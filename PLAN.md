@@ -18,7 +18,7 @@ This plan outlines the end-to-end implementation for the Company Finance & Reven
 ## Phase 3: Funds, Reserves & Advances
 
 - [x] **3.1 Add Fund System:** Implement API and UI for adding non-shareable funds and owner contributions.
-- [ ] **3.2 Reserve Balance Tracking:** Track company shares and manual adjustments to the reserve balance.
+- [x] **3.2 Reserve Balance Tracking:** Track company shares and manual adjustments to the reserve balance.
 - [ ] **3.3 Member Loans:** Implement `/api/loans` with 6-month overdue logic.
 - [ ] **3.4 Due/Advance Balances:** Implement `/api/advances` to deduct from future settlements.
 

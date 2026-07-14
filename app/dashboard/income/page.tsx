@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import styles from "./page.module.css";
 
 type Income = {
@@ -17,6 +18,7 @@ type Income = {
 
 export default function IncomePage() {
   const [incomes, setIncomes] = useState<Income[]>([]);
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form State
@@ -27,11 +29,22 @@ export default function IncomePage() {
   const [shareable, setShareable] = useState(true);
   const [description, setDescription] = useState("");
 
-  const fetchIncomes = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch("/api/income");
-      const data = await res.json();
-      setIncomes(data);
+      const [incRes, catRes] = await Promise.all([
+        fetch("/api/income"),
+        fetch("/api/income-categories")
+      ]);
+      const [incData, catData] = await Promise.all([
+        incRes.json(),
+        catRes.json()
+      ]);
+      setIncomes(incData);
+      setCategories(catData);
+      // Auto-select first category if available and not set
+      if (catData.length > 0 && !category) {
+        setCategory(catData[0].name);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -40,7 +53,7 @@ export default function IncomePage() {
   };
 
   useEffect(() => {
-    fetchIncomes();
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,14 +74,13 @@ export default function IncomePage() {
 
       if (res.ok) {
         // Reset form
-        setCategory("");
         setSource("");
         setAmount("");
         setReceived("");
         setShareable(true);
         setDescription("");
         // Refresh list
-        fetchIncomes();
+        fetchData();
       }
     } catch (err) {
       console.error("Failed to submit income", err);
@@ -86,11 +98,21 @@ export default function IncomePage() {
       <div className={styles.grid}>
         {/* Record Income Form */}
         <div className="glass-card">
-          <h3 style={{ marginBottom: "var(--spacing-4)" }}>Record New Income</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
+            <h3 style={{ margin: 0 }}>Record New Income</h3>
+            <Link href="/dashboard/income-categories" style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 600 }}>Manage Categories &rarr;</Link>
+          </div>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
               <label className="label">Category</label>
-              <input required className="input" placeholder="e.g. Client Project, Retainer" value={category} onChange={(e) => setCategory(e.target.value)} />
+              {categories.length > 0 ? (
+                <select required className="input" value={category} onChange={(e) => setCategory(e.target.value)} style={{ appearance: 'auto' }}>
+                  <option value="" disabled>Select a category</option>
+                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              ) : (
+                <input required className="input" placeholder="e.g. Client Project, Retainer" value={category} onChange={(e) => setCategory(e.target.value)} />
+              )}
             </div>
             
             <div className={styles.formGroup}>

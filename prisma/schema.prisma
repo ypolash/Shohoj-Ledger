@@ -140,3 +140,10 @@ model Settlement {
   companyShare   Decimal
   createdAt      DateTime @default(now())
 }
+
+model IncomeCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+}

@@ -11,7 +11,7 @@ This plan outlines the end-to-end implementation for the Company Finance & Reven
 
 ## Phase 2: Core Financial Operations (Income & Expenses)
 
-- [ ] **2.1 Income API & UI:** Implement `/api/income` to record payments. Enforce logic to track both full and partial payments.
+- [x] **2.1 Income API & UI:** Implement `/api/income` to record payments. Enforce logic to track both full and partial payments.
 - [ ] **2.2 Expense API & UI:** Implement `/api/expenses` with approval status workflow.
 - [ ] **2.3 Project Tracking:** Implement `/api/projects` to link income and expenses for profitability tracking.
 

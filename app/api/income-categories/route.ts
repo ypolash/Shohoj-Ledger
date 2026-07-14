@@ -5,9 +5,31 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const categories = await prisma.incomeCategory.findMany({
+    let categories = await prisma.incomeCategory.findMany({
       orderBy: { name: 'asc' }
     });
+
+    // Auto-seed default categories if empty
+    if (categories.length === 0) {
+      const defaultCategories = [
+        { name: "Client Project", description: "Standard project-based income" },
+        { name: "Retainer", description: "Monthly retainer fees" },
+        { name: "Consulting", description: "Hourly or flat-fee consulting" },
+        { name: "Software License", description: "Software sales or subscriptions" },
+        { name: "Maintenance", description: "Server and software maintenance" },
+        { name: "Other", description: "Miscellaneous income" }
+      ];
+
+      await prisma.incomeCategory.createMany({
+        data: defaultCategories,
+        skipDuplicates: true
+      });
+
+      categories = await prisma.incomeCategory.findMany({
+        orderBy: { name: 'asc' }
+      });
+    }
+
     return NextResponse.json(categories);
   } catch (error) {
     console.error("Error fetching income categories:", error);

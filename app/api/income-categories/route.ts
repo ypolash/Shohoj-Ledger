@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
@@ -12,12 +11,12 @@ export async function GET() {
     // Auto-seed default categories if empty
     if (categories.length === 0) {
       const defaultCategories = [
-        { name: "Client Project", description: "Standard project-based income" },
-        { name: "Retainer", description: "Monthly retainer fees" },
-        { name: "Consulting", description: "Hourly or flat-fee consulting" },
-        { name: "Software License", description: "Software sales or subscriptions" },
-        { name: "Maintenance", description: "Server and software maintenance" },
-        { name: "Other", description: "Miscellaneous income" }
+        { name: "Marketing" },
+        { name: "Consulting" },
+        { name: "Development" },
+        { name: "Maintenance" },
+        { name: "Support" },
+        { name: "Training" }
       ];
 
       await prisma.incomeCategory.createMany({
@@ -40,14 +39,14 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, description } = body;
+    const { name } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     const category = await prisma.incomeCategory.create({
-      data: { name, description }
+      data: { name }
     });
 
     return NextResponse.json(category, { status: 201 });

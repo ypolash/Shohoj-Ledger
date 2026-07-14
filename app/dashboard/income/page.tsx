@@ -19,7 +19,6 @@ type Income = {
 type IncomeCategory = {
   id: string;
   name: string;
-  description: string | null;
   createdAt: string;
 };
 
@@ -40,7 +39,6 @@ export default function IncomePage() {
 
   // Category Form State
   const [catName, setCatName] = useState("");
-  const [catDesc, setCatDesc] = useState("");
   const [catSubmitting, setCatSubmitting] = useState(false);
   const [catError, setCatError] = useState("");
 
@@ -54,11 +52,13 @@ export default function IncomePage() {
         incRes.json(),
         catRes.json()
       ]);
-      setIncomes(incData);
-      setCategories(catData);
+      const validIncData = Array.isArray(incData) ? incData : [];
+      const validCatData = Array.isArray(catData) ? catData : [];
+      setIncomes(validIncData);
+      setCategories(validCatData);
       // Auto-select first category if available and not set
-      if (catData.length > 0 && !category) {
-        setCategory(catData[0].name);
+      if (validCatData.length > 0 && !category) {
+        setCategory(validCatData[0].name);
       }
     } catch (err) {
       console.error(err);
@@ -111,7 +111,7 @@ export default function IncomePage() {
       const res = await fetch("/api/income-categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: catName, description: catDesc }),
+        body: JSON.stringify({ name: catName }),
       });
 
       if (!res.ok) {
@@ -120,7 +120,6 @@ export default function IncomePage() {
       }
 
       setCatName("");
-      setCatDesc("");
       fetchData();
     } catch (err: any) {
       setCatError(err.message);
@@ -314,16 +313,6 @@ export default function IncomePage() {
                   onChange={(e) => setCatName(e.target.value)} 
                 />
               </div>
-              <div>
-                <label className="label">Description (Optional)</label>
-                <textarea 
-                  className="input" 
-                  placeholder="Optional details..." 
-                  value={catDesc} 
-                  onChange={(e) => setCatDesc(e.target.value)}
-                  style={{ resize: 'vertical', minHeight: '80px' }}
-                />
-              </div>
               <button type="submit" className="btn btn-primary" disabled={catSubmitting}>
                 {catSubmitting ? "Adding..." : "Add Category"}
               </button>
@@ -343,7 +332,6 @@ export default function IncomePage() {
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
                     <th style={{ padding: '12px', fontWeight: 'normal' }}>Name</th>
-                    <th style={{ padding: '12px', fontWeight: 'normal' }}>Description</th>
                     <th style={{ padding: '12px', fontWeight: 'normal', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -351,7 +339,6 @@ export default function IncomePage() {
                   {categories.map((cat) => (
                     <tr key={cat.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '12px', fontWeight: 600 }}>{cat.name}</td>
-                      <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '14px' }}>{cat.description || '-'}</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         <button 
                           onClick={() => handleCategoryDelete(cat.id)}

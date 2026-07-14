@@ -15,7 +15,11 @@ export function calculateSettlement(netProfit: number, category: string) {
     };
   }
 
-  return { ceo: 0, developer: 0, company: 0 };
+  return {
+    ceo: netProfit * 0.5,
+    developer: 0,
+    company: netProfit * 0.5,
+  };
 }
 
 export function applyDueBalance(share: number, due: number) {

@@ -91,43 +91,77 @@ export default function DashboardIndex() {
 
   // Mock data for charts (would be replaced by real API data in the future)
   const revExpData = {
-    labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+    labels: ['Feb', 'Mar', 'Jun', 'Dec'],
     datasets: [
       {
         label: 'Revenue',
-        data: [15000, 18000, 16000, 22000, 20000, 24000],
-        backgroundColor: '#10b981', // success color
-        borderRadius: 4,
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
+        data: [80, 60, 95, 75],
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, '#06b6d4'); // Cyan
+          gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+          return gradient;
+        },
+        borderRadius: 50,
+        barPercentage: 0.3,
+        categoryPercentage: 0.8,
+        borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
+        borderColor: '#06b6d4'
       },
       {
         label: 'Expenses',
-        data: [12000, 14000, 13000, 16000, 15000, 17000],
-        backgroundColor: '#ef4444', // danger color
-        borderRadius: 4,
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
+        data: [40, 30, 60, 45],
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, '#a855f7'); // Purple
+          gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
+          return gradient;
+        },
+        borderRadius: 50,
+        barPercentage: 0.3,
+        categoryPercentage: 0.8,
+        borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
+        borderColor: '#a855f7'
       }
     ]
   };
 
   const cashFlowData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
         label: 'Net Cash',
-        data: [5000, 8000, 4500, 9200],
-        borderColor: '#3b82f6', // primary color
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        borderWidth: 2,
+        data: [150, 220, 180, 350, 210, 320],
+        borderColor: '#06b6d4', // Cyan
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(6, 182, 212, 0.4)');
+          gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+          return gradient;
+        },
+        borderWidth: 3,
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#3b82f6',
-        pointBorderColor: '#0b0f19',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
+        pointRadius: 0
+      },
+      {
+        label: 'Expenses',
+        data: [80, 150, 120, 200, 160, 240],
+        borderColor: '#a855f7', // Purple
+        backgroundColor: (context: any) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+          gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
+          return gradient;
+        },
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 0
       }
     ]
   };
@@ -140,96 +174,90 @@ export default function DashboardIndex() {
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       
       {/* Dashboard Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Financial Overview</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>Current fiscal status as of today.</p>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Shohoj Ledger - Premium Dark Dashboard</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>A premium, soft-UI financial dashboard</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>This Month</button>
-          <Link href="/dashboard/settlement" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-            Run Settlement
-          </Link>
+        
+        {/* Weather Widget */}
+        <div className="glass-panel" style={{ display: 'flex', gap: '16px', padding: '12px 20px', borderRadius: '12px', alignItems: 'center', maxWidth: '350px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '24px' }}>⛅</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
+              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>27°C</span>
+              <span style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>26°</span>
+            </div>
+          </div>
+          <div>
+            <span style={{ fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>Daily Tip</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.4, display: 'block' }}>
+              Breach your mornsy svetiwas: Alex, and hwnt mvt.came down iteep hant.
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Bento Grid Summary Cards */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: '16px',
+        gridTemplateColumns: 'repeat(3, 1fr)', 
+        gap: '24px',
         marginBottom: '24px'
       }}>
         
         {/* Total Income */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Income</span>
-            <span style={{ color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '6px', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold' }}>↑</span>
+        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(6, 182, 212, 0.1)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: '0 0 15px rgba(6, 182, 212, 0.2)' }}>
+            <span className="material-symbols-outlined" style={{ color: '#06b6d4', fontSize: '18px' }}>attach_money</span>
           </div>
-          <div style={{ marginTop: '16px' }}>
-            <span style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.02em' }}>{formatCurrency(data.totalIncome)}</span>
-            <div style={{ display: 'flex', gap: '4px', fontSize: '14px', marginTop: '4px' }}>
-              <span style={{ color: 'var(--success)' }}>PAID & PARTIAL</span>
-            </div>
-          </div>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Total Income</span>
+          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.totalIncome)}</span>
         </div>
 
         {/* Total Expenses */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Expenses</span>
-            <span style={{ color: 'var(--danger)', background: 'rgba(239,68,68,0.1)', padding: '6px', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold' }}>↓</span>
+        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: '0 0 15px rgba(168, 85, 247, 0.2)' }}>
+            <span className="material-symbols-outlined" style={{ color: '#a855f7', fontSize: '18px' }}>account_balance_wallet</span>
           </div>
-          <div style={{ marginTop: '16px' }}>
-            <span style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.02em' }}>{formatCurrency(data.totalExpenses)}</span>
-            <div style={{ display: 'flex', gap: '4px', fontSize: '14px', marginTop: '4px' }}>
-              <span style={{ color: 'var(--danger)' }}>APPROVED</span>
-            </div>
-          </div>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Total Expenses</span>
+          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.totalExpenses)}</span>
         </div>
 
         {/* Reserve Balance */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', right: '-16px', top: '-16px', width: '96px', height: '96px', background: 'rgba(59,130,246,0.1)', borderRadius: '50%', filter: 'blur(24px)' }}></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 10 }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reserve Balance</span>
-            <span style={{ color: 'var(--primary)', background: 'rgba(59,130,246,0.1)', padding: '6px', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold' }}>★</span>
+        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: '0 0 15px rgba(59, 130, 246, 0.2)' }}>
+            <span className="material-symbols-outlined" style={{ color: '#3b82f6', fontSize: '18px' }}>savings</span>
           </div>
-          <div style={{ marginTop: '16px', position: 'relative', zIndex: 10 }}>
-            <span style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.02em' }}>{formatCurrency(data.reserveBalance)}</span>
-            <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '6px', borderRadius: '99px', marginTop: '12px', overflow: 'hidden' }}>
-               <div style={{ background: 'var(--primary)', height: '100%', width: '100%', borderRadius: '99px' }}></div>
-            </div>
-          </div>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Reserve Balance</span>
+          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.reserveBalance)}</span>
         </div>
 
-        {/* Active Advances */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Advances</span>
+        {/* Due Balance */}
+        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(14, 165, 233, 0.1)', border: '1px solid rgba(14, 165, 233, 0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: '0 0 15px rgba(14, 165, 233, 0.2)' }}>
+            <span className="material-symbols-outlined" style={{ color: '#0ea5e9', fontSize: '18px' }}>calendar_today</span>
           </div>
-          <div style={{ marginTop: '16px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <div>
-              <span style={{ fontSize: '24px', fontWeight: 600 }}>{formatCurrency(data.activeAdvances)}</span>
-              <p style={{ margin: 0, fontSize: '14px' }}>Receivables</p>
-            </div>
-            <Link href="/dashboard/advances" style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>View All</Link>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Due Balance</span>
+          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.activeAdvances)}</span>
+        </div>
+
+        {/* Pending Payments */}
+        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: '0 0 15px rgba(139, 92, 246, 0.2)' }}>
+            <span className="material-symbols-outlined" style={{ color: '#8b5cf6', fontSize: '18px' }}>pending_actions</span>
           </div>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Pending Payments</span>
+          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>0</span>
         </div>
 
         {/* Active Loans */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding Loans</span>
+        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: '0 0 15px rgba(99, 102, 241, 0.2)' }}>
+            <span className="material-symbols-outlined" style={{ color: '#6366f1', fontSize: '18px' }}>monetization_on</span>
           </div>
-          <div style={{ marginTop: '16px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <div>
-              <span style={{ fontSize: '24px', fontWeight: 600 }}>{formatCurrency(data.outstandingLoans)}</span>
-              <p style={{ margin: 0, fontSize: '14px' }}>Principal Remaining</p>
-            </div>
-            <Link href="/dashboard/loans" style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>View All</Link>
-          </div>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Active Loans</span>
+          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{data.outstandingLoans > 0 ? formatCurrency(data.outstandingLoans) : '0'}</span>
         </div>
 
       </div>
@@ -243,8 +271,9 @@ export default function DashboardIndex() {
       }}>
         {/* Revenue vs Expense Chart */}
         <div className="glass-card" style={{ padding: '20px', height: '360px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Revenue vs Expense</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Revenue vs Expense</h3>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Month ⌄</div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <Bar data={revExpData} options={chartOptions as any} />
@@ -252,9 +281,10 @@ export default function DashboardIndex() {
         </div>
 
         {/* Cash Flow Line Chart */}
-        <div className="glass-card" style={{ padding: '20px', height: '360px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Cash Flow Trend</h3>
+        <div className="glass-card" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Cash Flow</h3>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Month ⌄</div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <Line data={cashFlowData} options={chartOptions as any} />
@@ -263,9 +293,10 @@ export default function DashboardIndex() {
       </div>
       
       {/* Recent Transactions Table */}
-      <div className="glass-card" style={{ padding: '20px', overflowX: 'auto' }}>
+      <div className="glass-card" style={{ padding: '24px', overflowX: 'auto', borderRadius: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Recent Transactions</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Recent Transactions</h3>
+
           <Link href="/dashboard/income" style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>View Complete Ledger &rarr;</Link>
         </div>
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
@@ -278,29 +309,50 @@ export default function DashboardIndex() {
             </tr>
           </thead>
           <tbody style={{ fontSize: '14px' }}>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '12px', color: 'var(--text-muted)' }}>Oct 24, 2023</td>
-              <td style={{ padding: '12px' }}>Design Assets</td>
-              <td style={{ padding: '12px', textAlign: 'right', color: 'var(--danger)', fontFamily: 'monospace' }}>-$450.00</td>
-              <td style={{ padding: '12px', textAlign: 'center' }}>
-                <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, background: 'rgba(16,185,129,0.1)', color: 'var(--success)' }}>Paid</span>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <td style={{ padding: '16px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justify: 'center' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6', margin: 'auto' }}>receipt_long</span>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 500 }}>Bcoiment</div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Dollar</div>
+                  </div>
+                </div>
               </td>
+              <td style={{ padding: '16px 12px', color: '#94a3b8' }}>06/1/2024</td>
+              <td style={{ padding: '16px 12px', textAlign: 'right', color: '#a855f7' }}>-$1,000.00</td>
             </tr>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '12px', color: 'var(--text-muted)' }}>Oct 23, 2023</td>
-              <td style={{ padding: '12px' }}>Client Retainer</td>
-              <td style={{ padding: '12px', textAlign: 'right', color: 'var(--success)', fontFamily: 'monospace' }}>+$5,000.00</td>
-              <td style={{ padding: '12px', textAlign: 'center' }}>
-                <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, background: 'rgba(148,163,184,0.1)', color: 'var(--text-muted)' }}>Pending</span>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <td style={{ padding: '16px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justify: 'center' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6', margin: 'auto' }}>sync_alt</span>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 500 }}>Seniment</div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Dollar</div>
+                  </div>
+                </div>
               </td>
+              <td style={{ padding: '16px 12px', color: '#94a3b8' }}>06/1/2023</td>
+              <td style={{ padding: '16px 12px', textAlign: 'right', color: '#a855f7' }}>-$3,000.00</td>
             </tr>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '12px', color: 'var(--text-muted)' }}>Oct 21, 2023</td>
-              <td style={{ padding: '12px' }}>Server Hosting</td>
-              <td style={{ padding: '12px', textAlign: 'right', color: 'var(--danger)', fontFamily: 'monospace' }}>-$120.00</td>
-              <td style={{ padding: '12px', textAlign: 'center' }}>
-                <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600, background: 'rgba(16,185,129,0.1)', color: 'var(--success)' }}>Paid</span>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <td style={{ padding: '16px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justify: 'center' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6', margin: 'auto' }}>account_balance</span>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 500 }}>Payment</div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Bank</div>
+                  </div>
+                </div>
               </td>
+              <td style={{ padding: '16px 12px', color: '#94a3b8' }}>08/1/2023</td>
+              <td style={{ padding: '16px 12px', textAlign: 'right', color: '#a855f7' }}>-$2,000.00</td>
             </tr>
           </tbody>
         </table>

@@ -34,7 +34,7 @@ export default function LoansPage() {
     try {
       const [loansRes, usersRes] = await Promise.all([
         fetch("/api/loans"),
-        fetch("/api/users")
+        fetch("/api/members")
       ]);
       const loansData = await loansRes.json();
       const usersData = await usersRes.json();

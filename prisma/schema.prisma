@@ -113,6 +113,7 @@ model MemberLoan {
   memberId        String
   amount          Decimal
   remainingAmount Decimal
+  reason          String?
   issueDate       DateTime @default(now())
   dueDate         DateTime
   status          String   @default("ACTIVE")
@@ -145,4 +146,16 @@ model IncomeCategory {
   id        String   @id @default(uuid())
   name      String   @unique
   createdAt DateTime @default(now())
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  email     String?  @unique
+  phone     String?
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

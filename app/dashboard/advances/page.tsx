@@ -33,7 +33,7 @@ export default function AdvancesPage() {
     try {
       const [advRes, usersRes] = await Promise.all([
         fetch("/api/advances"),
-        fetch("/api/users")
+        fetch("/api/members")
       ]);
       const advData = await advRes.json();
       const usersData = await usersRes.json();

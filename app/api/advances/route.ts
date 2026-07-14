@@ -8,12 +8,12 @@ export async function GET() {
     });
 
     const userIds = advances.map(a => a.memberId);
-    const users = await prisma.user.findMany({
+    const members = await prisma.member.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true }
     });
 
-    const userMap = users.reduce((acc, user) => {
+    const userMap = members.reduce((acc, user) => {
       acc[user.id] = user.name;
       return acc;
     }, {} as Record<string, string>);
@@ -45,8 +45,9 @@ export async function POST(request: Request) {
       data: {
         memberId,
         amount: advanceAmount,
+        remainingAmount: advanceAmount,
         status: "ACTIVE",
-        description,
+        reason: description,
       }
     });
 

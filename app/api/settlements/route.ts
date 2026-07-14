@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { calculateSettlement } from "@/lib/calculations";
 
 export async function GET(request: Request) {
   try {
@@ -38,11 +39,70 @@ export async function GET(request: Request) {
     const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
     const netProfit = totalIncome - totalExpenses;
 
-    // Distribution logic (e.g., Development: CEO 40%, Dev 20%, Co 40%)
-    // If netProfit is negative, shares are 0.
-    const ceoShare = netProfit > 0 ? netProfit * 0.40 : 0;
-    const developerShare = netProfit > 0 ? netProfit * 0.20 : 0;
-    const companyShare = netProfit > 0 ? netProfit * 0.40 : 0;
+    // Distribution logic by category
+    const projectIncomes: Record<string, { total: number; category: string }> = {};
+    let generalIncome = 0;
+
+    incomes.forEach(inc => {
+      if (inc.projectId) {
+        if (!projectIncomes[inc.projectId]) {
+          projectIncomes[inc.projectId] = { total: 0, category: inc.category };
+        }
+        projectIncomes[inc.projectId].total += Number(inc.received);
+      } else {
+        generalIncome += Number(inc.received);
+      }
+    });
+
+    const projectExpenses: Record<string, number> = {};
+    let generalExpense = 0;
+
+    expenses.forEach(exp => {
+      if (exp.projectId) {
+        projectExpenses[exp.projectId] = (projectExpenses[exp.projectId] || 0) + Number(exp.amount);
+      } else {
+        generalExpense += Number(exp.amount);
+      }
+    });
+
+    let ceoShare = 0;
+    let developerShare = 0;
+    let companyShare = 0;
+
+    // 1. Calculate shares from project-specific income minus project-specific expenses
+    Object.keys(projectIncomes).forEach(projectId => {
+      const pIncome = projectIncomes[projectId].total;
+      const pExpense = projectExpenses[projectId] || 0;
+      const pNet = pIncome - pExpense;
+      
+      if (pNet > 0) {
+        const shares = calculateSettlement(pNet, projectIncomes[projectId].category);
+        ceoShare += shares.ceo;
+        developerShare += shares.developer;
+        companyShare += shares.company;
+      }
+    });
+
+    // 2. Add general income shares (defaults to 50/50 in calculation)
+    if (generalIncome > 0) {
+      const shares = calculateSettlement(generalIncome, "General");
+      ceoShare += shares.ceo;
+      developerShare += shares.developer;
+      companyShare += shares.company;
+    }
+
+    // 3. Deduct general expenses proportionally from everyone's gross shares
+    if (generalExpense > 0) {
+      const grossShares = ceoShare + developerShare + companyShare;
+      if (grossShares > 0) {
+        ceoShare = Math.max(0, ceoShare - generalExpense * (ceoShare / grossShares));
+        developerShare = Math.max(0, developerShare - generalExpense * (developerShare / grossShares));
+        companyShare = Math.max(0, companyShare - generalExpense * (companyShare / grossShares));
+      } else {
+        // If there's no income but there are general expenses, it hits the company reserve
+        companyShare -= generalExpense;
+      }
+    }
 
     return NextResponse.json({
       period: `${startDate.toLocaleString('default', { month: 'long' })} ${year}`,

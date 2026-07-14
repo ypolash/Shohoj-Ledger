@@ -70,7 +70,7 @@ export default function EmployeesPage() {
   const getInitials = (f: string, l: string) => `${f[0]}${l[0]}`.toUpperCase();
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
+    <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Employees</h1>

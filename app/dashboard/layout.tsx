@@ -55,30 +55,9 @@ export default function DashboardLayout({
           <Link href="/dashboard/settlement" className={`${styles.navLink} ${isActive('/dashboard/settlement') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">handshake</span> Settlement
           </Link>
-          <div className={styles.navSection}>
-            <span className={styles.sectionTitle}>STAFF MANAGEMENT</span>
-            <Link href="/admin/staff-management" className={`${styles.navLink} ${isActive('/admin/staff-management') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">dashboard</span> Staff Dashboard
-            </Link>
-            <Link href="/admin/staff-management/employees" className={`${styles.navLink} ${isActive('/admin/staff-management/employees') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">badge</span> Employees
-            </Link>
-            <Link href="/admin/staff-management/attendance" className={`${styles.navLink} ${isActive('/admin/staff-management/attendance') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">how_to_reg</span> Attendance
-            </Link>
-            <Link href="/admin/staff-management/leave" className={`${styles.navLink} ${isActive('/admin/staff-management/leave') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">event_busy</span> Leave Requests
-            </Link>
-            <Link href="/admin/staff-management/payroll" className={`${styles.navLink} ${isActive('/admin/staff-management/payroll') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">payments</span> Payroll
-            </Link>
-            <Link href="/admin/staff-management/bonuses" className={`${styles.navLink} ${isActive('/admin/staff-management/bonuses') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">redeem</span> Bonuses
-            </Link>
-            <Link href="/admin/staff-management/reports" className={`${styles.navLink} ${isActive('/admin/staff-management/reports') ? styles.active : ''}`}>
-              <span className="material-symbols-outlined">analytics</span> Reports
-            </Link>
-          </div>
+          <Link href="/dashboard/staff-management" className={`${styles.navLink} ${isActive('/dashboard/staff-management') ? styles.active : ''}`}>
+            <span className="material-symbols-outlined">badge</span> Staff Management
+          </Link>
           
           <Link href="#" className={styles.navLink} style={{ marginTop: 'auto' }}>
             <span className="material-symbols-outlined">logout</span> Log out

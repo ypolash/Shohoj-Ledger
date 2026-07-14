@@ -5,8 +5,8 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Updated profit sharing conditions to include a new Advisor (Shafaeath Hosen) with a 20% share. The new flat share structure is 40% CEO, 20% Developer, 20% Advisor, and 20% Company.
-- **Next Phase:** Phase 6 (Production & Security), focusing on database backup automation via MinIO and system hardening.
+- **Last major feature added:** Initiated Phase 6 (Staff Management module). Created Prisma models for Employee, Attendance, LeaveRequest, Payroll, Bonuses, and Payslips. Integrated the Admin Staff Dashboard into the layout and built the Employee Portal (/staff) foundations.
+- **Next Phase:** Phase 6 (Staff Management module) - Complete Attendance rules (late deductions), Leave approvals, and Payroll generation engine, followed by integration with the Expense module.
 
 **Goal Pivots:**
 N/A (Initial Setup)
@@ -14,8 +14,11 @@ N/A (Initial Setup)
 **Production Roadmap:**
 
 - [x] Define Prisma schema and database models
-- [ ] Implement backend API routes for CRUD operations
-- [ ] Build the UI for Dashboard and core modules (Income, Expenses, Loans, Settlement)
+- [x] Implement backend API routes for CRUD operations
+- [x] Build the UI for Dashboard and core modules (Income, Expenses, Loans, Settlement)
 - [x] Setup authentication (Better Auth)
-- [ ] Implement Monthly Settlement Logic
+- [x] Implement Monthly Settlement Logic
+- [x] Setup Staff Management Models & Layout
+- [ ] Implement Staff Attendance & Leave Logic
+- [ ] Implement Payroll Processing & Deductions
 - [ ] Deploy to production via Coolify

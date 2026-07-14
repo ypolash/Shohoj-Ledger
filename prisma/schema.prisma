@@ -160,3 +160,111 @@ model Member {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Employee {
+  id              String            @id @default(uuid())
+  userId          String?           @unique // Link to User model if they can log in
+  employeeId      String            @unique
+  firstName       String
+  lastName        String
+  email           String            @unique
+  phone           String?
+  designation     String
+  department      String?
+  joinDate        DateTime
+  basicSalary     Decimal
+  status          String            @default("ACTIVE") // ACTIVE, ON_LEAVE, TERMINATED
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  attendances     Attendance[]
+  leaveRequests   LeaveRequest[]
+  salaryPayments  SalaryPayment[]
+  deductions      SalaryDeduction[]
+  bonuses         Bonus[]
+  payslips        Payslip[]
+}
+
+model Attendance {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  date        DateTime  // Store just the date (YYYY-MM-DD)
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      String    // PRESENT, LATE, ABSENT, HALF_DAY
+  lateMinutes Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([employeeId, date])
+}
+
+model LeaveRequest {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  type        String    // CASUAL, SICK, UNPAID
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  status      String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SalaryPayment {
+  id            String    @id @default(uuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id])
+  month         Int       // 1-12
+  year          Int
+  basicSalary   Decimal
+  grossSalary   Decimal
+  netSalary     Decimal
+  paymentDate   DateTime  @default(now())
+  status        String    @default("PAID") // PAID
+  expenseId     String?   // Link to Expense model record in Shohoj Ledger
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model SalaryDeduction {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  month       Int
+  year        Int
+  type        String    // LATE_FEE, UNPAID_LEAVE, OTHER
+  amount      Decimal
+  reason      String?
+  createdAt   DateTime  @default(now())
+}
+
+model Bonus {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  month       Int
+  year        Int
+  type        String    // PERFORMANCE, FESTIVAL, OTHER
+  amount      Decimal
+  reason      String?
+  expenseId   String?   // Link to Expense model record
+  createdAt   DateTime  @default(now())
+}
+
+model Payslip {
+  id            String    @id @default(uuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id])
+  month         Int
+  year          Int
+  fileUrl       String?   // If storing PDF generated
+  totalEarnings Decimal
+  totalDeductions Decimal
+  netPay        Decimal
+  createdAt     DateTime  @default(now())
+  
+  @@unique([employeeId, month, year])
+}

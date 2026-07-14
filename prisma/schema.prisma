@@ -138,6 +138,7 @@ model Settlement {
   totalExpenses  Decimal
   ceoShare       Decimal
   developerShare Decimal
+  advisorShare   Decimal
   companyShare   Decimal
   createdAt      DateTime @default(now())
 }

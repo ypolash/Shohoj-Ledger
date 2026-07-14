@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
     // Distribution logic by category
     const projectIncomes: Record<string, { total: number; category: string }> = {};
-    let generalIncome = 0;
+    const nonProjectIncomes: Array<{ amount: number; category: string }> = [];
 
     incomes.forEach(inc => {
       if (inc.projectId) {
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         }
         projectIncomes[inc.projectId].total += Number(inc.received);
       } else {
-        generalIncome += Number(inc.received);
+        nonProjectIncomes.push({ amount: Number(inc.received), category: inc.category });
       }
     });
 
@@ -67,6 +67,7 @@ export async function GET(request: Request) {
 
     let ceoShare = 0;
     let developerShare = 0;
+    let advisorShare = 0;
     let companyShare = 0;
 
     // 1. Calculate shares from project-specific income minus project-specific expenses
@@ -79,24 +80,29 @@ export async function GET(request: Request) {
         const shares = calculateSettlement(pNet, projectIncomes[projectId].category);
         ceoShare += shares.ceo;
         developerShare += shares.developer;
+        advisorShare += shares.advisor;
         companyShare += shares.company;
       }
     });
 
-    // 2. Add general income shares (defaults to 50/50 in calculation)
-    if (generalIncome > 0) {
-      const shares = calculateSettlement(generalIncome, "General");
-      ceoShare += shares.ceo;
-      developerShare += shares.developer;
-      companyShare += shares.company;
-    }
+    // 2. Add non-project income shares (using their explicit category)
+    nonProjectIncomes.forEach(inc => {
+      if (inc.amount > 0) {
+        const shares = calculateSettlement(inc.amount, inc.category);
+        ceoShare += shares.ceo;
+        developerShare += shares.developer;
+        advisorShare += shares.advisor;
+        companyShare += shares.company;
+      }
+    });
 
     // 3. Deduct general expenses proportionally from everyone's gross shares
     if (generalExpense > 0) {
-      const grossShares = ceoShare + developerShare + companyShare;
+      const grossShares = ceoShare + developerShare + advisorShare + companyShare;
       if (grossShares > 0) {
         ceoShare = Math.max(0, ceoShare - generalExpense * (ceoShare / grossShares));
         developerShare = Math.max(0, developerShare - generalExpense * (developerShare / grossShares));
+        advisorShare = Math.max(0, advisorShare - generalExpense * (advisorShare / grossShares));
         companyShare = Math.max(0, companyShare - generalExpense * (companyShare / grossShares));
       } else {
         // If there's no income but there are general expenses, it hits the company reserve
@@ -111,6 +117,7 @@ export async function GET(request: Request) {
       netProfit,
       ceoShare,
       developerShare,
+      advisorShare,
       companyShare
     });
   } catch (error) {
@@ -122,7 +129,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { period, totalIncome, totalExpenses, ceoShare, developerShare, companyShare } = body;
+    const { period, totalIncome, totalExpenses, ceoShare, developerShare, advisorShare, companyShare } = body;
 
     const settlement = await prisma.settlement.create({
       data: {
@@ -131,6 +138,7 @@ export async function POST(request: Request) {
         totalExpenses,
         ceoShare,
         developerShare,
+        advisorShare,
         companyShare,
         status: "PENDING"
       }
@@ -180,5 +188,38 @@ export async function PATCH(request: Request) {
   } catch (error) {
     console.error("Error executing settlement:", error);
     return NextResponse.json({ error: "Failed to execute settlement" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const id = url.searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Settlement ID is required" }, { status: 400 });
+    }
+
+    const settlement = await prisma.settlement.findUnique({ where: { id } });
+    if (!settlement) {
+      return NextResponse.json({ error: "Settlement not found" }, { status: 404 });
+    }
+
+    // Use a transaction to delete the settlement and its auto-deposit
+    await prisma.$transaction([
+      prisma.reserveTransaction.deleteMany({
+        where: {
+          reason: { contains: settlement.period }
+        }
+      }),
+      prisma.settlement.delete({
+        where: { id }
+      })
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting settlement:", error);
+    return NextResponse.json({ error: "Failed to delete settlement" }, { status: 500 });
   }
 }

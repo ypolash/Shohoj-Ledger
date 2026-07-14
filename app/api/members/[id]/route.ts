@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: Request,
@@ -20,7 +18,7 @@ export async function GET(
     // Calculate Wallet Balance from Settlements based on Role
     let totalEarned = 0;
     const settlements = await prisma.settlement.findMany({
-      where: { status: 'EXECUTED' }
+      where: { status: { in: ['PAID', 'EXECUTED'] } }
     });
 
     if (member.role.toLowerCase().includes('ceo')) {
@@ -41,9 +39,9 @@ export async function GET(
     const totalLoans = loans.reduce((sum, l) => sum + Number(l.remainingAmount), 0);
 
     const totalDeductions = totalAdvances + totalLoans;
-    const walletBalance = totalEarned;
-    const availableForWithdrawal = totalEarned - totalDeductions;
-
+    const walletBalance = totalEarned - totalDeductions;
+    const availableForWithdrawal = walletBalance;
+    
     // Recent Transactions (Settlements + Advances)
     let transactions: any[] = [];
     
@@ -97,6 +95,7 @@ export async function GET(
       ...member,
       financials: {
         walletBalance,
+        totalEarned,
         totalAdvances,
         totalLoans,
         availableForWithdrawal,

@@ -53,7 +53,7 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(amount);
   };
 
   if (isLoading) {
@@ -72,10 +72,7 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
     recentTransactions: []
   };
 
-  // Calculate some mock reward/cashback based on wallet balance for visual continuity
-  const monthlyLimit = 50000;
-  const cashback = financials.walletBalance * 0.05; // 5% mock cashback
-  const rewardPoints = Math.floor(financials.walletBalance * 0.5);
+  const totalDeductions = financials.totalAdvances + financials.totalLoans;
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
@@ -115,8 +112,8 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
             alignItems: 'center',
             gap: '6px'
           }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>star</span>
-            Premium Member
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>verified_user</span>
+            Active Member
           </div>
         </div>
 
@@ -136,8 +133,8 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
-              <p style={{ color: '#94a3b8', fontSize: '12px', margin: '0 0 4px 0' }}>Available for Withdrawal</p>
-              <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{formatCurrency(financials.availableForWithdrawal)}</h2>
+              <p style={{ color: '#94a3b8', fontSize: '12px', margin: '0 0 4px 0' }}>Advance</p>
+              <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{formatCurrency(financials.totalAdvances)}</h2>
             </div>
             <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payments</span>
@@ -152,31 +149,26 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
         
         <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontSize: '20px' }}>credit_card</span>
-            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Monthly Limit</span>
+            <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '20px' }}>payments</span>
+            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Total Earned</span>
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>{formatCurrency(monthlyLimit)}</h2>
-          <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', height: '6px', borderRadius: '99px', overflow: 'hidden' }}>
-            <div style={{ background: '#f59e0b', width: `${Math.min((financials.walletBalance / monthlyLimit) * 100, 100)}%`, height: '100%', borderRadius: '99px' }}></div>
-          </div>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0', color: '#fff' }}>{formatCurrency(financials.totalEarned)}</h2>
         </div>
 
         <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '20px' }}>savings</span>
-            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Cashback Earned</span>
+            <span className="material-symbols-outlined" style={{ color: '#ef4444', fontSize: '20px' }}>account_balance</span>
+            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Active Loans</span>
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{formatCurrency(cashback)}</h2>
-          <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 'bold' }}>+2.4% this month</span>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{formatCurrency(financials.totalLoans)}</h2>
         </div>
 
         <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <span className="material-symbols-outlined" style={{ color: '#a5b4fc', fontSize: '20px' }}>military_tech</span>
-            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Reward Points</span>
+            <span className="material-symbols-outlined" style={{ color: '#a5b4fc', fontSize: '20px' }}>receipt_long</span>
+            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Total Deductions Pending</span>
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{rewardPoints.toLocaleString()}</h2>
-          <span style={{ color: '#94a3b8', fontSize: '12px' }}>Equivalent to {formatCurrency(rewardPoints * 0.01)}</span>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{formatCurrency(totalDeductions)}</h2>
         </div>
 
       </div>

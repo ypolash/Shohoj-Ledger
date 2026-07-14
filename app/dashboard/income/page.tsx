@@ -30,6 +30,7 @@ export default function IncomePage() {
   const [loading, setLoading] = useState(true);
 
   // Income Form State
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [category, setCategory] = useState("");
   const [source, setSource] = useState("");
   const [amount, setAmount] = useState("");
@@ -74,8 +75,11 @@ export default function IncomePage() {
   const handleIncomeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/income", {
-        method: "POST",
+      const url = editingId ? `/api/income?id=${editingId}` : "/api/income";
+      const method = editingId ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
@@ -89,6 +93,7 @@ export default function IncomePage() {
 
       if (res.ok) {
         // Reset form
+        setEditingId(null);
         setSource("");
         setAmount("");
         setReceived("");
@@ -100,6 +105,28 @@ export default function IncomePage() {
     } catch (err) {
       console.error("Failed to submit income", err);
     }
+  };
+
+  const handleIncomeDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this income record?")) return;
+    try {
+      const res = await fetch(`/api/income?id=${id}`, { method: "DELETE" });
+      if (res.ok) fetchData();
+      else alert("Failed to delete income");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditClick = (inc: Income) => {
+    setEditingId(inc.id);
+    setCategory(inc.category);
+    setSource(inc.source || "");
+    setAmount(inc.amount);
+    setReceived(inc.received);
+    setShareable(inc.shareable);
+    setDescription(inc.description || "");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
@@ -237,9 +264,23 @@ export default function IncomePage() {
                 <textarea className="input" rows={3} value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                Record Income
-              </button>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                  {editingId ? "Update Income" : "Record Income"}
+                </button>
+                {editingId && (
+                  <button type="button" className="btn btn-secondary" onClick={() => {
+                    setEditingId(null);
+                    setSource("");
+                    setAmount("");
+                    setReceived("");
+                    setShareable(true);
+                    setDescription("");
+                  }}>
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -258,6 +299,7 @@ export default function IncomePage() {
                     <th>Amount</th>
                     <th>Received</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -273,11 +315,17 @@ export default function IncomePage() {
                           {inc.paymentStatus}
                         </span>
                       </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => handleEditClick(inc)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }}>Edit</button>
+                          <button onClick={() => handleIncomeDelete(inc.id)} className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '12px' }}>Delete</button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {incomes.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: "center", padding: "var(--spacing-4)" }}>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "var(--spacing-4)" }}>
                         No income recorded yet.
                       </td>
                     </tr>

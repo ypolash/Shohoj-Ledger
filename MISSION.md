@@ -1,11 +1,11 @@
 # MISSION
 
 **Core Goal:**
-Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income, expenses, reserve balances, member loans, due balances, and monthly settlements. The system ensures that only paid/partial income is included in settlement, and shares are calculated properly between the CEO, Developers, and Company (reserve balance).
+Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income, expenses, reserve balances, member loans, due balances, and monthly settlements. The system ensures that only paid/partial income is included in settlement, and shares are calculated properly between the CEO (40%), Developers (20%), Advisor (20%), and Company reserve (20%).
 
 **Current Status:**
 
-- **Last major feature added:** Completed Phase 5 (Dashboard & Reporting), launching the Financial Overview dashboard that aggregates Reserve Balance, Net Cash Flow, Active Advances, and Outstanding Loans. Project Profitability was also verified as fully integrated.
+- **Last major feature added:** Updated profit sharing conditions to include a new Advisor (Shafaeath Hosen) with a 20% share. The new flat share structure is 40% CEO, 20% Developer, 20% Advisor, and 20% Company.
 - **Next Phase:** Phase 6 (Production & Security), focusing on database backup automation via MinIO and system hardening.
 
 **Goal Pivots:**

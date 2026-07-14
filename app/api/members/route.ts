@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -13,7 +11,8 @@ export async function GET() {
       // Seed default members
       const defaults = [
         { name: 'Yasin Araphat', role: 'CEO' },
-        { name: 'Raihan Hasan', role: 'Chief Developer' }
+        { name: 'Raihan Hasan', role: 'Chief Developer' },
+        { name: 'Shafaeath Hosen', role: 'Advisor' }
       ];
       
       for (const d of defaults) {

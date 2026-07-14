@@ -11,6 +11,7 @@ type Settlement = {
   totalExpenses: string;
   ceoShare: string;
   developerShare: string;
+  advisorShare: string;
   companyShare: string;
   createdAt: string;
 };
@@ -85,6 +86,24 @@ export default function SettlementPage() {
     }
   };
 
+  const handleDeleteSettlement = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this settlement? This will reset member balances and undo company reserve deposits for this period.")) return;
+    
+    try {
+      const res = await fetch(`/api/settlements?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        fetchSettlements();
+      } else {
+        alert("Failed to delete settlement");
+      }
+    } catch (err) {
+      console.error("Error deleting settlement", err);
+    }
+  };
+
   const formatCurrency = (val: number | string) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(val));
   };
@@ -146,8 +165,12 @@ export default function SettlementPage() {
                 <span>Developer Share (20%):</span>
                 <span>{formatCurrency(preview.developerShare)}</span>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>Advisor Share (20%):</span>
+                <span>{formatCurrency(preview.advisorShare)}</span>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <span>Company Reserve (40%):</span>
+                <span>Company Reserve (20%):</span>
                 <span style={{ color: 'var(--primary)' }}>{formatCurrency(preview.companyShare)}</span>
               </div>
 
@@ -169,7 +192,7 @@ export default function SettlementPage() {
                 <tr>
                   <th>Period</th>
                   <th>Net Profit</th>
-                  <th>Company (40%)</th>
+                  <th>Company (20%)</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -185,12 +208,15 @@ export default function SettlementPage() {
                         {s.status}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ display: 'flex', gap: '8px' }}>
                       {s.status === "PENDING" && (
                         <button onClick={() => handleExecuteSettlement(s.id)} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '12px', color: 'var(--success)', borderColor: 'var(--success)' }}>
                           Execute
                         </button>
                       )}
+                      <button onClick={() => handleDeleteSettlement(s.id)} className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '12px', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

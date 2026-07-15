@@ -28,6 +28,22 @@ ChartJS.register(
   Filler
 );
 
+type TransactionData = {
+  id: string;
+  type: 'INCOME' | 'EXPENSE';
+  category: { name: string } | string | null;
+  amount: number;
+  date: string;
+  subtitle: string | null;
+};
+
+type MonthlyData = {
+  label: string;
+  revenue: number;
+  expense: number;
+  netCash: number;
+};
+
 type OverviewData = {
   reserveBalance: number;
   totalIncome: number;
@@ -35,7 +51,10 @@ type OverviewData = {
   netCashFlow: number;
   outstandingLoans: number;
   activeAdvances: number;
+  monthlyData: MonthlyData[];
+  recentTransactions: TransactionData[];
 };
+
 
 export default function DashboardIndex() {
   const [data, setData] = useState<OverviewData | null>(null);
@@ -91,11 +110,11 @@ export default function DashboardIndex() {
 
   // Mock data for charts (would be replaced by real API data in the future)
   const revExpData = {
-    labels: ['Feb', 'Mar', 'Jun', 'Dec'],
+    labels: data?.monthlyData.map(d => d.label) || [],
     datasets: [
       {
         label: 'Revenue',
-        data: [80, 60, 95, 75],
+        data: data?.monthlyData.map(d => d.revenue) || [],
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -111,7 +130,7 @@ export default function DashboardIndex() {
       },
       {
         label: 'Expenses',
-        data: [40, 30, 60, 45],
+        data: data?.monthlyData.map(d => d.expense) || [],
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -129,11 +148,11 @@ export default function DashboardIndex() {
   };
 
   const cashFlowData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: data?.monthlyData.map(d => d.label) || [],
     datasets: [
       {
         label: 'Net Cash',
-        data: [150, 220, 180, 350, 210, 320],
+        data: data?.monthlyData.map(d => d.netCash) || [],
         borderColor: '#06b6d4', // Cyan
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
@@ -149,7 +168,7 @@ export default function DashboardIndex() {
       },
       {
         label: 'Expenses',
-        data: [80, 150, 120, 200, 160, 240],
+        data: data?.monthlyData.map(d => d.expense) || [],
         borderColor: '#a855f7', // Purple
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
@@ -178,23 +197,6 @@ export default function DashboardIndex() {
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Shohoj Ledger - Premium Dark Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>A premium, soft-UI financial dashboard</p>
-        </div>
-        
-        {/* Weather Widget */}
-        <div className="glass-panel" style={{ display: 'flex', gap: '16px', padding: '12px 20px', borderRadius: '12px', alignItems: 'center', maxWidth: '350px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '24px' }}>⛅</span>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 'bold' }}>27°C</span>
-              <span style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>26°</span>
-            </div>
-          </div>
-          <div>
-            <span style={{ fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>Daily Tip</span>
-            <span style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.4, display: 'block' }}>
-              Breach your mornsy svetiwas: Alex, and hwnt mvt.came down iteep hant.
-            </span>
-          </div>
         </div>
       </div>
 
@@ -309,51 +311,42 @@ export default function DashboardIndex() {
             </tr>
           </thead>
           <tbody style={{ fontSize: '14px' }}>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-              <td style={{ padding: '16px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '32px', height: '32px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6', margin: 'auto' }}>receipt_long</span>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 500 }}>Bcoiment</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Dollar</div>
-                  </div>
-                </div>
-              </td>
-              <td style={{ padding: '16px 12px', color: '#94a3b8' }}>06/1/2024</td>
-              <td style={{ padding: '16px 12px', textAlign: 'right', color: '#a855f7' }}>-$1,000.00</td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-              <td style={{ padding: '16px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '32px', height: '32px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6', margin: 'auto' }}>sync_alt</span>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 500 }}>Seniment</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Dollar</div>
-                  </div>
-                </div>
-              </td>
-              <td style={{ padding: '16px 12px', color: '#94a3b8' }}>06/1/2023</td>
-              <td style={{ padding: '16px 12px', textAlign: 'right', color: '#a855f7' }}>-$3,000.00</td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-              <td style={{ padding: '16px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '32px', height: '32px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6', margin: 'auto' }}>account_balance</span>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 500 }}>Payment</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Bank</div>
-                  </div>
-                </div>
-              </td>
-              <td style={{ padding: '16px 12px', color: '#94a3b8' }}>08/1/2023</td>
-              <td style={{ padding: '16px 12px', textAlign: 'right', color: '#a855f7' }}>-$2,000.00</td>
-            </tr>
+            {data.recentTransactions.length > 0 ? (
+              data.recentTransactions.map((tx) => (
+                <tr key={tx.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <td style={{ padding: '16px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '32px', height: '32px', background: tx.type === 'INCOME' ? 'rgba(6,182,212,0.1)' : 'rgba(168,85,247,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: tx.type === 'INCOME' ? '#06b6d4' : '#a855f7', margin: 'auto' }}>
+                          {tx.type === 'INCOME' ? 'arrow_downward' : 'arrow_upward'}
+                        </span>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>
+                          {typeof tx.category === 'object' && tx.category !== null ? tx.category.name : (tx.category || 'Uncategorized')}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>{tx.subtitle || '-'}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '16px 12px', color: '#94a3b8' }}>{new Date(tx.date).toLocaleDateString()}</td>
+                  <td style={{ padding: '16px 12px', textAlign: 'right', color: tx.type === 'INCOME' ? '#06b6d4' : '#a855f7' }}>
+                    {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                  </td>
+                  <td style={{ padding: '16px 12px', textAlign: 'center' }}>
+                    <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}>
+                      Completed
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>
+                  No recent transactions found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

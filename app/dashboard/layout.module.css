@@ -43,7 +43,11 @@
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  overflow-y: auto;
+  /* Hide scrollbar for cleaner look, optional */
+  scrollbar-width: thin;
 }
+
 
 .navSection {
   display: flex;

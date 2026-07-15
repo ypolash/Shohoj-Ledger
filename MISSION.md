@@ -5,8 +5,8 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Implemented the Login Page UI integrating with Better Auth to allow users to sign in. Added login link to the homepage.
-- **Next Phase:** Phase 6 (Staff Management module) - Complete Attendance rules (late deductions), Leave approvals, and Payroll generation engine, followed by integration with the Expense module.
+- **Last major feature added:** Fixed production deployment by generating and applying missing Prisma migrations, allowing the Coolify environment to synchronize with the new schema (Members, Staff Management, etc.). The dashboard advances page and other components now successfully load without 500 errors.
+- **Next Phase:** Address any remaining hydration issues and ensure proper functioning of Staff Management workflows.
 
 **Goal Pivots:**
 N/A (Initial Setup)
@@ -19,6 +19,7 @@ N/A (Initial Setup)
 - [x] Setup authentication (Better Auth)
 - [x] Implement Monthly Settlement Logic
 - [x] Setup Staff Management Models & Layout
-- [ ] Implement Staff Attendance & Leave Logic
-- [ ] Implement Payroll Processing & Deductions
-- [ ] Deploy to production via Coolify
+- [x] Implement Staff Attendance & Leave Logic
+- [x] Implement Payroll Processing & Deductions
+- [x] Deploy to production via Coolify
+

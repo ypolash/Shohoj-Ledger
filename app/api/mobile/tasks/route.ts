@@ -1,24 +1,25 @@
-import { NextResponse } from "next/server";
-
-const demoTasks = [
-    {
-        id: "1",
-        title: "Complete dashboard",
-        description: "Finish the CRM dashboard UI",
-        priority: "High",
-        status: "Pending",
-        dueDate: "2026-07-20"
-    },
-    {
-        id: "2",
-        title: "Prepare proposal",
-        description: "Create client proposal document",
-        priority: "Medium",
-        status: "In Progress",
-        dueDate: "2026-07-22"
-    }
-];
+"next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
-    return NextResponse.json(demoTasks);
+    const { searchParams } = new URL(req.url);
+    const employeeId = searchParams.get("employeeId");
+
+    if (!employeeId) {
+        return NextResponse.json(
+            { error: "employeeId is required" },
+            { status: 400 }
+        );
+    }
+
+    const tasks = await prisma.task.findMany({
+        where: {
+            assignedToEmployeeId: employeeId
+        },
+        orderBy: {
+            dueDate: "asc"
+        }
+    });
+
+    return NextResponse.json(tasks);
 }

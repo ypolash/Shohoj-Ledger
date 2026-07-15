@@ -34,6 +34,8 @@ export default function TasksPage() {
     status: 'PENDING'
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -63,6 +65,7 @@ export default function TasksPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -73,9 +76,15 @@ export default function TasksPage() {
         setIsModalOpen(false);
         setNewTask({ employeeId: '', title: '', description: '', dueDate: '', status: 'PENDING' });
         fetchData();
+      } else {
+        const errData = await res.json();
+        alert(`Failed to assign task: ${errData.error || 'Unknown error'}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(`Error: ${err.message || 'An error occurred'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -266,8 +275,10 @@ export default function TasksPage() {
               </div>
 
               <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn" style={{ background: 'rgba(255,255,255,0.05)' }}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Assign Task</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn" style={{ background: 'rgba(255,255,255,0.05)' }} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Assigning...' : 'Assign Task'}
+                </button>
               </div>
             </form>
           </div>

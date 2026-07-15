@@ -43,7 +43,7 @@ export default function StaffManagementLayout({
         </nav>
       </div>
 
-      <div className={styles.content} style={{ position: 'relative', zIndex: 50 }}>
+      <div className={styles.content}>
         {children}
       </div>
     </div>

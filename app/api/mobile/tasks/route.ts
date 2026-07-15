@@ -1,4 +1,4 @@
-"next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
@@ -12,9 +12,9 @@ export async function GET(req: Request) {
         );
     }
 
-    const tasks = await prisma.task.findMany({
+    const tasks = await prisma.employeeTask.findMany({
         where: {
-            assignedToEmployeeId: employeeId
+            employeeId
         },
         orderBy: {
             dueDate: "asc"

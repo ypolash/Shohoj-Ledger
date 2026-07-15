@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Fixed production deployment by generating and applying missing Prisma migrations, allowing the Coolify environment to synchronize with the new schema (Members, Staff Management, etc.). The dashboard advances page and other components now successfully load without 500 errors.
+- **Last major feature added:** Integrated a comprehensive Lead Management module with a tab-based UI (All Leads, New Lead, Pipeline, Follow Ups, Won Leads, Lost Leads), dashboard metrics, and seamless conversion logic that automatically creates Projects and Income records.
 - **Next Phase:** Address any remaining hydration issues and ensure proper functioning of Staff Management workflows.
 
 **Goal Pivots:**
@@ -22,4 +22,4 @@ N/A (Initial Setup)
 - [x] Implement Staff Attendance & Leave Logic
 - [x] Implement Payroll Processing & Deductions
 - [x] Deploy to production via Coolify
-
+- [x] Implement Lead Management Module

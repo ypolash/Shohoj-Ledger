@@ -155,44 +155,44 @@ export default function EmployeesPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>First Name *</label>
-                  <input type="text" className="input-field" value={newEmployee.firstName} onChange={(e) => setNewEmployee({...newEmployee, firstName: e.target.value})} required />
+                  <input type="text" className="input" value={newEmployee.firstName} onChange={(e) => setNewEmployee({...newEmployee, firstName: e.target.value})} required />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Last Name *</label>
-                  <input type="text" className="input-field" value={newEmployee.lastName} onChange={(e) => setNewEmployee({...newEmployee, lastName: e.target.value})} required />
+                  <input type="text" className="input" value={newEmployee.lastName} onChange={(e) => setNewEmployee({...newEmployee, lastName: e.target.value})} required />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Email *</label>
-                  <input type="email" className="input-field" value={newEmployee.email} onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})} required />
+                  <input type="email" className="input" value={newEmployee.email} onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})} required />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Phone</label>
-                  <input type="text" className="input-field" value={newEmployee.phone} onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})} />
+                  <input type="text" className="input" value={newEmployee.phone} onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})} />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Designation *</label>
-                  <input type="text" className="input-field" value={newEmployee.designation} onChange={(e) => setNewEmployee({...newEmployee, designation: e.target.value})} required />
+                  <input type="text" className="input" value={newEmployee.designation} onChange={(e) => setNewEmployee({...newEmployee, designation: e.target.value})} required />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Department</label>
-                  <input type="text" className="input-field" value={newEmployee.department} onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})} />
+                  <input type="text" className="input" value={newEmployee.department} onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})} />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Basic Salary (BDT) *</label>
-                  <input type="number" step="0.01" className="input-field" value={newEmployee.basicSalary} onChange={(e) => setNewEmployee({...newEmployee, basicSalary: e.target.value})} required />
+                  <input type="number" step="0.01" className="input" value={newEmployee.basicSalary} onChange={(e) => setNewEmployee({...newEmployee, basicSalary: e.target.value})} required />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Join Date *</label>
-                  <input type="date" className="input-field" value={newEmployee.joinDate} onChange={(e) => setNewEmployee({...newEmployee, joinDate: e.target.value})} required />
+                  <input type="date" className="input" value={newEmployee.joinDate} onChange={(e) => setNewEmployee({...newEmployee, joinDate: e.target.value})} required />
                 </div>
               </div>
 

@@ -271,3 +271,27 @@ model Payslip {
   
   @@unique([employeeId, month, year])
 }
+
+model Lead {
+  id            String    @id @default(uuid())
+  serialNumber  Int       @default(autoincrement())
+  companyName   String
+  contactPerson String
+  phone         String
+  email         String?
+  serviceType   String
+  expectedValue Decimal
+  leadSource    String?
+  assignedTo    String?
+  nextFollowUp  DateTime?
+  notes         String?
+  status        String    @default("New")
+  lostReason    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+  @@index([serviceType])
+  @@index([nextFollowUp])
+  @@index([assignedTo])
+}

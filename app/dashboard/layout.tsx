@@ -58,6 +58,9 @@ export default function DashboardLayout({
           <Link href="/dashboard/staff-management" className={`${styles.navLink} ${isActive('/dashboard/staff-management') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">badge</span> Staff Management
           </Link>
+          <Link href="/dashboard/leads" className={`${styles.navLink} ${isActive('/dashboard/leads') ? styles.active : ''}`}>
+            <span className="material-symbols-outlined">track_changes</span> Lead Management
+          </Link>
           
           <Link href="#" className={styles.navLink} style={{ marginTop: 'auto' }}>
             <span className="material-symbols-outlined">logout</span> Log out

@@ -20,6 +20,7 @@ export default function StaffManagementLayout({
     { name: 'Payroll', path: '/dashboard/staff-management/payroll', icon: 'payments' },
     { name: 'Bonuses', path: '/dashboard/staff-management/bonuses', icon: 'redeem' },
     { name: 'Reports', path: '/dashboard/staff-management/reports', icon: 'analytics' },
+    { name: 'Tasks', path: '/dashboard/staff-management/tasks', icon: 'task' },
   ];
 
   return (

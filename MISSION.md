@@ -5,8 +5,8 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Integrated a comprehensive Lead Management module with a tab-based UI (All Leads, New Lead, Pipeline, Follow Ups, Won Leads, Lost Leads), dashboard metrics, and seamless conversion logic that automatically creates Projects and Income records.
-- **Next Phase:** Address any remaining hydration issues and ensure proper functioning of Staff Management workflows.
+- **Last major feature added:** Integrated Task Management functionality within the Staff Management module, allowing administrators to assign and track tasks for specific employees.
+- **Next Phase:** Address any remaining hydration issues and ensure proper functioning of all Staff Management workflows.
 
 **Goal Pivots:**
 N/A (Initial Setup)

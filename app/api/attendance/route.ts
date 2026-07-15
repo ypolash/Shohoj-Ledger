@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isWithinOfficeRadius } from '@/lib/gps';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -28,8 +29,22 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    if (!data.employeeId || !data.date || !data.status) {
+    if (!data.employeeId || !data.date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    let status = data.status || 'PRESENT';
+
+    // GPS Validation (Assuming checkInLocation is 'lat,lng')
+    if (data.checkInLocation) {
+      const [latStr, lngStr] = data.checkInLocation.split(',');
+      const lat = parseFloat(latStr);
+      const lng = parseFloat(lngStr);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        if (!isWithinOfficeRadius(lat, lng)) {
+          status = 'OUTSIDE_OFFICE';
+        }
+      }
     }
 
     const attendance = await prisma.attendance.create({
@@ -40,7 +55,7 @@ export async function POST(request: Request) {
         checkInLocation: data.checkInLocation || null,
         checkOut: data.checkOut ? new Date(data.checkOut) : null,
         checkOutLocation: data.checkOutLocation || null,
-        status: data.status,
+        status: status,
         lateMinutes: data.lateMinutes || 0
       }
     });

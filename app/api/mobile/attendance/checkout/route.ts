@@ -56,14 +56,14 @@ export async function POST(req: Request) {
 
     if (!existingAttendance || !existingAttendance.checkInTime) {
       return NextResponse.json(
-        { success: false, message: "No check-in record found for today." },
+        { success: false, message: "Check-in required first" },
         { status: 400 }
       );
     }
 
     if (existingAttendance.checkOutTime) {
       return NextResponse.json(
-        { success: false, message: "Already checked out today." },
+        { success: false, message: "Already checked out" },
         { status: 400 }
       );
     }
@@ -79,6 +79,8 @@ export async function POST(req: Request) {
         wifiBssid,
       },
     });
+
+    console.log("Check-out saved:", new Date());
 
     return NextResponse.json({
       success: true,

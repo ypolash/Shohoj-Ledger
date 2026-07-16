@@ -143,7 +143,7 @@ export default function AttendanceSettings() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={`animate-fade-in ${styles.container}`}>
       <div className={styles.header}>
         <h1>Allowed Networks</h1>
         <button className={styles.addBtn} onClick={() => handleOpenModal()}>
@@ -153,7 +153,7 @@ export default function AttendanceSettings() {
 
       <div className={styles.tableContainer}>
         {loading ? (
-          <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>
+          <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Loading...</div>
         ) : (
           <table className={styles.table}>
             <thead>
@@ -168,7 +168,7 @@ export default function AttendanceSettings() {
             <tbody>
               {networks.length === 0 ? (
                 <tr>
-                  <td className={styles.td} colSpan={5} style={{ textAlign: "center", padding: "2rem" }}>
+                  <td className={styles.td} colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
                     No networks configured.
                   </td>
                 </tr>

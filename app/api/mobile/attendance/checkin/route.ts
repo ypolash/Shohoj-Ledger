@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       },
     });
 
-    if (existingAttendance && existingAttendance.checkIn) {
+    if (existingAttendance && existingAttendance.checkInTime) {
       return NextResponse.json(
         { success: false, message: "Already checked in today.", serverTime: serverTime.toISOString() },
         { status: 400 }
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       await prisma.attendance.update({
         where: { id: existingAttendance.id },
         data: {
-          checkIn: serverTime,
+          checkInTime: serverTime,
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         data: {
           employeeId: employee.id,
           date: today,
-          checkIn: serverTime,
+          checkInTime: serverTime,
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,

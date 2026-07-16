@@ -51,9 +51,9 @@ export async function POST(request: Request) {
       data: {
         employeeId: data.employeeId,
         date: new Date(data.date),
-        checkIn: data.checkIn ? new Date(data.checkIn) : null,
+        checkInTime: data.checkIn ? new Date(data.checkIn) : null,
         checkInLocation: data.checkInLocation || null,
-        checkOut: data.checkOut ? new Date(data.checkOut) : null,
+        checkOutTime: data.checkOut ? new Date(data.checkOut) : null,
         checkOutLocation: data.checkOutLocation || null,
         status: status,
         lateMinutes: data.lateMinutes || 0

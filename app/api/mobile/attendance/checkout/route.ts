@@ -45,14 +45,14 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!existingAttendance || !existingAttendance.checkIn) {
+    if (!existingAttendance || !existingAttendance.checkInTime) {
       return NextResponse.json(
         { success: false, message: "No check-in record found for today." },
         { status: 400 }
       );
     }
 
-    if (existingAttendance.checkOut) {
+    if (existingAttendance.checkOutTime) {
       return NextResponse.json(
         { success: false, message: "Already checked out today." },
         { status: 400 }
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     await prisma.attendance.update({
       where: { id: existingAttendance.id },
       data: {
-        checkOut: serverTime,
+        checkOutTime: serverTime,
         checkOutLocation: `${latitude},${longitude}`,
         latitude,
         longitude,

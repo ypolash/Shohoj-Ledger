@@ -28,25 +28,25 @@ export async function GET(req: Request) {
     // Fetch the latest 30 attendance records
     const attendances = await prisma.attendance.findMany({
       where: { employeeId: employee.id },
-      orderBy: { checkIn: "desc" },
+      orderBy: { checkInTime: "desc" },
       take: 30,
     });
 
     // Map to the requested JSON format
     const history = attendances.map((record) => {
-      let totalWorkingMinutes = 0;
-      if (record.checkIn && record.checkOut) {
-        const diffMs = new Date(record.checkOut).getTime() - new Date(record.checkIn).getTime();
+      let totalWorkingMinutes = record.totalWorkingMinutes || 0;
+      if (record.checkInTime && record.checkOutTime && !totalWorkingMinutes) {
+        const diffMs = new Date(record.checkOutTime).getTime() - new Date(record.checkInTime).getTime();
         totalWorkingMinutes = Math.floor(diffMs / 1000 / 60);
       }
 
       return {
         id: record.id,
         employeeId: employee.employeeId,
-        checkInTime: record.checkIn,
-        checkOutTime: record.checkOut,
+        checkInTime: record.checkInTime,
+        checkOutTime: record.checkOutTime,
         totalWorkingMinutes,
-        isLate: record.status === "LATE" || record.lateMinutes > 0,
+        isLate: record.isLate || record.status === "LATE" || record.lateMinutes > 0,
         lateMinutes: record.lateMinutes,
         createdAt: record.createdAt,
       };

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 export const OFFICE_LATITUDE = 23.8103;
 export const OFFICE_LONGITUDE = 90.4125;
-export const ALLOWED_RADIUS_METERS = 100;
+export const ALLOWED_RADIUS_METERS = 200000; // TEMPORARY TEST RADIUS
 
 // Haversine formula to calculate the distance between two coordinates in meters
 export function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -31,8 +31,7 @@ export async function validateAttendanceRequest(
   }
 
   if (!wifiSsid || !wifiBssid) {
-    console.log("TEMP TEST MODE - Wi-Fi validation bypassed");
-    // return { isValid: false, error: "Wi-Fi information is missing." };
+    return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
   const allowedNetwork = await prisma.allowedNetwork.findFirst({

@@ -5,12 +5,12 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Temporarily increased the attendance GPS validation radius to 200km for remote location testing, while restoring strict Wi-Fi validation.
+- **Last major feature added:** Bypassed the missing Wi-Fi information validation check in the attendance API (while retaining the 200km radius and other security checks) for continued Android testing.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App (via home network testing), and proceed to polish HR operations.
 
 **Goal Pivots:**
 - Transitioned away from Better Auth towards a custom `jose` and `bcryptjs` JWT implementation (with backward compatibility) to support distinct Admin (User) and Employee login flows properly.
-- Temporarily relaxed strict GPS constraints (radius increased to 200km) to facilitate remote development and testing off-site, while keeping Wi-Fi network checks enabled.
+- Temporarily relaxed strict GPS constraints (radius increased to 200km) and missing Wi-Fi checks to facilitate remote development and testing off-site.
 
 **Production Roadmap:**
 

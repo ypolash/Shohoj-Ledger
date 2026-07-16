@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Fixed an Internal Server Error in the mobile Attendance History API (`/api/mobile/attendance/history`) and updated its error handling block to explicitly return stack traces in development mode.
+- **Last major feature added:** Generated and applied Prisma migration to add `isLate`, `totalWorkingMinutes`, `latitude`, `longitude`, `wifiSsid`, and `wifiBssid` to the `Attendance` model, and updated API route property mappings to use `checkInTime`.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App, test dynamic network validation, and proceed to polish HR operations.
 
 **Goal Pivots:**

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import styles from "./styles.module.css";
 
 interface Network {
@@ -215,7 +216,7 @@ export default function AttendanceSettings() {
         )}
       </div>
 
-      {isModalOpen && (
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h2>{editingNetwork ? "Edit Network" : "Add Network"}</h2>
@@ -275,7 +276,8 @@ export default function AttendanceSettings() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

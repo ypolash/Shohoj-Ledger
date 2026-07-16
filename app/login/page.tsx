@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import styles from "./login.module.css";
 
@@ -19,15 +18,24 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error } = await authClient.signIn.email({
-        email,
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
+      
+      const data = await res.json();
 
-      if (error) {
-        setError(error.message || "Invalid credentials. Please try again.");
+      if (!res.ok || !data.success) {
+        setError(data.message || "Invalid credentials. Please try again.");
       } else {
-        router.push("/dashboard"); // Redirect to dashboard on success
+        if (data.role === "EMPLOYEE") {
+          // You could redirect employees elsewhere if needed, but per requirements, 
+          // dashboard is for ADMIN. Middleware redirects them.
+          router.push("/dashboard"); 
+        } else {
+          router.push("/dashboard"); // Redirect to dashboard on success
+        }
         router.refresh(); // Refresh router to ensure middleware and states are updated
       }
     } catch (err) {

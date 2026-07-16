@@ -5,11 +5,11 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Fixed CSS module purity build errors and Next.js 15 route handler promise typing errors. Allowed Networks implementation for Attendance is fully deployed.
+- **Last major feature added:** Implemented a custom JWT-based dual-auth login system. Administrators log in via the `User` table, while staff log in via the `Employee` table. Dashboard is securely protected by middleware.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App, test dynamic network validation, and proceed to polish HR operations.
 
 **Goal Pivots:**
-N/A (Initial Setup)
+- Transitioned away from Better Auth towards a custom `jose` and `bcryptjs` JWT implementation to support distinct Admin (User) and Employee login flows properly.
 
 **Production Roadmap:**
 

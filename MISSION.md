@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Bypassed the missing Wi-Fi information validation check in the attendance API (while retaining the 200km radius and other security checks) for continued Android testing.
+- **Last major feature added:** Fixed attendance check-in time saving to properly use `new Date()` for real-time accuracy and corrected the dashboard UI to render `checkInTime` properly in local format.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App (via home network testing), and proceed to polish HR operations.
 
 **Goal Pivots:**

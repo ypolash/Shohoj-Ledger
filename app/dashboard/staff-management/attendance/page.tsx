@@ -14,9 +14,9 @@ type Attendance = {
   id: string;
   employeeId: string;
   date: string;
-  checkIn: string | null;
+  checkInTime: string | null;
   checkInLocation: string | null;
-  checkOut: string | null;
+  checkOutTime: string | null;
   checkOutLocation: string | null;
   status: string;
   lateMinutes: number;
@@ -202,7 +202,9 @@ export default function AttendancePage() {
                               </h5>
                               <div style={{ marginBottom: '8px' }}>
                                 <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Time</span>
-                                <span style={{ fontSize: '15px', color: '#f8fafc', fontWeight: '500' }}>{formatTime(record.checkIn)}</span>
+                                <span style={{ fontSize: '15px', color: '#f8fafc', fontWeight: '500' }}>
+                                  {record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString() : '--:--'}
+                                </span>
                               </div>
                               <div>
                                 <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Location</span>
@@ -219,7 +221,9 @@ export default function AttendancePage() {
                               </h5>
                               <div style={{ marginBottom: '8px' }}>
                                 <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Time</span>
-                                <span style={{ fontSize: '15px', color: '#f8fafc', fontWeight: '500' }}>{formatTime(record.checkOut)}</span>
+                                <span style={{ fontSize: '15px', color: '#f8fafc', fontWeight: '500' }}>
+                                  {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : '--:--'}
+                                </span>
                               </div>
                               <div>
                                 <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Location</span>

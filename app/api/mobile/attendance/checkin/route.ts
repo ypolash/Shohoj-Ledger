@@ -87,11 +87,12 @@ export async function POST(req: Request) {
     const lateMinutes = Math.max(0, Math.floor((serverTime.getTime() - expectedCheckIn.getTime()) / 60000));
     const status = lateMinutes > 15 ? "LATE" : "PRESENT";
 
+    console.log("Saving check-in time:", new Date());
     if (existingAttendance) {
       await prisma.attendance.update({
         where: { id: existingAttendance.id },
         data: {
-          checkInTime: serverTime,
+          checkInTime: new Date(),
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
         data: {
           employeeId: employee.id,
           date: today,
-          checkInTime: serverTime,
+          checkInTime: new Date(),
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,

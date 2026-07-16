@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Implemented the mobile Attendance History API (`/api/mobile/attendance/history`) to retrieve the latest check-in/out records for staff members via their `employeeId`.
+- **Last major feature added:** Fixed an Internal Server Error in the mobile Attendance History API (`/api/mobile/attendance/history`) by correcting field mapping and adding detailed error logging for improved dev-mode debugging.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App, test dynamic network validation, and proceed to polish HR operations.
 
 **Goal Pivots:**

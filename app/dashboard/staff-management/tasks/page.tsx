@@ -27,11 +27,12 @@ export default function TasksPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [newTask, setNewTask] = useState({
-    employeeId: '',
+    assignedToEmployeeId: '',
     title: '',
     description: '',
     dueDate: '',
-    status: 'PENDING'
+    status: 'Pending',
+    priority: 'Medium'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +75,7 @@ export default function TasksPage() {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        setNewTask({ employeeId: '', title: '', description: '', dueDate: '', status: 'PENDING' });
+        setNewTask({ assignedToEmployeeId: '', title: '', description: '', dueDate: '', status: 'Pending', priority: 'Medium' });
         fetchData();
       } else {
         const errData = await res.json();
@@ -112,9 +113,10 @@ export default function TasksPage() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'PENDING': return '#f59e0b';
-      case 'IN_PROGRESS': return '#3b82f6';
+      case 'IN_PROGRESS':
+      case 'IN PROGRESS': return '#3b82f6';
       case 'COMPLETED': return '#10b981';
       default: return '#94a3b8';
     }
@@ -176,9 +178,9 @@ export default function TasksPage() {
                         outline: 'none'
                       }}
                     >
-                      <option value="PENDING" style={{ background: '#11151F', color: '#fff' }}>Pending</option>
-                      <option value="IN_PROGRESS" style={{ background: '#11151F', color: '#fff' }}>In Progress</option>
-                      <option value="COMPLETED" style={{ background: '#11151F', color: '#fff' }}>Completed</option>
+                      <option value="Pending" style={{ background: '#11151F', color: '#fff' }}>Pending</option>
+                      <option value="In Progress" style={{ background: '#11151F', color: '#fff' }}>In Progress</option>
+                      <option value="Completed" style={{ background: '#11151F', color: '#fff' }}>Completed</option>
                     </select>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'right' }}>
@@ -218,13 +220,13 @@ export default function TasksPage() {
                 <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Employee *</label>
                 <select 
                   className="input" 
-                  value={newTask.employeeId} 
-                  onChange={e => setNewTask({...newTask, employeeId: e.target.value})}
+                  value={newTask.assignedToEmployeeId} 
+                  onChange={e => setNewTask({...newTask, assignedToEmployeeId: e.target.value})}
                   required
                 >
                   <option value="">Select Employee...</option>
                   {employees.map(e => (
-                    <option key={e.id} value={e.id}>{e.firstName} {e.lastName} ({e.employeeId})</option>
+                    <option key={e.id} value={e.employeeId}>{e.firstName} {e.lastName} ({e.employeeId})</option>
                   ))}
                 </select>
               </div>
@@ -267,9 +269,9 @@ export default function TasksPage() {
                     value={newTask.status} 
                     onChange={e => setNewTask({...newTask, status: e.target.value})}
                   >
-                    <option value="PENDING">Pending</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
                   </select>
                 </div>
               </div>

@@ -5,8 +5,8 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Fixed Task Assignment module and created database migration for EmployeeTask to ensure Coolify deployment creates the necessary tables.
-- **Next Phase:** Verify Task Management in production and proceed to polish HR operations.
+- **Last major feature added:** Renamed EmployeeTask to Task, added assignedToEmployeeId field, updated Next.js API endpoints and Android GET API to ensure tasks can be correctly queried by employeeId (e.g. EMP-1001). Applied Prisma migrations successfully.
+- **Next Phase:** Verify Task Management integration in the Android App and proceed to polish HR operations.
 
 **Goal Pivots:**
 N/A (Initial Setup)

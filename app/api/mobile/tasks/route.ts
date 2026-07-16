@@ -12,9 +12,9 @@ export async function GET(req: Request) {
         );
     }
 
-    const tasks = await prisma.employeeTask.findMany({
+    const tasks = await prisma.task.findMany({
         where: {
-            employeeId
+            assignedToEmployeeId: employeeId
         },
         orderBy: {
             dueDate: "asc"

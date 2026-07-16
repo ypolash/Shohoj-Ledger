@@ -5,7 +5,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   const params = await props.params;
   try {
     const data = await req.json();
-    const task = await prisma.employeeTask.update({
+    const task = await prisma.task.update({
       where: { id: params.id },
       data: {
         status: data.status !== undefined ? data.status : undefined,
@@ -23,7 +23,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
 export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await prisma.employeeTask.delete({
+    await prisma.task.delete({
       where: { id: params.id }
     });
     return NextResponse.json({ success: true });

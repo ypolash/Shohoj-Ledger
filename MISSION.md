@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Generated and applied Prisma migration to add `isLate`, `totalWorkingMinutes`, `latitude`, `longitude`, `wifiSsid`, and `wifiBssid` to the `Attendance` model, and updated API route property mappings to use `checkInTime`.
+- **Last major feature added:** Fixed BSSID Wi-Fi validation logic to normalize (lowercase and trim) values prior to comparison. Previously generated and applied Prisma migration to add attendance location fields.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App, test dynamic network validation, and proceed to polish HR operations.
 
 **Goal Pivots:**

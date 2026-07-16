@@ -25,7 +25,7 @@ export async function validateAttendanceRequest(
   longitude?: number,
   wifiSsid?: string,
   wifiBssid?: string
-): Promise<{ isValid: boolean; error?: string }> {
+): Promise<{ isValid: boolean; error?: string; details?: any }> {
   if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
     return { isValid: false, error: "GPS disabled or location not provided." };
   }
@@ -34,18 +34,34 @@ export async function validateAttendanceRequest(
     return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
-  const allowedNetworks = await prisma.allowedNetwork.findMany();
-
-  const normalizedDetected = wifiBssid.toLowerCase().trim();
-  const matchedNetwork = allowedNetworks.find(network => {
-    const storedBssid = network.bssid;
-    const normalizedStored = storedBssid.toLowerCase().trim();
-    const isMatch = normalizedStored === normalizedDetected;
-    return isMatch;
+  const allowedNetwork = await prisma.allowedNetwork.findFirst({
+    where: { isActive: true },
   });
 
-  if (!matchedNetwork || !matchedNetwork.isActive) {
-    return { isValid: false, error: "Invalid network. Please connect to the office Wi-Fi." };
+  if (!allowedNetwork) {
+    return { isValid: false, error: "No active office Wi-Fi configured." };
+  }
+
+  console.log("Stored SSID:", allowedNetwork.ssid);
+  console.log("Stored BSSID:", allowedNetwork.bssid);
+  console.log("Detected SSID:", wifiSsid);
+  console.log("Detected BSSID:", wifiBssid);
+
+  const storedBssid = allowedNetwork.bssid?.toLowerCase().trim();
+  const detectedBssid = wifiBssid?.toLowerCase().trim();
+  const isMatch = storedBssid === detectedBssid;
+
+  if (!isMatch) {
+    return { 
+      isValid: false, 
+      error: "Invalid network. Please connect to the office Wi-Fi.",
+      details: {
+        storedBssid,
+        detectedBssid,
+        storedSsid: allowedNetwork.ssid,
+        detectedSsid: wifiSsid
+      }
+    };
   }
 
   const distance = getDistanceInMeters(latitude, longitude, OFFICE_LATITUDE, OFFICE_LONGITUDE);

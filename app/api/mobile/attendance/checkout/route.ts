@@ -16,6 +16,15 @@ export async function POST(req: Request) {
 
     const validation = await validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
     if (!validation.isValid) {
+      if (validation.details) {
+        return NextResponse.json(
+          { 
+            success: false,
+            ...validation.details
+          },
+          { status: 403 }
+        );
+      }
       return NextResponse.json(
         { success: false, message: validation.error },
         { status: 403 }

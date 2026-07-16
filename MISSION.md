@@ -5,8 +5,8 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Implemented PATCH `/api/mobile/tasks/[id]/status` API route for the Android App to allow status updates (e.g. Completed, In Progress, Blocked) on tasks, resolving the HTTP 404 issue.
-- **Next Phase:** Verify End-to-End Task Management integration in the Android App and proceed to polish HR operations.
+- **Last major feature added:** Implemented secure attendance API endpoints (check-in and check-out) for the Android App with GPS geofencing and Wi-Fi network validation.
+- **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App and proceed to polish HR operations.
 
 **Goal Pivots:**
 N/A (Initial Setup)

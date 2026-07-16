@@ -55,16 +55,11 @@ export async function GET(req: Request) {
     return NextResponse.json(history);
   } catch (error: any) {
     console.error("Attendance history error:", error);
-    
-    if (process.env.NODE_ENV === "development") {
-      return NextResponse.json(
-        { error: error.message || String(error) },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: error?.message || "Unknown error",
+        stack: process.env.NODE_ENV === "development" ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }

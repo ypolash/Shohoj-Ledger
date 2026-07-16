@@ -5,10 +5,11 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Fixed BSSID Wi-Fi validation logic to normalize (lowercase and trim) values prior to comparison. Previously generated and applied Prisma migration to add attendance location fields.
-- **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App, test dynamic network validation, and proceed to polish HR operations.
+- **Last major feature added:** Temporarily bypassed Wi-Fi network validation in the attendance check-in API to allow for local home network testing while keeping GPS validation active.
+- **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App (via home network testing), and proceed to polish HR operations.
 
 **Goal Pivots:**
+- Temporarily relaxed strict office network constraints in the attendance module to facilitate development and testing off-site.
 - Transitioned away from Better Auth towards a custom `jose` and `bcryptjs` JWT implementation (with backward compatibility) to support distinct Admin (User) and Employee login flows properly.
 
 **Production Roadmap:**

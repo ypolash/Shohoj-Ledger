@@ -5,8 +5,8 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Implemented secure attendance API endpoints (check-in and check-out) for the Android App with GPS geofencing and Wi-Fi network validation.
-- **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App and proceed to polish HR operations.
+- **Last major feature added:** Implemented "Allowed Networks" settings page, updated Prisma schema to track valid Wi-Fi BSSIDs, and refactored attendance APIs to validate against the allowed network list dynamically.
+- **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App, test dynamic network validation, and proceed to polish HR operations.
 
 **Goal Pivots:**
 N/A (Initial Setup)

@@ -40,18 +40,18 @@
   overflow-x: auto;
 }
 
-table {
+.table {
   width: 100%;
   border-collapse: collapse;
 }
 
-th, td {
+.th, .td {
   padding: 1rem 1.5rem;
   text-align: left;
   border-bottom: 1px solid #eaeaea;
 }
 
-th {
+.th {
   background-color: #f8f9fa;
   color: #666;
   font-weight: 600;
@@ -60,7 +60,7 @@ th {
   letter-spacing: 0.05em;
 }
 
-td {
+.td {
   color: #333;
 }
 

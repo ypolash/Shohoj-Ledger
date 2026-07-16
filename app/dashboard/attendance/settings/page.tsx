@@ -155,30 +155,30 @@ export default function AttendanceSettings() {
         {loading ? (
           <div style={{ padding: "2rem", textAlign: "center" }}>Loading...</div>
         ) : (
-          <table>
+          <table className={styles.table}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>SSID</th>
-                <th>BSSID (MAC Address)</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th className={styles.th}>Name</th>
+                <th className={styles.th}>SSID</th>
+                <th className={styles.th}>BSSID (MAC Address)</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {networks.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "2rem" }}>
+                  <td className={styles.td} colSpan={5} style={{ textAlign: "center", padding: "2rem" }}>
                     No networks configured.
                   </td>
                 </tr>
               ) : (
                 networks.map((network) => (
                   <tr key={network.id}>
-                    <td>{network.name}</td>
-                    <td>{network.ssid}</td>
-                    <td>{network.bssid}</td>
-                    <td>
+                    <td className={styles.td}>{network.name}</td>
+                    <td className={styles.td}>{network.ssid}</td>
+                    <td className={styles.td}>{network.bssid}</td>
+                    <td className={styles.td}>
                       <button 
                         style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
                         onClick={() => handleToggleActive(network)}
@@ -189,7 +189,7 @@ export default function AttendanceSettings() {
                         </span>
                       </button>
                     </td>
-                    <td>
+                    <td className={styles.td}>
                       <div className={styles.actions}>
                         <button 
                           className={`${styles.iconBtn} ${styles.editBtn}`}

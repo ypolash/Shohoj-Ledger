@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession } from "@/lib/session";
+import { verifyPassword } from "better-auth/crypto";
 
 export async function POST(req: Request) {
   try {
@@ -22,9 +23,30 @@ export async function POST(req: Request) {
     });
 
     if (user && user.accounts && user.accounts.length > 0) {
-      const account = user.accounts[0]; // Assuming first account holds the password
-      if (account.password) {
-        const isMatch = await bcrypt.compare(password, account.password);
+      const account = user.accounts.find(a => a.password); // Find the account that actually has a password
+      if (account && account.password) {
+        // Check bcrypt
+        let isMatch = false;
+        try {
+          isMatch = await bcrypt.compare(password, account.password);
+        } catch (e) {
+          console.error("Bcrypt compare error:", e);
+        }
+
+        // Fallback for better-auth hashed passwords
+        if (!isMatch) {
+          try {
+            isMatch = await verifyPassword({ hash: account.password, password });
+          } catch (e) {
+            console.error("Better-auth verify error:", e);
+          }
+        }
+
+        // Fallback for plaintext or if they manually inserted passwords in DB for testing
+        if (!isMatch && account.password === password) {
+          isMatch = true;
+        }
+
         if (isMatch) {
           // Password matches, login as ADMIN
           const payload = {
@@ -40,11 +62,6 @@ export async function POST(req: Request) {
             user: payload,
           });
         }
-      } else {
-        // If password is not in account, maybe it's stored directly in user? 
-        // Wait, User model doesn't have password. 
-        // We'll proceed to check employee if password doesn't match or doesn't exist, though typically we'd just fail if the user exists but password is bad.
-        // Actually, if user exists but bad password, we should probably fail. But let's check employee table just in case.
       }
     }
 
@@ -56,7 +73,18 @@ export async function POST(req: Request) {
     });
 
     if (employee && employee.password) {
-      const isMatch = await bcrypt.compare(password, employee.password);
+      let isMatch = false;
+      try {
+        isMatch = await bcrypt.compare(password, employee.password);
+      } catch (e) {
+        console.error("Bcrypt compare error:", e);
+      }
+
+      // Fallback for plaintext testing passwords
+      if (!isMatch && employee.password === password) {
+        isMatch = true;
+      }
+
       if (isMatch) {
         // Password matches, login as EMPLOYEE
         const payload = {

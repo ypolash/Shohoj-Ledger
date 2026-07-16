@@ -1,0 +1,61 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const { id } = params;
+    const body = await req.json();
+    const { name, ssid, bssid, isActive } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: "ID is required" }, { status: 400 });
+    }
+
+    if (bssid) {
+      const existingNetwork = await prisma.allowedNetwork.findFirst({
+        where: { bssid, NOT: { id } },
+      });
+
+      if (existingNetwork) {
+        return NextResponse.json(
+          { success: false, message: "A network with this BSSID already exists" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const updatedNetwork = await prisma.allowedNetwork.update({
+      where: { id },
+      data: {
+        name,
+        ssid,
+        bssid,
+        isActive,
+      },
+    });
+
+    return NextResponse.json({ success: true, data: updatedNetwork });
+  } catch (error) {
+    console.error("Failed to update network:", error);
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const { id } = params;
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: "ID is required" }, { status: 400 });
+    }
+
+    await prisma.allowedNetwork.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: "Network deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete network:", error);
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
+  }
+}

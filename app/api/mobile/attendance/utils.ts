@@ -1,5 +1,5 @@
-export const ALLOWED_WIFI_SSIDS = ["SHOHOJ-OFFICE"];
-export const ALLOWED_WIFI_BSSIDS = ["3C:84:6A:11:22:33"];
+import { prisma } from "@/lib/prisma";
+
 export const OFFICE_LATITUDE = 23.8103;
 export const OFFICE_LONGITUDE = 90.4125;
 export const ALLOWED_RADIUS_METERS = 100;
@@ -20,12 +20,12 @@ export function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lo
   return R * c;
 }
 
-export function validateAttendanceRequest(
+export async function validateAttendanceRequest(
   latitude?: number,
   longitude?: number,
   wifiSsid?: string,
   wifiBssid?: string
-): { isValid: boolean; error?: string } {
+): Promise<{ isValid: boolean; error?: string }> {
   if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
     return { isValid: false, error: "GPS disabled or location not provided." };
   }
@@ -34,7 +34,11 @@ export function validateAttendanceRequest(
     return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
-  if (!ALLOWED_WIFI_SSIDS.includes(wifiSsid) || !ALLOWED_WIFI_BSSIDS.includes(wifiBssid)) {
+  const allowedNetwork = await prisma.allowedNetwork.findUnique({
+    where: { bssid: wifiBssid },
+  });
+
+  if (!allowedNetwork || !allowedNetwork.isActive) {
     return { isValid: false, error: "Invalid network. Please connect to the office Wi-Fi." };
   }
 

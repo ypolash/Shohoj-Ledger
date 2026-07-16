@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const validation = validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
+    const validation = await validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
     if (!validation.isValid) {
       return NextResponse.json(
         { success: false, message: validation.error },

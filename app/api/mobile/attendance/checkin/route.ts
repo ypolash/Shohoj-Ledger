@@ -22,9 +22,11 @@ export async function POST(req: Request) {
       let code = "FORBIDDEN_UNKNOWN";
       const errorLower = validation.error?.toLowerCase() || "";
       
-      if (errorLower.includes("wi-fi") || errorLower.includes("network")) {
-        code = "FORBIDDEN_WIFI";
-      } else if (errorLower.includes("location") || errorLower.includes("gps") || errorLower.includes("radius")) {
+      // TEMP TEST MODE - Wi-Fi validation bypassed
+      // if (errorLower.includes("wi-fi") || errorLower.includes("network")) {
+      //   code = "FORBIDDEN_WIFI";
+      // } else if (errorLower.includes("location") || errorLower.includes("gps") || errorLower.includes("radius")) {
+      if (errorLower.includes("location") || errorLower.includes("gps") || errorLower.includes("radius")) {
         code = "FORBIDDEN_LOCATION";
       }
 

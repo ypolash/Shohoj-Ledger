@@ -34,11 +34,17 @@ export async function validateAttendanceRequest(
     return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
-  const allowedNetwork = await prisma.allowedNetwork.findUnique({
-    where: { bssid: wifiBssid },
+  const allowedNetworks = await prisma.allowedNetwork.findMany();
+
+  const normalizedDetected = wifiBssid.toLowerCase().trim();
+  const matchedNetwork = allowedNetworks.find(network => {
+    const storedBssid = network.bssid;
+    const normalizedStored = storedBssid.toLowerCase().trim();
+    const isMatch = normalizedStored === normalizedDetected;
+    return isMatch;
   });
 
-  if (!allowedNetwork || !allowedNetwork.isActive) {
+  if (!matchedNetwork || !matchedNetwork.isActive) {
     return { isValid: false, error: "Invalid network. Please connect to the office Wi-Fi." };
   }
 

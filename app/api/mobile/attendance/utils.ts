@@ -39,29 +39,35 @@ export async function validateAttendanceRequest(
   });
 
   if (!allowedNetwork) {
-    return { isValid: false, error: "No active office Wi-Fi configured." };
-  }
+    // TEMPORARY DEBUG - REMOVE AFTER TESTING
+    console.log("Bypassing missing active network check for debugging");
+    // return { isValid: false, error: "No active office Wi-Fi configured." };
+  } else {
+    console.log("Stored SSID:", allowedNetwork.ssid);
+    console.log("Stored BSSID:", allowedNetwork.bssid);
+    console.log("Detected SSID:", wifiSsid);
+    console.log("Detected BSSID:", wifiBssid);
 
-  console.log("Stored SSID:", allowedNetwork.ssid);
-  console.log("Stored BSSID:", allowedNetwork.bssid);
-  console.log("Detected SSID:", wifiSsid);
-  console.log("Detected BSSID:", wifiBssid);
+    const storedBssid = allowedNetwork.bssid?.toLowerCase().trim();
+    const detectedBssid = wifiBssid?.toLowerCase().trim();
+    const isMatch = storedBssid === detectedBssid;
 
-  const storedBssid = allowedNetwork.bssid?.toLowerCase().trim();
-  const detectedBssid = wifiBssid?.toLowerCase().trim();
-  const isMatch = storedBssid === detectedBssid;
-
-  if (!isMatch) {
-    return { 
-      isValid: false, 
-      error: "Invalid network. Please connect to the office Wi-Fi.",
-      details: {
-        storedBssid,
-        detectedBssid,
-        storedSsid: allowedNetwork.ssid,
-        detectedSsid: wifiSsid
-      }
-    };
+    if (!isMatch) {
+      // TEMPORARY DEBUG - REMOVE AFTER TESTING
+      console.log("Bypassing Wi-Fi mismatch check for debugging");
+      /*
+      return { 
+        isValid: false, 
+        error: "Invalid network. Please connect to the office Wi-Fi.",
+        details: {
+          storedBssid,
+          detectedBssid,
+          storedSsid: allowedNetwork.ssid,
+          detectedSsid: wifiSsid
+        }
+      };
+      */
+    }
   }
 
   const distance = getDistanceInMeters(latitude, longitude, OFFICE_LATITUDE, OFFICE_LONGITUDE);

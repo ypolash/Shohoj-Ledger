@@ -4,29 +4,44 @@ import { validateAttendanceRequest } from "../utils";
 
 export async function POST(req: Request) {
   try {
+    console.log("Reached TOKEN validation");
     const body = await req.json();
     const { employeeId, wifiSsid, wifiBssid, latitude, longitude } = body;
 
     if (!employeeId) {
+      console.log("Returning 400: employeeId is required");
       return NextResponse.json(
         { success: false, message: "employeeId is required" },
         { status: 400 }
       );
     }
 
+    console.log("Reached WIFI validation");
     const validation = await validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
     if (!validation.isValid) {
+      let code = "FORBIDDEN_UNKNOWN";
+      const errorLower = validation.error?.toLowerCase() || "";
+      
+      if (errorLower.includes("wi-fi") || errorLower.includes("network")) {
+        code = "FORBIDDEN_WIFI";
+      } else if (errorLower.includes("location") || errorLower.includes("gps") || errorLower.includes("radius")) {
+        code = "FORBIDDEN_LOCATION";
+      }
+
+      console.log(`Returning 403: ${code} - ${validation.error}`);
       if (validation.details) {
         return NextResponse.json(
           { 
             success: false,
+            code,
+            message: validation.error,
             ...validation.details
           },
           { status: 403 }
         );
       }
       return NextResponse.json(
-        { success: false, message: validation.error },
+        { success: false, code, message: validation.error },
         { status: 403 }
       );
     }
@@ -36,14 +51,16 @@ export async function POST(req: Request) {
     const dateStr = serverTime.toISOString().split("T")[0];
     const today = new Date(dateStr);
 
+    console.log("Reached EMPLOYEE validation");
     const employee = await prisma.employee.findUnique({
       where: { employeeId },
     });
 
     if (!employee) {
+      console.log("Returning 403: Employee not found. Code: FORBIDDEN_EMPLOYEE");
       return NextResponse.json(
-        { success: false, message: "Employee not found." },
-        { status: 404 }
+        { success: false, code: "FORBIDDEN_EMPLOYEE", message: "Employee not found." },
+        { status: 403 }
       );
     }
 
@@ -55,6 +72,7 @@ export async function POST(req: Request) {
     });
 
     if (existingAttendance && existingAttendance.checkInTime) {
+      console.log("Returning 400: Already checked in today.");
       return NextResponse.json(
         { success: false, message: "Already checked in today.", serverTime: serverTime.toISOString() },
         { status: 400 }
@@ -98,6 +116,7 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log("Returning 200: Check-in successful");
     return NextResponse.json({
       success: true,
       message: "Check-in successful",
@@ -106,6 +125,7 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("Check-in error:", error);
+    console.log("Returning 500: Internal server error");
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

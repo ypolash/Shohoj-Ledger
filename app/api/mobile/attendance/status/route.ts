@@ -1,0 +1,51 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const employeeId = searchParams.get("employeeId");
+
+    if (!employeeId) {
+      return NextResponse.json(
+        { success: false, message: "employeeId is required" },
+        { status: 400 }
+      );
+    }
+
+    const serverTime = new Date();
+    const dateStr = serverTime.toISOString().split("T")[0];
+    const today = new Date(dateStr);
+
+    const employee = await prisma.employee.findUnique({
+      where: { employeeId },
+    });
+
+    if (!employee) {
+      return NextResponse.json(
+        { success: false, message: "Employee not found." },
+        { status: 404 }
+      );
+    }
+
+    const attendance = await prisma.attendance.findFirst({
+      where: {
+        employeeId: employee.id,
+        date: today,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      checkInTime: attendance?.checkInTime || null,
+      checkOutTime: attendance?.checkOutTime || null,
+    });
+
+  } catch (error) {
+    console.error("Attendance status error:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

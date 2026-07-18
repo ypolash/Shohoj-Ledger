@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Implemented Attendance Check-Out functionality. Added `/api/mobile/attendance/checkout` API route to validate and log check-out time. Updated Dashboard to render checkOutTime correctly. Generated Android Compose components to enable/disable Check Out button dynamically based on `hasCheckedIn` and `hasCheckedOut` states.
+- **Last major feature added:** Fixed BSSID comparison in the attendance check-in API to prevent errors when comparing casing or trailing whitespaces (used `.toLowerCase().trim()`). Prior to this, implemented Attendance Check-Out functionality. Added `/api/mobile/attendance/checkout` API route to validate and log check-out time. Updated Dashboard to render checkOutTime correctly. Generated Android Compose components to enable/disable Check Out button dynamically based on `hasCheckedIn` and `hasCheckedOut` states.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App (via home network testing), and proceed to polish HR operations.
 
 **Goal Pivots:**

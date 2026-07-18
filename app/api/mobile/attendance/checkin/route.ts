@@ -140,18 +140,34 @@ export async function POST(request: Request) {
         isLate = true;
         status = "LATE";
         
-        const calculatedPunishment = await calculatePunishment("LATE", lateMinutes);
-        if (calculatedPunishment > 0) {
-          punishmentReason = "LATE";
-          if (config.enablePunishmentDeduction) {
-            punishmentAmount = calculatedPunishment;
-            reviewStatus = "DEDUCTED";
-          } else {
-            reviewStatus = "TEMPORARY_REVIEW";
+        console.log("Late Minutes:", lateMinutes);
+        
+        const rules = await prisma.punishmentSetting.findMany({
+          where: { type: "LATE", active: true }
+        });
+        
+        let matchedRule = null;
+        for (const rule of rules) {
+          if (lateMinutes >= rule.fromMinutes && lateMinutes <= rule.toMinutes) {
+            matchedRule = rule;
+            break;
           }
-        } else {
-          punishmentReason = "LATE";
         }
+        
+        console.log("Matched Rule:", matchedRule);
+        
+        if (matchedRule) {
+          punishmentReason = "Late Arrival";
+          reviewStatus = "TEMPORARY_REVIEW";
+          
+          if (config.enablePunishmentDeduction) {
+            punishmentAmount = Number(matchedRule.amount);
+          } else {
+            punishmentAmount = 0;
+          }
+        }
+        
+        console.log("Punishment Amount:", punishmentAmount);
       }
     }
 

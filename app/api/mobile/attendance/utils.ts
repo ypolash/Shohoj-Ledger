@@ -46,9 +46,9 @@ export async function validateAttendanceRequest(
     console.log("Detected SSID:", wifiSsid);
     console.log("Detected BSSID:", wifiBssid);
 
-    const storedBssid = allowedNetwork.bssid?.toLowerCase().trim();
-    const detectedBssid = wifiBssid?.toLowerCase().trim();
-    const isMatch = storedBssid === detectedBssid;
+    const storedBssid = allowedNetwork.bssid || "";
+    const incomingBssid = wifiBssid || "";
+    const isMatch = incomingBssid.toLowerCase().trim() === storedBssid.toLowerCase().trim();
 
     if (!isMatch) {
       return { 
@@ -56,7 +56,7 @@ export async function validateAttendanceRequest(
         error: "Invalid network. Please connect to the office Wi-Fi.",
         details: {
           storedBssid,
-          detectedBssid,
+          incomingBssid,
           storedSsid: allowedNetwork.ssid,
           detectedSsid: wifiSsid
         }

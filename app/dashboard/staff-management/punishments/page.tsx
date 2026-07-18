@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, Settings, ShieldAlert, Check } from "lucide-react";
+
 
 export default function PunishmentSettingsPage() {
   const [config, setConfig] = useState<any>(null);
@@ -145,7 +145,7 @@ export default function PunishmentSettingsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6 text-indigo-600" />
+            <span className="material-symbols-outlined text-indigo-600" style={{ fontSize: '24px' }}>warning</span>
             Attendance & Punishment Settings
           </h2>
           <p className="text-gray-500 mt-1">Configure global attendance limits and monetary penalty slabs.</p>
@@ -156,7 +156,7 @@ export default function PunishmentSettingsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
           <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Settings className="h-4 w-4" /> Global Settings
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings</span> Global Settings
           </h3>
           <button 
             onClick={saveConfig}
@@ -230,7 +230,7 @@ export default function PunishmentSettingsPage() {
             onClick={() => openModal()}
             className="flex items-center gap-1 text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-md hover:bg-indigo-100"
           >
-            <Plus className="h-4 w-4" /> Add Rule
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> Add Rule
           </button>
         </div>
         
@@ -274,10 +274,10 @@ export default function PunishmentSettingsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button onClick={() => openModal(rule)} className="text-indigo-600 hover:text-indigo-900 mr-3">
-                        <Edit2 className="h-4 w-4" />
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                       </button>
                       <button onClick={() => deleteRule(rule.id)} className="text-red-600 hover:text-red-900">
-                        <Trash2 className="h-4 w-4" />
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                       </button>
                     </td>
                   </tr>

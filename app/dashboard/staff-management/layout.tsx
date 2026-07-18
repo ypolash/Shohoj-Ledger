@@ -21,7 +21,7 @@ export default function StaffManagementLayout({
     { name: 'Bonuses', path: '/dashboard/staff-management/bonuses', icon: 'redeem' },
     { name: 'Reports', path: '/dashboard/staff-management/reports', icon: 'analytics' },
     { name: 'Tasks', path: '/dashboard/staff-management/tasks', icon: 'task' },
-    { name: 'Settings', path: '/dashboard/staff-management/punishments', icon: 'settings' },
+    { name: 'Rules & Policies', path: '/dashboard/staff-management/punishments', icon: 'policy' },
   ];
 
   return (

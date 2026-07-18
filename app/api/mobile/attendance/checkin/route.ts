@@ -84,8 +84,13 @@ export async function POST(request: Request) {
     }
 
     const serverTime = new Date();
+    const dhakaTimeString = serverTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+    const currentDhakaTime = new Date(dhakaTimeString);
+
     // Normalize date to YYYY-MM-DD to use as unique constraint
-    const dateStr = serverTime.toISOString().split("T")[0];
+    const dateStr = currentDhakaTime.getFullYear() + "-" + 
+                    String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
+                    String(currentDhakaTime.getDate()).padStart(2, '0');
     const today = new Date(dateStr);
 
     console.log("Reached EMPLOYEE validation");
@@ -123,7 +128,7 @@ export async function POST(request: Request) {
     console.log("DB shiftEnd:", config?.shiftEnd);
     console.log("DB gracePeriod:", config?.gracePeriod);
 
-    const isFriday = serverTime.getDay() === 5;
+    const isFriday = currentDhakaTime.getDay() === 5;
     let status = "PRESENT";
     let lateMinutes = 0;
     let isLate = false;
@@ -153,7 +158,7 @@ export async function POST(request: Request) {
       startMin = parseInt(parts[1], 10);
     }
     
-    const shiftStartDate = new Date(today);
+    const shiftStartDate = new Date(currentDhakaTime);
     shiftStartDate.setHours(startHour, startMin, 0, 0);
     
     const lateAfter = new Date(shiftStartDate);
@@ -164,18 +169,20 @@ export async function POST(request: Request) {
       reviewStatus = "TEMPORARY_REVIEW";
       punishmentReason = "Off-day work";
     } else {
-      if (serverTime > lateAfter) {
+      if (currentDhakaTime > lateAfter) {
         status = "LATE";
         isLate = true;
-        lateMinutes = Math.floor((serverTime.getTime() - shiftStartDate.getTime()) / 60000);
+        lateMinutes = Math.floor((currentDhakaTime.getTime() - shiftStartDate.getTime()) / 60000);
       } else {
         status = "PRESENT";
         lateMinutes = 0;
       }
       
-      console.log("Shift Start Date:", shiftStartDate.toISOString());
-      console.log("Late After:", lateAfter.toISOString());
-      console.log("Check In Time:", serverTime.toISOString());
+      console.log("Current Dhaka Time:", currentDhakaTime.toISOString());
+      console.log("Shift Start Dhaka:", shiftStartDate.toISOString());
+      console.log("Late After Dhaka:", lateAfter.toISOString());
+      console.log("Calculated Status:", status);
+      console.log("Calculated Late Minutes:", lateMinutes);
       
       if (isLate) {
         const rules = await prisma.punishmentSetting.findMany({

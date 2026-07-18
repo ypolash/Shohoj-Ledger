@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import { createPortal } from "react-dom";
+import styles from "./styles.module.css";
 
 export default function PunishmentSettingsPage() {
   const [config, setConfig] = useState<any>(null);
@@ -134,87 +135,86 @@ export default function PunishmentSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
+        Loading Settings...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <span className="material-symbols-outlined text-indigo-600" style={{ fontSize: '24px' }}>warning</span>
-            Attendance & Punishment Settings
-          </h2>
-          <p className="text-gray-500 mt-1">Configure global attendance limits and monetary penalty slabs.</p>
-        </div>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h2 className={styles.headerTitle}>
+          <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#60a5fa' }}>warning</span>
+          Attendance & Punishment Settings
+        </h2>
+        <p className={styles.headerDesc}>Configure global attendance limits and monetary penalty slabs.</p>
       </div>
 
       {/* Global Configuration Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings</span> Global Settings
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <h3 className={styles.cardTitle}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings</span> 
+            Global Settings
           </h3>
           <button 
             onClick={saveConfig}
             disabled={saving}
-            className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 disabled:opacity-50"
+            className={styles.primaryBtn}
           >
             {saving ? "Saving..." : "Save Config"}
           </button>
         </div>
         
         {config && (
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Grace Period (Minutes)</label>
-              <input 
-                type="number" 
-                value={config.gracePeriod}
-                onChange={(e) => handleConfigChange('gracePeriod', parseInt(e.target.value))}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm p-2 border"
-              />
+          <div className={styles.cardBody}>
+            <div className={styles.grid}>
+              <div className={styles.formGroup}>
+                <label>Grace Period (Minutes)</label>
+                <input 
+                  type="number" 
+                  value={config.gracePeriod}
+                  onChange={(e) => handleConfigChange('gracePeriod', parseInt(e.target.value))}
+                  className={styles.input}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Shift Start Time (HH:mm)</label>
+                <input 
+                  type="time" 
+                  value={config.shiftStart}
+                  onChange={(e) => handleConfigChange('shiftStart', e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Shift End Time (HH:mm)</label>
+                <input 
+                  type="time" 
+                  value={config.shiftEnd}
+                  onChange={(e) => handleConfigChange('shiftEnd', e.target.value)}
+                  className={styles.input}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Shift Start Time (HH:mm)</label>
-              <input 
-                type="time" 
-                value={config.shiftStart}
-                onChange={(e) => handleConfigChange('shiftStart', e.target.value)}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm p-2 border"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Shift End Time (HH:mm)</label>
-              <input 
-                type="time" 
-                value={config.shiftEnd}
-                onChange={(e) => handleConfigChange('shiftEnd', e.target.value)}
-                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm p-2 border"
-              />
-            </div>
-            <div className="flex items-center gap-2 pt-6">
-              <input 
-                type="checkbox" 
-                id="fridayOff"
-                checked={config.fridayOff}
-                onChange={(e) => handleConfigChange('fridayOff', e.target.checked)}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label htmlFor="fridayOff" className="text-sm font-medium text-gray-700">Friday is an Off-Day</label>
-            </div>
-            <div className="flex items-center gap-2 pt-6">
-              <input 
-                type="checkbox" 
-                id="enablePunishment"
-                checked={config.enablePunishmentDeduction}
-                onChange={(e) => handleConfigChange('enablePunishmentDeduction', e.target.checked)}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label htmlFor="enablePunishment" className="text-sm font-medium text-gray-700">
+            
+            <div className={styles.checkboxContainer}>
+              <label className={styles.checkboxLabel}>
+                <input 
+                  type="checkbox" 
+                  checked={config.fridayOff}
+                  onChange={(e) => handleConfigChange('fridayOff', e.target.checked)}
+                />
+                Friday is an Off-Day
+              </label>
+              
+              <label className={styles.checkboxLabel}>
+                <input 
+                  type="checkbox" 
+                  checked={config.enablePunishmentDeduction}
+                  onChange={(e) => handleConfigChange('enablePunishmentDeduction', e.target.checked)}
+                />
                 Enable Monetary Deductions (Warning Only if disabled)
               </label>
             </div>
@@ -223,62 +223,66 @@ export default function PunishmentSettingsPage() {
       </div>
 
       {/* Punishment Rules */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="font-semibold text-gray-800">Punishment Slabs (Rules)</h3>
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <h3 className={styles.cardTitle}>Punishment Slabs (Rules)</h3>
           <button 
             onClick={() => openModal()}
-            className="flex items-center gap-1 text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-md hover:bg-indigo-100"
+            className={styles.primaryBtn}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> Add Rule
           </button>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (৳)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className={styles.th}>Type</th>
+                <th className={styles.th}>Condition</th>
+                <th className={styles.th}>Amount (৳)</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th}>Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {rules.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500 text-sm">
+                  <td colSpan={5} className={styles.td} style={{ textAlign: 'center', padding: '2rem' }}>
                     No punishment rules defined yet.
                   </td>
                 </tr>
               ) : (
                 rules.map((rule) => (
-                  <tr key={rule.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {rule.type.replace('_', ' ')}
+                  <tr key={rule.id}>
+                    <td className={styles.td}>
+                      <span className={styles.typeBadge}>{rule.type.replace('_', ' ')}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className={styles.td}>
                       {rule.fromMinutes} to {rule.toMinutes} mins
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-semibold">
+                    <td className={styles.td} style={{ color: '#f87171', fontWeight: 'bold' }}>
                       ৳{rule.amount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className={styles.td}>
                       <button
                         onClick={() => toggleRuleActive(rule.id, !rule.active)}
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${rule.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                       >
-                        {rule.active ? 'Active' : 'Disabled'}
+                        <span className={`${styles.badge} ${rule.active ? styles.active : styles.inactive}`}>
+                          {rule.active ? 'Active' : 'Disabled'}
+                        </span>
                       </button>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button onClick={() => openModal(rule)} className="text-indigo-600 hover:text-indigo-900 mr-3">
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
-                      </button>
-                      <button onClick={() => deleteRule(rule.id)} className="text-red-600 hover:text-red-900">
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                      </button>
+                    <td className={styles.td}>
+                      <div className={styles.actions}>
+                        <button onClick={() => openModal(rule)} className={`${styles.iconBtn} ${styles.editBtn}`} title="Edit">
+                          ✎
+                        </button>
+                        <button onClick={() => deleteRule(rule.id)} className={`${styles.iconBtn} ${styles.deleteBtn}`} title="Delete">
+                          🗑
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -289,81 +293,75 @@ export default function PunishmentSettingsPage() {
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">{editingRule ? "Edit Rule" : "Add Rule"}</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Type</label>
-                <select 
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-                >
-                  <option value="LATE">LATE</option>
-                  <option value="EARLY_LEAVE">EARLY LEAVE</option>
-                  <option value="ABSENT">ABSENT</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">From (Mins)</label>
-                  <input 
-                    type="number" 
-                    value={formData.fromMinutes}
-                    onChange={(e) => setFormData({...formData, fromMinutes: parseInt(e.target.value)})}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">To (Mins)</label>
-                  <input 
-                    type="number" 
-                    value={formData.toMinutes}
-                    onChange={(e) => setFormData({...formData, toMinutes: parseInt(e.target.value)})}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border p-2"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Amount (৳)</label>
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h2>{editingRule ? "Edit Rule" : "Add Rule"}</h2>
+            
+            <div className={styles.formGroup}>
+              <label>Type</label>
+              <select 
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                className={styles.input}
+              >
+                <option value="LATE">LATE</option>
+                <option value="EARLY_LEAVE">EARLY LEAVE</option>
+                <option value="ABSENT">ABSENT</option>
+              </select>
+            </div>
+            
+            <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className={styles.formGroup}>
+                <label>From (Mins)</label>
                 <input 
                   type="number" 
-                  value={formData.amount}
-                  onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border p-2"
+                  value={formData.fromMinutes}
+                  onChange={(e) => setFormData({...formData, fromMinutes: parseInt(e.target.value)})}
+                  className={styles.input}
                 />
               </div>
-              <div className="flex items-center">
+              <div className={styles.formGroup}>
+                <label>To (Mins)</label>
                 <input 
-                  type="checkbox" 
-                  id="activeRule"
-                  checked={formData.active}
-                  onChange={(e) => setFormData({...formData, active: e.target.checked})}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  type="number" 
+                  value={formData.toMinutes}
+                  onChange={(e) => setFormData({...formData, toMinutes: parseInt(e.target.value)})}
+                  className={styles.input}
                 />
-                <label htmlFor="activeRule" className="ml-2 block text-sm text-gray-900">
-                  Active
-                </label>
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
+            
+            <div className={styles.formGroup}>
+              <label>Amount (৳)</label>
+              <input 
+                type="number" 
+                value={formData.amount}
+                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
+                className={styles.input}
+              />
+            </div>
+            
+            <label className={styles.checkboxLabel} style={{ marginBottom: '1rem' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.active}
+                onChange={(e) => setFormData({...formData, active: e.target.checked})}
+              />
+              Active
+            </label>
+            
+            <div className={styles.modalActions}>
+              <button onClick={() => setIsModalOpen(false)} className={styles.cancelBtn}>
                 Cancel
               </button>
-              <button 
-                onClick={saveRule}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700"
-              >
+              <button onClick={saveRule} className={styles.saveBtn}>
                 Save Rule
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

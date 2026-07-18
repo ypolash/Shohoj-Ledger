@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Implemented Bonus and Report tabs in Staff Management, creating respective full-stack APIs and frontend UI components. Generated and applied Prisma migration `add_attendance_shift_fields` to support the recent attendance features (`earlyLeaveMinutes`, `overtimeMinutes`, `punishmentAmount`, `punishmentReason`, `reviewStatus`) without resetting the production database.
+- **Last major feature added:** Converted the attendance punishment system into an editable, modular system. Implemented `PunishmentSetting` and `AttendanceConfig` Prisma models. Added dynamic shift time, grace period, and punishment slab validations into the check-in and check-out APIs. Built a new "Settings" tab in the Staff Management dashboard to let admins seamlessly configure all global attendance settings.
 - **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App (via home network testing), and proceed to polish HR operations.
 
 **Goal Pivots:**

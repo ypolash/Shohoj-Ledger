@@ -131,17 +131,29 @@ export async function POST(request: Request) {
       punishmentReason = "Off-day work";
     } else {
       const [startHour, startMin] = config.shiftStart.split(':').map(Number);
-      const expectedCheckIn = new Date(today);
-      expectedCheckIn.setHours(startHour, startMin, 0, 0);
-      const diffMinutes = Math.floor((serverTime.getTime() - expectedCheckIn.getTime()) / 60000);
+      const shiftStart = new Date(today);
+      shiftStart.setHours(startHour, startMin, 0, 0);
       
-      if (diffMinutes > config.gracePeriod) {
-        lateMinutes = diffMinutes;
-        isLate = true;
+      const lateAfter = new Date(shiftStart);
+      lateAfter.setMinutes(lateAfter.getMinutes() + config.gracePeriod);
+      
+      if (serverTime > lateAfter) {
         status = "LATE";
-        
-        console.log("Late Minutes:", lateMinutes);
-        
+        isLate = true;
+        lateMinutes = Math.floor((serverTime.getTime() - shiftStart.getTime()) / 60000);
+      } else {
+        status = "PRESENT";
+        lateMinutes = 0;
+      }
+      
+      console.log("Shift Start:", config.shiftStart);
+      console.log("Grace Period:", config.gracePeriod);
+      console.log("Late After:", lateAfter);
+      console.log("Check In:", serverTime);
+      console.log("Status:", status);
+      console.log("Late Minutes:", lateMinutes);
+      
+      if (isLate) {
         const rules = await prisma.punishmentSetting.findMany({
           where: { type: "LATE", active: true }
         });

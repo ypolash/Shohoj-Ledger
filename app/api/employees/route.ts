@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export async function GET() {
   try {
@@ -25,10 +26,12 @@ export async function POST(request: Request) {
     const count = await prisma.employee.count();
     const employeeId = `EMP-${1000 + count + 1}`;
 
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
     const employee = await prisma.employee.create({
       data: {
         employeeId,
-        password: data.password,
+        password: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,

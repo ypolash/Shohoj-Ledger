@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateAttendanceRequest, ENABLE_PUNISHMENT_DEDUCTION } from "../utils";
+import { validateAttendanceRequest, getAttendanceConfig, calculatePunishment } from "../utils";
 
 export async function POST(request: Request) {
   try {
@@ -116,34 +116,41 @@ export async function POST(request: Request) {
       );
     }
 
+    const config = await getAttendanceConfig();
     const isFriday = serverTime.getDay() === 5;
     let status = "PRESENT";
     let lateMinutes = 0;
     let isLate = false;
-    let reviewStatus = null;
-    let punishmentReason = null;
+    let reviewStatus: string | null = null;
+    let punishmentReason: string | null = null;
     let punishmentAmount = 0;
 
-    if (isFriday) {
+    if (isFriday && config.fridayOff) {
       status = "OFF_DAY_WORK";
       reviewStatus = "TEMPORARY_REVIEW";
       punishmentReason = "Off-day work";
     } else {
+      const [startHour, startMin] = config.shiftStart.split(':').map(Number);
       const expectedCheckIn = new Date(today);
-      expectedCheckIn.setHours(9, 0, 0, 0);
+      expectedCheckIn.setHours(startHour, startMin, 0, 0);
       const diffMinutes = Math.floor((serverTime.getTime() - expectedCheckIn.getTime()) / 60000);
       
-      if (diffMinutes > 15) {
+      if (diffMinutes > config.gracePeriod) {
         lateMinutes = diffMinutes;
         isLate = true;
         status = "LATE";
-        reviewStatus = "TEMPORARY_REVIEW";
         punishmentReason = "Late check-in";
+        
+        const calculatedPunishment = await calculatePunishment("LATE", lateMinutes);
+        if (config.enablePunishmentDeduction) {
+          punishmentAmount = calculatedPunishment;
+          if (punishmentAmount > 0) {
+            reviewStatus = "DEDUCTED";
+          }
+        } else if (calculatedPunishment > 0) {
+          reviewStatus = "TEMPORARY_REVIEW";
+        }
       }
-    }
-
-    if (ENABLE_PUNISHMENT_DEDUCTION) {
-      // Logic for actual deduction would go here if enabled
     }
 
     console.log("Saving check-in time:", new Date());

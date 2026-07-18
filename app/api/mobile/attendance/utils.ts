@@ -3,7 +3,29 @@ import { prisma } from "@/lib/prisma";
 export const OFFICE_LATITUDE = 23.8103;
 export const OFFICE_LONGITUDE = 90.4125;
 export const ALLOWED_RADIUS_METERS = 200000; // TEMPORARY TEST RADIUS
-export const ENABLE_PUNISHMENT_DEDUCTION = false;
+
+export async function getAttendanceConfig() {
+  let config = await prisma.attendanceConfig.findFirst();
+  if (!config) {
+    config = await prisma.attendanceConfig.create({
+      data: {}
+    });
+  }
+  return config;
+}
+
+export async function calculatePunishment(type: string, minutes: number): Promise<number> {
+  const rules = await prisma.punishmentSetting.findMany({
+    where: { type, active: true }
+  });
+  
+  for (const rule of rules) {
+    if (minutes >= rule.fromMinutes && minutes <= rule.toMinutes) {
+      return Number(rule.amount);
+    }
+  }
+  return 0;
+}
 
 // Haversine formula to calculate the distance between two coordinates in meters
 export function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {

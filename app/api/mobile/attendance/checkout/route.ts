@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateAttendanceRequest, ENABLE_PUNISHMENT_DEDUCTION } from "../utils";
+import { validateAttendanceRequest, getAttendanceConfig, calculatePunishment } from "../utils";
 
 export async function POST(req: Request) {
   try {
@@ -68,6 +68,7 @@ export async function POST(req: Request) {
       );
     }
 
+    const config = await getAttendanceConfig();
     const checkInTime = existingAttendance.checkInTime;
     const totalWorkingMinutes = Math.floor((serverTime.getTime() - checkInTime.getTime()) / 60000);
     
@@ -80,29 +81,34 @@ export async function POST(req: Request) {
     let punishmentReason = existingAttendance.punishmentReason || "";
     let punishmentAmount = Number(existingAttendance.punishmentAmount) || 0;
 
-    if (isFriday) {
+    if (isFriday && config.fridayOff) {
       overtimeMinutes = totalWorkingMinutes;
     } else {
+      const [endHour, endMin] = config.shiftEnd.split(':').map(Number);
       const expectedCheckOut = new Date(today);
-      expectedCheckOut.setHours(20, 0, 0, 0);
+      expectedCheckOut.setHours(endHour, endMin, 0, 0);
       
       const earlyDiff = Math.floor((expectedCheckOut.getTime() - serverTime.getTime()) / 60000);
       if (earlyDiff > 0) {
         earlyLeaveMinutes = earlyDiff;
-        reviewStatus = "TEMPORARY_REVIEW";
         punishmentReason = punishmentReason ? `${punishmentReason}, Early leave` : "Early leave";
+        
+        const calculatedPunishment = await calculatePunishment("EARLY_LEAVE", earlyLeaveMinutes);
+        if (config.enablePunishmentDeduction) {
+          punishmentAmount += calculatedPunishment;
+          if (punishmentAmount > 0) {
+            reviewStatus = "DEDUCTED";
+          }
+        } else if (calculatedPunishment > 0) {
+          reviewStatus = "TEMPORARY_REVIEW";
+        }
       }
       
-      const expectedWorkingMinutes = 11 * 60;
+      const [startHour, startMin] = config.shiftStart.split(':').map(Number);
+      const expectedWorkingMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
       if (totalWorkingMinutes > expectedWorkingMinutes) {
         overtimeMinutes = totalWorkingMinutes - expectedWorkingMinutes;
       }
-    }
-
-    if (ENABLE_PUNISHMENT_DEDUCTION) {
-      // Logic for deduction would go here when enabled
-    } else {
-      punishmentAmount = 0;
     }
 
     await prisma.attendance.update({

@@ -68,6 +68,31 @@ export async function POST(req: Request) {
       );
     }
 
+    const checkInTime = existingAttendance.checkInTime;
+    const totalWorkingMinutes = Math.floor((serverTime.getTime() - checkInTime.getTime()) / 60000);
+    
+    let earlyLeaveMinutes = 0;
+    let overtimeMinutes = 0;
+    
+    const isFriday = serverTime.getDay() === 5;
+    
+    if (isFriday) {
+      overtimeMinutes = totalWorkingMinutes;
+    } else {
+      const expectedCheckOut = new Date(today);
+      expectedCheckOut.setHours(20, 0, 0, 0);
+      
+      const earlyDiff = Math.floor((expectedCheckOut.getTime() - serverTime.getTime()) / 60000);
+      if (earlyDiff > 0) {
+        earlyLeaveMinutes = earlyDiff;
+      }
+      
+      const expectedWorkingMinutes = 11 * 60;
+      if (totalWorkingMinutes > expectedWorkingMinutes) {
+        overtimeMinutes = totalWorkingMinutes - expectedWorkingMinutes;
+      }
+    }
+
     await prisma.attendance.update({
       where: { id: existingAttendance.id },
       data: {
@@ -77,6 +102,9 @@ export async function POST(req: Request) {
         longitude,
         wifiSsid,
         wifiBssid,
+        totalWorkingMinutes,
+        earlyLeaveMinutes,
+        overtimeMinutes,
       },
     });
 

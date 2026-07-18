@@ -20,6 +20,8 @@ type Attendance = {
   checkOutLocation: string | null;
   status: string;
   lateMinutes: number;
+  earlyLeaveMinutes: number;
+  overtimeMinutes: number;
 };
 
 export default function AttendancePage() {
@@ -173,18 +175,18 @@ export default function AttendancePage() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                          <span className="material-symbols-outlined" style={{ color: record.status === 'PRESENT' ? '#10b981' : record.status === 'LATE' ? '#f59e0b' : '#ef4444' }}>
-                            {record.status === 'PRESENT' ? 'check_circle' : record.status === 'LATE' ? 'schedule' : 'cancel'}
+                          <span className="material-symbols-outlined" style={{ color: record.status === 'PRESENT' ? '#10b981' : record.status === 'LATE' ? '#f59e0b' : record.status === 'WEEKLY_OFF' ? '#94a3b8' : record.status === 'OFF_DAY_WORK' ? '#8b5cf6' : '#ef4444' }}>
+                            {record.status === 'PRESENT' ? 'check_circle' : record.status === 'LATE' ? 'schedule' : record.status === 'WEEKLY_OFF' ? 'weekend' : record.status === 'OFF_DAY_WORK' ? 'work_history' : 'cancel'}
                           </span>
                           <span style={{ fontWeight: '500', fontSize: '15px' }}>{formatDate(record.date)}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                           <span style={{ 
                             fontSize: '12px', padding: '4px 10px', borderRadius: '99px',
-                            background: record.status === 'PRESENT' ? 'rgba(16,185,129,0.1)' : record.status === 'LATE' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
-                            color: record.status === 'PRESENT' ? '#34d399' : record.status === 'LATE' ? '#fbbf24' : '#f87171'
+                            background: record.status === 'PRESENT' ? 'rgba(16,185,129,0.1)' : record.status === 'LATE' ? 'rgba(245,158,11,0.1)' : record.status === 'WEEKLY_OFF' ? 'rgba(148,163,184,0.1)' : record.status === 'OFF_DAY_WORK' ? 'rgba(139,92,246,0.1)' : 'rgba(239,68,68,0.1)',
+                            color: record.status === 'PRESENT' ? '#34d399' : record.status === 'LATE' ? '#fbbf24' : record.status === 'WEEKLY_OFF' ? '#94a3b8' : record.status === 'OFF_DAY_WORK' ? '#a78bfa' : '#f87171'
                           }}>
-                            {record.status} {record.lateMinutes > 0 && `(${record.lateMinutes}m late)`}
+                            {record.status.replace(/_/g, ' ')} {record.lateMinutes > 0 ? `(${record.lateMinutes}m late)` : ''} {record.earlyLeaveMinutes > 0 ? `(${record.earlyLeaveMinutes}m early)` : ''} {record.overtimeMinutes > 0 ? `(${record.overtimeMinutes}m OT)` : ''}
                           </span>
                           <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#94a3b8', transform: expandedDateId === record.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>
                             expand_more

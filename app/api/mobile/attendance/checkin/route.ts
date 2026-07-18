@@ -116,24 +116,38 @@ export async function POST(request: Request) {
       );
     }
 
-    // Determine late minutes (e.g., if checking in past 10:00 AM)
-    const expectedCheckIn = new Date(today);
-    expectedCheckIn.setHours(10, 0, 0, 0);
-    const lateMinutes = Math.max(0, Math.floor((serverTime.getTime() - expectedCheckIn.getTime()) / 60000));
-    const status = lateMinutes > 15 ? "LATE" : "PRESENT";
+    const isFriday = serverTime.getDay() === 5;
+    let status = "PRESENT";
+    let lateMinutes = 0;
+    let isLate = false;
+
+    if (isFriday) {
+      status = "OFF_DAY_WORK";
+    } else {
+      const expectedCheckIn = new Date(today);
+      expectedCheckIn.setHours(9, 0, 0, 0);
+      const diffMinutes = Math.floor((serverTime.getTime() - expectedCheckIn.getTime()) / 60000);
+      
+      if (diffMinutes > 15) {
+        lateMinutes = diffMinutes;
+        isLate = true;
+        status = "LATE";
+      }
+    }
 
     console.log("Saving check-in time:", new Date());
     if (existingAttendance) {
       await prisma.attendance.update({
         where: { id: existingAttendance.id },
         data: {
-          checkInTime: new Date(),
+          checkInTime: serverTime,
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,
           wifiSsid: ssid,
           wifiBssid: bssid,
           status,
+          isLate,
           lateMinutes,
         },
       });
@@ -142,13 +156,14 @@ export async function POST(request: Request) {
         data: {
           employeeId: employee.id,
           date: today,
-          checkInTime: new Date(),
+          checkInTime: serverTime,
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,
           wifiSsid: ssid,
           wifiBssid: bssid,
           status,
+          isLate,
           lateMinutes,
         },
       });

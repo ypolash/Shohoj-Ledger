@@ -209,10 +209,12 @@ model Attendance {
   checkInLocation  String?
   checkOutTime     DateTime? @map("checkOut")
   checkOutLocation String?
-  status           String    // PRESENT, LATE, ABSENT, HALF_DAY
+  status           String    // PRESENT, LATE, ABSENT, HALF_DAY, WEEKLY_OFF, OFF_DAY_WORK
   isLate           Boolean   @default(false)
   lateMinutes      Int       @default(0)
   totalWorkingMinutes Int?   @default(0)
+  earlyLeaveMinutes Int?     @default(0)
+  overtimeMinutes   Int?     @default(0)
   latitude         Float?
   longitude        Float?
   wifiSsid         String?

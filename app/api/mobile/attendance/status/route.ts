@@ -28,6 +28,8 @@ export async function GET(req: Request) {
       );
     }
 
+    const isFriday = today.getDay() === 5;
+
     const attendance = await prisma.attendance.findFirst({
       where: {
         employeeId: employee.id,
@@ -35,10 +37,16 @@ export async function GET(req: Request) {
       },
     });
 
+    let currentStatus = attendance?.status;
+    if (!currentStatus) {
+      currentStatus = isFriday ? "WEEKLY_OFF" : "PENDING";
+    }
+
     return NextResponse.json({
       success: true,
       checkInTime: attendance?.checkInTime || null,
       checkOutTime: attendance?.checkOutTime || null,
+      status: currentStatus,
     });
 
   } catch (error) {

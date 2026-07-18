@@ -2,11 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateAttendanceRequest } from "../utils";
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     console.log("Reached TOKEN validation");
-    const body = await req.json();
-    const { employeeId, wifiSsid, wifiBssid, latitude, longitude } = body;
+    const body = await request.json();
+    
+    const employeeId = body.employeeId;
+    const ssid = body.ssid;
+    const bssid = body.bssid;
+    const latitude = body.latitude;
+    const longitude = body.longitude;
+
+    console.log("Parsed employeeId:", employeeId);
+    console.log("Parsed SSID:", ssid);
+    console.log("Parsed BSSID:", bssid);
 
     if (!employeeId) {
       console.log("Returning 400: employeeId is required");
@@ -17,8 +26,8 @@ export async function POST(req: Request) {
     }
 
     console.log("=== WIFI DEBUG START ===");
-    console.log("Incoming SSID:", wifiSsid);
-    console.log("Incoming BSSID:", wifiBssid);
+    console.log("Incoming SSID:", ssid);
+    console.log("Incoming BSSID:", bssid);
 
     const allowedNetworks = await prisma.allowedNetwork.findMany({
       where: { isActive: true }
@@ -29,8 +38,8 @@ export async function POST(req: Request) {
       console.log(`Network ${i}:`, { ssid: n.ssid, bssid: n.bssid, active: n.isActive });
     });
 
-    const incomingSsid = (wifiSsid || "").toLowerCase().trim();
-    const incomingBssid = (wifiBssid || "").toLowerCase().trim();
+    const incomingSsid = (ssid || "").toLowerCase().trim();
+    const incomingBssid = (bssid || "").toLowerCase().trim();
     allowedNetworks.forEach((n, i) => {
       const storedSsid = (n.ssid || "").toLowerCase().trim();
       const storedBssid = (n.bssid || "").toLowerCase().trim();
@@ -45,7 +54,7 @@ export async function POST(req: Request) {
     });
 
     console.log("Reached WIFI validation");
-    const validation = await validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
+    const validation = await validateAttendanceRequest(latitude, longitude, ssid, bssid);
     if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";
       const errorLower = validation.error?.toLowerCase() || "";
@@ -122,8 +131,8 @@ export async function POST(req: Request) {
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,
-          wifiSsid,
-          wifiBssid,
+          wifiSsid: ssid,
+          wifiBssid: bssid,
           status,
           lateMinutes,
         },
@@ -137,8 +146,8 @@ export async function POST(req: Request) {
           checkInLocation: `${latitude},${longitude}`,
           latitude,
           longitude,
-          wifiSsid,
-          wifiBssid,
+          wifiSsid: ssid,
+          wifiBssid: bssid,
           status,
           lateMinutes,
         },

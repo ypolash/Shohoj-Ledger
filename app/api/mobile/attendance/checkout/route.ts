@@ -32,8 +32,13 @@ export async function POST(req: Request) {
     }
 
     const serverTime = new Date();
+    const dhakaTimeString = serverTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+    const currentDhakaTime = new Date(dhakaTimeString);
+    
     // Normalize date to YYYY-MM-DD
-    const dateStr = serverTime.toISOString().split("T")[0];
+    const dateStr = currentDhakaTime.getFullYear() + "-" + 
+                    String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
+                    String(currentDhakaTime.getDate()).padStart(2, '0');
     const today = new Date(dateStr);
 
     const employee = await prisma.employee.findUnique({
@@ -75,7 +80,7 @@ export async function POST(req: Request) {
     let earlyLeaveMinutes = 0;
     let overtimeMinutes = 0;
     
-    const isFriday = serverTime.getDay() === 5;
+    const isFriday = currentDhakaTime.getDay() === 5;
     
     let reviewStatus = existingAttendance.reviewStatus;
     let punishmentReason = existingAttendance.punishmentReason || "";
@@ -84,11 +89,26 @@ export async function POST(req: Request) {
     if (isFriday && config.fridayOff) {
       overtimeMinutes = totalWorkingMinutes;
     } else {
-      const [endHour, endMin] = config.shiftEnd.split(':').map(Number);
-      const expectedCheckOut = new Date(today);
+      let shiftEndStr = config.shiftEnd || "18:00";
+      let endHour = 18;
+      let endMin = 0;
+      if (shiftEndStr.includes(" ")) {
+        const [timePart, modifier] = shiftEndStr.split(" ");
+        let [hours, minutes] = timePart.split(":");
+        endHour = parseInt(hours, 10);
+        endMin = parseInt(minutes, 10);
+        if (modifier.toUpperCase() === "PM" && endHour < 12) endHour += 12;
+        if (modifier.toUpperCase() === "AM" && endHour === 12) endHour = 0;
+      } else {
+        const parts = shiftEndStr.split(':');
+        endHour = parseInt(parts[0], 10);
+        endMin = parseInt(parts[1], 10);
+      }
+
+      const expectedCheckOut = new Date(currentDhakaTime);
       expectedCheckOut.setHours(endHour, endMin, 0, 0);
       
-      const earlyDiff = Math.floor((expectedCheckOut.getTime() - serverTime.getTime()) / 60000);
+      const earlyDiff = Math.floor((expectedCheckOut.getTime() - currentDhakaTime.getTime()) / 60000);
       if (earlyDiff > 0) {
         earlyLeaveMinutes = earlyDiff;
         
@@ -106,7 +126,22 @@ export async function POST(req: Request) {
         }
       }
       
-      const [startHour, startMin] = config.shiftStart.split(':').map(Number);
+      let shiftStartStr = config.shiftStart || "09:00";
+      let startHour = 9;
+      let startMin = 0;
+      if (shiftStartStr.includes(" ")) {
+        const [timePart, modifier] = shiftStartStr.split(" ");
+        let [hours, minutes] = timePart.split(":");
+        startHour = parseInt(hours, 10);
+        startMin = parseInt(minutes, 10);
+        if (modifier.toUpperCase() === "PM" && startHour < 12) startHour += 12;
+        if (modifier.toUpperCase() === "AM" && startHour === 12) startHour = 0;
+      } else {
+        const parts = shiftStartStr.split(':');
+        startHour = parseInt(parts[0], 10);
+        startMin = parseInt(parts[1], 10);
+      }
+
       const expectedWorkingMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
       if (totalWorkingMinutes > expectedWorkingMinutes) {
         overtimeMinutes = totalWorkingMinutes - expectedWorkingMinutes;

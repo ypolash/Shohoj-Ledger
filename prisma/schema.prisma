@@ -215,6 +215,9 @@ model Attendance {
   totalWorkingMinutes Int?   @default(0)
   earlyLeaveMinutes Int?     @default(0)
   overtimeMinutes   Int?     @default(0)
+  punishmentReason  String?
+  reviewStatus      String?
+  punishmentAmount  Decimal? @default(0)
   latitude         Float?
   longitude        Float?
   wifiSsid         String?

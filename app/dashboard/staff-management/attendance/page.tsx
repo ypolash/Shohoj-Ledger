@@ -22,6 +22,9 @@ type Attendance = {
   lateMinutes: number;
   earlyLeaveMinutes: number;
   overtimeMinutes: number;
+  reviewStatus: string | null;
+  punishmentReason: string | null;
+  punishmentAmount: number | null;
 };
 
 export default function AttendancePage() {
@@ -237,6 +240,32 @@ export default function AttendancePage() {
                             </div>
 
                           </div>
+                          
+                          {record.reviewStatus === 'TEMPORARY_REVIEW' && (
+                            <div style={{ 
+                              marginTop: '16px', 
+                              padding: '12px 16px', 
+                              background: 'rgba(245, 158, 11, 0.1)', 
+                              border: '1px solid rgba(245, 158, 11, 0.3)',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '12px'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontSize: '20px' }}>warning</span>
+                              <div>
+                                <div style={{ color: '#fcd34d', fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' }}>
+                                  Temporary Review
+                                </div>
+                                <div style={{ color: '#fbbf24', fontSize: '12px' }}>
+                                  Reason: {record.punishmentReason || 'Review pending'}
+                                </div>
+                                <div style={{ color: '#fbbf24', fontSize: '12px', marginTop: '2px', fontWeight: 'bold' }}>
+                                  No Deduction Applied
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

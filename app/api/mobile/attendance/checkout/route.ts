@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateAttendanceRequest } from "../utils";
+import { validateAttendanceRequest, ENABLE_PUNISHMENT_DEDUCTION } from "../utils";
 
 export async function POST(req: Request) {
   try {
@@ -76,6 +76,10 @@ export async function POST(req: Request) {
     
     const isFriday = serverTime.getDay() === 5;
     
+    let reviewStatus = existingAttendance.reviewStatus;
+    let punishmentReason = existingAttendance.punishmentReason || "";
+    let punishmentAmount = Number(existingAttendance.punishmentAmount) || 0;
+
     if (isFriday) {
       overtimeMinutes = totalWorkingMinutes;
     } else {
@@ -85,12 +89,20 @@ export async function POST(req: Request) {
       const earlyDiff = Math.floor((expectedCheckOut.getTime() - serverTime.getTime()) / 60000);
       if (earlyDiff > 0) {
         earlyLeaveMinutes = earlyDiff;
+        reviewStatus = "TEMPORARY_REVIEW";
+        punishmentReason = punishmentReason ? `${punishmentReason}, Early leave` : "Early leave";
       }
       
       const expectedWorkingMinutes = 11 * 60;
       if (totalWorkingMinutes > expectedWorkingMinutes) {
         overtimeMinutes = totalWorkingMinutes - expectedWorkingMinutes;
       }
+    }
+
+    if (ENABLE_PUNISHMENT_DEDUCTION) {
+      // Logic for deduction would go here when enabled
+    } else {
+      punishmentAmount = 0;
     }
 
     await prisma.attendance.update({
@@ -105,6 +117,9 @@ export async function POST(req: Request) {
         totalWorkingMinutes,
         earlyLeaveMinutes,
         overtimeMinutes,
+        reviewStatus,
+        punishmentReason,
+        punishmentAmount,
       },
     });
 

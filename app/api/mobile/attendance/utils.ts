@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 export const OFFICE_LATITUDE = 23.8103;
 export const OFFICE_LONGITUDE = 90.4125;
 export const ALLOWED_RADIUS_METERS = 200000; // TEMPORARY TEST RADIUS
+export const ENABLE_PUNISHMENT_DEDUCTION = false;
 
 // Haversine formula to calculate the distance between two coordinates in meters
 export function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {

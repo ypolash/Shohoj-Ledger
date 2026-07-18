@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateAttendanceRequest } from "../utils";
+import { validateAttendanceRequest, ENABLE_PUNISHMENT_DEDUCTION } from "../utils";
 
 export async function POST(request: Request) {
   try {
@@ -120,9 +120,14 @@ export async function POST(request: Request) {
     let status = "PRESENT";
     let lateMinutes = 0;
     let isLate = false;
+    let reviewStatus = null;
+    let punishmentReason = null;
+    let punishmentAmount = 0;
 
     if (isFriday) {
       status = "OFF_DAY_WORK";
+      reviewStatus = "TEMPORARY_REVIEW";
+      punishmentReason = "Off-day work";
     } else {
       const expectedCheckIn = new Date(today);
       expectedCheckIn.setHours(9, 0, 0, 0);
@@ -132,7 +137,13 @@ export async function POST(request: Request) {
         lateMinutes = diffMinutes;
         isLate = true;
         status = "LATE";
+        reviewStatus = "TEMPORARY_REVIEW";
+        punishmentReason = "Late check-in";
       }
+    }
+
+    if (ENABLE_PUNISHMENT_DEDUCTION) {
+      // Logic for actual deduction would go here if enabled
     }
 
     console.log("Saving check-in time:", new Date());
@@ -149,6 +160,9 @@ export async function POST(request: Request) {
           status,
           isLate,
           lateMinutes,
+          reviewStatus,
+          punishmentReason,
+          punishmentAmount,
         },
       });
     } else {
@@ -165,6 +179,9 @@ export async function POST(request: Request) {
           status,
           isLate,
           lateMinutes,
+          reviewStatus,
+          punishmentReason,
+          punishmentAmount,
         },
       });
     }

@@ -40,6 +40,8 @@ export default function ReportsPage() {
     fetchReports();
   }, []);
 
+  const totalPunishment = reports.reduce((sum, report) => sum + (report.punishmentAmount || 0), 0);
+
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
@@ -47,6 +49,12 @@ export default function ReportsPage() {
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Staff Reports</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Detailed attendance and punishment review</p>
         </div>
+        {!loading && !error && (
+          <div className="glass-card topo-bg" style={{ padding: '16px 24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <span style={{ fontSize: '12px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em' }}>Total Punishment</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>৳{totalPunishment.toLocaleString()}</span>
+          </div>
+        )}
       </div>
 
       <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px', overflowX: 'auto' }}>
@@ -107,6 +115,8 @@ export default function ReportsPage() {
                         </span>
                         <span style={{ fontSize: '11px', color: '#fbbf24' }}>No Deduction Applied</span>
                       </div>
+                    ) : report.reviewStatus === 'DEDUCTED' ? (
+                      <span style={{ color: '#ef4444', fontWeight: 'bold' }}>Deducted</span>
                     ) : (
                       <span style={{ color: '#94a3b8' }}>{report.reviewStatus || '-'}</span>
                     )}

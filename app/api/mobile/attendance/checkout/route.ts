@@ -91,16 +91,18 @@ export async function POST(req: Request) {
       const earlyDiff = Math.floor((expectedCheckOut.getTime() - serverTime.getTime()) / 60000);
       if (earlyDiff > 0) {
         earlyLeaveMinutes = earlyDiff;
-        punishmentReason = punishmentReason ? `${punishmentReason}, Early leave` : "Early leave";
         
         const calculatedPunishment = await calculatePunishment("EARLY_LEAVE", earlyLeaveMinutes);
-        if (config.enablePunishmentDeduction) {
-          punishmentAmount += calculatedPunishment;
-          if (punishmentAmount > 0) {
+        if (calculatedPunishment > 0) {
+          punishmentReason = punishmentReason ? `${punishmentReason}, EARLY_LEAVE` : "EARLY_LEAVE";
+          if (config.enablePunishmentDeduction) {
+            punishmentAmount += calculatedPunishment;
             reviewStatus = "DEDUCTED";
+          } else {
+            reviewStatus = "TEMPORARY_REVIEW";
           }
-        } else if (calculatedPunishment > 0) {
-          reviewStatus = "TEMPORARY_REVIEW";
+        } else {
+          punishmentReason = punishmentReason ? `${punishmentReason}, EARLY_LEAVE` : "EARLY_LEAVE";
         }
       }
       

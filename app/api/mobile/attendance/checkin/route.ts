@@ -139,16 +139,18 @@ export async function POST(request: Request) {
         lateMinutes = diffMinutes;
         isLate = true;
         status = "LATE";
-        punishmentReason = "Late check-in";
         
         const calculatedPunishment = await calculatePunishment("LATE", lateMinutes);
-        if (config.enablePunishmentDeduction) {
-          punishmentAmount = calculatedPunishment;
-          if (punishmentAmount > 0) {
+        if (calculatedPunishment > 0) {
+          punishmentReason = "LATE";
+          if (config.enablePunishmentDeduction) {
+            punishmentAmount = calculatedPunishment;
             reviewStatus = "DEDUCTED";
+          } else {
+            reviewStatus = "TEMPORARY_REVIEW";
           }
-        } else if (calculatedPunishment > 0) {
-          reviewStatus = "TEMPORARY_REVIEW";
+        } else {
+          punishmentReason = "LATE";
         }
       }
     }

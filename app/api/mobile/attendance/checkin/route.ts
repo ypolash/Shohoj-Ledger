@@ -18,20 +18,13 @@ export async function POST(req: Request) {
 
     console.log("Reached WIFI validation");
     const validation = await validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
-    
-    let isValid = validation.isValid;
-    const errorLower = validation.error?.toLowerCase() || "";
-
-    // TEMPORARY WIFI BYPASS - REMOVE BEFORE PRODUCTION
-    if (!isValid && (errorLower.includes("wi-fi") || errorLower.includes("network"))) {
-      console.log("TEMP TEST MODE - Wi-Fi validation bypassed");
-      isValid = true;
-    }
-
-    if (!isValid) {
+    if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";
+      const errorLower = validation.error?.toLowerCase() || "";
       
-      if (errorLower.includes("location") || errorLower.includes("gps") || errorLower.includes("radius")) {
+      if (errorLower.includes("wi-fi") || errorLower.includes("network")) {
+        code = "FORBIDDEN_WIFI";
+      } else if (errorLower.includes("location") || errorLower.includes("gps") || errorLower.includes("radius")) {
         code = "FORBIDDEN_LOCATION";
       }
 

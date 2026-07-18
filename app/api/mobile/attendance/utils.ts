@@ -31,8 +31,7 @@ export async function validateAttendanceRequest(
   }
 
   if (!wifiSsid || !wifiBssid) {
-    console.log("TEMP TEST - Wi-Fi validation bypassed");
-    // return { isValid: false, error: "Wi-Fi information is missing." };
+    return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
   const allowedNetwork = await prisma.allowedNetwork.findFirst({
@@ -40,9 +39,7 @@ export async function validateAttendanceRequest(
   });
 
   if (!allowedNetwork) {
-    // TEMPORARY DEBUG - REMOVE AFTER TESTING
-    console.log("Bypassing missing active network check for debugging");
-    // return { isValid: false, error: "No active office Wi-Fi configured." };
+    return { isValid: false, error: "No active office Wi-Fi configured." };
   } else {
     console.log("Stored SSID:", allowedNetwork.ssid);
     console.log("Stored BSSID:", allowedNetwork.bssid);
@@ -54,9 +51,6 @@ export async function validateAttendanceRequest(
     const isMatch = storedBssid === detectedBssid;
 
     if (!isMatch) {
-      // TEMPORARY DEBUG - REMOVE AFTER TESTING
-      console.log("Bypassing Wi-Fi mismatch check for debugging");
-      /*
       return { 
         isValid: false, 
         error: "Invalid network. Please connect to the office Wi-Fi.",
@@ -67,7 +61,6 @@ export async function validateAttendanceRequest(
           detectedSsid: wifiSsid
         }
       };
-      */
     }
   }
 

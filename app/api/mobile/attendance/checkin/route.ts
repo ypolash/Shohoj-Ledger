@@ -16,6 +16,34 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("=== WIFI DEBUG START ===");
+    console.log("Incoming SSID:", wifiSsid);
+    console.log("Incoming BSSID:", wifiBssid);
+
+    const allowedNetworks = await prisma.allowedNetwork.findMany({
+      where: { isActive: true }
+    });
+
+    console.log("Allowed Networks Count:", allowedNetworks.length);
+    allowedNetworks.forEach((n, i) => {
+      console.log(`Network ${i}:`, { ssid: n.ssid, bssid: n.bssid, active: n.isActive });
+    });
+
+    const incomingSsid = (wifiSsid || "").toLowerCase().trim();
+    const incomingBssid = (wifiBssid || "").toLowerCase().trim();
+    allowedNetworks.forEach((n, i) => {
+      const storedSsid = (n.ssid || "").toLowerCase().trim();
+      const storedBssid = (n.bssid || "").toLowerCase().trim();
+      console.log(`Compare ${i}:`, {
+        incomingSsid,
+        storedSsid,
+        ssidMatch: incomingSsid === storedSsid,
+        incomingBssid,
+        storedBssid,
+        bssidMatch: incomingBssid === storedBssid
+      });
+    });
+
     console.log("Reached WIFI validation");
     const validation = await validateAttendanceRequest(latitude, longitude, wifiSsid, wifiBssid);
     if (!validation.isValid) {

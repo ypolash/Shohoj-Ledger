@@ -116,7 +116,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const config = await getAttendanceConfig();
+    const config = await prisma.attendanceConfig.findFirst();
+    
+    console.log("=== ATTENDANCE CONFIG DEBUG ===");
+    console.log("DB shiftStart:", config?.shiftStart);
+    console.log("DB shiftEnd:", config?.shiftEnd);
+    console.log("DB gracePeriod:", config?.gracePeriod);
+
     const isFriday = serverTime.getDay() === 5;
     let status = "PRESENT";
     let lateMinutes = 0;
@@ -125,33 +131,51 @@ export async function POST(request: Request) {
     let punishmentReason: string | null = null;
     let punishmentAmount = 0;
 
-    if (isFriday && config.fridayOff) {
+    let shiftStartStr = config?.shiftStart || "09:00";
+    let startHour = 9;
+    let startMin = 0;
+    
+    if (shiftStartStr.includes(" ")) {
+      const [timePart, modifier] = shiftStartStr.split(" ");
+      let [hours, minutes] = timePart.split(":");
+      startHour = parseInt(hours, 10);
+      startMin = parseInt(minutes, 10);
+      
+      if (modifier.toUpperCase() === "PM" && startHour < 12) {
+        startHour += 12;
+      }
+      if (modifier.toUpperCase() === "AM" && startHour === 12) {
+        startHour = 0;
+      }
+    } else {
+      const parts = shiftStartStr.split(':');
+      startHour = parseInt(parts[0], 10);
+      startMin = parseInt(parts[1], 10);
+    }
+    
+    const shiftStartDate = new Date(today);
+    shiftStartDate.setHours(startHour, startMin, 0, 0);
+    
+    const lateAfter = new Date(shiftStartDate);
+    lateAfter.setMinutes(lateAfter.getMinutes() + (config?.gracePeriod || 0));
+
+    if (isFriday && config?.fridayOff) {
       status = "OFF_DAY_WORK";
       reviewStatus = "TEMPORARY_REVIEW";
       punishmentReason = "Off-day work";
     } else {
-      const [startHour, startMin] = config.shiftStart.split(':').map(Number);
-      const shiftStart = new Date(today);
-      shiftStart.setHours(startHour, startMin, 0, 0);
-      
-      const lateAfter = new Date(shiftStart);
-      lateAfter.setMinutes(lateAfter.getMinutes() + config.gracePeriod);
-      
       if (serverTime > lateAfter) {
         status = "LATE";
         isLate = true;
-        lateMinutes = Math.floor((serverTime.getTime() - shiftStart.getTime()) / 60000);
+        lateMinutes = Math.floor((serverTime.getTime() - shiftStartDate.getTime()) / 60000);
       } else {
         status = "PRESENT";
         lateMinutes = 0;
       }
       
-      console.log("Shift Start:", config.shiftStart);
-      console.log("Grace Period:", config.gracePeriod);
-      console.log("Late After:", lateAfter);
-      console.log("Check In:", serverTime);
-      console.log("Status:", status);
-      console.log("Late Minutes:", lateMinutes);
+      console.log("Shift Start Date:", shiftStartDate.toISOString());
+      console.log("Late After:", lateAfter.toISOString());
+      console.log("Check In Time:", serverTime.toISOString());
       
       if (isLate) {
         const rules = await prisma.punishmentSetting.findMany({
@@ -172,7 +196,7 @@ export async function POST(request: Request) {
           punishmentReason = "Late Arrival";
           reviewStatus = "TEMPORARY_REVIEW";
           
-          if (config.enablePunishmentDeduction) {
+          if (config?.enablePunishmentDeduction) {
             punishmentAmount = Number(matchedRule.amount);
           } else {
             punishmentAmount = 0;
@@ -228,6 +252,11 @@ export async function POST(request: Request) {
       success: true,
       message: "Check-in successful",
       serverTime: serverTime.toISOString(),
+      shiftStart: config?.shiftStart,
+      gracePeriod: config?.gracePeriod,
+      lateAfter: lateAfter.toISOString(),
+      status,
+      lateMinutes
     });
 
   } catch (error) {

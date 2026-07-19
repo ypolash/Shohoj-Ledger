@@ -5,68 +5,50 @@
 }
 
 .sidebar {
-  width: 72px;
-  background-color: #141625;
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  width: 80px;
+  background: linear-gradient(180deg, #16182D, #1C1F36);
+  border-right: none;
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   display: flex;
   flex-direction: column;
-  transition: width 250ms ease;
   overflow-x: hidden;
-  white-space: nowrap;
   z-index: 100;
-}
-
-.sidebar:hover {
-  width: 260px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 72px;
-  padding: 0 24px;
+  justify-content: center;
+  height: 80px;
   color: #fff;
-  font-size: 1.25rem;
-  font-weight: 700;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: none;
 }
 
 .brandIcon {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  background: linear-gradient(135deg, #a5b4fc, #6366f1);
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background: linear-gradient(135deg, #7C3AED, #9333EA);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  color: #11151F;
-}
-
-.brandText {
-  opacity: 0;
-  transform: translateX(10px);
-  transition: opacity 250ms ease, transform 250ms ease;
-}
-
-.sidebar:hover .brandText {
-  opacity: 1;
-  transform: translateX(0);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Slight gap that is small enough for most screens */
+  gap: 14px;
   flex: 1;
-  padding: 16px 8px;
-  overflow-y: hidden; /* Hide scrollbar completely */
+  padding: 16px 0;
+  overflow-y: hidden;
   scrollbar-width: none;
 }
 
@@ -74,83 +56,67 @@
   display: none;
 }
 
-.navSection {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 8px;
-}
-
-.sectionTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #64748b;
-  letter-spacing: 1px;
-  padding-left: 16px;
-  margin-bottom: 2px;
-  opacity: 0;
-  transition: opacity 250ms ease;
-}
-
-.sidebar:hover .sectionTitle {
-  opacity: 1;
-}
-
 .navLink {
-  padding: 0 17px; /* Vertical padding handled by flex height */
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  margin: 0 auto;
+  border-radius: 18px;
   color: #94a3b8;
-  font-weight: 500;
-  font-size: 15px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  transition: all 0.2s ease;
-  position: relative;
+  justify-content: center;
+  background: transparent;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
-  
-  /* Dynamic height magic to fit viewport without scrolling */
-  flex: 1 1 48px;
-  max-height: 48px;
-  min-height: 32px;
 }
 
 .navLink span.material-symbols-outlined {
-  font-size: 22px;
-  min-width: 22px;
-}
-
-.navText {
-  opacity: 0;
-  transform: translateX(10px);
-  transition: opacity 250ms ease, transform 250ms ease;
-}
-
-.sidebar:hover .navText {
-  opacity: 1;
-  transform: translateX(0);
+  font-size: 24px;
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1), color 250ms ease;
 }
 
 .navLink:hover {
-  background: #24283a;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+
+.navLink:hover span.material-symbols-outlined {
+  transform: scale(1.15);
   color: #fff;
 }
 
 .navLink.active {
-  background: linear-gradient(90deg, #6D5EF8, #8B5CF6);
-  color: white;
+  background: linear-gradient(135deg, #7C3AED, #9333EA);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4), 0 0 10px rgba(124, 58, 237, 0.2);
+}
+
+.navLink.active span.material-symbols-outlined {
+  transform: scale(1.05);
+  color: #fff;
+}
+
+.bottomSection {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 24px;
+}
+
+.separator {
+  height: 1px;
+  width: 40px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 auto;
+  border-radius: 1px;
 }
 
 .mainContent {
   flex: 1;
-  margin-left: 72px;
+  margin-left: 80px;
   padding: var(--spacing-8);
   min-width: 0;
-  transition: margin-left 250ms ease;
-}
-
-.sidebar:hover ~ .mainContent {
-  margin-left: 260px;
 }

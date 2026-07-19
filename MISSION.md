@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Upgraded the Loan Management module to exactly match the unified Enterprise SaaS UI system. Removed the static side-form, implemented a full-width tracking dashboard, added six dynamic metric cards (Total Loans, Active Loans, Outstanding Balance, Total Borrowed, Total Repaid, This Month Repayments), and a unified filter row. The frontend architecture is now standardized across Income, Expenses, Projects, Funds, Reserves, and Loans.
+- **Last major feature added:** Upgraded the Advance Management module to exactly match the unified Enterprise SaaS UI system. Removed the static side-form, implemented a full-width tracking dashboard, added six dynamic metric cards (Total Advances, Outstanding Advances, Total Advanced Amount, Total Recovered, This Month Advances, Recovery Rate), and a unified filter row. The frontend architecture is now standardized across Income, Expenses, Projects, Funds, Reserves, Loans, and Advances.
 - **Next Phase:** Continue aligning any remaining modules (Leads, Settlement) to this unified UI standard, and verify End-to-End Task Management and Attendance integration in the Android App.
 
 **Goal Pivots:**

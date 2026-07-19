@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Upgraded the Settlement Management module to match the unified Enterprise SaaS UI system. Removed the static form, implemented a full-width dashboard with six metric cards (Total Settlements, Completed/Pending Settlements, Total Amount, etc.), and integrated advanced filters, modals, and a detailed drawer view. The frontend architecture is now standardized across Income, Expenses, Projects, Funds, Reserves, Loans, Advances, and Settlements.
+- **Last major feature added:** Upgraded the Staff Management (Employees) module to match the unified Enterprise SaaS UI system. Replaced the card-based layout with a professional list view, added top KPI metrics (Total/Active/Inactive Employees, Total Monthly Salary), comprehensive filters, and a sliding drawer for detailed employee profiles. The frontend architecture is now strictly standardized across all finance modules and staff management.
 - **Next Phase:** Align the final remaining module (Leads) to this unified UI standard, and verify End-to-End Task Management and Attendance integration in the Android App.
 
 **Goal Pivots:**

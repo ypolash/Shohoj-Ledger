@@ -5,7 +5,7 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Redesigned the Staff Management (Payroll) module into a full-width dashboard matching the unified Enterprise SaaS UI system. Hidden the permanent generation form in favor of a clean, triggerable modal overlay. The enhanced table intelligently extracts and displays precise Additions (Allowances/Bonuses) and Deductions (Punishments/Leaves) from gross vs net calculations.
+- **Last major feature added:** Redesigned the left navigation sidebar into a modern collapsible design using Vanilla CSS, complete with hover-triggered expansion and smooth text slide/fade animations.
 - **Next Phase:** Align the final remaining module (Leads) to this unified UI standard, and verify End-to-End Task Management and Attendance integration in the Android App.
 
 **Goal Pivots:**

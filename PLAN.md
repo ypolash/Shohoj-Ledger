@@ -41,3 +41,11 @@ This plan outlines the end-to-end implementation for the Company Finance & Reven
 
 - [x] **6.1 Backup Automation:** Setup MinIO scripts for weekly backups and daily Postgres dumps.
 - [ ] **6.2 Coolify Deployment:** Finalize Docker configuration and environment variables for live server deployment.
+
+## Phase 7: UI Overhaul (Enterprise SaaS Redesign)
+
+- [x] **7.1 Foundation:** Initialize Next.js with Tailwind CSS, configure shadcn/ui components (`components.json`), and restore legacy CSS rules to prevent breaking old pages.
+- [x] **7.2 Dashboard Redesign:** Create `Sidebar`, `TopBar`, and completely overhaul `app/dashboard/page.tsx` with responsive layout and modern data visualization.
+- [ ] **7.3 Core Financials Redesign:** Redesign Income, Expenses, and Projects pages.
+- [ ] **7.4 Funds & Reserves:** Redesign Funds, Reserves, Advances, and Loans pages.
+- [ ] **7.5 Settlement & Management:** Redesign Settlement, Staff Management, Leaves, Payroll, and Settings.

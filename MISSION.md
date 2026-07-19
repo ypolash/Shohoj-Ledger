@@ -5,14 +5,13 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 
 **Current Status:**
 
-- **Last major feature added:** Transitioned the application to a modern enterprise SaaS design architecture using Next.js, Tailwind CSS, and shadcn/ui. Completed Phase 1 of the UI overhaul by fully redesigning the Dashboard with a new dark sidebar, top navigation, and responsive metric cards, while maintaining legacy CSS for backward compatibility of remaining modules.
-- **Next Phase:** Incrementally redesign the rest of the application modules (Income, Expenses, Projects, Funds, Settlement, etc.) using the new shadcn/ui design language to achieve a premium, unified CRM experience.
+- **Last major feature added:** Converted the attendance punishment system into an editable, modular system. Implemented `PunishmentSetting` and `AttendanceConfig` Prisma models. Added dynamic shift time, grace period, and punishment slab validations into the check-in and check-out APIs. Built a new "Settings" tab in the Staff Management dashboard to let admins seamlessly configure all global attendance settings.
+- **Next Phase:** Verify End-to-End Task Management and Attendance integration in the Android App (via home network testing), and proceed to polish HR operations.
 
 **Goal Pivots:**
 
 - Transitioned away from Better Auth towards a custom `jose` and `bcryptjs` JWT implementation (with backward compatibility) to support distinct Admin (User) and Employee login flows properly.
 - Temporarily relaxed strict GPS constraints (radius increased to 200km) and missing Wi-Fi checks to facilitate remote development and testing off-site.
-- **UI Pivot:** Abandoned custom vanilla CSS in favor of a robust Tailwind CSS + shadcn/ui component system to meet enterprise layout and aesthetic requirements.
 
 **Production Roadmap:**
 
@@ -26,8 +25,3 @@ Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income
 - [x] Implement Payroll Processing & Deductions
 - [x] Deploy to production via Coolify
 - [x] Implement Lead Management Module
-- [x] **UI Overhaul:** Setup Tailwind CSS, shadcn/ui, and Redesign Dashboard
-- [ ] **UI Overhaul:** Redesign Core Financials (Income, Expenses, Projects)
-- [ ] **UI Overhaul:** Redesign Management Modules (Funds, Reserves, Settlement)
-- [ ] **UI Overhaul:** Redesign Staff Operations (Attendance, Leaves, Settings)
-

@@ -14,8 +14,8 @@
   bottom: 0;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
   z-index: 100;
+  /* Removed overflow: hidden to allow tooltips to escape */
 }
 
 .brand {
@@ -48,8 +48,8 @@
   gap: 14px;
   flex: 1;
   padding: 16px 0;
-  overflow-y: hidden;
   scrollbar-width: none;
+  /* Removed overflow-y: hidden to allow tooltips to escape */
 }
 
 .nav::-webkit-scrollbar {
@@ -69,6 +69,7 @@
   background: transparent;
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  position: relative; /* Essential for tooltip positioning */
 }
 
 .navLink span.material-symbols-outlined {
@@ -96,6 +97,31 @@
 .navLink.active span.material-symbols-outlined {
   transform: scale(1.05);
   color: #fff;
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: absolute;
+  left: calc(100% + 28px); /* 16px (to edge of sidebar) + 12px (offset requested) = 28px */
+  top: 50%;
+  transform: translateY(-50%) translateX(-10px);
+  background: #1F2937;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.navLink:hover .tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 .bottomSection {

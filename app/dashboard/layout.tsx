@@ -24,50 +24,64 @@ export default function DashboardLayout({
           <div className={styles.brandIcon}>S</div>
         </div>
         <nav className={styles.nav}>
-          <Link href="/dashboard" className={`${styles.navLink} ${isActive('/dashboard') ? styles.active : ''}`} title="Dashboard">
+          <Link href="/dashboard" className={`${styles.navLink} ${isActive('/dashboard') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">home</span>
+            <div className={styles.tooltip}>Dashboard</div>
           </Link>
-          <Link href="/dashboard/income" className={`${styles.navLink} ${isActive('/dashboard/income') ? styles.active : ''}`} title="Income">
+          <Link href="/dashboard/income" className={`${styles.navLink} ${isActive('/dashboard/income') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">attach_money</span>
+            <div className={styles.tooltip}>Income</div>
           </Link>
-          <Link href="/dashboard/expenses" className={`${styles.navLink} ${isActive('/dashboard/expenses') ? styles.active : ''}`} title="Expenses">
+          <Link href="/dashboard/expenses" className={`${styles.navLink} ${isActive('/dashboard/expenses') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">money_off</span>
+            <div className={styles.tooltip}>Expenses</div>
           </Link>
-          <Link href="/dashboard/projects" className={`${styles.navLink} ${isActive('/dashboard/projects') ? styles.active : ''}`} title="Projects">
+          <Link href="/dashboard/projects" className={`${styles.navLink} ${isActive('/dashboard/projects') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">work</span>
+            <div className={styles.tooltip}>Projects</div>
           </Link>
-          <Link href="/dashboard/members" className={`${styles.navLink} ${isActive('/dashboard/members') ? styles.active : ''}`} title="Members">
+          <Link href="/dashboard/members" className={`${styles.navLink} ${isActive('/dashboard/members') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">group</span>
+            <div className={styles.tooltip}>Members</div>
           </Link>
-          <Link href="/dashboard/funds" className={`${styles.navLink} ${isActive('/dashboard/funds') ? styles.active : ''}`} title="Funds">
+          <Link href="/dashboard/funds" className={`${styles.navLink} ${isActive('/dashboard/funds') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">account_balance_wallet</span>
+            <div className={styles.tooltip}>Funds</div>
           </Link>
-          <Link href="/dashboard/reserves" className={`${styles.navLink} ${isActive('/dashboard/reserves') ? styles.active : ''}`} title="Reserves">
+          <Link href="/dashboard/reserves" className={`${styles.navLink} ${isActive('/dashboard/reserves') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">savings</span>
+            <div className={styles.tooltip}>Reserves</div>
           </Link>
-          <Link href="/dashboard/loans" className={`${styles.navLink} ${isActive('/dashboard/loans') ? styles.active : ''}`} title="Loans">
+          <Link href="/dashboard/loans" className={`${styles.navLink} ${isActive('/dashboard/loans') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">real_estate_agent</span>
+            <div className={styles.tooltip}>Loans</div>
           </Link>
-          <Link href="/dashboard/advances" className={`${styles.navLink} ${isActive('/dashboard/advances') ? styles.active : ''}`} title="Advances">
+          <Link href="/dashboard/advances" className={`${styles.navLink} ${isActive('/dashboard/advances') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">payments</span>
+            <div className={styles.tooltip}>Advances</div>
           </Link>
-          <Link href="/dashboard/settlement" className={`${styles.navLink} ${isActive('/dashboard/settlement') ? styles.active : ''}`} title="Settlement">
+          <Link href="/dashboard/settlement" className={`${styles.navLink} ${isActive('/dashboard/settlement') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">handshake</span>
+            <div className={styles.tooltip}>Settlement</div>
           </Link>
-          <Link href="/dashboard/staff-management" className={`${styles.navLink} ${isActive('/dashboard/staff-management') ? styles.active : ''}`} title="Staff Management">
+          <Link href="/dashboard/staff-management" className={`${styles.navLink} ${isActive('/dashboard/staff-management') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">badge</span>
+            <div className={styles.tooltip}>Staff Management</div>
           </Link>
-          <Link href="/dashboard/leads" className={`${styles.navLink} ${isActive('/dashboard/leads') ? styles.active : ''}`} title="Lead Management">
+          <Link href="/dashboard/leads" className={`${styles.navLink} ${isActive('/dashboard/leads') ? styles.active : ''}`}>
             <span className="material-symbols-outlined">track_changes</span>
+            <div className={styles.tooltip}>Lead Management</div>
           </Link>
           
           <div className={styles.bottomSection}>
             <div className={styles.separator}></div>
-            <Link href="/dashboard/attendance/settings" className={`${styles.navLink} ${isActive('/dashboard/attendance/settings') ? styles.active : ''}`} title="Settings">
+            <Link href="/dashboard/attendance/settings" className={`${styles.navLink} ${isActive('/dashboard/attendance/settings') ? styles.active : ''}`}>
               <span className="material-symbols-outlined">settings</span>
+              <div className={styles.tooltip}>Settings</div>
             </Link>
-            <Link href="#" className={styles.navLink} title="Log out">
+            <Link href="#" className={styles.navLink}>
               <span className="material-symbols-outlined">logout</span>
+              <div className={styles.tooltip}>Logout</div>
             </Link>
           </div>
         </nav>

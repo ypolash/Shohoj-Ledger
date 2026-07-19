@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import styles from "./styles.module.css";
+import styles from "../../income/page.module.css";
 
 export default function PunishmentSettingsPage() {
   const [config, setConfig] = useState<any>(null);
@@ -135,229 +135,243 @@ export default function PunishmentSettingsPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
+      <div className="animate-fade-in container" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
         Loading Settings...
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h2 className={styles.headerTitle}>
-          <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#60a5fa' }}>warning</span>
-          Attendance & Punishment Settings
-        </h2>
-        <p className={styles.headerDesc}>Configure global attendance limits and monetary penalty slabs.</p>
+    <div className="animate-fade-in container" style={{ maxWidth: '1400px' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
+        <div>
+          <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--primary)' }}>warning</span>
+            Attendance & Punishment Settings
+          </h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
+            Configure global attendance limits and monetary penalty slabs.
+          </p>
+        </div>
       </div>
 
-      {/* Global Configuration Card */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings</span> 
-            Global Settings
-          </h3>
-          <button 
-            onClick={saveConfig}
-            disabled={saving}
-            className={styles.primaryBtn}
-          >
-            {saving ? "Saving..." : "Save Config"}
-          </button>
-        </div>
+      <div className={styles.container}>
         
-        {config && (
-          <div className={styles.cardBody}>
-            <div className={styles.grid}>
-              <div className={styles.formGroup}>
-                <label>Grace Period (Minutes)</label>
-                <input 
-                  type="number" 
-                  value={config.gracePeriod}
-                  onChange={(e) => handleConfigChange('gracePeriod', parseInt(e.target.value))}
-                  className={styles.input}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Shift Start Time (HH:mm)</label>
-                <input 
-                  type="time" 
-                  value={config.shiftStart}
-                  onChange={(e) => handleConfigChange('shiftStart', e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Shift End Time (HH:mm)</label>
-                <input 
-                  type="time" 
-                  value={config.shiftEnd}
-                  onChange={(e) => handleConfigChange('shiftEnd', e.target.value)}
-                  className={styles.input}
-                />
-              </div>
-            </div>
-            
-            <div className={styles.checkboxContainer}>
-              <label className={styles.checkboxLabel}>
-                <input 
-                  type="checkbox" 
-                  checked={config.fridayOff}
-                  onChange={(e) => handleConfigChange('fridayOff', e.target.checked)}
-                />
-                Friday is an Off-Day
-              </label>
-              
-              <label className={styles.checkboxLabel}>
-                <input 
-                  type="checkbox" 
-                  checked={config.enablePunishmentDeduction}
-                  onChange={(e) => handleConfigChange('enablePunishmentDeduction', e.target.checked)}
-                />
-                Enable Monetary Deductions (Warning Only if disabled)
-              </label>
-            </div>
+        {/* Global Configuration Card */}
+        <div className="glass-card" style={{ padding: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-6)', paddingBottom: 'var(--spacing-4)', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings</span> 
+              Global Settings
+            </h3>
+            <button onClick={saveConfig} disabled={saving} className="btn btn-primary">
+              {saving ? "Saving..." : "Save Config"}
+            </button>
           </div>
-        )}
-      </div>
-
-      {/* Punishment Rules */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>Punishment Slabs (Rules)</h3>
-          <button 
-            onClick={() => openModal()}
-            className={styles.primaryBtn}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> Add Rule
-          </button>
+          
+          {config && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-6)' }}>
+                <div className={styles.formGroup}>
+                  <label className="label">Grace Period (Minutes)</label>
+                  <input 
+                    type="number" 
+                    value={config.gracePeriod}
+                    onChange={(e) => handleConfigChange('gracePeriod', parseInt(e.target.value))}
+                    className="input"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className="label">Shift Start Time (HH:mm)</label>
+                  <input 
+                    type="time" 
+                    value={config.shiftStart}
+                    onChange={(e) => handleConfigChange('shiftStart', e.target.value)}
+                    className="input"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className="label">Shift End Time (HH:mm)</label>
+                  <input 
+                    type="time" 
+                    value={config.shiftEnd}
+                    onChange={(e) => handleConfigChange('shiftEnd', e.target.value)}
+                    className="input"
+                  />
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: 'var(--spacing-6)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text)' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={config.fridayOff}
+                    onChange={(e) => handleConfigChange('fridayOff', e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                  />
+                  Friday is an Off-Day
+                </label>
+                
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text)' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={config.enablePunishmentDeduction}
+                    onChange={(e) => handleConfigChange('enablePunishmentDeduction', e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                  />
+                  Enable Monetary Deductions (Warning Only if disabled)
+                </label>
+              </div>
+            </div>
+          )}
         </div>
-        
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>Type</th>
-                <th className={styles.th}>Condition</th>
-                <th className={styles.th}>Amount (৳)</th>
-                <th className={styles.th}>Status</th>
-                <th className={styles.th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.length === 0 ? (
+
+        {/* Punishment Rules */}
+        <div className="glass-card" style={{ padding: 'var(--spacing-6)', marginTop: 'var(--spacing-6)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-6)', paddingBottom: 'var(--spacing-4)', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ margin: 0 }}>Punishment Slabs (Rules)</h3>
+            <button onClick={() => openModal()} className="btn btn-primary">
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span> Add Rule
+            </button>
+          </div>
+          
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
                 <tr>
-                  <td colSpan={5} className={styles.td} style={{ textAlign: 'center', padding: '2rem' }}>
-                    No punishment rules defined yet.
-                  </td>
+                  <th>Type</th>
+                  <th>Condition</th>
+                  <th style={{ textAlign: 'right' }}>Amount (৳)</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ) : (
-                rules.map((rule) => (
-                  <tr key={rule.id}>
-                    <td className={styles.td}>
-                      <span className={styles.typeBadge}>{rule.type.replace('_', ' ')}</span>
-                    </td>
-                    <td className={styles.td}>
-                      {rule.fromMinutes} to {rule.toMinutes} mins
-                    </td>
-                    <td className={styles.td} style={{ color: '#f87171', fontWeight: 'bold' }}>
-                      ৳{rule.amount}
-                    </td>
-                    <td className={styles.td}>
-                      <button
-                        onClick={() => toggleRuleActive(rule.id, !rule.active)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                      >
-                        <span className={`${styles.badge} ${rule.active ? styles.active : styles.inactive}`}>
-                          {rule.active ? 'Active' : 'Disabled'}
-                        </span>
-                      </button>
-                    </td>
-                    <td className={styles.td}>
-                      <div className={styles.actions}>
-                        <button onClick={() => openModal(rule)} className={`${styles.iconBtn} ${styles.editBtn}`} title="Edit">
-                          ✎
-                        </button>
-                        <button onClick={() => deleteRule(rule.id)} className={`${styles.iconBtn} ${styles.deleteBtn}`} title="Delete">
-                          🗑
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {rules.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                      No punishment rules defined yet.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  rules.map((rule) => (
+                    <tr key={rule.id} className={styles.clickableRow}>
+                      <td>
+                        <span className={`${styles.badge} ${styles['badge-partial']}`}>
+                          {rule.type.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>
+                        {rule.fromMinutes} to {rule.toMinutes} mins
+                      </td>
+                      <td style={{ color: 'var(--danger)', fontWeight: 'bold', textAlign: 'right' }}>
+                        ৳{rule.amount}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          onClick={() => toggleRuleActive(rule.id, !rule.active)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                        >
+                          <span className={`${styles.badge} ${rule.active ? styles['badge-paid'] : styles['badge-unpaid']}`}>
+                            {rule.active ? 'Active' : 'Disabled'}
+                          </span>
+                        </button>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => openModal(rule)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--border)' }}>
+                            Edit
+                          </button>
+                          <button onClick={() => deleteRule(rule.id)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* Modal */}
       {isModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h2>{editingRule ? "Edit Rule" : "Add Rule"}</h2>
-            
-            <div className={styles.formGroup}>
-              <label>Type</label>
-              <select 
-                value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value})}
-                className={styles.input}
-              >
-                <option value="LATE">LATE</option>
-                <option value="EARLY_LEAVE">EARLY LEAVE</option>
-                <option value="ABSENT">ABSENT</option>
-              </select>
+        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{editingRule ? "Edit Rule" : "Add Rule"}</h2>
+              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </div>
             
-            <div className={styles.grid} style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className={styles.formGroup}>
-                <label>From (Mins)</label>
+                <label className="label">Type</label>
+                <select 
+                  value={formData.type}
+                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  className="input"
+                >
+                  <option value="LATE">LATE</option>
+                  <option value="EARLY_LEAVE">EARLY LEAVE</option>
+                  <option value="ABSENT">ABSENT</option>
+                </select>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className={styles.formGroup}>
+                  <label className="label">From (Mins)</label>
+                  <input 
+                    type="number" 
+                    value={formData.fromMinutes}
+                    onChange={(e) => setFormData({...formData, fromMinutes: parseInt(e.target.value)})}
+                    className="input"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className="label">To (Mins)</label>
+                  <input 
+                    type="number" 
+                    value={formData.toMinutes}
+                    onChange={(e) => setFormData({...formData, toMinutes: parseInt(e.target.value)})}
+                    className="input"
+                  />
+                </div>
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label className="label">Amount (৳)</label>
                 <input 
                   type="number" 
-                  value={formData.fromMinutes}
-                  onChange={(e) => setFormData({...formData, fromMinutes: parseInt(e.target.value)})}
-                  className={styles.input}
+                  value={formData.amount}
+                  onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
+                  className="input"
                 />
               </div>
-              <div className={styles.formGroup}>
-                <label>To (Mins)</label>
+              
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text)' }}>
                 <input 
-                  type="number" 
-                  value={formData.toMinutes}
-                  onChange={(e) => setFormData({...formData, toMinutes: parseInt(e.target.value)})}
-                  className={styles.input}
+                  type="checkbox" 
+                  checked={formData.active}
+                  onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
                 />
+                Active
+              </label>
+              
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <button onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>
+                  Cancel
+                </button>
+                <button onClick={saveRule} className="btn btn-primary" style={{ flex: 1 }}>
+                  Save Rule
+                </button>
               </div>
-            </div>
-            
-            <div className={styles.formGroup}>
-              <label>Amount (৳)</label>
-              <input 
-                type="number" 
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
-                className={styles.input}
-              />
-            </div>
-            
-            <label className={styles.checkboxLabel} style={{ marginBottom: '1rem' }}>
-              <input 
-                type="checkbox" 
-                checked={formData.active}
-                onChange={(e) => setFormData({...formData, active: e.target.checked})}
-              />
-              Active
-            </label>
-            
-            <div className={styles.modalActions}>
-              <button onClick={() => setIsModalOpen(false)} className={styles.cancelBtn}>
-                Cancel
-              </button>
-              <button onClick={saveRule} className={styles.saveBtn}>
-                Save Rule
-              </button>
             </div>
           </div>
         </div>,

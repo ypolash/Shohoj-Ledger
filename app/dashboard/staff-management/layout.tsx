@@ -25,9 +25,9 @@ export default function StaffManagementLayout({
   ];
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      <div className="glass-card topo-bg" style={{ padding: '8px', borderRadius: '16px' }}>
+      <div className="glass-card topo-bg" style={{ padding: '12px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', border: 'none' }}>
         <nav className={styles.tabContainer}>
           {tabs.map((tab) => {
             const isActive = pathname === tab.path;
@@ -43,6 +43,11 @@ export default function StaffManagementLayout({
             );
           })}
         </nav>
+        
+        <Link href="/dashboard/staff-management/employees?new=true" className="btn btn-primary" style={{ whiteSpace: 'nowrap', flexShrink: 0, padding: '10px 20px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+          Add Employee
+        </Link>
       </div>
 
       <div className={styles.content}>
@@ -51,4 +56,3 @@ export default function StaffManagementLayout({
     </div>
   );
 }
-

@@ -1,11 +1,15 @@
 .tabContainer {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex: 1;
 }
 
 .tabContainer::-webkit-scrollbar { 
-  display: none;  /* Safari and Chrome */
+  display: none; 
 }
 
 .tab {
@@ -13,23 +17,40 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  border-radius: 12px;
-  color: #94a3b8;
+  border-radius: 20px;
+  color: var(--text-muted, #94a3b8);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  transition: all 250ms ease;
+  white-space: nowrap;
+}
+
+.tab span.material-symbols-outlined {
+  color: var(--text-muted, #94a3b8);
+  transition: color 250ms ease;
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f8fafc;
+  background: rgba(124, 58, 237, 0.1);
+  color: #7C3AED;
+}
+
+.tab:hover span.material-symbols-outlined {
+  color: #7C3AED;
 }
 
 .tab.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: #818cf8;
-  font-weight: 600;
+  background: linear-gradient(90deg, #7C3AED, #9333EA);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+  transform: scale(1.02);
+}
+
+.tab.active span.material-symbols-outlined {
+  color: #ffffff;
 }
 
 .content {

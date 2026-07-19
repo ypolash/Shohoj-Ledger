@@ -63,20 +63,24 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px; /* Slight gap that is small enough for most screens */
   flex: 1;
-  padding: 24px 8px;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  padding: 16px 8px;
+  overflow-y: hidden; /* Hide scrollbar completely */
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
 }
 
 .navSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 4px;
+  margin-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 16px;
+  padding-top: 8px;
 }
 
 .sectionTitle {
@@ -85,7 +89,7 @@
   color: #64748b;
   letter-spacing: 1px;
   padding-left: 16px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   opacity: 0;
   transition: opacity 250ms ease;
 }
@@ -95,7 +99,7 @@
 }
 
 .navLink {
-  padding: 12px 17px;
+  padding: 0 17px; /* Vertical padding handled by flex height */
   border-radius: 14px;
   color: #94a3b8;
   font-weight: 500;
@@ -106,6 +110,11 @@
   transition: all 0.2s ease;
   position: relative;
   text-decoration: none;
+  
+  /* Dynamic height magic to fit viewport without scrolling */
+  flex: 1 1 48px;
+  max-height: 48px;
+  min-height: 32px;
 }
 
 .navLink span.material-symbols-outlined {

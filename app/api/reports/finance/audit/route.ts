@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         reportName,
         action, // "GENERATED", "EXPORTED", "PRINTED"
         format, // "CSV", "PDF", etc.
-        filters: filters ? JSON.stringify(filters) : null,
+        filters: filters ? JSON.stringify(filters) : undefined,
       }
     });
 

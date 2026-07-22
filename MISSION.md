@@ -4,11 +4,17 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
-Successfully completed **Version 1.1 — Phase 5D: Enterprise Business Intelligence & Executive Analytics**. 
-Created a unified Executive Dashboard that aggregates metrics across Accounting, HR, CRM, and Projects into a real-time, singular pane of glass with `chart.js` visualizations and robust `ReportAudit` tracking.
+- **Phase 6A Complete (Enterprise Inventory & Asset Management):**
+  - **Inventory Subsystem:** Implemented Product Catalog, Categories, Warehouses, and Suppliers.
+  - **Stock Ledger:** Designed a double-entry `StockTransaction` ledger model for stock ins, outs, adjustments, and transfers.
+  - **Purchasing:** Implemented Purchase Orders and PO item tracking.
+  - **Fixed Assets:** Developed company asset registration mapping to employees and tracking depreciation/warranty.
+  - **Inventory Dashboard:** Built an operations-wide KPI dashboard aggregating stock levels and values.
+  - **Audit:** Intercepted all critical inventory movements inside `InventoryAudit`.
 
-## Goal Pivots
-- Shifted towards a highly modular schema for HR by separating Departments and Designations into standalone entities with references to Employee.
+## Goal Pivots & Architectural Decisions
+- **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
+- **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
 - Decoupled employment history into a robust `EmployeeLifecycle` timeline event model for better auditability and historical tracking instead of directly mutating all fields without record.
 - Added explicit schema models `PayrollAudit` and enhanced `SalaryPayment` fields to rigidly enforce audit logging, allowing robust tracking of approvals and workflow changes while isolating companies via `companyId`.
 - **Phase 4C Pivot**: Chose to layer the ledger asynchronously over existing endpoints rather than mutating the original CRUD architectures, preserving absolute backward compatibility and avoiding regression in the Attendance/HR flows.

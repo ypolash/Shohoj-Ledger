@@ -1226,3 +1226,33 @@ model GlobalAuditLog {
   @@index([companyId, userId])
   @@index([companyId, entityType, entityId])
 }
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String // JSON stringified for arrays/objects
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FeatureFlag {
+  id                String   @id @default(uuid())
+  key               String   @unique
+  description       String?
+  isEnabled         Boolean  @default(false)
+  rolloutPercentage Int      @default(100) // 0-100
+  enabledCompanyIds String[] // Array of company IDs that have this enabled (bypasses rollout if present)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model SystemBackup {
+  id          String    @id @default(uuid())
+  fileName    String
+  fileSize    BigInt?
+  status      String    @default("PENDING") // PENDING, SUCCESS, FAILED
+  triggeredBy String? // User ID who triggered it, or System
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+}

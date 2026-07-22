@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const rbacGuard = await requirePermission(["VIEW_AUDIT", "VIEW_ACTIVITY"]);
+    const rbacGuard = await requirePermission("VIEW_AUDIT");
     if (rbacGuard) return rbacGuard;
 
     const url = new URL(req.url);

@@ -4,14 +4,14 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
-- **Phase 6C Complete (Enterprise Audit Log & Activity Center):**
-  - **Global Audit Engine:** Created a single `GlobalAuditLog` schema to chronologically track every module's core CRUD events across the platform.
-  - **Secret Sanitization:** Developed `auditService.ts` which intercepts network headers (IP, User Agent) and automatically recursive-masks passwords, tokens, and API keys before database serialization.
-  - **Activity Timeline Dashboard:** Built a highly filterable UI supporting cross-module JSON deep dives and JSON diffs.
-  - **Export Framework:** Bound to the `EXPORT_AUDIT` RBAC role to strictly regulate raw CSV generation.
+- **Phase 6D Complete (Enterprise System Administration & Platform Operations):**
+  - **Platform Architecture Extensions:** Introduced `SystemSetting`, `FeatureFlag`, and `SystemBackup` schemas to track meta-information that sits *above* individual companies.
+  - **System Dashboard:** Developed the Platform Operations center showing active tenants, user counts, CPU load, and RAM telemetry across the server.
+  - **Tenant Governance:** Activated `MANAGE_COMPANIES` endpoints to allow platform admins to globally suspend or reactivate companies instantly.
+  - **Simulated Backups & Toggles:** Created the scaffold for triggering database backups, configuring global variables (maintenance mode, defaults), and feature flags capable of gradual rollouts.
 
 ## Goal Pivots & Architectural Decisions
-- **Non-Destructive Integration:** To obey strict backward-compatibility rules on older modules, the `GlobalAuditLog` operates as a parallel hook (`logAudit()`). Modules don't need to be rewritten to support the global log; they simply invoke the fire-and-forget service.
+- **Bypassing Tenant Boundaries By Design:** To fulfill Phase 6D's requirement of a "Platform Admin View," we specifically built `/api/system/...` endpoints that completely ignore the `where: { companyId }` filter. However, these endpoints strictly demand `SYSTEM_ADMIN` or equivalent overarching roles, preventing normal tenant admins from escaping their isolation.
 - **Abstract Service Hook:** Instead of embedding Prisma inserts into every Payroll/Inventory API, we created a single `lib/notifications/notificationService.ts` that safely checks user opt-in preferences before generating rows. If an employee disables 'INVENTORY' alerts, the DB completely drops the message.
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.

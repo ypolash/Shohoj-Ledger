@@ -1,7 +1,9 @@
 export type PayrollCalculationResult = {
   basicSalary: number;
-  grossSalary: number;
-  netSalary: number;
+  grossSalary: number; // Basic + Bonuses
+  netSalary: number;   // Gross - Deductions
+  totalDeductions: number;
+  totalBonuses: number;
   deductions: { type: string; amount: number; reason: string }[];
   bonuses: { type: string; amount: number; reason: string }[];
   workingDays: number;
@@ -14,6 +16,8 @@ export function calculatePayroll(
   leaveRequests: any[], // Array of approved/unapproved leave requests for the month
   bonuses: any[] // Pre-created bonuses for the month
 ): PayrollCalculationResult {
+  // Prevent division by zero
+  if (workingDays <= 0) workingDays = 22; 
   const dailyRate = basicSalary / workingDays;
   const deductions: { type: string; amount: number; reason: string }[] = [];
   let totalDeductionAmount = 0;
@@ -22,7 +26,6 @@ export function calculatePayroll(
   attendances.forEach(att => {
     if (att.status === 'ABSENT') {
       // Check if they have an approved leave for this date
-      // Note: In real logic, we'd check if the att.date falls within an APPROVED leaveRequest startDate-endDate
       const hasApprovedLeave = leaveRequests.some(lr => 
         lr.status === 'APPROVED' && 
         new Date(att.date).getTime() >= new Date(lr.startDate).getTime() && 
@@ -57,6 +60,17 @@ export function calculatePayroll(
         totalDeductionAmount += dailyRate;
       }
     }
+    
+    // Process punishment deduction if any exists from attendance review
+    if (att.punishmentAmount && Number(att.punishmentAmount) > 0) {
+       const amount = Number(att.punishmentAmount);
+       deductions.push({
+          type: 'OTHER',
+          amount: amount,
+          reason: `Punishment on ${new Date(att.date).toLocaleDateString()}: ${att.punishmentReason || 'N/A'}`
+       });
+       totalDeductionAmount += amount;
+    }
   });
 
   // Calculate total bonuses
@@ -71,12 +85,16 @@ export function calculatePayroll(
     };
   });
 
-  const netSalary = basicSalary - totalDeductionAmount + totalBonusAmount;
+  let netSalary = basicSalary - totalDeductionAmount + totalBonusAmount;
+  // Ensure net salary is not negative
+  if (netSalary < 0) netSalary = 0;
 
   return {
     basicSalary,
-    grossSalary: basicSalary + totalBonusAmount, // Gross is before deductions
-    netSalary: netSalary > 0 ? netSalary : 0,
+    grossSalary: basicSalary + totalBonusAmount, // Gross is basic + bonuses
+    netSalary,
+    totalDeductions: totalDeductionAmount,
+    totalBonuses: totalBonusAmount,
     deductions,
     bonuses: bonusDetails,
     workingDays

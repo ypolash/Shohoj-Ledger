@@ -60,7 +60,7 @@ export default function EssPayrollPage() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <button className="btn btn-secondary" onClick={() => downloadPdf(slip.id)}>
+                      <button className="btn btn-secondary" onClick={() => window.open(`/dashboard/staff-management/payroll/payslip/${slip.id}`, '_blank')}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span> Download
                       </button>
                     </td>

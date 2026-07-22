@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from "../../income/page.module.css";
+import Link from 'next/link';
 
 type SalaryPayment = {
   id: string;
@@ -15,6 +16,16 @@ type SalaryPayment = {
   paymentDate: string;
 };
 
+type PayrollSummary = {
+  currentMonth: string;
+  totalSalary: number;
+  totalBonus: number;
+  totalDeductions: number;
+  totalNetPay: number;
+  pendingCount: number;
+  processedCount: number;
+};
+
 type Employee = {
   id: string;
   firstName: string;
@@ -25,6 +36,7 @@ type Employee = {
 
 export default function PayrollManagementPage() {
   const [payments, setPayments] = useState<SalaryPayment[]>([]);
+  const [summary, setSummary] = useState<PayrollSummary | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -32,8 +44,8 @@ export default function PayrollManagementPage() {
   
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterMonth, setFilterMonth] = useState("ALL");
-  const [filterYear, setFilterYear] = useState("ALL");
+  const [filterMonth, setFilterMonth] = useState((new Date().getMonth() + 1).toString());
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -47,14 +59,16 @@ export default function PayrollManagementPage() {
   useEffect(() => {
     fetchPayments();
     fetchEmployees();
-  }, []);
+  }, [filterMonth, filterYear]);
 
   const fetchPayments = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch('/api/payroll');
+      const res = await fetch(`/api/payroll?month=${filterMonth}&year=${filterYear}`);
       if (res.ok) {
         const data = await res.json();
-        setPayments(Array.isArray(data) ? data : []);
+        setPayments(data.payments || []);
+        setSummary(data.summary || null);
       }
     } catch (e) {
       console.error(e);
@@ -86,10 +100,8 @@ export default function PayrollManagementPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        // Show success toast (native alert for now, can be replaced)
-        alert('Payroll processed successfully!');
+        alert('Payroll drafted successfully!');
         setIsModalOpen(false);
-        // Reset form
         setSelectedEmp('');
         fetchPayments();
       } else {
@@ -99,6 +111,25 @@ export default function PayrollManagementPage() {
       alert('Failed to process payroll');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const updatePayrollStatus = async (id: string, newStatus: string) => {
+    if (!confirm(`Are you sure you want to change status to ${newStatus}?`)) return;
+    try {
+      const res = await fetch(`/api/payroll/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchPayments();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (e) {
+      alert('Failed to update status');
     }
   };
 
@@ -116,11 +147,9 @@ export default function PayrollManagementPage() {
   let filteredPayments = payments.filter(p => {
     const searchString = `${p.employee.firstName} ${p.employee.lastName} ${p.employee.employeeId} ${p.id}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-    const matchesMonth = filterMonth === "ALL" || p.month.toString() === filterMonth;
-    const matchesYear = filterYear === "ALL" || p.year.toString() === filterYear;
     const matchesStatus = filterStatus === "ALL" || p.status === filterStatus;
     
-    return matchesSearch && matchesMonth && matchesYear && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   // Pagination Logic
@@ -129,8 +158,9 @@ export default function PayrollManagementPage() {
 
   const getStatusBadgeClass = (status: string) => {
     if (status === 'PAID') return styles['badge-paid'];
-    if (status === 'PENDING') return styles['badge-unpaid'];
-    if (status === 'PROCESSING') return styles['badge-partial'];
+    if (status === 'PENDING' || status === 'DRAFT' || status === 'CALCULATED') return styles['badge-unpaid'];
+    if (status === 'APPROVED') return styles['badge-partial'];
+    if (status === 'CANCELLED') return styles['badge-danger'] || 'badge bg-danger';
     return '';
   };
 
@@ -140,16 +170,46 @@ export default function PayrollManagementPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
         <div>
-          <h1 style={{ margin: 0 }}>Payroll</h1>
+          <h1 style={{ margin: 0 }}>Payroll Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
-            Manage employee payroll, salary generation and payment history.
+            Manage employee payroll, approvals, and history.
           </p>
         </div>
         <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          Generate Payroll
+          Generate Draft
         </button>
       </div>
+
+      {/* Summary Cards */}
+      {summary && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+          <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Net Pay</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{formatCurrency(summary.totalNetPay)}</div>
+          </div>
+          <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Salary (Basic)</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{formatCurrency(summary.totalSalary)}</div>
+          </div>
+          <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Bonus</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)' }}>{formatCurrency(summary.totalBonus)}</div>
+          </div>
+          <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Deductions</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--danger)' }}>{formatCurrency(summary.totalDeductions)}</div>
+          </div>
+          <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Status Pending</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>{summary.pendingCount}</div>
+          </div>
+          <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Status Processed</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)' }}>{summary.processedCount}</div>
+          </div>
+        </div>
+      )}
 
       <div className={styles.container}>
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
@@ -157,7 +217,7 @@ export default function PayrollManagementPage() {
           {/* Filters Section */}
           <div className={styles.filtersRow}>
             <div className={styles.filterGroup} style={{ flex: 1.5 }}>
-              <label className="label">Search Payroll</label>
+              <label className="label">Search</label>
               <input 
                 type="text" 
                 className="input" 
@@ -169,16 +229,14 @@ export default function PayrollManagementPage() {
             <div className={styles.filterGroup}>
               <label className="label">Month</label>
               <select className="input" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
-                <option value="ALL">All Months</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                  <option key={m} value={m}>{getMonthName(m)}</option>
+                  <option key={m} value={m.toString()}>{getMonthName(m)}</option>
                 ))}
               </select>
             </div>
             <div className={styles.filterGroup}>
               <label className="label">Year</label>
               <select className="input" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
-                <option value="ALL">All Years</option>
                 <option value="2026">2026</option>
                 <option value="2025">2025</option>
               </select>
@@ -187,9 +245,10 @@ export default function PayrollManagementPage() {
               <label className="label">Status</label>
               <select className="input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                 <option value="ALL">All Statuses</option>
+                <option value="DRAFT">Draft</option>
+                <option value="APPROVED">Approved</option>
                 <option value="PAID">Paid</option>
-                <option value="PENDING">Pending</option>
-                <option value="PROCESSING">Processing</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
             <div className={styles.filterGroup} style={{ flex: 'none', paddingBottom: '2px' }}>
@@ -207,20 +266,19 @@ export default function PayrollManagementPage() {
                 <tr>
                   <th>Payroll ID</th>
                   <th>Employee</th>
-                  <th>Department</th>
                   <th>Month/Year</th>
-                  <th style={{ textAlign: 'right' }}>Basic Salary</th>
-                  <th style={{ textAlign: 'right' }}>Allowances/Bonuses</th>
+                  <th style={{ textAlign: 'right' }}>Basic</th>
+                  <th style={{ textAlign: 'right' }}>Bonus</th>
                   <th style={{ textAlign: 'right' }}>Deductions</th>
                   <th style={{ textAlign: 'right' }}>Net Salary</th>
-                  <th style={{ textAlign: 'center' }}>Payment Status</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'right' }}>Payment Date</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td colSpan={11} style={{ textAlign: 'center' }}>Loading history...</td></tr>
+                  <tr><td colSpan={10} style={{ textAlign: 'center' }}>Loading history...</td></tr>
                 ) : paginatedPayments.length > 0 ? (
                   paginatedPayments.map((pay) => {
                     const additions = Number(pay.grossSalary) - Number(pay.basicSalary);
@@ -233,7 +291,6 @@ export default function PayrollManagementPage() {
                           <div>{pay.employee.firstName} {pay.employee.lastName}</div>
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{pay.employee.employeeId}</div>
                         </td>
-                        <td style={{ color: 'var(--text-muted)' }}>{pay.employee.department || '-'}</td>
                         <td>{getMonthName(pay.month)} {pay.year}</td>
                         <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(pay.basicSalary)}</td>
                         <td style={{ textAlign: 'right', color: additions > 0 ? 'var(--success)' : 'inherit' }}>
@@ -251,13 +308,24 @@ export default function PayrollManagementPage() {
                           </span>
                         </td>
                         <td style={{ textAlign: 'right', fontSize: '13px', color: 'var(--text-muted)' }}>
-                          {new Date(pay.paymentDate).toLocaleDateString()}
+                          {pay.status === 'PAID' ? new Date(pay.paymentDate).toLocaleDateString() : '-'}
                         </td>
                         <td>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--border)' }}>
-                              Payslip
-                            </button>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            {pay.status === 'DRAFT' && (
+                               <button onClick={() => updatePayrollStatus(pay.id, 'APPROVED')} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--success)', color: 'var(--success)' }}>Approve</button>
+                            )}
+                            {pay.status === 'APPROVED' && (
+                               <button onClick={() => updatePayrollStatus(pay.id, 'PAID')} className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '12px' }}>Pay</button>
+                            )}
+                            {pay.status !== 'CANCELLED' && pay.status !== 'PAID' && (
+                               <button onClick={() => updatePayrollStatus(pay.id, 'CANCELLED')} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--danger)', color: 'var(--danger)' }}>Cancel</button>
+                            )}
+                            <Link href={`/dashboard/staff-management/payroll/payslip/${pay.id}`}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--border)' }}>
+                                Payslip
+                                </button>
+                            </Link>
                           </div>
                         </td>
                       </tr>
@@ -265,10 +333,10 @@ export default function PayrollManagementPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={11} style={{ textAlign: "center", padding: "var(--spacing-6)" }}>
+                    <td colSpan={10} style={{ textAlign: "center", padding: "var(--spacing-6)" }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: 'var(--text-muted)' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.5 }}>payments</span>
-                        <p>No payroll records found.</p>
+                        <p>No payroll records found for this month.</p>
                       </div>
                     </td>
                   </tr>
@@ -309,7 +377,7 @@ export default function PayrollManagementPage() {
         <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
             <div className={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Generate Payroll</h3>
+              <h3 style={{ margin: 0 }}>Generate Draft Payroll</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -346,7 +414,7 @@ export default function PayrollManagementPage() {
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isProcessing}>
-                  {isProcessing ? 'Processing...' : 'Calculate & Pay Salary'}
+                  {isProcessing ? 'Processing...' : 'Generate Draft'}
                 </button>
               </div>
             </form>

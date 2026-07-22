@@ -8,16 +8,18 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function POST(request: Request) {
-  const rbacGuard = await requirePermission("PAYROLL_MANAGE");
+  const rbacGuard = await requirePermission("PAYROLL_GENERATE");
   if (rbacGuard) return rbacGuard;
 
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "PAYROLL");
+  const companyFilter = await withCompany();
+  const companyId = companyFilter.companyId;
+
+  const moduleGuard = await requireModule(companyId || "", "PAYROLL");
   if (moduleGuard) return moduleGuard;
 
   try {
     const data = await request.json();
-    const { employeeId, month, year, workingDays } = data;
+    const { employeeId, month, year, workingDays, status = 'DRAFT' } = data;
     
     if (!employeeId || !month || !year || !workingDays) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -25,18 +27,18 @@ export async function POST(request: Request) {
 
     // Check if payroll already processed
     const existing = await prisma.salaryPayment.findFirst({
-      where: { ...(await withCompany()), employeeId, month, year }
+      where: { ...companyFilter, employeeId, month, year }
     });
     if (existing) {
-      return NextResponse.json({ error: 'Payroll already processed for this month' }, { status: 400 });
+      return NextResponse.json({ error: 'Payroll already generated for this month' }, { status: 400 });
     }
 
-    const employee = await prisma.employee.findUnique({ where: { ...(await withCompany()), id: employeeId } });
+    const employee = await prisma.employee.findUnique({ where: { ...companyFilter, id: employeeId } });
     if (!employee) return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
 
     // Fetch Attendances for the month
     const attendances = await prisma.attendance.findMany({
-      where: { ...(await withCompany()),
+      where: { ...companyFilter,
         employeeId,
         date: {
           gte: new Date(year, month - 1, 1),
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
 
     // Fetch Leaves
     const leaveRequests = await prisma.leaveRequest.findMany({
-      where: { ...(await withCompany()),
+      where: { ...companyFilter,
         employeeId,
         startDate: {
           gte: new Date(year, month - 1, 1),
@@ -57,33 +59,23 @@ export async function POST(request: Request) {
 
     // Fetch Bonuses
     const bonuses = await prisma.bonus.findMany({
-      where: { ...(await withCompany()), employeeId, month, year }
+      where: { ...companyFilter, employeeId, month, year }
     });
 
     const payroll = calculatePayroll(Number(employee.basicSalary), workingDays, attendances, leaveRequests, bonuses);
 
-    // Create Expense Record
-    const expense = await prisma.expense.create({
-      data: {
-        category: 'Payroll',
-        amount: payroll.netSalary,
-        paymentMethod: 'Bank Transfer', // Default or UI provided
-        approvalStatus: 'Approved',
-        description: `Salary Payment for ${employee.firstName} ${employee.lastName} (${month}/${year})`
-      }
-    });
-
     // Save Payroll Record
     const payment = await prisma.salaryPayment.create({
       data: {
+        companyId,
         employeeId,
         month,
         year,
         basicSalary: payroll.basicSalary,
         grossSalary: payroll.grossSalary,
         netSalary: payroll.netSalary,
-        status: 'PAID',
-        expenseId: expense.id
+        status: status, // DRAFT, CALCULATED, APPROVED, PAID
+        // expenseId is left null until PAID
       }
     });
 
@@ -91,6 +83,7 @@ export async function POST(request: Request) {
     for (const ded of payroll.deductions) {
       await prisma.salaryDeduction.create({
         data: {
+          companyId,
           employeeId,
           month,
           year,
@@ -104,19 +97,20 @@ export async function POST(request: Request) {
     // Save Payslip
     await prisma.payslip.create({
       data: {
+        companyId,
         employeeId,
         month,
         year,
         totalEarnings: payroll.grossSalary,
-        totalDeductions: payroll.basicSalary - payroll.netSalary + payroll.grossSalary - payroll.basicSalary,
+        totalDeductions: payroll.totalDeductions,
         netPay: payroll.netSalary
       }
     });
 
     return NextResponse.json(payment, { status: 201 });
   } catch (error) {
-    console.error('Failed to process payroll:', error);
-    return NextResponse.json({ error: 'Failed to process payroll' }, { status: 500 });
+    console.error('Failed to generate payroll:', error);
+    return NextResponse.json({ error: 'Failed to generate payroll' }, { status: 500 });
   }
 }
 
@@ -124,17 +118,59 @@ export async function GET(request: Request) {
   const rbacGuard = await requirePermission("PAYROLL_VIEW");
   if (rbacGuard) return rbacGuard;
 
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "PAYROLL");
+  const companyFilter = await withCompany();
+  const companyId = companyFilter.companyId;
+
+  const moduleGuard = await requireModule(companyId || "", "PAYROLL");
   if (moduleGuard) return moduleGuard;
 
   try {
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get('month') ? parseInt(searchParams.get('month')!) : new Date().getMonth() + 1;
+    const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : new Date().getFullYear();
+
     const payments = await prisma.salaryPayment.findMany({
+      where: { ...companyFilter },
       include: { employee: true },
       orderBy: { createdAt: 'desc' }
     });
-    return NextResponse.json(payments);
+
+    // Calculate Summary Metrics for the given month/year
+    const currentMonthPayments = payments.filter(p => p.month === month && p.year === year);
+    
+    let totalSalary = 0;
+    let totalBonus = 0;
+    let totalDeductions = 0;
+    let totalNetPay = 0;
+    let pendingCount = 0;
+    let processedCount = 0;
+
+    currentMonthPayments.forEach(p => {
+      totalSalary += Number(p.basicSalary);
+      totalBonus += (Number(p.grossSalary) - Number(p.basicSalary));
+      totalDeductions += (Number(p.grossSalary) - Number(p.netSalary));
+      totalNetPay += Number(p.netSalary);
+
+      if (p.status === 'PAID') {
+        processedCount++;
+      } else if (p.status !== 'CANCELLED') {
+        pendingCount++;
+      }
+    });
+
+    const summary = {
+      currentMonth: `${month}/${year}`,
+      totalSalary,
+      totalBonus,
+      totalDeductions,
+      totalNetPay,
+      pendingCount,
+      processedCount
+    };
+
+    return NextResponse.json({ summary, payments });
   } catch (error) {
+    console.error("Failed to fetch payroll:", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

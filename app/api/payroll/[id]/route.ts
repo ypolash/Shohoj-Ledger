@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from "@/lib/rbac/permissionGuard";
-import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
+import { withCompany } from "@/lib/company/companyFilter";
 import { requireModule } from "@/lib/modules/moduleGuard";
+import { getSession } from "@/lib/session";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,11 +14,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const moduleGuard = await requireModule(companyId || "", "PAYROLL");
   if (moduleGuard) return moduleGuard;
 
+  const session = await getSession();
+  const userId = session?.user?.id;
+  const userRole = session?.user?.role || 'user';
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const data = await request.json();
-    const { status } = data;
+    const { status, paymentMethod, transactionRef, paymentNote, remarks } = data;
 
-    if (!['DRAFT', 'CALCULATED', 'APPROVED', 'PAID', 'CANCELLED'].includes(status)) {
+    const validStatuses = ['DRAFT', 'CALCULATED', 'SUBMITTED', 'APPROVED', 'PAID', 'LOCKED', 'ARCHIVED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
 
@@ -27,6 +37,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (rbacGuard) return rbacGuard;
     } else if (status === 'PAID') {
       const rbacGuard = await requirePermission("PAYROLL_PAY");
+      if (rbacGuard) return rbacGuard;
+    } else if (status === 'LOCKED') {
+      const rbacGuard = await requirePermission("PAYROLL_LOCK");
+      if (rbacGuard) return rbacGuard;
+    } else if (status === 'ARCHIVED') {
+      const rbacGuard = await requirePermission("PAYROLL_ARCHIVE");
       if (rbacGuard) return rbacGuard;
     } else {
       const rbacGuard = await requirePermission("PAYROLL_GENERATE");
@@ -42,8 +58,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Payroll not found' }, { status: 404 });
     }
 
-    if (existingPayment.status === 'PAID' && status !== 'CANCELLED') {
-      return NextResponse.json({ error: 'Cannot modify a paid payroll' }, { status: 400 });
+    if (existingPayment.status === 'LOCKED' && status !== 'ARCHIVED') {
+      return NextResponse.json({ error: 'Cannot modify a locked payroll' }, { status: 400 });
+    }
+    
+    if (existingPayment.status === 'ARCHIVED') {
+      return NextResponse.json({ error: 'Cannot modify an archived payroll' }, { status: 400 });
+    }
+
+    if (existingPayment.status === 'PAID' && ['DRAFT', 'CALCULATED', 'SUBMITTED', 'APPROVED'].includes(status)) {
+      return NextResponse.json({ error: 'Cannot revert a paid payroll to an earlier state' }, { status: 400 });
     }
 
     // If transitioning to PAID, create the expense
@@ -54,15 +78,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           companyId,
           category: 'Payroll',
           amount: existingPayment.netSalary,
-          paymentMethod: 'Bank Transfer',
+          paymentMethod: paymentMethod || 'Bank Transfer',
           approvalStatus: 'Approved',
-          description: `Salary Payment for ${existingPayment.employee.firstName} ${existingPayment.employee.lastName} (${existingPayment.month}/${existingPayment.year})`
+          description: `Salary Payment for ${existingPayment.employee.firstName} ${existingPayment.employee.lastName} (${existingPayment.month}/${existingPayment.year})${transactionRef ? ' | Ref: ' + transactionRef : ''}`
         }
       });
       expenseId = expense.id;
     }
 
-    // If cancelling a PAID payroll, we should technically handle the expense, but we'll keep it simple or mark expense as rejected
+    // If cancelling a PAID payroll
     if (status === 'CANCELLED' && expenseId) {
        await prisma.expense.update({
           where: { id: expenseId },
@@ -75,7 +99,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       data: { 
         status,
         expenseId,
-        ...(status === 'PAID' ? { paymentDate: new Date() } : {})
+        ...(status === 'PAID' ? { 
+          paymentDate: new Date(),
+          paymentMethod: paymentMethod || 'Bank Transfer',
+          transactionRef: transactionRef || null,
+          paymentNote: paymentNote || null
+        } : {})
+      }
+    });
+
+    // Audit Logging
+    await prisma.payrollAudit.create({
+      data: {
+        companyId: companyId!,
+        salaryPaymentId: id,
+        userId: userId,
+        role: userRole,
+        oldStatus: existingPayment.status,
+        newStatus: status,
+        remarks: remarks || `Status changed from ${existingPayment.status} to ${status}`
       }
     });
 

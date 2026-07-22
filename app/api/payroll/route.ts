@@ -2,6 +2,7 @@ import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculatePayroll } from '@/lib/payroll';
+import { getSession } from '@/lib/session';
 
 import { requireModule } from "@/lib/modules/moduleGuard";
 
@@ -16,6 +17,14 @@ export async function POST(request: Request) {
 
   const moduleGuard = await requireModule(companyId || "", "PAYROLL");
   if (moduleGuard) return moduleGuard;
+
+  const session = await getSession();
+  const userId = session?.user?.id;
+  const userRole = session?.user?.role || 'user';
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     const data = await request.json();
@@ -104,6 +113,19 @@ export async function POST(request: Request) {
         totalEarnings: payroll.grossSalary,
         totalDeductions: payroll.totalDeductions,
         netPay: payroll.netSalary
+      }
+    });
+
+    // Audit Logging
+    await prisma.payrollAudit.create({
+      data: {
+        companyId,
+        salaryPaymentId: payment.id,
+        userId: userId,
+        role: userRole,
+        oldStatus: null,
+        newStatus: status,
+        remarks: 'Payroll manually generated'
       }
     });
 

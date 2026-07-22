@@ -20,6 +20,7 @@ model User {
   role          String        @default("member")
   sessions      Session[]
   accounts      Account[]
+  payrollAudits PayrollAudit[]
 }
 
 model Session {
@@ -328,11 +329,16 @@ model SalaryPayment {
   basicSalary Decimal
   grossSalary Decimal
   netSalary   Decimal
-  paymentDate DateTime @default(now())
-  status      String   @default("PAID") // PAID
-  expenseId   String? // Link to Expense model record in Shohoj Ledger
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  paymentDate    DateTime?
+  status         String   @default("PAID") // DRAFT, CALCULATED, SUBMITTED, APPROVED, PAID, LOCKED, ARCHIVED
+  expenseId      String? // Link to Expense model record in Shohoj Ledger
+  paymentMethod  String?
+  transactionRef String?
+  paymentNote    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  audits         PayrollAudit[]
 
   @@index([companyId])
 }
@@ -509,6 +515,7 @@ model Company {
   departments         Department[]
   designations        Designation[]
   lifecycles          EmployeeLifecycle[]
+  payrollAudits       PayrollAudit[]
 }
 
 model CompanySetting {
@@ -627,4 +634,22 @@ model EmployeeLifecycle {
 
   @@index([companyId])
   @@index([employeeId])
+}
+
+model PayrollAudit {
+  id              String   @id @default(uuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  salaryPaymentId String
+  salaryPayment   SalaryPayment @relation(fields: [salaryPaymentId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  role            String
+  oldStatus       String?
+  newStatus       String
+  remarks         String?
+  createdAt       DateTime @default(now())
+
+  @@index([companyId])
+  @@index([salaryPaymentId])
 }

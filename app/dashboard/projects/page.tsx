@@ -1,405 +1,160 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import styles from "../income/page.module.css"; // Reuse the layout grid styles
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-type Project = {
-  id: string;
-  name: string;
-  clientName: string | null;
-  status: string;
-  totalIncome: number;
-  totalExpense: number;
-  profitability: number;
-  createdAt: string;
-};
-
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Layout State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  // Filters & Pagination State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("ALL");
-  const [filterClient, setFilterClient] = useState("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  // Form State
-  const [name, setName] = useState("");
-  const [clientName, setClientName] = useState("");
-
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch("/api/projects");
-      const data = await res.json();
-      setProjects(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function ProjectDashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchProjects();
+    fetchStats();
   }, []);
 
-  // Derived Metrics
-  const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => p.status === "ACTIVE").length;
-  const completedProjects = projects.filter(p => p.status === "COMPLETED").length;
-  const pendingProjects = projects.filter(p => p.status === "PENDING").length; // Assuming 'PENDING' might exist
-  const totalProfit = projects.reduce((sum, p) => sum + p.profitability, 0);
-
-  // Unique filters
-  const uniqueClients = Array.from(new Set(projects.map(p => p.clientName).filter(Boolean)));
-
-  // Filter & Sort Logic
-  let filteredProjects = projects.filter(p => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = p.name.toLowerCase().includes(searchLower) || 
-                          (p.clientName?.toLowerCase() || "").includes(searchLower);
-    const matchesStatus = filterStatus === "ALL" || p.status === filterStatus;
-    const matchesClient = filterClient === "ALL" || p.clientName === filterClient;
-    return matchesSearch && matchesStatus && matchesClient;
-  });
-
-  filteredProjects.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  // Pagination Logic
-  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / itemsPerPage));
-  const paginatedProjects = filteredProjects.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchStats = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          clientName,
-        }),
-      });
-
+      const res = await fetch(`/api/projects/dashboard`);
       if (res.ok) {
-        setName("");
-        setClientName("");
-        setIsModalOpen(false);
-        fetchProjects();
+        const json = await res.json();
+        setData(json);
       }
-    } catch (err) {
-      console.error("Failed to create project", err);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const updateStatus = async (id: string, newStatus: string) => {
-    try {
-      const res = await fetch("/api/projects", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: newStatus }),
-      });
-      if (res.ok) {
-        fetchProjects();
-        if (selectedProject?.id === id) {
-          setSelectedProject({ ...selectedProject, status: newStatus });
-        }
-      }
-    } catch (err) {
-      console.error("Failed to update status", err);
-    }
+  const formatCurrency = (val: string | number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(val || 0));
   };
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(val);
-  };
-
-  const getProfitabilityColor = (val: number) => {
-    if (val > 0) return "var(--success)";
-    if (val < 0) return "var(--danger)";
-    return "var(--text-muted)";
-  };
-
-  const openNewProjectModal = () => {
-    setName("");
-    setClientName("");
-    setIsModalOpen(true);
-  };
+  const metrics = data?.metrics || {};
+  const deadlines = data?.upcomingDeadlines || [];
+  const activity = data?.recentActivity || [];
 
   return (
-    <div className="animate-fade-in container" style={{ maxWidth: '1400px' }}>
+    <div className="animate-fade-in container">
+      
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
-        <h1 style={{ margin: 0 }}>Project Management</h1>
-        <button onClick={openNewProjectModal} className="btn btn-primary">
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-          New Project
-        </button>
+        <div>
+          <h1 style={{ margin: 0 }}>Project Portfolio Management</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
+            Overview of all enterprise projects, budgets, and workloads.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link href="/dashboard/projects/list" className="btn btn-primary">
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>list_alt</span>
+            View All Projects
+          </Link>
+        </div>
       </div>
 
-      <div className={styles.container}>
-        {/* Top Section Metrics */}
-        <div className={styles.metricsGrid}>
-          <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Total Projects</div>
-            <div className={styles.metricValue}>{totalProjects}</div>
-          </div>
-          <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Active Projects</div>
-            <div className={styles.metricValue} style={{ color: 'var(--primary)' }}>{activeProjects}</div>
-          </div>
-          <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Completed Projects</div>
-            <div className={styles.metricValue} style={{ color: 'var(--success)' }}>{completedProjects}</div>
-          </div>
-          <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Pending Projects</div>
-            <div className={styles.metricValue} style={{ color: 'var(--warning)' }}>{pendingProjects}</div>
-          </div>
-          <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Total Budget</div>
-            <div className={styles.metricValue} style={{ color: 'var(--text-muted)' }}>{formatCurrency(0)}</div>
-          </div>
-          <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Total Profit</div>
-            <div className={styles.metricValue} style={{ color: getProfitabilityColor(totalProfit) }}>{formatCurrency(totalProfit)}</div>
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+        
+        {/* KPI Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-5)' }}>
+          {[
+            { label: 'Active Projects', value: metrics.activeProjects, color: 'var(--primary)' },
+            { label: 'Completed Projects', value: metrics.completedProjects, color: 'var(--success)' },
+            { label: 'Delayed Projects', value: metrics.delayedProjects, color: 'var(--danger)' },
+            { label: 'Avg Progress', value: `${metrics.averageProgress || 0}%`, color: 'var(--success)' },
+            { label: 'Budget Usage', value: `${metrics.budgetUsage || 0}%`, color: 'var(--warning)' },
+            { label: 'Total Budget', value: formatCurrency(metrics.totalBudget), color: 'var(--text)' },
+            { label: 'Total Actual Cost', value: formatCurrency(metrics.totalCost), color: 'var(--danger)' },
+          ].map((kpi, idx) => (
+            <div key={idx} className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
+              <h3 style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>{kpi.label}</h3>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: kpi.color, marginTop: '8px' }}>
+                {isLoading ? '...' : kpi.value}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          {/* Filters Section */}
-          <div className={styles.filtersRow}>
-            <div className={styles.filterGroup} style={{ flex: 2 }}>
-              <label className="label">Search Projects</label>
-              <input 
-                type="text" 
-                className="input" 
-                placeholder="Search by project or client name..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className={styles.filterGroup}>
-              <label className="label">Status</label>
-              <select className="input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                <option value="ALL">All Statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="PENDING">Pending</option>
-              </select>
-            </div>
-            <div className={styles.filterGroup}>
-              <label className="label">Client</label>
-              <select className="input" value={filterClient} onChange={(e) => setFilterClient(e.target.value)}>
-                <option value="ALL">All Clients</option>
-                {uniqueClients.map((c, i) => <option key={i} value={c as string}>{c}</option>)}
-              </select>
-            </div>
-            <div className={styles.filterGroup}>
-              <label className="label">Category</label>
-              <select className="input" disabled>
-                <option>All Categories</option>
-              </select>
-            </div>
-            <div className={styles.filterGroup} style={{ flex: 'none', paddingBottom: '2px' }}>
-              <button className="btn btn-secondary" onClick={() => window.print()}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-                Export
-              </button>
-            </div>
-          </div>
-
-          {/* Projects Table */}
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Project Name</th>
-                  <th>Client</th>
-                  <th>Category</th>
-                  <th>Manager</th>
-                  <th>Start Date</th>
-                  <th style={{ textAlign: 'right' }}>Budget</th>
-                  <th style={{ textAlign: 'right' }}>Revenue</th>
-                  <th style={{ textAlign: 'right' }}>Profit</th>
-                  <th style={{ textAlign: 'center' }}>Progress</th>
-                  <th style={{ textAlign: 'center' }}>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={11} style={{ textAlign: 'center' }}>Loading...</td></tr>
-                ) : paginatedProjects.length > 0 ? (
-                  paginatedProjects.map((proj) => (
-                    <tr key={proj.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedProject(proj)}>
-                      <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{proj.name}</td>
-                      <td>{proj.clientName || '-'}</td>
-                      <td style={{ color: 'var(--text-muted)' }}>-</td>
-                      <td style={{ color: 'var(--text-muted)' }}>-</td>
-                      <td>{new Date(proj.createdAt).toLocaleDateString()}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>-</td>
-                      <td style={{ textAlign: 'right', color: "var(--success)" }}>+{formatCurrency(proj.totalIncome)}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600, color: getProfitabilityColor(proj.profitability) }}>
-                        {proj.profitability > 0 ? '+' : ''}{formatCurrency(proj.profitability)}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                          <div style={{ width: proj.status === 'COMPLETED' ? '100%' : '50%', height: '100%', background: proj.status === 'COMPLETED' ? 'var(--success)' : 'var(--primary)' }}></div>
-                        </div>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span className={`${styles.badge} ${proj.status === 'ACTIVE' ? styles['badge-partial'] : styles['badge-paid']}`}>
-                          {proj.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                           <button onClick={(e) => { e.stopPropagation(); setSelectedProject(proj); }} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }}>Details</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={11} style={{ textAlign: "center", padding: "var(--spacing-6)" }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--text-muted)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.5 }}>folder_open</span>
-                        <p>No projects found matching your criteria.</p>
+        {/* Layout for Deadlines & Activity */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-6)' }}>
+          
+          {/* Deadlines */}
+          <div className="glass-card">
+            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--danger)' }}>warning</span>
+              Upcoming Deadlines
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {!isLoading && deadlines.length > 0 ? (
+                deadlines.map((d: any, idx: number) => {
+                  const isOverdue = new Date(d.date).getTime() < new Date().getTime();
+                  return (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: 'var(--background)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 500 }}>{d.name}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Project Delivery</span>
                       </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ color: isOverdue ? 'var(--danger)' : 'var(--warning)', fontWeight: 'bold', fontSize: '14px' }}>
+                          {new Date(d.date).toLocaleDateString()}
+                        </span>
+                        <span style={{ fontSize: '11px', color: isOverdue ? 'var(--danger)' : 'var(--text-muted)' }}>
+                          {isOverdue ? 'OVERDUE' : 'UPCOMING'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No upcoming deadlines.</div>
+              )}
+            </div>
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of {filteredProjects.length} entries
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
-                  className="btn btn-secondary" 
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                >
-                  Previous
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                >
-                  Next
-                </button>
-              </div>
+          {/* Recent Activity Timeline */}
+          <div className="glass-card">
+            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="material-symbols-outlined">history</span>
+              Recent Portfolio Activity
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '19px', top: '10px', bottom: '10px', width: '2px', backgroundColor: 'var(--border)', zIndex: 0 }}></div>
+              {!isLoading && activity.length > 0 ? (
+                activity.map((act: any) => (
+                  <div key={act.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
+                    <div style={{ 
+                      width: '40px', height: '40px', borderRadius: '50%', 
+                      backgroundColor: 'var(--primary)', color: 'white',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                        {act.type.includes('TASK') ? 'task_alt' : 'folder'}
+                      </span>
+                    </div>
+                    <div style={{ backgroundColor: 'var(--background-alt)', padding: '12px', borderRadius: '8px', flex: 1, border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <strong style={{ fontSize: '14px' }}>{act.project?.name}</strong>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {new Date(act.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text)' }}>
+                        {act.description}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        By {act.performedBy?.name || 'System'}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No recent activity.</div>
+              )}
             </div>
-          )}
+          </div>
+
         </div>
       </div>
-
-      {/* New Project Modal */}
-      {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Start New Project</h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.formGroup}>
-                <label className="label">Project Name</label>
-                <input required className="input" placeholder="e.g. Q3 Marketing Campaign" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className="label">Client Name (Optional)</label>
-                <input className="input" placeholder="e.g. Acme Corp" value={clientName} onChange={(e) => setClientName(e.target.value)} />
-              </div>
-
-              <div style={{ display: 'flex', gap: '16px', marginTop: 'var(--spacing-4)' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Create Project
-                </button>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Project Details Modal/Drawer */}
-      {selectedProject && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedProject(null)}>
-          <div className={styles.modalContent} style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div>
-                <h2 style={{ margin: 0 }}>{selectedProject.name}</h2>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '4px' }}>
-                  Client: {selectedProject.clientName || 'Internal'} • Started: {new Date(selectedProject.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-              <button onClick={() => setSelectedProject(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--spacing-4)', marginBottom: 'var(--spacing-6)' }}>
-              <div style={{ padding: 'var(--spacing-4)', background: 'var(--surface-light)', borderRadius: 'var(--radius)' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Revenue</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(selectedProject.totalIncome)}</div>
-              </div>
-              <div style={{ padding: 'var(--spacing-4)', background: 'var(--surface-light)', borderRadius: 'var(--radius)' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Expenses</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--danger)' }}>{formatCurrency(selectedProject.totalExpense)}</div>
-              </div>
-              <div style={{ padding: 'var(--spacing-4)', background: 'var(--surface-light)', borderRadius: 'var(--radius)' }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Profitability</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 600, color: getProfitabilityColor(selectedProject.profitability) }}>{formatCurrency(selectedProject.profitability)}</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 'var(--spacing-6)' }}>
-              <h4 style={{ marginBottom: 'var(--spacing-4)' }}>Project Actions & Status</h4>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <span className={`${styles.badge} ${selectedProject.status === 'ACTIVE' ? styles['badge-partial'] : styles['badge-paid']}`}>
-                  Current Status: {selectedProject.status}
-                </span>
-                
-                {selectedProject.status === 'ACTIVE' && (
-                  <button onClick={() => updateStatus(selectedProject.id, "COMPLETED")} className="btn btn-secondary">
-                    Mark as Completed
-                  </button>
-                )}
-                {selectedProject.status === 'COMPLETED' && (
-                  <button onClick={() => updateStatus(selectedProject.id, "ACTIVE")} className="btn btn-secondary">
-                    Reopen Project
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '16px', marginTop: 'var(--spacing-6)', paddingTop: 'var(--spacing-4)', borderTop: '1px solid var(--border)' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setSelectedProject(null)} style={{ flex: 1 }}>
-                Close Details
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

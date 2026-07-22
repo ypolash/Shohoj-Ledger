@@ -8,22 +8,23 @@ datasource db {
 }
 
 model User {
-  id             String         @id @default(uuid())
-  companyId      String?
-  platformRole   PlatformRole?
-  name           String
-  email          String         @unique
-  emailVerified  Boolean        @default(false)
-  image          String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  role           String         @default("member")
-  sessions       Session[]
-  accounts       Account[]
-  payrollAudits  PayrollAudit[]
-  ledgerEntries  LedgerEntry[]
-  reportAudits   ReportAudit[]
-  leadActivities LeadActivity[]
+  id                String            @id @default(uuid())
+  companyId         String?
+  platformRole      PlatformRole?
+  name              String
+  email             String            @unique
+  emailVerified     Boolean           @default(false)
+  image             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  role              String            @default("member")
+  sessions          Session[]
+  accounts          Account[]
+  payrollAudits     PayrollAudit[]
+  ledgerEntries     LedgerEntry[]
+  reportAudits      ReportAudit[]
+  leadActivities    LeadActivity[]
+  projectActivities ProjectActivity[]
 }
 
 model Session {
@@ -67,14 +68,34 @@ model Verification {
 }
 
 model Project {
-  id         String   @id @default(uuid())
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id])
-  name       String
-  status     String
-  clientName String?
-  createdAt  DateTime @default(now())
+  id              String     @id @default(uuid())
+  companyId       String?
+  company         Company?   @relation(fields: [companyId], references: [id])
+  projectCode     String?
+  name            String
+  description     String?
+  category        String?
+  priority        String?    @default("Medium")
+  status          String     @default("Draft")
+  progress        Int?       @default(0)
+  clientName      String?
+  leadId          String?
+  lead            Lead?      @relation(fields: [leadId], references: [id])
+  managerId       String?
+  manager         Employee?  @relation("ProjectManager", fields: [managerId], references: [id])
+  teamMembers     Employee[] @relation("ProjectTeam")
+  startDate       DateTime?
+  endDate         DateTime?
+  estimatedBudget Decimal?
+  actualCost      Decimal?   @default(0)
+  tags            String[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
+  tasks      Task[]
+  activities ProjectActivity[]
+
+  @@unique([companyId, projectCode])
   @@index([companyId])
 }
 
@@ -253,6 +274,8 @@ model Employee {
 
   lifecycleEvents EmployeeLifecycle[]
   leads           Lead[]
+  managedProjects Project[]           @relation("ProjectManager")
+  teamProjects    Project[]           @relation("ProjectTeam")
 
   @@index([companyId])
 }
@@ -261,17 +284,24 @@ model Task {
   id                   String    @id @default(uuid())
   companyId            String?
   company              Company?  @relation(fields: [companyId], references: [id])
+  projectId            String?
+  project              Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignedToEmployeeId String?
   employee             Employee? @relation(fields: [assignedToEmployeeId], references: [employeeId])
   title                String
   description          String?
   priority             String?   @default("Medium")
-  status               String    @default("Pending") // Pending, In Progress, Completed
+  status               String    @default("To Do") // To Do, In Progress, Review, Testing, Completed
   dueDate              DateTime?
+  estimatedHours       Decimal?  @default(0)
+  actualHours          Decimal?  @default(0)
+  checklist            Json?
+  attachments          Json?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
   @@index([companyId])
+  @@index([projectId])
 }
 
 model Attendance {
@@ -425,6 +455,7 @@ model Lead {
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
   activities          LeadActivity[]
+  projects            Project[]
 
   @@index([status])
   @@index([serviceType])
@@ -549,6 +580,7 @@ model Company {
   ledgerEntries       LedgerEntry[]
   reportAudits        ReportAudit[]
   leadActivities      LeadActivity[]
+  projectActivities   ProjectActivity[]
 }
 
 model CompanySetting {
@@ -732,4 +764,24 @@ model ReportAudit {
 
   @@index([companyId])
   @@index([reportName])
+}
+
+model ProjectActivity {
+  id            String   @id @default(uuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskId        String? // Optional, if activity relates to a specific task
+  type          String // PROJECT_CREATED, PROJECT_UPDATED, PROJECT_STATUS, TASK_CREATED, TASK_ASSIGNED, TASK_STATUS
+  description   String?
+  oldValue      String?
+  newValue      String?
+  performedById String
+  performedBy   User     @relation(fields: [performedById], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([projectId])
+  @@index([taskId])
 }

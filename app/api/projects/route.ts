@@ -1,114 +1,138 @@
-import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-import { requireModule } from "@/lib/modules/moduleGuard";
-
+import { getCompanyId, getSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
-  const rbacGuard = await requirePermission("PROJECT_VIEW");
-  if (rbacGuard) return rbacGuard;
-
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "PROJECTS");
-  if (moduleGuard) return moduleGuard;
-
+export async function GET(req: Request) {
   try {
-    const projects = await prisma.project.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // To calculate profitability, we fetch related incomes and expenses for these projects
-    // Note: projectId is stored as a string field in Income/Expense
-    const projectIds = projects.map(p => p.id);
+    const rbacGuard = await requirePermission("VIEW_PROJECTS");
+    if (rbacGuard) return rbacGuard;
+
+    const url = new URL(req.url);
+    const search = url.searchParams.get("search") || "";
+    const status = url.searchParams.get("status");
+    const managerId = url.searchParams.get("managerId");
+    const client = url.searchParams.get("client");
+
+    const where: any = { companyId };
     
-    const incomes = await prisma.income.groupBy({
-      by: ['projectId'],
-      where: { ...(await withCompany()), projectId: { in: projectIds }, paymentStatus: { in: ["PAID", "PARTIAL"] } },
-      _sum: { received: true }
-    });
-
-    const expenses = await prisma.expense.groupBy({
-      by: ['projectId'],
-      where: { ...(await withCompany()), projectId: { in: projectIds }, approvalStatus: "APPROVED" },
-      _sum: { amount: true }
-    });
-
-    // Map the totals back to the projects
-    const projectsWithTotals = projects.map(project => {
-      const incomeSum = incomes.find(i => i.projectId === project.id)?._sum.received || 0;
-      const expenseSum = expenses.find(e => e.projectId === project.id)?._sum.amount || 0;
-      return {
-        ...project,
-        totalIncome: Number(incomeSum),
-        totalExpense: Number(expenseSum),
-        profitability: Number(incomeSum) - Number(expenseSum)
-      };
-    });
-
-    return NextResponse.json(projectsWithTotals);
-  } catch (error) {
-    console.error("Error fetching projects:", error);
-    return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
-  }
-}
-
-export async function POST(request: Request) {
-  const rbacGuard = await requirePermission("PROJECT_MANAGE");
-  if (rbacGuard) return rbacGuard;
-
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "PROJECTS");
-  if (moduleGuard) return moduleGuard;
-
-  try {
-    const body = await request.json();
-    const { name, clientName } = body;
-
-    if (!name) {
-      return NextResponse.json({ error: "Missing project name" }, { status: 400 });
+    if (status) where.status = status;
+    if (managerId) where.managerId = managerId;
+    
+    if (search || client) {
+      const q = search || client;
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { projectCode: { contains: q, mode: 'insensitive' } },
+        { clientName: { contains: q, mode: 'insensitive' } },
+        { tags: { has: q } },
+      ];
     }
 
-    const project = await prisma.project.create({
-      data: {
-        name,
-        clientName,
-        status: "ACTIVE",
+    const projects = await prisma.project.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        manager: { select: { firstName: true, lastName: true } },
+        teamMembers: { select: { id: true, firstName: true, lastName: true, email: true } },
+        tasks: { select: { id: true, status: true, estimatedHours: true, actualHours: true } }
       }
     });
 
-    return NextResponse.json(project, { status: 201 });
+    return NextResponse.json({ projects });
   } catch (error) {
-    console.error("Error creating project:", error);
-    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
+    console.error("GET Projects Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-export async function PATCH(request: Request) {
-  const rbacGuard = await requirePermission("PROJECT_MANAGE");
-  if (rbacGuard) return rbacGuard;
-
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "PROJECTS");
-  if (moduleGuard) return moduleGuard;
-
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { id, status } = body;
+    const companyId = await getCompanyId();
+    const session = await getSession();
+    if (!companyId || !session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!id || !status) {
-      return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
+    const rbacGuard = await requirePermission("CREATE_PROJECTS");
+    if (rbacGuard) return rbacGuard;
+
+    const body = await req.json();
+    const { 
+      projectCode, name, description, category, priority, 
+      clientName, leadId, managerId, teamMemberIds, 
+      startDate, endDate, estimatedBudget, tags 
+    } = body;
+
+    if (!name || !projectCode) {
+      return NextResponse.json({ error: "Name and Project Code are required." }, { status: 400 });
     }
 
-    const updatedProject = await prisma.project.update({
-      where: { ...(await withCompany()), id },
-      data: { status }
+    // Duplicate Check for Project Code
+    const existing = await prisma.project.findFirst({
+      where: {
+        companyId,
+        projectCode
+      }
     });
 
-    return NextResponse.json(updatedProject);
+    if (existing) {
+      return NextResponse.json({ error: "A project with this code already exists." }, { status: 400 });
+    }
+
+    const newProject = await prisma.$transaction(async (tx) => {
+      const p = await tx.project.create({
+        data: {
+          companyId,
+          projectCode,
+          name,
+          description,
+          category,
+          priority: priority || "Medium",
+          status: "Draft",
+          clientName,
+          leadId,
+          managerId,
+          startDate: startDate ? new Date(startDate) : null,
+          endDate: endDate ? new Date(endDate) : null,
+          estimatedBudget: estimatedBudget ? Number(estimatedBudget) : null,
+          tags: tags || [],
+          teamMembers: {
+            connect: (teamMemberIds || []).map((id: string) => ({ id }))
+          }
+        }
+      });
+
+      await tx.projectActivity.create({
+        data: {
+          companyId,
+          projectId: p.id,
+          type: "PROJECT_CREATED",
+          description: `Project ${projectCode} created`,
+          performedById: session.user.id
+        }
+      });
+
+      if (managerId) {
+        await tx.projectActivity.create({
+          data: {
+            companyId,
+            projectId: p.id,
+            type: "PROJECT_UPDATED",
+            description: "Manager assigned",
+            newValue: managerId,
+            performedById: session.user.id
+          }
+        });
+      }
+
+      return p;
+    });
+
+    return NextResponse.json({ project: newProject });
   } catch (error) {
-    console.error("Error updating project status:", error);
-    return NextResponse.json({ error: "Failed to update project status" }, { status: 500 });
+    console.error("POST Project Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

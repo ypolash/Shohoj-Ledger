@@ -1,3 +1,4 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +28,7 @@ export async function PATCH(
     }
 
     const updatedTask = await prisma.task.update({
-      where: { id: params.id },
+      where: { ...(await withCompany()), id: params.id },
       data: { status },
     });
 

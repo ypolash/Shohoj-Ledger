@@ -1,8 +1,20 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateAttendanceRequest, getAttendanceConfig, calculatePunishment } from "../utils";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     console.log("Reached TOKEN validation");
     const body = await request.json();
@@ -121,7 +133,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const config = await prisma.attendanceConfig.findFirst();
+    const config = await prisma.attendanceConfig.findFirst({ where: { ...(await withCompany()) } });
     
     console.log("=== ATTENDANCE CONFIG DEBUG ===");
     console.log("DB shiftStart:", config?.shiftStart);

@@ -1,15 +1,27 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isWithinOfficeRadius } from '@/lib/gps';
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   const { searchParams } = new URL(request.url);
   const employeeId = searchParams.get('employeeId');
 
   try {
     if (employeeId) {
       const attendances = await prisma.attendance.findMany({
-        where: { employeeId },
+        where: { ...(await withCompany()), employeeId },
         orderBy: { date: 'desc' }
       });
       return NextResponse.json(attendances);
@@ -26,6 +38,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const data = await request.json();
     

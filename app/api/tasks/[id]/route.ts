@@ -1,3 +1,5 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -6,7 +8,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   try {
     const data = await req.json();
     const task = await prisma.task.update({
-      where: { id: params.id },
+      where: { ...(await withCompany()), id: params.id },
       data: {
         status: data.status !== undefined ? data.status : undefined,
         title: data.title !== undefined ? data.title : undefined,
@@ -24,7 +26,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
   const params = await props.params;
   try {
     await prisma.task.delete({
-      where: { id: params.id }
+      where: { ...(await withCompany()), id: params.id }
     });
     return NextResponse.json({ success: true });
   } catch (error: any) {

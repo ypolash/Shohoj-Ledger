@@ -1,7 +1,20 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rbacGuard = await requirePermission("LEAD_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "LEAD_MANAGEMENT");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { id } = await params;
     const body = await req.json();
@@ -15,7 +28,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (assignedTo !== undefined) data.assignedTo = assignedTo;
 
     const updatedLead = await prisma.lead.update({
-      where: { id },
+      where: { ...(await withCompany()), id },
       data
     });
 
@@ -27,10 +40,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rbacGuard = await requirePermission("LEAD_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "LEAD_MANAGEMENT");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { id } = await params;
     await prisma.lead.delete({
-      where: { id }
+      where: { ...(await withCompany()), id }
     });
     return NextResponse.json({ success: true });
   } catch (error: any) {

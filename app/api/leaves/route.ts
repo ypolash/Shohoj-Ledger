@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   const { searchParams } = new URL(request.url);
   const employeeId = searchParams.get('employeeId');
 
@@ -24,6 +36,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const data = await request.json();
     
@@ -50,6 +69,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const data = await request.json();
     if (!data.id || !data.status) {
@@ -57,7 +83,7 @@ export async function PATCH(request: Request) {
     }
 
     const updated = await prisma.leaveRequest.update({
-      where: { id: data.id },
+      where: { ...(await withCompany()), id: data.id },
       data: { status: data.status }
     });
 

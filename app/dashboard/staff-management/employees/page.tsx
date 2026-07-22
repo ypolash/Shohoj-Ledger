@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from "../../income/page.module.css";
+import { fetchEmployees, createEmployee, updateEmployee, deleteEmployee } from "./actions";
 
 type Employee = {
   id: string;
@@ -13,18 +15,21 @@ type Employee = {
   designation: string;
   department: string | null;
   status: string;
-  basicSalary: string;
-  joinDate: string;
-  createdAt: string;
+  basicSalary: string | number;
+  joinDate: string | Date;
+  createdAt: string | Date;
 };
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [designations, setDesignations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Layout State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,21 +41,28 @@ export default function EmployeesPage() {
 
   // Form State
   const [newEmployee, setNewEmployee] = useState({
-    firstName: '', lastName: '', email: '', phone: '', designation: '', department: '', basicSalary: '', joinDate: '', password: ''
+    firstName: '', lastName: '', email: '', phone: '', designation: '', department: '', 
+    departmentId: '', designationId: '', reportingManagerId: '', employmentType: '', location: '', shift: '', employmentStatus: 'Probation',
+    basicSalary: '', joinDate: '', password: '', status: 'ACTIVE'
   });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchEmployees();
+    loadData();
   }, []);
 
-  const fetchEmployees = async () => {
+  const loadData = async () => {
     try {
-      const res = await fetch('/api/employees');
-      if (res.ok) {
-        const data = await res.json();
-        setEmployees(Array.isArray(data) ? data : []);
-      }
+      const data = await fetchEmployees();
+      setEmployees(data as any[]);
+      
+      const [deptRes, desigRes] = await Promise.all([
+        fetch('/api/departments'),
+        fetch('/api/designations')
+      ]);
+      if(deptRes.ok) setDepartments(await deptRes.json());
+      if(desigRes.ok) setDesignations(await desigRes.json());
+      
     } catch (error) {
       console.error('Failed to load employees', error);
     } finally {
@@ -58,29 +70,60 @@ export default function EmployeesPage() {
     }
   };
 
-  const handleAddEmployee = async (e: React.FormEvent) => {
+  const openAddModal = () => {
+    setIsEditMode(false);
+    setNewEmployee({ 
+      firstName: '', lastName: '', email: '', phone: '', designation: '', department: '', 
+      departmentId: '', designationId: '', reportingManagerId: '', employmentType: '', location: '', shift: '', employmentStatus: 'Probation',
+      basicSalary: '', joinDate: '', password: '', status: 'ACTIVE' 
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (emp: any) => {
+    setIsEditMode(true);
+    setNewEmployee({
+      firstName: emp.firstName,
+      lastName: emp.lastName,
+      email: emp.email,
+      phone: emp.phone || '',
+      designation: emp.designation,
+      department: emp.department || '',
+      departmentId: emp.departmentId || '',
+      designationId: emp.designationId || '',
+      reportingManagerId: emp.reportingManagerId || '',
+      employmentType: emp.employmentType || '',
+      location: emp.location || '',
+      shift: emp.shift || '',
+      employmentStatus: emp.employmentStatus || 'Probation',
+      basicSalary: String(emp.basicSalary),
+      joinDate: new Date(emp.joinDate).toISOString().split('T')[0],
+      password: '',
+      status: emp.status
+    });
+    setSelectedEmployee(emp);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch('/api/employees', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newEmployee,
-          basicSalary: parseFloat(newEmployee.basicSalary)
-        })
-      });
-      
-      if (res.ok) {
-        const added = await res.json();
-        setEmployees([added, ...employees]);
-        setIsModalOpen(false);
-        setNewEmployee({ firstName: '', lastName: '', email: '', phone: '', designation: '', department: '', basicSalary: '', joinDate: '', password: '' });
+      const payload = {
+        ...newEmployee,
+        basicSalary: parseFloat(newEmployee.basicSalary)
+      };
+
+      if (isEditMode && selectedEmployee) {
+        await updateEmployee(selectedEmployee.id, payload);
       } else {
-        alert("Failed to add employee. Please check required fields.");
+        await createEmployee(payload);
       }
-    } catch (error) {
-      console.error('Error adding employee:', error);
+      
+      await loadData();
+      setIsModalOpen(false);
+    } catch (error: any) {
+      alert(error.message || "Failed to save employee.");
     } finally {
       setSubmitting(false);
     }
@@ -88,22 +131,15 @@ export default function EmployeesPage() {
 
   const handleDeleteEmployee = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this employee? This action cannot be undone.")) return;
+    if (!confirm("Are you sure you want to terminate this employee?")) return;
     try {
-      // Assuming a DELETE route exists, though it might need to be created in the future
-      const res = await fetch(`/api/employees?id=${id}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        fetchEmployees();
-        if (selectedEmployee && selectedEmployee.id === id) {
-          setSelectedEmployee(null);
-        }
-      } else {
-        alert("Failed to delete employee.");
+      await deleteEmployee(id);
+      await loadData();
+      if (selectedEmployee && selectedEmployee.id === id) {
+        setSelectedEmployee(null);
       }
-    } catch (error) {
-      console.error('Error deleting employee:', error);
+    } catch (error: any) {
+      alert(error.message || "Failed to delete employee.");
     }
   };
 
@@ -146,8 +182,9 @@ export default function EmployeesPage() {
   const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / itemsPerPage));
   const paginatedEmployees = filteredEmployees.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const router = useRouter();
   const handleRowClick = (emp: Employee) => {
-    setSelectedEmployee(emp);
+    router.push(`/dashboard/staff-management/employees/${emp.id}`);
   };
 
   return (
@@ -157,7 +194,7 @@ export default function EmployeesPage() {
           <h1 style={{ margin: 0 }}>Employees</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>Manage staff profiles and base salaries.</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+        <button onClick={openAddModal} className="btn btn-primary">
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
           Add Employee
         </button>
@@ -348,13 +385,13 @@ export default function EmployeesPage() {
         <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <div className={styles.modalHeader}>
-              <h3 style={{ margin: 0 }}>Add New Employee</h3>
+              <h3 style={{ margin: 0 }}>{isEditMode ? "Edit Employee" : "Add New Employee"}</h3>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             
-            <form onSubmit={handleAddEmployee} className={styles.form}>
+            <form onSubmit={handleSaveEmployee} className={styles.form}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label className="label">First Name *</label>
@@ -399,6 +436,61 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
+              <div style={{ marginTop: 'var(--spacing-4)', padding: 'var(--spacing-4)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>
+                <h4 style={{ margin: '0 0 var(--spacing-4) 0', color: 'var(--text)' }}>Organization Details</h4>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className="label">Department Reference</label>
+                    <select className="input" value={newEmployee.departmentId} onChange={(e) => {
+                      const dept = departments.find(d => d.id === e.target.value);
+                      setNewEmployee({...newEmployee, departmentId: e.target.value, department: dept?.name || newEmployee.department});
+                    }}>
+                      <option value="">None</option>
+                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className="label">Designation Reference</label>
+                    <select className="input" value={newEmployee.designationId} onChange={(e) => {
+                      const des = designations.find(d => d.id === e.target.value);
+                      setNewEmployee({...newEmployee, designationId: e.target.value, designation: des?.name || newEmployee.designation});
+                    }}>
+                      <option value="">None</option>
+                      {designations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className="label">Reporting Manager</label>
+                    <select className="input" value={newEmployee.reportingManagerId} onChange={(e) => setNewEmployee({...newEmployee, reportingManagerId: e.target.value})}>
+                      <option value="">None</option>
+                      {employees.filter(emp => emp.id !== selectedEmployee?.id).map(e => <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className="label">Employment Type</label>
+                    <select className="input" value={newEmployee.employmentType} onChange={(e) => setNewEmployee({...newEmployee, employmentType: e.target.value})}>
+                      <option value="">Select...</option>
+                      <option value="Full-Time">Full-Time</option>
+                      <option value="Part-Time">Part-Time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Intern">Intern</option>
+                    </select>
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className="label">Location</label>
+                    <input type="text" className="input" value={newEmployee.location} onChange={(e) => setNewEmployee({...newEmployee, location: e.target.value})} placeholder="e.g. Dhaka Office" />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className="label">Shift</label>
+                    <input type="text" className="input" value={newEmployee.shift} onChange={(e) => setNewEmployee({...newEmployee, shift: e.target.value})} placeholder="e.g. Day Shift" />
+                  </div>
+                </div>
+              </div>
+
               <div style={{ marginTop: 'var(--spacing-4)', padding: 'var(--spacing-4)', background: 'rgba(59,130,246,0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(59,130,246,0.1)' }}>
                 <h4 style={{ margin: '0 0 var(--spacing-4) 0', color: 'var(--primary)' }}>App Login Credentials</h4>
                 <div className={styles.formRow}>
@@ -407,11 +499,24 @@ export default function EmployeesPage() {
                     <input type="text" className="input" value="Generated on Save" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
                   </div>
                   <div className={styles.formGroup}>
-                    <label className="label">App Password *</label>
-                    <input type="text" className="input" placeholder="e.g. 123456" value={newEmployee.password} onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})} required />
+                    <label className="label">App Password {isEditMode ? '(Leave blank to keep)' : '*'}</label>
+                    <input type="text" className="input" placeholder={isEditMode ? "••••••••" : "e.g. 123456"} value={newEmployee.password} onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})} required={!isEditMode} />
                   </div>
                 </div>
               </div>
+
+              {isEditMode && (
+                <div className={styles.formRow} style={{ marginTop: 'var(--spacing-4)' }}>
+                  <div className={styles.formGroup}>
+                    <label className="label">Employment Status</label>
+                    <select className="input" value={newEmployee.status} onChange={(e) => setNewEmployee({...newEmployee, status: e.target.value})}>
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="ON_LEAVE">ON LEAVE</option>
+                      <option value="TERMINATED">TERMINATED</option>
+                    </select>
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '16px', marginTop: 'var(--spacing-6)' }}>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={submitting}>
@@ -522,7 +627,7 @@ export default function EmployeesPage() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: 'auto' }}>
-                <button className="btn btn-secondary" style={{ flex: 1 }}>Edit Profile</button>
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setSelectedEmployee(null); openEditModal(selectedEmployee); }}>Edit Profile</button>
                 <button className="btn btn-secondary" style={{ flex: 1 }}>Manage Salary</button>
                 <button className="btn btn-secondary" style={{ flex: 1 }}>Attendance</button>
                 <button className="btn btn-secondary" style={{ flex: 1 }}>Performance</button>

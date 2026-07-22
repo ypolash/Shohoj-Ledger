@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("PROJECT_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "PROJECTS");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const projects = await prisma.project.findMany({
       orderBy: { createdAt: 'desc' }
@@ -13,13 +25,13 @@ export async function GET() {
     
     const incomes = await prisma.income.groupBy({
       by: ['projectId'],
-      where: { projectId: { in: projectIds }, paymentStatus: { in: ["PAID", "PARTIAL"] } },
+      where: { ...(await withCompany()), projectId: { in: projectIds }, paymentStatus: { in: ["PAID", "PARTIAL"] } },
       _sum: { received: true }
     });
 
     const expenses = await prisma.expense.groupBy({
       by: ['projectId'],
-      where: { projectId: { in: projectIds }, approvalStatus: "APPROVED" },
+      where: { ...(await withCompany()), projectId: { in: projectIds }, approvalStatus: "APPROVED" },
       _sum: { amount: true }
     });
 
@@ -43,6 +55,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("PROJECT_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "PROJECTS");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { name, clientName } = body;
@@ -67,6 +86,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const rbacGuard = await requirePermission("PROJECT_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "PROJECTS");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { id, status } = body;
@@ -76,7 +102,7 @@ export async function PATCH(request: Request) {
     }
 
     const updatedProject = await prisma.project.update({
-      where: { id },
+      where: { ...(await withCompany()), id },
       data: { status }
     });
 

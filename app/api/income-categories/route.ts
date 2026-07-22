@@ -1,3 +1,5 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -69,7 +71,7 @@ export async function DELETE(req: Request) {
     }
 
     await prisma.incomeCategory.delete({
-      where: { id }
+      where: { ...(await withCompany()), id }
     });
 
     return NextResponse.json({ success: true });

@@ -22,16 +22,14 @@ export default function LeaveManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchLeaves();
+    loadLeaves();
   }, []);
 
-  const fetchLeaves = async () => {
+  const loadLeaves = async () => {
     try {
-      const res = await fetch('/api/leaves');
-      if (res.ok) {
-        const data = await res.json();
-        setLeaves(data);
-      }
+      const { fetchLeaveRequests } = await import('./actions');
+      const data = await fetchLeaveRequests();
+      setLeaves(data as any[]);
     } catch (error) {
       console.error('Failed to fetch leaves:', error);
     } finally {
@@ -39,17 +37,22 @@ export default function LeaveManagementPage() {
     }
   };
 
-  const updateLeaveStatus = async (id: string, status: string) => {
+  const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      const res = await fetch('/api/leaves', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status })
-      });
-      if (res.ok) {
-        fetchLeaves();
+      const { approveLeaveRequest, rejectLeaveRequest, cancelLeaveRequest, updateLeaveRequest } = await import('./actions');
+      if (status === 'APPROVED') {
+        await approveLeaveRequest(id);
+      } else if (status === 'REJECTED') {
+        await rejectLeaveRequest(id);
+      } else if (status === 'PENDING') {
+        // Resetting to pending requires updating the status via updateLeaveRequest,
+        // Wait, updateLeaveRequest doesn't update status, it updates details.
+        // Let's implement a reset or cancel. The prompt requested: approve, reject, cancel.
+        await cancelLeaveRequest(id);
       }
-    } catch (error) {
+      await loadLeaves();
+    } catch (error: any) {
+      alert("Failed to update status: " + error.message);
       console.error('Failed to update leave status:', error);
     }
   };
@@ -117,12 +120,12 @@ export default function LeaveManagementPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {leave.status === 'PENDING' && (
                     <>
-                      <button onClick={() => updateLeaveStatus(leave.id, 'APPROVED')} className="btn" style={{ background: '#10b981', color: '#fff' }}>Approve</button>
-                      <button onClick={() => updateLeaveStatus(leave.id, 'REJECTED')} className="btn" style={{ background: '#ef4444', color: '#fff' }}>Reject</button>
+                      <button onClick={() => handleUpdateStatus(leave.id, 'APPROVED')} className="btn" style={{ background: '#10b981', color: '#fff' }}>Approve</button>
+                      <button onClick={() => handleUpdateStatus(leave.id, 'REJECTED')} className="btn" style={{ background: '#ef4444', color: '#fff' }}>Reject</button>
                     </>
                   )}
-                  {leave.status !== 'PENDING' && (
-                     <button onClick={() => updateLeaveStatus(leave.id, 'PENDING')} className="btn" style={{ background: 'rgba(255,255,255,0.05)' }}>Reset to Pending</button>
+                  {leave.status !== 'PENDING' && leave.status !== 'CANCELLED' && (
+                     <button onClick={() => handleUpdateStatus(leave.id, 'PENDING')} className="btn" style={{ background: 'rgba(255,255,255,0.05)' }}>Cancel Leave</button>
                   )}
                 </div>
               </div>

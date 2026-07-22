@@ -1,7 +1,13 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
   try {
     const attendances = await prisma.attendance.findMany({
       include: {

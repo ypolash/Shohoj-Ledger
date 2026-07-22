@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("FINANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const funds = await prisma.fundTransaction.findMany({
       orderBy: { createdAt: 'desc' }
@@ -20,6 +32,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { amount, source, description } = body;

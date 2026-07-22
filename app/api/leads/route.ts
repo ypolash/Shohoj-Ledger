@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET(req: Request) {
+  const rbacGuard = await requirePermission("LEAD_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "LEAD_MANAGEMENT");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
@@ -24,6 +36,13 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const rbacGuard = await requirePermission("LEAD_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "LEAD_MANAGEMENT");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await req.json();
     const {

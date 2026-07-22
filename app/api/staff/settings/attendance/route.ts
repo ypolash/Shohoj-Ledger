@@ -1,9 +1,16 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
   try {
-    let config = await prisma.attendanceConfig.findFirst();
+    let config = await prisma.attendanceConfig.findFirst({ where: { ...(await withCompany()) } });
     if (!config) {
       config = await prisma.attendanceConfig.create({ data: {} });
     }
@@ -14,9 +21,12 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
   try {
     const body = await request.json();
-    let config = await prisma.attendanceConfig.findFirst();
+    let config = await prisma.attendanceConfig.findFirst({ where: { ...(await withCompany()) } });
     
     if (!config) {
       config = await prisma.attendanceConfig.create({ data: body });

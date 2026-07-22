@@ -1,8 +1,21 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateSettlement } from "@/lib/calculations";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const url = new URL(request.url);
     const month = parseInt(url.searchParams.get("month") || "");
@@ -21,7 +34,7 @@ export async function GET(request: Request) {
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const incomes = await prisma.income.findMany({
-      where: {
+      where: { ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
         paymentStatus: { in: ["PAID", "PARTIAL"] },
         shareable: true
@@ -29,7 +42,7 @@ export async function GET(request: Request) {
     });
 
     const expenses = await prisma.expense.findMany({
-      where: {
+      where: { ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
         approvalStatus: "APPROVED"
       }
@@ -127,6 +140,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { period, totalIncome, totalExpenses, ceoShare, developerShare, advisorShare, companyShare } = body;
@@ -152,6 +172,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { id, action } = body;
@@ -160,7 +187,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid execution request" }, { status: 400 });
     }
 
-    const settlement = await prisma.settlement.findUnique({ where: { id } });
+    const settlement = await prisma.settlement.findUnique({ where: { ...(await withCompany()), id } });
     if (!settlement || settlement.status !== "PENDING") {
       return NextResponse.json({ error: "Settlement not found or already executed" }, { status: 400 });
     }
@@ -169,7 +196,7 @@ export async function PATCH(request: Request) {
     const [updatedSettlement, reserveDeposit] = await prisma.$transaction([
       // 1. Mark Settlement as Executed
       prisma.settlement.update({
-        where: { id },
+        where: { ...(await withCompany()), id },
         data: { status: "EXECUTED" }
       }),
       // 2. Auto-transfer the Company portion to the Reserve Balance
@@ -192,6 +219,13 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
@@ -200,7 +234,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Settlement ID is required" }, { status: 400 });
     }
 
-    const settlement = await prisma.settlement.findUnique({ where: { id } });
+    const settlement = await prisma.settlement.findUnique({ where: { ...(await withCompany()), id } });
     if (!settlement) {
       return NextResponse.json({ error: "Settlement not found" }, { status: 404 });
     }
@@ -208,12 +242,12 @@ export async function DELETE(req: Request) {
     // Use a transaction to delete the settlement and its auto-deposit
     await prisma.$transaction([
       prisma.reserveTransaction.deleteMany({
-        where: {
+        where: { ...(await withCompany()),
           reason: { contains: settlement.period }
         }
       }),
       prisma.settlement.delete({
-        where: { id }
+        where: { ...(await withCompany()), id }
       })
     ]);
 

@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET(req: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
@@ -18,7 +30,7 @@ export async function GET(req: Request) {
     const today = new Date(dateStr);
 
     const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+      where: { ...(await withCompany()), employeeId },
     });
 
     if (!employee) {
@@ -31,7 +43,7 @@ export async function GET(req: Request) {
     const isFriday = today.getDay() === 5;
 
     const attendance = await prisma.attendance.findFirst({
-      where: {
+      where: { ...(await withCompany()),
         employeeId: employee.id,
         date: today,
       },

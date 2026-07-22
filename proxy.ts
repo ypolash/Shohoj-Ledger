@@ -4,6 +4,7 @@ import { getSession } from '@/lib/session';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  let response = NextResponse.next();
 
   // Protect /dashboard routes
   if (pathname.startsWith('/dashboard')) {
@@ -11,22 +12,28 @@ export async function proxy(request: NextRequest) {
 
     if (!session) {
       // Not logged in, redirect to login
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    if (session.user.role === 'EMPLOYEE') {
+      response = NextResponse.redirect(new URL('/login', request.url));
+    } else if (session.user.role === 'EMPLOYEE') {
       // Employees should use the mobile app or staff interface.
       // Redirect them if they try to access the admin dashboard.
-      // Assuming /staff or something exists, or just deny access.
-      // Let's redirect to a dedicated staff page or login for now.
-      return NextResponse.redirect(new URL('/login?error=unauthorized', request.url));
+      response = NextResponse.redirect(new URL('/login?error=unauthorized', request.url));
     }
-
-    // Role is ADMIN, allow access
-    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // 1. Enforce Security Headers (Enterprise Hardening)
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'origin-when-cross-origin');
+  
+  // Basic rate limiting placeholder for Edge environments
+  // Real implementation requires Redis (Upstash) or similar Edge-compatible store
+  const ip = request.ip || '127.0.0.1';
+  response.headers.set('X-RateLimit-Limit', '100');
+
+  return response;
 }
 
 export const config = {

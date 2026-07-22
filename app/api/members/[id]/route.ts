@@ -1,3 +1,4 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -8,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params;
     const member = await prisma.member.findUnique({
-      where: { id }
+      where: { ...(await withCompany()), id }
     });
 
     if (!member) {
@@ -18,7 +19,7 @@ export async function GET(
     // Calculate Wallet Balance from Settlements based on Role
     let totalEarned = 0;
     const settlements = await prisma.settlement.findMany({
-      where: { status: { in: ['PAID', 'EXECUTED'] } }
+      where: { ...(await withCompany()), status: { in: ['PAID', 'EXECUTED'] } }
     });
 
     if (member.role.toLowerCase().includes('ceo')) {
@@ -29,12 +30,12 @@ export async function GET(
 
     // Calculate Deductions (Active Advances & Loans)
     const advances = await prisma.advance.findMany({
-      where: { memberId: id, status: 'ACTIVE' }
+      where: { ...(await withCompany()), memberId: id, status: 'ACTIVE' }
     });
     const totalAdvances = advances.reduce((sum, a) => sum + Number(a.remainingAmount), 0);
 
     const loans = await prisma.memberLoan.findMany({
-      where: { memberId: id, status: 'ACTIVE' }
+      where: { ...(await withCompany()), memberId: id, status: 'ACTIVE' }
     });
     const totalLoans = loans.reduce((sum, l) => sum + Number(l.remainingAmount), 0);
 

@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("FINANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const expenses = await prisma.expense.findMany({
       orderBy: { createdAt: 'desc' }
@@ -14,6 +26,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { category, amount, paymentMethod, description, projectId } = body;
@@ -43,6 +62,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { id, approvalStatus } = body;
@@ -52,7 +78,7 @@ export async function PATCH(request: Request) {
     }
 
     const updatedExpense = await prisma.expense.update({
-      where: { id },
+      where: { ...(await withCompany()), id },
       data: { approvalStatus }
     });
 

@@ -1,11 +1,23 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
   try {
     const employees = await prisma.employee.findMany({
-      orderBy: { createdAt: 'desc' }
+      where: await withCompany(),
+      orderBy: { createdAt: 'desc' },
+      include: {
+        departmentRef: true,
+        designationRef: true,
+        reportingManager: true
+      }
     });
     return NextResponse.json(employees);
   } catch (error) {
@@ -15,6 +27,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
   try {
     const data = await request.json();
     
@@ -23,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     // Auto-generate employeeId (e.g. EMP-1001)
-    const count = await prisma.employee.count();
+    const count = await prisma.employee.count({ where: { ...(await withCompany()) } });
     const employeeId = `EMP-${1000 + count + 1}`;
 
     const hashedPassword = await bcrypt.hash(data.password, 10);

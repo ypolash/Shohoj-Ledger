@@ -38,36 +38,28 @@ export default function AttendanceDirectoryPage() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetchData();
+    loadData();
   }, []);
 
-  const fetchData = async () => {
+  const loadData = async () => {
     try {
-      const [empRes, attRes] = await Promise.all([
-        fetch('/api/employees'),
-        fetch('/api/attendance')
+      // In a real app we'd fetch Employees from Server Actions, but we can reuse the Employee actions 
+      // already created in Phase 3A: `app/dashboard/staff-management/employees/actions.ts`
+      const { fetchEmployees } = await import('../employees/actions');
+      const { fetchAttendance, attendanceStatistics } = await import('./actions');
+
+      const [emps, todaysAttendance, stats] = await Promise.all([
+        fetchEmployees(),
+        fetchAttendance(),
+        attendanceStatistics()
       ]);
       
-      let empData = [];
-      let attData = [];
+      setEmployees(emps as any[]);
       
-      if (empRes.ok) empData = await empRes.json();
-      if (attRes.ok) attData = await attRes.json();
-      
-      setEmployees(Array.isArray(empData) ? empData : []);
-      
-      // Filter attendances for today
-      const today = new Date().toISOString().split('T')[0];
       const todayAtt: Record<string, Attendance> = {};
-      
-      if (Array.isArray(attData)) {
-        attData.forEach(att => {
-          const attDate = new Date(att.date).toISOString().split('T')[0];
-          if (attDate === today) {
-            todayAtt[att.employeeId] = att;
-          }
-        });
-      }
+      todaysAttendance.forEach((att: any) => {
+        todayAtt[att.employeeId] = att;
+      });
       
       setTodayAttendances(todayAtt);
     } catch (error) {

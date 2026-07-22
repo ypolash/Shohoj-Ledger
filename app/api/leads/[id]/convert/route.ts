@@ -1,13 +1,25 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rbacGuard = await requirePermission("LEAD_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "LEAD_MANAGEMENT");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { id } = await params;
 
     // 1. Fetch the lead
     const lead = await prisma.lead.findUnique({
-      where: { id }
+      where: { ...(await withCompany()), id }
     });
 
     if (!lead) {
@@ -45,7 +57,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
       // 3.5 Update Lead status to Converted
       await tx.lead.update({
-        where: { id: lead.id },
+        where: { ...(await withCompany()), id: lead.id },
         data: { status: "Converted" }
       });
 
@@ -54,7 +66,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const monthName = monthNames[new Date(income.createdAt).getMonth()];
       const yearName = new Date(income.createdAt).getFullYear();
       const period = `${monthName} ${yearName}`;
-      await tx.settlement.deleteMany({ where: { period } });
+      await tx.settlement.deleteMany({ where: { ...(await withCompany()), period } });
 
       return { project, income };
     });

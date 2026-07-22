@@ -1,27 +1,19 @@
-# MISSION
+# MISSION.md
 
-**Core Goal:**
-Develop a Company Finance & Revenue Sharing CRM (Shohoj Ledger) to manage income, expenses, reserve balances, member loans, due balances, and monthly settlements. The system ensures that only paid/partial income is included in settlement, and shares are calculated properly between the CEO (40%), Developers (20%), Advisor (20%), and Company reserve (20%).
+## Core Goal
+To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
-**Current Status:**
+## Current Status
+Successfully completed **Version 1.1 — Phase 3E: HR Organization & Employee Lifecycle Management**. 
+Implemented Departments, Designations, Employee Lifecycle Events, Organization Chart, and extended HR Overview dashboards.
 
-- **Last major feature added:** Redesigned the left navigation sidebar into a modern collapsible design using Vanilla CSS, complete with hover-triggered expansion and smooth text slide/fade animations.
-- **Next Phase:** Align the final remaining module (Leads) to this unified UI standard, and verify End-to-End Task Management and Attendance integration in the Android App.
+## Goal Pivots
+- Shifted towards a highly modular schema for HR by separating Departments and Designations into standalone entities with references to Employee.
+- Decoupled employment history into a robust `EmployeeLifecycle` timeline event model for better auditability and historical tracking instead of directly mutating all fields without record.
 
-**Goal Pivots:**
-
-- Transitioned away from Better Auth towards a custom `jose` and `bcryptjs` JWT implementation (with backward compatibility) to support distinct Admin (User) and Employee login flows properly.
-- Temporarily relaxed strict GPS constraints (radius increased to 200km) and missing Wi-Fi checks to facilitate remote development and testing off-site.
-
-**Production Roadmap:**
-
-- [x] Define Prisma schema and database models
-- [x] Implement backend API routes for CRUD operations
-- [x] Build the UI for Dashboard and core modules (Income, Expenses, Loans, Settlement)
-- [x] Setup authentication (Better Auth)
-- [x] Implement Monthly Settlement Logic
-- [x] Setup Staff Management Models & Layout
-- [x] Implement Staff Attendance & Leave Logic
-- [x] Implement Payroll Processing & Deductions
-- [x] Deploy to production via Coolify
-- [x] Implement Lead Management Module
+## Production Roadmap
+1. Polish UI/UX of newly added HR modules (Departments, Designations, Org Chart).
+2. Integrate remaining HR Phase 3 sub-modules (Attendance tracking logic, Payroll generation).
+3. E2E Testing and performance tuning.
+4. Prepare for production deployment and containerization (Docker/Kubernetes).
+5. Deploy to Production server.

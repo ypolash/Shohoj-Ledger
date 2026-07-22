@@ -1,7 +1,19 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const networks = await prisma.allowedNetwork.findMany({
       orderBy: { createdAt: "desc" },
@@ -14,6 +26,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await req.json();
     const { name, ssid, bssid, isActive } = body;
@@ -26,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     const existingNetwork = await prisma.allowedNetwork.findUnique({
-      where: { bssid },
+      where: { ...(await withCompany()), bssid },
     });
 
     if (existingNetwork) {

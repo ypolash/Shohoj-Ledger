@@ -1,7 +1,13 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET(request: Request) {
+  const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
@@ -25,6 +31,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
   try {
     const body = await request.json();
     const newSetting = await prisma.punishmentSetting.create({

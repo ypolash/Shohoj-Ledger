@@ -1,8 +1,20 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateAttendanceRequest, getAttendanceConfig, calculatePunishment } from "../utils";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function POST(req: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await req.json();
     const { employeeId, wifiSsid, wifiBssid, latitude, longitude } = body;
@@ -42,7 +54,7 @@ export async function POST(req: Request) {
     const today = new Date(dateStr);
 
     const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+      where: { ...(await withCompany()), employeeId },
     });
 
     if (!employee) {
@@ -53,7 +65,7 @@ export async function POST(req: Request) {
     }
 
     const existingAttendance = await prisma.attendance.findFirst({
-      where: {
+      where: { ...(await withCompany()),
         employeeId: employee.id,
         date: today,
       },
@@ -149,7 +161,7 @@ export async function POST(req: Request) {
     }
 
     await prisma.attendance.update({
-      where: { id: existingAttendance.id },
+      where: { ...(await withCompany()), id: existingAttendance.id },
       data: {
         checkOutTime: serverTime,
         checkOutLocation: `${latitude},${longitude}`,

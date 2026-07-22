@@ -8,14 +8,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String        @id @default(uuid())
+  companyId     String?
+  platformRole  PlatformRole?
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String        @unique
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          String    @default("member")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  role          String        @default("member")
   sessions      Session[]
   accounts      Account[]
 }
@@ -62,14 +64,20 @@ model Verification {
 
 model Project {
   id         String   @id @default(uuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
   name       String
   status     String
   clientName String?
   createdAt  DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Income {
   id            String   @id @default(uuid())
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
   projectId     String?
   category      String
   source        String?
@@ -79,10 +87,14 @@ model Income {
   shareable     Boolean  @default(true)
   description   String?
   createdAt     DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Expense {
   id             String   @id @default(uuid())
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
   projectId      String?
   category       String
   amount         Decimal
@@ -90,26 +102,38 @@ model Expense {
   approvalStatus String
   description    String?
   createdAt      DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model FundTransaction {
   id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
   amount      Decimal
   source      String?
   description String?
   createdAt   DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model ReserveTransaction {
   id        String   @id @default(uuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   type      String
   amount    Decimal
   reason    String?
   createdAt DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model MemberLoan {
   id              String   @id @default(uuid())
+  companyId       String?
+  company         Company? @relation(fields: [companyId], references: [id])
   memberId        String
   amount          Decimal
   remainingAmount Decimal
@@ -118,20 +142,28 @@ model MemberLoan {
   dueDate         DateTime
   status          String   @default("ACTIVE")
   createdAt       DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Advance {
   id              String   @id @default(uuid())
+  companyId       String?
+  company         Company? @relation(fields: [companyId], references: [id])
   memberId        String
   amount          Decimal
   remainingAmount Decimal
   reason          String?
   status          String   @default("ACTIVE")
   createdAt       DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Settlement {
   id             String   @id @default(uuid())
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
   period         String
   status         String   @default("PENDING")
   totalIncome    Decimal
@@ -141,16 +173,24 @@ model Settlement {
   advisorShare   Decimal
   companyShare   Decimal
   createdAt      DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model IncomeCategory {
   id        String   @id @default(uuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   name      String   @unique
   createdAt DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Member {
   id        String   @id @default(uuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   name      String
   role      String
   email     String?  @unique
@@ -159,36 +199,63 @@ model Member {
   joinedAt  DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model Employee {
-  id              String            @id @default(uuid())
-  userId          String?           @unique // Link to User model if they can log in
-  employeeId      String            @unique
-  password        String?
-  firstName       String
-  lastName        String
-  email           String            @unique
-  phone           String?
-  designation     String
-  department      String?
-  joinDate        DateTime
-  basicSalary     Decimal
-  status          String            @default("ACTIVE") // ACTIVE, ON_LEAVE, TERMINATED
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  userId      String?  @unique // Link to User model if they can log in
+  employeeId  String   @unique
+  password    String?
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phone       String?
+  designation String
+  department  String?
+  joinDate    DateTime
+  basicSalary Decimal
+  status      String   @default("ACTIVE") // ACTIVE, ON_LEAVE, TERMINATED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendances    Attendance[]
+  leaveRequests  LeaveRequest[]
+  salaryPayments SalaryPayment[]
+  deductions     SalaryDeduction[]
+  bonuses        Bonus[]
+  payslips       Payslip[]
+  tasks          Task[]
   
-  attendances     Attendance[]
-  leaveRequests   LeaveRequest[]
-  salaryPayments  SalaryPayment[]
-  deductions      SalaryDeduction[]
-  bonuses         Bonus[]
-  payslips        Payslip[]
-  tasks           Task[]
+  departmentId       String?
+  departmentRef      Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+  
+  designationId      String?
+  designationRef     Designation? @relation("EmployeeDesignation", fields: [designationId], references: [id])
+  
+  reportingManagerId String?
+  reportingManager   Employee? @relation("EmployeeToManager", fields: [reportingManagerId], references: [id])
+  subordinates       Employee[] @relation("EmployeeToManager")
+
+  headOfDepartment   Department[] @relation("DepartmentHead")
+  
+  employmentType     String?
+  location           String?
+  shift              String?
+  employmentStatus   String? @default("Probation")
+  
+  lifecycleEvents    EmployeeLifecycle[]
+
+  @@index([companyId])
 }
 
 model Task {
   id                   String    @id @default(uuid())
+  companyId            String?
+  company              Company?  @relation(fields: [companyId], references: [id])
   assignedToEmployeeId String?
   employee             Employee? @relation(fields: [assignedToEmployeeId], references: [employeeId])
   title                String
@@ -198,107 +265,133 @@ model Task {
   dueDate              DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+
+  @@index([companyId])
 }
 
 model Attendance {
-  id               String    @id @default(uuid())
-  employeeId       String
-  employee         Employee  @relation(fields: [employeeId], references: [id])
-  date             DateTime  // Store just the date (YYYY-MM-DD)
-  checkInTime      DateTime? @map("checkIn")
-  checkInLocation  String?
-  checkOutTime     DateTime? @map("checkOut")
-  checkOutLocation String?
-  status           String    // PRESENT, LATE, ABSENT, HALF_DAY, WEEKLY_OFF, OFF_DAY_WORK
-  isLate           Boolean   @default(false)
-  lateMinutes      Int       @default(0)
-  totalWorkingMinutes Int?   @default(0)
-  earlyLeaveMinutes Int?     @default(0)
-  overtimeMinutes   Int?     @default(0)
-  punishmentReason  String?
-  reviewStatus      String?
-  punishmentAmount  Decimal? @default(0)
-  latitude         Float?
-  longitude        Float?
-  wifiSsid         String?
-  wifiBssid        String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  companyId           String?
+  company             Company?  @relation(fields: [companyId], references: [id])
+  employeeId          String
+  employee            Employee  @relation(fields: [employeeId], references: [id])
+  date                DateTime // Store just the date (YYYY-MM-DD)
+  checkInTime         DateTime? @map("checkIn")
+  checkInLocation     String?
+  checkOutTime        DateTime? @map("checkOut")
+  checkOutLocation    String?
+  status              String // PRESENT, LATE, ABSENT, HALF_DAY, WEEKLY_OFF, OFF_DAY_WORK
+  isLate              Boolean   @default(false)
+  lateMinutes         Int       @default(0)
+  totalWorkingMinutes Int?      @default(0)
+  earlyLeaveMinutes   Int?      @default(0)
+  overtimeMinutes     Int?      @default(0)
+  punishmentReason    String?
+  reviewStatus        String?
+  punishmentAmount    Decimal?  @default(0)
+  latitude            Float?
+  longitude           Float?
+  wifiSsid            String?
+  wifiBssid           String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@unique([employeeId, date])
+  @@index([companyId])
 }
 
 model LeaveRequest {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  type        String    // CASUAL, SICK, UNPAID
-  startDate   DateTime
-  endDate     DateTime
-  reason      String
-  status      String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String   @id @default(uuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  type       String // CASUAL, SICK, UNPAID
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model SalaryPayment {
-  id            String    @id @default(uuid())
-  employeeId    String
-  employee      Employee  @relation(fields: [employeeId], references: [id])
-  month         Int       // 1-12
-  year          Int
-  basicSalary   Decimal
-  grossSalary   Decimal
-  netSalary     Decimal
-  paymentDate   DateTime  @default(now())
-  status        String    @default("PAID") // PAID
-  expenseId     String?   // Link to Expense model record in Shohoj Ledger
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  month       Int // 1-12
+  year        Int
+  basicSalary Decimal
+  grossSalary Decimal
+  netSalary   Decimal
+  paymentDate DateTime @default(now())
+  status      String   @default("PAID") // PAID
+  expenseId   String? // Link to Expense model record in Shohoj Ledger
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model SalaryDeduction {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  month       Int
-  year        Int
-  type        String    // LATE_FEE, UNPAID_LEAVE, OTHER
-  amount      Decimal
-  reason      String?
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(uuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  type       String // LATE_FEE, UNPAID_LEAVE, OTHER
+  amount     Decimal
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Bonus {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  month       Int
-  year        Int
-  type        String    // PERFORMANCE, FESTIVAL, OTHER
-  amount      Decimal
-  reason      String?
-  expenseId   String?   // Link to Expense model record
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(uuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  type       String // PERFORMANCE, FESTIVAL, OTHER
+  amount     Decimal
+  reason     String?
+  expenseId  String? // Link to Expense model record
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
 }
 
 model Payslip {
-  id            String    @id @default(uuid())
-  employeeId    String
-  employee      Employee  @relation(fields: [employeeId], references: [id])
-  month         Int
-  year          Int
-  fileUrl       String?   // If storing PDF generated
-  totalEarnings Decimal
+  id              String   @id @default(uuid())
+  companyId       String?
+  company         Company? @relation(fields: [companyId], references: [id])
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  month           Int
+  year            Int
+  fileUrl         String? // If storing PDF generated
+  totalEarnings   Decimal
   totalDeductions Decimal
-  netPay        Decimal
-  createdAt     DateTime  @default(now())
-  
+  netPay          Decimal
+  createdAt       DateTime @default(now())
+
   @@unique([employeeId, month, year])
+  @@index([companyId])
 }
 
 model Lead {
   id            String    @id @default(uuid())
+  companyId     String?
+  company       Company?  @relation(fields: [companyId], references: [id])
   serialNumber  Int       @default(autoincrement())
   companyName   String
   contactPerson String
@@ -319,34 +412,219 @@ model Lead {
   @@index([serviceType])
   @@index([nextFollowUp])
   @@index([assignedTo])
+  @@index([companyId])
 }
 
 model AllowedNetwork {
   id        String   @id @default(cuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
   name      String
   ssid      String
   bssid     String   @unique
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model PunishmentSetting {
-  id        String   @id @default(uuid())
-  type      String   // LATE, EARLY_LEAVE, ABSENT
+  id          String   @id @default(uuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  type        String // LATE, EARLY_LEAVE, ABSENT
   fromMinutes Int
-  toMinutes Int
-  amount    Decimal
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  toMinutes   Int
+  amount      Decimal
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model AttendanceConfig {
   id                        String   @id @default(uuid())
+  companyId                 String?
+  company                   Company? @relation(fields: [companyId], references: [id])
   gracePeriod               Int      @default(15)
   shiftStart                String   @default("09:00") // HH:mm
   shiftEnd                  String   @default("20:00") // HH:mm
   fridayOff                 Boolean  @default(true)
   enablePunishmentDeduction Boolean  @default(false)
+
+  @@index([companyId])
+}
+
+enum BusinessType {
+  PRODUCT
+  SERVICE
+  BOTH
+}
+
+enum CompanyStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  USER
+}
+
+model Company {
+  id                  String               @id @default(uuid())
+  name                String
+  businessType        String
+  status              String               @default("ACTIVE")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  settings            CompanySetting?
+  modules             CompanyModule[]
+  roles               Role[]
+  projects            Project[]
+  incomes             Income[]
+  expenses            Expense[]
+  fundTransactions    FundTransaction[]
+  reserveTransactions ReserveTransaction[]
+  memberLoans         MemberLoan[]
+  advances            Advance[]
+  settlements         Settlement[]
+  incomeCategories    IncomeCategory[]
+  members             Member[]
+  employees           Employee[]
+  tasks               Task[]
+  attendances         Attendance[]
+  leaveRequests       LeaveRequest[]
+  salaryPayments      SalaryPayment[]
+  salaryDeductions    SalaryDeduction[]
+  bonuses             Bonus[]
+  payslips            Payslip[]
+  leads               Lead[]
+  allowedNetworks     AllowedNetwork[]
+  punishmentSettings  PunishmentSetting[]
+  attendanceConfigs   AttendanceConfig[]
+  departments         Department[]
+  designations        Designation[]
+  lifecycles          EmployeeLifecycle[]
+}
+
+model CompanySetting {
+  id                 String  @id @default(uuid())
+  companyId          String  @unique
+  company            Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  currency           String  @default("BDT")
+  timezone           String  @default("Asia/Dhaka")
+  workingDays        Json
+  weeklyHolidays     Json
+  shiftStartTime     String
+  shiftEndTime       String
+  gracePeriodMinutes Int
+}
+
+model Module {
+  id          String          @id @default(uuid())
+  key         String          @unique
+  name        String
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  companies   CompanyModule[]
+}
+
+model CompanyModule {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  moduleId  String
+  module    Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  isActive  Boolean @default(true)
+
+  @@unique([companyId, moduleId])
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  isDefault   Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+}
+
+model Permission {
+  id        String           @id @default(uuid())
+  action    String           @unique
+  moduleKey String
+  roles     RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code        String?
+  name        String
+  description String?
+  headId      String?  
+  head        Employee? @relation("DepartmentHead", fields: [headId], references: [id])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees   Employee[] @relation("EmployeeDepartment")
+
+  @@unique([companyId, name])
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model Designation {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  grade       String?
+  level       String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees   Employee[] @relation("EmployeeDesignation")
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model EmployeeLifecycle {
+  id           String   @id @default(uuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  eventType    String   // HIRE, CONFIRM, PROMOTE, TRANSFER, SUSPEND, REINSTATE, RESIGN, TERMINATE
+  effectiveDate DateTime
+  description  String?
+  previousData Json?    // To keep history of what changed
+  newData      Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([employeeId])
 }

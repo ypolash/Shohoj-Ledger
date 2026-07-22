@@ -1,8 +1,20 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculatePayroll } from '@/lib/payroll';
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("PAYROLL_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "PAYROLL");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const data = await request.json();
     const { employeeId, month, year, workingDays } = data;
@@ -13,18 +25,18 @@ export async function POST(request: Request) {
 
     // Check if payroll already processed
     const existing = await prisma.salaryPayment.findFirst({
-      where: { employeeId, month, year }
+      where: { ...(await withCompany()), employeeId, month, year }
     });
     if (existing) {
       return NextResponse.json({ error: 'Payroll already processed for this month' }, { status: 400 });
     }
 
-    const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+    const employee = await prisma.employee.findUnique({ where: { ...(await withCompany()), id: employeeId } });
     if (!employee) return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
 
     // Fetch Attendances for the month
     const attendances = await prisma.attendance.findMany({
-      where: {
+      where: { ...(await withCompany()),
         employeeId,
         date: {
           gte: new Date(year, month - 1, 1),
@@ -35,7 +47,7 @@ export async function POST(request: Request) {
 
     // Fetch Leaves
     const leaveRequests = await prisma.leaveRequest.findMany({
-      where: {
+      where: { ...(await withCompany()),
         employeeId,
         startDate: {
           gte: new Date(year, month - 1, 1),
@@ -45,7 +57,7 @@ export async function POST(request: Request) {
 
     // Fetch Bonuses
     const bonuses = await prisma.bonus.findMany({
-      where: { employeeId, month, year }
+      where: { ...(await withCompany()), employeeId, month, year }
     });
 
     const payroll = calculatePayroll(Number(employee.basicSalary), workingDays, attendances, leaveRequests, bonuses);
@@ -109,6 +121,13 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const rbacGuard = await requirePermission("PAYROLL_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "PAYROLL");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const payments = await prisma.salaryPayment.findMany({
       include: { employee: true },

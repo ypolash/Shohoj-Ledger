@@ -1,7 +1,20 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function GET() {
+  const rbacGuard = await requirePermission("FINANCE_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const incomes = await prisma.income.findMany({
       orderBy: { createdAt: 'desc' }
@@ -14,6 +27,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const body = await request.json();
     const { category, source, amount, received, shareable, description, projectId } = body;
@@ -50,7 +70,7 @@ export async function POST(request: Request) {
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { period } });
+    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
 
     return NextResponse.json(income, { status: 201 });
   } catch (error) {
@@ -60,6 +80,13 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
@@ -69,7 +96,7 @@ export async function DELETE(req: Request) {
     }
 
     const income = await prisma.income.delete({
-      where: { id }
+      where: { ...(await withCompany()), id }
     });
 
     // Invalidate Settlement for this month
@@ -77,7 +104,7 @@ export async function DELETE(req: Request) {
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { period } });
+    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -87,6 +114,13 @@ export async function DELETE(req: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
@@ -117,7 +151,7 @@ export async function PATCH(request: Request) {
     }
 
     const income = await prisma.income.update({
-      where: { id },
+      where: { ...(await withCompany()), id },
       data: updateData
     });
 
@@ -126,7 +160,7 @@ export async function PATCH(request: Request) {
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { period } });
+    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
 
     return NextResponse.json(income);
   } catch (error) {

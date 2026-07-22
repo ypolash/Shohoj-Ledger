@@ -1,7 +1,20 @@
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireModule } from "@/lib/modules/moduleGuard";
+
+import { requirePermission } from "@/lib/rbac/permissionGuard";
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { id } = await params;
     const body = await req.json();
@@ -13,7 +26,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (bssid) {
       const existingNetwork = await prisma.allowedNetwork.findFirst({
-        where: { bssid, NOT: { id } },
+        where: { ...(await withCompany()), bssid, NOT: { id } },
       });
 
       if (existingNetwork) {
@@ -25,7 +38,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     const updatedNetwork = await prisma.allowedNetwork.update({
-      where: { id },
+      where: { ...(await withCompany()), id },
       data: {
         name,
         ssid,
@@ -42,6 +55,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
+  if (moduleGuard) return moduleGuard;
+
   try {
     const { id } = await params;
 
@@ -50,7 +70,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     }
 
     await prisma.allowedNetwork.delete({
-      where: { id },
+      where: { ...(await withCompany()), id },
     });
 
     return NextResponse.json({ success: true, message: "Network deleted successfully" });

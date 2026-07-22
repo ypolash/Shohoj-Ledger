@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { createSession } from "@/lib/session";
 import { verifyPassword } from "better-auth/crypto";
+import { getCompanyContext } from "@/lib/auth/getCompanyContext";
 
 export async function POST(req: Request) {
   try {
@@ -49,11 +50,13 @@ export async function POST(req: Request) {
 
         if (isMatch) {
           // Password matches, login as ADMIN
+          const context = await getCompanyContext(user.id, "ADMIN");
           const payload = {
             id: user.id,
             email: user.email,
             name: user.name,
             role: "ADMIN",
+            ...context,
           };
           await createSession(payload);
           return NextResponse.json({
@@ -87,12 +90,14 @@ export async function POST(req: Request) {
 
       if (isMatch) {
         // Password matches, login as EMPLOYEE
+        const context = await getCompanyContext(employee.id, "EMPLOYEE");
         const payload = {
           id: employee.id,
           employeeId: employee.employeeId,
           email: employee.email,
           name: `${employee.firstName} ${employee.lastName}`,
           role: "EMPLOYEE",
+          ...context,
         };
         await createSession(payload);
         return NextResponse.json({

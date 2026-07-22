@@ -1,3 +1,4 @@
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +14,7 @@ export async function GET(req: Request) {
     }
 
     const tasks = await prisma.task.findMany({
-        where: {
+        where: { ...(await withCompany()),
             assignedToEmployeeId: employeeId
         },
         orderBy: {

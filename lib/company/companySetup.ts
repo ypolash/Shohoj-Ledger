@@ -96,8 +96,8 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
 
     return {
       success: true,
-      companyId: company.id,
-      ownerId: newOwner.id,
+      company,
+      owner: newOwner,
       message: "Company setup completed successfully."
     };
   }, {

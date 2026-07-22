@@ -15,6 +15,8 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const search = url.searchParams.get("search") || "";
     const categoryId = url.searchParams.get("categoryId");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "50");
 
     const where: any = { companyId };
     if (categoryId) where.categoryId = categoryId;
@@ -27,6 +29,7 @@ export async function GET(req: Request) {
       ];
     }
 
+    const total = await prisma.product.count({ where });
     const products = await prisma.product.findMany({
       where,
       include: {
@@ -35,7 +38,9 @@ export async function GET(req: Request) {
           select: { quantity: true, type: true }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     // Calculate current stock dynamically
@@ -55,7 +60,15 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({ products: formattedProducts });
+    return NextResponse.json({
+      products: formattedProducts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("GET Products Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -60,33 +60,64 @@ export async function POST(request: Request) {
       skipped: 0
     };
 
+    // --- N+1 Query Optimization N+1: O(1) Pre-fetching ---
+    // Fetch all necessary data outside the loop
+    const existingPayments = await prisma.salaryPayment.findMany({
+      where: { ...companyFilter, employeeId: { in: targetEmployeeIds }, month, year }
+    });
+    const existingEmpIds = new Set(existingPayments.map(p => p.employeeId));
+
+    const employees = await prisma.employee.findMany({
+      where: { ...companyFilter, id: { in: targetEmployeeIds } }
+    });
+    const employeeMap = new Map(employees.map(e => [e.id, e]));
+
+    const attendances = await prisma.attendance.findMany({
+      where: { 
+        ...companyFilter, 
+        employeeId: { in: targetEmployeeIds }, 
+        date: { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) } 
+      }
+    });
+    const attendanceMap = new Map<string, any[]>();
+    attendances.forEach(a => {
+      if (!attendanceMap.has(a.employeeId)) attendanceMap.set(a.employeeId, []);
+      attendanceMap.get(a.employeeId)!.push(a);
+    });
+
+    const leaveRequests = await prisma.leaveRequest.findMany({
+      where: { ...companyFilter, employeeId: { in: targetEmployeeIds }, startDate: { gte: new Date(year, month - 1, 1) } }
+    });
+    const leaveMap = new Map<string, any[]>();
+    leaveRequests.forEach(l => {
+      if (!leaveMap.has(l.employeeId)) leaveMap.set(l.employeeId, []);
+      leaveMap.get(l.employeeId)!.push(l);
+    });
+
+    const bonuses = await prisma.bonus.findMany({
+      where: { ...companyFilter, employeeId: { in: targetEmployeeIds }, month, year }
+    });
+    const bonusMap = new Map<string, any[]>();
+    bonuses.forEach(b => {
+      if (!bonusMap.has(b.employeeId)) bonusMap.set(b.employeeId, []);
+      bonusMap.get(b.employeeId)!.push(b);
+    });
+
+    // --- Process Writes ---
     for (const empId of targetEmployeeIds) {
-      // Check if already processed
-      const existing = await prisma.salaryPayment.findFirst({
-        where: { ...companyFilter, employeeId: empId, month, year }
-      });
-      
-      if (existing) {
+      if (existingEmpIds.has(empId)) {
         results.skipped++;
         continue;
       }
 
-      const employee = await prisma.employee.findUnique({ where: { ...companyFilter, id: empId } });
+      const employee = employeeMap.get(empId);
       if (!employee) continue;
 
-      const attendances = await prisma.attendance.findMany({
-        where: { ...companyFilter, employeeId: empId, date: { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) } }
-      });
+      const empAttendances = attendanceMap.get(empId) || [];
+      const empLeaves = leaveMap.get(empId) || [];
+      const empBonuses = bonusMap.get(empId) || [];
 
-      const leaveRequests = await prisma.leaveRequest.findMany({
-        where: { ...companyFilter, employeeId: empId, startDate: { gte: new Date(year, month - 1, 1) } }
-      });
-
-      const bonuses = await prisma.bonus.findMany({
-        where: { ...companyFilter, employeeId: empId, month, year }
-      });
-
-      const payroll = calculatePayroll(Number(employee.basicSalary), workingDays, attendances, leaveRequests, bonuses);
+      const payroll = calculatePayroll(Number(employee.basicSalary), workingDays, empAttendances, empLeaves, empBonuses);
 
       const payment = await prisma.salaryPayment.create({
         data: {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
+import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function POST(req: Request) {
   try {
@@ -10,6 +11,9 @@ export async function POST(req: Request) {
     if (!companyId || !session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rbacGuard = await requirePermission("FINANCE_VIEW");
+    if (rbacGuard) return rbacGuard;
 
     const body = await req.json();
     const { reportName, action, format, filters } = body;

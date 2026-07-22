@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
   
   // Basic rate limiting placeholder for Edge environments
   // Real implementation requires Redis (Upstash) or similar Edge-compatible store
-  const ip = request.ip || '127.0.0.1';
+  const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
   response.headers.set('X-RateLimit-Limit', '100');
 
   return response;

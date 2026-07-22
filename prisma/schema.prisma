@@ -1315,36 +1315,42 @@ model InventoryAudit {
 }
 
 model NotificationTemplate {
-  id              String              @id @default(uuid())
-  companyId       String
-  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name            String
-  eventKey        String
-  channel         NotificationChannel
-  titleTemplate   String
-  messageTemplate String
-  variables       Json?
-  isActive        Boolean             @default(true)
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  category  String // e.g., "HR", "PAYROLL", "SYSTEM"
+  subject   String
+  body      String // Supports variables like {{EmployeeName}}
+  channels  String[] // e.g., ["EMAIL", "IN_APP"]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  queues NotificationQueue[]
+  queues    NotificationQueue[]
 
+  @@unique([companyId, name])
   @@index([companyId])
-  @@index([eventKey])
 }
 
 model NotificationPreference {
-  id        String              @id @default(uuid())
-  companyId String
-  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel   NotificationChannel
-  enabled   Boolean             @default(true)
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  id                String   @id @default(uuid())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled      Boolean  @default(true)
+  inAppEnabled      Boolean  @default(true)
+  smsEnabled        Boolean  @default(false)
+  pushEnabled       Boolean  @default(false)
+  mutedCategories   String[] // e.g., ["CRM", "INVENTORY"]
+  digestMode        Boolean  @default(false)
+  workingHoursStart String? // e.g., "09:00"
+  workingHoursEnd   String? // e.g., "18:00"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
+  @@unique([companyId, userId])
   @@index([companyId])
 }
 

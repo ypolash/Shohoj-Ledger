@@ -3,13 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { withCompany } from "@/lib/company/companyFilter";
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
   if (rbacGuard) return rbacGuard;
 
   try {
     const data = await request.json();
-    const id = params.id;
+    const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });

@@ -3,13 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
   if (rbacGuard) return rbacGuard;
 
   try {
+    const { id } = await context.params;
     const lifecycles = await prisma.employeeLifecycle.findMany({
-      where: { ...(await withCompany()), employeeId: params.id },
+      where: { ...(await withCompany()), employeeId: id },
       orderBy: { effectiveDate: 'desc' }
     });
     return NextResponse.json(lifecycles);
@@ -19,13 +20,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
   if (rbacGuard) return rbacGuard;
 
   try {
     const data = await request.json();
-    const employeeId = params.id;
+    const { id: employeeId } = await context.params;
     
     if (!data.eventType || !data.effectiveDate) {
       return NextResponse.json({ error: 'Event Type and Effective Date are required' }, { status: 400 });

@@ -4,7 +4,8 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function PATCH(req: Request, { params }: { params: { id: string, taskId: string } }) {
+export async function PATCH(req: Request, context: { params: Promise<{ id: string, taskId: string }> }) {
+  const params = await context.params;
   try {
     const companyId = await getCompanyId();
     const session = await getSession();
@@ -82,7 +83,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string, ta
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string, taskId: string } }) {
+export async function DELETE(req: Request, context: { params: Promise<{ id: string, taskId: string }> }) {
+  const params = await context.params;
   try {
     const companyId = await getCompanyId();
     const session = await getSession();

@@ -51,10 +51,26 @@ export async function POST(request: Request) {
 
     const transaction = await prisma.fundTransaction.create({
       data: {
+        companyId: companyIdForGuard,
         amount: fundAmount,
         source,
         description
       }
+    });
+
+    const { createLedgerEntry } = await import("@/lib/ledger");
+    const { getSession } = await import("@/lib/session");
+    const session = await getSession();
+
+    await createLedgerEntry({
+      companyId: companyIdForGuard,
+      module: 'Fund',
+      referenceId: transaction.id,
+      amount: fundAmount,
+      isDebit: true, // Fund coming in, Cash/Bank increases
+      accountType: 'Fund',
+      description: `Fund Added: ${source || ''} - ${description || ''}`,
+      createdById: session?.user?.id
     });
 
     return NextResponse.json(transaction, { status: 201 });

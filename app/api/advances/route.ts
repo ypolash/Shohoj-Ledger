@@ -62,12 +62,28 @@ export async function POST(request: Request) {
 
     const advance = await prisma.advance.create({
       data: {
+        companyId: companyIdForGuard,
         memberId,
         amount: advanceAmount,
         remainingAmount: advanceAmount,
         status: "ACTIVE",
         reason: description,
       }
+    });
+
+    const { createLedgerEntry } = await import("@/lib/ledger");
+    const { getSession } = await import("@/lib/session");
+    const session = await getSession();
+
+    await createLedgerEntry({
+      companyId: companyIdForGuard,
+      module: 'Advance',
+      referenceId: advance.id,
+      amount: advanceAmount,
+      isDebit: false, // Credit Bank (Asset decreases because we give cash to member)
+      accountType: 'Advance', // Representing the receivable/cash out side
+      description: `Advance Issued to Member: ${description || ''}`,
+      createdById: session?.user?.id
     });
 
     return NextResponse.json(advance, { status: 201 });

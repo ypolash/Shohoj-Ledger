@@ -70,12 +70,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Cannot revert a paid payroll to an earlier state' }, { status: 400 });
     }
 
-    // If transitioning to PAID, create the expense
+    // If transitioning to PAID, create the expense and ledger entry
     let expenseId = existingPayment.expenseId;
     if (status === 'PAID' && !expenseId) {
       const expense = await prisma.expense.create({
         data: {
-          companyId,
+          companyId: companyId!,
           category: 'Payroll',
           amount: existingPayment.netSalary,
           paymentMethod: paymentMethod || 'Bank Transfer',
@@ -84,6 +84,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
       });
       expenseId = expense.id;
+
+      const { createLedgerEntry } = await import("@/lib/ledger");
+      await createLedgerEntry({
+        companyId: companyId!,
+        module: 'Payroll',
+        referenceId: existingPayment.id,
+        amount: Number(existingPayment.netSalary),
+        isDebit: false, // Credit Bank (Asset decreases)
+        accountType: paymentMethod || 'Bank Transfer',
+        description: `Salary Payment for ${existingPayment.employee.firstName} ${existingPayment.employee.lastName} (${existingPayment.month}/${existingPayment.year})`,
+        createdById: userId
+      });
     }
 
     // If cancelling a PAID payroll

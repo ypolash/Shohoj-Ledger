@@ -1,10 +1,10 @@
 import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 import { requireModule } from "@/lib/modules/moduleGuard";
-
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { createLedgerEntry } from "@/lib/ledger";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const expenses = await prisma.expense.findMany({
+      where: { ...(await withCompany()) },
       orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(expenses);
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
 
     const expense = await prisma.expense.create({
       data: {
+        companyId: companyIdForGuard,
         category,
         amount: expenseAmount,
         paymentMethod,
@@ -77,10 +79,46 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
 
+    const oldExpense = await prisma.expense.findUnique({
+      where: { ...(await withCompany()), id }
+    });
+
+    if (!oldExpense) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
     const updatedExpense = await prisma.expense.update({
       where: { ...(await withCompany()), id },
       data: { approvalStatus }
     });
+
+    // If it was just approved, generate the Ledger Entry (Money Out)
+    if (oldExpense.approvalStatus !== 'APPROVED' && approvalStatus === 'APPROVED') {
+      const session = await getSession();
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Expense',
+        referenceId: updatedExpense.id,
+        amount: Number(updatedExpense.amount),
+        isDebit: false, // Credit Bank (Asset decreases)
+        accountType: updatedExpense.paymentMethod || 'Bank',
+        description: `Expense Approved: ${updatedExpense.category} ${updatedExpense.description ? '(' + updatedExpense.description + ')' : ''}`,
+        createdById: session?.user?.id
+      });
+    } else if (oldExpense.approvalStatus === 'APPROVED' && approvalStatus !== 'APPROVED') {
+      // Reversal/Refund if it was un-approved
+      const session = await getSession();
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Expense',
+        referenceId: updatedExpense.id,
+        amount: Number(updatedExpense.amount),
+        isDebit: true, // Debit Bank (Asset returned)
+        accountType: updatedExpense.paymentMethod || 'Bank',
+        description: `Expense Un-approved (Reversed): ${updatedExpense.category}`,
+        createdById: session?.user?.id
+      });
+    }
 
     return NextResponse.json(updatedExpense);
   } catch (error) {

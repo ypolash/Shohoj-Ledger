@@ -79,6 +79,7 @@ export async function POST(request: Request) {
 
     const loan = await prisma.memberLoan.create({
       data: {
+        companyId: companyIdForGuard,
         memberId,
         amount: loanAmount,
         remainingAmount: loanAmount,
@@ -87,6 +88,21 @@ export async function POST(request: Request) {
         issueDate,
         dueDate
       }
+    });
+
+    const { createLedgerEntry } = await import("@/lib/ledger");
+    const { getSession } = await import("@/lib/session");
+    const session = await getSession();
+
+    await createLedgerEntry({
+      companyId: companyIdForGuard,
+      module: 'Loan',
+      referenceId: loan.id,
+      amount: loanAmount,
+      isDebit: false, // Credit Bank (Cash leaves the company)
+      accountType: 'Bank', 
+      description: `Loan Issued to Member: ${description || ''}`,
+      createdById: session?.user?.id
     });
 
     return NextResponse.json(loan, { status: 201 });
@@ -111,18 +127,38 @@ export async function PATCH(request: Request) {
     if (!id || !status) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
+    
+    const oldLoan = await prisma.memberLoan.findUnique({
+      where: { ...(await withCompany()), id }
+    });
+
+    if (!oldLoan) {
+      return NextResponse.json({ error: "Loan not found" }, { status: 404 });
+    }
 
     const updateData: any = { status };
-    
-    // If marking as repaid, set repayment date
-    if (status === "REPAID" || status === "DEDUCTED") {
-      updateData.repaymentDate = new Date();
-    }
 
     const updatedLoan = await prisma.memberLoan.update({
       where: { ...(await withCompany()), id },
       data: updateData
     });
+
+    if (oldLoan.status === "ACTIVE" && (status === "REPAID" || status === "DEDUCTED")) {
+       const { createLedgerEntry } = await import("@/lib/ledger");
+       const { getSession } = await import("@/lib/session");
+       const session = await getSession();
+
+       await createLedgerEntry({
+         companyId: companyIdForGuard,
+         module: 'Loan',
+         referenceId: updatedLoan.id,
+         amount: Number(updatedLoan.amount), // Assuming full repayment for simplicity
+         isDebit: true, // Debit Bank (Cash enters the company from repayment)
+         accountType: 'Bank', 
+         description: `Loan Repaid by Member (${status})`,
+         createdById: session?.user?.id
+       });
+    }
 
     return NextResponse.json(updatedLoan);
   } catch (error) {

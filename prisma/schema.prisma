@@ -21,6 +21,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   payrollAudits PayrollAudit[]
+  ledgerEntries LedgerEntry[]
 }
 
 model Session {
@@ -516,6 +517,7 @@ model Company {
   designations        Designation[]
   lifecycles          EmployeeLifecycle[]
   payrollAudits       PayrollAudit[]
+  ledgerEntries       LedgerEntry[]
 }
 
 model CompanySetting {
@@ -652,4 +654,35 @@ model PayrollAudit {
 
   @@index([companyId])
   @@index([salaryPaymentId])
+}
+
+model LedgerEntry {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  date        DateTime @default(now())
+  voucherNo   String
+  voucherType String
+  
+  referenceId String?
+  module      String
+  
+  accountType String
+  debit       Decimal  @default(0)
+  credit      Decimal  @default(0)
+  
+  status      String   @default("COMPLETED")
+  description String?
+  
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([date])
+  @@index([voucherNo])
+  @@index([module])
 }

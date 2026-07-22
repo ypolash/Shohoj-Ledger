@@ -55,10 +55,26 @@ export async function POST(request: Request) {
 
     const transaction = await prisma.reserveTransaction.create({
       data: {
+        companyId: companyIdForGuard,
         amount: transactionAmount,
         type, // "DEPOSIT" or "WITHDRAWAL"
-        description
+        reason: description // NOTE: schema uses `reason` instead of `description`! Let me fix this mapping.
       }
+    });
+
+    const { createLedgerEntry } = await import("@/lib/ledger");
+    const { getSession } = await import("@/lib/session");
+    const session = await getSession();
+
+    await createLedgerEntry({
+      companyId: companyIdForGuard,
+      module: 'Reserve',
+      referenceId: transaction.id,
+      amount: transactionAmount,
+      isDebit: type === 'WITHDRAWAL', // If withdrawing from reserve, cash/bank receives money (Asset +)
+      accountType: 'Reserve',
+      description: `Reserve ${type}: ${description || ''}`,
+      createdById: session?.user?.id
     });
 
     return NextResponse.json(transaction, { status: 201 });

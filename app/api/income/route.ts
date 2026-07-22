@@ -2,10 +2,10 @@ import { verifyOwnership } from "@/lib/company/verifyOwnership";
 import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 import { requireModule } from "@/lib/modules/moduleGuard";
-
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { createLedgerEntry } from "@/lib/ledger";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
@@ -17,6 +17,7 @@ export async function GET() {
 
   try {
     const incomes = await prisma.income.findMany({
+      where: { ...(await withCompany()) },
       orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(incomes);
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
 
     const income = await prisma.income.create({
       data: {
+        companyId: companyIdForGuard,
         category,
         source,
         amount: totalAmount,
@@ -64,6 +66,21 @@ export async function POST(request: Request) {
         projectId
       }
     });
+
+    // Generate Universal Ledger Entry if money was received
+    if (receivedAmount > 0) {
+      const session = await getSession();
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Income',
+        referenceId: income.id,
+        amount: receivedAmount,
+        isDebit: true, // Debit Bank/Cash (Asset increases)
+        accountType: 'Bank', // Default
+        description: `Income Received: ${category} ${description ? '(' + description + ')' : ''}`,
+        createdById: session?.user?.id
+      });
+    }
 
     // Invalidate Settlement for this month
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -133,10 +150,16 @@ export async function PATCH(request: Request) {
     const { category, source, amount, received, shareable, description, projectId } = body;
 
     let updateData: any = { category, source, shareable, description, projectId };
+    let receivedDiff = 0;
 
     if (amount !== undefined && received !== undefined) {
+      const oldIncome = await prisma.income.findUnique({ where: { ...(await withCompany()), id } });
+      const oldReceived = oldIncome ? Number(oldIncome.received) : 0;
+      
       const totalAmount = parseFloat(amount);
       const receivedAmount = parseFloat(received);
+
+      receivedDiff = receivedAmount - oldReceived;
 
       let paymentStatus = "UNPAID";
       if (receivedAmount >= totalAmount) {
@@ -154,6 +177,33 @@ export async function PATCH(request: Request) {
       where: { ...(await withCompany()), id },
       data: updateData
     });
+
+    if (receivedDiff > 0) {
+      const session = await getSession();
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Income',
+        referenceId: income.id,
+        amount: receivedDiff,
+        isDebit: true,
+        accountType: 'Bank',
+        description: `Additional Income Received: ${category}`,
+        createdById: session?.user?.id
+      });
+    } else if (receivedDiff < 0) {
+       // Negative income receipt adjustment (refund)
+       const session = await getSession();
+       await createLedgerEntry({
+         companyId: companyIdForGuard,
+         module: 'Income',
+         referenceId: income.id,
+         amount: Math.abs(receivedDiff),
+         isDebit: false, // Credit Bank (Asset decreases)
+         accountType: 'Bank',
+         description: `Income Receipt Adjusted/Refunded: ${category}`,
+         createdById: session?.user?.id
+       });
+    }
 
     // Invalidate Settlement for this month
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];

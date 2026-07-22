@@ -232,6 +232,18 @@ export async function PATCH(request: Request) {
           }
         });
         expenseId = expense.id;
+
+        const { createLedgerEntry } = await import("@/lib/ledger");
+        await createLedgerEntry({
+          companyId: companyId!,
+          module: 'Payroll',
+          referenceId: existingPayment.id,
+          amount: Number(existingPayment.netSalary),
+          isDebit: false, // Credit Bank (Asset decreases)
+          accountType: paymentMethod || 'Bank Transfer',
+          description: `Salary Payment for ${existingPayment.employee.firstName} ${existingPayment.employee.lastName} (${existingPayment.month}/${existingPayment.year})`,
+          createdById: userId
+        });
       }
 
       if (status === 'CANCELLED' && expenseId) {

@@ -4,17 +4,17 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
-Successfully completed **Version 1.1 — Phase 4B: Payroll Processing Workflow**. 
-Implemented the advanced payroll lifecycle (Draft -> Calculated -> Submitted -> Approved -> Paid -> Locked -> Archived), Bulk Operations API, rigorous Audit Logging via the new `PayrollAudit` model, enhanced printable Payslips (with QR codes and payment details), and an analytics-driven Payroll Reports dashboard.
+Successfully completed **Version 1.1 — Phase 4C: Accounting & Ledger Integration**. 
+Implemented the unified Accounting Engine (`LedgerEntry`), hooked it dynamically into all transactional modules (Income, Expense, Payroll, Loans, Advances, Reserves, Funds), and built a central Unified General Ledger View alongside a Financial Overview dashboard.
 
 ## Goal Pivots
 - Shifted towards a highly modular schema for HR by separating Departments and Designations into standalone entities with references to Employee.
 - Decoupled employment history into a robust `EmployeeLifecycle` timeline event model for better auditability and historical tracking instead of directly mutating all fields without record.
 - Added explicit schema models `PayrollAudit` and enhanced `SalaryPayment` fields to rigidly enforce audit logging, allowing robust tracking of approvals and workflow changes while isolating companies via `companyId`.
+- **Phase 4C Pivot**: Chose to layer the ledger asynchronously over existing endpoints rather than mutating the original CRUD architectures, preserving absolute backward compatibility and avoiding regression in the Attendance/HR flows.
 
 ## Production Roadmap
-1. Polish UI/UX of newly added HR modules (Departments, Designations, Org Chart).
-2. Integrate Phase 4B Finance logic and general ledger capabilities.
-3. E2E Testing and performance tuning.
+1. Polish UI/UX of newly added HR and Finance modules.
+2. Build specific Tax and Compliance reporting systems if required.
 4. Prepare for production deployment and containerization (Docker/Kubernetes).
 5. Deploy to Production server.

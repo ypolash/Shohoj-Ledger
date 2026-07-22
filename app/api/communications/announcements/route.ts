@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { logAudit } from "@/lib/audit/auditService";
 
 export async function GET(req: Request) {
   try {
@@ -65,6 +66,16 @@ export async function POST(req: Request) {
       });
 
       // Optionally hook into notificationService here to distribute individual notifications to the target users.
+
+      // Hook into the central GlobalAuditLog
+      await logAudit({
+        module: "COMMUNICATIONS",
+        entityType: "Announcement",
+        entityId: a.id,
+        action: "CREATE",
+        description: `Created announcement: ${title}`,
+        afterValue: { title, message, targetType, targetId, priority }
+      });
 
       return a;
     });

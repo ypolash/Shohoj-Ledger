@@ -32,6 +32,7 @@ model User {
   notificationPreferences NotificationPreference[]
   notifications           Notification[]
   notificationAudits      NotificationAudit[]
+  globalAuditLogs         GlobalAuditLog[]
 }
 
 model Session {
@@ -609,6 +610,7 @@ model Company {
   notifications           Notification[]
   announcements           Announcement[]
   notificationAudits      NotificationAudit[]
+  globalAuditLogs         GlobalAuditLog[]
 }
 
 model CompanySetting {
@@ -1200,4 +1202,27 @@ model NotificationAudit {
   createdAt     DateTime @default(now())
 
   @@index([companyId])
+}
+
+model GlobalAuditLog {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  module      String // HR, PAYROLL, INVENTORY, SYSTEM, CRM, etc.
+  entityType  String // Employee, Project, etc.
+  entityId    String
+  action      String // CREATE, UPDATE, DELETE, LOGIN, EXPORT
+  description String?
+  beforeValue String? // JSON stringified
+  afterValue  String? // JSON stringified
+  ipAddress   String?
+  userAgent   String?
+  status      String   @default("SUCCESS") // SUCCESS, FAILED
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, module])
+  @@index([companyId, userId])
+  @@index([companyId, entityType, entityId])
 }

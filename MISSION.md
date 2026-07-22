@@ -4,13 +4,14 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
-- **Phase 6B Complete (Enterprise Notification & Communication Center):**
-  - **Notification Center:** Centralized inbox supporting read/unread, pinned, and archived states.
-  - **Event Architecture:** Hooked an internal `notificationService` emitter to programmatically generate alerts across HR, Inventory, Finance, and CRM.
-  - **User Preferences:** Allowed users to opt out of Email vs In-App delivery, setup working hours, and mute specific categories, checking preferences *before* dispatch.
-  - **Announcements & Templates:** Added company-wide broadcast models and templated engine abstractions.
+- **Phase 6C Complete (Enterprise Audit Log & Activity Center):**
+  - **Global Audit Engine:** Created a single `GlobalAuditLog` schema to chronologically track every module's core CRUD events across the platform.
+  - **Secret Sanitization:** Developed `auditService.ts` which intercepts network headers (IP, User Agent) and automatically recursive-masks passwords, tokens, and API keys before database serialization.
+  - **Activity Timeline Dashboard:** Built a highly filterable UI supporting cross-module JSON deep dives and JSON diffs.
+  - **Export Framework:** Bound to the `EXPORT_AUDIT` RBAC role to strictly regulate raw CSV generation.
 
 ## Goal Pivots & Architectural Decisions
+- **Non-Destructive Integration:** To obey strict backward-compatibility rules on older modules, the `GlobalAuditLog` operates as a parallel hook (`logAudit()`). Modules don't need to be rewritten to support the global log; they simply invoke the fire-and-forget service.
 - **Abstract Service Hook:** Instead of embedding Prisma inserts into every Payroll/Inventory API, we created a single `lib/notifications/notificationService.ts` that safely checks user opt-in preferences before generating rows. If an employee disables 'INVENTORY' alerts, the DB completely drops the message.
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.

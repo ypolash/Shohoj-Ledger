@@ -17,11 +17,11 @@ export async function fetchMyPayroll() {
     }),
     prisma.bonus.findMany({
       where: { companyId, employeeId },
-      orderBy: { date: "desc" }
+      orderBy: { createdAt: "desc" }
     }),
     prisma.salaryDeduction.findMany({
       where: { companyId, employeeId },
-      orderBy: { date: "desc" }
+      orderBy: { createdAt: "desc" }
     })
   ]);
 

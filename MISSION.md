@@ -4,15 +4,14 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
-- **Phase 6A Complete (Enterprise Inventory & Asset Management):**
-  - **Inventory Subsystem:** Implemented Product Catalog, Categories, Warehouses, and Suppliers.
-  - **Stock Ledger:** Designed a double-entry `StockTransaction` ledger model for stock ins, outs, adjustments, and transfers.
-  - **Purchasing:** Implemented Purchase Orders and PO item tracking.
-  - **Fixed Assets:** Developed company asset registration mapping to employees and tracking depreciation/warranty.
-  - **Inventory Dashboard:** Built an operations-wide KPI dashboard aggregating stock levels and values.
-  - **Audit:** Intercepted all critical inventory movements inside `InventoryAudit`.
+- **Phase 6B Complete (Enterprise Notification & Communication Center):**
+  - **Notification Center:** Centralized inbox supporting read/unread, pinned, and archived states.
+  - **Event Architecture:** Hooked an internal `notificationService` emitter to programmatically generate alerts across HR, Inventory, Finance, and CRM.
+  - **User Preferences:** Allowed users to opt out of Email vs In-App delivery, setup working hours, and mute specific categories, checking preferences *before* dispatch.
+  - **Announcements & Templates:** Added company-wide broadcast models and templated engine abstractions.
 
 ## Goal Pivots & Architectural Decisions
+- **Abstract Service Hook:** Instead of embedding Prisma inserts into every Payroll/Inventory API, we created a single `lib/notifications/notificationService.ts` that safely checks user opt-in preferences before generating rows. If an employee disables 'INVENTORY' alerts, the DB completely drops the message.
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
 - Decoupled employment history into a robust `EmployeeLifecycle` timeline event model for better auditability and historical tracking instead of directly mutating all fields without record.

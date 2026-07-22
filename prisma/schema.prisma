@@ -8,27 +8,30 @@ datasource db {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  companyId         String?
-  platformRole      PlatformRole?
-  name              String
-  email             String             @unique
-  emailVerified     Boolean            @default(false)
-  image             String?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  role              String             @default("member")
-  sessions          Session[]
-  accounts          Account[]
-  payrollAudits     PayrollAudit[]
-  ledgerEntries     LedgerEntry[]
-  reportAudits      ReportAudit[]
-  leadActivities    LeadActivity[]
-  projectActivities ProjectActivity[]
-  clientActivities  ClientActivity[]
-  clientDocuments   ClientDocument[]
-  stockTransactions StockTransaction[]
-  inventoryAudits   InventoryAudit[]
+  id                      String                   @id @default(uuid())
+  companyId               String?
+  platformRole            PlatformRole?
+  name                    String
+  email                   String                   @unique
+  emailVerified           Boolean                  @default(false)
+  image                   String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  role                    String                   @default("member")
+  sessions                Session[]
+  accounts                Account[]
+  payrollAudits           PayrollAudit[]
+  ledgerEntries           LedgerEntry[]
+  reportAudits            ReportAudit[]
+  leadActivities          LeadActivity[]
+  projectActivities       ProjectActivity[]
+  clientActivities        ClientActivity[]
+  clientDocuments         ClientDocument[]
+  stockTransactions       StockTransaction[]
+  inventoryAudits         InventoryAudit[]
+  notificationPreferences NotificationPreference[]
+  notifications           Notification[]
+  notificationAudits      NotificationAudit[]
 }
 
 model Session {
@@ -552,55 +555,60 @@ enum PlatformRole {
 }
 
 model Company {
-  id                  String               @id @default(uuid())
-  name                String
-  businessType        String
-  status              String               @default("ACTIVE")
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  settings            CompanySetting?
-  modules             CompanyModule[]
-  roles               Role[]
-  projects            Project[]
-  incomes             Income[]
-  expenses            Expense[]
-  fundTransactions    FundTransaction[]
-  reserveTransactions ReserveTransaction[]
-  memberLoans         MemberLoan[]
-  advances            Advance[]
-  settlements         Settlement[]
-  incomeCategories    IncomeCategory[]
-  members             Member[]
-  employees           Employee[]
-  tasks               Task[]
-  attendances         Attendance[]
-  leaveRequests       LeaveRequest[]
-  salaryPayments      SalaryPayment[]
-  salaryDeductions    SalaryDeduction[]
-  bonuses             Bonus[]
-  payslips            Payslip[]
-  leads               Lead[]
-  allowedNetworks     AllowedNetwork[]
-  punishmentSettings  PunishmentSetting[]
-  attendanceConfigs   AttendanceConfig[]
-  departments         Department[]
-  designations        Designation[]
-  lifecycles          EmployeeLifecycle[]
-  payrollAudits       PayrollAudit[]
-  ledgerEntries       LedgerEntry[]
-  reportAudits        ReportAudit[]
-  leadActivities      LeadActivity[]
-  projectActivities   ProjectActivity[]
-  clients             Client[]
-  productCategories   ProductCategory[]
-  products            Product[]
-  warehouses          Warehouse[]
-  suppliers           Supplier[]
-  purchaseOrders      PurchaseOrder[]
-  stockTransactions   StockTransaction[]
-  assetCategories     AssetCategory[]
-  assets              Asset[]
-  inventoryAudits     InventoryAudit[]
+  id                      String                   @id @default(uuid())
+  name                    String
+  businessType            String
+  status                  String                   @default("ACTIVE")
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  settings                CompanySetting?
+  modules                 CompanyModule[]
+  roles                   Role[]
+  projects                Project[]
+  incomes                 Income[]
+  expenses                Expense[]
+  fundTransactions        FundTransaction[]
+  reserveTransactions     ReserveTransaction[]
+  memberLoans             MemberLoan[]
+  advances                Advance[]
+  settlements             Settlement[]
+  incomeCategories        IncomeCategory[]
+  members                 Member[]
+  employees               Employee[]
+  tasks                   Task[]
+  attendances             Attendance[]
+  leaveRequests           LeaveRequest[]
+  salaryPayments          SalaryPayment[]
+  salaryDeductions        SalaryDeduction[]
+  bonuses                 Bonus[]
+  payslips                Payslip[]
+  leads                   Lead[]
+  allowedNetworks         AllowedNetwork[]
+  punishmentSettings      PunishmentSetting[]
+  attendanceConfigs       AttendanceConfig[]
+  departments             Department[]
+  designations            Designation[]
+  lifecycles              EmployeeLifecycle[]
+  payrollAudits           PayrollAudit[]
+  ledgerEntries           LedgerEntry[]
+  reportAudits            ReportAudit[]
+  leadActivities          LeadActivity[]
+  projectActivities       ProjectActivity[]
+  clients                 Client[]
+  productCategories       ProductCategory[]
+  products                Product[]
+  warehouses              Warehouse[]
+  suppliers               Supplier[]
+  purchaseOrders          PurchaseOrder[]
+  stockTransactions       StockTransaction[]
+  assetCategories         AssetCategory[]
+  assets                  Asset[]
+  inventoryAudits         InventoryAudit[]
+  notificationPreferences NotificationPreference[]
+  notificationTemplates   NotificationTemplate[]
+  notifications           Notification[]
+  announcements           Announcement[]
+  notificationAudits      NotificationAudit[]
 }
 
 model CompanySetting {
@@ -1097,6 +1105,96 @@ model InventoryAudit {
   description   String?
   oldValue      String?
   newValue      String?
+  performedById String
+  performedBy   User     @relation(fields: [performedById], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+}
+
+model NotificationPreference {
+  id                String   @id @default(uuid())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled      Boolean  @default(true)
+  inAppEnabled      Boolean  @default(true)
+  smsEnabled        Boolean  @default(false)
+  pushEnabled       Boolean  @default(false)
+  mutedCategories   String[] // e.g., ["CRM", "INVENTORY"]
+  digestMode        Boolean  @default(false)
+  workingHoursStart String? // e.g., "09:00"
+  workingHoursEnd   String? // e.g., "18:00"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  category  String // e.g., "HR", "PAYROLL", "SYSTEM"
+  subject   String
+  body      String // Supports variables like {{EmployeeName}}
+  channels  String[] // e.g., ["EMAIL", "IN_APP"]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String // e.g., "SYSTEM", "HR", "PAYROLL", "PROJECTS"
+  title     String
+  message   String
+  link      String?
+  channel   String   @default("IN_APP")
+  status    String   @default("UNREAD") // UNREAD, READ, ARCHIVED
+  priority  String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, userId, status])
+  @@index([companyId])
+}
+
+model Announcement {
+  id         String   @id @default(uuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title      String
+  message    String
+  targetType String // EVERYONE, DEPARTMENT, ROLE, EMPLOYEE
+  targetId   String? // ID of the specific target
+  priority   String   @default("NORMAL")
+  status     String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model NotificationAudit {
+  id            String   @id @default(uuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  action        String // SENT, READ, DELETED, TEMPLATE_UPDATED
+  entityType    String // NOTIFICATION, ANNOUNCEMENT, TEMPLATE
+  entityId      String
+  description   String?
   performedById String
   performedBy   User     @relation(fields: [performedById], references: [id])
   createdAt     DateTime @default(now())

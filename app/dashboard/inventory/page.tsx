@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Package, AlertTriangle, Box, Truck, DollarSign, Monitor } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { Package, AlertTriangle, Box, Truck, DollarSign, Monitor, MapPin } from 'lucide-react';
 
 export default function InventoryDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const formatCurrency = (val: string | number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(val || 0));
+  };
 
   useEffect(() => {
     fetchDashboardData();

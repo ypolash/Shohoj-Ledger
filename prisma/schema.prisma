@@ -8,20 +8,21 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(uuid())
+  id            String         @id @default(uuid())
   companyId     String?
   platformRole  PlatformRole?
   name          String
-  email         String        @unique
-  emailVerified Boolean       @default(false)
+  email         String         @unique
+  emailVerified Boolean        @default(false)
   image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  role          String        @default("member")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  role          String         @default("member")
   sessions      Session[]
   accounts      Account[]
   payrollAudits PayrollAudit[]
   ledgerEntries LedgerEntry[]
+  reportAudits  ReportAudit[]
 }
 
 model Session {
@@ -231,25 +232,25 @@ model Employee {
   bonuses        Bonus[]
   payslips       Payslip[]
   tasks          Task[]
-  
-  departmentId       String?
-  departmentRef      Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id])
-  
-  designationId      String?
-  designationRef     Designation? @relation("EmployeeDesignation", fields: [designationId], references: [id])
-  
+
+  departmentId  String?
+  departmentRef Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+
+  designationId  String?
+  designationRef Designation? @relation("EmployeeDesignation", fields: [designationId], references: [id])
+
   reportingManagerId String?
-  reportingManager   Employee? @relation("EmployeeToManager", fields: [reportingManagerId], references: [id])
+  reportingManager   Employee?  @relation("EmployeeToManager", fields: [reportingManagerId], references: [id])
   subordinates       Employee[] @relation("EmployeeToManager")
 
-  headOfDepartment   Department[] @relation("DepartmentHead")
-  
-  employmentType     String?
-  location           String?
-  shift              String?
-  employmentStatus   String? @default("Probation")
-  
-  lifecycleEvents    EmployeeLifecycle[]
+  headOfDepartment Department[] @relation("DepartmentHead")
+
+  employmentType   String?
+  location         String?
+  shift            String?
+  employmentStatus String? @default("Probation")
+
+  lifecycleEvents EmployeeLifecycle[]
 
   @@index([companyId])
 }
@@ -320,26 +321,26 @@ model LeaveRequest {
 }
 
 model SalaryPayment {
-  id          String   @id @default(uuid())
-  companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id])
-  employeeId  String
-  employee    Employee @relation(fields: [employeeId], references: [id])
-  month       Int // 1-12
-  year        Int
-  basicSalary Decimal
-  grossSalary Decimal
-  netSalary   Decimal
+  id             String    @id @default(uuid())
+  companyId      String?
+  company        Company?  @relation(fields: [companyId], references: [id])
+  employeeId     String
+  employee       Employee  @relation(fields: [employeeId], references: [id])
+  month          Int // 1-12
+  year           Int
+  basicSalary    Decimal
+  grossSalary    Decimal
+  netSalary      Decimal
   paymentDate    DateTime?
-  status         String   @default("PAID") // DRAFT, CALCULATED, SUBMITTED, APPROVED, PAID, LOCKED, ARCHIVED
+  status         String    @default("PAID") // DRAFT, CALCULATED, SUBMITTED, APPROVED, PAID, LOCKED, ARCHIVED
   expenseId      String? // Link to Expense model record in Shohoj Ledger
   paymentMethod  String?
   transactionRef String?
   paymentNote    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  audits         PayrollAudit[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  audits PayrollAudit[]
 
   @@index([companyId])
 }
@@ -518,6 +519,7 @@ model Company {
   lifecycles          EmployeeLifecycle[]
   payrollAudits       PayrollAudit[]
   ledgerEntries       LedgerEntry[]
+  reportAudits        ReportAudit[]
 }
 
 model CompanySetting {
@@ -583,19 +585,19 @@ model RolePermission {
 }
 
 model Department {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   code        String?
   name        String
   description String?
-  headId      String?  
+  headId      String?
   head        Employee? @relation("DepartmentHead", fields: [headId], references: [id])
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  employees   Employee[] @relation("EmployeeDepartment")
+  employees Employee[] @relation("EmployeeDepartment")
 
   @@unique([companyId, name])
   @@unique([companyId, code])
@@ -614,75 +616,91 @@ model Designation {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  employees   Employee[] @relation("EmployeeDesignation")
+  employees Employee[] @relation("EmployeeDesignation")
 
   @@unique([companyId, name])
   @@index([companyId])
 }
 
 model EmployeeLifecycle {
-  id           String   @id @default(uuid())
-  companyId    String
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  employeeId   String
-  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  eventType    String   // HIRE, CONFIRM, PROMOTE, TRANSFER, SUSPEND, REINSTATE, RESIGN, TERMINATE
+  id            String   @id @default(uuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  eventType     String // HIRE, CONFIRM, PROMOTE, TRANSFER, SUSPEND, REINSTATE, RESIGN, TERMINATE
   effectiveDate DateTime
-  description  String?
-  previousData Json?    // To keep history of what changed
-  newData      Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  description   String?
+  previousData  Json? // To keep history of what changed
+  newData       Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([companyId])
   @@index([employeeId])
 }
 
 model PayrollAudit {
-  id              String   @id @default(uuid())
+  id              String        @id @default(uuid())
   companyId       String
-  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   salaryPaymentId String
   salaryPayment   SalaryPayment @relation(fields: [salaryPaymentId], references: [id], onDelete: Cascade)
   userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
   role            String
   oldStatus       String?
   newStatus       String
   remarks         String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime      @default(now())
 
   @@index([companyId])
   @@index([salaryPaymentId])
 }
 
 model LedgerEntry {
-  id          String   @id @default(uuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   date        DateTime @default(now())
   voucherNo   String
   voucherType String
-  
+
   referenceId String?
   module      String
-  
-  accountType String
-  debit       Decimal  @default(0)
-  credit      Decimal  @default(0)
-  
-  status      String   @default("COMPLETED")
-  description String?
-  
-  createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  accountType String
+  debit       Decimal @default(0)
+  credit      Decimal @default(0)
+
+  status      String  @default("COMPLETED")
+  description String?
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@index([date])
   @@index([voucherNo])
   @@index([module])
+}
+
+model ReportAudit {
+  id         String   @id @default(uuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  reportName String
+  action     String // "GENERATED", "EXPORTED", "PRINTED"
+  format     String? // "CSV", "PDF"
+  filters    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([companyId])
+  @@index([reportName])
 }

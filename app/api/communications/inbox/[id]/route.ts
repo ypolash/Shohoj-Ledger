@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCompanyId, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/session";
+import { getCompanyId } from "@/lib/company/companyFilter";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {

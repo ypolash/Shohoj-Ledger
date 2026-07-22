@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCompanyId, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/session";
+import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function GET(req: Request) {

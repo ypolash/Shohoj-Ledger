@@ -25,6 +25,8 @@ model User {
   reportAudits      ReportAudit[]
   leadActivities    LeadActivity[]
   projectActivities ProjectActivity[]
+  clientActivities  ClientActivity[]
+  clientDocuments   ClientDocument[]
 }
 
 model Session {
@@ -79,6 +81,8 @@ model Project {
   status          String     @default("Draft")
   progress        Int?       @default(0)
   clientName      String?
+  clientId        String?
+  client          Client?    @relation(fields: [clientId], references: [id])
   leadId          String?
   lead            Lead?      @relation(fields: [leadId], references: [id])
   managerId       String?
@@ -434,6 +438,8 @@ model Lead {
   company             Company?       @relation(fields: [companyId], references: [id])
   serialNumber        Int            @default(autoincrement())
   companyName         String
+  clientId            String?
+  client              Client?        @relation(fields: [clientId], references: [id])
   contactPerson       String
   phone               String
   email               String?
@@ -581,6 +587,7 @@ model Company {
   reportAudits        ReportAudit[]
   leadActivities      LeadActivity[]
   projectActivities   ProjectActivity[]
+  clients             Client[]
 }
 
 model CompanySetting {
@@ -784,4 +791,93 @@ model ProjectActivity {
   @@index([companyId])
   @@index([projectId])
   @@index([taskId])
+}
+
+model Client {
+  id           String   @id @default(uuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clientCode   String
+  name         String
+  email        String?
+  phone        String?
+  altPhone     String?
+  website      String?
+  industry     String?
+  businessType String?
+  taxNumber    String?
+  address      String?
+  country      String?
+  city         String?
+  postalCode   String?
+  status       String   @default("ACTIVE")
+  notes        String?
+  tags         String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contacts   ClientContact[]
+  documents  ClientDocument[]
+  activities ClientActivity[]
+  projects   Project[]
+  leads      Lead[]
+
+  @@unique([companyId, clientCode])
+  @@unique([companyId, email])
+  @@unique([companyId, phone])
+  @@unique([companyId, taxNumber])
+  @@index([companyId])
+}
+
+model ClientContact {
+  id          String    @id @default(uuid())
+  companyId   String
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name        String
+  designation String?
+  email       String?
+  phone       String?
+  mobile      String?
+  birthday    DateTime?
+  notes       String?
+  isPrimary   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([clientId])
+}
+
+model ClientDocument {
+  id           String   @id @default(uuid())
+  companyId    String
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name         String
+  type         String
+  fileUrl      String
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([companyId])
+  @@index([clientId])
+}
+
+model ClientActivity {
+  id            String   @id @default(uuid())
+  companyId     String
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type          String
+  description   String?
+  oldValue      String?
+  newValue      String?
+  performedById String
+  performedBy   User     @relation(fields: [performedById], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([companyId])
+  @@index([clientId])
 }

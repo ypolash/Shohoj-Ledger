@@ -4,8 +4,8 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
-Successfully completed **Version 1.1 — Phase 5B: Enterprise Project Management**. 
-Created a comprehensive Project Portfolio Management (PPM) module enabling complex project lifecycles, kanban task boards, team assignments, budget vs actual tracking, and robust unified audit logging.
+Successfully completed **Version 1.1 — Phase 5C: Enterprise Customer & Client Management Portal**. 
+Created a unified Client 360 Workspace integrating contacts, documents, linked projects, converted leads, and full audit timelines into a single pane of glass.
 
 ## Goal Pivots
 - Shifted towards a highly modular schema for HR by separating Departments and Designations into standalone entities with references to Employee.
@@ -15,9 +15,10 @@ Created a comprehensive Project Portfolio Management (PPM) module enabling compl
 - **Phase 4D Pivot**: Built a native client-side CSV export (`Blob`) and leveraged `window.print()` for PDF functionality instead of bringing in heavy backend dependencies, adhering to the constraint of utilizing existing export infrastructure.
 - **Phase 5A Pivot**: Leveraged native HTML5 drag-and-drop instead of heavy external drag-and-drop libraries to build the Kanban pipeline, minimizing dependency bloat while delivering a premium interactive user experience.
 - **Phase 5B Pivot**: Refactored the generic `Task` model to explicitly link with `Project`, and created a unified `ProjectActivity` model that elegantly handles audit logging for both Project and Task events in a single chronologically sortable feed.
+- **Phase 5C Pivot**: Kept string-based `clientName` in `Project` and `companyName` in `Lead` to maintain absolute backward compatibility, while concurrently introducing strong `clientId` foreign key bindings to power the 360-degree client views.
 
 ## Production Roadmap
-1. Polish UI/UX of newly added HR, Finance, Reporting, CRM, and Project Management modules.
-2. Begin Phase 5C (potentially client portals, advanced workflows, or system configurations).
+1. Polish UI/UX of newly added HR, Finance, Reporting, CRM, Project Management, and Client Portal modules.
+2. Begin Phase 5D (if any further enterprise workflows remain) or proceed to Phase 6.
 4. Prepare for production deployment and containerization (Docker/Kubernetes).
 5. Deploy to Production server.

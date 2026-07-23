@@ -60,6 +60,7 @@ model User {
   createdDeliveryOrders   DeliveryOrder[]          @relation("DeliveryOrderCreator")
   createdCustomerReturns  CustomerReturn[]         @relation("CustomerReturnCreator")
   createdCreditHistories  CustomerCreditHistory[]  @relation("CreditHistoryCreator")
+  createdCustomerPayments CustomerPayment[]        @relation("CustomerPaymentCreator")
 }
 
 model Session {
@@ -1053,6 +1054,70 @@ model CustomerCreditHistory {
   @@index([referenceType])
 }
 
+enum CustomerPaymentStatus {
+  DRAFT
+  PENDING
+  POSTED
+  PARTIALLY_ALLOCATED
+  FULLY_ALLOCATED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK
+  CHEQUE
+  MOBILE_BANKING
+  CARD
+  ONLINE
+}
+
+model CustomerPayment {
+  id                String                @id @default(uuid())
+  companyId         String
+  company           Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  paymentNumber     String                @unique @default(cuid())
+  customerId        String
+  customer          Customer              @relation(fields: [customerId], references: [id])
+  paymentDate       DateTime              @default(now())
+  paymentMethod     PaymentMethod
+  referenceNumber   String?
+  bankAccountId     String?
+  currency          String                @default("USD")
+  amount            Decimal               @default(0)
+  allocatedAmount   Decimal               @default(0)
+  unallocatedAmount Decimal               @default(0)
+  status            CustomerPaymentStatus @default(DRAFT)
+  remarks           String?
+
+  createdById String
+  createdBy   User     @relation("CustomerPaymentCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  allocations CustomerPaymentAllocation[]
+
+  @@index([companyId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model CustomerPaymentAllocation {
+  id                String          @id @default(uuid())
+  customerPaymentId String
+  customerPayment   CustomerPayment @relation(fields: [customerPaymentId], references: [id], onDelete: Cascade)
+
+  referenceType String // e.g., INVOICE, SALES_ORDER
+  referenceId   String
+
+  allocatedAmount Decimal
+
+  createdAt DateTime @default(now())
+
+  @@index([customerPaymentId])
+  @@index([referenceType, referenceId])
+}
+
 model AllowedNetwork {
   id        String   @id @default(cuid())
   companyId String?
@@ -1288,6 +1353,7 @@ model Company {
   customerReturns          CustomerReturn[]
   creditProfiles           CustomerCreditProfile[]
   creditHistories          CustomerCreditHistory[]
+  customerPayments         CustomerPayment[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -3424,16 +3490,17 @@ model Customer {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  addresses       CustomerAddress[]
-  contacts        CustomerContact[]
-  leads           Lead[]
-  opportunities   Opportunity[]
-  quotations      Quotation[]
-  salesOrders     SalesOrder[]
-  deliveryOrders  DeliveryOrder[]
-  customerReturns CustomerReturn[]
-  creditProfile   CustomerCreditProfile?
-  creditHistories CustomerCreditHistory[]
+  addresses        CustomerAddress[]
+  contacts         CustomerContact[]
+  leads            Lead[]
+  opportunities    Opportunity[]
+  quotations       Quotation[]
+  salesOrders      SalesOrder[]
+  deliveryOrders   DeliveryOrder[]
+  customerReturns  CustomerReturn[]
+  creditProfile    CustomerCreditProfile?
+  creditHistories  CustomerCreditHistory[]
+  customerPayments CustomerPayment[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

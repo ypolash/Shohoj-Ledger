@@ -53,6 +53,8 @@ model User {
   createdCustomers        Customer[]               @relation("CustomerCreator")
   createdLeads            Lead[]                   @relation("LeadCreator")
   createdLeadActivities   LeadActivity[]           @relation("LeadActivityCreator")
+  createdOpportunities    Opportunity[]            @relation("OpportunityCreator")
+  createdOppActivities    OpportunityActivity[]    @relation("OpportunityActivityCreator")
 }
 
 model Session {
@@ -322,6 +324,7 @@ model Employee {
   purchaseRequestsApproved     PurchaseRequest[]     @relation("PurchaseRequestApprovedBy")
   pickingTasksAssigned         PickingTask[]         @relation("PickingTaskAssignedTo")
   packingTasksPacked           PackingTask[]         @relation("PackingTaskPackedBy")
+  ownedOpportunities           Opportunity[]         @relation("OpportunityOwner")
 
   @@index([companyId])
 }
@@ -567,8 +570,9 @@ model Lead {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  activities LeadActivity[]
-  projects   Project[]
+  activities    LeadActivity[]
+  projects      Project[]
+  opportunities Opportunity[]
 
   @@index([status])
   @@index([leadStatus])
@@ -604,6 +608,85 @@ model LeadActivity {
 
   @@index([leadId])
   @@index([companyId])
+}
+
+enum OpportunityStatus {
+  OPEN
+  WON
+  LOST
+  CANCELLED
+}
+
+model OpportunityStage {
+  id             String   @id @default(uuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name           String
+  displayOrder   Int      @default(0)
+  winProbability Int      @default(0) // 0-100
+  isClosed       Boolean  @default(false)
+  isWon          Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  opportunities Opportunity[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model Opportunity {
+  id                String            @id @default(uuid())
+  companyId         String
+  company           Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  opportunityNumber String            @unique @default(cuid())
+  customerId        String
+  customer          Customer          @relation(fields: [customerId], references: [id])
+  leadId            String?
+  lead              Lead?             @relation(fields: [leadId], references: [id])
+  stageId           String
+  stage             OpportunityStage  @relation(fields: [stageId], references: [id])
+  ownerId           String?
+  owner             Employee?         @relation("OpportunityOwner", fields: [ownerId], references: [id])
+  title             String
+  description       String?
+  estimatedRevenue  Decimal           @default(0)
+  expectedCloseDate DateTime?
+  probability       Int               @default(0) // 0-100
+  status            OpportunityStatus @default(OPEN)
+  priority          String            @default("Medium")
+  source            String?
+  currency          String            @default("BDT")
+
+  createdById String
+  createdBy   User     @relation("OpportunityCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  activities OpportunityActivity[]
+
+  @@index([companyId])
+  @@index([customerId])
+  @@index([leadId])
+  @@index([stageId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model OpportunityActivity {
+  id            String      @id @default(uuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  activityType  String
+  activityDate  DateTime    @default(now())
+  subject       String
+  description   String?
+
+  createdById String
+  createdBy   User     @relation("OpportunityActivityCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([opportunityId])
 }
 
 model AllowedNetwork {
@@ -833,6 +916,8 @@ model Company {
   payslips                 Payslip[]
   leads                    Lead[]
   leadSources              LeadSource[]
+  opportunities            Opportunity[]
+  opportunityStages        OpportunityStage[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -2951,9 +3036,10 @@ model Customer {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  addresses CustomerAddress[]
-  contacts  CustomerContact[]
-  leads     Lead[]
+  addresses     CustomerAddress[]
+  contacts      CustomerContact[]
+  leads         Lead[]
+  opportunities Opportunity[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

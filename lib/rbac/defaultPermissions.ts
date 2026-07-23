@@ -97,6 +97,11 @@ export const DefaultPermissions = [
   { action: "ADJUSTMENT_APPROVE", moduleKey: "INVENTORY" },
   { action: "ADJUSTMENT_POST", moduleKey: "INVENTORY" },
   { action: "ADJUSTMENT_CANCEL", moduleKey: "INVENTORY" },
+  { action: "CYCLECOUNT_VIEW", moduleKey: "INVENTORY" },
+  { action: "CYCLECOUNT_CREATE", moduleKey: "INVENTORY" },
+  { action: "CYCLECOUNT_ASSIGN", moduleKey: "INVENTORY" },
+  { action: "CYCLECOUNT_APPROVE", moduleKey: "INVENTORY" },
+  { action: "CYCLECOUNT_POST", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

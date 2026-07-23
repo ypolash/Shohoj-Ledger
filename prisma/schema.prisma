@@ -313,6 +313,8 @@ model Employee {
   transfersApproved            StockTransfer[]       @relation("TransferApprovedBy")
   inventoryAdjustmentsCreated  InventoryAdjustment[] @relation("AdjustmentCreatedBy")
   inventoryAdjustmentsApproved InventoryAdjustment[] @relation("AdjustmentApprovedBy")
+  cycleCountsCreated           CycleCount[]          @relation("CycleCountCreatedBy")
+  cycleCountsApproved          CycleCount[]          @relation("CycleCountApprovedBy")
 
   @@index([companyId])
 }
@@ -811,6 +813,7 @@ model Company {
   goodsReceipts        GoodsReceipt[]
   putAwayTasks         PutAwayTask[]
   inventoryAdjustments InventoryAdjustment[]
+  cycleCounts          CycleCount[]
 }
 
 model CompanySetting {
@@ -1178,6 +1181,7 @@ model Product {
   putAwayTaskLines         PutAwayTaskLine[]
   stockTransferLines       StockTransferLine[]
   inventoryAdjustmentLines InventoryAdjustmentLine[]
+  cycleCountLines          CycleCountLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1221,6 +1225,8 @@ model Warehouse {
   putAwayTasks             PutAwayTask[]
   inventoryAdjustments     InventoryAdjustment[]     @relation("AdjustmentWarehouse")
   inventoryAdjustmentLines InventoryAdjustmentLine[] @relation("AdjustmentLineWarehouse")
+  cycleCounts              CycleCount[]              @relation("CycleCountWarehouse")
+  cycleCountLines          CycleCountLine[]          @relation("CycleCountLineWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2209,6 +2215,7 @@ model WarehouseZone {
   stockTransferLinesFrom   StockTransferLine[]       @relation("TransferFromZone")
   stockTransferLinesTo     StockTransferLine[]       @relation("TransferToZone")
   inventoryAdjustmentLines InventoryAdjustmentLine[]
+  cycleCountLines          CycleCountLine[]
 
   @@index([warehouseId])
   @@index([code])
@@ -2233,6 +2240,7 @@ model WarehouseBin {
   stockTransferLinesFrom   StockTransferLine[]       @relation("TransferFromBin")
   stockTransferLinesTo     StockTransferLine[]       @relation("TransferToBin")
   inventoryAdjustmentLines InventoryAdjustmentLine[]
+  cycleCountLines          CycleCountLine[]
 
   @@index([warehouseId])
   @@index([code])
@@ -2326,6 +2334,7 @@ model InventoryBatch {
   putAwayTaskLines         PutAwayTaskLine[]
   stockTransferLines       StockTransferLine[]
   inventoryAdjustmentLines InventoryAdjustmentLine[]
+  cycleCountLines          CycleCountLine[]
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2362,6 +2371,7 @@ model InventorySerial {
   putAwayTaskLines         PutAwayTaskLine[]
   stockTransferLines       StockTransferLine[]
   inventoryAdjustmentLines InventoryAdjustmentLine[]
+  cycleCountLines          CycleCountLine[]
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -2554,6 +2564,63 @@ model InventoryAdjustmentLine {
   remarks            String?
 
   @@index([inventoryAdjustmentId])
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+model CycleCount {
+  id            String    @id @default(uuid())
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouseId   String
+  warehouse     Warehouse @relation("CycleCountWarehouse", fields: [warehouseId], references: [id])
+  countNumber   String
+  status        String    @default("PENDING") // PENDING, COUNTING, COUNTED, RECOUNT_REQUIRED, APPROVED, POSTED, CANCELLED
+  scheduledDate DateTime
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdById   String
+  createdBy     Employee  @relation("CycleCountCreatedBy", fields: [createdById], references: [id])
+  approvedById  String?
+  approvedBy    Employee? @relation("CycleCountApprovedBy", fields: [approvedById], references: [id])
+  remarks       String?
+
+  lines CycleCountLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, countNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+}
+
+model CycleCountLine {
+  id           String     @id @default(uuid())
+  cycleCountId String
+  cycleCount   CycleCount @relation(fields: [cycleCountId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+
+  batchId  String?
+  batch    InventoryBatch?  @relation(fields: [batchId], references: [id])
+  serialId String?
+  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+
+  warehouseId String
+  warehouse   Warehouse      @relation("CycleCountLineWarehouse", fields: [warehouseId], references: [id])
+  zoneId      String?
+  zone        WarehouseZone? @relation(fields: [zoneId], references: [id])
+  binId       String?
+  bin         WarehouseBin?  @relation(fields: [binId], references: [id])
+
+  systemQuantity  Decimal
+  countedQuantity Decimal?
+  variance        Decimal?
+  countStatus     String   @default("PENDING") // PENDING, COUNTED, RECOUNT_REQUIRED
+  remarks         String?
+
+  @@index([cycleCountId])
   @@index([productId])
   @@index([warehouseId])
 }

@@ -114,6 +114,11 @@ export const DefaultPermissions = [
   { action: "WAREHOUSE_DASHBOARD_VIEW", moduleKey: "INVENTORY" },
   { action: "WAREHOUSE_ANALYTICS_VIEW", moduleKey: "INVENTORY" },
   { action: "WAREHOUSE_REPORT_EXPORT", moduleKey: "INVENTORY" },
+  { action: "PICKING_VIEW", moduleKey: "INVENTORY" },
+  { action: "PICKING_ASSIGN", moduleKey: "INVENTORY" },
+  { action: "PICKING_EXECUTE", moduleKey: "INVENTORY" },
+  { action: "PACKING_VIEW", moduleKey: "INVENTORY" },
+  { action: "PACKING_EXECUTE", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

@@ -317,6 +317,8 @@ model Employee {
   cycleCountsApproved          CycleCount[]          @relation("CycleCountApprovedBy")
   purchaseRequestsRequested    PurchaseRequest[]     @relation("PurchaseRequestedBy")
   purchaseRequestsApproved     PurchaseRequest[]     @relation("PurchaseRequestApprovedBy")
+  pickingTasksAssigned         PickingTask[]         @relation("PickingTaskAssignedTo")
+  packingTasksPacked           PackingTask[]         @relation("PackingTaskPackedBy")
 
   @@index([companyId])
 }
@@ -819,6 +821,8 @@ model Company {
   inventoryValuationLayers InventoryValuationLayer[]
   reorderPolicies          ReorderPolicy[]
   purchaseRequests         PurchaseRequest[]
+  pickingTasks             PickingTask[]
+  packingTasks             PackingTask[]
 }
 
 model CompanySetting {
@@ -1190,6 +1194,7 @@ model Product {
   inventoryValuationLayers InventoryValuationLayer[]
   reorderPolicies          ReorderPolicy[]
   purchaseRequestLines     PurchaseRequestLine[]
+  pickingTaskLines         PickingTaskLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1238,6 +1243,8 @@ model Warehouse {
   valuationLayers          InventoryValuationLayer[] @relation("ValuationWarehouse")
   reorderPolicies          ReorderPolicy[]           @relation("ReorderPolicyWarehouse")
   purchaseRequests         PurchaseRequest[]         @relation("PurchaseRequestWarehouse")
+  pickingTasks             PickingTask[]             @relation("PickingTaskWarehouse")
+  packingTasks             PackingTask[]             @relation("PackingTaskWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2229,6 +2236,7 @@ model WarehouseZone {
   stockTransferLinesTo     StockTransferLine[]       @relation("TransferToZone")
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
+  pickingTaskLines         PickingTaskLine[]         @relation("PickingLineZone")
 
   @@index([warehouseId])
   @@index([code])
@@ -2254,6 +2262,7 @@ model WarehouseBin {
   stockTransferLinesTo     StockTransferLine[]       @relation("TransferToBin")
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
+  pickingTaskLines         PickingTaskLine[]         @relation("PickingLineBin")
 
   @@index([warehouseId])
   @@index([code])
@@ -2349,6 +2358,7 @@ model InventoryBatch {
   stockTransferLines       StockTransferLine[]
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
+  pickingTaskLines         PickingTaskLine[]         @relation("PickingLineBatch")
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2386,6 +2396,7 @@ model InventorySerial {
   stockTransferLines       StockTransferLine[]
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
+  pickingTaskLines         PickingTaskLine[]         @relation("PickingLineSerial")
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -2729,4 +2740,75 @@ model PurchaseRequestLine {
 
   @@index([purchaseRequestId])
   @@index([productId])
+}
+
+model PickingTask {
+  id           String            @id @default(uuid())
+  companyId    String
+  company      Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouseId  String
+  warehouse    Warehouse         @relation("PickingTaskWarehouse", fields: [warehouseId], references: [id])
+  salesOrderId String?
+  taskNumber   String
+  status       String            @default("PENDING") // PENDING, ASSIGNED, IN_PROGRESS, PICKED, COMPLETED, CANCELLED
+  priority     Int               @default(1)
+  assignedToId String?
+  assignedTo   Employee?         @relation("PickingTaskAssignedTo", fields: [assignedToId], references: [id])
+  lines        PickingTaskLine[]
+  packingTasks PackingTask[]
+  completedAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([companyId, taskNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+}
+
+model PickingTaskLine {
+  id                String           @id @default(uuid())
+  pickingTaskId     String
+  pickingTask       PickingTask      @relation(fields: [pickingTaskId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product          @relation(fields: [productId], references: [id])
+  batchId           String?
+  batch             InventoryBatch?  @relation("PickingLineBatch", fields: [batchId], references: [id])
+  serialId          String?
+  serial            InventorySerial? @relation("PickingLineSerial", fields: [serialId], references: [id])
+  zoneId            String
+  zone              WarehouseZone    @relation("PickingLineZone", fields: [zoneId], references: [id])
+  binId             String
+  bin               WarehouseBin     @relation("PickingLineBin", fields: [binId], references: [id])
+  requestedQuantity Decimal
+  pickedQuantity    Decimal          @default(0)
+  packedQuantity    Decimal          @default(0)
+  remarks           String?
+
+  @@index([pickingTaskId])
+  @@index([productId])
+  @@index([zoneId])
+  @@index([binId])
+}
+
+model PackingTask {
+  id            String      @id @default(uuid())
+  companyId     String
+  company       Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouseId   String
+  warehouse     Warehouse   @relation("PackingTaskWarehouse", fields: [warehouseId], references: [id])
+  pickingTaskId String
+  pickingTask   PickingTask @relation(fields: [pickingTaskId], references: [id])
+  packingNumber String
+  status        String      @default("PENDING") // PENDING, PACKING, COMPLETED, CANCELLED
+  packedById    String?
+  packedBy      Employee?   @relation("PackingTaskPackedBy", fields: [packedById], references: [id])
+  packedAt      DateTime?
+  remarks       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([companyId, packingNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+  @@index([pickingTaskId])
 }

@@ -38,6 +38,9 @@ export const DefaultPermissions = [
   { action: "JOURNALENTRY_EDIT", moduleKey: "ACCOUNTING" },
   { action: "JOURNALENTRY_POST", moduleKey: "ACCOUNTING" },
   { action: "JOURNALENTRY_VOID", moduleKey: "ACCOUNTING" },
+  { action: "LEDGER_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "LEDGER_EXPORT", moduleKey: "ACCOUNTING" },
+  { action: "LEDGER_AUDIT", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

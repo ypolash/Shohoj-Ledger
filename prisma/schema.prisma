@@ -964,9 +964,25 @@ model LedgerEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // V1.3 General Ledger Engine Additions
+  branchId           String?
+  branch             Branch?           @relation(fields: [branchId], references: [id])
+  journalEntryId     String?
+  journalEntry       JournalEntry?     @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  journalEntryLineId String?
+  journalEntryLine   JournalEntryLine? @relation(fields: [journalEntryLineId], references: [id], onDelete: Cascade)
+  accountId          String?
+  account            ChartOfAccount?   @relation(fields: [accountId], references: [id])
+  entryDate          DateTime?
+  runningBalance     Decimal?
+  referenceType      String?
+
   @@index([companyId])
   @@index([date])
   @@index([voucherNo])
+  @@index([accountId])
+  @@index([entryDate])
+  @@index([journalEntryId])
   @@index([module])
 }
 
@@ -1832,6 +1848,7 @@ model Branch {
   branchPermissions BranchPermission[]
   warehouses        Warehouse[]
   journalEntries    JournalEntry[]
+  ledgerEntries     LedgerEntry[]
 
   @@index([companyId])
   @@index([code])
@@ -1986,6 +2003,7 @@ model ChartOfAccount {
   updatedAt   DateTime         @updatedAt
 
   journalEntryLines JournalEntryLine[]
+  ledgerEntries     LedgerEntry[]
 
   @@unique([companyId, accountCode])
   @@index([companyId])
@@ -2072,7 +2090,8 @@ model JournalEntry {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
-  lines JournalEntryLine[]
+  lines         JournalEntryLine[]
+  ledgerEntries LedgerEntry[]
 
   @@unique([companyId, entryNumber])
   @@index([companyId])
@@ -2091,6 +2110,7 @@ model JournalEntryLine {
   debit          Decimal        @default(0)
   credit         Decimal        @default(0)
   createdAt      DateTime       @default(now())
+  ledgerEntries  LedgerEntry[]
 
   @@index([journalEntryId])
   @@index([accountId])

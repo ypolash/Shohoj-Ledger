@@ -800,20 +800,21 @@ model Company {
   stockTransfers           StockTransfer[]
 
   // Phase 1A Accounting Foundation
-  chartOfAccounts      ChartOfAccount[]
-  fiscalYears          FiscalYear[]
-  accountingPeriods    AccountingPeriod[]
-  journals             Journal[]
-  journalEntries       JournalEntry[]
-  productWarehouses    ProductWarehouse[]
-  stockMovements       StockMovement[]
-  inventoryBatches     InventoryBatch[]
-  inventorySerials     InventorySerial[]
-  barcodes             Barcode[]
-  goodsReceipts        GoodsReceipt[]
-  putAwayTasks         PutAwayTask[]
-  inventoryAdjustments InventoryAdjustment[]
-  cycleCounts          CycleCount[]
+  chartOfAccounts          ChartOfAccount[]
+  fiscalYears              FiscalYear[]
+  accountingPeriods        AccountingPeriod[]
+  journals                 Journal[]
+  journalEntries           JournalEntry[]
+  productWarehouses        ProductWarehouse[]
+  stockMovements           StockMovement[]
+  inventoryBatches         InventoryBatch[]
+  inventorySerials         InventorySerial[]
+  barcodes                 Barcode[]
+  goodsReceipts            GoodsReceipt[]
+  putAwayTasks             PutAwayTask[]
+  inventoryAdjustments     InventoryAdjustment[]
+  cycleCounts              CycleCount[]
+  inventoryValuationLayers InventoryValuationLayer[]
 }
 
 model CompanySetting {
@@ -1182,6 +1183,7 @@ model Product {
   stockTransferLines       StockTransferLine[]
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
+  inventoryValuationLayers InventoryValuationLayer[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1227,6 +1229,7 @@ model Warehouse {
   inventoryAdjustmentLines InventoryAdjustmentLine[] @relation("AdjustmentLineWarehouse")
   cycleCounts              CycleCount[]              @relation("CycleCountWarehouse")
   cycleCountLines          CycleCountLine[]          @relation("CycleCountLineWarehouse")
+  valuationLayers          InventoryValuationLayer[] @relation("ValuationWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2297,8 +2300,9 @@ model StockMovement {
   batchId String?
   batch   InventoryBatch? @relation(fields: [batchId], references: [id])
 
-  serialId String?
-  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+  serialId                 String?
+  serial                   InventorySerial?          @relation(fields: [serialId], references: [id])
+  inventoryValuationLayers InventoryValuationLayer[]
 
   @@index([companyId])
   @@index([productId])
@@ -2621,6 +2625,31 @@ model CycleCountLine {
   remarks         String?
 
   @@index([cycleCountId])
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+model InventoryValuationLayer {
+  id                String         @id @default(uuid())
+  companyId         String
+  company           Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product        @relation(fields: [productId], references: [id])
+  warehouseId       String?
+  warehouse         Warehouse?     @relation("ValuationWarehouse", fields: [warehouseId], references: [id])
+  stockMovementId   String?
+  stockMovement     StockMovement? @relation(fields: [stockMovementId], references: [id])
+  layerType         String // RECEIPT, ADJUSTMENT_IN, INITIAL_STOCK
+  quantity          Decimal
+  remainingQuantity Decimal
+  unitCost          Decimal
+  totalCost         Decimal
+  valuationMethod   String         @default("FIFO") // FIFO, LIFO, WEIGHTED_AVERAGE, SPECIFIC_ID, STANDARD
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
   @@index([productId])
   @@index([warehouseId])
 }

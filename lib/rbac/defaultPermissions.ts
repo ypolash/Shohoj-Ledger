@@ -102,6 +102,9 @@ export const DefaultPermissions = [
   { action: "CYCLECOUNT_ASSIGN", moduleKey: "INVENTORY" },
   { action: "CYCLECOUNT_APPROVE", moduleKey: "INVENTORY" },
   { action: "CYCLECOUNT_POST", moduleKey: "INVENTORY" },
+  { action: "VALUATION_VIEW", moduleKey: "INVENTORY" },
+  { action: "VALUATION_REBUILD", moduleKey: "INVENTORY" },
+  { action: "VALUATION_REPORT", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

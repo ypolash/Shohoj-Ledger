@@ -71,6 +71,10 @@ export const DefaultPermissions = [
   { action: "BATCH_MANAGE", moduleKey: "INVENTORY" },
   { action: "BATCH_ADJUST", moduleKey: "INVENTORY" },
   { action: "BATCH_QUARANTINE", moduleKey: "INVENTORY" },
+  { action: "SERIAL_VIEW", moduleKey: "INVENTORY" },
+  { action: "SERIAL_MANAGE", moduleKey: "INVENTORY" },
+  { action: "SERIAL_TRANSFER", moduleKey: "INVENTORY" },
+  { action: "SERIAL_SCRAP", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

@@ -800,6 +800,7 @@ model Company {
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
   inventoryBatches  InventoryBatch[]
+  inventorySerials  InventorySerial[]
 }
 
 model CompanySetting {
@@ -1162,6 +1163,7 @@ model Product {
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
   inventoryBatches  InventoryBatch[]
+  inventorySerials  InventorySerial[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1200,6 +1202,7 @@ model Warehouse {
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
   inventoryBatches  InventoryBatch[]
+  inventorySerials  InventorySerial[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2217,11 +2220,15 @@ model StockMovement {
   batchId String?
   batch   InventoryBatch? @relation(fields: [batchId], references: [id])
 
+  serialId String?
+  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+
   @@index([companyId])
   @@index([productId])
   @@index([warehouseId])
   @@index([referenceType, referenceId])
   @@index([batchId])
+  @@index([serialId])
 }
 
 model InventoryBatch {
@@ -2239,12 +2246,13 @@ model InventoryBatch {
   receivedDate      DateTime
   quantity          Decimal
   reservedQuantity  Decimal   @default(0)
-  status            String    @default("ACTIVE") // ACTIVE, RESERVED, PARTIAL, EXPIRED, CONSUMED, QUARANTINE, RETURNED
+  status            String    @default("ACTIVE")
   remarks           String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   stockMovements StockMovement[]
+  serials        InventorySerial[]
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2252,4 +2260,35 @@ model InventoryBatch {
   @@index([warehouseId])
   @@index([batchNumber])
   @@index([expiryDate])
+}
+
+model InventorySerial {
+  id          String          @id @default(uuid())
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId String
+  warehouse   Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  batchId     String?
+  batch       InventoryBatch? @relation(fields: [batchId], references: [id])
+
+  serialNumber String
+  status       String @default("AVAILABLE") // AVAILABLE, RESERVED, ALLOCATED, SOLD, RETURNED, REPAIRED, DAMAGED, SCRAPPED, LOST
+
+  receivedDate       DateTime
+  soldDate           DateTime?
+  assignedCustomerId String?
+
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockMovements StockMovement[]
+
+  @@unique([companyId, productId, serialNumber])
+  @@index([companyId])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([serialNumber])
 }

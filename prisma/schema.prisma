@@ -398,6 +398,9 @@ model Employee {
   performanceReviewsGiven   PerformanceReview[]           @relation("Reviewer")
   performanceFeedbacksGiven PerformanceFeedback[]         @relation("FeedbackAuthor")
   performancePIPs           PerformanceImprovementPlan[]
+  trainingSessionsLed       TrainingSession[]             @relation("Trainer")
+  trainingEnrollments       TrainingEnrollment[]          @relation("Trainee")
+  trainingAssessmentsDone   TrainingAssessment[]          @relation("Assessor")
 
   @@index([companyId])
 }
@@ -1746,6 +1749,7 @@ model Company {
   employeeLoans           EmployeeLoan[]
   salaryAdvances          SalaryAdvance[]
   performanceCycles       PerformanceCycle[]
+  trainingPrograms        TrainingProgram[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -5313,4 +5317,101 @@ model PerformanceImprovementPlan {
 
   @@index([employeeId])
   @@index([cycleId])
+}
+
+model TrainingProgram {
+  id            String            @id @default(uuid())
+  companyId     String
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code          String
+  title         String
+  description   String?           @db.Text
+  category      String
+  durationHours Decimal?
+  status        String            @default("ACTIVE") // ACTIVE, ARCHIVED
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  sessions      TrainingSession[]
+
+  @@index([companyId])
+}
+
+model TrainingSession {
+  id            String               @id @default(uuid())
+  programId     String
+  program       TrainingProgram      @relation(fields: [programId], references: [id], onDelete: Cascade)
+  trainerId     String?
+  trainer       Employee?            @relation("Trainer", fields: [trainerId], references: [id])
+  location      String?
+  onlineLink    String?
+  scheduleStart DateTime
+  scheduleEnd   DateTime
+  capacity      Int?
+  status        String               @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  enrollments   TrainingEnrollment[]
+
+  @@index([programId])
+  @@index([trainerId])
+}
+
+model TrainingEnrollment {
+  id             String                @id @default(uuid())
+  sessionId      String
+  session        TrainingSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  employeeId     String
+  employee       Employee              @relation("Trainee", fields: [employeeId], references: [id], onDelete: Cascade)
+  enrollmentDate DateTime              @default(now())
+  status         String                @default("ENROLLED") // ENROLLED, COMPLETED, CANCELLED, DROPPED
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  attendances    TrainingAttendance[]
+  assessments    TrainingAssessment[]
+  certificates   TrainingCertificate[]
+
+  @@index([sessionId])
+  @@index([employeeId])
+}
+
+model TrainingAttendance {
+  id           String             @id @default(uuid())
+  enrollmentId String
+  enrollment   TrainingEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  status       String // PRESENT, ABSENT, LATE
+  remarks      String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([enrollmentId])
+}
+
+model TrainingAssessment {
+  id           String             @id @default(uuid())
+  enrollmentId String
+  enrollment   TrainingEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  evaluatorId  String?
+  evaluator    Employee?          @relation("Assessor", fields: [evaluatorId], references: [id])
+  score        Decimal?
+  result       String // PASS, FAIL
+  remarks      String?            @db.Text
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([enrollmentId])
+  @@index([evaluatorId])
+}
+
+model TrainingCertificate {
+  id                String             @id @default(uuid())
+  enrollmentId      String
+  enrollment        TrainingEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  certificateNumber String             @unique
+  issueDate         DateTime           @default(now())
+  expiryDate        DateTime?
+  documentUrl       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([enrollmentId])
 }

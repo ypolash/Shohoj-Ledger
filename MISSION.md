@@ -58,7 +58,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.5 — Phase 0 (Enterprise HR & Payroll Architecture Planning):**
   - **Completed**: Authored `hr-architecture.md` outlining the Hire-to-Retire workflow, modular integration with Accounting/CRM/Procurement, secure RBAC boundaries, and strategies for expanding Time & Attendance without breaking the frozen models. Waiting for user approval to begin Phase 1.
 - **Version 1.5 — Phase 1 (Enterprise Organization Structure):**
-  - **Completed**: Successfully implemented the Enterprise Organization hierarchy models (`Division`, `Section`, `Team`, etc.) in `schema.prisma`. Engineered `organizationService.ts` for hierarchy operations and created `organization-structure.md`. Validated schemas. Awaiting approval for Phase 2.
+  - **Completed**: Successfully implemented the Enterprise Organization hierarchy models (`Division`, `Section`, `Team`, etc.) in `schema.prisma`. Engineered `organizationService.ts` for hierarchy operations and created `organization-structure.md`. Validated schemas. 
+- **Version 1.5 — Phase 2 (Enterprise Employee Master):**
+  - **Completed**: Extended the existing `Employee` module with comprehensive HR records (`EmployeeProfile`, `EmployeeAddress`, etc.) and linked it to the Phase 1 Organization Structure. Created `employeeService.ts` for handling complex transactions with immutable `EmployeeLifecycle` logging. Validated schemas. Awaiting approval for Phase 3.
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
 - **Background Worker Shift**: V1.3 pivots heavily toward asynchronous event-driven design (Background Queues) to handle heavy tasks like notifications, report generation, and LLM processing without blocking the API.
@@ -67,7 +69,7 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
 - **Core Goal:** Build the definitive B2B SaaS ERP with strict accounting, inventory, supply chain, and comprehensive HR & Payroll controls.
-- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 1 (Enterprise Organization Structure).
+- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 2 (Enterprise Employee Master).
 
 ## Production Roadmap
 1. **Version 1.3 Phase 1 (Core Engines):** Deploy background workers for Notifications, Approvals, and Webhook dispatching.

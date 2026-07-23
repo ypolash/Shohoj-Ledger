@@ -59,6 +59,7 @@ model User {
   createdSalesOrders      SalesOrder[]             @relation("SalesOrderCreator")
   createdDeliveryOrders   DeliveryOrder[]          @relation("DeliveryOrderCreator")
   createdCustomerReturns  CustomerReturn[]         @relation("CustomerReturnCreator")
+  createdCreditHistories  CustomerCreditHistory[]  @relation("CreditHistoryCreator")
 }
 
 model Session {
@@ -998,6 +999,60 @@ model CustomerReturnLine {
   @@index([warehouseId])
 }
 
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model CustomerCreditProfile {
+  id         String   @id @default(uuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  creditLimit     Decimal @default(0)
+  creditDays      Int     @default(0)
+  currentExposure Decimal @default(0)
+  availableCredit Decimal @default(0)
+
+  riskLevel  RiskLevel @default(LOW)
+  isOnHold   Boolean   @default(false)
+  holdReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([riskLevel])
+  @@index([isOnHold])
+}
+
+model CustomerCreditHistory {
+  id         String   @id @default(uuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  referenceType String // SALES_ORDER, DELIVERY, INVOICE, PAYMENT, MANUAL
+  referenceId   String?
+
+  previousExposure Decimal
+  newExposure      Decimal
+  remarks          String?
+
+  createdById String
+  createdBy   User     @relation("CreditHistoryCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([customerId])
+  @@index([referenceType])
+}
+
 model AllowedNetwork {
   id        String   @id @default(cuid())
   companyId String?
@@ -1231,6 +1286,8 @@ model Company {
   salesOrders              SalesOrder[]
   deliveryOrders           DeliveryOrder[]
   customerReturns          CustomerReturn[]
+  creditProfiles           CustomerCreditProfile[]
+  creditHistories          CustomerCreditHistory[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -3375,6 +3432,8 @@ model Customer {
   salesOrders     SalesOrder[]
   deliveryOrders  DeliveryOrder[]
   customerReturns CustomerReturn[]
+  creditProfile   CustomerCreditProfile?
+  creditHistories CustomerCreditHistory[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

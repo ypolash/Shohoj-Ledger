@@ -46,7 +46,11 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.4 — Phase 5 (Enterprise Purchase Order Engine):**
   - **Completed**: Repurposed legacy PO models into the Enterprise V1.4 architecture. Engineered `purchaseOrderService.ts` to generate POs algorithmically from Vendor Comparisons. Implemented strict barriers preventing premature Inventory and Ledger mutations.
 - **Version 1.4 — Phase 6 (Goods Receipt Note - GRN):**
-  - **Not Started**: Implement physical stock receiving and FIFO layer generation from Purchase Orders.
+  - **Completed**: Fully implemented the `GoodsReceiptNote` and `GoodsReceiptLine` models. Engineered `goodsReceiptService.ts` to seamlessly integrate external supplier commitments (POs) with internal stock movements and FIFO valuation, enforcing strict isolation against the accounting ledger.
+- **Version 1.4 — Phase 7 (Supplier Invoice & Three-Way Matching):**
+  - **Completed**: Engineered `SupplierInvoice` and `ThreeWayMatch` models. Built `supplierInvoiceService.ts` and `threeWayMatchService.ts` to implement rigorous variance tolerance loops. Hooked the final, approved invoice directly into the core `PostingService` to recognize Accounts Payable liabilities transactionally.
+- **Version 1.4 — Phase 8 (Supplier Payments):**
+  - **Not Started**: Implement Supplier Payment schedules, partial payments, and AP ledger deductions.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

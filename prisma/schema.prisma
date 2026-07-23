@@ -71,6 +71,8 @@ model User {
   approvedPurchaseOrders        PurchaseOrder[]          @relation("PurchaseOrderApprover")
   createdGoodsReceiptNotes      GoodsReceiptNote[]       @relation("GoodsReceiptCreator")
   approvedGoodsReceiptNotes     GoodsReceiptNote[]       @relation("GoodsReceiptApprover")
+  createdSupplierInvoices       SupplierInvoice[]        @relation("SupplierInvoiceCreator")
+  approvedSupplierInvoices      SupplierInvoice[]        @relation("SupplierInvoiceApprover")
 }
 
 model Session {
@@ -1507,6 +1509,8 @@ model Company {
   inventorySerials         InventorySerial[]
   barcodes                 Barcode[]
   goodsReceiptNotes        GoodsReceiptNote[]
+  supplierInvoices         SupplierInvoice[]
+  threeWayMatches          ThreeWayMatch[]
   putAwayTasks             PutAwayTask[]
   inventoryAdjustments     InventoryAdjustment[]
   cycleCounts              CycleCount[]
@@ -1903,6 +1907,7 @@ model Product {
   customerReturnLines      CustomerReturnLine[]
   rfqLines                 RequestForQuotationLine[]
   vendorQuotationLines     VendorQuotationLine[]
+  supplierInvoiceLines     SupplierInvoiceLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -2033,6 +2038,7 @@ model Supplier {
   reorderPolicies ReorderPolicy[] @relation("PreferredSupplier")
 
   goodsReceiptNotes GoodsReceiptNote[]
+  supplierInvoices  SupplierInvoice[]
   vendorQuotations  VendorQuotation[]
   vendorComparisons VendorComparisonItem[]
 
@@ -2161,6 +2167,8 @@ model PurchaseOrder {
 
   lines             PurchaseOrderLine[]
   goodsReceiptNotes GoodsReceiptNote[]
+  supplierInvoices  SupplierInvoice[]
+  threeWayMatches   ThreeWayMatch[]
   stockTransactions StockTransaction[]
 
   @@unique([companyId, purchaseOrderNumber])
@@ -2191,10 +2199,139 @@ model PurchaseOrderLine {
 
   remarks String?
 
-  goodsReceiptLines GoodsReceiptLine[]
+  goodsReceiptLines    GoodsReceiptLine[]
+  supplierInvoiceLines SupplierInvoiceLine[]
 
   @@index([purchaseOrderId])
   @@index([productId])
+}
+
+enum SupplierInvoiceStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  POSTED
+  REJECTED
+  CANCELLED
+}
+
+enum ThreeWayMatchStatus {
+  MATCHED
+  QUANTITY_MISMATCH
+  PRICE_MISMATCH
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model SupplierInvoice {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  invoiceNumber String
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+
+  goodsReceiptNoteId String?
+  goodsReceiptNote   GoodsReceiptNote? @relation(fields: [goodsReceiptNoteId], references: [id])
+
+  invoiceDate DateTime
+  dueDate     DateTime?
+
+  currency String @default("USD")
+
+  subtotal       Decimal @default(0)
+  discountAmount Decimal @default(0)
+  taxAmount      Decimal @default(0)
+  shippingAmount Decimal @default(0)
+  totalAmount    Decimal @default(0)
+
+  status  SupplierInvoiceStatus @default(DRAFT)
+  remarks String?
+
+  approvedById String?
+  approvedBy   User?     @relation("SupplierInvoiceApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("SupplierInvoiceCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines           SupplierInvoiceLine[]
+  threeWayMatches ThreeWayMatch[]
+
+  @@unique([companyId, invoiceNumber])
+  @@index([companyId])
+  @@index([supplierId])
+  @@index([purchaseOrderId])
+  @@index([goodsReceiptNoteId])
+  @@index([status])
+}
+
+model SupplierInvoiceLine {
+  id String @id @default(uuid())
+
+  supplierInvoiceId String
+  supplierInvoice   SupplierInvoice @relation(fields: [supplierInvoiceId], references: [id], onDelete: Cascade)
+
+  purchaseOrderLineId String?
+  purchaseOrderLine   PurchaseOrderLine? @relation(fields: [purchaseOrderLineId], references: [id])
+
+  goodsReceiptLineId String?
+  goodsReceiptLine   GoodsReceiptLine? @relation(fields: [goodsReceiptLineId], references: [id])
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  quantity       Decimal
+  unitPrice      Decimal
+  discountAmount Decimal @default(0)
+  taxAmount      Decimal @default(0)
+  lineTotal      Decimal
+
+  @@index([supplierInvoiceId])
+  @@index([purchaseOrderLineId])
+  @@index([goodsReceiptLineId])
+  @@index([productId])
+}
+
+model ThreeWayMatch {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+
+  goodsReceiptNoteId String
+  goodsReceiptNote   GoodsReceiptNote @relation(fields: [goodsReceiptNoteId], references: [id])
+
+  supplierInvoiceId String
+  supplierInvoice   SupplierInvoice @relation(fields: [supplierInvoiceId], references: [id])
+
+  matchStatus ThreeWayMatchStatus @default(PENDING_REVIEW)
+
+  quantityMatched Boolean @default(false)
+  priceMatched    Boolean @default(false)
+  varianceAmount  Decimal @default(0)
+
+  remarks String?
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([purchaseOrderId])
+  @@index([goodsReceiptNoteId])
+  @@index([supplierInvoiceId])
+  @@index([matchStatus])
 }
 
 model StockTransaction {
@@ -3350,8 +3487,10 @@ model GoodsReceiptNote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lines        GoodsReceiptLine[]
-  putAwayTasks PutAwayTask[]
+  lines            GoodsReceiptLine[]
+  putAwayTasks     PutAwayTask[]
+  supplierInvoices SupplierInvoice[]
+  threeWayMatches  ThreeWayMatch[]
 
   @@unique([companyId, grnNumber])
   @@index([companyId])
@@ -3389,7 +3528,8 @@ model GoodsReceiptLine {
   binId String?
   bin   WarehouseBin? @relation(fields: [binId], references: [id])
 
-  remarks String?
+  remarks              String?
+  supplierInvoiceLines SupplierInvoiceLine[]
 
   @@index([goodsReceiptNoteId])
   @@index([purchaseOrderLineId])

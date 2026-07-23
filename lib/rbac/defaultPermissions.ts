@@ -17,6 +17,11 @@ export const DefaultPermissions = [
 
   { action: "CRM_VIEW", moduleKey: "CRM" },
   { action: "CRM_MANAGE", moduleKey: "CRM" },
+  { action: "CUSTOMER_VIEW", moduleKey: "CRM" },
+  { action: "CUSTOMER_CREATE", moduleKey: "CRM" },
+  { action: "CUSTOMER_UPDATE", moduleKey: "CRM" },
+  { action: "CUSTOMER_DELETE", moduleKey: "CRM" },
+  { action: "CUSTOMER_EXPORT", moduleKey: "CRM" },
 
   { action: "LEAD_VIEW", moduleKey: "LEAD_MANAGEMENT" },
   { action: "LEAD_MANAGE", moduleKey: "LEAD_MANAGEMENT" },

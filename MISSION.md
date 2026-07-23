@@ -7,6 +7,8 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.3 — Phase 0 (Roadmap & Architecture Planning):**
   - **Version 1.2 Complete**: Applied architecture models for Workflow Engine, Approval Engine, Advanced Reporting, Notification Center, API Platform, Multi-Branch, Advanced Inventory, and AI Analytics safely.
   - **V1.3 Planning Complete**: Created documentation for V1.3 in `docs/version-1.3/` spanning the 8 Enterprise Pillars.
+- **Version 1.3 — Phase 3A (Enterprise Customer Master):**
+  - **Completed**: Added core Customer, CustomerGroup, CustomerAddress, and CustomerContact models. Created `customerService.ts` for operations with full auditability, integrated RBAC, and maintained single source of truth for Sales/CRM.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

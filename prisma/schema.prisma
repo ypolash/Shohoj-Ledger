@@ -50,6 +50,7 @@ model User {
   businessInsights        BusinessInsight[]
   createdJournalEntries   JournalEntry[]           @relation("JournalEntryCreator")
   approvedJournalEntries  JournalEntry[]           @relation("JournalEntryApprover")
+  createdCustomers        Customer[]               @relation("CustomerCreator")
 }
 
 model Session {
@@ -823,6 +824,12 @@ model Company {
   purchaseRequests         PurchaseRequest[]
   pickingTasks             PickingTask[]
   packingTasks             PackingTask[]
+
+  // Phase 3A Customer Master
+  customerGroups    CustomerGroup[]
+  customers         Customer[]
+  customerAddresses CustomerAddress[]
+  customerContacts  CustomerContact[]
 }
 
 model CompanySetting {
@@ -2811,4 +2818,107 @@ model PackingTask {
   @@index([companyId])
   @@index([warehouseId])
   @@index([pickingTaskId])
+}
+
+// ==========================================
+// Phase 3A Customer Master Models
+// ==========================================
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+model CustomerGroup {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customers Customer[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model Customer {
+  id              String         @id @default(uuid())
+  companyId       String
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerCode    String
+  customerGroupId String?
+  customerGroup   CustomerGroup? @relation(fields: [customerGroupId], references: [id])
+  name            String
+  displayName     String?
+  email           String?
+  phone           String?
+  mobile          String?
+  website         String?
+  taxNumber       String?
+  tradeLicense    String?
+  creditLimit     Decimal        @default(0)
+  creditDays      Int            @default(0)
+  currency        String         @default("BDT")
+  priceLevel      String?
+  status          CustomerStatus @default(ACTIVE)
+  notes           String?
+  createdById     String
+  createdBy       User           @relation("CustomerCreator", fields: [createdById], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  addresses CustomerAddress[]
+  contacts  CustomerContact[]
+
+  @@unique([companyId, customerCode])
+  @@unique([companyId, email])
+  @@unique([companyId, phone])
+  @@index([companyId])
+  @@index([customerGroupId])
+  @@index([status])
+}
+
+model CustomerAddress {
+  id           String   @id @default(uuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type         String // BILLING, SHIPPING, OFFICE, WAREHOUSE
+  country      String?
+  state        String?
+  city         String?
+  postalCode   String?
+  addressLine1 String
+  addressLine2 String?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([customerId])
+}
+
+model CustomerContact {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name        String
+  designation String?
+  email       String?
+  phone       String?
+  mobile      String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([customerId])
 }

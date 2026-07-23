@@ -66,6 +66,8 @@ model User {
   purchaseRequisitionsRequested PurchaseRequisition[]    @relation("PurchaseRequisitionRequestedBy")
   purchaseRequisitionsApproved  PurchaseRequisition[]    @relation("PurchaseRequisitionApprovedBy")
   createdRfqs                   RequestForQuotation[]    @relation("RfqCreator")
+  createdVendorComparisons      VendorComparison[]       @relation("VendorComparisonCreator")
+  approvedVendorComparisons     VendorComparison[]       @relation("VendorComparisonApprover")
 }
 
 model Session {
@@ -1512,6 +1514,7 @@ model Company {
   // Phase 3A Customer Master
   rfqs              RequestForQuotation[]
   vendorQuotations  VendorQuotation[]
+  vendorComparisons VendorComparison[]
   customerGroups    CustomerGroup[]
   customers         Customer[]
   customerAddresses CustomerAddress[]
@@ -2024,8 +2027,9 @@ model Supplier {
   purchaseOrders  PurchaseOrder[]
   reorderPolicies ReorderPolicy[] @relation("PreferredSupplier")
 
-  goodsReceipts    GoodsReceipt[]
-  vendorQuotations VendorQuotation[]
+  goodsReceipts     GoodsReceipt[]
+  vendorQuotations  VendorQuotation[]
+  vendorComparisons VendorComparisonItem[]
 
   @@unique([companyId, supplierCode])
   @@index([companyId])
@@ -3650,8 +3654,9 @@ model RequestForQuotation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lines            RequestForQuotationLine[]
-  vendorQuotations VendorQuotation[]
+  lines             RequestForQuotationLine[]
+  vendorQuotations  VendorQuotation[]
+  vendorComparisons VendorComparison[]
 
   @@unique([companyId, rfqNumber])
   @@index([companyId])
@@ -3708,7 +3713,8 @@ model VendorQuotation {
   status  VendorQuotationStatus @default(DRAFT)
   remarks String?
 
-  lines VendorQuotationLine[]
+  lines                 VendorQuotationLine[]
+  vendorComparisonItems VendorComparisonItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3738,6 +3744,86 @@ model VendorQuotationLine {
 
   @@index([vendorQuotationId])
   @@index([productId])
+}
+
+enum VendorComparisonStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CONVERTED
+}
+
+enum EvaluationMethod {
+  LOWEST_PRICE
+  WEIGHTED_SCORE
+  MANUAL_SELECTION
+  BEST_VALUE
+}
+
+model VendorComparison {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  comparisonNumber String
+
+  requestForQuotationId String
+  requestForQuotation   RequestForQuotation @relation(fields: [requestForQuotationId], references: [id])
+
+  status           VendorComparisonStatus @default(DRAFT)
+  evaluationMethod EvaluationMethod       @default(MANUAL_SELECTION)
+
+  selectedSupplierId String?
+
+  remarks String?
+
+  createdById String?
+  createdBy   User?   @relation("VendorComparisonCreator", fields: [createdById], references: [id])
+
+  approvedById String?
+  approvedBy   User?     @relation("VendorComparisonApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items VendorComparisonItem[]
+
+  @@unique([companyId, comparisonNumber])
+  @@index([companyId])
+  @@index([requestForQuotationId])
+  @@index([status])
+}
+
+model VendorComparisonItem {
+  id String @id @default(uuid())
+
+  vendorComparisonId String
+  vendorComparison   VendorComparison @relation(fields: [vendorComparisonId], references: [id], onDelete: Cascade)
+
+  vendorQuotationId String
+  vendorQuotation   VendorQuotation @relation(fields: [vendorQuotationId], references: [id])
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  totalPrice   Decimal @default(0)
+  leadTime     String?
+  paymentTerms String?
+
+  qualityScore  Decimal?
+  deliveryScore Decimal?
+  priceScore    Decimal?
+  overallScore  Decimal?
+
+  ranking    Int?
+  isSelected Boolean @default(false)
+  remarks    String?
+
+  @@index([vendorComparisonId])
+  @@index([vendorQuotationId])
+  @@index([supplierId])
 }
 
 model PickingTask {

@@ -382,6 +382,10 @@ model Employee {
   shiftAssignments   AttendanceShiftAssignment[]
   rosters            AttendanceRoster[]
   holidayAssignments AttendanceHolidayAssignment[]
+  leaveBalances      LeaveBalance[]
+  leaveApprovals     LeaveApproval[]
+  leaveAccruals      LeaveAccrual[]
+  leaveEncashments   LeaveEncashment[]
 
   @@index([companyId])
 }
@@ -679,18 +683,26 @@ model JobOffer {
 }
 
 model LeaveRequest {
-  id         String   @id @default(uuid())
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id])
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  type       String // CASUAL, SICK, UNPAID
-  startDate  DateTime
-  endDate    DateTime
-  reason     String
-  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String     @id @default(uuid())
+  companyId     String?
+  company       Company?   @relation(fields: [companyId], references: [id])
+  employeeId    String
+  employee      Employee   @relation(fields: [employeeId], references: [id])
+  type          String // CASUAL, SICK, UNPAID
+  leaveTypeId   String?
+  leaveType     LeaveType? @relation(fields: [leaveTypeId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  isHalfDay     Boolean    @default(false)
+  reason        String
+  attachmentUrl String?
+  status        String     @default("PENDING") // DRAFT, SUBMITTED, PENDING, APPROVED, REJECTED, CANCELLED
+  approvedById  String?
+  comments      String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  approvals LeaveApproval[]
 
   @@index([companyId])
 }
@@ -1715,6 +1727,7 @@ model Company {
   applicants              Applicant[]
   attendanceRosters       AttendanceRoster[]
   holidayAssignments      AttendanceHolidayAssignment[]
+  leaveTypes              LeaveType[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -4872,4 +4885,108 @@ model CustomerContact {
 
   @@index([companyId])
   @@index([customerId])
+}
+
+model LeaveType {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String // Annual Leave, Sick Leave, Casual Leave, Maternity, Paternity, Unpaid Leave, Comp Off, Custom Leave
+  description String?
+  isPaid      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leavePolicies    LeavePolicy[]
+  leaveBalances    LeaveBalance[]
+  leaveRequests    LeaveRequest[]
+  leaveAccruals    LeaveAccrual[]
+  leaveEncashments LeaveEncashment[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model LeavePolicy {
+  id                String    @id @default(uuid())
+  leaveTypeId       String
+  leaveType         LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  eligibilityDays   Int       @default(0)
+  accrualRate       Decimal   @default(0) // Days per month/year
+  maxBalance        Decimal?
+  carryForward      Boolean   @default(false)
+  carryForwardLimit Decimal?
+  approvalLevels    Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([leaveTypeId])
+}
+
+model LeaveBalance {
+  id             String    @id @default(uuid())
+  employeeId     String
+  employee       Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId    String
+  leaveType      LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  year           Int
+  openingBalance Decimal   @default(0)
+  earned         Decimal   @default(0)
+  used           Decimal   @default(0)
+  remaining      Decimal   @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([employeeId, leaveTypeId, year])
+  @@index([employeeId])
+  @@index([leaveTypeId])
+}
+
+model LeaveApproval {
+  id             String       @id @default(uuid())
+  leaveRequestId String
+  leaveRequest   LeaveRequest @relation(fields: [leaveRequestId], references: [id], onDelete: Cascade)
+  approverId     String
+  approver       Employee     @relation(fields: [approverId], references: [id], onDelete: Cascade)
+  level          Int          @default(1)
+  status         String       @default("PENDING") // PENDING, APPROVED, REJECTED
+  comments       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([leaveRequestId])
+  @@index([approverId])
+}
+
+model LeaveAccrual {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId String
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  date        DateTime  @default(now())
+  amount      Decimal
+  type        String    @default("AUTOMATIC") // MONTHLY, YEARLY, MANUAL, AUTOMATIC
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
+}
+
+model LeaveEncashment {
+  id               String    @id @default(uuid())
+  employeeId       String
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveTypeId      String
+  leaveType        LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  days             Decimal
+  amount           Decimal
+  status           String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  postingReference String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
 }

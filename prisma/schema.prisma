@@ -51,6 +51,8 @@ model User {
   createdJournalEntries   JournalEntry[]           @relation("JournalEntryCreator")
   approvedJournalEntries  JournalEntry[]           @relation("JournalEntryApprover")
   createdCustomers        Customer[]               @relation("CustomerCreator")
+  createdLeads            Lead[]                   @relation("LeadCreator")
+  createdLeadActivities   LeadActivity[]           @relation("LeadActivityCreator")
 }
 
 model Session {
@@ -472,60 +474,136 @@ model Payslip {
   @@index([companyId])
 }
 
-model Lead {
-  id                  String         @id @default(uuid())
-  companyId           String?
-  company             Company?       @relation(fields: [companyId], references: [id])
-  serialNumber        Int            @default(autoincrement())
-  companyName         String
-  clientId            String?
-  client              Client?        @relation(fields: [clientId], references: [id])
-  contactPerson       String
-  phone               String
-  email               String?
-  serviceType         String
-  expectedValue       Decimal
-  leadSource          String?
-  assignedToId        String?
-  assignedTo          Employee?      @relation(fields: [assignedToId], references: [id])
-  nextFollowUp        DateTime?
-  notes               String?
-  status              String         @default("New")
-  priority            String         @default("Medium")
-  lostReason          String?
-  website             String?
-  address             String?
-  industry            String?
-  expectedClosingDate DateTime?
-  tags                String[]
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  activities          LeadActivity[]
-  projects            Project[]
+model LeadSource {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  leads       Lead[]
 
-  @@index([status])
-  @@index([serviceType])
-  @@index([nextFollowUp])
-  @@index([assignedToId])
+  @@unique([companyId, name])
   @@index([companyId])
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum LeadRating {
+  COLD
+  WARM
+  HOT
+}
+
+model Lead {
+  id           String   @id @default(uuid())
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  leadNumber   String   @unique @default(cuid())
+  serialNumber Int      @default(autoincrement()) // kept for backwards compatibility
+
+  companyName String
+
+  // Legacy relations
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+
+  // New V1.3 relations
+  customerId      String?
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  leadSourceId    String?
+  leadSourceModel LeadSource? @relation(fields: [leadSourceId], references: [id])
+
+  contactPerson String // legacy
+  contactName   String? // new
+  phone         String
+  mobile        String?
+  email         String?
+  website       String?
+  industry      String?
+
+  serviceType    String? // legacy
+  expectedValue  Decimal? // legacy
+  estimatedValue Decimal? // new
+
+  assignedToId String?
+  assignedTo   Employee? @relation(fields: [assignedToId], references: [id])
+
+  nextFollowUp        DateTime? // legacy
+  expectedCloseDate   DateTime? // new
+  expectedClosingDate DateTime? // legacy
+
+  status       String       @default("New") // legacy
+  leadStatus   LeadStatus   @default(NEW) // new
+  priority     String       @default("Medium") // legacy
+  leadPriority LeadPriority @default(MEDIUM) // new
+  rating       LeadRating? // new
+
+  notes      String?
+  lostReason String?
+  address    String?
+  tags       String[]
+
+  leadSource String? // legacy string
+
+  createdById String?
+  createdBy   User?    @relation("LeadCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  activities LeadActivity[]
+  projects   Project[]
+
+  @@index([status])
+  @@index([leadStatus])
+  @@index([priority])
+  @@index([rating])
+  @@index([assignedToId])
+  @@index([companyId])
+  @@index([customerId])
+  @@index([leadSourceId])
+}
+
 model LeadActivity {
-  id            String   @id @default(uuid())
-  companyId     String
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  leadId        String
-  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  type          String // CREATED, UPDATED, STATUS_CHANGE, ASSIGNED, FOLLOW_UP_CALL, FOLLOW_UP_MEETING, FOLLOW_UP_EMAIL, FOLLOW_UP_WHATSAPP, FOLLOW_UP_TASK, FOLLOW_UP_REMINDER
-  description   String?
+  id           String   @id @default(uuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  activityType String? // new
+  activityDate DateTime @default(now()) // new
+  subject      String? // new
+  description  String?
+
+  // legacy
+  companyId     String? // made optional for backwards comp
+  company       Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type          String? // legacy
   oldValue      String?
   newValue      String?
-  performedById String
-  performedBy   User     @relation(fields: [performedById], references: [id])
-  createdAt     DateTime @default(now())
+  performedById String? // legacy
+  performedBy   User?    @relation(fields: [performedById], references: [id])
 
-  @@index([companyId])
+  createdById String?
+  createdBy   User?    @relation("LeadActivityCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
   @@index([leadId])
+  @@index([companyId])
 }
 
 model AllowedNetwork {
@@ -754,6 +832,7 @@ model Company {
   bonuses                  Bonus[]
   payslips                 Payslip[]
   leads                    Lead[]
+  leadSources              LeadSource[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -2874,6 +2953,7 @@ model Customer {
 
   addresses CustomerAddress[]
   contacts  CustomerContact[]
+  leads     Lead[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

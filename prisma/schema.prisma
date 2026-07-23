@@ -299,18 +299,20 @@ model Employee {
   shift            String?
   employmentStatus String? @default("Probation")
 
-  lifecycleEvents    EmployeeLifecycle[]
-  leads              Lead[]
-  managedProjects    Project[]           @relation("ProjectManager")
-  teamProjects       Project[]           @relation("ProjectTeam")
-  managedWarehouses  Warehouse[]         @relation("WarehouseManager")
-  assignedAssets     Asset[]             @relation("EmployeeAssets")
-  stockMovements     StockMovement[]
-  barcodes           Barcode[]
-  goodsReceipts      GoodsReceipt[]
-  putAwayTasks       PutAwayTask[]
-  transfersRequested StockTransfer[]     @relation("TransferRequestedBy")
-  transfersApproved  StockTransfer[]     @relation("TransferApprovedBy")
+  lifecycleEvents              EmployeeLifecycle[]
+  leads                        Lead[]
+  managedProjects              Project[]             @relation("ProjectManager")
+  teamProjects                 Project[]             @relation("ProjectTeam")
+  managedWarehouses            Warehouse[]           @relation("WarehouseManager")
+  assignedAssets               Asset[]               @relation("EmployeeAssets")
+  stockMovements               StockMovement[]
+  barcodes                     Barcode[]
+  goodsReceipts                GoodsReceipt[]
+  putAwayTasks                 PutAwayTask[]
+  transfersRequested           StockTransfer[]       @relation("TransferRequestedBy")
+  transfersApproved            StockTransfer[]       @relation("TransferApprovedBy")
+  inventoryAdjustmentsCreated  InventoryAdjustment[] @relation("AdjustmentCreatedBy")
+  inventoryAdjustmentsApproved InventoryAdjustment[] @relation("AdjustmentApprovedBy")
 
   @@index([companyId])
 }
@@ -796,18 +798,19 @@ model Company {
   stockTransfers           StockTransfer[]
 
   // Phase 1A Accounting Foundation
-  chartOfAccounts   ChartOfAccount[]
-  fiscalYears       FiscalYear[]
-  accountingPeriods AccountingPeriod[]
-  journals          Journal[]
-  journalEntries    JournalEntry[]
-  productWarehouses ProductWarehouse[]
-  stockMovements    StockMovement[]
-  inventoryBatches  InventoryBatch[]
-  inventorySerials  InventorySerial[]
-  barcodes          Barcode[]
-  goodsReceipts     GoodsReceipt[]
-  putAwayTasks      PutAwayTask[]
+  chartOfAccounts      ChartOfAccount[]
+  fiscalYears          FiscalYear[]
+  accountingPeriods    AccountingPeriod[]
+  journals             Journal[]
+  journalEntries       JournalEntry[]
+  productWarehouses    ProductWarehouse[]
+  stockMovements       StockMovement[]
+  inventoryBatches     InventoryBatch[]
+  inventorySerials     InventorySerial[]
+  barcodes             Barcode[]
+  goodsReceipts        GoodsReceipt[]
+  putAwayTasks         PutAwayTask[]
+  inventoryAdjustments InventoryAdjustment[]
 }
 
 model CompanySetting {
@@ -1165,15 +1168,16 @@ model Product {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  stockTransactions  StockTransaction[]
-  purchaseItems      PurchaseOrderItem[]
-  productWarehouses  ProductWarehouse[]
-  stockMovements     StockMovement[]
-  inventoryBatches   InventoryBatch[]
-  inventorySerials   InventorySerial[]
-  goodsReceiptLines  GoodsReceiptLine[]
-  putAwayTaskLines   PutAwayTaskLine[]
-  stockTransferLines StockTransferLine[]
+  stockTransactions        StockTransaction[]
+  purchaseItems            PurchaseOrderItem[]
+  productWarehouses        ProductWarehouse[]
+  stockMovements           StockMovement[]
+  inventoryBatches         InventoryBatch[]
+  inventorySerials         InventorySerial[]
+  goodsReceiptLines        GoodsReceiptLine[]
+  putAwayTaskLines         PutAwayTaskLine[]
+  stockTransferLines       StockTransferLine[]
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1207,14 +1211,16 @@ model Warehouse {
   transfersFrom         StockTransfer[]        @relation("TransferFrom")
   transfersTo           StockTransfer[]        @relation("TransferTo")
 
-  zones             WarehouseZone[]
-  bins              WarehouseBin[]
-  productWarehouses ProductWarehouse[]
-  stockMovements    StockMovement[]
-  inventoryBatches  InventoryBatch[]
-  inventorySerials  InventorySerial[]
-  goodsReceipts     GoodsReceipt[]
-  putAwayTasks      PutAwayTask[]
+  zones                    WarehouseZone[]
+  bins                     WarehouseBin[]
+  productWarehouses        ProductWarehouse[]
+  stockMovements           StockMovement[]
+  inventoryBatches         InventoryBatch[]
+  inventorySerials         InventorySerial[]
+  goodsReceipts            GoodsReceipt[]
+  putAwayTasks             PutAwayTask[]
+  inventoryAdjustments     InventoryAdjustment[]     @relation("AdjustmentWarehouse")
+  inventoryAdjustmentLines InventoryAdjustmentLine[] @relation("AdjustmentLineWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2196,12 +2202,13 @@ model WarehouseZone {
   description String?
   isActive    Boolean   @default(true)
 
-  bins                   WarehouseBin[]
-  stockMovements         StockMovement[]
-  putAwayTaskLinesFrom   PutAwayTaskLine[]   @relation("FromZone")
-  putAwayTaskLinesTo     PutAwayTaskLine[]   @relation("ToZone")
-  stockTransferLinesFrom StockTransferLine[] @relation("TransferFromZone")
-  stockTransferLinesTo   StockTransferLine[] @relation("TransferToZone")
+  bins                     WarehouseBin[]
+  stockMovements           StockMovement[]
+  putAwayTaskLinesFrom     PutAwayTaskLine[]         @relation("FromZone")
+  putAwayTaskLinesTo       PutAwayTaskLine[]         @relation("ToZone")
+  stockTransferLinesFrom   StockTransferLine[]       @relation("TransferFromZone")
+  stockTransferLinesTo     StockTransferLine[]       @relation("TransferToZone")
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
 
   @@index([warehouseId])
   @@index([code])
@@ -2218,13 +2225,14 @@ model WarehouseBin {
   capacity    Decimal?
   isActive    Boolean        @default(true)
 
-  productWarehouses      ProductWarehouse[]
-  stockMovements         StockMovement[]
-  goodsReceiptLines      GoodsReceiptLine[]
-  putAwayTaskLinesFrom   PutAwayTaskLine[]   @relation("FromBin")
-  putAwayTaskLinesTo     PutAwayTaskLine[]   @relation("ToBin")
-  stockTransferLinesFrom StockTransferLine[] @relation("TransferFromBin")
-  stockTransferLinesTo   StockTransferLine[] @relation("TransferToBin")
+  productWarehouses        ProductWarehouse[]
+  stockMovements           StockMovement[]
+  goodsReceiptLines        GoodsReceiptLine[]
+  putAwayTaskLinesFrom     PutAwayTaskLine[]         @relation("FromBin")
+  putAwayTaskLinesTo       PutAwayTaskLine[]         @relation("ToBin")
+  stockTransferLinesFrom   StockTransferLine[]       @relation("TransferFromBin")
+  stockTransferLinesTo     StockTransferLine[]       @relation("TransferToBin")
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
 
   @@index([warehouseId])
   @@index([code])
@@ -2312,11 +2320,12 @@ model InventoryBatch {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  stockMovements     StockMovement[]
-  serials            InventorySerial[]
-  goodsReceiptLines  GoodsReceiptLine[]
-  putAwayTaskLines   PutAwayTaskLine[]
-  stockTransferLines StockTransferLine[]
+  stockMovements           StockMovement[]
+  serials                  InventorySerial[]
+  goodsReceiptLines        GoodsReceiptLine[]
+  putAwayTaskLines         PutAwayTaskLine[]
+  stockTransferLines       StockTransferLine[]
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2348,10 +2357,11 @@ model InventorySerial {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stockMovements     StockMovement[]
-  goodsReceiptLines  GoodsReceiptLine[]
-  putAwayTaskLines   PutAwayTaskLine[]
-  stockTransferLines StockTransferLine[]
+  stockMovements           StockMovement[]
+  goodsReceiptLines        GoodsReceiptLine[]
+  putAwayTaskLines         PutAwayTaskLine[]
+  stockTransferLines       StockTransferLine[]
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -2490,4 +2500,60 @@ model PutAwayTaskLine {
 
   @@index([putAwayTaskId])
   @@index([productId])
+}
+
+model InventoryAdjustment {
+  id               String    @id @default(uuid())
+  companyId        String
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  adjustmentNumber String
+  warehouseId      String
+  warehouse        Warehouse @relation("AdjustmentWarehouse", fields: [warehouseId], references: [id])
+  reason           String
+  status           String    @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, POSTED, CANCELLED
+  createdById      String
+  createdBy        Employee  @relation("AdjustmentCreatedBy", fields: [createdById], references: [id])
+  approvedById     String?
+  approvedBy       Employee? @relation("AdjustmentApprovedBy", fields: [approvedById], references: [id])
+  adjustmentDate   DateTime  @default(now())
+  remarks          String?
+
+  lines InventoryAdjustmentLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, adjustmentNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+}
+
+model InventoryAdjustmentLine {
+  id                    String              @id @default(uuid())
+  inventoryAdjustmentId String
+  inventoryAdjustment   InventoryAdjustment @relation(fields: [inventoryAdjustmentId], references: [id], onDelete: Cascade)
+  productId             String
+  product               Product             @relation(fields: [productId], references: [id])
+
+  batchId  String?
+  batch    InventoryBatch?  @relation(fields: [batchId], references: [id])
+  serialId String?
+  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+
+  warehouseId String
+  warehouse   Warehouse      @relation("AdjustmentLineWarehouse", fields: [warehouseId], references: [id])
+  zoneId      String?
+  zone        WarehouseZone? @relation(fields: [zoneId], references: [id])
+  binId       String?
+  bin         WarehouseBin?  @relation(fields: [binId], references: [id])
+
+  systemQuantity     Decimal
+  physicalQuantity   Decimal
+  adjustmentQuantity Decimal
+  adjustmentType     String // GAIN, LOSS, DAMAGE, EXPIRED, SCRAP, FOUND, CORRECTION, WRITE_OFF
+  remarks            String?
+
+  @@index([inventoryAdjustmentId])
+  @@index([productId])
+  @@index([warehouseId])
 }

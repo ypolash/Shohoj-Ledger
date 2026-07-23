@@ -92,6 +92,11 @@ export const DefaultPermissions = [
   { action: "TRANSFER_SHIP", moduleKey: "INVENTORY" },
   { action: "TRANSFER_RECEIVE", moduleKey: "INVENTORY" },
   { action: "TRANSFER_CANCEL", moduleKey: "INVENTORY" },
+  { action: "ADJUSTMENT_VIEW", moduleKey: "INVENTORY" },
+  { action: "ADJUSTMENT_CREATE", moduleKey: "INVENTORY" },
+  { action: "ADJUSTMENT_APPROVE", moduleKey: "INVENTORY" },
+  { action: "ADJUSTMENT_POST", moduleKey: "INVENTORY" },
+  { action: "ADJUSTMENT_CANCEL", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

@@ -67,6 +67,10 @@ export const DefaultPermissions = [
   { action: "STOCKMOVEMENT_VIEW", moduleKey: "INVENTORY" },
   { action: "STOCKMOVEMENT_CREATE", moduleKey: "INVENTORY" },
   { action: "STOCKMOVEMENT_REVERSE", moduleKey: "INVENTORY" },
+  { action: "BATCH_VIEW", moduleKey: "INVENTORY" },
+  { action: "BATCH_MANAGE", moduleKey: "INVENTORY" },
+  { action: "BATCH_ADJUST", moduleKey: "INVENTORY" },
+  { action: "BATCH_QUARANTINE", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

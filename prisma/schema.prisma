@@ -799,6 +799,7 @@ model Company {
   journalEntries    JournalEntry[]
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
+  inventoryBatches  InventoryBatch[]
 }
 
 model CompanySetting {
@@ -1160,6 +1161,7 @@ model Product {
   purchaseItems     PurchaseOrderItem[]
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
+  inventoryBatches  InventoryBatch[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1197,6 +1199,7 @@ model Warehouse {
   bins              WarehouseBin[]
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
+  inventoryBatches  InventoryBatch[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2211,8 +2214,42 @@ model StockMovement {
   performedBy   Employee? @relation(fields: [performedById], references: [id])
   createdAt     DateTime  @default(now())
 
+  batchId String?
+  batch   InventoryBatch? @relation(fields: [batchId], references: [id])
+
   @@index([companyId])
   @@index([productId])
   @@index([warehouseId])
   @@index([referenceType, referenceId])
+  @@index([batchId])
+}
+
+model InventoryBatch {
+  id                String    @id @default(uuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId       String
+  warehouse         Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  batchNumber       String
+  manufacturerBatch String?
+  manufactureDate   DateTime?
+  expiryDate        DateTime?
+  receivedDate      DateTime
+  quantity          Decimal
+  reservedQuantity  Decimal   @default(0)
+  status            String    @default("ACTIVE") // ACTIVE, RESERVED, PARTIAL, EXPIRED, CONSUMED, QUARANTINE, RETURNED
+  remarks           String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  stockMovements StockMovement[]
+
+  @@unique([companyId, productId, batchNumber])
+  @@index([companyId])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([batchNumber])
+  @@index([expiryDate])
 }

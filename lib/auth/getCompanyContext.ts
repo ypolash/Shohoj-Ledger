@@ -4,12 +4,12 @@ export async function getCompanyContext(userId: string, role: string) {
   if (role === "ADMIN") {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { companyId: true, platformRole: true, roleId: true }
+      select: { companyId: true, platformRole: true }
     });
     return {
       companyId: user?.companyId || null,
       platformRole: user?.platformRole || null,
-      roleId: user?.roleId || null,
+      roleId: null,
     };
   } else if (role === "EMPLOYEE") {
     const employee = await prisma.employee.findUnique({

@@ -309,6 +309,7 @@ model Employee {
   stockMovements    StockMovement[]
   barcodes          Barcode[]
   goodsReceipts     GoodsReceipt[]
+  putAwayTasks      PutAwayTask[]
 
   @@index([companyId])
 }
@@ -805,6 +806,7 @@ model Company {
   inventorySerials  InventorySerial[]
   barcodes          Barcode[]
   goodsReceipts     GoodsReceipt[]
+  putAwayTasks      PutAwayTask[]
 }
 
 model CompanySetting {
@@ -1169,6 +1171,7 @@ model Product {
   inventoryBatches  InventoryBatch[]
   inventorySerials  InventorySerial[]
   goodsReceiptLines GoodsReceiptLine[]
+  putAwayTaskLines  PutAwayTaskLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1209,6 +1212,7 @@ model Warehouse {
   inventoryBatches  InventoryBatch[]
   inventorySerials  InventorySerial[]
   goodsReceipts     GoodsReceipt[]
+  putAwayTasks      PutAwayTask[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2151,8 +2155,10 @@ model WarehouseZone {
   description String?
   isActive    Boolean   @default(true)
 
-  bins           WarehouseBin[]
-  stockMovements StockMovement[]
+  bins                 WarehouseBin[]
+  stockMovements       StockMovement[]
+  putAwayTaskLinesFrom PutAwayTaskLine[] @relation("FromZone")
+  putAwayTaskLinesTo   PutAwayTaskLine[] @relation("ToZone")
 
   @@index([warehouseId])
   @@index([code])
@@ -2169,9 +2175,11 @@ model WarehouseBin {
   capacity    Decimal?
   isActive    Boolean        @default(true)
 
-  productWarehouses ProductWarehouse[]
-  stockMovements    StockMovement[]
-  goodsReceiptLines GoodsReceiptLine[]
+  productWarehouses    ProductWarehouse[]
+  stockMovements       StockMovement[]
+  goodsReceiptLines    GoodsReceiptLine[]
+  putAwayTaskLinesFrom PutAwayTaskLine[]  @relation("FromBin")
+  putAwayTaskLinesTo   PutAwayTaskLine[]  @relation("ToBin")
 
   @@index([warehouseId])
   @@index([code])
@@ -2262,6 +2270,7 @@ model InventoryBatch {
   stockMovements    StockMovement[]
   serials           InventorySerial[]
   goodsReceiptLines GoodsReceiptLine[]
+  putAwayTaskLines  PutAwayTaskLine[]
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2295,6 +2304,7 @@ model InventorySerial {
 
   stockMovements    StockMovement[]
   goodsReceiptLines GoodsReceiptLine[]
+  putAwayTaskLines  PutAwayTaskLine[]
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -2344,8 +2354,9 @@ model GoodsReceipt {
 
   lines GoodsReceiptLine[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  putAwayTasks PutAwayTask[]
 
   @@unique([companyId, receiptNumber])
   @@index([companyId])
@@ -2375,5 +2386,61 @@ model GoodsReceiptLine {
   remarks String?
 
   @@index([goodsReceiptId])
+  @@index([productId])
+}
+
+model PutAwayTask {
+  id             String        @id @default(uuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouseId    String
+  warehouse      Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  goodsReceiptId String?
+  goodsReceipt   GoodsReceipt? @relation(fields: [goodsReceiptId], references: [id])
+  taskNumber     String
+  status         String        @default("PENDING") // PENDING, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+  assignedToId   String?
+  assignedTo     Employee?     @relation(fields: [assignedToId], references: [id])
+  priority       Int           @default(0)
+
+  lines PutAwayTaskLine[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@unique([companyId, taskNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+  @@index([goodsReceiptId])
+}
+
+model PutAwayTaskLine {
+  id            String      @id @default(uuid())
+  putAwayTaskId String
+  putAwayTask   PutAwayTask @relation(fields: [putAwayTaskId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+
+  batchId  String?
+  batch    InventoryBatch?  @relation(fields: [batchId], references: [id])
+  serialId String?
+  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+
+  fromZoneId String
+  fromZone   WarehouseZone @relation("FromZone", fields: [fromZoneId], references: [id])
+  fromBinId  String
+  fromBin    WarehouseBin  @relation("FromBin", fields: [fromBinId], references: [id])
+
+  toZoneId String
+  toZone   WarehouseZone @relation("ToZone", fields: [toZoneId], references: [id])
+  toBinId  String
+  toBin    WarehouseBin  @relation("ToBin", fields: [toBinId], references: [id])
+
+  quantity          Decimal
+  completedQuantity Decimal @default(0)
+  remarks           String?
+
+  @@index([putAwayTaskId])
   @@index([productId])
 }

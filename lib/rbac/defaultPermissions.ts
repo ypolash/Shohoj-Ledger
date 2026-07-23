@@ -82,6 +82,10 @@ export const DefaultPermissions = [
   { action: "GOODSRECEIPT_CREATE", moduleKey: "INVENTORY" },
   { action: "GOODSRECEIPT_COMPLETE", moduleKey: "INVENTORY" },
   { action: "GOODSRECEIPT_CANCEL", moduleKey: "INVENTORY" },
+  { action: "PUTAWAY_VIEW", moduleKey: "INVENTORY" },
+  { action: "PUTAWAY_ASSIGN", moduleKey: "INVENTORY" },
+  { action: "PUTAWAY_EXECUTE", moduleKey: "INVENTORY" },
+  { action: "PUTAWAY_CANCEL", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

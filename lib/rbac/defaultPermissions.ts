@@ -64,6 +64,9 @@ export const DefaultPermissions = [
   { action: "WAREHOUSE_ISSUE", moduleKey: "INVENTORY" },
   { action: "WAREHOUSE_RESERVE", moduleKey: "INVENTORY" },
   { action: "BIN_MANAGE", moduleKey: "INVENTORY" },
+  { action: "STOCKMOVEMENT_VIEW", moduleKey: "INVENTORY" },
+  { action: "STOCKMOVEMENT_CREATE", moduleKey: "INVENTORY" },
+  { action: "STOCKMOVEMENT_REVERSE", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

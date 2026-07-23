@@ -390,6 +390,9 @@ model Employee {
   payrollItems         PayrollItem[]
   payrollApprovals     PayrollApproval[]
   payrollRunsProcessed PayrollRun[]
+  loans                EmployeeLoan[]
+  loansApproved        EmployeeLoan[]                @relation("LoanApprover")
+  salaryAdvances       SalaryAdvance[]
 
   @@index([companyId])
 }
@@ -1735,6 +1738,8 @@ model Company {
   salaryStructures        SalaryStructure[]
   payrollPeriods          PayrollPeriod[]
   payrollRuns             PayrollRun[]
+  employeeLoans           EmployeeLoan[]
+  salaryAdvances          SalaryAdvance[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -5128,4 +5133,76 @@ model PayrollSnapshot {
   createdAt    DateTime   @default(now())
 
   @@index([payrollRunId])
+}
+
+model EmployeeLoan {
+  id                 String                    @id @default(uuid())
+  companyId          String
+  company            Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employeeId         String
+  employee           Employee                  @relation(fields: [employeeId], references: [id])
+  loanNumber         String                    @unique
+  loanType           String
+  principalAmount    Decimal
+  interestRate       Decimal                   @default(0)
+  issueDate          DateTime                  @default(now())
+  installmentAmount  Decimal
+  installmentCount   Int
+  outstandingBalance Decimal
+  status             String                    @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, ACTIVE, COMPLETED, CANCELLED
+  approvedById       String?
+  approvedBy         Employee?                 @relation("LoanApprover", fields: [approvedById], references: [id])
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  installments       EmployeeLoanInstallment[]
+
+  @@index([companyId])
+  @@index([employeeId])
+}
+
+model EmployeeLoanInstallment {
+  id               String       @id @default(uuid())
+  loanId           String
+  loan             EmployeeLoan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  installmentNo    Int
+  dueDate          DateTime
+  amount           Decimal
+  isRecovered      Boolean      @default(false)
+  recoveryDate     DateTime?
+  payrollReference String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([loanId])
+}
+
+model SalaryAdvance {
+  id             String                  @id @default(uuid())
+  companyId      String
+  company        Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employeeId     String
+  employee       Employee                @relation(fields: [employeeId], references: [id])
+  advanceNumber  String                  @unique
+  amount         Decimal
+  issueDate      DateTime                @default(now())
+  recoveryMethod String                  @default("PAYROLL") // PAYROLL, MANUAL
+  status         String                  @default("DRAFT") // DRAFT, APPROVED, ACTIVE, COMPLETED, CANCELLED
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  recoveries     SalaryAdvanceRecovery[]
+
+  @@index([companyId])
+  @@index([employeeId])
+}
+
+model SalaryAdvanceRecovery {
+  id               String        @id @default(uuid())
+  advanceId        String
+  advance          SalaryAdvance @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  amount           Decimal
+  recoveryDate     DateTime      @default(now())
+  payrollReference String?
+  createdAt        DateTime      @default(now())
+
+  @@index([advanceId])
 }

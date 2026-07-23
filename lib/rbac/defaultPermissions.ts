@@ -86,6 +86,12 @@ export const DefaultPermissions = [
   { action: "PUTAWAY_ASSIGN", moduleKey: "INVENTORY" },
   { action: "PUTAWAY_EXECUTE", moduleKey: "INVENTORY" },
   { action: "PUTAWAY_CANCEL", moduleKey: "INVENTORY" },
+  { action: "TRANSFER_VIEW", moduleKey: "INVENTORY" },
+  { action: "TRANSFER_CREATE", moduleKey: "INVENTORY" },
+  { action: "TRANSFER_APPROVE", moduleKey: "INVENTORY" },
+  { action: "TRANSFER_SHIP", moduleKey: "INVENTORY" },
+  { action: "TRANSFER_RECEIVE", moduleKey: "INVENTORY" },
+  { action: "TRANSFER_CANCEL", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

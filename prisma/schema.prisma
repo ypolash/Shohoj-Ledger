@@ -47,7 +47,6 @@ model User {
   branchUsers             BranchUser[]
   createdPurchaseOrders   PurchaseOrder[]          @relation("PurchaseOrderCreator")
   createdInventoryTx      InventoryTransaction[]   @relation("InventoryTransactionCreator")
-  createdStockTransfers   StockTransfer[]          @relation("StockTransferCreator")
   businessInsights        BusinessInsight[]
   createdJournalEntries   JournalEntry[]           @relation("JournalEntryCreator")
   approvedJournalEntries  JournalEntry[]           @relation("JournalEntryApprover")
@@ -300,16 +299,18 @@ model Employee {
   shift            String?
   employmentStatus String? @default("Probation")
 
-  lifecycleEvents   EmployeeLifecycle[]
-  leads             Lead[]
-  managedProjects   Project[]           @relation("ProjectManager")
-  teamProjects      Project[]           @relation("ProjectTeam")
-  managedWarehouses Warehouse[]         @relation("WarehouseManager")
-  assignedAssets    Asset[]             @relation("EmployeeAssets")
-  stockMovements    StockMovement[]
-  barcodes          Barcode[]
-  goodsReceipts     GoodsReceipt[]
-  putAwayTasks      PutAwayTask[]
+  lifecycleEvents    EmployeeLifecycle[]
+  leads              Lead[]
+  managedProjects    Project[]           @relation("ProjectManager")
+  teamProjects       Project[]           @relation("ProjectTeam")
+  managedWarehouses  Warehouse[]         @relation("WarehouseManager")
+  assignedAssets     Asset[]             @relation("EmployeeAssets")
+  stockMovements     StockMovement[]
+  barcodes           Barcode[]
+  goodsReceipts      GoodsReceipt[]
+  putAwayTasks       PutAwayTask[]
+  transfersRequested StockTransfer[]     @relation("TransferRequestedBy")
+  transfersApproved  StockTransfer[]     @relation("TransferApprovedBy")
 
   @@index([companyId])
 }
@@ -1164,14 +1165,15 @@ model Product {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  stockTransactions StockTransaction[]
-  purchaseItems     PurchaseOrderItem[]
-  productWarehouses ProductWarehouse[]
-  stockMovements    StockMovement[]
-  inventoryBatches  InventoryBatch[]
-  inventorySerials  InventorySerial[]
-  goodsReceiptLines GoodsReceiptLine[]
-  putAwayTaskLines  PutAwayTaskLine[]
+  stockTransactions  StockTransaction[]
+  purchaseItems      PurchaseOrderItem[]
+  productWarehouses  ProductWarehouse[]
+  stockMovements     StockMovement[]
+  inventoryBatches   InventoryBatch[]
+  inventorySerials   InventorySerial[]
+  goodsReceiptLines  GoodsReceiptLine[]
+  putAwayTaskLines   PutAwayTaskLine[]
+  stockTransferLines StockTransferLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1933,21 +1935,60 @@ model InventoryTransaction {
 }
 
 model StockTransfer {
-  id              String              @id @default(uuid())
+  id              String    @id @default(uuid())
   companyId       String
-  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transferNumber  String
   fromWarehouseId String
-  fromWarehouse   Warehouse           @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  fromWarehouse   Warehouse @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
   toWarehouseId   String
-  toWarehouse     Warehouse           @relation("TransferTo", fields: [toWarehouseId], references: [id])
-  status          StockTransferStatus @default(PENDING)
-  createdById     String
-  createdBy       User                @relation("StockTransferCreator", fields: [createdById], references: [id])
-  createdAt       DateTime            @default(now())
-  completedAt     DateTime?
+  toWarehouse     Warehouse @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  requestedById   String
+  requestedBy     Employee  @relation("TransferRequestedBy", fields: [requestedById], references: [id])
+  approvedById    String?
+  approvedBy      Employee? @relation("TransferApprovedBy", fields: [approvedById], references: [id])
+  status          String    @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, IN_TRANSIT, PARTIALLY_RECEIVED, COMPLETED, CANCELLED
+  transferDate    DateTime?
+  remarks         String?
 
+  lines StockTransferLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, transferNumber])
   @@index([companyId])
-  @@index([status])
+  @@index([fromWarehouseId])
+  @@index([toWarehouseId])
+}
+
+model StockTransferLine {
+  id              String        @id @default(uuid())
+  stockTransferId String
+  stockTransfer   StockTransfer @relation(fields: [stockTransferId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+
+  batchId  String?
+  batch    InventoryBatch?  @relation(fields: [batchId], references: [id])
+  serialId String?
+  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+
+  fromZoneId String?
+  fromZone   WarehouseZone? @relation("TransferFromZone", fields: [fromZoneId], references: [id])
+  toZoneId   String?
+  toZone     WarehouseZone? @relation("TransferToZone", fields: [toZoneId], references: [id])
+  fromBinId  String?
+  fromBin    WarehouseBin?  @relation("TransferFromBin", fields: [fromBinId], references: [id])
+  toBinId    String?
+  toBin      WarehouseBin?  @relation("TransferToBin", fields: [toBinId], references: [id])
+
+  quantity         Decimal
+  receivedQuantity Decimal @default(0)
+  remarks          String?
+
+  @@index([stockTransferId])
+  @@index([productId])
 }
 
 model AnalyticsSnapshot {
@@ -2155,10 +2196,12 @@ model WarehouseZone {
   description String?
   isActive    Boolean   @default(true)
 
-  bins                 WarehouseBin[]
-  stockMovements       StockMovement[]
-  putAwayTaskLinesFrom PutAwayTaskLine[] @relation("FromZone")
-  putAwayTaskLinesTo   PutAwayTaskLine[] @relation("ToZone")
+  bins                   WarehouseBin[]
+  stockMovements         StockMovement[]
+  putAwayTaskLinesFrom   PutAwayTaskLine[]   @relation("FromZone")
+  putAwayTaskLinesTo     PutAwayTaskLine[]   @relation("ToZone")
+  stockTransferLinesFrom StockTransferLine[] @relation("TransferFromZone")
+  stockTransferLinesTo   StockTransferLine[] @relation("TransferToZone")
 
   @@index([warehouseId])
   @@index([code])
@@ -2175,11 +2218,13 @@ model WarehouseBin {
   capacity    Decimal?
   isActive    Boolean        @default(true)
 
-  productWarehouses    ProductWarehouse[]
-  stockMovements       StockMovement[]
-  goodsReceiptLines    GoodsReceiptLine[]
-  putAwayTaskLinesFrom PutAwayTaskLine[]  @relation("FromBin")
-  putAwayTaskLinesTo   PutAwayTaskLine[]  @relation("ToBin")
+  productWarehouses      ProductWarehouse[]
+  stockMovements         StockMovement[]
+  goodsReceiptLines      GoodsReceiptLine[]
+  putAwayTaskLinesFrom   PutAwayTaskLine[]   @relation("FromBin")
+  putAwayTaskLinesTo     PutAwayTaskLine[]   @relation("ToBin")
+  stockTransferLinesFrom StockTransferLine[] @relation("TransferFromBin")
+  stockTransferLinesTo   StockTransferLine[] @relation("TransferToBin")
 
   @@index([warehouseId])
   @@index([code])
@@ -2267,10 +2312,11 @@ model InventoryBatch {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  stockMovements    StockMovement[]
-  serials           InventorySerial[]
-  goodsReceiptLines GoodsReceiptLine[]
-  putAwayTaskLines  PutAwayTaskLine[]
+  stockMovements     StockMovement[]
+  serials            InventorySerial[]
+  goodsReceiptLines  GoodsReceiptLine[]
+  putAwayTaskLines   PutAwayTaskLine[]
+  stockTransferLines StockTransferLine[]
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2302,9 +2348,10 @@ model InventorySerial {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stockMovements    StockMovement[]
-  goodsReceiptLines GoodsReceiptLine[]
-  putAwayTaskLines  PutAwayTaskLine[]
+  stockMovements     StockMovement[]
+  goodsReceiptLines  GoodsReceiptLine[]
+  putAwayTaskLines   PutAwayTaskLine[]
+  stockTransferLines StockTransferLine[]
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])

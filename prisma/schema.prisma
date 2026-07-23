@@ -23,6 +23,7 @@ model User {
   payrollAudits                 PayrollAudit[]
   ledgerEntries                 LedgerEntry[]
   reportAudits                  ReportAudit[]
+  jobOpenings                   JobOpening[]
   leadActivities                LeadActivity[]
   projectActivities             ProjectActivity[]
   clientActivities              ClientActivity[]
@@ -372,6 +373,9 @@ model Employee {
   packingTasksPacked   PackingTask[] @relation("PackingTaskPackedBy")
   ownedOpportunities   Opportunity[] @relation("OpportunityOwner")
 
+  interviewsConducted Interview[]
+  interviewFeedbacks  InterviewFeedback[]
+
   @@index([companyId])
 }
 
@@ -428,6 +432,128 @@ model Attendance {
 
   @@unique([employeeId, date])
   @@index([companyId])
+}
+
+model JobOpening {
+  id               String          @id @default(uuid())
+  companyId        String
+  company          Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobCode          String?
+  title            String
+  departmentId     String?
+  department       Department?     @relation(fields: [departmentId], references: [id])
+  designationId    String?
+  designation      Designation?    @relation(fields: [designationId], references: [id])
+  employmentTypeId String?
+  employmentType   EmploymentType? @relation(fields: [employmentTypeId], references: [id])
+  vacancies        Int             @default(1)
+  openingDate      DateTime
+  closingDate      DateTime?
+  status           String          @default("OPEN") // OPEN, CLOSED, DRAFT
+  createdById      String?
+  user             User?           @relation(fields: [createdById], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  applications Application[]
+
+  @@index([companyId])
+}
+
+model Applicant {
+  id          String    @id @default(uuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fullName    String
+  email       String
+  phone       String?
+  dateOfBirth DateTime?
+  resume      String?
+  linkedin    String?
+  portfolio   String?
+  status      String    @default("NEW") // NEW, IN_PROGRESS, REJECTED, HIRED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  applications Application[]
+
+  @@unique([companyId, email])
+  @@index([companyId])
+}
+
+model Application {
+  id           String     @id @default(uuid())
+  jobOpeningId String
+  jobOpening   JobOpening @relation(fields: [jobOpeningId], references: [id], onDelete: Cascade)
+  applicantId  String
+  applicant    Applicant  @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  currentStage String     @default("APPLIED") // APPLIED, SCREENING, SHORTLISTED, INTERVIEW, TECHNICAL, HR, OFFERED, HIRED, REJECTED, WITHDRAWN
+  source       String?
+  appliedAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  interviews Interview[]
+  jobOffers  JobOffer[]
+
+  @@unique([jobOpeningId, applicantId])
+  @@index([jobOpeningId])
+  @@index([applicantId])
+}
+
+model Interview {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          String // TECHNICAL, HR, CULTURAL
+  date          DateTime
+  interviewerId String
+  interviewer   Employee    @relation(fields: [interviewerId], references: [id])
+  location      String?
+  onlineLink    String?
+  status        String      @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  feedbacks InterviewFeedback[]
+
+  @@index([applicationId])
+  @@index([interviewerId])
+}
+
+model InterviewFeedback {
+  id                 String    @id @default(uuid())
+  interviewId        String
+  interview          Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  interviewerId      String
+  interviewer        Employee  @relation(fields: [interviewerId], references: [id])
+  technicalScore     Int?
+  communicationScore Int?
+  cultureScore       Int?
+  overallScore       Int?
+  recommendation     String? // HIRE, NO_HIRE, STRONG_HIRE
+  comments           String?
+  createdAt          DateTime  @default(now())
+
+  @@index([interviewId])
+  @@index([interviewerId])
+}
+
+model JobOffer {
+  id             String       @id @default(uuid())
+  applicationId  String
+  application    Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  salary         Decimal
+  joiningDate    DateTime
+  designationId  String?
+  designation    Designation? @relation(fields: [designationId], references: [id])
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  status         String       @default("PENDING") // PENDING, ACCEPTED, REJECTED, WITHDRAWN
+  offerLetterUrl String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([applicationId])
 }
 
 model LeaveRequest {
@@ -1463,6 +1589,8 @@ model Company {
   bonuses                 Bonus[]
   payslips                Payslip[]
   leads                   Lead[]
+  jobOpenings             JobOpening[]
+  applicants              Applicant[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -1660,6 +1788,8 @@ model Department {
   purchaseRequisitions PurchaseRequisition[]
   sections             Section[]
   jobPositions         JobPosition[]
+  jobOpenings          JobOpening[]
+  jobOffers            JobOffer[]
 
   @@unique([companyId, name])
   @@unique([companyId, code])
@@ -1748,14 +1878,15 @@ model JobPosition {
 }
 
 model EmploymentType {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  jobOpenings JobOpening[]
 
   @@unique([companyId, name])
   @@index([companyId])
@@ -1844,7 +1975,9 @@ model Designation {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  employees Employee[] @relation("EmployeeDesignation")
+  employees   Employee[]   @relation("EmployeeDesignation")
+  jobOpenings JobOpening[]
+  jobOffers   JobOffer[]
 
   @@unique([companyId, name])
   @@index([companyId])

@@ -58,6 +58,7 @@ model User {
   createdQuotations       Quotation[]              @relation("QuotationCreator")
   createdSalesOrders      SalesOrder[]             @relation("SalesOrderCreator")
   createdDeliveryOrders   DeliveryOrder[]          @relation("DeliveryOrderCreator")
+  createdCustomerReturns  CustomerReturn[]         @relation("CustomerReturnCreator")
 }
 
 model Session {
@@ -875,7 +876,8 @@ model DeliveryOrder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  lines DeliveryOrderLine[]
+  lines           DeliveryOrderLine[]
+  customerReturns CustomerReturn[]
 
   @@index([companyId])
   @@index([customerId])
@@ -905,8 +907,93 @@ model DeliveryOrderLine {
   bin              WarehouseBin?    @relation("DeliveryLineBin", fields: [binId], references: [id])
   remarks          String?
 
+  customerReturnLines CustomerReturnLine[]
+
   @@index([deliveryOrderId])
   @@index([salesOrderLineId])
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+enum CustomerReturnStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  INSPECTING
+  RESTOCKED
+  SCRAPPED
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum ReturnCondition {
+  GOOD
+  DAMAGED
+  DEFECTIVE
+  EXPIRED
+  OPEN_BOX
+  SCRAP
+}
+
+model CustomerReturn {
+  id               String               @id @default(uuid())
+  companyId        String
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  returnNumber     String               @unique @default(cuid())
+  deliveryOrderId  String
+  deliveryOrder    DeliveryOrder        @relation(fields: [deliveryOrderId], references: [id])
+  customerId       String
+  customer         Customer             @relation(fields: [customerId], references: [id])
+  warehouseId      String
+  warehouse        Warehouse            @relation("CustomerReturnWarehouse", fields: [warehouseId], references: [id])
+  status           CustomerReturnStatus @default(DRAFT)
+  returnDate       DateTime             @default(now())
+  reason           String?
+  inspectionStatus String?
+  remarks          String?
+
+  approvedById String?
+  approvedAt   DateTime?
+
+  createdById String
+  createdBy   User     @relation("CustomerReturnCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines CustomerReturnLine[]
+
+  @@index([companyId])
+  @@index([customerId])
+  @@index([deliveryOrderId])
+  @@index([warehouseId])
+  @@index([status])
+}
+
+model CustomerReturnLine {
+  id                  String            @id @default(uuid())
+  customerReturnId    String
+  customerReturn      CustomerReturn    @relation(fields: [customerReturnId], references: [id], onDelete: Cascade)
+  deliveryOrderLineId String
+  deliveryOrderLine   DeliveryOrderLine @relation(fields: [deliveryOrderLineId], references: [id])
+  productId           String
+  product             Product           @relation(fields: [productId], references: [id])
+  batchId             String?
+  batch               InventoryBatch?   @relation("CustomerReturnLineBatch", fields: [batchId], references: [id])
+  serialId            String?
+  serial              InventorySerial?  @relation("CustomerReturnLineSerial", fields: [serialId], references: [id])
+  quantity            Decimal
+  returnCondition     ReturnCondition   @default(GOOD)
+  warehouseId         String
+  warehouse           Warehouse         @relation("CustomerReturnLineWarehouse", fields: [warehouseId], references: [id])
+  zoneId              String?
+  zone                WarehouseZone?    @relation("CustomerReturnLineZone", fields: [zoneId], references: [id])
+  binId               String?
+  bin                 WarehouseBin?     @relation("CustomerReturnLineBin", fields: [binId], references: [id])
+  remarks             String?
+
+  @@index([customerReturnId])
+  @@index([deliveryOrderLineId])
   @@index([productId])
   @@index([warehouseId])
 }
@@ -1143,6 +1230,7 @@ model Company {
   quotations               Quotation[]
   salesOrders              SalesOrder[]
   deliveryOrders           DeliveryOrder[]
+  customerReturns          CustomerReturn[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -1594,6 +1682,7 @@ model Product {
   quotationLines           QuotationLine[]
   salesOrderLines          SalesOrderLine[]
   deliveryOrderLines       DeliveryOrderLine[]
+  customerReturnLines      CustomerReturnLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1648,6 +1737,8 @@ model Warehouse {
   salesOrderLines          SalesOrderLine[]          @relation("SalesOrderLineWarehouse")
   deliveryOrders           DeliveryOrder[]           @relation("DeliveryOrderWarehouse")
   deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryOrderLineWarehouse")
+  customerReturns          CustomerReturn[]          @relation("CustomerReturnWarehouse")
+  customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2641,6 +2732,7 @@ model WarehouseZone {
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineZone")
   deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineZone")
+  customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineZone")
 
   @@index([warehouseId])
   @@index([code])
@@ -2668,6 +2760,7 @@ model WarehouseBin {
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineBin")
   deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineBin")
+  customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineBin")
 
   @@index([warehouseId])
   @@index([code])
@@ -2765,6 +2858,7 @@ model InventoryBatch {
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineBatch")
   deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineBatch")
+  customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineBatch")
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2804,6 +2898,7 @@ model InventorySerial {
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineSerial")
   deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineSerial")
+  customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineSerial")
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -3272,13 +3367,14 @@ model Customer {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  addresses      CustomerAddress[]
-  contacts       CustomerContact[]
-  leads          Lead[]
-  opportunities  Opportunity[]
-  quotations     Quotation[]
-  salesOrders    SalesOrder[]
-  deliveryOrders DeliveryOrder[]
+  addresses       CustomerAddress[]
+  contacts        CustomerContact[]
+  leads           Lead[]
+  opportunities   Opportunity[]
+  quotations      Quotation[]
+  salesOrders     SalesOrder[]
+  deliveryOrders  DeliveryOrder[]
+  customerReturns CustomerReturn[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

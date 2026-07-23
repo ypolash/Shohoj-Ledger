@@ -376,6 +376,13 @@ model Employee {
   interviewsConducted Interview[]
   interviewFeedbacks  InterviewFeedback[]
 
+  exceptions         AttendanceException[]
+  adjustments        AttendanceAdjustment[]
+  overtimes          AttendanceOvertime[]
+  shiftAssignments   AttendanceShiftAssignment[]
+  rosters            AttendanceRoster[]
+  holidayAssignments AttendanceHolidayAssignment[]
+
   @@index([companyId])
 }
 
@@ -399,39 +406,154 @@ model Task {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
+  exceptions  AttendanceException[]
+  adjustments AttendanceAdjustment[]
+  overtimes   AttendanceOvertime[]
+
   @@index([companyId])
   @@index([projectId])
 }
 
 model Attendance {
-  id                  String    @id @default(uuid())
-  companyId           String?
-  company             Company?  @relation(fields: [companyId], references: [id])
-  employeeId          String
-  employee            Employee  @relation(fields: [employeeId], references: [id])
-  date                DateTime // Store just the date (YYYY-MM-DD)
-  checkInTime         DateTime? @map("checkIn")
-  checkInLocation     String?
-  checkOutTime        DateTime? @map("checkOut")
-  checkOutLocation    String?
-  status              String // PRESENT, LATE, ABSENT, HALF_DAY, WEEKLY_OFF, OFF_DAY_WORK
-  isLate              Boolean   @default(false)
-  lateMinutes         Int       @default(0)
-  totalWorkingMinutes Int?      @default(0)
-  earlyLeaveMinutes   Int?      @default(0)
-  overtimeMinutes     Int?      @default(0)
-  punishmentReason    String?
-  reviewStatus        String?
-  punishmentAmount    Decimal?  @default(0)
-  latitude            Float?
-  longitude           Float?
-  wifiSsid            String?
-  wifiBssid           String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                    String                 @id @default(uuid())
+  companyId             String?
+  company               Company?               @relation(fields: [companyId], references: [id])
+  employeeId            String
+  employee              Employee               @relation(fields: [employeeId], references: [id])
+  date                  DateTime // Store just the date (YYYY-MM-DD)
+  checkInTime           DateTime?              @map("checkIn")
+  checkInLocation       String?
+  checkOutTime          DateTime?              @map("checkOut")
+  checkOutLocation      String?
+  status                String // PRESENT, LATE, ABSENT, HALF_DAY, WEEKLY_OFF, OFF_DAY_WORK
+  isLate                Boolean                @default(false)
+  lateMinutes           Int                    @default(0)
+  totalWorkingMinutes   Int?                   @default(0)
+  earlyLeaveMinutes     Int?                   @default(0)
+  overtimeMinutes       Int?                   @default(0)
+  punishmentReason      String?
+  reviewStatus          String?
+  punishmentAmount      Decimal?               @default(0)
+  latitude              Float?
+  longitude             Float?
+  wifiSsid              String?
+  wifiBssid             String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  attendanceExceptions  AttendanceException[]
+  attendanceAdjustments AttendanceAdjustment[]
+  attendanceOvertimes   AttendanceOvertime[]
 
   @@unique([employeeId, date])
   @@index([companyId])
+}
+
+model AttendanceShiftAssignment {
+  id            String    @id @default(uuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workShiftId   String
+  workShift     WorkShift @relation(fields: [workShiftId], references: [id])
+  effectiveDate DateTime
+  endDate       DateTime?
+  isRotation    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([employeeId])
+}
+
+model AttendanceException {
+  id              String     @id @default(uuid())
+  attendanceId    String
+  attendance      Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type            String // LATE, EARLY_LEAVE, MISSING_CHECKIN, MISSING_CHECKOUT, HOLIDAY_WORK, WEEKEND_WORK
+  durationMinutes Int        @default(0)
+  reason          String?
+  status          String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  task            Task?      @relation(fields: [taskId], references: [id])
+  taskId          String?
+
+  @@index([attendanceId])
+  @@index([employeeId])
+}
+
+model AttendanceAdjustment {
+  id            String     @id @default(uuid())
+  attendanceId  String
+  attendance    Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  employeeId    String
+  employee      Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type          String // CORRECTION, OVERRIDE
+  reason        String?
+  requestedById String?
+  approvedById  String?
+  status        String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  task          Task?      @relation(fields: [taskId], references: [id])
+  taskId        String?
+
+  @@index([attendanceId])
+  @@index([employeeId])
+}
+
+model AttendanceOvertime {
+  id           String     @id @default(uuid())
+  attendanceId String
+  attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  employeeId   String
+  employee     Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type         String // NORMAL, WEEKEND, HOLIDAY
+  hours        Decimal    @default(0)
+  rate         Decimal    @default(1.0)
+  status       String     @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedById String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  task         Task?      @relation(fields: [taskId], references: [id])
+  taskId       String?
+
+  @@index([attendanceId])
+  @@index([employeeId])
+}
+
+model AttendanceRoster {
+  id          String    @id @default(uuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workShiftId String
+  workShift   WorkShift @relation(fields: [workShiftId], references: [id])
+  date        DateTime
+  status      String    @default("PLANNED") // PLANNED, ACTUAL
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([employeeId])
+}
+
+model AttendanceHolidayAssignment {
+  id         String          @id @default(uuid())
+  companyId  String
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  holidayId  String
+  holiday    HolidayCalendar @relation(fields: [holidayId], references: [id])
+  date       DateTime
+  status     String          @default("ACTIVE")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([companyId])
+  @@index([employeeId])
 }
 
 model JobOpening {
@@ -1561,12 +1683,12 @@ enum PlatformRole {
 }
 
 model Company {
-  id                      String                   @id @default(uuid())
+  id                      String                        @id @default(uuid())
   name                    String
   businessType            String
-  status                  String                   @default("ACTIVE")
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  status                  String                        @default("ACTIVE")
+  createdAt               DateTime                      @default(now())
+  updatedAt               DateTime                      @updatedAt
   settings                CompanySetting?
   modules                 CompanyModule[]
   roles                   Role[]
@@ -1591,6 +1713,8 @@ model Company {
   leads                   Lead[]
   jobOpenings             JobOpening[]
   applicants              Applicant[]
+  attendanceRosters       AttendanceRoster[]
+  holidayAssignments      AttendanceHolidayAssignment[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -1929,35 +2053,38 @@ model CostCenter {
 }
 
 model HolidayCalendar {
-  id        String   @id @default(uuid())
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchId  String?
-  branch    Branch?  @relation(fields: [branchId], references: [id])
-  name      String
-  date      DateTime
-  type      String   @default("COMPANY") // COMPANY, BRANCH, RECURRING
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String                        @id @default(uuid())
+  companyId          String
+  company            Company                       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId           String?
+  branch             Branch?                       @relation(fields: [branchId], references: [id])
+  name               String
+  date               DateTime
+  type               String                        @default("COMPANY") // COMPANY, BRANCH, RECURRING
+  isActive           Boolean                       @default(true)
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+  holidayAssignments AttendanceHolidayAssignment[]
 
   @@index([companyId])
 }
 
 model WorkShift {
-  id          String     @id @default(uuid())
-  companyId   String
-  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name        String
-  startTime   String // HH:mm
-  endTime     String // HH:mm
-  gracePeriod Int        @default(0) // minutes
-  breakTime   Int        @default(0) // minutes
-  nightShift  Boolean    @default(false)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  employees   Employee[]
+  id               String                      @id @default(uuid())
+  companyId        String
+  company          Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name             String
+  startTime        String // HH:mm
+  endTime          String // HH:mm
+  gracePeriod      Int                         @default(0) // minutes
+  breakTime        Int                         @default(0) // minutes
+  nightShift       Boolean                     @default(false)
+  isActive         Boolean                     @default(true)
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+  employees        Employee[]
+  shiftAssignments AttendanceShiftAssignment[]
+  rosters          AttendanceRoster[]
 
   @@unique([companyId, name])
   @@index([companyId])

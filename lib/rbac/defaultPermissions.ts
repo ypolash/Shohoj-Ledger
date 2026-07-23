@@ -47,6 +47,8 @@ export const DefaultPermissions = [
   { action: "PROFITLOSS_EXPORT", moduleKey: "ACCOUNTING" },
   { action: "CASHFLOW_VIEW", moduleKey: "ACCOUNTING" },
   { action: "CASHFLOW_EXPORT", moduleKey: "ACCOUNTING" },
+  { action: "BALANCESHEET_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "BALANCESHEET_EXPORT", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

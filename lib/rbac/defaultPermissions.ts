@@ -33,6 +33,11 @@ export const DefaultPermissions = [
   { action: "JOURNAL_VIEW", moduleKey: "ACCOUNTING" },
   { action: "JOURNAL_MANAGE", moduleKey: "ACCOUNTING" },
   { action: "FISCALYEAR_MANAGE", moduleKey: "ACCOUNTING" },
+  { action: "JOURNALENTRY_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "JOURNALENTRY_CREATE", moduleKey: "ACCOUNTING" },
+  { action: "JOURNALENTRY_EDIT", moduleKey: "ACCOUNTING" },
+  { action: "JOURNALENTRY_POST", moduleKey: "ACCOUNTING" },
+  { action: "JOURNALENTRY_VOID", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

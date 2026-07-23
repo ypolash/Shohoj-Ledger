@@ -49,6 +49,8 @@ model User {
   createdInventoryTx      InventoryTransaction[]   @relation("InventoryTransactionCreator")
   createdStockTransfers   StockTransfer[]          @relation("StockTransferCreator")
   businessInsights        BusinessInsight[]
+  createdJournalEntries   JournalEntry[]           @relation("JournalEntryCreator")
+  approvedJournalEntries  JournalEntry[]           @relation("JournalEntryApprover")
 }
 
 model Session {
@@ -793,6 +795,7 @@ model Company {
   fiscalYears       FiscalYear[]
   accountingPeriods AccountingPeriod[]
   journals          Journal[]
+  journalEntries    JournalEntry[]
 }
 
 model CompanySetting {
@@ -1828,6 +1831,7 @@ model Branch {
   branchUsers       BranchUser[]
   branchPermissions BranchPermission[]
   warehouses        Warehouse[]
+  journalEntries    JournalEntry[]
 
   @@index([companyId])
   @@index([code])
@@ -1981,6 +1985,8 @@ model ChartOfAccount {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  journalEntryLines JournalEntryLine[]
+
   @@unique([companyId, accountCode])
   @@index([companyId])
   @@index([accountCode])
@@ -2030,7 +2036,62 @@ model Journal {
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
 
+  journalEntries JournalEntry[]
+
   @@unique([companyId, code])
   @@index([companyId])
   @@index([code])
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  POSTED
+  VOID
+  CANCELLED
+}
+
+model JournalEntry {
+  id            String             @id @default(uuid())
+  companyId     String
+  company       Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId      String?
+  branch        Branch?            @relation(fields: [branchId], references: [id])
+  journalId     String
+  journal       Journal            @relation(fields: [journalId], references: [id])
+  entryNumber   String
+  entryDate     DateTime
+  description   String?
+  referenceType String?
+  referenceId   String?
+  status        JournalEntryStatus @default(DRAFT)
+  createdById   String
+  createdBy     User               @relation("JournalEntryCreator", fields: [createdById], references: [id])
+  approvedById  String?
+  approvedBy    User?              @relation("JournalEntryApprover", fields: [approvedById], references: [id])
+  approvedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  lines JournalEntryLine[]
+
+  @@unique([companyId, entryNumber])
+  @@index([companyId])
+  @@index([entryDate])
+  @@index([status])
+  @@index([journalId])
+}
+
+model JournalEntryLine {
+  id             String         @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry   @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      String
+  account        ChartOfAccount @relation(fields: [accountId], references: [id])
+  description    String?
+  debit          Decimal        @default(0)
+  credit         Decimal        @default(0)
+  createdAt      DateTime       @default(now())
+
+  @@index([journalEntryId])
+  @@index([accountId])
 }

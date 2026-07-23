@@ -55,6 +55,8 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
   - **Completed**: Implemented `procurementAnalyticsService.ts` providing read-only executive KPIs, spend analysis, top supplier aggregations, and procurement cycle tracking. Fully decoupled from transactional mutations.
 - **Version 1.4 — Phase 10 (Final Procurement Architecture Review):**
   - **Completed**: Executed a comprehensive architectural audit across all Procurement phases. Confirmed strict data isolation, zero leakages into frozen modules, robust RBAC integrations, and complete end-to-end P2P workflows. Version 1.4 is officially Frozen.
+- **Version 1.5 — Phase 0 (Enterprise HR & Payroll Architecture Planning):**
+  - **Completed**: Authored `hr-architecture.md` outlining the Hire-to-Retire workflow, modular integration with Accounting/CRM/Procurement, secure RBAC boundaries, and strategies for expanding Time & Attendance without breaking the frozen models. Waiting for user approval to begin Phase 1.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
@@ -63,12 +65,13 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Abstract Service Hook:** Instead of embedding Prisma inserts into every Payroll/Inventory API, we created a single `lib/notifications/notificationService.ts` that safely checks user opt-in preferences before generating rows.
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
-- **Core Goal:** Build the definitive B2B SaaS ERP with strict accounting, inventory, and supply chain controls.
-- **Current Status:** Version 1.3 ERP Architecture (Accounting, Inventory 2.0, CRM & Sales) is 100% complete and frozen (Git Tag: `v1.3.0`). Preparing for Version 1.4 (Enterprise Procurement & Supplier Management).
+- **Core Goal:** Build the definitive B2B SaaS ERP with strict accounting, inventory, supply chain, and comprehensive HR & Payroll controls.
+- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 0 (Enterprise HR & Payroll Architecture Planning).
 
 ## Production Roadmap
 1. **Version 1.3 Phase 1 (Core Engines):** Deploy background workers for Notifications, Approvals, and Webhook dispatching.
 2. **Version 1.3 Phase 2 (Enterprise Inventory):** Complete multi-branch stock management, stock transfers, and purchase order lifecycles.
 3. **Version 1.3 Phase 3 (CRM 2.0 & Accounting):** Build Sales Pipeline, Quotations, and a fully integrated double-entry General Ledger.
-4. **Version 1.3 Phase 4 (HR 2.0 & Mobile 2.0):** Advanced leave calendars, shift planning, and push notifications to the mobile app.
-5. **Version 1.3 Phase 5 (AI & SaaS Administration):** LLM-powered analytics over ERP data and Tenant billing setup.
+4. **Version 1.4 (Enterprise Procurement):** RFQ, Vendor Comparison, Purchase Orders, GRN, and Three-Way Match accounting.
+5. **Version 1.5 (Enterprise HR & Payroll):** Organization structure, Time & Attendance tracking, Leave requests, and asynchronous Payroll generation.
+6. **Future (AI & SaaS Administration):** LLM-powered analytics over ERP data and Tenant billing setup.

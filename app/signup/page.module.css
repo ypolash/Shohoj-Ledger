@@ -161,6 +161,7 @@
   transition: all 0.2s ease;
   width: 100%;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .select {

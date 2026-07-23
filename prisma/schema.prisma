@@ -308,6 +308,7 @@ model Employee {
   assignedAssets    Asset[]             @relation("EmployeeAssets")
   stockMovements    StockMovement[]
   barcodes          Barcode[]
+  goodsReceipts     GoodsReceipt[]
 
   @@index([companyId])
 }
@@ -803,6 +804,7 @@ model Company {
   inventoryBatches  InventoryBatch[]
   inventorySerials  InventorySerial[]
   barcodes          Barcode[]
+  goodsReceipts     GoodsReceipt[]
 }
 
 model CompanySetting {
@@ -1166,6 +1168,7 @@ model Product {
   stockMovements    StockMovement[]
   inventoryBatches  InventoryBatch[]
   inventorySerials  InventorySerial[]
+  goodsReceiptLines GoodsReceiptLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1205,6 +1208,7 @@ model Warehouse {
   stockMovements    StockMovement[]
   inventoryBatches  InventoryBatch[]
   inventorySerials  InventorySerial[]
+  goodsReceipts     GoodsReceipt[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -1229,6 +1233,7 @@ model Supplier {
   updatedAt          DateTime @updatedAt
 
   purchaseOrders PurchaseOrder[]
+  goodsReceipts  GoodsReceipt[]
 
   @@unique([companyId, name])
   @@index([companyId])
@@ -2166,6 +2171,7 @@ model WarehouseBin {
 
   productWarehouses ProductWarehouse[]
   stockMovements    StockMovement[]
+  goodsReceiptLines GoodsReceiptLine[]
 
   @@index([warehouseId])
   @@index([code])
@@ -2253,8 +2259,9 @@ model InventoryBatch {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  stockMovements StockMovement[]
-  serials        InventorySerial[]
+  stockMovements    StockMovement[]
+  serials           InventorySerial[]
+  goodsReceiptLines GoodsReceiptLine[]
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2286,7 +2293,8 @@ model InventorySerial {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stockMovements StockMovement[]
+  stockMovements    StockMovement[]
+  goodsReceiptLines GoodsReceiptLine[]
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -2316,4 +2324,56 @@ model Barcode {
   @@index([entityType, entityId])
   @@index([barcode])
   @@index([qrCode])
+}
+
+model GoodsReceipt {
+  id              String    @id @default(uuid())
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouseId     String
+  warehouse       Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  purchaseOrderId String?
+  receiptNumber   String
+  supplierId      String
+  supplier        Supplier  @relation(fields: [supplierId], references: [id])
+  receiptDate     DateTime  @default(now())
+  status          String    @default("DRAFT") // DRAFT, RECEIVING, PARTIAL, COMPLETED, CANCELLED
+  receivedById    String?
+  receivedBy      Employee? @relation(fields: [receivedById], references: [id])
+  remarks         String?
+
+  lines GoodsReceiptLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, receiptNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+  @@index([purchaseOrderId])
+  @@index([supplierId])
+}
+
+model GoodsReceiptLine {
+  id               String       @id @default(uuid())
+  goodsReceiptId   String
+  goodsReceipt     GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product      @relation(fields: [productId], references: [id])
+  orderedQuantity  Decimal
+  receivedQuantity Decimal      @default(0)
+  acceptedQuantity Decimal      @default(0)
+  rejectedQuantity Decimal      @default(0)
+
+  batchId  String?
+  batch    InventoryBatch?  @relation(fields: [batchId], references: [id])
+  serialId String?
+  serial   InventorySerial? @relation(fields: [serialId], references: [id])
+  binId    String?
+  bin      WarehouseBin?    @relation(fields: [binId], references: [id])
+
+  remarks String?
+
+  @@index([goodsReceiptId])
+  @@index([productId])
 }

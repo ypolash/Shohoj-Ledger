@@ -78,6 +78,10 @@ export const DefaultPermissions = [
   { action: "BARCODE_VIEW", moduleKey: "INVENTORY" },
   { action: "BARCODE_GENERATE", moduleKey: "INVENTORY" },
   { action: "BARCODE_PRINT", moduleKey: "INVENTORY" },
+  { action: "GOODSRECEIPT_VIEW", moduleKey: "INVENTORY" },
+  { action: "GOODSRECEIPT_CREATE", moduleKey: "INVENTORY" },
+  { action: "GOODSRECEIPT_COMPLETE", moduleKey: "INVENTORY" },
+  { action: "GOODSRECEIPT_CANCEL", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

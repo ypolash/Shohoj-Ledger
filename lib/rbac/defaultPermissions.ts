@@ -49,6 +49,9 @@ export const DefaultPermissions = [
   { action: "CASHFLOW_EXPORT", moduleKey: "ACCOUNTING" },
   { action: "BALANCESHEET_VIEW", moduleKey: "ACCOUNTING" },
   { action: "BALANCESHEET_EXPORT", moduleKey: "ACCOUNTING" },
+  { action: "POSTING_EXECUTE", moduleKey: "ACCOUNTING" },
+  { action: "POSTING_REVERSE", moduleKey: "ACCOUNTING" },
+  { action: "POSTING_AUDIT", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

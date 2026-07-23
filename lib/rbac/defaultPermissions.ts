@@ -56,6 +56,11 @@ export const DefaultPermissions = [
   { action: "INVENTORY_POST_REVERSE", moduleKey: "INVENTORY" },
   { action: "PAYROLL_POST", moduleKey: "PAYROLL" },
   { action: "PAYROLL_POST_REVERSE", moduleKey: "PAYROLL" },
+  { action: "WAREHOUSE_VIEW", moduleKey: "INVENTORY" },
+  { action: "WAREHOUSE_MANAGE", moduleKey: "INVENTORY" },
+  { action: "WAREHOUSE_TRANSFER", moduleKey: "INVENTORY" },
+  { action: "WAREHOUSE_ADJUST", moduleKey: "INVENTORY" },
+  { action: "BIN_MANAGE", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

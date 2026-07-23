@@ -796,6 +796,7 @@ model Company {
   accountingPeriods AccountingPeriod[]
   journals          Journal[]
   journalEntries    JournalEntry[]
+  productWarehouses ProductWarehouse[]
 }
 
 model CompanySetting {
@@ -1155,6 +1156,7 @@ model Product {
 
   stockTransactions StockTransaction[]
   purchaseItems     PurchaseOrderItem[]
+  productWarehouses ProductWarehouse[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1162,27 +1164,35 @@ model Product {
 }
 
 model Warehouse {
-  id        String    @id @default(uuid())
-  companyId String
-  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branchId  String?
-  branch    Branch?   @relation(fields: [branchId], references: [id])
-  code      String
-  name      String
-  location  String?
-  address   String?
-  managerId String?
-  manager   Employee? @relation("WarehouseManager", fields: [managerId], references: [id])
-  status    String    @default("ACTIVE")
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String    @id @default(uuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId    String?
+  branch      Branch?   @relation(fields: [branchId], references: [id])
+  code        String
+  name        String
+  description String?
+  location    String?
+  address     String?
+  phone       String?
+  email       String?
+  managerId   String?
+  manager     Employee? @relation("WarehouseManager", fields: [managerId], references: [id])
+  status      String    @default("ACTIVE")
+  isActive    Boolean   @default(true)
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   stockTransactions     StockTransaction[]
   inventoryTransactions InventoryTransaction[]
   purchaseOrders        PurchaseOrder[]
   transfersFrom         StockTransfer[]        @relation("TransferFrom")
   transfersTo           StockTransfer[]        @relation("TransferTo")
+
+  zones             WarehouseZone[]
+  bins              WarehouseBin[]
+  productWarehouses ProductWarehouse[]
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2113,5 +2123,59 @@ model JournalEntryLine {
   ledgerEntries  LedgerEntry[]
 
   @@index([journalEntryId])
-  @@index([accountId])
+}
+
+model WarehouseZone {
+  id          String    @id @default(uuid())
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  code        String
+  name        String
+  description String?
+  isActive    Boolean   @default(true)
+
+  bins WarehouseBin[]
+
+  @@index([warehouseId])
+  @@index([code])
+}
+
+model WarehouseBin {
+  id          String         @id @default(uuid())
+  warehouseId String
+  warehouse   Warehouse      @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  zoneId      String?
+  zone        WarehouseZone? @relation(fields: [zoneId], references: [id])
+  code        String
+  name        String
+  capacity    Decimal?
+  isActive    Boolean        @default(true)
+
+  productWarehouses ProductWarehouse[]
+
+  @@index([warehouseId])
+  @@index([code])
+}
+
+model ProductWarehouse {
+  id               String        @id @default(uuid())
+  companyId        String
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId      String
+  warehouse        Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  binId            String?
+  bin              WarehouseBin? @relation(fields: [binId], references: [id])
+  quantity         Decimal       @default(0)
+  reservedQuantity Decimal       @default(0)
+  minimumQuantity  Decimal       @default(0)
+  maximumQuantity  Decimal?
+  reorderPoint     Decimal       @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([companyId])
+  @@index([productId])
+  @@index([warehouseId])
 }

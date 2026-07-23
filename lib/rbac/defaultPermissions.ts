@@ -52,6 +52,8 @@ export const DefaultPermissions = [
   { action: "POSTING_EXECUTE", moduleKey: "ACCOUNTING" },
   { action: "POSTING_REVERSE", moduleKey: "ACCOUNTING" },
   { action: "POSTING_AUDIT", moduleKey: "ACCOUNTING" },
+  { action: "INVENTORY_POST", moduleKey: "INVENTORY" },
+  { action: "INVENTORY_POST_REVERSE", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

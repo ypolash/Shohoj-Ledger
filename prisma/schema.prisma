@@ -317,6 +317,9 @@ model Employee {
   subordinates       Employee[] @relation("EmployeeToManager")
 
   headOfDepartment Department[] @relation("DepartmentHead")
+  headOfDivision   Division[]   @relation("DivisionHead")
+  headOfSection    Section[]    @relation("SectionHead")
+  leadOfTeam       Team[]       @relation("TeamLead")
 
   employmentType   String?
   location         String?
@@ -1530,6 +1533,17 @@ model Company {
   customers         Customer[]
   customerAddresses CustomerAddress[]
   customerContacts  CustomerContact[]
+
+  // Phase 1 Organization Structure
+  divisions        Division[]
+  sections         Section[]
+  teams            Team[]
+  jobPositions     JobPosition[]
+  employmentTypes  EmploymentType[]
+  employeeGrades   EmployeeGrade[]
+  costCenters      CostCenter[]
+  holidayCalendars HolidayCalendar[]
+  workShifts       WorkShift[]
 }
 
 model CompanySetting {
@@ -1600,23 +1614,188 @@ model RolePermission {
 }
 
 model Department {
-  id          String    @id @default(uuid())
-  companyId   String
-  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  code        String?
-  name        String
-  description String?
-  headId      String?
-  head        Employee? @relation("DepartmentHead", fields: [headId], references: [id])
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String      @id @default(uuid())
+  companyId    String
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code         String?
+  name         String
+  description  String?
+  headId       String?
+  head         Employee?   @relation("DepartmentHead", fields: [headId], references: [id])
+  divisionId   String?
+  division     Division?   @relation(fields: [divisionId], references: [id])
+  costCenterId String?
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id])
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   employees            Employee[]            @relation("EmployeeDepartment")
   purchaseRequisitions PurchaseRequisition[]
+  sections             Section[]
+  jobPositions         JobPosition[]
 
   @@unique([companyId, name])
   @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model Division {
+  id        String    @id @default(uuid())
+  companyId String
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId  String?
+  branch    Branch?   @relation(fields: [branchId], references: [id])
+  code      String?
+  name      String
+  headId    String?
+  head      Employee? @relation("DivisionHead", fields: [headId], references: [id])
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  departments Department[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model Section {
+  id           String     @id @default(uuid())
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  code         String?
+  name         String
+  headId       String?
+  head         Employee?  @relation("SectionHead", fields: [headId], references: [id])
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  teams Team[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model Team {
+  id        String    @id @default(uuid())
+  companyId String
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sectionId String
+  section   Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  code      String?
+  name      String
+  leadId    String?
+  lead      Employee? @relation("TeamLead", fields: [leadId], references: [id])
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([companyId, name])
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model JobPosition {
+  id           String      @id @default(uuid())
+  companyId    String
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([companyId, title])
+  @@index([companyId])
+}
+
+model EmploymentType {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model EmployeeGrade {
+  id             String   @id @default(uuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name           String
+  salaryBand     String?
+  benefits       String?
+  promotionLevel Int?     @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model CostCenter {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code        String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departments Department[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model HolidayCalendar {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  name      String
+  date      DateTime
+  type      String   @default("COMPANY") // COMPANY, BRANCH, RECURRING
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model WorkShift {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  startTime   String // HH:mm
+  endTime     String // HH:mm
+  gracePeriod Int      @default(0) // minutes
+  breakTime   Int      @default(0) // minutes
+  nightShift  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, name])
   @@index([companyId])
 }
 
@@ -2993,6 +3172,8 @@ model Branch {
   warehouses        Warehouse[]
   journalEntries    JournalEntry[]
   ledgerEntries     LedgerEntry[]
+  divisions         Division[]
+  holidayCalendars  HolidayCalendar[]
 
   @@index([companyId])
   @@index([code])

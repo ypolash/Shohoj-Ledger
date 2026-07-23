@@ -66,7 +66,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.5 — Phase 4 (Enterprise Attendance & Shift Management):**
   - **Completed**: Extended legacy `Attendance` models with `AttendanceShiftAssignment`, `AttendanceException`, `AttendanceAdjustment`, `AttendanceOvertime`, and `AttendanceRoster`. Created `attendanceService.ts` mapping pure mathematical rule evaluations while preserving strict boundaries so no financial deductions happen prior to Payroll processing. Validated schemas.
 - **Version 1.5 — Phase 5 (Enterprise Leave Management):**
-  - **Completed**: Authored complete Leave Management System (`LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApproval`, `LeaveAccrual`, `LeaveEncashment`). Upgraded legacy `LeaveRequest` with multi-level hierarchical approvals. Built `leaveService.ts` providing seamless workflow ending in read-only consumption for Attendance and Payroll modules. Validated schemas. Awaiting approval for Phase 6.
+  - **Completed**: Authored complete Leave Management System (`LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApproval`, `LeaveAccrual`, `LeaveEncashment`). Upgraded legacy `LeaveRequest` with multi-level hierarchical approvals. Built `leaveService.ts` providing seamless workflow ending in read-only consumption for Attendance and Payroll modules. Validated schemas.
+- **Version 1.5 — Phase 6 (Enterprise Payroll Engine):**
+  - **Completed**: Authored complete immutable Payroll Engine (`SalaryStructure`, `SalaryComponent`, `EmployeeSalary`, `PayrollPeriod`, `PayrollRun`, `PayrollItem`, `PayrollAdjustment`, `PayrollApproval`, `PayrollSnapshot`). Built 6-part service layer bridging Attendance OT, Leave deductions, and legacy Posting Engine (for isolated accounting). Validated schemas. Awaiting approval for Phase 7.
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
 - **Background Worker Shift**: V1.3 pivots heavily toward asynchronous event-driven design (Background Queues) to handle heavy tasks like notifications, report generation, and LLM processing without blocking the API.
@@ -75,7 +77,7 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
 - **Core Goal:** Build the definitive B2B SaaS ERP with strict accounting, inventory, supply chain, and comprehensive HR & Payroll controls.
-- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 5 (Enterprise Leave Management).
+- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 6 (Enterprise Payroll Engine).
 
 ## Production Roadmap
 1. **Version 1.3 Phase 1 (Core Engines):** Deploy background workers for Notifications, Approvals, and Webhook dispatching.

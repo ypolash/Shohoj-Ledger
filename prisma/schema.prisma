@@ -376,16 +376,20 @@ model Employee {
   interviewsConducted Interview[]
   interviewFeedbacks  InterviewFeedback[]
 
-  exceptions         AttendanceException[]
-  adjustments        AttendanceAdjustment[]
-  overtimes          AttendanceOvertime[]
-  shiftAssignments   AttendanceShiftAssignment[]
-  rosters            AttendanceRoster[]
-  holidayAssignments AttendanceHolidayAssignment[]
-  leaveBalances      LeaveBalance[]
-  leaveApprovals     LeaveApproval[]
-  leaveAccruals      LeaveAccrual[]
-  leaveEncashments   LeaveEncashment[]
+  exceptions           AttendanceException[]
+  adjustments          AttendanceAdjustment[]
+  overtimes            AttendanceOvertime[]
+  shiftAssignments     AttendanceShiftAssignment[]
+  rosters              AttendanceRoster[]
+  holidayAssignments   AttendanceHolidayAssignment[]
+  leaveBalances        LeaveBalance[]
+  leaveApprovals       LeaveApproval[]
+  leaveAccruals        LeaveAccrual[]
+  leaveEncashments     LeaveEncashment[]
+  salaryHistories      EmployeeSalary[]
+  payrollItems         PayrollItem[]
+  payrollApprovals     PayrollApproval[]
+  payrollRunsProcessed PayrollRun[]
 
   @@index([companyId])
 }
@@ -1728,6 +1732,9 @@ model Company {
   attendanceRosters       AttendanceRoster[]
   holidayAssignments      AttendanceHolidayAssignment[]
   leaveTypes              LeaveType[]
+  salaryStructures        SalaryStructure[]
+  payrollPeriods          PayrollPeriod[]
+  payrollRuns             PayrollRun[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -4989,4 +4996,136 @@ model LeaveEncashment {
 
   @@index([employeeId])
   @@index([leaveTypeId])
+}
+
+model SalaryStructure {
+  id               String            @id @default(uuid())
+  companyId        String
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name             String
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  components       SalaryComponent[]
+  employeeSalaries EmployeeSalary[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model SalaryComponent {
+  id          String          @id @default(uuid())
+  structureId String
+  structure   SalaryStructure @relation(fields: [structureId], references: [id], onDelete: Cascade)
+  name        String
+  type        String // EARNING, DEDUCTION
+  amountType  String // FIXED, PERCENTAGE
+  value       Decimal
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([structureId])
+}
+
+model EmployeeSalary {
+  id            String          @id @default(uuid())
+  employeeId    String
+  employee      Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  structureId   String
+  structure     SalaryStructure @relation(fields: [structureId], references: [id])
+  effectiveDate DateTime
+  endDate       DateTime?
+  status        String          @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([employeeId])
+}
+
+model PayrollPeriod {
+  id        String       @id @default(uuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    String       @default("OPEN") // OPEN, CLOSED, LOCKED
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  runs      PayrollRun[]
+
+  @@index([companyId])
+}
+
+model PayrollRun {
+  id            String            @id @default(uuid())
+  companyId     String
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  periodId      String
+  period        PayrollPeriod     @relation(fields: [periodId], references: [id])
+  status        String            @default("DRAFT") // DRAFT, CALCULATING, REVIEW, APPROVED, POSTED, CLOSED, CANCELLED
+  processedById String?
+  processedBy   Employee?         @relation(fields: [processedById], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  items         PayrollItem[]
+  approvals     PayrollApproval[]
+  snapshots     PayrollSnapshot[]
+
+  @@index([companyId])
+}
+
+model PayrollItem {
+  id              String              @id @default(uuid())
+  payrollRunId    String
+  payrollRun      PayrollRun          @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employeeId      String
+  employee        Employee            @relation(fields: [employeeId], references: [id])
+  grossSalary     Decimal             @default(0)
+  totalAllowances Decimal             @default(0)
+  totalDeductions Decimal             @default(0)
+  netSalary       Decimal             @default(0)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  adjustments     PayrollAdjustment[]
+
+  @@index([payrollRunId])
+  @@index([employeeId])
+}
+
+model PayrollAdjustment {
+  id            String      @id @default(uuid())
+  payrollItemId String
+  payrollItem   PayrollItem @relation(fields: [payrollItemId], references: [id], onDelete: Cascade)
+  type          String // EARNING, DEDUCTION
+  amount        Decimal
+  reason        String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([payrollItemId])
+}
+
+model PayrollApproval {
+  id           String     @id @default(uuid())
+  payrollRunId String
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  approverId   String
+  approver     Employee   @relation(fields: [approverId], references: [id])
+  status       String     @default("PENDING") // APPROVED, REJECTED
+  comments     String?
+  createdAt    DateTime   @default(now())
+
+  @@index([payrollRunId])
+  @@index([approverId])
+}
+
+model PayrollSnapshot {
+  id           String     @id @default(uuid())
+  payrollRunId String
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  snapshotData String     @db.Text // JSON string storing exact mathematical states at calculation
+  createdAt    DateTime   @default(now())
+
+  @@index([payrollRunId])
 }

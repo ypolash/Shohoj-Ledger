@@ -35,7 +35,7 @@ export async function createSupplier(companyId: string, userId: string, data: an
     companyId,
     userId,
     action: "CREATE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplier.id,
     details: `Created new supplier ${supplier.name} (${supplier.supplierCode})`
   });
@@ -65,7 +65,7 @@ export async function updateSupplier(companyId: string, userId: string, supplier
     companyId,
     userId,
     action: "UPDATE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplier.id,
     details: `Updated profile for supplier ${supplier.name}`
   });
@@ -84,7 +84,7 @@ export async function deleteSupplier(companyId: string, userId: string, supplier
     companyId,
     userId,
     action: "DELETE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplierId,
     details: `Deleted supplier ${existing.name}`
   });
@@ -144,7 +144,7 @@ export async function assignCategory(companyId: string, userId: string, supplier
     companyId,
     userId,
     action: "UPDATE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplier.id,
     details: `Assigned category ${categoryId} to supplier ${supplier.name}`
   });
@@ -162,7 +162,7 @@ export async function updateCreditTerms(companyId: string, userId: string, suppl
     companyId,
     userId,
     action: "UPDATE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplier.id,
     details: `Updated credit terms to Limit: ${creditLimit}, Terms: ${paymentTerms}`
   });
@@ -188,7 +188,7 @@ export async function blockSupplier(companyId: string, userId: string, supplierI
     companyId,
     userId,
     action: "UPDATE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplier.id,
     details: `Blocked supplier ${supplier.name}. Reason: ${reason}`
   });
@@ -214,7 +214,7 @@ export async function unblockSupplier(companyId: string, userId: string, supplie
     companyId,
     userId,
     action: "UPDATE",
-    entity: "Supplier",
+    entityType: "Supplier",
     entityId: supplier.id,
     details: `Unblocked supplier ${supplier.name}. Reason: ${reason}`
   });

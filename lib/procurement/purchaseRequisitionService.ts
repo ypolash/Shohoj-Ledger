@@ -38,7 +38,7 @@ export async function createRequisition(companyId: string, userId: string, data:
     companyId,
     userId,
     action: "CREATE",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: requisition.id,
     details: `Created Purchase Requisition ${requisition.requisitionNumber}`
   });
@@ -78,7 +78,7 @@ export async function updateRequisition(companyId: string, userId: string, id: s
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: id,
     details: `Updated Purchase Requisition ${existing.requisitionNumber}`
   });
@@ -98,7 +98,7 @@ export async function submitRequisition(companyId: string, userId: string, id: s
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: id,
     details: `Submitted Purchase Requisition ${existing.requisitionNumber} for approval`
   });
@@ -122,7 +122,7 @@ export async function approveRequisition(companyId: string, userId: string, id: 
     companyId,
     userId,
     action: "APPROVAL",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: id,
     details: `Approved Purchase Requisition ${existing.requisitionNumber}`
   });
@@ -145,7 +145,7 @@ export async function rejectRequisition(companyId: string, userId: string, id: s
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: id,
     details: `Rejected Purchase Requisition ${existing.requisitionNumber}. Reason: ${reason}`
   });
@@ -168,7 +168,7 @@ export async function cancelRequisition(companyId: string, userId: string, id: s
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: id,
     details: `Cancelled Purchase Requisition ${existing.requisitionNumber}. Reason: ${reason}`
   });
@@ -188,7 +188,7 @@ export async function convertToRFQ(companyId: string, userId: string, id: string
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseRequisition",
+    entityType: "PurchaseRequisition",
     entityId: id,
     details: `Converted Purchase Requisition ${existing.requisitionNumber} to RFQ`
   });
@@ -212,7 +212,7 @@ export async function validateRequisition(companyId: string, id: string, allowed
 
 export async function getRequisitionHistory(companyId: string, id: string) {
   return prisma.globalAuditLog.findMany({
-    where: { companyId, entity: "PurchaseRequisition", entityId: id },
-    orderBy: { timestamp: 'desc' }
+    where: { companyId, entityType: "PurchaseRequisition", entityId: id },
+    orderBy: { createdAt: 'desc' }
   });
 }

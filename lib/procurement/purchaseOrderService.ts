@@ -62,7 +62,7 @@ export async function createPurchaseOrder(companyId: string, userId: string, sup
     companyId,
     userId,
     action: "CREATE",
-    entity: "PurchaseOrder",
+    entityType: "PurchaseOrder",
     entityId: po.id,
     details: `Created Purchase Order ${po.purchaseOrderNumber}`
   });
@@ -118,7 +118,7 @@ export async function updatePurchaseOrder(companyId: string, userId: string, id:
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseOrder",
+    entityType: "PurchaseOrder",
     entityId: id,
     details: `Updated Purchase Order ${existing.purchaseOrderNumber}`
   });
@@ -180,7 +180,7 @@ export async function approvePurchaseOrder(companyId: string, userId: string, id
     companyId,
     userId,
     action: "APPROVAL",
-    entity: "PurchaseOrder",
+    entityType: "PurchaseOrder",
     entityId: id,
     details: `Approved Purchase Order ${existing.purchaseOrderNumber}`
   });
@@ -203,7 +203,7 @@ export async function cancelPurchaseOrder(companyId: string, userId: string, id:
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseOrder",
+    entityType: "PurchaseOrder",
     entityId: id,
     details: `Cancelled Purchase Order ${existing.purchaseOrderNumber}. Reason: ${reason}`
   });
@@ -223,7 +223,7 @@ export async function closePurchaseOrder(companyId: string, userId: string, id: 
     companyId,
     userId,
     action: "UPDATE",
-    entity: "PurchaseOrder",
+    entityType: "PurchaseOrder",
     entityId: id,
     details: `Closed Purchase Order ${existing.purchaseOrderNumber}`
   });
@@ -259,7 +259,7 @@ export async function validatePurchaseOrder(companyId: string, id: string, allow
 
 export async function getPurchaseOrderHistory(companyId: string, id: string) {
   return prisma.globalAuditLog.findMany({
-    where: { companyId, entity: "PurchaseOrder", entityId: id },
-    orderBy: { timestamp: 'desc' }
+    where: { companyId, entityType: "PurchaseOrder", entityId: id },
+    orderBy: { createdAt: 'desc' }
   });
 }

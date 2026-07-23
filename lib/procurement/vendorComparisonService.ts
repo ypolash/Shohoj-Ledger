@@ -52,7 +52,7 @@ export async function createComparison(companyId: string, userId: string, rfqId:
     companyId,
     userId,
     action: "CREATE",
-    entity: "VendorComparison",
+    entityType: "VendorComparison",
     entityId: comparison.id,
     details: `Created Vendor Comparison ${comparison.comparisonNumber} for RFQ ${rfq.rfqNumber}`
   });
@@ -93,7 +93,7 @@ export async function calculateScores(companyId: string, userId: string, id: str
     companyId,
     userId,
     action: "UPDATE",
-    entity: "VendorComparison",
+    entityType: "VendorComparison",
     entityId: id,
     details: `Calculated scores using ${method}`
   });
@@ -127,7 +127,7 @@ export async function selectSupplier(companyId: string, userId: string, id: stri
     companyId,
     userId,
     action: "UPDATE",
-    entity: "VendorComparison",
+    entityType: "VendorComparison",
     entityId: id,
     details: `Selected Supplier ${supplierId} for RFQ ${comparison.requestForQuotationId}`
   });
@@ -155,7 +155,7 @@ export async function approveComparison(companyId: string, userId: string, id: s
     companyId,
     userId,
     action: "APPROVAL",
-    entity: "VendorComparison",
+    entityType: "VendorComparison",
     entityId: id,
     details: `Approved Vendor Comparison ${comparison.comparisonNumber}`
   });
@@ -178,7 +178,7 @@ export async function rejectComparison(companyId: string, userId: string, id: st
     companyId,
     userId,
     action: "UPDATE",
-    entity: "VendorComparison",
+    entityType: "VendorComparison",
     entityId: id,
     details: `Rejected Vendor Comparison. Reason: ${reason}`
   });
@@ -198,7 +198,7 @@ export async function convertToPurchaseOrder(companyId: string, userId: string, 
     companyId,
     userId,
     action: "UPDATE",
-    entity: "VendorComparison",
+    entityType: "VendorComparison",
     entityId: id,
     details: `Converted Vendor Comparison ${comparison.comparisonNumber} to Purchase Order`
   });
@@ -222,7 +222,7 @@ export async function validateComparison(companyId: string, id: string, allowedS
 
 export async function getComparisonHistory(companyId: string, id: string) {
   return prisma.globalAuditLog.findMany({
-    where: { companyId, entity: "VendorComparison", entityId: id },
-    orderBy: { timestamp: 'desc' }
+    where: { companyId, entityType: "VendorComparison", entityId: id },
+    orderBy: { createdAt: 'desc' }
   });
 }

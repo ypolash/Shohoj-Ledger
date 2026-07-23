@@ -44,7 +44,7 @@ export async function createRFQ(companyId: string, userId: string, purchaseRequi
     companyId,
     userId,
     action: "CREATE",
-    entity: "RequestForQuotation",
+    entityType: "RequestForQuotation",
     entityId: rfq.id,
     details: `Created RFQ ${rfq.rfqNumber}`
   });
@@ -67,7 +67,7 @@ export async function issueRFQ(companyId: string, userId: string, id: string) {
     companyId,
     userId,
     action: "UPDATE",
-    entity: "RequestForQuotation",
+    entityType: "RequestForQuotation",
     entityId: id,
     details: `Issued RFQ ${existing.rfqNumber} to vendors.`
   });
@@ -87,7 +87,7 @@ export async function closeRFQ(companyId: string, userId: string, id: string) {
     companyId,
     userId,
     action: "UPDATE",
-    entity: "RequestForQuotation",
+    entityType: "RequestForQuotation",
     entityId: id,
     details: `Closed RFQ ${existing.rfqNumber}. No longer accepting quotes.`
   });
@@ -110,7 +110,7 @@ export async function cancelRFQ(companyId: string, userId: string, id: string, r
     companyId,
     userId,
     action: "UPDATE",
-    entity: "RequestForQuotation",
+    entityType: "RequestForQuotation",
     entityId: id,
     details: `Cancelled RFQ ${existing.rfqNumber}. Reason: ${reason}`
   });
@@ -134,7 +134,7 @@ export async function validateRFQ(companyId: string, id: string, allowedStatuses
 
 export async function getRFQHistory(companyId: string, id: string) {
   return prisma.globalAuditLog.findMany({
-    where: { companyId, entity: "RequestForQuotation", entityId: id },
-    orderBy: { timestamp: 'desc' }
+    where: { companyId, entityType: "RequestForQuotation", entityId: id },
+    orderBy: { createdAt: 'desc' }
   });
 }

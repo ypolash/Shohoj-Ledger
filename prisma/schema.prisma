@@ -69,6 +69,8 @@ model User {
   createdVendorComparisons      VendorComparison[]       @relation("VendorComparisonCreator")
   approvedVendorComparisons     VendorComparison[]       @relation("VendorComparisonApprover")
   approvedPurchaseOrders        PurchaseOrder[]          @relation("PurchaseOrderApprover")
+  createdGoodsReceiptNotes      GoodsReceiptNote[]       @relation("GoodsReceiptCreator")
+  approvedGoodsReceiptNotes     GoodsReceiptNote[]       @relation("GoodsReceiptApprover")
 }
 
 model Session {
@@ -326,7 +328,6 @@ model Employee {
   assignedAssets               Asset[]               @relation("EmployeeAssets")
   stockMovements               StockMovement[]
   barcodes                     Barcode[]
-  goodsReceipts                GoodsReceipt[]
   putAwayTasks                 PutAwayTask[]
   transfersRequested           StockTransfer[]       @relation("TransferRequestedBy")
   transfersApproved            StockTransfer[]       @relation("TransferApprovedBy")
@@ -1505,7 +1506,7 @@ model Company {
   inventoryBatches         InventoryBatch[]
   inventorySerials         InventorySerial[]
   barcodes                 Barcode[]
-  goodsReceipts            GoodsReceipt[]
+  goodsReceiptNotes        GoodsReceiptNote[]
   putAwayTasks             PutAwayTask[]
   inventoryAdjustments     InventoryAdjustment[]
   cycleCounts              CycleCount[]
@@ -1941,7 +1942,7 @@ model Warehouse {
   stockMovements           StockMovement[]
   inventoryBatches         InventoryBatch[]
   inventorySerials         InventorySerial[]
-  goodsReceipts            GoodsReceipt[]
+  goodsReceiptNotes        GoodsReceiptNote[]
   putAwayTasks             PutAwayTask[]
   inventoryAdjustments     InventoryAdjustment[]     @relation("AdjustmentWarehouse")
   inventoryAdjustmentLines InventoryAdjustmentLine[] @relation("AdjustmentLineWarehouse")
@@ -2031,7 +2032,7 @@ model Supplier {
   purchaseOrders  PurchaseOrder[]
   reorderPolicies ReorderPolicy[] @relation("PreferredSupplier")
 
-  goodsReceipts     GoodsReceipt[]
+  goodsReceiptNotes GoodsReceiptNote[]
   vendorQuotations  VendorQuotation[]
   vendorComparisons VendorComparisonItem[]
 
@@ -2159,6 +2160,7 @@ model PurchaseOrder {
   updatedAt DateTime @updatedAt
 
   lines             PurchaseOrderLine[]
+  goodsReceiptNotes GoodsReceiptNote[]
   stockTransactions StockTransaction[]
 
   @@unique([companyId, purchaseOrderNumber])
@@ -2188,6 +2190,8 @@ model PurchaseOrderLine {
   lineTotal       Decimal
 
   remarks String?
+
+  goodsReceiptLines GoodsReceiptLine[]
 
   @@index([purchaseOrderId])
   @@index([productId])
@@ -3108,6 +3112,7 @@ model WarehouseZone {
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineZone")
   deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineZone")
   customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineZone")
+  goodsReceiptLines        GoodsReceiptLine[]
 
   @@index([warehouseId])
   @@index([code])
@@ -3305,72 +3310,105 @@ model Barcode {
   @@index([qrCode])
 }
 
-model GoodsReceipt {
-  id              String    @id @default(uuid())
-  companyId       String
-  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  warehouseId     String
-  warehouse       Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+enum GoodsReceiptStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  RECEIVED
+  PARTIALLY_RECEIVED
+  CANCELLED
+}
+
+model GoodsReceiptNote {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  grnNumber String
+
   purchaseOrderId String?
-  receiptNumber   String
-  supplierId      String
-  supplier        Supplier  @relation(fields: [supplierId], references: [id])
-  receiptDate     DateTime  @default(now())
-  status          String    @default("DRAFT") // DRAFT, RECEIVING, PARTIAL, COMPLETED, CANCELLED
-  receivedById    String?
-  receivedBy      Employee? @relation(fields: [receivedById], references: [id])
-  remarks         String?
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
 
-  lines GoodsReceiptLine[]
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  status      GoodsReceiptStatus @default(DRAFT)
+  receiptDate DateTime           @default(now())
+
+  remarks String?
+
+  approvedById String?
+  approvedBy   User?     @relation("GoodsReceiptApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("GoodsReceiptCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines        GoodsReceiptLine[]
   putAwayTasks PutAwayTask[]
 
-  @@unique([companyId, receiptNumber])
+  @@unique([companyId, grnNumber])
   @@index([companyId])
   @@index([warehouseId])
   @@index([purchaseOrderId])
   @@index([supplierId])
+  @@index([status])
 }
 
 model GoodsReceiptLine {
-  id               String       @id @default(uuid())
-  goodsReceiptId   String
-  goodsReceipt     GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
-  productId        String
-  product          Product      @relation(fields: [productId], references: [id])
-  orderedQuantity  Decimal
-  receivedQuantity Decimal      @default(0)
-  acceptedQuantity Decimal      @default(0)
-  rejectedQuantity Decimal      @default(0)
+  id String @id @default(uuid())
 
-  batchId  String?
-  batch    InventoryBatch?  @relation(fields: [batchId], references: [id])
+  goodsReceiptNoteId String
+  goodsReceiptNote   GoodsReceiptNote @relation(fields: [goodsReceiptNoteId], references: [id], onDelete: Cascade)
+
+  purchaseOrderLineId String?
+  purchaseOrderLine   PurchaseOrderLine? @relation(fields: [purchaseOrderLineId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  batchId String?
+  batch   InventoryBatch? @relation(fields: [batchId], references: [id])
+
   serialId String?
   serial   InventorySerial? @relation(fields: [serialId], references: [id])
-  binId    String?
-  bin      WarehouseBin?    @relation(fields: [binId], references: [id])
+
+  quantityReceived Decimal @default(0)
+  quantityRejected Decimal @default(0)
+
+  warehouseId   String?
+  zoneId        String?
+  warehouseZone WarehouseZone? @relation(fields: [zoneId], references: [id])
+
+  binId String?
+  bin   WarehouseBin? @relation(fields: [binId], references: [id])
 
   remarks String?
 
-  @@index([goodsReceiptId])
+  @@index([goodsReceiptNoteId])
+  @@index([purchaseOrderLineId])
   @@index([productId])
 }
 
 model PutAwayTask {
-  id             String        @id @default(uuid())
-  companyId      String
-  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  warehouseId    String
-  warehouse      Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
-  goodsReceiptId String?
-  goodsReceipt   GoodsReceipt? @relation(fields: [goodsReceiptId], references: [id])
-  taskNumber     String
-  status         String        @default("PENDING") // PENDING, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
-  assignedToId   String?
-  assignedTo     Employee?     @relation(fields: [assignedToId], references: [id])
-  priority       Int           @default(0)
+  id                 String            @id @default(uuid())
+  companyId          String
+  company            Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  warehouseId        String
+  warehouse          Warehouse         @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  goodsReceiptNoteId String?
+  goodsReceiptNote   GoodsReceiptNote? @relation(fields: [goodsReceiptNoteId], references: [id])
+  taskNumber         String
+  status             String            @default("PENDING") // PENDING, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+  assignedToId       String?
+  assignedTo         Employee?         @relation(fields: [assignedToId], references: [id])
+  priority           Int               @default(0)
 
   lines PutAwayTaskLine[]
 
@@ -3381,7 +3419,7 @@ model PutAwayTask {
   @@unique([companyId, taskNumber])
   @@index([companyId])
   @@index([warehouseId])
-  @@index([goodsReceiptId])
+  @@index([goodsReceiptNoteId])
 }
 
 model PutAwayTaskLine {

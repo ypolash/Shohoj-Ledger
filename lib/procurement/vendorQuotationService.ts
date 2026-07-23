@@ -57,7 +57,7 @@ export async function createVendorQuotation(companyId: string, userId: string, s
     companyId,
     userId,
     action: "CREATE",
-    entity: "VendorQuotation",
+    entityType: "VendorQuotation",
     entityId: vq.id,
     details: `Created Draft Vendor Quotation for supplier ${supplier.name}`
   });
@@ -77,7 +77,7 @@ export async function submitVendorQuotation(companyId: string, userId: string, i
     companyId,
     userId,
     action: "UPDATE",
-    entity: "VendorQuotation",
+    entityType: "VendorQuotation",
     entityId: id,
     details: `Submitted Vendor Quotation for review.`
   });
@@ -99,7 +99,7 @@ export async function acceptVendorQuotation(companyId: string, userId: string, i
     companyId,
     userId,
     action: "APPROVAL",
-    entity: "VendorQuotation",
+    entityType: "VendorQuotation",
     entityId: id,
     details: `Accepted Vendor Quotation. Ready for Purchase Order.`
   });
@@ -122,7 +122,7 @@ export async function rejectVendorQuotation(companyId: string, userId: string, i
     companyId,
     userId,
     action: "UPDATE",
-    entity: "VendorQuotation",
+    entityType: "VendorQuotation",
     entityId: id,
     details: `Rejected Vendor Quotation. Reason: ${reason}`
   });

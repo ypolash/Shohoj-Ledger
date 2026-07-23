@@ -44,7 +44,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.4 — Phase 4 (Enterprise Vendor Comparison & Approval):**
   - **Completed**: Developed algorithmic `VendorComparison` engine supporting `LOWEST_PRICE`, `WEIGHTED_SCORE`, and `MANUAL_SELECTION`. Integrated matrix selection with strict managerial approval locks.
 - **Version 1.4 — Phase 5 (Enterprise Purchase Order Engine):**
-  - **Not Started**: Implement Purchase Order generation from converted RFQs and approved Comparisons.
+  - **Completed**: Repurposed legacy PO models into the Enterprise V1.4 architecture. Engineered `purchaseOrderService.ts` to generate POs algorithmically from Vendor Comparisons. Implemented strict barriers preventing premature Inventory and Ledger mutations.
+- **Version 1.4 — Phase 6 (Goods Receipt Note - GRN):**
+  - **Not Started**: Implement physical stock receiving and FIFO layer generation from Purchase Orders.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

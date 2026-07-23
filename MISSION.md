@@ -79,6 +79,8 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
   - **Completed**: Authored `hrAnalyticsService.ts` exposing 20 discrete methods for Dashboards, Statistical Analysis, and Financial Summaries. Established strict isolation by querying Prisma directly rather than relying on mutable operational endpoints. Enforced `companyId` data boundaries on all KPI aggregations.
 - **Version 1.5 — Phase 11 (Final HR Architecture Review):**
   - **Completed**: Executed complete structural audit of the Hire-to-Retire lifecycle. Verified database relations, transaction safety, accounting isolation, and multi-tenant logic. APPROVED WITH RECOMMENDATIONS. HR Architecture is frozen.
+- **Version 1.5 — Soft Architecture Freeze:**
+  - **Completed**: The entire HR & Payroll suite (Organization, Employee Master, ATS, Attendance, Leave, Payroll, Loans, Performance, Training, Analytics) is officially under a soft freeze. No schema breaking changes or business workflow redesigns permitted. Future iterations (V1.6+) must reuse these boundaries.
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
 - **Background Worker Shift**: V1.3 pivots heavily toward asynchronous event-driven design (Background Queues) to handle heavy tasks like notifications, report generation, and LLM processing without blocking the API.

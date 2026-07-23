@@ -41,6 +41,8 @@ export const DefaultPermissions = [
   { action: "LEDGER_VIEW", moduleKey: "ACCOUNTING" },
   { action: "LEDGER_EXPORT", moduleKey: "ACCOUNTING" },
   { action: "LEDGER_AUDIT", moduleKey: "ACCOUNTING" },
+  { action: "TRIALBALANCE_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "TRIALBALANCE_EXPORT", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

@@ -121,5 +121,5 @@ export async function calculateOutstanding(employeeId: string) {
   const loans = await prisma.employeeLoan.findMany({
     where: { employeeId, status: 'ACTIVE' }
   });
-  return loans.reduce((sum, loan) => sum + Number(loan.outstandingBalance), 0);
+  return loans.reduce((sum: number, loan: any) => sum + Number(loan.outstandingBalance), 0);
 }

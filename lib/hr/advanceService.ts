@@ -48,7 +48,7 @@ export async function recoverAdvance(advanceId: string, amountToRecover: number,
       include: { recoveries: true }
     });
 
-    const totalRecoveredAlready = advance.recoveries.reduce((sum, r) => sum + Number(r.amount), 0);
+    const totalRecoveredAlready = advance.recoveries.reduce((sum: number, r: any) => sum + Number(r.amount), 0);
     const newTotal = totalRecoveredAlready + amountToRecover;
 
     if (newTotal > Number(advance.amount)) {

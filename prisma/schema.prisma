@@ -376,23 +376,28 @@ model Employee {
   interviewsConducted Interview[]
   interviewFeedbacks  InterviewFeedback[]
 
-  exceptions           AttendanceException[]
-  adjustments          AttendanceAdjustment[]
-  overtimes            AttendanceOvertime[]
-  shiftAssignments     AttendanceShiftAssignment[]
-  rosters              AttendanceRoster[]
-  holidayAssignments   AttendanceHolidayAssignment[]
-  leaveBalances        LeaveBalance[]
-  leaveApprovals       LeaveApproval[]
-  leaveAccruals        LeaveAccrual[]
-  leaveEncashments     LeaveEncashment[]
-  salaryHistories      EmployeeSalary[]
-  payrollItems         PayrollItem[]
-  payrollApprovals     PayrollApproval[]
-  payrollRunsProcessed PayrollRun[]
-  loans                EmployeeLoan[]
-  loansApproved        EmployeeLoan[]                @relation("LoanApprover")
-  salaryAdvances       SalaryAdvance[]
+  exceptions                AttendanceException[]
+  adjustments               AttendanceAdjustment[]
+  overtimes                 AttendanceOvertime[]
+  shiftAssignments          AttendanceShiftAssignment[]
+  rosters                   AttendanceRoster[]
+  holidayAssignments        AttendanceHolidayAssignment[]
+  leaveBalances             LeaveBalance[]
+  leaveApprovals            LeaveApproval[]
+  leaveAccruals             LeaveAccrual[]
+  leaveEncashments          LeaveEncashment[]
+  salaryHistories           EmployeeSalary[]
+  payrollItems              PayrollItem[]
+  payrollApprovals          PayrollApproval[]
+  payrollRunsProcessed      PayrollRun[]
+  loans                     EmployeeLoan[]
+  loansApproved             EmployeeLoan[]                @relation("LoanApprover")
+  salaryAdvances            SalaryAdvance[]
+  performanceGoals          PerformanceGoal[]
+  performanceReviews        PerformanceReview[]
+  performanceReviewsGiven   PerformanceReview[]           @relation("Reviewer")
+  performanceFeedbacksGiven PerformanceFeedback[]         @relation("FeedbackAuthor")
+  performancePIPs           PerformanceImprovementPlan[]
 
   @@index([companyId])
 }
@@ -1740,6 +1745,7 @@ model Company {
   payrollRuns             PayrollRun[]
   employeeLoans           EmployeeLoan[]
   salaryAdvances          SalaryAdvance[]
+  performanceCycles       PerformanceCycle[]
   leadSources             LeadSource[]
   opportunities           Opportunity[]
   opportunityStages       OpportunityStage[]
@@ -5205,4 +5211,106 @@ model SalaryAdvanceRecovery {
   createdAt        DateTime      @default(now())
 
   @@index([advanceId])
+}
+
+model PerformanceCycle {
+  id               String                       @id @default(uuid())
+  companyId        String
+  company          Company                      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name             String
+  startDate        DateTime
+  endDate          DateTime
+  status           String                       @default("ACTIVE") // ACTIVE, CLOSED
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+  goals            PerformanceGoal[]
+  reviews          PerformanceReview[]
+  improvementPlans PerformanceImprovementPlan[]
+
+  @@index([companyId])
+}
+
+model PerformanceGoal {
+  id         String           @id @default(uuid())
+  employeeId String
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  cycleId    String
+  cycle      PerformanceCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  goal       String
+  weight     Decimal
+  target     String?
+  status     String           @default("ACTIVE") // ACTIVE, ACHIEVED, MISSED, CANCELLED
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([employeeId])
+  @@index([cycleId])
+}
+
+model PerformanceReview {
+  id            String                @id @default(uuid())
+  employeeId    String
+  employee      Employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewerId    String
+  reviewer      Employee              @relation("Reviewer", fields: [reviewerId], references: [id])
+  cycleId       String
+  cycle         PerformanceCycle      @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  reviewDate    DateTime              @default(now())
+  overallRating Decimal?
+  comments      String?               @db.Text
+  status        String                @default("DRAFT") // DRAFT, SELF_SUBMITTED, MANAGER_SUBMITTED, APPROVED
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  scores        PerformanceScore[]
+  feedbacks     PerformanceFeedback[]
+
+  @@index([employeeId])
+  @@index([reviewerId])
+  @@index([cycleId])
+}
+
+model PerformanceScore {
+  id        String            @id @default(uuid())
+  reviewId  String
+  review    PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  category  String // KPI, COMPETENCY, BEHAVIOR, LEADERSHIP, TECHNICAL, etc.
+  score     Decimal
+  comments  String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([reviewId])
+}
+
+model PerformanceFeedback {
+  id        String            @id @default(uuid())
+  reviewId  String
+  review    PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    Employee          @relation("FeedbackAuthor", fields: [authorId], references: [id])
+  type      String // SELF, MANAGER, PEER, HR
+  feedback  String            @db.Text
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([reviewId])
+  @@index([authorId])
+}
+
+model PerformanceImprovementPlan {
+  id         String           @id @default(uuid())
+  employeeId String
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  cycleId    String
+  cycle      PerformanceCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  objectives String           @db.Text
+  actions    String           @db.Text
+  targetDate DateTime
+  progress   String?          @db.Text
+  status     String           @default("ACTIVE") // ACTIVE, COMPLETED, FAILED
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([employeeId])
+  @@index([cycleId])
 }

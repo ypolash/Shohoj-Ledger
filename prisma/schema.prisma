@@ -3564,6 +3564,8 @@ model Customer {
   priceLevel      String?
   status          CustomerStatus @default(ACTIVE)
   notes           String?
+  portalPassword  String?
+  isPortalActive  Boolean        @default(false)
   createdById     String
   createdBy       User           @relation("CustomerCreator", fields: [createdById], references: [id])
   createdAt       DateTime       @default(now())

@@ -26,7 +26,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.3 — Phase 3I (Enterprise Customer Payments & Collections):**
   - **Completed**: Created `CustomerPayment` and `CustomerPaymentAllocation` models. Built `customerPaymentService.ts` to manage cash/bank receipts, partial allocations, unallocated advance balances, and integration with credit limits.
 - **Version 1.3 — Phase 3J (Enterprise Sales Commission Engine):**
-  - **Completed**: Created `CommissionPolicy` and `SalesCommission` models. Built `commissionService.ts` to handle math evaluation, recalculation, and approval loops, effectively bridging CRM transactions with future Payroll capabilities. Ready for Phase 3K Customer Portal Services.
+  - **Completed**: Created `CommissionPolicy` and `SalesCommission` models. Built `commissionService.ts` to handle math evaluation, recalculation, and approval loops, effectively bridging CRM transactions with future Payroll capabilities.
+- **Version 1.3 — Phase 3K (Enterprise Customer Portal Services):**
+  - **Completed**: Extended `Customer` model with portal credentials. Built `customerPortalService.ts` providing secure, isolated backend APIs for external clients to view orders, payments, statements, and manage their profiles. Ready for Phase 3L CRM Analytics.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

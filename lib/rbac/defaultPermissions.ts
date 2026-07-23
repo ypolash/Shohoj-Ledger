@@ -45,6 +45,8 @@ export const DefaultPermissions = [
   { action: "TRIALBALANCE_EXPORT", moduleKey: "ACCOUNTING" },
   { action: "PROFITLOSS_VIEW", moduleKey: "ACCOUNTING" },
   { action: "PROFITLOSS_EXPORT", moduleKey: "ACCOUNTING" },
+  { action: "CASHFLOW_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "CASHFLOW_EXPORT", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

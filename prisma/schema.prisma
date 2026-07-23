@@ -307,6 +307,7 @@ model Employee {
   managedWarehouses Warehouse[]         @relation("WarehouseManager")
   assignedAssets    Asset[]             @relation("EmployeeAssets")
   stockMovements    StockMovement[]
+  barcodes          Barcode[]
 
   @@index([companyId])
 }
@@ -801,6 +802,7 @@ model Company {
   stockMovements    StockMovement[]
   inventoryBatches  InventoryBatch[]
   inventorySerials  InventorySerial[]
+  barcodes          Barcode[]
 }
 
 model CompanySetting {
@@ -2291,4 +2293,27 @@ model InventorySerial {
   @@index([productId])
   @@index([warehouseId])
   @@index([serialNumber])
+}
+
+model Barcode {
+  id          String  @id @default(uuid())
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  entityType  String // PRODUCT, BATCH, SERIAL, WAREHOUSE, ZONE, BIN
+  entityId    String
+  barcode     String? @unique
+  barcodeType String? // CODE128, CODE39, EAN13, EAN8, UPC, QR
+  qrCode      String? @unique
+  isPrimary   Boolean @default(true)
+
+  generatedById String?
+  generatedBy   Employee? @relation(fields: [generatedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([entityType, entityId])
+  @@index([barcode])
+  @@index([qrCode])
 }

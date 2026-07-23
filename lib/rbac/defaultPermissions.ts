@@ -75,6 +75,9 @@ export const DefaultPermissions = [
   { action: "SERIAL_MANAGE", moduleKey: "INVENTORY" },
   { action: "SERIAL_TRANSFER", moduleKey: "INVENTORY" },
   { action: "SERIAL_SCRAP", moduleKey: "INVENTORY" },
+  { action: "BARCODE_VIEW", moduleKey: "INVENTORY" },
+  { action: "BARCODE_GENERATE", moduleKey: "INVENTORY" },
+  { action: "BARCODE_PRINT", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

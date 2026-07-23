@@ -30,7 +30,15 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.3 — Phase 3K (Enterprise Customer Portal Services):**
   - **Completed**: Extended `Customer` model with portal credentials. Built `customerPortalService.ts` providing secure, isolated backend APIs for external clients to view orders, payments, statements, and manage their profiles.
 - **Version 1.3 — Phase 3L (Enterprise CRM Analytics Engine):**
-  - **Completed**: Created `crmAnalyticsService.ts` to aggregate cross-module metrics securely. Implemented robust dashboards for executives, sales, customers, leads, and financials. Prepared foundational JSON structures for future BI, caching, and AI injection. Ready for Phase 3M Final CRM Architecture Review.
+  - **Completed**: Created `crmAnalyticsService.ts` to aggregate cross-module metrics securely. Implemented robust dashboards for executives, sales, customers, leads, and financials. Prepared foundational JSON structures for future BI, caching, and AI injection.
+- **Version 1.3 — Phase 3M (Final CRM Architecture Review):**
+  - **Completed**: Performed a thorough architectural review of the entire Phase 3 module. Architecture is fully approved and **FROZEN**.
+
+## Production Roadmap (Version 1.4)
+- **Version 1.4 — Phase 1 (Enterprise Supplier Master):**
+  - **Completed**: Implemented comprehensive `Supplier` models including categories, addresses, contacts, bank accounts, and documents. Built `supplierService.ts` to manage vendor lifecycle, statuses, and strict companyId isolation.
+- **Version 1.4 — Phase 2 (Purchase Requisition):**
+  - **Not Started**: Implement internal employee demand generation for procurement.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
@@ -39,8 +47,8 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Abstract Service Hook:** Instead of embedding Prisma inserts into every Payroll/Inventory API, we created a single `lib/notifications/notificationService.ts` that safely checks user opt-in preferences before generating rows.
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
-- Decoupled employment history into a robust `EmployeeLifecycle` timeline event model for better auditability and historical tracking instead of directly mutating all fields without record.
-- Added explicit schema models `PayrollAudit` and enhanced `SalaryPayment` fields to rigidly enforce audit logging, allowing robust tracking of approvals and workflow changes while isolating companies via `companyId`.
+- **Core Goal:** Build the definitive B2B SaaS ERP with strict accounting, inventory, and supply chain controls.
+- **Current Status:** Version 1.3 ERP Architecture (Accounting, Inventory 2.0, CRM & Sales) is 100% complete and frozen (Git Tag: `v1.3.0`). Preparing for Version 1.4 (Enterprise Procurement & Supplier Management).
 
 ## Production Roadmap
 1. **Version 1.3 Phase 1 (Core Engines):** Deploy background workers for Notifications, Approvals, and Webhook dispatching.

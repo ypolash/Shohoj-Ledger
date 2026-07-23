@@ -62,6 +62,7 @@ model User {
   createdCreditHistories  CustomerCreditHistory[]  @relation("CreditHistoryCreator")
   createdCustomerPayments CustomerPayment[]        @relation("CustomerPaymentCreator")
   salesCommissions        SalesCommission[]        @relation("CommissionSalesperson")
+  createdSuppliers        Supplier[]               @relation("SupplierCreator")
 }
 
 model Session {
@@ -1393,71 +1394,73 @@ enum PlatformRole {
 }
 
 model Company {
-  id                       String                    @id @default(uuid())
-  name                     String
-  businessType             String
-  status                   String                    @default("ACTIVE")
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  settings                 CompanySetting?
-  modules                  CompanyModule[]
-  roles                    Role[]
-  projects                 Project[]
-  incomes                  Income[]
-  expenses                 Expense[]
-  fundTransactions         FundTransaction[]
-  reserveTransactions      ReserveTransaction[]
-  memberLoans              MemberLoan[]
-  advances                 Advance[]
-  settlements              Settlement[]
-  incomeCategories         IncomeCategory[]
-  members                  Member[]
-  employees                Employee[]
-  tasks                    Task[]
-  attendances              Attendance[]
-  leaveRequests            LeaveRequest[]
-  salaryPayments           SalaryPayment[]
-  salaryDeductions         SalaryDeduction[]
-  bonuses                  Bonus[]
-  payslips                 Payslip[]
-  leads                    Lead[]
-  leadSources              LeadSource[]
-  opportunities            Opportunity[]
-  opportunityStages        OpportunityStage[]
-  quotations               Quotation[]
-  salesOrders              SalesOrder[]
-  deliveryOrders           DeliveryOrder[]
-  customerReturns          CustomerReturn[]
-  creditProfiles           CustomerCreditProfile[]
-  creditHistories          CustomerCreditHistory[]
-  customerPayments         CustomerPayment[]
-  commissionPolicies       CommissionPolicy[]
-  salesCommissions         SalesCommission[]
-  allowedNetworks          AllowedNetwork[]
-  punishmentSettings       PunishmentSetting[]
-  attendanceConfigs        AttendanceConfig[]
-  departments              Department[]
-  designations             Designation[]
-  lifecycles               EmployeeLifecycle[]
-  payrollAudits            PayrollAudit[]
-  ledgerEntries            LedgerEntry[]
-  reportAudits             ReportAudit[]
-  leadActivities           LeadActivity[]
-  projectActivities        ProjectActivity[]
-  clients                  Client[]
-  productCategories        ProductCategory[]
-  products                 Product[]
-  warehouses               Warehouse[]
-  suppliers                Supplier[]
-  purchaseOrders           PurchaseOrder[]
-  stockTransactions        StockTransaction[]
-  assetCategories          AssetCategory[]
-  assets                   Asset[]
-  inventoryAudits          InventoryAudit[]
-  notificationPreferences  NotificationPreference[]
-  notificationTemplates    NotificationTemplate[]
-  notifications            Notification[]
-  announcements            Announcement[]
+  id                      String                   @id @default(uuid())
+  name                    String
+  businessType            String
+  status                  String                   @default("ACTIVE")
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  settings                CompanySetting?
+  modules                 CompanyModule[]
+  roles                   Role[]
+  projects                Project[]
+  incomes                 Income[]
+  expenses                Expense[]
+  fundTransactions        FundTransaction[]
+  reserveTransactions     ReserveTransaction[]
+  memberLoans             MemberLoan[]
+  advances                Advance[]
+  settlements             Settlement[]
+  incomeCategories        IncomeCategory[]
+  members                 Member[]
+  employees               Employee[]
+  tasks                   Task[]
+  attendances             Attendance[]
+  leaveRequests           LeaveRequest[]
+  salaryPayments          SalaryPayment[]
+  salaryDeductions        SalaryDeduction[]
+  bonuses                 Bonus[]
+  payslips                Payslip[]
+  leads                   Lead[]
+  leadSources             LeadSource[]
+  opportunities           Opportunity[]
+  opportunityStages       OpportunityStage[]
+  quotations              Quotation[]
+  salesOrders             SalesOrder[]
+  deliveryOrders          DeliveryOrder[]
+  customerReturns         CustomerReturn[]
+  creditProfiles          CustomerCreditProfile[]
+  creditHistories         CustomerCreditHistory[]
+  customerPayments        CustomerPayment[]
+  commissionPolicies      CommissionPolicy[]
+  salesCommissions        SalesCommission[]
+  allowedNetworks         AllowedNetwork[]
+  punishmentSettings      PunishmentSetting[]
+  attendanceConfigs       AttendanceConfig[]
+  departments             Department[]
+  designations            Designation[]
+  lifecycles              EmployeeLifecycle[]
+  payrollAudits           PayrollAudit[]
+  ledgerEntries           LedgerEntry[]
+  reportAudits            ReportAudit[]
+  leadActivities          LeadActivity[]
+  projectActivities       ProjectActivity[]
+  clients                 Client[]
+  productCategories       ProductCategory[]
+  products                Product[]
+  warehouses              Warehouse[]
+  suppliers               Supplier[]
+  purchaseOrders          PurchaseOrder[]
+  stockTransactions       StockTransaction[]
+  assetCategories         AssetCategory[]
+  assets                  Asset[]
+  inventoryAudits         InventoryAudit[]
+  notificationPreferences NotificationPreference[]
+  notificationTemplates   NotificationTemplate[]
+  notifications           Notification[]
+  announcements           Announcement[]
+  supplierCategories      SupplierCategory[]
+
   notificationAudits       NotificationAudit[]
   globalAuditLogs          GlobalAuditLog[]
   auditEvents              AuditEvent[]
@@ -1947,30 +1950,152 @@ model Warehouse {
   @@index([code])
 }
 
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  BLACKLISTED
+}
+
+model SupplierCategory {
+  id          String     @id @default(uuid())
+  companyId   String
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  suppliers   Supplier[]
+
+  @@unique([companyId, name])
+}
+
 model Supplier {
-  id                 String   @id @default(uuid())
-  companyId          String
-  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name               String
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  supplierCode String
+  name         String
+  taxNumber    String?
+  vatNumber    String?
+  tradeLicense String?
+
+  paymentTerms String?
+  creditLimit  Decimal @default(0)
+  currency     String  @default("USD")
+
+  status SupplierStatus @default(ACTIVE)
+
+  // Future Supplier Portal Auth
+  portalPassword String?
+  isPortalActive Boolean @default(false)
+
+  // Legacy fields (kept for backward compatibility with early phases if needed, though they will be replaced by relations)
   contactPerson      String?
   email              String?
   phone              String?
   address            String?
-  taxNumber          String?
-  paymentTerms       String?
-  outstandingBalance Decimal  @default(0)
-  status             String   @default("ACTIVE")
-  isActive           Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  outstandingBalance Decimal @default(0)
+  isActive           Boolean @default(true)
+
+  createdById String?
+  createdBy   User?   @relation("SupplierCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId String?
+  category   SupplierCategory? @relation(fields: [categoryId], references: [id])
+
+  addresses      SupplierAddress[]
+  contacts       SupplierContact[]
+  bankAccounts   SupplierBankAccount[]
+  documents      SupplierDocument[]
+  communications SupplierCommunicationLog[]
 
   purchaseOrders       PurchaseOrder[]
   reorderPolicies      ReorderPolicy[]       @relation("PreferredSupplier")
   purchaseRequestLines PurchaseRequestLine[] @relation("PurchaseRequestLineSupplier")
   goodsReceipts        GoodsReceipt[]
 
-  @@unique([companyId, name])
+  @@unique([companyId, supplierCode])
   @@index([companyId])
+  @@index([categoryId])
+  @@index([status])
+}
+
+model SupplierAddress {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  type        String   @default("BILLING") // BILLING, SHIPPING, WAREHOUSE
+  addressLine String
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([supplierId])
+}
+
+model SupplierContact {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  name        String
+  designation String?
+  email       String?
+  phone       String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([supplierId])
+}
+
+model SupplierBankAccount {
+  id            String   @id @default(uuid())
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  bankName      String
+  accountName   String
+  accountNumber String
+  routingNumber String?
+  swiftCode     String?
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([supplierId])
+}
+
+model SupplierDocument {
+  id         String   @id @default(uuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  title      String
+  fileUrl    String
+  type       String // e.g. NDA, CONTRACT, TAX_FORM
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([supplierId])
+}
+
+model SupplierCommunicationLog {
+  id         String   @id @default(uuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  type       String // EMAIL, CALL, MEETING
+  notes      String
+  date       DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([supplierId])
 }
 
 model PurchaseOrder {

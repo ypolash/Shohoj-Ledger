@@ -1,0 +1,157 @@
+import prisma from "@/lib/prisma";
+import { Decimal } from "@prisma/client/runtime/library";
+
+/**
+ * Version 1.3 Phase 2N: Enterprise Reorder Planning
+ * Automates inventory replenishment based on configured policies.
+ */
+
+export const reorderService = {
+
+  validatePolicy: async (companyId: string, policyId: string) => {
+    const policy = await prisma.reorderPolicy.findFirst({
+      where: { id: policyId, companyId, isActive: true }
+    });
+    if (!policy) throw new Error("Active Reorder Policy not found.");
+    return policy;
+  },
+
+  calculateSafetyStock: (leadTimeDays: number, averageDailyConsumption: number = 1) => {
+    // Basic calculation for Phase 2N. Can be extended with standard deviation in Phase 2P forecasting.
+    return new Decimal(leadTimeDays * averageDailyConsumption * 1.5); // 50% buffer
+  },
+
+  calculateReorderQuantity: (
+    currentStock: Decimal,
+    minimumQuantity: Decimal,
+    maximumQuantity: Decimal,
+    reorderQuantity: Decimal
+  ) => {
+    // If standard reorder quantity is defined, use it. Otherwise, order up to maximum.
+    if (reorderQuantity.greaterThan(0)) {
+      return reorderQuantity;
+    }
+    
+    const deficit = maximumQuantity.minus(currentStock);
+    return deficit.greaterThan(0) ? deficit : new Decimal(0);
+  },
+
+  evaluateProduct: async (companyId: string, warehouseId: string, productId: string) => {
+    const policy = await prisma.reorderPolicy.findFirst({
+      where: { companyId, warehouseId, productId, isActive: true }
+    });
+
+    if (!policy) return null;
+
+    // Calculate actual available physical stock (Total - Picked/Reserved)
+    // Note: We use the live physical ProductWarehouse quantity. Future phases would deduct open Sales Orders.
+    const stockRecord = await prisma.productWarehouse.aggregate({
+      where: { companyId, warehouseId, productId },
+      _sum: { quantity: true }
+    });
+    
+    const currentStock = stockRecord._sum.quantity || new Decimal(0);
+
+    // Also check stock currently "On Order" (Purchase Orders in processing)
+    const onOrderRecord = await prisma.purchaseOrderItem.aggregate({
+      where: {
+        purchaseOrder: { companyId, status: { in: ["APPROVED", "SENT", "PARTIALLY_RECEIVED"] } },
+        productId
+      },
+      _sum: { quantity: true } // Simplified: In reality, subtract received quantity from this
+    });
+
+    const onOrderStock = onOrderRecord._sum.quantity || new Decimal(0);
+    const effectiveStock = currentStock.plus(onOrderStock);
+
+    if (effectiveStock.lessThanOrEqualTo(policy.reorderPoint)) {
+      const recommendedQty = reorderService.calculateReorderQuantity(
+        effectiveStock,
+        policy.minimumQuantity as any,
+        policy.maximumQuantity as any,
+        policy.reorderQuantity as any
+      );
+
+      return {
+        productId,
+        warehouseId,
+        currentStock,
+        onOrderStock,
+        effectiveStock,
+        reorderPoint: policy.reorderPoint,
+        recommendedQuantity: recommendedQty,
+        supplierId: policy.preferredSupplierId,
+        autoGenerate: policy.autoGeneratePurchaseRequest
+      };
+    }
+
+    return null;
+  },
+
+  evaluateWarehouse: async (companyId: string, warehouseId: string) => {
+    const policies = await prisma.reorderPolicy.findMany({
+      where: { companyId, warehouseId, isActive: true }
+    });
+
+    const recommendations = [];
+    for (const policy of policies) {
+      const rec = await reorderService.evaluateProduct(companyId, warehouseId, policy.productId);
+      if (rec) recommendations.push(rec);
+    }
+    return recommendations;
+  },
+
+  generateRecommendations: async (companyId: string) => {
+    const warehouses = await prisma.warehouse.findMany({ where: { companyId } });
+    const allRecommendations = [];
+
+    for (const wh of warehouses) {
+      const recs = await reorderService.evaluateWarehouse(companyId, wh.id);
+      allRecommendations.push(...recs);
+    }
+
+    return allRecommendations;
+  },
+
+  generatePurchaseRequests: async (companyId: string, requestedById: string) => {
+    const recommendations = await reorderService.generateRecommendations(companyId);
+    const autoGenRecs = recommendations.filter(r => r.autoGenerate);
+    
+    if (autoGenRecs.length === 0) return [];
+
+    // Group by Warehouse to generate efficient Purchase Requests
+    const grouped = autoGenRecs.reduce((acc, rec) => {
+      if (!acc[rec.warehouseId]) acc[rec.warehouseId] = [];
+      acc[rec.warehouseId].push(rec);
+      return acc;
+    }, {} as Record<string, typeof autoGenRecs>);
+
+    const requests = [];
+
+    for (const [warehouseId, lines] of Object.entries(grouped)) {
+      // Import dynamically to avoid circular dependencies if any
+      const prService = (await import("./purchaseRequestService")).purchaseRequestService;
+      
+      const pr = await prService.createRequest({
+        companyId,
+        warehouseId,
+        requestedById,
+        remarks: "Auto-generated by Enterprise Reorder Planning Engine",
+        lines: lines.map(l => ({
+          productId: l.productId,
+          requiredQuantity: l.recommendedQuantity as any,
+          recommendedQuantity: l.recommendedQuantity as any,
+          supplierId: l.supplierId || undefined
+        }))
+      });
+      requests.push(pr);
+    }
+
+    return requests;
+  },
+
+  getRecommendations: async (companyId: string, warehouseId?: string) => {
+    if (warehouseId) return reorderService.evaluateWarehouse(companyId, warehouseId);
+    return reorderService.generateRecommendations(companyId);
+  }
+};

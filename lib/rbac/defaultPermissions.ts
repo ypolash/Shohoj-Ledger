@@ -105,6 +105,12 @@ export const DefaultPermissions = [
   { action: "VALUATION_VIEW", moduleKey: "INVENTORY" },
   { action: "VALUATION_REBUILD", moduleKey: "INVENTORY" },
   { action: "VALUATION_REPORT", moduleKey: "INVENTORY" },
+  { action: "REORDERPOLICY_VIEW", moduleKey: "PROCUREMENT" },
+  { action: "REORDERPOLICY_MANAGE", moduleKey: "PROCUREMENT" },
+  { action: "PURCHASEREQUEST_VIEW", moduleKey: "PROCUREMENT" },
+  { action: "PURCHASEREQUEST_CREATE", moduleKey: "PROCUREMENT" },
+  { action: "PURCHASEREQUEST_APPROVE", moduleKey: "PROCUREMENT" },
+  { action: "PURCHASEREQUEST_CONVERT", moduleKey: "PROCUREMENT" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

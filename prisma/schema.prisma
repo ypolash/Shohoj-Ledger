@@ -315,6 +315,8 @@ model Employee {
   inventoryAdjustmentsApproved InventoryAdjustment[] @relation("AdjustmentApprovedBy")
   cycleCountsCreated           CycleCount[]          @relation("CycleCountCreatedBy")
   cycleCountsApproved          CycleCount[]          @relation("CycleCountApprovedBy")
+  purchaseRequestsRequested    PurchaseRequest[]     @relation("PurchaseRequestedBy")
+  purchaseRequestsApproved     PurchaseRequest[]     @relation("PurchaseRequestApprovedBy")
 
   @@index([companyId])
 }
@@ -815,6 +817,8 @@ model Company {
   inventoryAdjustments     InventoryAdjustment[]
   cycleCounts              CycleCount[]
   inventoryValuationLayers InventoryValuationLayer[]
+  reorderPolicies          ReorderPolicy[]
+  purchaseRequests         PurchaseRequest[]
 }
 
 model CompanySetting {
@@ -1184,6 +1188,8 @@ model Product {
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
   inventoryValuationLayers InventoryValuationLayer[]
+  reorderPolicies          ReorderPolicy[]
+  purchaseRequestLines     PurchaseRequestLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1230,6 +1236,8 @@ model Warehouse {
   cycleCounts              CycleCount[]              @relation("CycleCountWarehouse")
   cycleCountLines          CycleCountLine[]          @relation("CycleCountLineWarehouse")
   valuationLayers          InventoryValuationLayer[] @relation("ValuationWarehouse")
+  reorderPolicies          ReorderPolicy[]           @relation("ReorderPolicyWarehouse")
+  purchaseRequests         PurchaseRequest[]         @relation("PurchaseRequestWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -1253,8 +1261,10 @@ model Supplier {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  purchaseOrders PurchaseOrder[]
-  goodsReceipts  GoodsReceipt[]
+  purchaseOrders       PurchaseOrder[]
+  reorderPolicies      ReorderPolicy[]       @relation("PreferredSupplier")
+  purchaseRequestLines PurchaseRequestLine[] @relation("PurchaseRequestLineSupplier")
+  goodsReceipts        GoodsReceipt[]
 
   @@unique([companyId, name])
   @@index([companyId])
@@ -2652,4 +2662,71 @@ model InventoryValuationLayer {
   @@index([companyId])
   @@index([productId])
   @@index([warehouseId])
+}
+
+model ReorderPolicy {
+  id                          String    @id @default(uuid())
+  companyId                   String
+  company                     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productId                   String
+  product                     Product   @relation(fields: [productId], references: [id])
+  warehouseId                 String
+  warehouse                   Warehouse @relation("ReorderPolicyWarehouse", fields: [warehouseId], references: [id])
+  minimumQuantity             Decimal
+  maximumQuantity             Decimal
+  reorderPoint                Decimal
+  reorderQuantity             Decimal
+  safetyStock                 Decimal
+  leadTimeDays                Int
+  preferredSupplierId         String?
+  preferredSupplier           Supplier? @relation("PreferredSupplier", fields: [preferredSupplierId], references: [id])
+  autoGeneratePurchaseRequest Boolean   @default(false)
+  isActive                    Boolean   @default(true)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  @@unique([companyId, productId, warehouseId])
+  @@index([companyId])
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+model PurchaseRequest {
+  id            String                @id @default(uuid())
+  companyId     String
+  company       Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  requestNumber String
+  warehouseId   String
+  warehouse     Warehouse             @relation("PurchaseRequestWarehouse", fields: [warehouseId], references: [id])
+  requestedById String
+  requestedBy   Employee              @relation("PurchaseRequestedBy", fields: [requestedById], references: [id])
+  approvedById  String?
+  approvedBy    Employee?             @relation("PurchaseRequestApprovedBy", fields: [approvedById], references: [id])
+  status        String                @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, CONVERTED_TO_PO, REJECTED, CANCELLED
+  requestDate   DateTime              @default(now())
+  remarks       String?
+  lines         PurchaseRequestLine[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@unique([companyId, requestNumber])
+  @@index([companyId])
+  @@index([warehouseId])
+}
+
+model PurchaseRequestLine {
+  id                  String          @id @default(uuid())
+  purchaseRequestId   String
+  purchaseRequest     PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  productId           String
+  product             Product         @relation(fields: [productId], references: [id])
+  requiredQuantity    Decimal
+  recommendedQuantity Decimal
+  supplierId          String?
+  supplier            Supplier?       @relation("PurchaseRequestLineSupplier", fields: [supplierId], references: [id])
+  estimatedUnitCost   Decimal?
+  remarks             String?
+
+  @@index([purchaseRequestId])
+  @@index([productId])
 }

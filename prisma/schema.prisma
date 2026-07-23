@@ -57,6 +57,7 @@ model User {
   createdOppActivities    OpportunityActivity[]    @relation("OpportunityActivityCreator")
   createdQuotations       Quotation[]              @relation("QuotationCreator")
   createdSalesOrders      SalesOrder[]             @relation("SalesOrderCreator")
+  createdDeliveryOrders   DeliveryOrder[]          @relation("DeliveryOrderCreator")
 }
 
 model Session {
@@ -804,7 +805,8 @@ model SalesOrder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  lines SalesOrderLine[]
+  lines          SalesOrderLine[]
+  deliveryOrders DeliveryOrder[]
 
   @@index([companyId])
   @@index([customerId])
@@ -813,24 +815,98 @@ model SalesOrder {
 }
 
 model SalesOrderLine {
-  id               String     @id @default(uuid())
+  id               String              @id @default(uuid())
   salesOrderId     String
-  salesOrder       SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  salesOrder       SalesOrder          @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
   productId        String
-  product          Product    @relation(fields: [productId], references: [id])
+  product          Product             @relation(fields: [productId], references: [id])
   warehouseId      String
-  warehouse        Warehouse  @relation("SalesOrderLineWarehouse", fields: [warehouseId], references: [id])
+  warehouse        Warehouse           @relation("SalesOrderLineWarehouse", fields: [warehouseId], references: [id])
   quantity         Decimal
-  reservedQuantity Decimal    @default(0)
+  reservedQuantity Decimal             @default(0)
   unitPrice        Decimal
-  discountPercent  Decimal    @default(0)
-  discountAmount   Decimal    @default(0)
-  taxPercent       Decimal    @default(0)
-  taxAmount        Decimal    @default(0)
+  discountPercent  Decimal             @default(0)
+  discountAmount   Decimal             @default(0)
+  taxPercent       Decimal             @default(0)
+  taxAmount        Decimal             @default(0)
   lineTotal        Decimal
   remarks          String?
+  deliveryLines    DeliveryOrderLine[]
 
   @@index([salesOrderId])
+  @@index([productId])
+  @@index([warehouseId])
+}
+
+enum DeliveryOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PICKING
+  PACKING
+  SHIPPED
+  PARTIALLY_DELIVERED
+  DELIVERED
+  CANCELLED
+}
+
+model DeliveryOrder {
+  id             String              @id @default(uuid())
+  companyId      String
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  deliveryNumber String              @unique @default(cuid())
+  salesOrderId   String
+  salesOrder     SalesOrder          @relation(fields: [salesOrderId], references: [id])
+  customerId     String
+  customer       Customer            @relation(fields: [customerId], references: [id])
+  warehouseId    String
+  warehouse      Warehouse           @relation("DeliveryOrderWarehouse", fields: [warehouseId], references: [id])
+  status         DeliveryOrderStatus @default(DRAFT)
+  deliveryDate   DateTime            @default(now())
+  carrier        String?
+  trackingNumber String?
+  remarks        String?
+
+  approvedById String?
+  approvedAt   DateTime?
+
+  createdById String
+  createdBy   User     @relation("DeliveryOrderCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines DeliveryOrderLine[]
+
+  @@index([companyId])
+  @@index([customerId])
+  @@index([salesOrderId])
+  @@index([warehouseId])
+  @@index([status])
+}
+
+model DeliveryOrderLine {
+  id               String           @id @default(uuid())
+  deliveryOrderId  String
+  deliveryOrder    DeliveryOrder    @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+  salesOrderLineId String
+  salesOrderLine   SalesOrderLine   @relation(fields: [salesOrderLineId], references: [id])
+  productId        String
+  product          Product          @relation(fields: [productId], references: [id])
+  batchId          String?
+  batch            InventoryBatch?  @relation("DeliveryLineBatch", fields: [batchId], references: [id])
+  serialId         String?
+  serial           InventorySerial? @relation("DeliveryLineSerial", fields: [serialId], references: [id])
+  quantity         Decimal
+  warehouseId      String
+  warehouse        Warehouse        @relation("DeliveryOrderLineWarehouse", fields: [warehouseId], references: [id])
+  zoneId           String?
+  zone             WarehouseZone?   @relation("DeliveryLineZone", fields: [zoneId], references: [id])
+  binId            String?
+  bin              WarehouseBin?    @relation("DeliveryLineBin", fields: [binId], references: [id])
+  remarks          String?
+
+  @@index([deliveryOrderId])
+  @@index([salesOrderLineId])
   @@index([productId])
   @@index([warehouseId])
 }
@@ -1066,6 +1142,7 @@ model Company {
   opportunityStages        OpportunityStage[]
   quotations               Quotation[]
   salesOrders              SalesOrder[]
+  deliveryOrders           DeliveryOrder[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -1516,6 +1593,7 @@ model Product {
   pickingTaskLines         PickingTaskLine[]
   quotationLines           QuotationLine[]
   salesOrderLines          SalesOrderLine[]
+  deliveryOrderLines       DeliveryOrderLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -1568,6 +1646,8 @@ model Warehouse {
   packingTasks             PackingTask[]             @relation("PackingTaskWarehouse")
   quotationLines           QuotationLine[]           @relation("QuotationLineWarehouse")
   salesOrderLines          SalesOrderLine[]          @relation("SalesOrderLineWarehouse")
+  deliveryOrders           DeliveryOrder[]           @relation("DeliveryOrderWarehouse")
+  deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryOrderLineWarehouse")
 
   @@unique([companyId, code])
   @@index([companyId])
@@ -2560,6 +2640,7 @@ model WarehouseZone {
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineZone")
+  deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineZone")
 
   @@index([warehouseId])
   @@index([code])
@@ -2586,6 +2667,7 @@ model WarehouseBin {
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineBin")
+  deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineBin")
 
   @@index([warehouseId])
   @@index([code])
@@ -2682,6 +2764,7 @@ model InventoryBatch {
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineBatch")
+  deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineBatch")
 
   @@unique([companyId, productId, batchNumber])
   @@index([companyId])
@@ -2720,6 +2803,7 @@ model InventorySerial {
   inventoryAdjustmentLines InventoryAdjustmentLine[]
   cycleCountLines          CycleCountLine[]
   pickingTaskLines         PickingTaskLine[]         @relation("PickingLineSerial")
+  deliveryOrderLines       DeliveryOrderLine[]       @relation("DeliveryLineSerial")
 
   @@unique([companyId, productId, serialNumber])
   @@index([companyId])
@@ -3188,12 +3272,13 @@ model Customer {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  addresses     CustomerAddress[]
-  contacts      CustomerContact[]
-  leads         Lead[]
-  opportunities Opportunity[]
-  quotations    Quotation[]
-  salesOrders   SalesOrder[]
+  addresses      CustomerAddress[]
+  contacts       CustomerContact[]
+  leads          Lead[]
+  opportunities  Opportunity[]
+  quotations     Quotation[]
+  salesOrders    SalesOrder[]
+  deliveryOrders DeliveryOrder[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

@@ -73,6 +73,7 @@ model User {
   approvedGoodsReceiptNotes     GoodsReceiptNote[]       @relation("GoodsReceiptApprover")
   createdSupplierInvoices       SupplierInvoice[]        @relation("SupplierInvoiceCreator")
   approvedSupplierInvoices      SupplierInvoice[]        @relation("SupplierInvoiceApprover")
+  createdSupplierPayments       SupplierPayment[]        @relation("SupplierPaymentCreator")
 }
 
 model Session {
@@ -1510,6 +1511,7 @@ model Company {
   barcodes                 Barcode[]
   goodsReceiptNotes        GoodsReceiptNote[]
   supplierInvoices         SupplierInvoice[]
+  supplierPayments         SupplierPayment[]
   threeWayMatches          ThreeWayMatch[]
   putAwayTasks             PutAwayTask[]
   inventoryAdjustments     InventoryAdjustment[]
@@ -2039,6 +2041,7 @@ model Supplier {
 
   goodsReceiptNotes GoodsReceiptNote[]
   supplierInvoices  SupplierInvoice[]
+  supplierPayments  SupplierPayment[]
   vendorQuotations  VendorQuotation[]
   vendorComparisons VendorComparisonItem[]
 
@@ -2265,8 +2268,9 @@ model SupplierInvoice {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lines           SupplierInvoiceLine[]
-  threeWayMatches ThreeWayMatch[]
+  lines                      SupplierInvoiceLine[]
+  threeWayMatches            ThreeWayMatch[]
+  supplierPaymentAllocations SupplierPaymentAllocation[]
 
   @@unique([companyId, invoiceNumber])
   @@index([companyId])
@@ -2332,6 +2336,71 @@ model ThreeWayMatch {
   @@index([goodsReceiptNoteId])
   @@index([supplierInvoiceId])
   @@index([matchStatus])
+}
+
+enum SupplierPaymentStatus {
+  DRAFT
+  PENDING
+  POSTED
+  PARTIALLY_ALLOCATED
+  FULLY_ALLOCATED
+  CANCELLED
+}
+
+model SupplierPayment {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  paymentNumber String
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  paymentDate     DateTime
+  paymentMethod   PaymentMethod @default(BANK)
+  referenceNumber String?
+
+  bankAccountId String?
+
+  currency String @default("USD")
+
+  amount            Decimal @default(0)
+  allocatedAmount   Decimal @default(0)
+  unallocatedAmount Decimal @default(0)
+
+  status  SupplierPaymentStatus @default(DRAFT)
+  remarks String?
+
+  createdById String?
+  createdBy   User?   @relation("SupplierPaymentCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  allocations SupplierPaymentAllocation[]
+
+  @@unique([companyId, paymentNumber])
+  @@index([companyId])
+  @@index([supplierId])
+  @@index([status])
+}
+
+model SupplierPaymentAllocation {
+  id String @id @default(uuid())
+
+  supplierPaymentId String
+  supplierPayment   SupplierPayment @relation(fields: [supplierPaymentId], references: [id], onDelete: Cascade)
+
+  supplierInvoiceId String
+  supplierInvoice   SupplierInvoice @relation(fields: [supplierInvoiceId], references: [id], onDelete: Cascade)
+
+  allocatedAmount Decimal
+
+  createdAt DateTime @default(now())
+
+  @@index([supplierPaymentId])
+  @@index([supplierInvoiceId])
 }
 
 model StockTransaction {

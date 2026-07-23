@@ -61,6 +61,7 @@ model User {
   createdCustomerReturns  CustomerReturn[]         @relation("CustomerReturnCreator")
   createdCreditHistories  CustomerCreditHistory[]  @relation("CreditHistoryCreator")
   createdCustomerPayments CustomerPayment[]        @relation("CustomerPaymentCreator")
+  salesCommissions        SalesCommission[]        @relation("CommissionSalesperson")
 }
 
 model Session {
@@ -808,8 +809,9 @@ model SalesOrder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  lines          SalesOrderLine[]
-  deliveryOrders DeliveryOrder[]
+  lines            SalesOrderLine[]
+  deliveryOrders   DeliveryOrder[]
+  salesCommissions SalesCommission[]
 
   @@index([companyId])
   @@index([customerId])
@@ -1095,7 +1097,8 @@ model CustomerPayment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  allocations CustomerPaymentAllocation[]
+  allocations      CustomerPaymentAllocation[]
+  salesCommissions SalesCommission[]
 
   @@index([companyId])
   @@index([customerId])
@@ -1116,6 +1119,80 @@ model CustomerPaymentAllocation {
 
   @@index([customerPaymentId])
   @@index([referenceType, referenceId])
+}
+
+enum CalculationType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  TIERED
+  TARGET_BASED
+}
+
+enum CommissionStatus {
+  PENDING
+  CALCULATED
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+model CommissionPolicy {
+  id                String          @id @default(uuid())
+  companyId         String
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  calculationType   CalculationType
+  commissionRate    Decimal         @default(0) // Percentage or fixed amount
+  minimumTarget     Decimal? // Optional threshold to hit before commission applies
+  maximumCommission Decimal? // Cap
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  commissions SalesCommission[]
+
+  @@index([companyId])
+}
+
+model SalesCommission {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  salespersonId String
+  salesperson   User   @relation("CommissionSalesperson", fields: [salespersonId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  salesOrderId String?
+  salesOrder   SalesOrder? @relation(fields: [salesOrderId], references: [id])
+
+  paymentId String?
+  payment   CustomerPayment? @relation(fields: [paymentId], references: [id])
+
+  commissionPolicyId String
+  policy             CommissionPolicy @relation(fields: [commissionPolicyId], references: [id])
+
+  baseAmount       Decimal // The amount on which commission is calculated (e.g., Sales Order total)
+  commissionAmount Decimal // The calculated reward
+
+  status       CommissionStatus @default(PENDING)
+  calculatedAt DateTime?
+
+  approvedById String?
+  approvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([salespersonId])
+  @@index([customerId])
+  @@index([salesOrderId])
+  @@index([paymentId])
+  @@index([status])
 }
 
 model AllowedNetwork {
@@ -1354,6 +1431,8 @@ model Company {
   creditProfiles           CustomerCreditProfile[]
   creditHistories          CustomerCreditHistory[]
   customerPayments         CustomerPayment[]
+  commissionPolicies       CommissionPolicy[]
+  salesCommissions         SalesCommission[]
   allowedNetworks          AllowedNetwork[]
   punishmentSettings       PunishmentSetting[]
   attendanceConfigs        AttendanceConfig[]
@@ -3501,6 +3580,7 @@ model Customer {
   creditProfile    CustomerCreditProfile?
   creditHistories  CustomerCreditHistory[]
   customerPayments CustomerPayment[]
+  salesCommissions SalesCommission[]
 
   @@unique([companyId, customerCode])
   @@unique([companyId, email])

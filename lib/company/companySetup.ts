@@ -75,7 +75,6 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
         name: ownerName,
         email: ownerEmail,
         role: "Owner", // Keep string enum backward compatible
-        roleId: ownerRole.id,
         platformRole: "USER"
       }
     });

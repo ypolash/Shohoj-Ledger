@@ -8,61 +8,63 @@ datasource db {
 }
 
 model User {
-  id                      String                   @id @default(uuid())
-  companyId               String?
-  platformRole            PlatformRole?
-  name                    String
-  email                   String                   @unique
-  emailVerified           Boolean                  @default(false)
-  image                   String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  role                    String                   @default("member")
-  sessions                Session[]
-  accounts                Account[]
-  payrollAudits           PayrollAudit[]
-  ledgerEntries           LedgerEntry[]
-  reportAudits            ReportAudit[]
-  leadActivities          LeadActivity[]
-  projectActivities       ProjectActivity[]
-  clientActivities        ClientActivity[]
-  clientDocuments         ClientDocument[]
-  stockTransactions       StockTransaction[]
-  inventoryAudits         InventoryAudit[]
-  notificationPreferences NotificationPreference[]
-  notifications           Notification[]
-  notificationAudits      NotificationAudit[]
-  globalAuditLogs         GlobalAuditLog[]
-  auditEvents             AuditEvent[]
-  createdWorkflows        Workflow[]               @relation("WorkflowCreator")
-  approvalFlows           ApprovalFlow[]           @relation("ApprovalFlowCreator")
-  approvalRequests        ApprovalRequest[]        @relation("ApprovalRequester")
-  approvalHistories       ApprovalHistory[]
-  createdReportTemplates  ReportTemplate[]         @relation("ReportTemplateCreator")
-  reportExecutions        ReportExecution[]        @relation("ReportExecutionRequester")
-  notificationQueues      NotificationQueue[]
-  apiKeys                 ApiKey[]                 @relation("ApiKeyCreator")
-  webhooks                Webhook[]                @relation("WebhookCreator")
-  managedBranches         Branch[]                 @relation("BranchManager")
-  branchUsers             BranchUser[]
-  createdPurchaseOrders   PurchaseOrder[]          @relation("PurchaseOrderCreator")
-  createdInventoryTx      InventoryTransaction[]   @relation("InventoryTransactionCreator")
-  businessInsights        BusinessInsight[]
-  createdJournalEntries   JournalEntry[]           @relation("JournalEntryCreator")
-  approvedJournalEntries  JournalEntry[]           @relation("JournalEntryApprover")
-  createdCustomers        Customer[]               @relation("CustomerCreator")
-  createdLeads            Lead[]                   @relation("LeadCreator")
-  createdLeadActivities   LeadActivity[]           @relation("LeadActivityCreator")
-  createdOpportunities    Opportunity[]            @relation("OpportunityCreator")
-  createdOppActivities    OpportunityActivity[]    @relation("OpportunityActivityCreator")
-  createdQuotations       Quotation[]              @relation("QuotationCreator")
-  createdSalesOrders      SalesOrder[]             @relation("SalesOrderCreator")
-  createdDeliveryOrders   DeliveryOrder[]          @relation("DeliveryOrderCreator")
-  createdCustomerReturns  CustomerReturn[]         @relation("CustomerReturnCreator")
-  createdCreditHistories  CustomerCreditHistory[]  @relation("CreditHistoryCreator")
-  createdCustomerPayments CustomerPayment[]        @relation("CustomerPaymentCreator")
-  salesCommissions        SalesCommission[]        @relation("CommissionSalesperson")
-  createdSuppliers        Supplier[]               @relation("SupplierCreator")
+  id                            String                   @id @default(uuid())
+  companyId                     String?
+  platformRole                  PlatformRole?
+  name                          String
+  email                         String                   @unique
+  emailVerified                 Boolean                  @default(false)
+  image                         String?
+  createdAt                     DateTime                 @default(now())
+  updatedAt                     DateTime                 @updatedAt
+  role                          String                   @default("member")
+  sessions                      Session[]
+  accounts                      Account[]
+  payrollAudits                 PayrollAudit[]
+  ledgerEntries                 LedgerEntry[]
+  reportAudits                  ReportAudit[]
+  leadActivities                LeadActivity[]
+  projectActivities             ProjectActivity[]
+  clientActivities              ClientActivity[]
+  clientDocuments               ClientDocument[]
+  stockTransactions             StockTransaction[]
+  inventoryAudits               InventoryAudit[]
+  notificationPreferences       NotificationPreference[]
+  notifications                 Notification[]
+  notificationAudits            NotificationAudit[]
+  globalAuditLogs               GlobalAuditLog[]
+  auditEvents                   AuditEvent[]
+  createdWorkflows              Workflow[]               @relation("WorkflowCreator")
+  approvalFlows                 ApprovalFlow[]           @relation("ApprovalFlowCreator")
+  approvalRequests              ApprovalRequest[]        @relation("ApprovalRequester")
+  approvalHistories             ApprovalHistory[]
+  createdReportTemplates        ReportTemplate[]         @relation("ReportTemplateCreator")
+  reportExecutions              ReportExecution[]        @relation("ReportExecutionRequester")
+  notificationQueues            NotificationQueue[]
+  apiKeys                       ApiKey[]                 @relation("ApiKeyCreator")
+  webhooks                      Webhook[]                @relation("WebhookCreator")
+  managedBranches               Branch[]                 @relation("BranchManager")
+  branchUsers                   BranchUser[]
+  createdPurchaseOrders         PurchaseOrder[]          @relation("PurchaseOrderCreator")
+  createdInventoryTx            InventoryTransaction[]   @relation("InventoryTransactionCreator")
+  businessInsights              BusinessInsight[]
+  createdJournalEntries         JournalEntry[]           @relation("JournalEntryCreator")
+  approvedJournalEntries        JournalEntry[]           @relation("JournalEntryApprover")
+  createdCustomers              Customer[]               @relation("CustomerCreator")
+  createdLeads                  Lead[]                   @relation("LeadCreator")
+  createdLeadActivities         LeadActivity[]           @relation("LeadActivityCreator")
+  createdOpportunities          Opportunity[]            @relation("OpportunityCreator")
+  createdOppActivities          OpportunityActivity[]    @relation("OpportunityActivityCreator")
+  createdQuotations             Quotation[]              @relation("QuotationCreator")
+  createdSalesOrders            SalesOrder[]             @relation("SalesOrderCreator")
+  createdDeliveryOrders         DeliveryOrder[]          @relation("DeliveryOrderCreator")
+  createdCustomerReturns        CustomerReturn[]         @relation("CustomerReturnCreator")
+  createdCreditHistories        CustomerCreditHistory[]  @relation("CreditHistoryCreator")
+  createdCustomerPayments       CustomerPayment[]        @relation("CustomerPaymentCreator")
+  salesCommissions              SalesCommission[]        @relation("CommissionSalesperson")
+  createdSuppliers              Supplier[]               @relation("SupplierCreator")
+  purchaseRequisitionsRequested PurchaseRequisition[]    @relation("PurchaseRequisitionRequestedBy")
+  purchaseRequisitionsApproved  PurchaseRequisition[]    @relation("PurchaseRequisitionApprovedBy")
 }
 
 model Session {
@@ -328,11 +330,10 @@ model Employee {
   inventoryAdjustmentsApproved InventoryAdjustment[] @relation("AdjustmentApprovedBy")
   cycleCountsCreated           CycleCount[]          @relation("CycleCountCreatedBy")
   cycleCountsApproved          CycleCount[]          @relation("CycleCountApprovedBy")
-  purchaseRequestsRequested    PurchaseRequest[]     @relation("PurchaseRequestedBy")
-  purchaseRequestsApproved     PurchaseRequest[]     @relation("PurchaseRequestApprovedBy")
-  pickingTasksAssigned         PickingTask[]         @relation("PickingTaskAssignedTo")
-  packingTasksPacked           PackingTask[]         @relation("PackingTaskPackedBy")
-  ownedOpportunities           Opportunity[]         @relation("OpportunityOwner")
+
+  pickingTasksAssigned PickingTask[] @relation("PickingTaskAssignedTo")
+  packingTasksPacked   PackingTask[] @relation("PackingTaskPackedBy")
+  ownedOpportunities   Opportunity[] @relation("OpportunityOwner")
 
   @@index([companyId])
 }
@@ -1503,7 +1504,7 @@ model Company {
   cycleCounts              CycleCount[]
   inventoryValuationLayers InventoryValuationLayer[]
   reorderPolicies          ReorderPolicy[]
-  purchaseRequests         PurchaseRequest[]
+  purchaseRequisitions     PurchaseRequisition[]
   pickingTasks             PickingTask[]
   packingTasks             PackingTask[]
 
@@ -1594,7 +1595,8 @@ model Department {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  employees Employee[] @relation("EmployeeDepartment")
+  employees            Employee[]            @relation("EmployeeDepartment")
+  purchaseRequisitions PurchaseRequisition[]
 
   @@unique([companyId, name])
   @@unique([companyId, code])
@@ -1882,7 +1884,7 @@ model Product {
   cycleCountLines          CycleCountLine[]
   inventoryValuationLayers InventoryValuationLayer[]
   reorderPolicies          ReorderPolicy[]
-  purchaseRequestLines     PurchaseRequestLine[]
+  purchaseRequisitionLines PurchaseRequisitionLine[]
   pickingTaskLines         PickingTaskLine[]
   quotationLines           QuotationLine[]
   salesOrderLines          SalesOrderLine[]
@@ -1935,7 +1937,7 @@ model Warehouse {
   cycleCountLines          CycleCountLine[]          @relation("CycleCountLineWarehouse")
   valuationLayers          InventoryValuationLayer[] @relation("ValuationWarehouse")
   reorderPolicies          ReorderPolicy[]           @relation("ReorderPolicyWarehouse")
-  purchaseRequests         PurchaseRequest[]         @relation("PurchaseRequestWarehouse")
+  purchaseRequisitionLines PurchaseRequisitionLine[] @relation("PurchaseRequisitionWarehouse")
   pickingTasks             PickingTask[]             @relation("PickingTaskWarehouse")
   packingTasks             PackingTask[]             @relation("PackingTaskWarehouse")
   quotationLines           QuotationLine[]           @relation("QuotationLineWarehouse")
@@ -2014,10 +2016,10 @@ model Supplier {
   documents      SupplierDocument[]
   communications SupplierCommunicationLog[]
 
-  purchaseOrders       PurchaseOrder[]
-  reorderPolicies      ReorderPolicy[]       @relation("PreferredSupplier")
-  purchaseRequestLines PurchaseRequestLine[] @relation("PurchaseRequestLineSupplier")
-  goodsReceipts        GoodsReceipt[]
+  purchaseOrders  PurchaseOrder[]
+  reorderPolicies ReorderPolicy[] @relation("PreferredSupplier")
+
+  goodsReceipts GoodsReceipt[]
 
   @@unique([companyId, supplierCode])
   @@index([companyId])
@@ -3505,25 +3507,25 @@ model InventoryValuationLayer {
 }
 
 model ReorderPolicy {
-  id                          String    @id @default(uuid())
-  companyId                   String
-  company                     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  productId                   String
-  product                     Product   @relation(fields: [productId], references: [id])
-  warehouseId                 String
-  warehouse                   Warehouse @relation("ReorderPolicyWarehouse", fields: [warehouseId], references: [id])
-  minimumQuantity             Decimal
-  maximumQuantity             Decimal
-  reorderPoint                Decimal
-  reorderQuantity             Decimal
-  safetyStock                 Decimal
-  leadTimeDays                Int
-  preferredSupplierId         String?
-  preferredSupplier           Supplier? @relation("PreferredSupplier", fields: [preferredSupplierId], references: [id])
-  autoGeneratePurchaseRequest Boolean   @default(false)
-  isActive                    Boolean   @default(true)
-  createdAt                   DateTime  @default(now())
-  updatedAt                   DateTime  @updatedAt
+  id                              String    @id @default(uuid())
+  companyId                       String
+  company                         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  productId                       String
+  product                         Product   @relation(fields: [productId], references: [id])
+  warehouseId                     String
+  warehouse                       Warehouse @relation("ReorderPolicyWarehouse", fields: [warehouseId], references: [id])
+  minimumQuantity                 Decimal
+  maximumQuantity                 Decimal
+  reorderPoint                    Decimal
+  reorderQuantity                 Decimal
+  safetyStock                     Decimal
+  leadTimeDays                    Int
+  preferredSupplierId             String?
+  preferredSupplier               Supplier? @relation("PreferredSupplier", fields: [preferredSupplierId], references: [id])
+  autoGeneratePurchaseRequisition Boolean   @default(false)
+  isActive                        Boolean   @default(true)
+  createdAt                       DateTime  @default(now())
+  updatedAt                       DateTime  @updatedAt
 
   @@unique([companyId, productId, warehouseId])
   @@index([companyId])
@@ -3531,44 +3533,77 @@ model ReorderPolicy {
   @@index([warehouseId])
 }
 
-model PurchaseRequest {
-  id            String                @id @default(uuid())
-  companyId     String
-  company       Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  requestNumber String
-  warehouseId   String
-  warehouse     Warehouse             @relation("PurchaseRequestWarehouse", fields: [warehouseId], references: [id])
-  requestedById String
-  requestedBy   Employee              @relation("PurchaseRequestedBy", fields: [requestedById], references: [id])
-  approvedById  String?
-  approvedBy    Employee?             @relation("PurchaseRequestApprovedBy", fields: [approvedById], references: [id])
-  status        String                @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, CONVERTED_TO_PO, REJECTED, CANCELLED
-  requestDate   DateTime              @default(now())
-  remarks       String?
-  lines         PurchaseRequestLine[]
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-
-  @@unique([companyId, requestNumber])
-  @@index([companyId])
-  @@index([warehouseId])
+enum PurchaseRequisitionStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+  CONVERTED
 }
 
-model PurchaseRequestLine {
-  id                  String          @id @default(uuid())
-  purchaseRequestId   String
-  purchaseRequest     PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
-  productId           String
-  product             Product         @relation(fields: [productId], references: [id])
-  requiredQuantity    Decimal
-  recommendedQuantity Decimal
-  supplierId          String?
-  supplier            Supplier?       @relation("PurchaseRequestLineSupplier", fields: [supplierId], references: [id])
-  estimatedUnitCost   Decimal?
-  remarks             String?
+enum PurchaseRequisitionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
 
-  @@index([purchaseRequestId])
+model PurchaseRequisition {
+  id                String   @id @default(uuid())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  requisitionNumber String
+  requestDate       DateTime @default(now())
+
+  requestedById String?
+  requestedBy   User?   @relation("PurchaseRequisitionRequestedBy", fields: [requestedById], references: [id])
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  status   PurchaseRequisitionStatus   @default(DRAFT)
+  priority PurchaseRequisitionPriority @default(MEDIUM)
+
+  requiredDate DateTime?
+  remarks      String?
+
+  approvedById String?
+  approvedBy   User?     @relation("PurchaseRequisitionApprovedBy", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  lines     PurchaseRequisitionLine[]
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+
+  @@unique([companyId, requisitionNumber])
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model PurchaseRequisitionLine {
+  id                    String              @id @default(uuid())
+  purchaseRequisitionId String
+  purchaseRequisition   PurchaseRequisition @relation(fields: [purchaseRequisitionId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  description   String
+  quantity      Decimal
+  uom           String
+  estimatedCost Decimal?
+
+  warehouseId String?
+  warehouse   Warehouse? @relation("PurchaseRequisitionWarehouse", fields: [warehouseId], references: [id])
+
+  remarks String?
+
+  @@index([purchaseRequisitionId])
   @@index([productId])
+  @@index([warehouseId])
 }
 
 model PickingTask {

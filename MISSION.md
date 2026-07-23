@@ -37,8 +37,10 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 ## Production Roadmap (Version 1.4)
 - **Version 1.4 — Phase 1 (Enterprise Supplier Master):**
   - **Completed**: Implemented comprehensive `Supplier` models including categories, addresses, contacts, bank accounts, and documents. Built `supplierService.ts` to manage vendor lifecycle, statuses, and strict companyId isolation.
-- **Version 1.4 — Phase 2 (Purchase Requisition):**
-  - **Not Started**: Implement internal employee demand generation for procurement.
+- **Version 1.4 — Phase 2 (Enterprise Purchase Requisition):**
+  - **Completed**: Fully replaced legacy `PurchaseRequest` models with `PurchaseRequisition` and `PurchaseRequisitionLine`. Built robust status workflow, approval tracking, and integration scaffolding for future budget controls and RFQ routing.
+- **Version 1.4 — Phase 3 (Request for Quotation - RFQ):**
+  - **Not Started**: Implement competitive vendor bidding engine based on approved Requisitions.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

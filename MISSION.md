@@ -74,7 +74,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.5 — Phase 8 (Enterprise Performance Management):**
   - **Completed**: Authored complete Performance Evaluation Engine (`PerformanceCycle`, `PerformanceGoal`, `PerformanceReview`, `PerformanceScore`, `PerformanceFeedback`, `PerformanceImprovementPlan`). Built robust 360-review workflow logic in `performanceService.ts` independent from Payroll logic, but prepared for future bonus ingestion. Validated schemas.
 - **Version 1.5 — Phase 9 (Enterprise Training & Development):**
-  - **Completed**: Authored comprehensive Training Engine (`TrainingProgram`, `TrainingSession`, `TrainingEnrollment`, `TrainingAttendance`, `TrainingAssessment`, `TrainingCertificate`). Built strict capacity-validating workflow in `trainingService.ts`, decoupling certification from core Performance logic while preserving historical linkage. Validated schemas. Awaiting approval for Phase 10.
+  - **Completed**: Authored comprehensive Training Engine (`TrainingProgram`, `TrainingSession`, `TrainingEnrollment`, `TrainingAttendance`, `TrainingAssessment`, `TrainingCertificate`). Built strict capacity-validating workflow in `trainingService.ts`, decoupling certification from core Performance logic while preserving historical linkage. Validated schemas.
+- **Version 1.5 — Phase 10 (Enterprise HR Analytics):**
+  - **Completed**: Authored `hrAnalyticsService.ts` exposing 20 discrete methods for Dashboards, Statistical Analysis, and Financial Summaries. Established strict isolation by querying Prisma directly rather than relying on mutable operational endpoints. Enforced `companyId` data boundaries on all KPI aggregations. Awaiting approval for Phase 11.
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
 - **Background Worker Shift**: V1.3 pivots heavily toward asynchronous event-driven design (Background Queues) to handle heavy tasks like notifications, report generation, and LLM processing without blocking the API.
@@ -83,7 +85,7 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Double-Entry Stock Ledger:** We explicitly rejected adding a scalar `currentStock` integer to the Product table. Instead, stock is calculated dynamically from the `StockTransaction` ledger to prevent data drift and race conditions.
 - **Zero RBAC/Company Breach:** Adhered strictly to `VIEW_PRODUCTS`, `MANAGE_STOCK`, `VIEW_ASSETS`, `MANAGE_ASSETS` and isolated every query by `{ where: { companyId } }`.
 - **Core Goal:** Build the definitive B2B SaaS ERP with strict accounting, inventory, supply chain, and comprehensive HR & Payroll controls.
-- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 9 (Enterprise Training & Development).
+- **Current Status:** Version 1.4 (Enterprise Procurement & Supplier Management) is officially Frozen. Currently in Version 1.5 Phase 10 (Enterprise HR Analytics).
 
 ## Production Roadmap
 1. **Version 1.3 Phase 1 (Core Engines):** Deploy background workers for Notifications, Approvals, and Webhook dispatching.

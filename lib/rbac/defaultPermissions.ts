@@ -111,6 +111,9 @@ export const DefaultPermissions = [
   { action: "PURCHASEREQUEST_CREATE", moduleKey: "PROCUREMENT" },
   { action: "PURCHASEREQUEST_APPROVE", moduleKey: "PROCUREMENT" },
   { action: "PURCHASEREQUEST_CONVERT", moduleKey: "PROCUREMENT" },
+  { action: "WAREHOUSE_DASHBOARD_VIEW", moduleKey: "INVENTORY" },
+  { action: "WAREHOUSE_ANALYTICS_VIEW", moduleKey: "INVENTORY" },
+  { action: "WAREHOUSE_REPORT_EXPORT", moduleKey: "INVENTORY" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

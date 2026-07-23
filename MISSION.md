@@ -14,7 +14,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.3 — Phase 3C (Enterprise Opportunity Pipeline):**
   - **Completed**: Created `Opportunity`, `OpportunityStage`, and `OpportunityActivity` models with strict enum tracking and probability mappings. Developed `opportunityService.ts` to manage pipeline transitions securely.
 - **Version 1.3 — Phase 3D (Enterprise Quotation Engine):**
-  - **Completed**: Engineered `Quotation` and `QuotationLine` models alongside `quotationService.ts`. Implemented robust header/line pricing, taxing, and discounting calculations with a comprehensive state machine (`DRAFT` to `ACCEPTED`). Ready for Phase 3E Sales Order Engine.
+  - **Completed**: Engineered `Quotation` and `QuotationLine` models alongside `quotationService.ts`. Implemented robust header/line pricing, taxing, and discounting calculations with a comprehensive state machine (`DRAFT` to `ACCEPTED`).
+- **Version 1.3 — Phase 3E (Enterprise Sales Order Engine):**
+  - **Completed**: Created `SalesOrder` and `SalesOrderLine` models to manage the confirmed customer commitment. Built `salesOrderService.ts` to handle complex pricing mirroring Quotations, and implemented strict logic to reserve inventory (`reservedQuantity`) without executing physical stock deductions or accounting ledgers. Ready for Phase 3F Delivery Order Workflow.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

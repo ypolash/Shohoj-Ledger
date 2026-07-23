@@ -40,7 +40,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 - **Version 1.4 — Phase 2 (Enterprise Purchase Requisition):**
   - **Completed**: Fully replaced legacy `PurchaseRequest` models with `PurchaseRequisition` and `PurchaseRequisitionLine`. Built robust status workflow, approval tracking, and integration scaffolding for future budget controls and RFQ routing.
 - **Version 1.4 — Phase 3 (Request for Quotation - RFQ):**
-  - **Not Started**: Implement competitive vendor bidding engine based on approved Requisitions.
+  - **Completed**: Engineered `RequestForQuotation` and `VendorQuotation` pipelines. Built `rfqService.ts` and `vendorQuotationService.ts` to manage bidding lifecycles securely.
+- **Version 1.4 — Phase 4 (Vendor Comparison & Approval):**
+  - **Not Started**: Build the algorithm to evaluate quotes and transition them to Purchase Orders.
 
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.

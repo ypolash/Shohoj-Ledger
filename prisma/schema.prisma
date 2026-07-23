@@ -65,6 +65,7 @@ model User {
   createdSuppliers              Supplier[]               @relation("SupplierCreator")
   purchaseRequisitionsRequested PurchaseRequisition[]    @relation("PurchaseRequisitionRequestedBy")
   purchaseRequisitionsApproved  PurchaseRequisition[]    @relation("PurchaseRequisitionApprovedBy")
+  createdRfqs                   RequestForQuotation[]    @relation("RfqCreator")
 }
 
 model Session {
@@ -1509,6 +1510,8 @@ model Company {
   packingTasks             PackingTask[]
 
   // Phase 3A Customer Master
+  rfqs              RequestForQuotation[]
+  vendorQuotations  VendorQuotation[]
   customerGroups    CustomerGroup[]
   customers         Customer[]
   customerAddresses CustomerAddress[]
@@ -1890,6 +1893,8 @@ model Product {
   salesOrderLines          SalesOrderLine[]
   deliveryOrderLines       DeliveryOrderLine[]
   customerReturnLines      CustomerReturnLine[]
+  rfqLines                 RequestForQuotationLine[]
+  vendorQuotationLines     VendorQuotationLine[]
 
   @@unique([companyId, productCode])
   @@unique([companyId, sku])
@@ -2019,7 +2024,8 @@ model Supplier {
   purchaseOrders  PurchaseOrder[]
   reorderPolicies ReorderPolicy[] @relation("PreferredSupplier")
 
-  goodsReceipts GoodsReceipt[]
+  goodsReceipts    GoodsReceipt[]
+  vendorQuotations VendorQuotation[]
 
   @@unique([companyId, supplierCode])
   @@index([companyId])
@@ -3574,6 +3580,7 @@ model PurchaseRequisition {
   approvedAt   DateTime?
 
   lines     PurchaseRequisitionLine[]
+  rfqs      RequestForQuotation[]
   createdAt DateTime                  @default(now())
   updatedAt DateTime                  @updatedAt
 
@@ -3599,11 +3606,138 @@ model PurchaseRequisitionLine {
   warehouseId String?
   warehouse   Warehouse? @relation("PurchaseRequisitionWarehouse", fields: [warehouseId], references: [id])
 
-  remarks String?
+  remarks  String?
+  rfqLines RequestForQuotationLine[]
 
   @@index([purchaseRequisitionId])
   @@index([productId])
   @@index([warehouseId])
+}
+
+enum RequestForQuotationStatus {
+  DRAFT
+  ISSUED
+  CLOSED
+  CANCELLED
+}
+
+enum VendorQuotationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model RequestForQuotation {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  rfqNumber String
+
+  purchaseRequisitionId String?
+  purchaseRequisition   PurchaseRequisition? @relation(fields: [purchaseRequisitionId], references: [id])
+
+  status      RequestForQuotationStatus @default(DRAFT)
+  issueDate   DateTime?
+  closingDate DateTime?
+  remarks     String?
+
+  createdById String?
+  createdBy   User?   @relation("RfqCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines            RequestForQuotationLine[]
+  vendorQuotations VendorQuotation[]
+
+  @@unique([companyId, rfqNumber])
+  @@index([companyId])
+  @@index([purchaseRequisitionId])
+  @@index([status])
+}
+
+model RequestForQuotationLine {
+  id                    String              @id @default(uuid())
+  requestForQuotationId String
+  requestForQuotation   RequestForQuotation @relation(fields: [requestForQuotationId], references: [id], onDelete: Cascade)
+
+  purchaseRequisitionLineId String?
+  purchaseRequisitionLine   PurchaseRequisitionLine? @relation(fields: [purchaseRequisitionLineId], references: [id])
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  description String
+  quantity    Decimal
+  uom         String
+  remarks     String?
+
+  vendorQuotationLines VendorQuotationLine[]
+
+  @@index([requestForQuotationId])
+  @@index([productId])
+}
+
+model VendorQuotation {
+  id        String  @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  requestForQuotationId String?
+  requestForQuotation   RequestForQuotation? @relation(fields: [requestForQuotationId], references: [id])
+
+  quotationDate DateTime @default(now())
+  currency      String   @default("USD")
+
+  subtotal Decimal @default(0)
+  discount Decimal @default(0)
+  tax      Decimal @default(0)
+  shipping Decimal @default(0)
+  total    Decimal @default(0)
+
+  leadTime     String?
+  paymentTerms String?
+  validUntil   DateTime?
+
+  status  VendorQuotationStatus @default(DRAFT)
+  remarks String?
+
+  lines VendorQuotationLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([supplierId])
+  @@index([requestForQuotationId])
+  @@index([status])
+}
+
+model VendorQuotationLine {
+  id                String          @id @default(uuid())
+  vendorQuotationId String
+  vendorQuotation   VendorQuotation @relation(fields: [vendorQuotationId], references: [id], onDelete: Cascade)
+
+  requestForQuotationLineId String?
+  requestForQuotationLine   RequestForQuotationLine? @relation(fields: [requestForQuotationLineId], references: [id])
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  quantity  Decimal
+  unitPrice Decimal
+  discount  Decimal @default(0)
+  tax       Decimal @default(0)
+  lineTotal Decimal @default(0)
+
+  @@index([vendorQuotationId])
+  @@index([productId])
 }
 
 model PickingTask {

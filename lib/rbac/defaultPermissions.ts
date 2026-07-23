@@ -26,6 +26,13 @@ export const DefaultPermissions = [
 
   { action: "FINANCE_VIEW", moduleKey: "ACCOUNTING" },
   { action: "FINANCE_MANAGE", moduleKey: "ACCOUNTING" },
+  { action: "ACCOUNT_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "ACCOUNT_CREATE", moduleKey: "ACCOUNTING" },
+  { action: "ACCOUNT_EDIT", moduleKey: "ACCOUNTING" },
+  { action: "ACCOUNT_DELETE", moduleKey: "ACCOUNTING" },
+  { action: "JOURNAL_VIEW", moduleKey: "ACCOUNTING" },
+  { action: "JOURNAL_MANAGE", moduleKey: "ACCOUNTING" },
+  { action: "FISCALYEAR_MANAGE", moduleKey: "ACCOUNTING" },
 
   { action: "COMPANY_SETTINGS", moduleKey: "CORE" },
   { action: "MODULE_MANAGE", moduleKey: "CORE" },

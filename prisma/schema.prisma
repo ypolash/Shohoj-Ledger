@@ -787,6 +787,12 @@ model Company {
   branches                 Branch[]
   inventoryTransactions    InventoryTransaction[]
   stockTransfers           StockTransfer[]
+
+  // Phase 1A Accounting Foundation
+  chartOfAccounts   ChartOfAccount[]
+  fiscalYears       FiscalYear[]
+  accountingPeriods AccountingPeriod[]
+  journals          Journal[]
 }
 
 model CompanySetting {
@@ -1327,7 +1333,7 @@ model NotificationTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  queues    NotificationQueue[]
+  queues NotificationQueue[]
 
   @@unique([companyId, name])
   @@index([companyId])
@@ -1941,4 +1947,90 @@ model ForecastRecord {
   @@index([companyId])
   @@index([metricKey])
   @@index([forecastPeriod])
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum JournalType {
+  GENERAL
+  SALES
+  PURCHASE
+  CASH
+  BANK
+  PAYROLL
+}
+
+model ChartOfAccount {
+  id          String           @id @default(uuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  accountCode String
+  accountName String
+  accountType AccountType
+  parentId    String?
+  parent      ChartOfAccount?  @relation("ChartOfAccountParent", fields: [parentId], references: [id])
+  children    ChartOfAccount[] @relation("ChartOfAccountParent")
+  isSystem    Boolean          @default(false)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([companyId, accountCode])
+  @@index([companyId])
+  @@index([accountCode])
+}
+
+model FiscalYear {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  periods AccountingPeriod[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@index([isClosed])
+}
+
+model AccountingPeriod {
+  id           String     @id @default(uuid())
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fiscalYearId String
+  fiscalYear   FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  isClosed     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  @@unique([companyId, fiscalYearId, name])
+  @@index([companyId])
+  @@index([fiscalYearId])
+}
+
+model Journal {
+  id          String      @id @default(uuid())
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code        String
+  name        String
+  journalType JournalType
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([code])
 }

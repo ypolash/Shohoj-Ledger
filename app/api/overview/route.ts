@@ -1,62 +1,83 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
   try {
-    // 1. Calculate Reserve Balance
-    const reserveTransactions = await prisma.reserveTransaction.findMany();
+    const session = await getSession();
+    if (!session || !session.user || !session.user.companyId) {
+      return NextResponse.json({ error: "Unauthorized or missing company context" }, { status: 401 });
+    }
+    
+    const companyId = session.user.companyId;
+
+    // 1. Optimize sequential awaits using Promise.all
+    const [
+      reserveTransactions,
+      incomes,
+      expenses,
+      loans,
+      advances,
+      allIncomes,
+      allExpenses,
+      recentIncomes,
+      recentExpenses
+    ] = await Promise.all([
+      prisma.reserveTransaction.findMany({ where: { companyId } }),
+      prisma.income.aggregate({
+        _sum: { received: true },
+        where: { companyId, paymentStatus: { in: ["PAID", "PARTIAL"] } }
+      }),
+      prisma.expense.aggregate({
+        _sum: { amount: true },
+        where: { companyId, approvalStatus: "APPROVED" }
+      }),
+      prisma.memberLoan.aggregate({
+        _sum: { remainingAmount: true },
+        where: { companyId, status: { in: ["ACTIVE", "OVERDUE"] } }
+      }),
+      prisma.advance.aggregate({
+        _sum: { remainingAmount: true },
+        where: { companyId, status: "ACTIVE" }
+      }),
+      prisma.income.findMany({
+        where: { companyId, paymentStatus: { in: ["PAID", "PARTIAL"] } },
+        select: { createdAt: true, received: true }
+      }),
+      prisma.expense.findMany({
+        where: { companyId, approvalStatus: "APPROVED" },
+        select: { createdAt: true, amount: true }
+      }),
+      prisma.income.findMany({
+        where: { companyId },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, category: true, received: true, createdAt: true, source: true }
+      }),
+      prisma.expense.findMany({
+        where: { companyId },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, category: true, amount: true, createdAt: true, paymentMethod: true }
+      })
+    ]);
+
     const reserveBalance = reserveTransactions.reduce((acc, tx) => {
       if (tx.type === "DEPOSIT") return acc + Number(tx.amount);
       if (tx.type === "WITHDRAWAL") return acc - Number(tx.amount);
       return acc;
     }, 0);
 
-    // 2. Calculate Total Incomes (Paid/Partial)
-    const incomes = await prisma.income.aggregate({
-      _sum: { received: true },
-      where: { paymentStatus: { in: ["PAID", "PARTIAL"] } }
-    });
     const totalIncome = Number(incomes._sum.received || 0);
-
-    // 3. Calculate Total Expenses (Approved)
-    const expenses = await prisma.expense.aggregate({
-      _sum: { amount: true },
-      where: { approvalStatus: "APPROVED" }
-    });
     const totalExpenses = Number(expenses._sum.amount || 0);
-
-    // 4. Calculate Net Cash Flow
     const netCashFlow = totalIncome - totalExpenses;
-
-    // 5. Outstanding Loans
-    const loans = await prisma.memberLoan.aggregate({
-      _sum: { remainingAmount: true },
-      where: { status: { in: ["ACTIVE", "OVERDUE"] } }
-    });
     const outstandingLoans = Number(loans._sum.remainingAmount || 0);
-
-    // 6. Active Advances
-    const advances = await prisma.advance.aggregate({
-      _sum: { remainingAmount: true },
-      where: { status: "ACTIVE" }
-    });
     const activeAdvances = Number(advances._sum.remainingAmount || 0);
-
-    // 7. Calculate Monthly Data (Last 6 Months)
-    const allIncomes = await prisma.income.findMany({
-      where: { paymentStatus: { in: ["PAID", "PARTIAL"] } },
-      select: { createdAt: true, received: true }
-    });
-    
-    const allExpenses = await prisma.expense.findMany({
-      where: { approvalStatus: "APPROVED" },
-      select: { createdAt: true, amount: true }
-    });
 
     const monthlyData = [];
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
     const today = new Date();
+    
     for (let i = 5; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const m = d.getMonth();
@@ -79,18 +100,6 @@ export async function GET() {
         netCash: mIncome - mExpense
       });
     }
-
-    // 8. Recent Transactions
-    const recentIncomes = await prisma.income.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, category: true, received: true, createdAt: true, source: true }
-    });
-    const recentExpenses = await prisma.expense.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, category: true, amount: true, createdAt: true, paymentMethod: true }
-    });
 
     const recentTransactions = [
       ...recentIncomes.map(i => ({ id: i.id, type: 'INCOME', category: i.category, amount: Number(i.received), date: i.createdAt, subtitle: i.source })),

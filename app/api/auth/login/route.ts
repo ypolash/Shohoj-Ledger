@@ -49,19 +49,34 @@ export async function POST(req: Request) {
         }
 
         if (isMatch) {
+          console.log("✓ Authentication: Password verified (User)");
           // Password matches, login as ADMIN
           const context = await getCompanyContext(user.id, "ADMIN");
+          console.log("✓ Company Context resolved:", context.companyId ? "Yes" : "No");
+          
+          if (context.roleId) {
+            console.log("✓ Permissions (Role) loaded:", context.dbRoleName);
+          } else if (user.platformRole === "SUPER_ADMIN" || context.dbRoleName === "Owner") {
+            console.log("✓ Permissions Bypass granted for:", context.dbRoleName || user.platformRole);
+          } else {
+            console.log("✗ Permission Missing: No roleId assigned");
+          }
+
           const payload = {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: "ADMIN",
+            loginType: "ADMIN",
+            role: context.dbRoleName || "Member", // Use actual role from DB for RBAC
             ...context,
           };
+          
           await createSession(payload);
+          console.log("✓ Session/JWT Created");
+
           return NextResponse.json({
             success: true,
-            role: "ADMIN",
+            role: context.dbRoleName || "Member",
             user: payload,
           });
         }
@@ -89,25 +104,39 @@ export async function POST(req: Request) {
       }
 
       if (isMatch) {
+        console.log("✓ Authentication: Password verified (Employee)");
         // Password matches, login as EMPLOYEE
         const context = await getCompanyContext(employee.id, "EMPLOYEE");
+        console.log("✓ Company Context resolved:", context.companyId ? "Yes" : "No");
+
+        if (context.roleId) {
+          console.log("✓ Permissions (Role) loaded:", context.dbRoleName);
+        } else {
+          console.log("✗ Permission Missing: No roleId assigned");
+        }
+
         const payload = {
           id: employee.id,
           employeeId: employee.employeeId,
           email: employee.email,
           name: `${employee.firstName} ${employee.lastName}`,
-          role: "EMPLOYEE",
+          loginType: "EMPLOYEE",
+          role: context.dbRoleName || "Employee", // Use actual role from DB for RBAC
           ...context,
         };
+        
         await createSession(payload);
+        console.log("✓ Session/JWT Created");
+
         return NextResponse.json({
           success: true,
-          role: "EMPLOYEE",
+          role: context.dbRoleName || "Employee",
           user: payload,
         });
       }
     }
 
+    console.log("✗ Authentication Failed: Invalid credentials");
     return NextResponse.json(
       { success: false, message: "Invalid credentials" },
       { status: 401 }

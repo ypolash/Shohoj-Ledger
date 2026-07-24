@@ -81,6 +81,8 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
   - **Completed**: Executed complete structural audit of the Hire-to-Retire lifecycle. Verified database relations, transaction safety, accounting isolation, and multi-tenant logic. APPROVED WITH RECOMMENDATIONS. HR Architecture is frozen.
 - **Version 1.5 — Soft Architecture Freeze:**
   - **Completed**: The entire HR & Payroll suite (Organization, Employee Master, ATS, Attendance, Leave, Payroll, Loans, Performance, Training, Analytics) is officially under a soft freeze. No schema breaking changes or business workflow redesigns permitted. Future iterations (V1.6+) must reuse these boundaries.
+- **Version 1.6 — Sprint 1 (Company Onboarding Stabilization):**
+  - **Completed & Approved**: Investigated and resolved the critical P2003 foreign key constraint bug in the signup transaction. Refactored `companySetup.ts` to implement `Promise.all` instead of `createMany` for roles, enforced proper sequential execution, and integrated missing `Permission Assignment` and `Owner Membership` steps. Validated the entire flow.
 ## Goal Pivots & Architectural Decisions
 - **Version 1.3 Dark Release Strategy:** Continuing the successful V1.2 strategy. All new UI elements must be feature-flagged or hidden behind `/v2/` additive routes until tested.
 - **Background Worker Shift**: V1.3 pivots heavily toward asynchronous event-driven design (Background Queues) to handle heavy tasks like notifications, report generation, and LLM processing without blocking the API.

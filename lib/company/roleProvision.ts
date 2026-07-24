@@ -26,11 +26,10 @@ export async function provisionDefaultRoles(
     isDefault: true
   }));
 
-  // Create roles
-  await tx.role.createMany({
-    data: roleData,
-    skipDuplicates: true
-  });
+  // Create roles using Promise.all to avoid createMany foreign key transaction bugs in Postgres
+  await Promise.all(
+    roleData.map(data => tx.role.create({ data }))
+  );
 
   // Fetch and return the Owner role specifically so it can be assigned
   const ownerRole = await tx.role.findFirst({

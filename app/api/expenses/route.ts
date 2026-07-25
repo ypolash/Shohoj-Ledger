@@ -79,7 +79,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
 
-    const oldExpense = await prisma.expense.findUnique({
+    const oldExpense = await prisma.expense.findFirst({
       where: { ...(await withCompany()), id }
     });
 
@@ -88,7 +88,7 @@ export async function PATCH(request: Request) {
     }
 
     const updatedExpense = await prisma.expense.update({
-      where: { ...(await withCompany()), id },
+      where: { id },
       data: { approvalStatus }
     });
 

@@ -112,8 +112,16 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Income ID is required" }, { status: 400 });
     }
 
-    const income = await prisma.income.delete({
+    const income = await prisma.income.findFirst({
       where: { ...(await withCompany()), id }
+    });
+
+    if (!income) {
+      return NextResponse.json({ error: "Income not found" }, { status: 404 });
+    }
+
+    await prisma.income.delete({
+      where: { id }
     });
 
     // Invalidate Settlement for this month
@@ -153,8 +161,11 @@ export async function PATCH(request: Request) {
     let receivedDiff = 0;
 
     if (amount !== undefined && received !== undefined) {
-      const oldIncome = await prisma.income.findUnique({ where: { ...(await withCompany()), id } });
-      const oldReceived = oldIncome ? Number(oldIncome.received) : 0;
+      const oldIncome = await prisma.income.findFirst({ where: { ...(await withCompany()), id } });
+      if (!oldIncome) {
+        return NextResponse.json({ error: "Income not found" }, { status: 404 });
+      }
+      const oldReceived = Number(oldIncome.received);
       
       const totalAmount = parseFloat(amount);
       const receivedAmount = parseFloat(received);
@@ -173,8 +184,15 @@ export async function PATCH(request: Request) {
       updateData.paymentStatus = paymentStatus;
     }
 
-    const income = await prisma.income.update({
-      where: { ...(await withCompany()), id },
+    const income = await prisma.income.findFirst({
+      where: { ...(await withCompany()), id }
+    });
+    if (!income) {
+      return NextResponse.json({ error: "Income not found" }, { status: 404 });
+    }
+
+    const updatedIncome = await prisma.income.update({
+      where: { id },
       data: updateData
     });
 
@@ -183,7 +201,7 @@ export async function PATCH(request: Request) {
       await createLedgerEntry({
         companyId: companyIdForGuard,
         module: 'Income',
-        referenceId: income.id,
+        referenceId: updatedIncome.id,
         amount: receivedDiff,
         isDebit: true,
         accountType: 'Bank',
@@ -196,7 +214,7 @@ export async function PATCH(request: Request) {
        await createLedgerEntry({
          companyId: companyIdForGuard,
          module: 'Income',
-         referenceId: income.id,
+         referenceId: updatedIncome.id,
          amount: Math.abs(receivedDiff),
          isDebit: false, // Credit Bank (Asset decreases)
          accountType: 'Bank',
@@ -212,7 +230,7 @@ export async function PATCH(request: Request) {
     const period = `${monthName} ${yearName}`;
     await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
 
-    return NextResponse.json(income);
+    return NextResponse.json(updatedIncome);
   } catch (error) {
     console.error("Error updating income:", error);
     return NextResponse.json({ error: "Failed to update income" }, { status: 500 });

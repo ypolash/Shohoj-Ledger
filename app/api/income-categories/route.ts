@@ -5,8 +5,12 @@ import { prisma } from "@/lib/prisma";
 
 
 export async function GET() {
+  const companyIdForGuard = await getCompanyId();
+  if (!companyIdForGuard) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     let categories = await prisma.incomeCategory.findMany({
+      where: { ...(await withCompany()) },
       orderBy: { name: 'asc' }
     });
 
@@ -22,11 +26,12 @@ export async function GET() {
       ];
 
       await prisma.incomeCategory.createMany({
-        data: defaultCategories,
+        data: defaultCategories.map(c => ({ ...c, companyId: companyIdForGuard })),
         skipDuplicates: true
       });
 
       categories = await prisma.incomeCategory.findMany({
+        where: { ...(await withCompany()) },
         orderBy: { name: 'asc' }
       });
     }
@@ -39,6 +44,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const companyIdForGuard = await getCompanyId();
+  if (!companyIdForGuard) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const body = await req.json();
     const { name } = body;
@@ -48,7 +56,7 @@ export async function POST(req: Request) {
     }
 
     const category = await prisma.incomeCategory.create({
-      data: { name }
+      data: { name, companyId: companyIdForGuard }
     });
 
     return NextResponse.json(category, { status: 201 });
@@ -62,6 +70,9 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const companyIdForGuard = await getCompanyId();
+  if (!companyIdForGuard) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
@@ -70,8 +81,16 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
     }
 
-    await prisma.incomeCategory.delete({
+    const category = await prisma.incomeCategory.findFirst({
       where: { ...(await withCompany()), id }
+    });
+
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    await prisma.incomeCategory.delete({
+      where: { id }
     });
 
     return NextResponse.json({ success: true });

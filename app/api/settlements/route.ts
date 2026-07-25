@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     if (isNaN(month) || isNaN(year)) {
       // Just fetch all settlements
       const settlements = await prisma.settlement.findMany({
+        where: { ...(await withCompany()) },
         orderBy: { createdAt: 'desc' }
       });
       return NextResponse.json(settlements);
@@ -153,6 +154,7 @@ export async function POST(request: Request) {
 
     const settlement = await prisma.settlement.create({
       data: {
+        companyId: companyIdForGuard,
         period,
         totalIncome,
         totalExpenses,
@@ -187,7 +189,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid execution request" }, { status: 400 });
     }
 
-    const settlement = await prisma.settlement.findUnique({ where: { ...(await withCompany()), id } });
+    const settlement = await prisma.settlement.findFirst({ where: { ...(await withCompany()), id } });
     if (!settlement || settlement.status !== "PENDING") {
       return NextResponse.json({ error: "Settlement not found or already executed" }, { status: 400 });
     }
@@ -196,12 +198,13 @@ export async function PATCH(request: Request) {
     const [updatedSettlement, reserveDeposit] = await prisma.$transaction([
       // 1. Mark Settlement as Executed
       prisma.settlement.update({
-        where: { ...(await withCompany()), id },
+        where: { id },
         data: { status: "EXECUTED" }
       }),
       // 2. Auto-transfer the Company portion to the Reserve Balance
       prisma.reserveTransaction.create({
         data: {
+          companyId: companyIdForGuard,
           type: "DEPOSIT",
           amount: settlement.companyShare,
           reason: `Auto-deposit from ${settlement.period} Settlement`,
@@ -234,7 +237,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Settlement ID is required" }, { status: 400 });
     }
 
-    const settlement = await prisma.settlement.findUnique({ where: { ...(await withCompany()), id } });
+    const settlement = await prisma.settlement.findFirst({ where: { ...(await withCompany()), id } });
     if (!settlement) {
       return NextResponse.json({ error: "Settlement not found" }, { status: 404 });
     }
@@ -247,7 +250,7 @@ export async function DELETE(req: Request) {
         }
       }),
       prisma.settlement.delete({
-        where: { ...(await withCompany()), id }
+        where: { id }
       })
     ]);
 

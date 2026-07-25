@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const transactions = await prisma.reserveTransaction.findMany({
+      where: { ...(await withCompany()) },
       orderBy: { createdAt: 'desc' }
     });
 

@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const funds = await prisma.fundTransaction.findMany({
+      where: { ...(await withCompany()) },
       orderBy: { createdAt: 'desc' }
     });
 

@@ -1,0 +1,143 @@
+.topbar {
+  height: 64px;
+  background-color: var(--surface-main);
+  border-bottom: 1px solid var(--border-main);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  box-shadow: var(--shadow-sm);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  position: relative;
+}
+
+.iconButton:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.breadcrumbItem {
+  color: var(--text-muted);
+}
+
+.breadcrumbItem.active {
+  color: var(--text-main);
+  font-weight: var(--font-weight-medium);
+}
+
+.breadcrumbSeparator {
+  color: var(--gray-400);
+}
+
+.searchTrigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  width: 240px;
+  transition: border-color var(--transition-fast);
+}
+
+.searchTrigger:hover {
+  border-color: var(--border-focus);
+}
+
+.searchPlaceholder {
+  flex: 1;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.shortcutKey {
+  font-size: var(--font-size-xs);
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-main);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: var(--danger);
+  color: white;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  height: 16px;
+  min-width: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--surface-main);
+}
+
+.profileButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  margin-left: var(--space-2);
+  transition: color var(--transition-fast);
+}
+
+.profileButton:hover {
+  color: var(--primary);
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .searchTrigger {
+    display: none; /* Hide global search input on mobile topbar, move to a button if needed */
+  }
+  .breadcrumbs {
+    display: none; /* Hide breadcrumbs on small mobile to save space */
+  }
+}

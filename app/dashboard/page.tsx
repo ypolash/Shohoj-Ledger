@@ -15,6 +15,8 @@ import {
   Filler
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
 ChartJS.register(
   CategoryScale,
@@ -86,10 +88,10 @@ export default function DashboardIndex() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1F2937',
-        titleColor: '#F8FAFC',
-        bodyColor: '#c3c6d7',
-        borderColor: '#334155',
+        backgroundColor: 'var(--gray-800)',
+        titleColor: 'var(--gray-50)',
+        bodyColor: 'var(--gray-300)',
+        borderColor: 'var(--gray-700)',
         borderWidth: 1,
         padding: 12,
         displayColors: true,
@@ -99,11 +101,11 @@ export default function DashboardIndex() {
     scales: {
       x: {
         grid: { display: false, drawBorder: false },
-        ticks: { color: '#64748b', font: { family: 'Inter', size: 12 } }
+        ticks: { color: 'var(--text-muted)', font: { family: 'var(--font-sans)', size: 12 } }
       },
       y: {
-        grid: { color: '#f1f5f9', drawBorder: false, borderDash: [4, 4] },
-        ticks: { color: '#64748b', font: { family: 'Inter', size: 12 }, maxTicksLimit: 5 }
+        grid: { color: 'var(--border-light)', drawBorder: false, borderDash: [4, 4] },
+        ticks: { color: 'var(--text-muted)', font: { family: 'var(--font-sans)', size: 12 }, maxTicksLimit: 5 }
       }
     }
   };
@@ -118,15 +120,15 @@ export default function DashboardIndex() {
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, '#5B7CFA'); // Primary
-          gradient.addColorStop(1, 'rgba(91, 124, 250, 0)');
+          gradient.addColorStop(0, 'var(--primary)'); 
+          gradient.addColorStop(1, 'transparent');
           return gradient;
         },
         borderRadius: 50,
         barPercentage: 0.3,
         categoryPercentage: 0.8,
         borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
-        borderColor: '#5B7CFA'
+        borderColor: 'var(--primary)'
       },
       {
         label: 'Expenses',
@@ -134,15 +136,15 @@ export default function DashboardIndex() {
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, '#EF4444'); // Danger
-          gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+          gradient.addColorStop(0, 'var(--danger)');
+          gradient.addColorStop(1, 'transparent');
           return gradient;
         },
         borderRadius: 50,
         barPercentage: 0.3,
         categoryPercentage: 0.8,
         borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
-        borderColor: '#EF4444'
+        borderColor: 'var(--danger)'
       }
     ]
   };
@@ -153,12 +155,12 @@ export default function DashboardIndex() {
       {
         label: 'Net Cash',
         data: data?.monthlyData.map(d => d.netCash) || [],
-        borderColor: '#10B981', // Success/Secondary
+        borderColor: 'var(--success)', 
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-          gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+          gradient.addColorStop(0, 'var(--success-glow)');
+          gradient.addColorStop(1, 'transparent');
           return gradient;
         },
         borderWidth: 3,
@@ -169,12 +171,12 @@ export default function DashboardIndex() {
       {
         label: 'Expenses',
         data: data?.monthlyData.map(d => d.expense) || [],
-        borderColor: '#EF4444', // Danger
+        borderColor: 'var(--danger)', 
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
-          gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+          gradient.addColorStop(0, 'var(--danger-glow)');
+          gradient.addColorStop(1, 'transparent');
           return gradient;
         },
         borderWidth: 3,
@@ -186,19 +188,19 @@ export default function DashboardIndex() {
   };
 
   if (loading || !data) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading metrics...</div>;
+    return (
+      <PageContainer>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading metrics...</div>
+      </PageContainer>
+    );
   }
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
-      
-      {/* Dashboard Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif', color: 'var(--text)' }}>Shohoj Ledger - Premium Dashboard</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>A premium, soft-UI financial dashboard</p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader 
+        title="Enterprise Dashboard" 
+        description="A premium, structured overview of your company's financials."
+      />
 
       {/* Bento Grid Summary Cards */}
       <div style={{ 
@@ -351,6 +353,6 @@ export default function DashboardIndex() {
         </table>
       </div>
 
-    </div>
+    </PageContainer>
   );
 }

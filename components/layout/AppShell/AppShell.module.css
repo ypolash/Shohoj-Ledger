@@ -1,0 +1,48 @@
+.appShell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--bg-main);
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Important for preventing flex children from overflowing */
+  transition: margin-left var(--transition-base);
+  margin-left: 280px; /* Default sidebar width */
+}
+
+/* When sidebar is collapsed on desktop */
+.mainWrapperExpanded {
+  margin-left: 80px;
+}
+
+.mainContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-modal-backdrop);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Mobile Overrides */
+@media (max-width: 1023px) {
+  .mainWrapper {
+    margin-left: 0;
+  }
+  .mainWrapperExpanded {
+    margin-left: 0;
+  }
+}

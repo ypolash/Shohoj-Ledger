@@ -244,8 +244,10 @@ export async function deleteSalesOrder(companyId: string, id: string) {
  * Approves a Sales Order.
  */
 export async function approveSalesOrder(companyId: string, id: string, userId: string) {
-  const salesOrder = await prisma.salesOrder.update({
-    where: { id, companyId },
+  const existing = await prisma.salesOrder.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const salesOrder = await prisma.salesOrder.update({
+      where: { id },
     data: { 
       status: SalesOrderStatus.APPROVED,
       approvedById: userId,
@@ -381,8 +383,10 @@ export async function convertQuotation(companyId: string, quotationId: string, u
 export async function cancelSalesOrder(companyId: string, id: string, userId: string) {
   await releaseReservation(companyId, id, userId);
 
-  const salesOrder = await prisma.salesOrder.update({
-    where: { id, companyId },
+  const existing = await prisma.salesOrder.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const salesOrder = await prisma.salesOrder.update({
+      where: { id },
     data: { status: SalesOrderStatus.CANCELLED }
   });
 
@@ -401,8 +405,10 @@ export async function cancelSalesOrder(companyId: string, id: string, userId: st
  * Closes a Sales Order (usually after final delivery/invoicing).
  */
 export async function closeSalesOrder(companyId: string, id: string, userId: string) {
-  const salesOrder = await prisma.salesOrder.update({
-    where: { id, companyId },
+  const existing = await prisma.salesOrder.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const salesOrder = await prisma.salesOrder.update({
+      where: { id },
     data: { status: SalesOrderStatus.CLOSED }
   });
 

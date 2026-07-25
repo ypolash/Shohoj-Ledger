@@ -135,8 +135,10 @@ export async function validateSupplier(companyId: string, supplierId: string) {
 }
 
 export async function assignCategory(companyId: string, userId: string, supplierId: string, categoryId: string) {
+  const existing = await prisma.supplier.findFirst({ where: { id: supplierId, companyId } });
+  if (!existing) throw new Error("Record not found or access denied");
   const supplier = await prisma.supplier.update({
-    where: { id: supplierId, companyId },
+    where: { id: supplierId },
     data: { categoryId }
   });
 
@@ -153,8 +155,10 @@ export async function assignCategory(companyId: string, userId: string, supplier
 }
 
 export async function updateCreditTerms(companyId: string, userId: string, supplierId: string, creditLimit: number, paymentTerms: string) {
+  const existing = await prisma.supplier.findFirst({ where: { id: supplierId, companyId } });
+  if (!existing) throw new Error("Record not found or access denied");
   const supplier = await prisma.supplier.update({
-    where: { id: supplierId, companyId },
+    where: { id: supplierId },
     data: { creditLimit, paymentTerms }
   });
 
@@ -171,8 +175,10 @@ export async function updateCreditTerms(companyId: string, userId: string, suppl
 }
 
 export async function blockSupplier(companyId: string, userId: string, supplierId: string, reason: string) {
+  const existing = await prisma.supplier.findFirst({ where: { id: supplierId, companyId } });
+  if (!existing) throw new Error("Record not found or access denied");
   const supplier = await prisma.supplier.update({
-    where: { id: supplierId, companyId },
+    where: { id: supplierId },
     data: { status: "BLOCKED" }
   });
 
@@ -197,8 +203,10 @@ export async function blockSupplier(companyId: string, userId: string, supplierI
 }
 
 export async function unblockSupplier(companyId: string, userId: string, supplierId: string, reason: string) {
+  const existing = await prisma.supplier.findFirst({ where: { id: supplierId, companyId } });
+  if (!existing) throw new Error("Record not found or access denied");
   const supplier = await prisma.supplier.update({
-    where: { id: supplierId, companyId },
+    where: { id: supplierId },
     data: { status: "ACTIVE" }
   });
 

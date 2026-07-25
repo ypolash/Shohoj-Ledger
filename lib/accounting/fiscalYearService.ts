@@ -11,8 +11,10 @@ export const fiscalYearService = {
   },
 
   closeFiscalYear: async (companyId: string, id: string) => {
+    const existing = await prisma.fiscalYear.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.fiscalYear.update({
-      where: { id, companyId },
+      where: { id },
       data: { isClosed: true }
     });
   },

@@ -254,15 +254,19 @@ export const batchService = {
   },
 
   expireBatch: async (id: string, companyId: string) => {
+    const existing = await prisma.inventoryBatch.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.inventoryBatch.update({
-      where: { id, companyId },
+      where: { id },
       data: { status: "EXPIRED" }
     });
   },
 
   quarantineBatch: async (id: string, companyId: string, remarks?: string) => {
+    const existing = await prisma.inventoryBatch.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.inventoryBatch.update({
-      where: { id, companyId },
+      where: { id },
       data: { status: "QUARANTINE", remarks }
     });
   },

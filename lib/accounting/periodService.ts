@@ -16,8 +16,10 @@ export const periodService = {
   },
 
   closePeriod: async (companyId: string, id: string) => {
+    const existing = await prisma.accountingPeriod.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.accountingPeriod.update({
-      where: { id, companyId },
+      where: { id },
       data: { isClosed: true }
     });
   },

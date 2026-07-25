@@ -296,8 +296,10 @@ export const serialService = {
   },
 
   repairSerial: async (id: string, companyId: string, remarks?: string) => {
+    const existing = await prisma.inventorySerial.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.inventorySerial.update({
-      where: { id, companyId },
+      where: { id },
       data: { status: "REPAIRED", remarks }
     });
   },

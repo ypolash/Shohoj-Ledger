@@ -113,8 +113,10 @@ export async function approveReturn(companyId: string, id: string, userId: strin
     throw new Error("Only DRAFT returns can be approved");
   }
 
-  const customerReturn = await prisma.customerReturn.update({
-    where: { id, companyId },
+  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const customerReturn = await prisma.customerReturn.update({
+      where: { id },
     data: { 
       status: CustomerReturnStatus.APPROVED,
       approvedById: userId,
@@ -142,8 +144,10 @@ export async function inspectReturn(companyId: string, id: string, userId: strin
     throw new Error("Return must be APPROVED before inspection");
   }
 
-  const customerReturn = await prisma.customerReturn.update({
-    where: { id, companyId },
+  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const customerReturn = await prisma.customerReturn.update({
+      where: { id },
     data: { 
       status: CustomerReturnStatus.INSPECTING,
       inspectionStatus: "STARTED",
@@ -364,8 +368,10 @@ export async function scrapInventory(companyId: string, id: string, userId: stri
  * Completes a Customer Return (typically post-restock/scrap).
  */
 export async function completeReturn(companyId: string, id: string, userId: string) {
-  const customerReturn = await prisma.customerReturn.update({
-    where: { id, companyId },
+  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const customerReturn = await prisma.customerReturn.update({
+      where: { id },
     data: { status: CustomerReturnStatus.COMPLETED }
   });
 
@@ -389,8 +395,10 @@ export async function cancelReturn(companyId: string, id: string, userId: string
     throw new Error("Cannot cancel a processed return.");
   }
 
-  const customerReturn = await prisma.customerReturn.update({
-    where: { id, companyId },
+  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const customerReturn = await prisma.customerReturn.update({
+      where: { id },
     data: { status: CustomerReturnStatus.CANCELLED }
   });
 

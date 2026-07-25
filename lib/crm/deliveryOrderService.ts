@@ -109,8 +109,10 @@ export async function createDeliveryOrder(companyId: string, userId: string, dat
  * Approves a Delivery Order for Picking/Packing.
  */
 export async function approveDeliveryOrder(companyId: string, id: string, userId: string) {
-  const deliveryOrder = await prisma.deliveryOrder.update({
-    where: { id, companyId },
+  const existing = await prisma.deliveryOrder.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const deliveryOrder = await prisma.deliveryOrder.update({
+      where: { id },
     data: { 
       status: DeliveryOrderStatus.APPROVED,
       approvedById: userId,
@@ -329,8 +331,10 @@ export async function shipDelivery(companyId: string, id: string, userId: string
  * Completes the delivery (Customer Received).
  */
 export async function completeDelivery(companyId: string, id: string, userId: string) {
-  const delivery = await prisma.deliveryOrder.update({
-    where: { id, companyId },
+  const existing = await prisma.deliveryOrder.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const delivery = await prisma.deliveryOrder.update({
+      where: { id },
     data: { status: DeliveryOrderStatus.DELIVERED }
   });
 
@@ -354,8 +358,10 @@ export async function cancelDelivery(companyId: string, id: string, userId: stri
     throw new Error("Cannot cancel a shipped or delivered order.");
   }
 
-  const delivery = await prisma.deliveryOrder.update({
-    where: { id, companyId },
+  const existing = await prisma.deliveryOrder.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const delivery = await prisma.deliveryOrder.update({
+      where: { id },
     data: { status: DeliveryOrderStatus.CANCELLED }
   });
 

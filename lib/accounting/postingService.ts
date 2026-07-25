@@ -159,8 +159,10 @@ export const postingService = {
   },
 
   completePosting: async (tx: any, entryId: string, companyId: string) => {
+    const existing = await tx.journalEntry.findFirst({ where: { id: entryId, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return tx.journalEntry.update({
-      where: { id: entryId, companyId },
+      where: { id: entryId },
       data: { status: JournalEntryStatus.POSTED }
     });
   },

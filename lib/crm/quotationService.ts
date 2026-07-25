@@ -263,8 +263,10 @@ export async function deleteQuotation(companyId: string, id: string) {
  * Approves a quotation.
  */
 export async function approveQuotation(companyId: string, id: string, userId: string) {
-  const quotation = await prisma.quotation.update({
-    where: { id, companyId },
+  const existing = await prisma.quotation.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const quotation = await prisma.quotation.update({
+      where: { id },
     data: { 
       status: QuotationStatus.APPROVED,
       approvedById: userId,
@@ -287,8 +289,10 @@ export async function approveQuotation(companyId: string, id: string, userId: st
  * Marks a quotation as sent.
  */
 export async function sendQuotation(companyId: string, id: string, userId: string) {
-  const quotation = await prisma.quotation.update({
-    where: { id, companyId },
+  const existing = await prisma.quotation.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const quotation = await prisma.quotation.update({
+      where: { id },
     data: { status: QuotationStatus.SENT }
   });
 
@@ -307,8 +311,10 @@ export async function sendQuotation(companyId: string, id: string, userId: strin
  * Marks a quotation as accepted by customer.
  */
 export async function acceptQuotation(companyId: string, id: string, userId: string) {
-  const quotation = await prisma.quotation.update({
-    where: { id, companyId },
+  const existing = await prisma.quotation.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const quotation = await prisma.quotation.update({
+      where: { id },
     data: { status: QuotationStatus.ACCEPTED }
   });
 
@@ -327,8 +333,10 @@ export async function acceptQuotation(companyId: string, id: string, userId: str
  * Marks a quotation as rejected.
  */
 export async function rejectQuotation(companyId: string, id: string, userId: string) {
-  const quotation = await prisma.quotation.update({
-    where: { id, companyId },
+  const existing = await prisma.quotation.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const quotation = await prisma.quotation.update({
+      where: { id },
     data: { status: QuotationStatus.REJECTED }
   });
 
@@ -347,8 +355,10 @@ export async function rejectQuotation(companyId: string, id: string, userId: str
  * Expires a quotation.
  */
 export async function expireQuotation(companyId: string, id: string, userId: string) {
-  const quotation = await prisma.quotation.update({
-    where: { id, companyId },
+  const existing = await prisma.quotation.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
+    const quotation = await prisma.quotation.update({
+      where: { id },
     data: { status: QuotationStatus.EXPIRED }
   });
 

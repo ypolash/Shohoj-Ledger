@@ -79,8 +79,10 @@ export const journalEntryService = {
 
     // 2. Mark as POSTED
     // DO NOT update ledgers (as per strict instructions, Phase 1B stops before posting logic)
+    const existing = await prisma.journalEntry.findFirst({ where: { id: journalEntryId, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.journalEntry.update({
-      where: { id: journalEntryId, companyId },
+      where: { id: journalEntryId },
       data: {
         status: JournalEntryStatus.POSTED,
         approvedById,
@@ -104,8 +106,10 @@ export const journalEntryService = {
   },
 
   voidEntry: async (companyId: string, journalEntryId: string) => {
+    const existing = await prisma.journalEntry.findFirst({ where: { id: journalEntryId, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.journalEntry.update({
-      where: { id: journalEntryId, companyId },
+      where: { id: journalEntryId },
       data: { status: JournalEntryStatus.VOID }
     });
   }

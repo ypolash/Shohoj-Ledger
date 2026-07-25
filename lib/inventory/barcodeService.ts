@@ -128,8 +128,10 @@ export const barcodeService = {
   },
 
   removeBarcode: async (id: string, companyId: string) => {
+    const existing = await prisma.barcode.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.barcode.delete({
-      where: { id, companyId }
+      where: { id }
     });
   },
 

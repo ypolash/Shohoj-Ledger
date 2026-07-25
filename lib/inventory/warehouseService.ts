@@ -45,15 +45,19 @@ export const warehouseService = {
       });
     }
 
+    const existing = await prisma.warehouse.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.warehouse.update({
-      where: { id, companyId },
+      where: { id },
       data
     });
   },
 
   disableWarehouse: async (id: string, companyId: string) => {
+    const existing = await prisma.warehouse.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.warehouse.update({
-      where: { id, companyId },
+      where: { id },
       data: { isActive: false, status: "INACTIVE" }
     });
   },

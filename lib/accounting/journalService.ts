@@ -12,8 +12,10 @@ export const journalService = {
   },
 
   updateJournal: async (companyId: string, id: string, data: { name?: string, journalType?: JournalType, isActive?: boolean }) => {
+    const existing = await prisma.journal.findFirst({ where: { id, companyId } });
+    if (!existing) throw new Error("Record not found or access denied");
     return prisma.journal.update({
-      where: { id, companyId },
+      where: { id },
       data
     });
   },

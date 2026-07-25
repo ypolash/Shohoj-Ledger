@@ -1848,15 +1848,16 @@ model Company {
   customerContacts  CustomerContact[]
 
   // Phase 1 Organization Structure
-  divisions        Division[]
-  sections         Section[]
-  teams            Team[]
-  jobPositions     JobPosition[]
-  employmentTypes  EmploymentType[]
-  employeeGrades   EmployeeGrade[]
-  costCenters      CostCenter[]
-  holidayCalendars HolidayCalendar[]
-  workShifts       WorkShift[]
+  divisions         Division[]
+  sections          Section[]
+  teams             Team[]
+  jobPositions      JobPosition[]
+  employmentTypes   EmploymentType[]
+  employeeGrades    EmployeeGrade[]
+  costCenters       CostCenter[]
+  holidayCalendars  HolidayCalendar[]
+  workShifts        WorkShift[]
+  customerDocuments CustomerDocument[]
 }
 
 model CompanySetting {
@@ -4847,8 +4848,10 @@ model Customer {
   createdBy       User           @relation("CustomerCreator", fields: [createdById], references: [id])
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  tags            String[]
 
   addresses        CustomerAddress[]
+  documents        CustomerDocument[]
   contacts         CustomerContact[]
   leads            Lead[]
   opportunities    Opportunity[]
@@ -4867,6 +4870,22 @@ model Customer {
   @@index([companyId])
   @@index([customerGroupId])
   @@index([status])
+}
+
+model CustomerDocument {
+  id         String   @id @default(uuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title      String
+  fileUrl    String
+  type       String // e.g. NDA, CONTRACT, TAX_FORM
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([customerId])
 }
 
 model CustomerAddress {

@@ -62,6 +62,7 @@ export async function createCustomer(companyId: string, userId: string, data: an
   const customer = await prisma.customer.create({
     data: {
       ...data,
+      tags: data.tags || [],
       companyId,
       createdById: userId,
     }
@@ -85,8 +86,8 @@ export async function createCustomer(companyId: string, userId: string, data: an
 export async function updateCustomer(companyId: string, id: string, data: any) {
   await validateCustomer(companyId, { ...data, id });
 
-  const existing = await prisma.customer.findUnique({
-    where: { id_companyId: { id, companyId } } // Actually unique is companyId, customerCode but id is primary key. Wait, id is CUID/UUID, just id is enough, but we should scope by companyId.
+  const existing = await prisma.customer.findFirst({
+    where: { id, companyId }
   });
   
   if (!existing) throw new Error("Customer not found");

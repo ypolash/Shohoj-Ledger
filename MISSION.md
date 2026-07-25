@@ -106,3 +106,9 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
   - **Completed & Approved**: Added missing CRM features: `CustomerTag` (via string array), `CustomerDocument`, `CustomerGroup`, `CustomerContact`, `CustomerAddress`. Implemented API and UI adhering to V1.3 security standards.
 - **Version 2.0 — Sprint 2.1 Phase 2 (Opportunity Management):**
   - **Completed & Approved**: Integrated Pipeline support, Activity Attachments, Lost Reason tracking, and Tags into the existing Opportunity architecture without breaking V1.3 isolation rules. Added multi-pipeline management UI, Kanban/Board ready listings, and a dynamic Pipeline Dashboard reflecting Expected Revenue.
+- **Version 2.0 — Sprint 2.1 Phase 3 (Quotation Management):**
+  - **Completed & Approved**: Built Quotation CRUD logic linking to Customers and Opportunities. Delivered state-machine workflows (Draft -> Pending -> Approved -> Sent -> Accepted).
+- **Version 2.0 — Sprint 2.1 Phase 4 (Sales Order Management):**
+  - **Completed & Approved**: Finished Enterprise Sales Order module. Integrated `productWarehouseService.reserveStock` to handle mathematically-isolated inventory reservations triggered on approval. Prevented accounting leakage and added JSON serialization for dynamic Remarks.
+- **Version 3.0 — Sprint UI-0 (Master Enterprise Design System):**
+  - **Completed**: Established the foundation for the Enterprise Design System using pure Vanilla CSS. Created comprehensive `docs/ui-design-system.md` detailing the design language, grid, typography, and dark mode rules. Implemented extensive root CSS variables (tokens) in `app/globals.css` covering colors, spacing, radius, shadow, typography, and z-index to guarantee UI consistency. Architecture, backend, and DB remain fully frozen.

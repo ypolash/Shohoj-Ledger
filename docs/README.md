@@ -50,9 +50,11 @@ Read these files in the following order.
 19. ui-form-standard.md
 20. ui-accessibility.md
 21. ui-component-usage.md
-22. deployment.md
-23. future-roadmap.md
-24. AI-RULES.md
+22. crm-leads.md
+23. crm-customers.md
+24. deployment.md
+25. future-roadmap.md
+26. AI-RULES.md
 
 Never skip documentation.
 

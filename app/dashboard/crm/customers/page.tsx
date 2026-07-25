@@ -1,23 +1,45 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+
+// Modular Components
+import { CustomerTable } from "./components/CustomerTable";
+import { CustomerFilters } from "./components/CustomerFilters";
+import { CustomerSearch } from "./components/CustomerSearch";
+import { CustomerToolbar } from "./components/CustomerToolbar";
+import { CustomerStatistics } from "./components/CustomerStatistics";
+import { CustomerEmptyState } from "./components/CustomerEmptyState";
+import { CustomerLoading } from "./components/CustomerLoading";
+import { CustomerCard } from "./components/CustomerCard";
 
 export default function CustomersPage() {
-  const router = useRouter();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ query: '', status: '', groupId: '' });
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    fetchCustomers();
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const fetchCustomers = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/crm/customers");
-      const data = await res.json();
-      if (res.ok) setCustomers(data.data || []);
+      const qParams = new URLSearchParams();
+      if (filters.query) qParams.append("query", filters.query);
+      if (filters.status) qParams.append("status", filters.status);
+      if (filters.groupId) qParams.append("groupId", filters.groupId);
+
+      const res = await fetch(`/api/crm/customers?${qParams.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCustomers(data.customers || []);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -25,61 +47,58 @@ export default function CustomersPage() {
     }
   };
 
-  return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Customers</h1>
-        <div className="space-x-4">
-          <Link href="/dashboard/crm/customers/groups" className="bg-gray-200 text-gray-800 px-4 py-2 rounded">
-            Manage Groups
-          </Link>
-          <Link href="/dashboard/crm/customers/new" className="bg-blue-600 text-white px-4 py-2 rounded">
-            + New Customer
-          </Link>
-        </div>
-      </div>
+  useEffect(() => {
+    fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div className="bg-white rounded shadow overflow-x-auto">
-          <table className="min-w-full text-left text-sm whitespace-nowrap">
-            <thead className="uppercase tracking-wider border-b-2">
-              <tr>
-                <th className="px-6 py-4">Code</th>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Phone</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((c) => (
-                <tr key={c.id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-4">{c.customerCode}</td>
-                  <td className="px-6 py-4">{c.name}</td>
-                  <td className="px-6 py-4">{c.email}</td>
-                  <td className="px-6 py-4">{c.phone}</td>
-                  <td className="px-6 py-4">{c.status}</td>
-                  <td className="px-6 py-4">
-                    <Link href={`/dashboard/crm/customers/${c.id}`} className="text-blue-600 hover:underline">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {customers.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                    No customers found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to archive or delete this customer?")) return;
+    try {
+      const res = await fetch(`/api/crm/customers/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchCustomers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Mock Stats calculation
+  const stats = {
+    total: customers.length,
+    active: customers.filter(c => c.status !== 'Inactive').length,
+    outstanding: customers.reduce((acc, curr) => acc + Number(curr.outstandingBalance || 0), 0),
+    salesTotal: 450000, // Placeholder
+  };
+
+  return (
+    <PageContainer>
+      <PageHeader 
+        title="Customer Management" 
+        description="View and manage all your enterprise customers, balances, and interactions."
+      />
+
+      <CustomerStatistics {...stats} />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <CustomerSearch onSearch={(q) => setFilters(prev => ({ ...prev, query: q }))} />
+          <CustomerToolbar onRefresh={fetchCustomers} />
         </div>
-      )}
-    </div>
+
+        <CustomerFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
+
+        {loading ? (
+          <CustomerLoading />
+        ) : customers.length === 0 ? (
+          <CustomerEmptyState />
+        ) : isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {customers.map(customer => <CustomerCard key={customer.id} customer={customer} onDelete={handleDelete} />)}
+          </div>
+        ) : (
+          <CustomerTable customers={customers} onDelete={handleDelete} />
+        )}
+      </div>
+    </PageContainer>
   );
 }

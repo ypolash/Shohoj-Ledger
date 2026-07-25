@@ -1,234 +1,189 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
-export default function LeadDetailsPage({ params }: { params: { id: string } }) {
+// Modular Components
+import { LeadStatus } from "../components/LeadStatus";
+import { LeadPriority } from "../components/LeadPriority";
+import { LeadOwner } from "../components/LeadOwner";
+import { LeadTags } from "../components/LeadTags";
+import { LeadTimeline } from "../components/LeadTimeline";
+import { LeadNotes } from "../components/LeadNotes";
+import { LeadActivity } from "../components/LeadActivity";
+import { LeadHistory } from "../components/LeadHistory";
+
+export default function LeadDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const [lead, setLead] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-
-  // New Activity Form
-  const [actType, setActType] = useState("FOLLOW_UP_CALL");
-  const [actDesc, setActDesc] = useState("");
-  const [actDate, setActDate] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    fetchLead();
-  }, []);
-
-  const fetchLead = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/crm/leads/${params.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setLead(data.lead);
+    const fetchLead = async () => {
+      try {
+        const res = await fetch(`/api/crm/leads/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLead(data.lead);
+        } else {
+          router.push('/dashboard/crm/leads');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+    if (params.id) fetchLead();
+  }, [params.id, router]);
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value;
-    try {
-      const res = await fetch(`/api/crm/leads/${params.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (res.ok) {
-        fetchLead();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (loading) {
+    return (
+      <PageContainer>
+        <div style={{ padding: '48px', textAlign: 'center' }}>Loading Lead Details...</div>
+      </PageContainer>
+    );
+  }
 
-  const handleAddActivity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/crm/leads/${params.id}/activities`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: actType,
-          description: actDesc,
-          newValue: actDate || undefined
-        })
-      });
-      if (res.ok) {
-        setActDesc("");
-        setActDate("");
-        fetchLead();
-      } else {
-        alert("Failed to add activity");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getActivityIcon = (type: string) => {
-    if (type.includes("CALL")) return "call";
-    if (type.includes("MEETING")) return "groups";
-    if (type.includes("EMAIL")) return "mail";
-    if (type.includes("WHATSAPP")) return "chat";
-    if (type.includes("TASK")) return "task_alt";
-    if (type.includes("REMINDER")) return "alarm";
-    if (type.includes("STATUS_CHANGE")) return "swap_horiz";
-    if (type.includes("ASSIGNED")) return "person_add";
-    return "history";
-  };
-
-  if (isLoading) return <div className="container" style={{ textAlign: "center", padding: "40px" }}>Loading Lead...</div>;
-  if (!lead) return <div className="container" style={{ textAlign: "center", padding: "40px" }}>Lead not found</div>;
+  if (!lead) return null;
 
   return (
-    <div className="animate-fade-in container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
+    <PageContainer>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ margin: 0 }}>{lead.companyName}</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
-            {lead.contactPerson} • {lead.serviceType}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <select 
-            className="input" 
-            value={lead.status} 
-            onChange={handleStatusChange}
-            style={{ fontWeight: "bold", width: "auto" }}
+          <button 
+            onClick={() => router.push('/dashboard/crm/leads')}
+            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
           >
-            {["New", "Contacted", "Qualified", "Proposal Sent", "Negotiation", "Won", "Lost", "Archived"].map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <button className="btn btn-secondary" onClick={() => router.push("/dashboard/crm/leads")}>
-            Back to Pipeline
+            &larr; Back to Leads
+          </button>
+          <PageHeader 
+            title={lead.companyName}
+            description={`Contact: ${lead.contactPerson} | ${lead.email || lead.phone}`}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button style={{ padding: '8px 16px', background: 'var(--success)', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
+            Convert
+          </button>
+          <button 
+            onClick={() => router.push(`/dashboard/crm/leads/${lead.id}/edit`)}
+            style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+            Edit
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-6)' }}>
-        
-        {/* Details Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          <div className="glass-card">
-            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', display: 'flex', justifyContent: 'space-between' }}>
-              <span>Lead Details</span>
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Email</strong>{lead.email || '-'}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Phone</strong>{lead.phone}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Expected Value</strong>BDT {lead.expectedValue}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Priority</strong>{lead.priority}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Industry</strong>{lead.industry || '-'}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Source</strong>{lead.leadSource || '-'}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Website</strong>{lead.website || '-'}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Address</strong>{lead.address || '-'}</div>
-            </div>
-            
-            {lead.tags?.length > 0 && (
-              <div style={{ marginTop: '16px' }}>
-                <strong style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block', marginBottom: '8px' }}>Tags</strong>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {lead.tags.map((t: string, idx: number) => (
-                    <span key={idx} style={{ background: 'var(--border)', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>{t}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Add Activity Box */}
-          <div className="glass-card">
-            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0' }}>Log Follow-Up</h2>
-            <form onSubmit={handleAddActivity} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <select className="input" value={actType} onChange={e => setActType(e.target.value)} required>
-                  <option value="FOLLOW_UP_CALL">Call</option>
-                  <option value="FOLLOW_UP_MEETING">Meeting</option>
-                  <option value="FOLLOW_UP_EMAIL">Email</option>
-                  <option value="FOLLOW_UP_WHATSAPP">WhatsApp</option>
-                  <option value="FOLLOW_UP_TASK">Task</option>
-                  <option value="FOLLOW_UP_REMINDER">Reminder</option>
-                </select>
-                {(actType === 'FOLLOW_UP_REMINDER' || actType === 'FOLLOW_UP_TASK') && (
-                  <input type="datetime-local" className="input" value={actDate} onChange={e => setActDate(e.target.value)} required />
-                )}
-              </div>
-              <textarea 
-                className="input" 
-                rows={3} 
-                placeholder="Log notes, outcomes, or tasks..." 
-                value={actDesc} 
-                onChange={e => setActDesc(e.target.value)} 
-                required
-              ></textarea>
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? "Logging..." : "Log Activity"}
-              </button>
-            </form>
-          </div>
+      {/* Hero Section */}
+      <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '32px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</span>
+          <LeadStatus status={lead.status} />
         </div>
-
-        {/* Timeline Column */}
-        <div className="glass-card">
-          <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0' }}>Activity Timeline</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', position: 'relative' }}>
-            {/* Timeline Line */}
-            <div style={{ position: 'absolute', left: '19px', top: '24px', bottom: '24px', width: '2px', backgroundColor: 'var(--border)', zIndex: 0 }}></div>
-            
-            {lead.activities?.length > 0 ? (
-              lead.activities.map((act: any) => (
-                <div key={act.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
-                  <div style={{ 
-                    width: '40px', height: '40px', borderRadius: '50%', 
-                    backgroundColor: 'var(--primary)', color: 'white',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
-                  }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                      {getActivityIcon(act.type)}
-                    </span>
-                  </div>
-                  <div style={{ backgroundColor: 'var(--background-alt)', padding: '12px', borderRadius: '8px', flex: 1, border: '1px solid var(--border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <strong style={{ fontSize: '14px' }}>{act.type.replace(/_/g, " ")}</strong>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {new Date(act.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '8px' }}>
-                      {act.description}
-                    </div>
-                    {(act.oldValue || act.newValue) && act.type === "STATUS_CHANGE" && (
-                      <div style={{ fontSize: '12px', backgroundColor: 'var(--background)', padding: '6px', borderRadius: '4px', color: 'var(--text-muted)' }}>
-                        {act.oldValue} ➔ <strong>{act.newValue}</strong>
-                      </div>
-                    )}
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>person</span>
-                      {act.performedBy?.name || 'System'}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div style={{ paddingLeft: '40px', color: 'var(--text-muted)' }}>No activities recorded yet.</div>
-            )}
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Priority</span>
+          <LeadPriority priority={lead.priority} />
         </div>
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Assigned To</span>
+          <LeadOwner ownerName={lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : null} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Value</span>
+          <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(lead.expectedValue))}
+          </span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tags</span>
+          <LeadTags tags={lead.tags} />
+        </div>
       </div>
-    </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px' }}>
+        {['overview', 'timeline', 'notes', 'activities', 'history'].map(tab => (
+          <div 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '12px 0',
+              cursor: 'pointer',
+              color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+              fontWeight: activeTab === tab ? 600 : 500,
+              textTransform: 'capitalize',
+              fontSize: '14px',
+              transition: 'all var(--transition-fast)'
+            }}
+          >
+            {tab}
+          </div>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div style={{ minHeight: '400px' }}>
+        {activeTab === 'overview' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Company Details</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div><strong>Industry:</strong> {lead.industry || '-'}</div>
+                <div><strong>Website:</strong> {lead.website ? <a href={lead.website} target="_blank" rel="noreferrer">{lead.website}</a> : '-'}</div>
+                <div><strong>Address:</strong> {lead.address || '-'}</div>
+                <div><strong>Source:</strong> {lead.leadSource || '-'}</div>
+              </div>
+            </div>
+            <div>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Contact Person</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div><strong>Name:</strong> {lead.contactPerson}</div>
+                <div><strong>Phone:</strong> {lead.phone}</div>
+                <div><strong>Email:</strong> {lead.email || '-'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'timeline' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <LeadTimeline activities={lead.activities || []} />
+          </div>
+        )}
+
+        {activeTab === 'notes' && (
+          <LeadNotes notes={lead.notes} />
+        )}
+
+        {activeTab === 'activities' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Activities & Tasks</h4>
+              <button style={{ padding: '6px 12px', background: 'var(--primary)', color: 'white', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
+                + Add Activity
+              </button>
+            </div>
+            <LeadActivity />
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 24px 0', fontSize: '16px', fontWeight: 600 }}>Audit History</h4>
+            <LeadHistory />
+          </div>
+        )}
+      </div>
+
+    </PageContainer>
   );
 }

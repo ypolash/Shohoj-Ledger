@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { createSalesOrder } from "@/lib/crm/salesOrderService";
+import { SalesOrderStatus } from "@prisma/client";
+
+export async function GET(req: NextRequest) {
+  try {
+    const companyId = req.headers.get("x-company-id");
+    if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
+
+    const searchParams = req.nextUrl.searchParams;
+    const query = searchParams.get("query")?.toLowerCase();
+    const customerId = searchParams.get("customerId");
+    const status = searchParams.get("status") as SalesOrderStatus | null;
+    const fromDate = searchParams.get("fromDate");
+    const toDate = searchParams.get("toDate");
+    const createdById = searchParams.get("createdById");
+
+    const where: any = { companyId };
+
+    if (query) {
+      where.OR = [
+        { salesOrderNumber: { contains: query, mode: "insensitive" } },
+        { customer: { name: { contains: query, mode: "insensitive" } } }
+      ];
+    }
+    
+    if (customerId) where.customerId = customerId;
+    if (status) where.status = status;
+    if (createdById) where.createdById = createdById;
+    
+    if (fromDate || toDate) {
+      where.orderDate = {};
+      if (fromDate) where.orderDate.gte = new Date(fromDate);
+      if (toDate) where.orderDate.lte = new Date(toDate);
+    }
+
+    const data = await prisma.salesOrder.findMany({
+      where,
+      include: {
+        customer: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, firstName: true, lastName: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const companyId = req.headers.get("x-company-id");
+    const userId = req.headers.get("x-user-id");
+    if (!companyId || !userId) return NextResponse.json({ error: "Missing headers" }, { status: 400 });
+
+    const body = await req.json();
+    const salesOrder = await createSalesOrder(companyId, userId, body);
+
+    return NextResponse.json(salesOrder, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 400 });
+  }
+}

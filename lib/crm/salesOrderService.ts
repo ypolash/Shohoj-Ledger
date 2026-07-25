@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
 import { SalesOrderStatus } from "@prisma/client";
+import { productWarehouseService } from "@/lib/inventory/productWarehouseService";
 
 /**
  * Validates a Sales Order.
@@ -282,20 +283,26 @@ export async function reserveInventory(companyId: string, id: string, userId: st
   }
 
   // Iterate over lines and mark quantity as reserved
-  await prisma.$transaction(async (tx) => {
-    for (const line of existing.lines) {
-      await tx.salesOrderLine.update({
+  // Do this sequentially to allow productWarehouseService to validate and reserve
+  for (const line of existing.lines) {
+    if (Number(line.quantity) > 0) {
+      await productWarehouseService.reserveStock(
+        companyId, 
+        line.productId, 
+        line.warehouseId, 
+        Number(line.quantity)
+      );
+      
+      await prisma.salesOrderLine.update({
         where: { id: line.id },
         data: { reservedQuantity: line.quantity }
       });
-      // NOTE: In an advanced system, we would also increment a `reservedQuantity` on the ProductWarehouse record here.
-      // We are deliberately NOT generating physical Stock Movement records or Journal Entries per project rules.
     }
+  }
 
-    await tx.salesOrder.update({
-      where: { id },
-      data: { status: SalesOrderStatus.OPEN }
-    });
+  await prisma.salesOrder.update({
+    where: { id },
+    data: { status: SalesOrderStatus.OPEN }
   });
 
   await logAudit({
@@ -322,16 +329,21 @@ export async function releaseReservation(companyId: string, id: string, userId: 
     throw new Error("Cannot release reservation for completed orders");
   }
 
-  await prisma.$transaction(async (tx) => {
-    for (const line of existing.lines) {
-      if (Number(line.reservedQuantity) > 0) {
-        await tx.salesOrderLine.update({
-          where: { id: line.id },
-          data: { reservedQuantity: 0 }
-        });
-      }
+  for (const line of existing.lines) {
+    if (Number(line.reservedQuantity) > 0) {
+      await productWarehouseService.releaseStock(
+        companyId,
+        line.productId,
+        line.warehouseId,
+        Number(line.reservedQuantity)
+      );
+
+      await prisma.salesOrderLine.update({
+        where: { id: line.id },
+        data: { reservedQuantity: 0 }
+      });
     }
-  });
+  }
 
   await logAudit({
     module: "CRM",

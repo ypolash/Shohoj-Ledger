@@ -58,9 +58,10 @@ Read these files in the following order.
 27. finance-dashboard.md
 28. accounting-ui.md
 29. finance-operations-ui.md
-30. deployment.md
-31. future-roadmap.md
-32. AI-RULES.md
+30. financial-reports-ui.md
+31. deployment.md
+32. future-roadmap.md
+33. AI-RULES.md
 
 Never skip documentation.
 

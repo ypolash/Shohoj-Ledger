@@ -102,3 +102,5 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
 4. **Version 1.4 (Enterprise Procurement):** RFQ, Vendor Comparison, Purchase Orders, GRN, and Three-Way Match accounting.
 5. **Version 1.5 (Enterprise HR & Payroll):** Organization structure, Time & Attendance tracking, Leave requests, and asynchronous Payroll generation.
 6. **Future (AI & SaaS Administration):** LLM-powered analytics over ERP data and Tenant billing setup.
+- **Version 2.0 — Sprint 2.1 Phase 1 (Customer Master):**
+  - **Completed & Approved**: Added missing CRM features: `CustomerTag` (via string array), `CustomerDocument`, `CustomerGroup`, `CustomerContact`, `CustomerAddress`. Implemented API and UI adhering to V1.3 security standards.

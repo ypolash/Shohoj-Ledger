@@ -163,6 +163,7 @@ model Income {
   paymentStatus String
   shareable     Boolean  @default(true)
   description   String?
+  attachments   String[] @default([])
   createdAt     DateTime @default(now())
 
   @@index([companyId])
@@ -936,48 +937,73 @@ enum OpportunityStatus {
   WON
   LOST
   CANCELLED
+  ARCHIVED
 }
 
-model OpportunityStage {
-  id             String   @id @default(uuid())
-  companyId      String
-  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name           String
-  displayOrder   Int      @default(0)
-  winProbability Int      @default(0) // 0-100
-  isClosed       Boolean  @default(false)
-  isWon          Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model OpportunityPipeline {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
+  stages        OpportunityStage[]
   opportunities Opportunity[]
 
   @@unique([companyId, name])
   @@index([companyId])
 }
 
+model OpportunityStage {
+  id             String               @id @default(uuid())
+  companyId      String
+  company        Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  pipelineId     String?
+  pipeline       OpportunityPipeline? @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  name           String
+  displayOrder   Int                  @default(0)
+  winProbability Int                  @default(0) // 0-100
+  isClosed       Boolean              @default(false)
+  isWon          Boolean              @default(false)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  opportunities Opportunity[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@index([pipelineId])
+}
+
 model Opportunity {
-  id                String            @id @default(uuid())
+  id                String               @id @default(uuid())
   companyId         String
-  company           Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  opportunityNumber String            @unique @default(cuid())
+  company           Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  opportunityNumber String               @unique @default(cuid())
   customerId        String
-  customer          Customer          @relation(fields: [customerId], references: [id])
+  customer          Customer             @relation(fields: [customerId], references: [id])
   leadId            String?
-  lead              Lead?             @relation(fields: [leadId], references: [id])
+  lead              Lead?                @relation(fields: [leadId], references: [id])
   stageId           String
-  stage             OpportunityStage  @relation(fields: [stageId], references: [id])
+  stage             OpportunityStage     @relation(fields: [stageId], references: [id])
   ownerId           String?
-  owner             Employee?         @relation("OpportunityOwner", fields: [ownerId], references: [id])
+  owner             Employee?            @relation("OpportunityOwner", fields: [ownerId], references: [id])
   title             String
   description       String?
-  estimatedRevenue  Decimal           @default(0)
+  estimatedRevenue  Decimal              @default(0)
   expectedCloseDate DateTime?
-  probability       Int               @default(0) // 0-100
-  status            OpportunityStatus @default(OPEN)
-  priority          String            @default("Medium")
+  probability       Int                  @default(0) // 0-100
+  status            OpportunityStatus    @default(OPEN)
+  priority          String               @default("Medium")
   source            String?
-  currency          String            @default("BDT")
+  currency          String               @default("BDT")
+  pipelineId        String?
+  pipeline          OpportunityPipeline? @relation(fields: [pipelineId], references: [id])
+  tags              String[]             @default([])
+  lostReason        String?
 
   createdById String
   createdBy   User     @relation("OpportunityCreator", fields: [createdById], references: [id])
@@ -989,6 +1015,7 @@ model Opportunity {
 
   @@index([companyId])
   @@index([customerId])
+  @@index([pipelineId])
   @@index([leadId])
   @@index([stageId])
   @@index([ownerId])
@@ -1848,16 +1875,17 @@ model Company {
   customerContacts  CustomerContact[]
 
   // Phase 1 Organization Structure
-  divisions         Division[]
-  sections          Section[]
-  teams             Team[]
-  jobPositions      JobPosition[]
-  employmentTypes   EmploymentType[]
-  employeeGrades    EmployeeGrade[]
-  costCenters       CostCenter[]
-  holidayCalendars  HolidayCalendar[]
-  workShifts        WorkShift[]
-  customerDocuments CustomerDocument[]
+  divisions            Division[]
+  sections             Section[]
+  teams                Team[]
+  jobPositions         JobPosition[]
+  employmentTypes      EmploymentType[]
+  employeeGrades       EmployeeGrade[]
+  costCenters          CostCenter[]
+  holidayCalendars     HolidayCalendar[]
+  workShifts           WorkShift[]
+  customerDocuments    CustomerDocument[]
+  opportunityPipelines OpportunityPipeline[]
 }
 
 model CompanySetting {

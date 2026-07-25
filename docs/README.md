@@ -54,9 +54,10 @@ Read these files in the following order.
 23. crm-customers.md
 24. crm-opportunities.md
 25. crm-quotation-sales-order.md
-26. deployment.md
-27. future-roadmap.md
-28. AI-RULES.md
+26. crm-reports.md
+27. deployment.md
+28. future-roadmap.md
+29. AI-RULES.md
 
 Never skip documentation.
 

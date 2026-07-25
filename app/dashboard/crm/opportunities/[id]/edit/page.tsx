@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function NewOpportunityPage() {
+export default function EditOpportunityPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [customers, setCustomers] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
   const [pipelines, setPipelines] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -35,15 +36,36 @@ export default function NewOpportunityPage() {
       fetch("/api/crm/opportunities/stages").then(r => r.json()),
       fetch("/api/crm/opportunities/pipelines").then(r => r.json()),
       fetch("/api/crm/leads").then(r => r.json()),
-      fetch("/api/employees").then(r => r.json())
-    ]).then(([custData, stageData, pipeData, leadData, empData]) => {
+      fetch("/api/employees").then(r => r.json()),
+      fetch(`/api/crm/opportunities/${params.id}`).then(r => r.json())
+    ]).then(([custData, stageData, pipeData, leadData, empData, oppData]) => {
       setCustomers(custData.data || custData || []);
       setStages(stageData || []);
       setPipelines(pipeData || []);
       setLeads(leadData.data || leadData || []);
       setEmployees(empData.data || empData || []);
+      
+      if (oppData) {
+        setFormData({
+          title: oppData.title || "",
+          customerId: oppData.customerId || "",
+          leadId: oppData.leadId || "",
+          stageId: oppData.stageId || "",
+          pipelineId: oppData.pipelineId || "",
+          ownerId: oppData.ownerId || "",
+          description: oppData.description || "",
+          estimatedRevenue: oppData.estimatedRevenue || 0,
+          probability: oppData.probability || 0,
+          priority: oppData.priority || "Medium",
+          currency: oppData.currency || "BDT",
+          expectedCloseDate: oppData.expectedCloseDate ? new Date(oppData.expectedCloseDate).toISOString().split('T')[0] : "",
+          source: oppData.source || "",
+          tags: oppData.tags ? oppData.tags.join(", ") : ""
+        });
+      }
+      setLoading(false);
     });
-  }, []);
+  }, [params.id]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -55,23 +77,25 @@ export default function NewOpportunityPage() {
       tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : []
     };
 
-    const res = await fetch("/api/crm/opportunities", {
-      method: "POST",
+    const res = await fetch(`/api/crm/opportunities/${params.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      router.push("/dashboard/crm/opportunities");
+      router.push(`/dashboard/crm/opportunities/${params.id}`);
     } else {
-      alert("Error creating opportunity");
+      alert("Error updating opportunity");
     }
   };
+
+  if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow rounded mt-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">New Opportunity</h1>
-        <Link href="/dashboard/crm/opportunities" className="text-gray-600 hover:underline">Back to List</Link>
+        <h1 className="text-2xl font-bold">Edit Opportunity</h1>
+        <Link href={`/dashboard/crm/opportunities/${params.id}`} className="text-gray-600 hover:underline">Cancel</Link>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -166,7 +190,7 @@ export default function NewOpportunityPage() {
 
         <div className="pt-4 flex justify-end space-x-2 border-t">
           <button type="button" onClick={() => router.back()} className="px-4 py-2 border rounded text-gray-600">Cancel</button>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Create Opportunity</button>
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Save Changes</button>
         </div>
       </form>
     </div>

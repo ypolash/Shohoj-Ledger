@@ -52,6 +52,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // SECURITY HOTFIX: Validate employee belongs to authenticated company
+    const employee = await prisma.employee.findFirst({
+      where: { id: data.employeeId, companyId: companyIdForGuard }
+    });
+    if (!employee) {
+      return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 403 });
+    }
+
     let status = data.status || 'PRESENT';
 
     // GPS Validation (Assuming checkInLocation is 'lat,lng')
@@ -68,6 +76,7 @@ export async function POST(request: Request) {
 
     const attendance = await prisma.attendance.create({
       data: {
+        companyId: companyIdForGuard,
         employeeId: data.employeeId,
         date: new Date(data.date),
         checkInTime: data.checkIn ? new Date(data.checkIn) : null,

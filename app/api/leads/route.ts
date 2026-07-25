@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const status = searchParams.get("status");
     const serviceType = searchParams.get("serviceType");
 
-    const where: any = {};
+    const where: any = { companyId: companyIdForGuard };
     if (status) where.status = status;
     if (serviceType) where.serviceType = serviceType;
 
@@ -58,8 +58,16 @@ export async function POST(req: Request) {
       notes,
     } = body;
 
+    if (assignedTo) {
+      const targetUser = await prisma.user.findFirst({
+        where: { id: assignedTo, companyId: companyIdForGuard }
+      });
+      if (!targetUser) return NextResponse.json({ success: false, message: "Assigned user not found or access denied" }, { status: 403 });
+    }
+
     const newLead = await prisma.lead.create({
       data: {
+        companyId: companyIdForGuard,
         companyName,
         contactPerson,
         phone,

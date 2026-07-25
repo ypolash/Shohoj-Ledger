@@ -37,6 +37,23 @@ export async function POST(req: Request) {
       signedQty = Number(quantity); // Can be positive or negative from client
     }
 
+    const product = await prisma.product.findFirst({
+      where: { id: productId, companyId }
+    });
+    if (!product) return NextResponse.json({ error: "Product not found or unauthorized" }, { status: 403 });
+
+    const warehouse = await prisma.warehouse.findFirst({
+      where: { id: warehouseId, companyId }
+    });
+    if (!warehouse) return NextResponse.json({ error: "Warehouse not found or unauthorized" }, { status: 403 });
+
+    if (type === "TRANSFER" && toWarehouseId) {
+      const toWarehouse = await prisma.warehouse.findFirst({
+        where: { id: toWarehouseId, companyId }
+      });
+      if (!toWarehouse) return NextResponse.json({ error: "Destination warehouse not found or unauthorized" }, { status: 403 });
+    }
+
     await prisma.$transaction(async (tx) => {
       if (type === "TRANSFER") {
         // Deduct from source

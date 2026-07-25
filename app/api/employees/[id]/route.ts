@@ -15,8 +15,31 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Validate ownership before update
+    const existingEmp = await prisma.employee.findFirst({ where: { id, companyId } });
+    if (!existingEmp) {
+      return NextResponse.json({ error: "Employee not found or unauthorized" }, { status: 404 });
+    }
+
+    // Validate relational IDs if present
+    if (data.departmentId) {
+      const dept = await prisma.department.findFirst({ where: { id: data.departmentId, companyId } });
+      if (!dept) return NextResponse.json({ error: 'Invalid department or cross-tenant reference' }, { status: 403 });
+    }
+    if (data.designationId) {
+      const desig = await prisma.designation.findFirst({ where: { id: data.designationId, companyId } });
+      if (!desig) return NextResponse.json({ error: 'Invalid designation or cross-tenant reference' }, { status: 403 });
+    }
+    if (data.reportingManagerId) {
+      const mgr = await prisma.employee.findFirst({ where: { id: data.reportingManagerId, companyId } });
+      if (!mgr) return NextResponse.json({ error: 'Invalid manager or cross-tenant reference' }, { status: 403 });
+    }
+
     const employee = await prisma.employee.update({
-      where: { ...(await withCompany()), id },
+      where: { id },
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -40,9 +63,6 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json(employee);
   } catch (error: any) {
     console.error("Error updating employee:", error);
-    if (error.code === 'P2025') {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
-    }
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 });
   }
 }

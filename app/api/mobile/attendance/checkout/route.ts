@@ -53,19 +53,20 @@ export async function POST(req: Request) {
                     String(currentDhakaTime.getDate()).padStart(2, '0');
     const today = new Date(dateStr);
 
-    const employee = await prisma.employee.findUnique({
-      where: { ...(await withCompany()), employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: { employeeId: employeeId, companyId: companyIdForGuard },
     });
 
     if (!employee) {
       return NextResponse.json(
-        { success: false, message: "Employee not found." },
+        { success: false, message: "Employee not found or access denied." },
         { status: 404 }
       );
     }
 
     const existingAttendance = await prisma.attendance.findFirst({
-      where: { ...(await withCompany()),
+      where: {
+        companyId: companyIdForGuard,
         employeeId: employee.id,
         date: today,
       },
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
     }
 
     await prisma.attendance.update({
-      where: { ...(await withCompany()), id: existingAttendance.id },
+      where: { id: existingAttendance.id },
       data: {
         checkOutTime: serverTime,
         checkOutLocation: `${latitude},${longitude}`,

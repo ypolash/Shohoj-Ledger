@@ -26,7 +26,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (bssid) {
       const existingNetwork = await prisma.allowedNetwork.findFirst({
-        where: { ...(await withCompany()), bssid, NOT: { id } },
+        where: { bssid, companyId: companyIdForGuard, NOT: { id } },
       });
 
       if (existingNetwork) {
@@ -37,8 +37,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
+    // Pre-flight check for ownership
+    const targetNetwork = await prisma.allowedNetwork.findFirst({
+      where: { id, companyId: companyIdForGuard }
+    });
+    if (!targetNetwork) {
+      return NextResponse.json({ success: false, message: "Network not found or access denied" }, { status: 404 });
+    }
+
     const updatedNetwork = await prisma.allowedNetwork.update({
-      where: { ...(await withCompany()), id },
+      where: { id },
       data: {
         name,
         ssid,
@@ -69,8 +77,16 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ success: false, message: "ID is required" }, { status: 400 });
     }
 
+    // Pre-flight check for ownership
+    const targetNetwork = await prisma.allowedNetwork.findFirst({
+      where: { id, companyId: companyIdForGuard }
+    });
+    if (!targetNetwork) {
+      return NextResponse.json({ success: false, message: "Network not found or access denied" }, { status: 404 });
+    }
+
     await prisma.allowedNetwork.delete({
-      where: { ...(await withCompany()), id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true, message: "Network deleted successfully" });

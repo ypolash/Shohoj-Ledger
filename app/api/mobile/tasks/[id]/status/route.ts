@@ -1,12 +1,17 @@
 import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
 
 export async function PATCH(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
   try {
+
+        const ownershipGuard = await verifyOwnership("task", params.id);
+        if (ownershipGuard) return ownershipGuard;
+
     const params = await props.params;
     
     if (!params.id) {

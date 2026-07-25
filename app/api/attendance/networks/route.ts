@@ -44,8 +44,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const existingNetwork = await prisma.allowedNetwork.findUnique({
-      where: { ...(await withCompany()), bssid },
+    const existingNetwork = await prisma.allowedNetwork.findFirst({
+      where: { bssid, companyId: companyIdForGuard },
     });
 
     if (existingNetwork) {
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
 
     const newNetwork = await prisma.allowedNetwork.create({
       data: {
+        companyId: companyIdForGuard,
         name: name || ssid,
         ssid,
         bssid,

@@ -10,9 +10,12 @@ export async function GET() {
   if (rbacGuard) return rbacGuard;
 
   try {
-    let config = await prisma.attendanceConfig.findFirst({ where: { ...(await withCompany()) } });
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    let config = await prisma.attendanceConfig.findFirst({ where: { companyId } });
     if (!config) {
-      config = await prisma.attendanceConfig.create({ data: {} });
+      config = await prisma.attendanceConfig.create({ data: { companyId } });
     }
     return NextResponse.json(config);
   } catch (error: any) {
@@ -25,11 +28,14 @@ export async function PUT(request: Request) {
   if (rbacGuard) return rbacGuard;
 
   try {
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json();
-    let config = await prisma.attendanceConfig.findFirst({ where: { ...(await withCompany()) } });
+    let config = await prisma.attendanceConfig.findFirst({ where: { companyId } });
     
     if (!config) {
-      config = await prisma.attendanceConfig.create({ data: body });
+      config = await prisma.attendanceConfig.create({ data: { ...body, companyId } });
     } else {
       config = await prisma.attendanceConfig.update({
         where: { id: config.id },

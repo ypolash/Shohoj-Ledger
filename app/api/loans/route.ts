@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const loans = await prisma.memberLoan.findMany({
+      where: { companyId: companyIdForGuard },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -69,6 +70,14 @@ export async function POST(request: Request) {
 
     if (!memberId || amount === undefined) {
       return NextResponse.json({ error: "Missing memberId or amount" }, { status: 400 });
+    }
+
+    // SECURITY HOTFIX: Verify target relation belongs to authenticated company
+    const targetMember = await prisma.member.findFirst({
+      where: { id: memberId, companyId: companyIdForGuard }
+    });
+    if (!targetMember) {
+      return NextResponse.json({ error: "Unauthorized cross-tenant reference or member not found" }, { status: 403 });
     }
 
     const loanAmount = parseFloat(amount);
@@ -128,18 +137,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
     
-    const oldLoan = await prisma.memberLoan.findUnique({
-      where: { ...(await withCompany()), id }
+    const oldLoan = await prisma.memberLoan.findFirst({
+      where: { id, companyId: companyIdForGuard }
     });
 
     if (!oldLoan) {
-      return NextResponse.json({ error: "Loan not found" }, { status: 404 });
+      return NextResponse.json({ error: "Loan not found or access denied" }, { status: 404 });
     }
 
     const updateData: any = { status };
 
     const updatedLoan = await prisma.memberLoan.update({
-      where: { ...(await withCompany()), id },
+      where: { id },
       data: updateData
     });
 

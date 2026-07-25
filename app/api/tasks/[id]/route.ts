@@ -6,9 +6,12 @@ import { prisma } from '@/lib/prisma';
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const ownershipGuard = await verifyOwnership("task", params.id);
+    if (ownershipGuard) return ownershipGuard;
+
     const data = await req.json();
     const task = await prisma.task.update({
-      where: { ...(await withCompany()), id: params.id },
+      where: { id: params.id },
       data: {
         status: data.status !== undefined ? data.status : undefined,
         title: data.title !== undefined ? data.title : undefined,
@@ -25,8 +28,11 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
 export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const ownershipGuard = await verifyOwnership("task", params.id);
+    if (ownershipGuard) return ownershipGuard;
+
     await prisma.task.delete({
-      where: { ...(await withCompany()), id: params.id }
+      where: { id: params.id }
     });
     return NextResponse.json({ success: true });
   } catch (error: any) {

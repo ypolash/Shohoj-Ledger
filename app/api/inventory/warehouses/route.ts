@@ -46,6 +46,13 @@ export async function POST(req: Request) {
     });
     if (existing) return NextResponse.json({ error: "Warehouse with this code already exists" }, { status: 400 });
 
+    if (managerId) {
+      const manager = await prisma.employee.findFirst({
+        where: { id: managerId, companyId }
+      });
+      if (!manager) return NextResponse.json({ error: "Manager not found or unauthorized" }, { status: 403 });
+    }
+
     const warehouse = await prisma.warehouse.create({
       data: {
         companyId,

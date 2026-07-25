@@ -18,8 +18,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
 
     // 1. Fetch the lead
-    const lead = await prisma.lead.findUnique({
-      where: { ...(await withCompany()), id }
+    const lead = await prisma.lead.findFirst({
+      where: { id, companyId: companyIdForGuard }
     });
 
     if (!lead) {
@@ -35,6 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // 2. Create the project
       const project = await tx.project.create({
         data: {
+          companyId: companyIdForGuard,
           name: `${lead.serviceType} for ${lead.companyName}`,
           clientName: lead.companyName,
           status: "ACTIVE"
@@ -44,6 +45,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // 3. Create income record (UNPAID initially)
       const income = await tx.income.create({
         data: {
+          companyId: companyIdForGuard,
           projectId: project.id,
           category: lead.serviceType,
           source: lead.companyName,
@@ -57,7 +59,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
       // 3.5 Update Lead status to Converted
       await tx.lead.update({
-        where: { ...(await withCompany()), id: lead.id },
+        where: { id: lead.id },
         data: { status: "Converted" }
       });
 
@@ -66,7 +68,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const monthName = monthNames[new Date(income.createdAt).getMonth()];
       const yearName = new Date(income.createdAt).getFullYear();
       const period = `${monthName} ${yearName}`;
-      await tx.settlement.deleteMany({ where: { ...(await withCompany()), period } });
+      await tx.settlement.deleteMany({ where: { companyId: companyIdForGuard, period } });
 
       return { project, income };
     });

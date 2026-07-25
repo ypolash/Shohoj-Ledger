@@ -225,8 +225,8 @@ export async function PATCH(request: Request) {
     };
 
     for (const id of paymentIds) {
-      const existingPayment = await prisma.salaryPayment.findUnique({
-        where: { ...companyFilter, id },
+      const existingPayment = await prisma.salaryPayment.findFirst({
+        where: { companyId: companyId!, id },
         include: { employee: true }
       });
 
@@ -285,7 +285,7 @@ export async function PATCH(request: Request) {
       }
 
       await prisma.salaryPayment.update({
-        where: { ...companyFilter, id },
+        where: { id },
         data: { 
           status,
           expenseId,

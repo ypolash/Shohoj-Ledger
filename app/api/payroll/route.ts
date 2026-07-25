@@ -42,8 +42,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payroll already generated for this month' }, { status: 400 });
     }
 
-    const employee = await prisma.employee.findUnique({ where: { ...companyFilter, id: employeeId } });
-    if (!employee) return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    const employee = await prisma.employee.findFirst({ where: { companyId, id: employeeId } });
+    if (!employee) return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 404 });
 
     // Fetch Attendances for the month
     const attendances = await prisma.attendance.findMany({

@@ -106,8 +106,8 @@ export async function POST(request: Request) {
     const today = new Date(dateStr);
 
     console.log("Reached EMPLOYEE validation");
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: { employeeId: employeeId, companyId: companyIdForGuard },
     });
 
     if (!employee) {
@@ -248,6 +248,7 @@ export async function POST(request: Request) {
     } else {
       await prisma.attendance.create({
         data: {
+          companyId: companyIdForGuard,
           employeeId: employee.id,
           date: today,
           checkInTime: serverTime,

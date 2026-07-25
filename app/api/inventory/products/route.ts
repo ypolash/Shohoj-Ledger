@@ -107,6 +107,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Product with this Code or SKU already exists" }, { status: 400 });
     }
 
+    if (categoryId) {
+      const category = await prisma.productCategory.findFirst({
+        where: { id: categoryId, companyId }
+      });
+      if (!category) return NextResponse.json({ error: "Category not found or unauthorized" }, { status: 403 });
+    }
+
     const newProduct = await prisma.$transaction(async (tx) => {
       const p = await tx.product.create({
         data: {

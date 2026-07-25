@@ -39,6 +39,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const companyId = await getCompanyId();
+    if (!companyId) {
+      return NextResponse.json({ error: 'Unauthorized: Company context missing' }, { status: 401 });
+    }
+
     const data = await request.json();
     
     if (!data.name || !data.role) {
@@ -50,7 +55,8 @@ export async function POST(request: Request) {
         name: data.name,
         role: data.role,
         email: data.email || null,
-        phone: data.phone || null
+        phone: data.phone || null,
+        companyId
       }
     });
 

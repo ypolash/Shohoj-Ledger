@@ -33,14 +33,25 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Verify employee exists and get current status
-    const employee = await prisma.employee.findUnique({
+    // Verify employee exists and get current status using findFirst to respect tenant isolation
+    const employee = await prisma.employee.findFirst({
       where: { id: employeeId, companyId }
     });
 
     if (!employee) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 404 });
+    }
+
+    // Verify relational IDs if provided for TRANSFER/PROMOTE
+    if (data.departmentId) {
+      const dept = await prisma.department.findFirst({ where: { id: data.departmentId, companyId } });
+      if (!dept) return NextResponse.json({ error: 'Invalid department or cross-tenant reference' }, { status: 403 });
+    }
+    if (data.designationId) {
+      const desig = await prisma.designation.findFirst({ where: { id: data.designationId, companyId } });
+      if (!desig) return NextResponse.json({ error: 'Invalid designation or cross-tenant reference' }, { status: 403 });
     }
 
     // Determine new status based on event type

@@ -18,7 +18,9 @@ export async function GET(request: Request) {
   const employeeId = searchParams.get('employeeId');
 
   try {
-    const where = employeeId ? { employeeId } : {};
+    const where: any = { companyId: companyIdForGuard };
+    if (employeeId) where.employeeId = employeeId;
+
     const leaves = await prisma.leaveRequest.findMany({
       where,
       include: {
@@ -50,8 +52,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // SECURITY HOTFIX: Validate employee belongs to authenticated company
+    const employee = await prisma.employee.findFirst({
+      where: { id: data.employeeId, companyId: companyIdForGuard }
+    });
+    if (!employee) {
+      return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 403 });
+    }
+
     const leave = await prisma.leaveRequest.create({
       data: {
+        companyId: companyIdForGuard,
         employeeId: data.employeeId,
         type: data.type,
         startDate: new Date(data.startDate),
@@ -82,8 +93,16 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Missing id or status' }, { status: 400 });
     }
 
+    // SECURITY HOTFIX: Pre-flight check for ownership
+    const targetLeave = await prisma.leaveRequest.findFirst({
+      where: { id: data.id, companyId: companyIdForGuard }
+    });
+    if (!targetLeave) {
+      return NextResponse.json({ error: 'Leave request not found or access denied' }, { status: 404 });
+    }
+
     const updated = await prisma.leaveRequest.update({
-      where: { ...(await withCompany()), id: data.id },
+      where: { id: data.id },
       data: { status: data.status }
     });
 

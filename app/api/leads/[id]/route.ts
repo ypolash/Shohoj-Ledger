@@ -27,8 +27,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (lostReason !== undefined) data.lostReason = lostReason;
     if (assignedTo !== undefined) data.assignedTo = assignedTo;
 
+    if (assignedTo !== undefined && assignedTo !== null) {
+      const targetUser = await prisma.user.findFirst({
+        where: { id: assignedTo, companyId: companyIdForGuard }
+      });
+      if (!targetUser) return NextResponse.json({ success: false, message: "Assigned user not found or access denied" }, { status: 403 });
+    }
+
+    const existingLead = await prisma.lead.findFirst({
+      where: { id, companyId: companyIdForGuard }
+    });
+    if (!existingLead) return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
+
     const updatedLead = await prisma.lead.update({
-      where: { ...(await withCompany()), id },
+      where: { id },
       data
     });
 
@@ -49,8 +61,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   try {
     const { id } = await params;
+    const existingLead = await prisma.lead.findFirst({
+      where: { id, companyId: companyIdForGuard }
+    });
+    if (!existingLead) return NextResponse.json({ success: false, message: "Lead not found" }, { status: 404 });
+
     await prisma.lead.delete({
-      where: { ...(await withCompany()), id }
+      where: { id }
     });
     return NextResponse.json({ success: true });
   } catch (error: any) {

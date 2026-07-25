@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { verifyOwnership } from "@/lib/company/verifyOwnership";
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -45,6 +46,10 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   try {
+
+        const ownershipGuard = await verifyOwnership("project", params.id);
+        if (ownershipGuard) return ownershipGuard;
+
     const companyId = await getCompanyId();
     const session = await getSession();
     if (!companyId || !session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -131,6 +136,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   try {
+
+        const ownershipGuard = await verifyOwnership("project", params.id);
+        if (ownershipGuard) return ownershipGuard;
+
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

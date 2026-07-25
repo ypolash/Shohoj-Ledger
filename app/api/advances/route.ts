@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const advances = await prisma.advance.findMany({
+      where: { companyId: companyIdForGuard },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -56,6 +57,14 @@ export async function POST(request: Request) {
 
     if (!memberId || amount === undefined) {
       return NextResponse.json({ error: "Missing memberId or amount" }, { status: 400 });
+    }
+
+    // SECURITY HOTFIX: Verify target relation belongs to authenticated company
+    const targetMember = await prisma.member.findFirst({
+      where: { id: memberId, companyId: companyIdForGuard }
+    });
+    if (!targetMember) {
+      return NextResponse.json({ error: "Unauthorized cross-tenant reference or member not found" }, { status: 403 });
     }
 
     const advanceAmount = parseFloat(amount);
@@ -109,8 +118,16 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
 
+    const existingAdvance = await prisma.advance.findFirst({
+      where: { id, companyId: companyIdForGuard }
+    });
+
+    if (!existingAdvance) {
+      return NextResponse.json({ error: "Advance not found or access denied" }, { status: 404 });
+    }
+
     const updatedAdvance = await prisma.advance.update({
-      where: { ...(await withCompany()), id },
+      where: { id },
       data: { status }
     });
 

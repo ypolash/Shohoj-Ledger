@@ -49,8 +49,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (rbacGuard) return rbacGuard;
     }
 
-    const existingPayment = await prisma.salaryPayment.findUnique({
-      where: { ...companyFilter, id },
+    const existingPayment = await prisma.salaryPayment.findFirst({
+      where: { companyId: companyId!, id },
       include: { employee: true }
     });
 
@@ -107,7 +107,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const updatedPayment = await prisma.salaryPayment.update({
-      where: { ...companyFilter, id },
+      where: { id },
       data: { 
         status,
         expenseId,

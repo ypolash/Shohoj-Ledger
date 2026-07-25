@@ -52,9 +52,10 @@ Read these files in the following order.
 21. ui-component-usage.md
 22. crm-leads.md
 23. crm-customers.md
-24. deployment.md
-25. future-roadmap.md
-26. AI-RULES.md
+24. crm-opportunities.md
+25. deployment.md
+26. future-roadmap.md
+27. AI-RULES.md
 
 Never skip documentation.
 

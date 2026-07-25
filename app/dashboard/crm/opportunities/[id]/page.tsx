@@ -1,202 +1,192 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
-export default function OpportunityDetailsPage({ params }: { params: { id: string } }) {
+// Modular Components
+import { OpportunityValue } from "../components/OpportunityValue";
+import { OpportunityProbability } from "../components/OpportunityProbability";
+import { OpportunityOwner } from "../components/OpportunityOwner";
+import { OpportunityTimeline } from "../components/OpportunityTimeline";
+import { OpportunityActivities } from "../components/OpportunityActivities";
+import { OpportunityNotes } from "../components/OpportunityNotes";
+import { OpportunityProducts } from "../components/OpportunityProducts";
+import { OpportunityHistory } from "../components/OpportunityHistory";
+
+export default function OpportunityDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const [opportunity, setOpportunity] = useState<any>(null);
-  const [stages, setStages] = useState<any[]>([]);
-  const [activity, setActivity] = useState({ activityType: "Task", subject: "", description: "" });
-  
-  // Lost Modal State
-  const [showLostModal, setShowLostModal] = useState(false);
-  const [lostReason, setLostReason] = useState("Competitor");
-  const [lostNote, setLostNote] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    fetchData();
-  }, [params.id]);
+    const fetchOpportunity = async () => {
+      try {
+        const res = await fetch(`/api/crm/opportunities/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOpportunity(data.opportunity || data);
+        } else {
+          router.push('/dashboard/crm/opportunities');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (params.id) fetchOpportunity();
+  }, [params.id, router]);
 
-  const fetchData = async () => {
-    const [oppRes, stageRes] = await Promise.all([
-      fetch(`/api/crm/opportunities/${params.id}`),
-      fetch("/api/crm/opportunities/stages")
-    ]);
-    if (oppRes.ok) setOpportunity(await oppRes.json());
-    if (stageRes.ok) setStages(await stageRes.json());
-  };
+  if (loading) {
+    return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Opportunity...</div></PageContainer>;
+  }
 
-  const handleStatusChange = async (action: string, extraData: any = {}) => {
-    await fetch(`/api/crm/opportunities/${params.id}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...extraData })
-    });
-    setShowLostModal(false);
-    fetchData();
-  };
-
-  const handleAddActivity = async (e: any) => {
-    e.preventDefault();
-    await fetch(`/api/crm/opportunities/${params.id}/activities`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(activity)
-    });
-    setActivity({ activityType: "Task", subject: "", description: "" });
-    fetchData();
-  };
-
-  if (!opportunity) return <div className="p-6">Loading...</div>;
+  if (!opportunity) return null;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6 relative">
-      <div className="flex justify-between items-start bg-white p-6 rounded shadow">
+    <PageContainer>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <h1 className="text-2xl font-bold">{opportunity.title}</h1>
-          <p className="text-gray-500">{opportunity.opportunityNumber} • {opportunity.customer?.name}</p>
-          <div className="mt-2 flex space-x-2">
-            <span className={`px-2 py-1 rounded text-sm ${
-              opportunity.status === 'WON' ? 'bg-green-100 text-green-800' :
-              opportunity.status === 'LOST' ? 'bg-red-100 text-red-800' :
-              opportunity.status === 'ARCHIVED' ? 'bg-gray-200 text-gray-800' :
-              'bg-blue-100 text-blue-800'
-            }`}>
-              {opportunity.status}
-            </span>
-            <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">{opportunity.stage?.name}</span>
-          </div>
-          {opportunity.tags && opportunity.tags.length > 0 && (
-            <div className="mt-3 flex space-x-2">
-              {opportunity.tags.map((tag: string, idx: number) => (
-                <span key={idx} className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">{tag}</span>
-              ))}
-            </div>
-          )}
+          <button 
+            onClick={() => router.push('/dashboard/crm/opportunities')}
+            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
+          >
+            &larr; Back to Opportunities
+          </button>
+          <PageHeader 
+            title={opportunity.name}
+            description={`Customer: ${opportunity.customer?.customerName || 'Unknown'} | Stage: ${opportunity.stage?.name || 'New'}`}
+          />
         </div>
-        <div className="text-right space-y-2">
-          <div className="space-x-2">
-            <Link href={`/dashboard/crm/opportunities/${params.id}/edit`} className="px-4 py-2 bg-gray-200 text-gray-800 rounded text-sm">
-              Edit Opportunity
-            </Link>
-            <Link href="/dashboard/crm/opportunities" className="px-4 py-2 bg-gray-200 text-gray-800 rounded text-sm">
-              Back to List
-            </Link>
-          </div>
-          <p className="text-xl font-bold mt-4">{opportunity.currency} {Number(opportunity.estimatedRevenue).toLocaleString()}</p>
-          <p className="text-gray-500">Probability: {opportunity.probability}%</p>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>done_all</span>
+            Mark as Won
+          </button>
+          <button style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>receipt_long</span>
+            Create Quote
+          </button>
+          <button 
+            onClick={() => router.push(`/dashboard/crm/opportunities/${opportunity.id}/edit`)}
+            style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+            Edit
+          </button>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-lg font-bold mb-4">Pipeline Stages</h2>
-        <div className="flex space-x-2 overflow-x-auto pb-2">
-          {stages
-            .filter(s => !opportunity.pipelineId || s.pipelineId === opportunity.pipelineId)
-            .map(stage => (
-            <button
-              key={stage.id}
-              onClick={() => handleStatusChange("MOVE_STAGE", { stageId: stage.id })}
-              className={`px-4 py-2 rounded whitespace-nowrap ${opportunity.stageId === stage.id ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}`}
-            >
-              {stage.name}
-            </button>
-          ))}
+      {/* KPI Header Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--primary)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Expected Revenue</div>
+          <div style={{ marginTop: '8px' }}>
+            <OpportunityValue amount={opportunity.expectedRevenue} currency={opportunity.currency} size="lg" />
+          </div>
         </div>
-        
-        {opportunity.status !== 'WON' && opportunity.status !== 'LOST' && (
-          <div className="mt-6 flex space-x-4 border-t pt-4">
-            <button onClick={() => handleStatusChange("WON")} className="px-4 py-2 bg-green-600 text-white rounded font-medium">Mark as Won</button>
-            <button onClick={() => setShowLostModal(true)} className="px-4 py-2 bg-red-600 text-white rounded font-medium">Mark as Lost</button>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--info)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px' }}>Probability</div>
+          <OpportunityProbability probability={opportunity.probability || 0} />
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--warning)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Expected Close</div>
+          <div style={{ marginTop: '8px', fontSize: '18px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {new Date(opportunity.expectedCloseDate).toLocaleDateString()}
           </div>
-        )}
-        
-        {opportunity.status === 'LOST' && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded">
-            <p className="font-bold text-red-800">Lost Reason: {opportunity.lostReason}</p>
-          </div>
-        )}
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--success)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Owner</div>
+          <OpportunityOwner ownerName={opportunity.owner?.name || opportunity.ownerId} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-lg font-bold mb-4">Add Activity</h2>
-          <form onSubmit={handleAddActivity} className="space-y-4">
-            <div>
-              <select className="w-full border p-2 rounded" value={activity.activityType} onChange={e => setActivity({...activity, activityType: e.target.value})}>
-                <option value="Call">Call</option>
-                <option value="Meeting">Meeting</option>
-                <option value="Email">Email</option>
-                <option value="WhatsApp">WhatsApp</option>
-                <option value="Task">Task</option>
-                <option value="Internal Note">Internal Note</option>
-              </select>
-            </div>
-            <div>
-              <input required placeholder="Subject" className="w-full border p-2 rounded" value={activity.subject} onChange={e => setActivity({...activity, subject: e.target.value})} />
-            </div>
-            <div>
-              <textarea placeholder="Description / Comment" className="w-full border p-2 rounded h-24" value={activity.description} onChange={e => setActivity({...activity, description: e.target.value})}></textarea>
-            </div>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Post Activity</button>
-          </form>
-        </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '2px' }}>
+        {['overview', 'timeline', 'products & quotes', 'history'].map(tab => (
+          <div 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '12px 0',
+              cursor: 'pointer',
+              color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+              fontWeight: activeTab === tab ? 600 : 500,
+              textTransform: 'capitalize',
+              fontSize: '14px',
+              transition: 'all var(--transition-fast)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {tab}
+          </div>
+        ))}
+      </div>
 
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-lg font-bold mb-4">Activity Timeline</h2>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto">
-            {opportunity.activities?.map((act: any) => (
-              <div key={act.id} className="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 rounded-r">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-sm">{act.subject}</h3>
-                  <span className="text-xs text-gray-500">{new Date(act.activityDate).toLocaleDateString()}</span>
+      {/* Tab Content */}
+      <div style={{ minHeight: '500px' }}>
+        {activeTab === 'overview' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Details</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Lead Source:</span>
+                    <span style={{ fontWeight: 500 }}>{opportunity.leadSource || '-'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Priority:</span>
+                    <span style={{ fontWeight: 500 }}>{opportunity.priority || 'Normal'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Next Step:</span>
+                    <span style={{ fontWeight: 500 }}>{opportunity.nextStep || 'Follow up'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Description:</span>
+                  </div>
+                  <p style={{ margin: 0, padding: '12px', background: 'var(--surface-hover)', borderRadius: '8px' }}>
+                    {opportunity.description || 'No description provided.'}
+                  </p>
                 </div>
-                <p className="text-xs font-semibold text-blue-700 uppercase mt-1">{act.activityType}</p>
-                {act.description && <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{act.description}</p>}
               </div>
-            ))}
-            {(!opportunity.activities || opportunity.activities.length === 0) && (
-              <p className="text-gray-500 text-sm">No activities logged yet.</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Lost Reason Modal */}
-      {showLostModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Mark Opportunity as Lost</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Reason</label>
-                <select className="w-full border p-2 rounded" value={lostReason} onChange={e => setLostReason(e.target.value)}>
-                  <option value="Competitor">Lost to Competitor</option>
-                  <option value="Price">Price too high</option>
-                  <option value="Feature Gap">Missing Features</option>
-                  <option value="Customer Cancelled">Customer Cancelled / Ghosted</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Additional Notes</label>
-                <textarea className="w-full border p-2 rounded h-24" placeholder="Provide details..." value={lostNote} onChange={e => setLostNote(e.target.value)}></textarea>
-              </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                <button onClick={() => setShowLostModal(false)} className="px-4 py-2 border rounded text-gray-600">Cancel</button>
-                <button 
-                  onClick={() => handleStatusChange("LOST", { reason: `${lostReason}${lostNote ? ` - ${lostNote}` : ''}` })} 
-                  className="px-4 py-2 bg-red-600 text-white rounded font-medium"
-                >
-                  Confirm Lost
-                </button>
-              </div>
+              <OpportunityNotes />
+            </div>
+            <div>
+              <OpportunityActivities />
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {activeTab === 'timeline' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Activity Timeline</h4>
+            <OpportunityTimeline />
+          </div>
+        )}
+
+        {activeTab === 'products & quotes' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <OpportunityProducts />
+            {/* Quotes would go here */}
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Audit Logs</h4>
+            <OpportunityHistory />
+          </div>
+        )}
+      </div>
+
+    </PageContainer>
   );
 }

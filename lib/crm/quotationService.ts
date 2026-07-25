@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
 import { QuotationStatus, Prisma } from "@prisma/client";
+import { convertQuotation as createSalesOrderFromQuotation } from "@/lib/crm/salesOrderService";
 
 /**
  * Validates a quotation.
@@ -387,12 +388,15 @@ export async function convertToSalesOrder(companyId: string, id: string, userId:
     data: { status: QuotationStatus.CONVERTED }
   });
 
+  // Automatically generate the Sales Order via salesOrderService
+  const newSalesOrder = await createSalesOrderFromQuotation(companyId, quotation.id, userId);
+
   await logAudit({
     module: "CRM",
     entityType: "Quotation",
     entityId: id,
     action: "UPDATE",
-    description: `Converted quotation ${quotation.quotationNumber} to Sales Order (Phase 3E Pending)`,
+    description: `Converted quotation ${quotation.quotationNumber} to Sales Order ${newSalesOrder.salesOrderNumber}`,
   });
 
   return quotation;

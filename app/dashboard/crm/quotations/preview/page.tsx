@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // Modular Components
 import { QuotationPDF } from "../components/QuotationPDF";
 
-export default function PreviewQuotationPage() {
+function PreviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams?.get('id');
@@ -84,5 +84,13 @@ export default function PreviewQuotationPage() {
         }
       `}} />
     </div>
+  );
+}
+
+export default function PreviewQuotationPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '48px', textAlign: 'center' }}>Loading...</div>}>
+      <PreviewContent />
+    </Suspense>
   );
 }

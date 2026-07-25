@@ -1,373 +1,58 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
-export default function EditQuotationPage({ params }: { params: { id: string } }) {
+// Modular Components
+import { QuotationForm } from "../../components/QuotationForm";
+
+export default function EditQuotationPage() {
+  const params = useParams();
   const router = useRouter();
-  
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [opportunities, setOpportunities] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [quotation, setQuotation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Headers
-  const [customerId, setCustomerId] = useState("");
-  const [opportunityId, setOpportunityId] = useState("");
-  const [quotationDate, setQuotationDate] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [currency, setCurrency] = useState("BDT");
-  const [priceLevel, setPriceLevel] = useState("Standard");
-
-  // Global Modifiers
-  const [globalDiscount, setGlobalDiscount] = useState(0);
-  const [shippingAmount, setShippingAmount] = useState(0);
-
-  // JSON Remarks Fields
-  const [internalNotes, setInternalNotes] = useState("");
-  const [customerNotes, setCustomerNotes] = useState("");
-  const [paymentTerms, setPaymentTerms] = useState("");
-  const [deliveryTerms, setDeliveryTerms] = useState("");
-  const [shippingTerms, setShippingTerms] = useState("");
-  const [salesPersonId, setSalesPersonId] = useState("");
-  const [revisionNumber, setRevisionNumber] = useState(1);
-
-  // Line Items
-  const [lines, setLines] = useState<any[]>([]);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/crm/customers").then(r => r.json()),
-      fetch("/api/crm/opportunities").then(r => r.json()),
-      fetch("/api/inventory/products").then(r => r.json()),
-      fetch("/api/employees").then(r => r.json()),
-      fetch(`/api/crm/quotations/${params.id}`).then(r => r.json())
-    ]).then(([custData, oppData, prodData, empData, quoteData]) => {
-      setCustomers(custData.data || custData || []);
-      setOpportunities(oppData.data || oppData || []);
-      setProducts(prodData.data || prodData || []);
-      setEmployees(empData.data || empData || []);
-      
-      if (quoteData && !quoteData.error) {
-        setCustomerId(quoteData.customerId || "");
-        setOpportunityId(quoteData.opportunityId || "");
-        setQuotationDate(quoteData.quotationDate ? new Date(quoteData.quotationDate).toISOString().split('T')[0] : "");
-        setExpiryDate(quoteData.expiryDate ? new Date(quoteData.expiryDate).toISOString().split('T')[0] : "");
-        setCurrency(quoteData.currency || "BDT");
-        setPriceLevel(quoteData.priceLevel || "Standard");
-        
-        setGlobalDiscount(Number(quoteData.discountAmount) || 0);
-        setShippingAmount(Number(quoteData.shippingAmount) || 0);
-        
-        setLines(quoteData.lines.map((l: any) => ({
-          productId: l.productId,
-          description: l.description || "",
-          quantity: Number(l.quantity),
-          unitPrice: Number(l.unitPrice),
-          discountPercent: Number(l.discountPercent),
-          taxPercent: Number(l.taxPercent)
-        })));
-        
-        if (quoteData.remarks) {
-          try {
-            const parsed = JSON.parse(quoteData.remarks);
-            setInternalNotes(parsed.internalNotes || "");
-            setCustomerNotes(parsed.customerNotes || "");
-            setPaymentTerms(parsed.paymentTerms || "");
-            setDeliveryTerms(parsed.deliveryTerms || "");
-            setShippingTerms(parsed.shippingTerms || "");
-            setSalesPersonId(parsed.salesPersonId || "");
-            setRevisionNumber((Number(parsed.revisionNumber) || 1) + 1); // Auto-increment revision on edit
-          } catch (e) {
-            // Fallback for old quotes that didn't use JSON
-            setCustomerNotes(quoteData.remarks);
-          }
+    const fetchQuotation = async () => {
+      try {
+        const res = await fetch(`/api/crm/quotations/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setQuotation(data.quotation || data);
+        } else {
+          router.push('/dashboard/crm/quotations');
         }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
-  }, [params.id]);
-
-  const handleProductChange = (index: number, productId: string) => {
-    const product = products.find(p => p.id === productId);
-    const newLines = [...lines];
-    newLines[index] = {
-      ...newLines[index],
-      productId,
-      description: product?.description || "",
-      unitPrice: product?.sellingPrice || 0
     };
-    setLines(newLines);
-  };
+    if (params.id) fetchQuotation();
+  }, [params.id, router]);
 
-  const updateLine = (index: number, field: string, value: any) => {
-    const newLines = [...lines];
-    newLines[index][field] = value;
-    setLines(newLines);
-  };
-
-  const addLine = () => {
-    setLines([...lines, { productId: "", description: "", quantity: 1, unitPrice: 0, discountPercent: 0, taxPercent: 0 }]);
-  };
-
-  const removeLine = (index: number) => {
-    setLines(lines.filter((_, i) => i !== index));
-  };
-
-  const totals = useMemo(() => {
-    let subtotal = 0;
-    let taxAmount = 0;
-    
-    lines.forEach(line => {
-      const qty = Number(line.quantity) || 0;
-      const price = Number(line.unitPrice) || 0;
-      const disc = Number(line.discountPercent) || 0;
-      const tax = Number(line.taxPercent) || 0;
-
-      const gross = qty * price;
-      const lineDisc = gross * (disc / 100);
-      const lineSub = gross - lineDisc;
-      const lineTax = lineSub * (tax / 100);
-      
-      subtotal += lineSub;
-      taxAmount += lineTax;
-    });
-
-    const gd = Number(globalDiscount) || 0;
-    const shp = Number(shippingAmount) || 0;
-    const grandTotal = subtotal + taxAmount + shp - gd;
-
-    return { subtotal, taxAmount, grandTotal };
-  }, [lines, globalDiscount, shippingAmount]);
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    const remarksPayload = {
-      internalNotes,
-      customerNotes,
-      paymentTerms,
-      deliveryTerms,
-      shippingTerms,
-      salesPersonId,
-      revisionNumber
-    };
-
-    const payload = {
-      customerId,
-      opportunityId: opportunityId || undefined,
-      expiryDate: new Date(expiryDate).toISOString(),
-      currency,
-      priceLevel,
-      discountAmount: Number(globalDiscount),
-      shippingAmount: Number(shippingAmount),
-      remarks: JSON.stringify(remarksPayload),
-      lines: lines.map(l => ({
-        ...l,
-        quantity: Number(l.quantity),
-        unitPrice: Number(l.unitPrice),
-        discountPercent: Number(l.discountPercent),
-        taxPercent: Number(l.taxPercent)
-      }))
-    };
-
-    try {
-      const res = await fetch(`/api/crm/quotations/${params.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        router.push(`/dashboard/crm/quotations/${params.id}`);
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to update quotation");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Error submitting quotation");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) {
+    return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading...</div></PageContainer>;
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded shadow">
-        <h1 className="text-2xl font-bold">Edit Quotation (Rev: {revisionNumber})</h1>
-        <div className="space-x-2">
-          <Link href={`/dashboard/crm/quotations/${params.id}`} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50">Cancel</Link>
-          <button type="submit" disabled={submitting} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-            {submitting ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
+    <PageContainer>
+      <button 
+        onClick={() => router.push(`/dashboard/crm/quotations/${params.id}`)}
+        style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+      >
+        &larr; Back to Quotation
+      </button>
+      <PageHeader 
+        title={`Edit Quotation: ${quotation.quotationNo || quotation.id.substring(0,8)}`}
+        description="Modify quotation items, terms, and status."
+      />
+
+      <div style={{ maxWidth: '1200px' }}>
+        <QuotationForm initialData={quotation} isEdit={true} />
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded shadow space-y-4">
-            <h2 className="text-lg font-bold border-b pb-2">General Information</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Customer *</label>
-                <select required className="w-full border p-2 rounded focus:ring focus:border-blue-300" value={customerId} onChange={e => setCustomerId(e.target.value)}>
-                  <option value="">Select Customer...</option>
-                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Related Opportunity</label>
-                <select className="w-full border p-2 rounded focus:ring focus:border-blue-300" value={opportunityId} onChange={e => setOpportunityId(e.target.value)}>
-                  <option value="">None</option>
-                  {opportunities.filter(o => !customerId || o.customerId === customerId).map(o => (
-                    <option key={o.id} value={o.id}>{o.opportunityNumber} - {o.title}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Quotation Date (Read Only)</label>
-                <input disabled type="date" className="w-full border p-2 rounded bg-gray-100" value={quotationDate} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Expiry Date *</label>
-                <input required type="date" className="w-full border p-2 rounded focus:ring focus:border-blue-300" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Currency</label>
-                <select className="w-full border p-2 rounded focus:ring focus:border-blue-300" value={currency} onChange={e => setCurrency(e.target.value)}>
-                  <option value="BDT">BDT</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Sales Person</label>
-                <select className="w-full border p-2 rounded focus:ring focus:border-blue-300" value={salesPersonId} onChange={e => setSalesPersonId(e.target.value)}>
-                  <option value="">Select Sales Person...</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.firstName} {e.lastName}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded shadow">
-            <h2 className="text-lg font-bold border-b pb-2 mb-4">Line Items</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 uppercase text-xs">
-                  <tr>
-                    <th className="p-2">Product *</th>
-                    <th className="p-2 w-24">Qty *</th>
-                    <th className="p-2 w-32">Unit Price *</th>
-                    <th className="p-2 w-24">Disc %</th>
-                    <th className="p-2 w-24">Tax %</th>
-                    <th className="p-2 w-32 text-right">Line Total</th>
-                    <th className="p-2 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((line, idx) => {
-                    const gross = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0);
-                    const d = gross * ((Number(line.discountPercent) || 0) / 100);
-                    const sub = gross - d;
-                    const t = sub * ((Number(line.taxPercent) || 0) / 100);
-                    const total = sub + t;
-
-                    return (
-                      <tr key={idx} className="border-b">
-                        <td className="p-2">
-                          <select required className="w-full border p-1 rounded text-xs" value={line.productId} onChange={e => handleProductChange(idx, e.target.value)}>
-                            <option value="">Select...</option>
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
-                          </select>
-                          {line.productId && (
-                            <input type="text" placeholder="Custom description..." className="w-full border p-1 rounded mt-1 text-xs" value={line.description} onChange={e => updateLine(idx, 'description', e.target.value)} />
-                          )}
-                        </td>
-                        <td className="p-2"><input required type="number" min="1" step="any" className="w-full border p-1 rounded text-xs" value={line.quantity} onChange={e => updateLine(idx, 'quantity', e.target.value)} /></td>
-                        <td className="p-2"><input required type="number" min="0" step="any" className="w-full border p-1 rounded text-xs" value={line.unitPrice} onChange={e => updateLine(idx, 'unitPrice', e.target.value)} /></td>
-                        <td className="p-2"><input type="number" min="0" max="100" step="any" className="w-full border p-1 rounded text-xs" value={line.discountPercent} onChange={e => updateLine(idx, 'discountPercent', e.target.value)} /></td>
-                        <td className="p-2"><input type="number" min="0" max="100" step="any" className="w-full border p-1 rounded text-xs" value={line.taxPercent} onChange={e => updateLine(idx, 'taxPercent', e.target.value)} /></td>
-                        <td className="p-2 text-right font-medium text-xs">{total.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                        <td className="p-2 text-center">
-                          {lines.length > 1 && (
-                            <button type="button" onClick={() => removeLine(idx)} className="text-red-500 hover:text-red-700 font-bold">&times;</button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <button type="button" onClick={addLine} className="mt-4 text-sm text-blue-600 hover:underline">+ Add Line Item</button>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded shadow space-y-4">
-            <h2 className="text-lg font-bold border-b pb-2">Terms & Notes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Customer Notes (Visible on PDF)</label>
-                <textarea className="w-full border p-2 rounded h-24 text-sm" value={customerNotes} onChange={e => setCustomerNotes(e.target.value)}></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Internal Notes (Hidden)</label>
-                <textarea className="w-full border p-2 rounded h-24 text-sm" value={internalNotes} onChange={e => setInternalNotes(e.target.value)}></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Payment Terms</label>
-                <textarea className="w-full border p-2 rounded h-16 text-sm" value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}></textarea>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Delivery Terms</label>
-                <textarea className="w-full border p-2 rounded h-16 text-sm" value={deliveryTerms} onChange={e => setDeliveryTerms(e.target.value)}></textarea>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Shipping Terms</label>
-                <textarea className="w-full border p-2 rounded h-16 text-sm" value={shippingTerms} onChange={e => setShippingTerms(e.target.value)}></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded shadow sticky top-6">
-            <h2 className="text-lg font-bold border-b pb-2 mb-4">Pricing Summary</h2>
-            
-            <div className="flex justify-between items-center mb-2 text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span>{currency} {totals.subtotal.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-            </div>
-            
-            <div className="flex justify-between items-center mb-2 text-sm">
-              <span className="text-gray-600">Total Tax</span>
-              <span>{currency} {totals.taxAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-            </div>
-
-            <div className="my-4 border-t pt-4 space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Global Discount Amount ({currency})</label>
-                <input type="number" min="0" step="any" className="w-full border p-2 rounded text-right text-sm" value={globalDiscount} onChange={e => setGlobalDiscount(Number(e.target.value))} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Shipping Charge ({currency})</label>
-                <input type="number" min="0" step="any" className="w-full border p-2 rounded text-right text-sm" value={shippingAmount} onChange={e => setShippingAmount(Number(e.target.value))} />
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center border-t pt-4 mt-4">
-              <span className="text-lg font-bold">Grand Total</span>
-              <span className="text-xl font-bold text-blue-700">{currency} {totals.grandTotal.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
+    </PageContainer>
   );
 }

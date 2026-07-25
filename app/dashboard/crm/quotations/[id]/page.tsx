@@ -1,278 +1,190 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
-export default function QuotationDetailsPage({ params }: { params: { id: string } }) {
+// Modular Components
+import { QuotationStatus } from "../components/QuotationStatus";
+import { QuotationItems } from "../components/QuotationItems";
+import { QuotationTotals } from "../components/QuotationTotals";
+import { QuotationTimeline } from "../components/QuotationTimeline";
+import { QuotationHistory } from "../components/QuotationHistory";
+import { QuotationNotes } from "../components/QuotationNotes";
+import { QuotationAttachments } from "../components/QuotationAttachments";
+import { QuotationTerms } from "../components/QuotationTerms";
+
+export default function QuotationDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const [quotation, setQuotation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    fetchData();
-  }, [params.id]);
-
-  const fetchData = async () => {
-    const res = await fetch(`/api/crm/quotations/${params.id}`);
-    if (res.ok) setQuotation(await res.json());
-    setLoading(false);
-  };
-
-  const handleStatusChange = async (action: string) => {
-    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this quotation?`)) return;
-    const res = await fetch(`/api/crm/quotations/${params.id}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action })
-    });
-    if (res.ok) {
-      fetchData();
-      if (action === "DUPLICATE") {
-        const data = await res.json();
-        router.push(`/dashboard/crm/quotations/${data.id}/edit`);
+    const fetchQuotation = async () => {
+      try {
+        const res = await fetch(`/api/crm/quotations/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setQuotation(data.quotation || data);
+        } else {
+          router.push('/dashboard/crm/quotations');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } else {
-      const err = await res.json();
-      alert(err.error || "Failed to update quotation");
-    }
-  };
+    };
+    if (params.id) fetchQuotation();
+  }, [params.id, router]);
 
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
-  if (!quotation || quotation.error) return <div className="p-6">Quotation not found.</div>;
-
-  let remarksData: any = {};
-  try {
-    remarksData = quotation.remarks ? JSON.parse(quotation.remarks) : {};
-  } catch(e) {
-    remarksData = { customerNotes: quotation.remarks };
+  if (loading) {
+    return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Quotation...</div></PageContainer>;
   }
 
-  const printDocument = () => {
-    window.print();
-  };
+  if (!quotation) return null;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body * { visibility: hidden; }
-          #printable-area, #printable-area * { visibility: visible; }
-          #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-          .no-print { display: none !important; }
-        }
-      `}} />
-
-      {/* Action Bar - Hidden during print */}
-      <div className="flex justify-between items-start bg-white p-6 rounded shadow no-print">
+    <PageContainer>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <h1 className="text-2xl font-bold">Quotation {quotation.quotationNumber}</h1>
-          <p className="text-gray-500">Rev: {remarksData.revisionNumber || 1} • {quotation.customer?.name}</p>
-          <div className="mt-2 flex space-x-2">
-            <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm font-semibold">{quotation.status}</span>
-          </div>
-        </div>
-        <div className="text-right space-y-2">
-          <div className="space-x-2">
-            <button onClick={printDocument} className="px-4 py-2 bg-gray-100 border text-gray-800 rounded text-sm hover:bg-gray-200">
-              Print / PDF
-            </button>
-            <button onClick={() => handleStatusChange("DUPLICATE")} className="px-4 py-2 bg-gray-100 border text-gray-800 rounded text-sm hover:bg-gray-200">
-              Duplicate
-            </button>
-            {(quotation.status === 'DRAFT' || quotation.status === 'PENDING_APPROVAL') && (
-              <Link href={`/dashboard/crm/quotations/${params.id}/edit`} className="px-4 py-2 bg-gray-200 text-gray-800 rounded text-sm inline-block">
-                Edit Draft
-              </Link>
-            )}
-            <Link href="/dashboard/crm/quotations" className="px-4 py-2 bg-gray-200 text-gray-800 rounded text-sm inline-block">
-              Back to List
-            </Link>
-          </div>
-          <p className="text-xl font-bold mt-4">{quotation.currency} {Number(quotation.totalAmount).toLocaleString()}</p>
-        </div>
-      </div>
-
-      {/* State Machine Bar - Hidden during print */}
-      <div className="bg-white p-4 rounded shadow flex space-x-4 no-print overflow-x-auto">
-        {quotation.status === 'DRAFT' && (
-          <button onClick={() => handleStatusChange("APPROVE")} className="px-4 py-2 bg-yellow-500 text-white rounded font-medium whitespace-nowrap">Submit for Approval</button>
-        )}
-        {quotation.status === 'PENDING_APPROVAL' && (
-          <>
-            <button onClick={() => handleStatusChange("APPROVE")} className="px-4 py-2 bg-blue-600 text-white rounded font-medium whitespace-nowrap">Approve</button>
-            <button onClick={() => handleStatusChange("REJECT")} className="px-4 py-2 bg-red-600 text-white rounded font-medium whitespace-nowrap">Reject</button>
-          </>
-        )}
-        {quotation.status === 'APPROVED' && (
-          <button onClick={() => handleStatusChange("SEND")} className="px-4 py-2 bg-indigo-600 text-white rounded font-medium whitespace-nowrap">Send to Customer (Email)</button>
-        )}
-        {quotation.status === 'SENT' && (
-          <>
-            <button onClick={() => handleStatusChange("ACCEPT")} className="px-4 py-2 bg-green-600 text-white rounded font-medium whitespace-nowrap">Customer Accepted</button>
-            <button onClick={() => handleStatusChange("REJECT")} className="px-4 py-2 bg-red-600 text-white rounded font-medium whitespace-nowrap">Customer Rejected</button>
-            <button onClick={() => handleStatusChange("EXPIRE")} className="px-4 py-2 bg-gray-600 text-white rounded font-medium whitespace-nowrap">Mark Expired</button>
-          </>
-        )}
-        {quotation.status === 'ACCEPTED' && (
-          <button onClick={() => handleStatusChange("CONVERT")} className="px-4 py-2 bg-purple-600 text-white rounded font-medium whitespace-nowrap">Convert to Sales Order</button>
-        )}
-      </div>
-
-      {/* Printable Area */}
-      <div id="printable-area" className="bg-white p-10 rounded shadow min-h-[800px]">
-        {/* Header */}
-        <div className="flex justify-between items-start border-b pb-6 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 uppercase tracking-widest">Quotation</h1>
-            <p className="text-gray-500 mt-1">Ref: {quotation.quotationNumber}</p>
-            <p className="text-gray-500">Rev: {remarksData.revisionNumber || 1}</p>
-          </div>
-          <div className="text-right">
-            {/* Future Logo Placeholder */}
-            <div className="h-16 w-48 bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 mb-2 ml-auto">Company Logo</div>
-            <p className="font-bold">Your Company Ltd.</p>
-            <p className="text-sm text-gray-500">123 Business Road, Tech City</p>
-            <p className="text-sm text-gray-500">contact@company.com</p>
-          </div>
-        </div>
-
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-8 mb-8">
-          <div>
-            <h3 className="text-sm font-bold text-gray-400 uppercase mb-2">Prepared For</h3>
-            <p className="font-bold text-lg">{quotation.customer?.name}</p>
-            <p className="text-sm text-gray-600 mt-2">
-              <strong>Prepared By:</strong> {quotation.createdBy?.firstName} {quotation.createdBy?.lastName}<br />
-              <strong>Quotation Date:</strong> {new Date(quotation.quotationDate).toLocaleDateString()}<br />
-              <strong>Valid Until:</strong> {new Date(quotation.expiryDate).toLocaleDateString()}
-            </p>
-          </div>
-          <div className="text-right">
-            {/* Future QR Code Placeholder */}
-            <div className="h-24 w-24 bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 ml-auto mb-2 text-xs">QR Code</div>
-            <p className="text-sm font-semibold text-blue-600">Scan to Verify</p>
-          </div>
-        </div>
-
-        {/* Items Table */}
-        <table className="w-full text-left mb-8">
-          <thead className="border-b-2 border-gray-800 text-sm">
-            <tr>
-              <th className="py-2">Item Description</th>
-              <th className="py-2 text-center w-24">Qty</th>
-              <th className="py-2 text-right w-32">Unit Price</th>
-              <th className="py-2 text-right w-32">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm">
-            {quotation.lines?.map((line: any) => (
-              <tr key={line.id} className="border-b border-gray-200">
-                <td className="py-3">
-                  <p className="font-bold">{line.product?.name}</p>
-                  {line.description && <p className="text-gray-500 text-xs mt-1">{line.description}</p>}
-                </td>
-                <td className="py-3 text-center">{Number(line.quantity)}</td>
-                <td className="py-3 text-right">{Number(line.unitPrice).toLocaleString()}</td>
-                <td className="py-3 text-right font-medium">{Number(line.lineTotal).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Totals Section */}
-        <div className="flex justify-end mb-10">
-          <div className="w-1/3">
-            <div className="flex justify-between py-1 text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span>{Number(quotation.subtotal).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+          <button 
+            onClick={() => router.push('/dashboard/crm/quotations')}
+            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          >
+            &larr; Back to Quotations
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <PageHeader 
+              title={quotation.quotationNo || \`Quotation \${quotation.id.substring(0,8)}\`}
+              description={`Customer: ${quotation.customer?.customerName || 'Unknown'}`}
+            />
+            <div style={{ marginTop: '-8px' }}>
+              <QuotationStatus status={quotation.status} />
             </div>
-            {Number(quotation.discountAmount) > 0 && (
-              <div className="flex justify-between py-1 text-sm text-red-600">
-                <span>Discount</span>
-                <span>-{Number(quotation.discountAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>shopping_cart_checkout</span>
+            Convert to Order
+          </button>
+          <button 
+            onClick={() => router.push(`/dashboard/crm/quotations/preview?id=${quotation.id}`)}
+            style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>picture_as_pdf</span>
+            Preview PDF
+          </button>
+          <button 
+            onClick={() => router.push(`/dashboard/crm/quotations/${quotation.id}/edit`)}
+            style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+            Edit
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Header Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--primary)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Grand Total</div>
+          <div style={{ marginTop: '8px', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: quotation.currency || 'BDT', maximumFractionDigits: 0 }).format(quotation.grandTotal || quotation.totalAmount || 0)}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--info)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Issue Date</div>
+          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {new Date(quotation.issueDate || quotation.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--warning)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Expiry Date</div>
+          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {quotation.expiryDate ? new Date(quotation.expiryDate).toLocaleDateString() : 'N/A'}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--success)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Opportunity</div>
+          <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--text-main)' }}>
+            {quotation.opportunity?.name || '-'}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '2px' }}>
+        {['overview', 'timeline', 'attachments', 'history'].map(tab => (
+          <div 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '12px 0',
+              cursor: 'pointer',
+              color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+              fontWeight: activeTab === tab ? 600 : 500,
+              textTransform: 'capitalize',
+              fontSize: '14px',
+              transition: 'all var(--transition-fast)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {tab}
+          </div>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div style={{ minHeight: '500px' }}>
+        {activeTab === 'overview' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <QuotationItems items={quotation.items || []} readOnly={true} />
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '32px', flexWrap: 'wrap' }}>
+              <QuotationTerms terms={quotation.terms} />
+              
+              <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--surface-main)' }}>
+                <QuotationTotals 
+                  subtotal={quotation.subtotal || 0} 
+                  totalDiscount={quotation.discount || 0} 
+                  totalTax={quotation.tax || 0} 
+                  grandTotal={quotation.grandTotal || quotation.totalAmount || 0} 
+                />
               </div>
-            )}
-            <div className="flex justify-between py-1 text-sm">
-              <span className="text-gray-600">Tax</span>
-              <span>{Number(quotation.taxAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
             </div>
-            {Number(quotation.shippingAmount) > 0 && (
-              <div className="flex justify-between py-1 text-sm">
-                <span className="text-gray-600">Shipping</span>
-                <span>{Number(quotation.shippingAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-              </div>
-            )}
-            <div className="flex justify-between py-2 border-t-2 border-gray-800 mt-2 font-bold text-lg">
-              <span>Total ({quotation.currency})</span>
-              <span>{Number(quotation.totalAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+            
+            <div style={{ maxWidth: '600px' }}>
+              <QuotationNotes />
             </div>
-          </div>
-        </div>
-
-        {/* Terms and Notes */}
-        <div className="text-sm text-gray-700 space-y-4 mb-16">
-          {remarksData.customerNotes && (
-            <div>
-              <p className="font-bold mb-1">Notes:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.customerNotes}</p>
-            </div>
-          )}
-          {remarksData.paymentTerms && (
-            <div>
-              <p className="font-bold mb-1">Payment Terms:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.paymentTerms}</p>
-            </div>
-          )}
-          {remarksData.deliveryTerms && (
-            <div>
-              <p className="font-bold mb-1">Delivery Terms:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.deliveryTerms}</p>
-            </div>
-          )}
-          {remarksData.shippingTerms && (
-            <div>
-              <p className="font-bold mb-1">Shipping Terms:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.shippingTerms}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Signatures */}
-        <div className="flex justify-between pt-16">
-          <div className="w-1/3 border-t border-gray-400 text-center pt-2 text-sm">
-            <p className="font-bold">Prepared By</p>
-            <p className="text-gray-500">{quotation.createdBy?.firstName} {quotation.createdBy?.lastName}</p>
-          </div>
-          <div className="w-1/3 border-t border-gray-400 text-center pt-2 text-sm">
-            <p className="font-bold">Accepted By</p>
-            <p className="text-gray-500">Customer Signature & Date</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Internal Notes & History - Hidden during print */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
-        {remarksData.internalNotes && (
-          <div className="bg-yellow-50 p-6 rounded shadow border border-yellow-200">
-            <h2 className="text-lg font-bold mb-2 text-yellow-800">Internal Notes (Hidden from PDF)</h2>
-            <p className="whitespace-pre-wrap text-sm text-yellow-900">{remarksData.internalNotes}</p>
           </div>
         )}
 
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-lg font-bold mb-4">Revision & Audit History</h2>
-          <div className="space-y-4 max-h-[300px] overflow-y-auto">
-            {quotation.history?.map((log: any) => (
-              <div key={log.id} className="border-l-2 border-blue-500 pl-4 py-1">
-                <p className="text-xs text-gray-500">{new Date(log.createdAt).toLocaleString()}</p>
-                <p className="text-sm font-medium">{log.description}</p>
-              </div>
-            ))}
+        {activeTab === 'timeline' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Activity Timeline</h4>
+            <QuotationTimeline />
           </div>
-        </div>
+        )}
+
+        {activeTab === 'attachments' && (
+          <QuotationAttachments />
+        )}
+
+        {activeTab === 'history' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Audit Logs</h4>
+            <QuotationHistory />
+          </div>
+        )}
       </div>
-    </div>
+
+    </PageContainer>
   );
 }

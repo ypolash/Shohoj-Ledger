@@ -1,55 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from 'react';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+
+// Modular Components
+import { SalesOrderTable } from "./components/SalesOrderTable";
+import { SalesOrderFilters } from "./components/SalesOrderFilters";
+import { SalesOrderSearch } from "./components/SalesOrderSearch";
+import { SalesOrderToolbar } from "./components/SalesOrderToolbar";
+import { SalesOrderEmptyState } from "./components/SalesOrderEmptyState";
+import { SalesOrderLoading } from "./components/SalesOrderLoading";
 
 export default function SalesOrdersPage() {
-  const router = useRouter();
-  const [salesOrders, setSalesOrders] = useState<any[]>([]);
-  const [dashboard, setDashboard] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ query: '', status: '', paymentStatus: '', shipmentStatus: '' });
 
-  // Filters
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
-  const [customerId, setCustomerId] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-
-  const [customers, setCustomers] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch("/api/crm/customers")
-      .then(r => r.json())
-      .then(data => setCustomers(data.data || data || []));
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [query, status, customerId, fromDate, toDate]);
-
-  const fetchData = async () => {
+  const fetchOrders = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (query) params.append("query", query);
-      if (status) params.append("status", status);
-      if (customerId) params.append("customerId", customerId);
-      if (fromDate) params.append("fromDate", fromDate);
-      if (toDate) params.append("toDate", toDate);
-
-      const [listRes, dashRes] = await Promise.all([
-        fetch(`/api/crm/sales-orders?${params.toString()}`),
-        fetch("/api/crm/sales-orders/dashboard")
-      ]);
+      const qParams = new URLSearchParams();
+      if (filters.query) qParams.append("query", filters.query);
+      if (filters.status) qParams.append("status", filters.status);
+      if (filters.paymentStatus) qParams.append("paymentStatus", filters.paymentStatus);
+      if (filters.shipmentStatus) qParams.append("shipmentStatus", filters.shipmentStatus);
       
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        setSalesOrders(listData.data || []);
-      }
-      if (dashRes.ok) {
-        setDashboard(await dashRes.json());
+      const res = await fetch(`/api/crm/sales-orders?${qParams.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
       }
     } catch (err) {
       console.error(err);
@@ -58,150 +38,44 @@ export default function SalesOrdersPage() {
     }
   };
 
-  const handleAction = async (id: string, action: string) => {
-    if (action === "DELETE") {
-      if (!confirm("Are you sure you want to delete this sales order?")) return;
-      await fetch(`/api/crm/sales-orders/${id}`, { method: "DELETE" });
-    } else {
-      if (!confirm(`Are you sure you want to execute action ${action}?`)) return;
-      await fetch(`/api/crm/sales-orders/${id}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action })
-      });
-    }
-    fetchData();
-  };
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
-  const statusColors: any = {
-    DRAFT: "bg-gray-100 text-gray-800",
-    PENDING_APPROVAL: "bg-yellow-100 text-yellow-800",
-    APPROVED: "bg-blue-100 text-blue-800",
-    OPEN: "bg-indigo-100 text-indigo-800",
-    PARTIALLY_DELIVERED: "bg-orange-100 text-orange-800",
-    DELIVERED: "bg-green-100 text-green-800",
-    CLOSED: "bg-purple-100 text-purple-800",
-    CANCELLED: "bg-red-100 text-red-800"
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this sales order?")) return;
+    try {
+      const res = await fetch(`/api/crm/sales-orders/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchOrders();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Sales Orders</h1>
-        <Link href="/dashboard/crm/sales-orders/new" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">
-          + New Sales Order
-        </Link>
-      </div>
+    <PageContainer>
+      <PageHeader 
+        title="Sales Orders" 
+        description="Manage confirmed customer orders, track payments and shipments."
+      />
 
-      {dashboard && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Total Orders</p>
-            <p className="text-lg font-bold">{dashboard.totalCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Draft</p>
-            <p className="text-lg font-bold text-gray-600">{dashboard.draftCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Pending</p>
-            <p className="text-lg font-bold text-yellow-600">{dashboard.pendingCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Approved</p>
-            <p className="text-lg font-bold text-blue-600">{dashboard.approvedCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Reserved (Open)</p>
-            <p className="text-lg font-bold text-indigo-600">{dashboard.openCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Delivered</p>
-            <p className="text-lg font-bold text-green-600">{dashboard.deliveredCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Cancelled</p>
-            <p className="text-lg font-bold text-red-600">{dashboard.cancelledCount}</p>
-          </div>
-          <div className="bg-white p-4 rounded shadow">
-            <p className="text-xs text-gray-500 uppercase">Revenue</p>
-            <p className="text-lg font-bold text-green-700">${Number(dashboard.revenue).toLocaleString()}</p>
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <SalesOrderSearch onSearch={(q) => setFilters(prev => ({ ...prev, query: q }))} />
+          <SalesOrderToolbar onRefresh={fetchOrders} />
         </div>
-      )}
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
-        <input 
-          type="text" 
-          placeholder="Search Number..." 
-          className="border p-2 rounded" 
-          value={query} 
-          onChange={(e) => setQuery(e.target.value)} 
-        />
-        <select className="border p-2 rounded" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-          <option value="">All Customers</option>
-          {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select className="border p-2 rounded" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All Statuses</option>
-          {Object.keys(statusColors).map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <input type="date" className="border p-2 rounded" value={fromDate} onChange={e => setFromDate(e.target.value)} />
-        <input type="date" className="border p-2 rounded" value={toDate} onChange={e => setToDate(e.target.value)} />
+        <SalesOrderFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
+
+        {loading ? (
+          <SalesOrderLoading />
+        ) : orders.length === 0 ? (
+          <SalesOrderEmptyState />
+        ) : (
+          <SalesOrderTable orders={orders} onDelete={handleDelete} />
+        )}
       </div>
-
-      {loading ? (
-        <div className="text-center py-10">Loading...</div>
-      ) : (
-        <div className="bg-white rounded shadow overflow-x-auto">
-          <table className="min-w-full text-left text-sm whitespace-nowrap">
-            <thead className="uppercase tracking-wider border-b-2 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4">SO No</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Amount</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {salesOrders.map((so) => (
-                <tr key={so.id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-blue-600">
-                    <Link href={`/dashboard/crm/sales-orders/${so.id}`}>{so.salesOrderNumber}</Link>
-                  </td>
-                  <td className="px-6 py-4">{new Date(so.orderDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">{so.customer?.name}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[so.status] || 'bg-gray-100'}`}>
-                      {so.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">{so.currency} {Number(so.totalAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                  <td className="px-6 py-4 text-right space-x-3">
-                    <Link href={`/dashboard/crm/sales-orders/${so.id}`} className="text-blue-600 hover:underline">View</Link>
-                    {(so.status === 'DRAFT' || so.status === 'PENDING_APPROVAL') && (
-                      <Link href={`/dashboard/crm/sales-orders/${so.id}/edit`} className="text-gray-600 hover:underline">Edit</Link>
-                    )}
-                    {so.status === 'DRAFT' && (
-                      <button onClick={() => handleAction(so.id, 'DELETE')} className="text-red-600 hover:underline">Delete</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {salesOrders.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                    No sales orders found. Try adjusting your filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+    </PageContainer>
   );
 }

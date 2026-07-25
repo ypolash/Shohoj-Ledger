@@ -1,267 +1,177 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
-export default function SalesOrderDetailsPage({ params }: { params: { id: string } }) {
+// Modular Components
+import { SalesOrderStatus } from "../components/SalesOrderStatus";
+import { SalesOrderItems } from "../components/SalesOrderItems";
+import { QuotationTotals } from "../../quotations/components/QuotationTotals";
+import { SalesOrderTimeline } from "../components/SalesOrderTimeline";
+import { SalesOrderHistory } from "../components/SalesOrderHistory";
+import { SalesOrderInvoices } from "../components/SalesOrderInvoices";
+import { SalesOrderPayments } from "../components/SalesOrderPayments";
+import { SalesOrderShipment } from "../components/SalesOrderShipment";
+
+export default function SalesOrderDetailPage() {
+  const params = useParams();
   const router = useRouter();
-  const [salesOrder, setSalesOrder] = useState<any>(null);
+  const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    fetchData();
-  }, [params.id]);
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/crm/sales-orders/${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrder(data.order || data);
+        } else {
+          router.push('/dashboard/crm/sales-orders');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (params.id) fetchOrder();
+  }, [params.id, router]);
 
-  const fetchData = async () => {
-    const res = await fetch(`/api/crm/sales-orders/${params.id}`);
-    if (res.ok) setSalesOrder(await res.json());
-    setLoading(false);
-  };
-
-  const handleStatusChange = async (action: string) => {
-    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this order?`)) return;
-    const res = await fetch(`/api/crm/sales-orders/${params.id}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action })
-    });
-    if (res.ok) {
-      fetchData();
-    } else {
-      const err = await res.json();
-      alert(err.error || "Failed to update sales order");
-    }
-  };
-
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
-  if (!salesOrder || salesOrder.error) return <div className="p-6">Sales Order not found.</div>;
-
-  let remarksData: any = {};
-  try {
-    remarksData = salesOrder.remarks ? JSON.parse(salesOrder.remarks) : {};
-  } catch(e) {
-    remarksData = { customerNotes: salesOrder.remarks };
+  if (loading) {
+    return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Order...</div></PageContainer>;
   }
 
-  const printDocument = () => {
-    window.print();
-  };
+  if (!order) return null;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body * { visibility: hidden; }
-          #printable-area, #printable-area * { visibility: visible; }
-          #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-          .no-print { display: none !important; }
-        }
-      `}} />
-
-      {/* Action Bar - Hidden during print */}
-      <div className="flex justify-between items-start bg-white p-6 rounded shadow no-print">
+    <PageContainer>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <h1 className="text-2xl font-bold">Sales Order {salesOrder.salesOrderNumber}</h1>
-          <p className="text-gray-500">Customer: {salesOrder.customer?.name}</p>
-          {salesOrder.quotation && (
-            <p className="text-gray-500 text-sm mt-1">From Quotation: {salesOrder.quotation.quotationNumber}</p>
-          )}
-          <div className="mt-2 flex space-x-2">
-            <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm font-semibold">{salesOrder.status}</span>
-          </div>
-        </div>
-        <div className="text-right space-y-2">
-          <div className="space-x-2">
-            <button onClick={printDocument} className="px-4 py-2 bg-gray-100 border text-gray-800 rounded text-sm hover:bg-gray-200">
-              Print Order
-            </button>
-            {(salesOrder.status === 'DRAFT' || salesOrder.status === 'PENDING_APPROVAL') && (
-              <Link href={`/dashboard/crm/sales-orders/${params.id}/edit`} className="px-4 py-2 bg-gray-200 text-gray-800 rounded text-sm inline-block">
-                Edit Draft
-              </Link>
-            )}
-            <Link href="/dashboard/crm/sales-orders" className="px-4 py-2 bg-gray-200 text-gray-800 rounded text-sm inline-block">
-              Back to List
-            </Link>
-          </div>
-          <p className="text-xl font-bold mt-4">{salesOrder.currency} {Number(salesOrder.totalAmount).toLocaleString()}</p>
-        </div>
-      </div>
-
-      {/* State Machine Bar - Hidden during print */}
-      <div className="bg-white p-4 rounded shadow flex space-x-4 no-print overflow-x-auto">
-        {salesOrder.status === 'DRAFT' && (
-          <button onClick={() => handleStatusChange("SUBMIT_APPROVAL")} className="px-4 py-2 bg-yellow-500 text-white rounded font-medium whitespace-nowrap">Submit for Approval</button>
-        )}
-        {salesOrder.status === 'PENDING_APPROVAL' && (
-          <>
-            <button onClick={() => handleStatusChange("APPROVE")} className="px-4 py-2 bg-blue-600 text-white rounded font-medium whitespace-nowrap">Approve</button>
-            <button onClick={() => handleStatusChange("CANCEL")} className="px-4 py-2 bg-red-600 text-white rounded font-medium whitespace-nowrap">Reject (Cancel)</button>
-          </>
-        )}
-        {salesOrder.status === 'APPROVED' && (
-          <>
-            <button onClick={() => handleStatusChange("RESERVE")} className="px-4 py-2 bg-indigo-600 text-white rounded font-medium whitespace-nowrap">Reserve Inventory</button>
-            <button onClick={() => handleStatusChange("CANCEL")} className="px-4 py-2 bg-red-600 text-white rounded font-medium whitespace-nowrap">Cancel Order</button>
-          </>
-        )}
-        {salesOrder.status === 'OPEN' && (
-          <>
-            <button onClick={() => alert('Delivery functionality will be implemented in the Warehouse module.')} className="px-4 py-2 bg-green-600 text-white rounded font-medium whitespace-nowrap">Create Delivery Order</button>
-            <button onClick={() => handleStatusChange("RELEASE")} className="px-4 py-2 bg-gray-600 text-white rounded font-medium whitespace-nowrap">Release Reservation (Revert to Approved)</button>
-            <button onClick={() => handleStatusChange("CANCEL")} className="px-4 py-2 bg-red-600 text-white rounded font-medium whitespace-nowrap">Cancel Order (Releases Stock)</button>
-          </>
-        )}
-        {(salesOrder.status === 'DELIVERED' || salesOrder.status === 'PARTIALLY_DELIVERED') && (
-          <button onClick={() => handleStatusChange("CLOSE")} className="px-4 py-2 bg-purple-600 text-white rounded font-medium whitespace-nowrap">Mark as Completed</button>
-        )}
-      </div>
-
-      {/* Printable Area */}
-      <div id="printable-area" className="bg-white p-10 rounded shadow min-h-[800px]">
-        {/* Header */}
-        <div className="flex justify-between items-start border-b pb-6 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 uppercase tracking-widest">Sales Order</h1>
-            <p className="text-gray-500 mt-1">Ref: {salesOrder.salesOrderNumber}</p>
-            {salesOrder.quotation && <p className="text-gray-500">Quote: {salesOrder.quotation.quotationNumber}</p>}
-          </div>
-          <div className="text-right">
-            {/* Future Logo Placeholder */}
-            <div className="h-16 w-48 bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 mb-2 ml-auto">Company Logo</div>
-            <p className="font-bold">Your Company Ltd.</p>
-            <p className="text-sm text-gray-500">123 Business Road, Tech City</p>
-            <p className="text-sm text-gray-500">contact@company.com</p>
-          </div>
-        </div>
-
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-8 mb-8">
-          <div>
-            <h3 className="text-sm font-bold text-gray-400 uppercase mb-2">Order For</h3>
-            <p className="font-bold text-lg">{salesOrder.customer?.name}</p>
-            <p className="text-sm text-gray-600 mt-2">
-              <strong>Prepared By:</strong> {salesOrder.createdBy?.firstName} {salesOrder.createdBy?.lastName}<br />
-              <strong>Order Date:</strong> {new Date(salesOrder.orderDate).toLocaleDateString()}<br />
-              {salesOrder.requestedDeliveryDate && (
-                <><strong>Req. Delivery:</strong> {new Date(salesOrder.requestedDeliveryDate).toLocaleDateString()}</>
-              )}
-            </p>
-          </div>
-          <div className="text-right">
-            {/* Future QR Code Placeholder */}
-            <div className="h-24 w-24 bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 ml-auto mb-2 text-xs">QR Code</div>
-            <p className="text-sm font-semibold text-blue-600">Scan Order Details</p>
-          </div>
-        </div>
-
-        {/* Items Table */}
-        <table className="w-full text-left mb-8">
-          <thead className="border-b-2 border-gray-800 text-sm">
-            <tr>
-              <th className="py-2">Item Description</th>
-              <th className="py-2 text-center w-24">Qty</th>
-              <th className="py-2 text-right w-32">Unit Price</th>
-              <th className="py-2 text-right w-32">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm">
-            {salesOrder.lines?.map((line: any) => (
-              <tr key={line.id} className="border-b border-gray-200">
-                <td className="py-3">
-                  <p className="font-bold">{line.product?.name}</p>
-                  {line.description && <p className="text-gray-500 text-xs mt-1">{line.description}</p>}
-                </td>
-                <td className="py-3 text-center">{Number(line.quantity)}</td>
-                <td className="py-3 text-right">{Number(line.unitPrice).toLocaleString()}</td>
-                <td className="py-3 text-right font-medium">{Number(line.lineTotal).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Totals Section */}
-        <div className="flex justify-end mb-10">
-          <div className="w-1/3">
-            <div className="flex justify-between py-1 text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span>{Number(salesOrder.subtotal).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+          <button 
+            onClick={() => router.push('/dashboard/crm/sales-orders')}
+            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+          >
+            &larr; Back to Sales Orders
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <PageHeader 
+              title={order.orderNo || \`Order \${order.id.substring(0,8)}\`}
+              description={`Customer: ${order.customer?.customerName || 'Unknown'}`}
+            />
+            <div style={{ marginTop: '-8px' }}>
+              <SalesOrderStatus status={order.status} />
             </div>
-            {Number(salesOrder.discountAmount) > 0 && (
-              <div className="flex justify-between py-1 text-sm text-red-600">
-                <span>Discount</span>
-                <span>-{Number(salesOrder.discountAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>local_shipping</span>
+            Fulfill Order
+          </button>
+          <button 
+            onClick={() => router.push(`/dashboard/crm/sales-orders/${order.id}/edit`)}
+            style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+            Edit
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Header Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--primary)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Amount Due</div>
+          <div style={{ marginTop: '8px', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency || 'BDT', maximumFractionDigits: 0 }).format((order.grandTotal || order.totalAmount || 0) - (order.amountPaid || 0))}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--info)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Order Date</div>
+          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+            {new Date(order.orderDate || order.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--warning)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Payment Status</div>
+          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: order.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+            {order.paymentStatus || 'Unpaid'}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--success)' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Shipment Status</div>
+          <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 500, color: order.shipmentStatus === 'Delivered' ? 'var(--success)' : 'var(--info)' }}>
+            {order.shipmentStatus || 'Pending'}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '2px' }}>
+        {['overview', 'payments', 'invoices', 'shipments', 'timeline', 'history'].map(tab => (
+          <div 
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '12px 0',
+              cursor: 'pointer',
+              color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+              fontWeight: activeTab === tab ? 600 : 500,
+              textTransform: 'capitalize',
+              fontSize: '14px',
+              transition: 'all var(--transition-fast)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {tab}
+          </div>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div style={{ minHeight: '500px' }}>
+        {activeTab === 'overview' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <SalesOrderItems items={order.items || []} readOnly={true} />
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '32px', flexWrap: 'wrap' }}>
+              <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--surface-main)' }}>
+                <QuotationTotals 
+                  subtotal={order.subtotal || 0} 
+                  totalDiscount={order.discount || 0} 
+                  totalTax={order.tax || 0} 
+                  grandTotal={order.grandTotal || order.totalAmount || 0} 
+                />
               </div>
-            )}
-            <div className="flex justify-between py-1 text-sm">
-              <span className="text-gray-600">Tax</span>
-              <span>{Number(salesOrder.taxAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
             </div>
-            {Number(salesOrder.shippingAmount) > 0 && (
-              <div className="flex justify-between py-1 text-sm">
-                <span className="text-gray-600">Shipping</span>
-                <span>{Number(salesOrder.shippingAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-              </div>
-            )}
-            <div className="flex justify-between py-2 border-t-2 border-gray-800 mt-2 font-bold text-lg">
-              <span>Total ({salesOrder.currency})</span>
-              <span>{Number(salesOrder.totalAmount).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Terms and Notes */}
-        <div className="text-sm text-gray-700 space-y-4 mb-16">
-          {remarksData.customerNotes && (
-            <div>
-              <p className="font-bold mb-1">Notes:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.customerNotes}</p>
-            </div>
-          )}
-          {remarksData.paymentTerms && (
-            <div>
-              <p className="font-bold mb-1">Payment Terms:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.paymentTerms}</p>
-            </div>
-          )}
-          {remarksData.deliveryTerms && (
-            <div>
-              <p className="font-bold mb-1">Delivery Terms:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.deliveryTerms}</p>
-            </div>
-          )}
-          {remarksData.shippingMethod && (
-            <div>
-              <p className="font-bold mb-1">Shipping Method:</p>
-              <p className="whitespace-pre-wrap text-gray-600">{remarksData.shippingMethod}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Internal Notes & History - Hidden during print */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
-        {remarksData.internalNotes && (
-          <div className="bg-yellow-50 p-6 rounded shadow border border-yellow-200">
-            <h2 className="text-lg font-bold mb-2 text-yellow-800">Internal Notes (Hidden from PDF)</h2>
-            <p className="whitespace-pre-wrap text-sm text-yellow-900">{remarksData.internalNotes}</p>
           </div>
         )}
 
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-lg font-bold mb-4">Revision & Audit History</h2>
-          <div className="space-y-4 max-h-[300px] overflow-y-auto">
-            {salesOrder.history?.map((log: any) => (
-              <div key={log.id} className="border-l-2 border-blue-500 pl-4 py-1">
-                <p className="text-xs text-gray-500">{new Date(log.createdAt).toLocaleString()}</p>
-                <p className="text-sm font-medium">{log.description}</p>
-              </div>
-            ))}
+        {activeTab === 'payments' && <SalesOrderPayments />}
+        {activeTab === 'invoices' && <SalesOrderInvoices />}
+        {activeTab === 'shipments' && <SalesOrderShipment />}
+
+        {activeTab === 'timeline' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fulfillment Timeline</h4>
+            <SalesOrderTimeline />
           </div>
-        </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Audit Logs</h4>
+            <SalesOrderHistory />
+          </div>
+        )}
       </div>
-    </div>
+
+    </PageContainer>
   );
 }

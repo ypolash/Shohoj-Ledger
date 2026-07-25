@@ -1,0 +1,109 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.container {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.switchWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px; /* Align with label text */
+}
+
+.input {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 2;
+  cursor: pointer;
+  margin: 0;
+}
+
+.track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-main);
+  border-radius: 20px;
+  transition: background-color var(--transition-fast);
+  pointer-events: none;
+}
+:global(.dark) .track {
+  background-color: var(--gray-700);
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Checked state */
+.input:checked + .track {
+  background-color: var(--primary);
+}
+
+.input:checked + .track .thumb {
+  transform: translateX(16px);
+}
+
+/* Focus state */
+.input:focus-visible + .track {
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Disabled state */
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.input:disabled + .track {
+  background-color: var(--surface-hover);
+  opacity: 0.7;
+}
+
+.input:disabled:checked + .track {
+  background-color: var(--primary-200);
+}
+:global(.dark) .input:disabled:checked + .track {
+  background-color: rgba(37, 99, 235, 0.4);
+}
+
+.input:disabled ~ .label {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-main);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.description {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin: 0;
+  margin-left: calc(36px + var(--space-3)); 
+}

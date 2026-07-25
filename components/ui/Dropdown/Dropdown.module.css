@@ -1,0 +1,75 @@
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.trigger {
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  min-width: 200px;
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  animation: popIn var(--transition-fast);
+}
+
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  font-size: var(--font-size-sm);
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  gap: var(--space-3);
+}
+
+.item:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+}
+
+.item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.danger {
+  color: var(--danger);
+}
+.danger:hover:not(:disabled) {
+  background-color: var(--danger-glow);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  opacity: 0.8;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}

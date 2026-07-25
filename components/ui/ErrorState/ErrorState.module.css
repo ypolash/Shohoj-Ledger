@@ -1,0 +1,12 @@
+.errorContainer {
+  border-color: rgba(239, 68, 68, 0.3); /* danger with opacity */
+  background-color: var(--danger-glow);
+}
+:global(.dark) .errorContainer {
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.errorIcon {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}

@@ -1,0 +1,59 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  gap: var(--space-2);
+}
+
+.default {
+  background-color: var(--surface-hover);
+  color: var(--text-main);
+  border: 1px solid var(--border-main);
+}
+
+.primary {
+  background-color: var(--primary-50);
+  color: var(--primary);
+  border: 1px solid var(--primary-100);
+}
+:global(.dark) .primary {
+  background-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.avatar {
+  display: flex;
+  margin-left: -8px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.content {
+  line-height: 1.2;
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  padding: 2px;
+  margin-right: -4px;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+}
+
+.removeButton:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+:global(.dark) .removeButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}

@@ -1,0 +1,51 @@
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-md);
+}
+
+.checkboxCell {
+  width: 48px;
+  text-align: center;
+}
+
+.sortableHeader {
+  cursor: pointer;
+  user-select: none;
+}
+.sortableHeader:hover {
+  background-color: var(--border-light);
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sortIcon {
+  display: flex;
+  align-items: center;
+  color: var(--text-main);
+}
+
+.idleIcon {
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  color: var(--text-muted);
+}
+
+.sortableHeader:hover .idleIcon {
+  opacity: 0.5;
+}
+
+.selectedRow {
+  background-color: var(--primary-50) !important;
+}
+:global(.dark) .selectedRow {
+  background-color: rgba(37, 99, 235, 0.1) !important;
+}

@@ -1,0 +1,62 @@
+.tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.list {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--border-main);
+  margin-bottom: var(--space-4);
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+.list::-webkit-scrollbar {
+  display: none; /* Chrome */
+}
+
+.trigger {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  margin-bottom: -1px;
+}
+
+.trigger:hover:not(:disabled):not(.active) {
+  color: var(--text-main);
+  border-bottom-color: var(--border-main);
+}
+
+.trigger.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trigger:focus-visible {
+  outline: none;
+  background-color: var(--surface-hover);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.content {
+  animation: fadeIn var(--transition-base);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

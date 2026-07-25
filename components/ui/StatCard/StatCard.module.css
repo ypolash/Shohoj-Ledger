@@ -1,0 +1,63 @@
+.statCard {
+  height: 100%;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+}
+
+.iconWrapper {
+  color: var(--text-muted);
+  display: flex;
+  opacity: 0.8;
+}
+
+.valueWrapper {
+  margin: var(--space-1) 0;
+}
+
+.value {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.trendWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.trendUp { color: var(--success); }
+.trendDown { color: var(--danger); }
+.trendNeutral { color: var(--text-muted); }
+
+.trendLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}

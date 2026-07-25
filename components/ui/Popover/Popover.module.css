@@ -1,0 +1,40 @@
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.trigger {
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  padding: var(--space-4);
+  animation: popIn var(--transition-fast);
+}
+
+.left { left: 0; }
+.right { right: 0; }
+.center { left: 50%; transform: translateX(-50%); }
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.center {
+  /* Override popIn for center align to maintain X translation */
+  animation: popInCenter var(--transition-fast);
+}
+
+@keyframes popInCenter {
+  from { opacity: 0; transform: translate(-50%, -10px) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}

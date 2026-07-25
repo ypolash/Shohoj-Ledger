@@ -1,0 +1,88 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.container {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--bg-main);
+  margin: 0;
+  margin-top: 2px;
+  
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border: 1px solid var(--border-main);
+  border-radius: 50%;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.input:checked {
+  border-color: var(--primary);
+  /* Use a background gradient or box-shadow for the inner circle */
+  box-shadow: inset 0 0 0 4px var(--bg-main), inset 0 0 0 16px var(--primary);
+}
+:global(.dark) .input:checked {
+  box-shadow: inset 0 0 0 4px var(--surface-main), inset 0 0 0 16px var(--primary);
+}
+
+.input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.input:disabled {
+  background-color: var(--surface-hover);
+  border-color: var(--border-light);
+  cursor: not-allowed;
+}
+.input:disabled:checked {
+  box-shadow: inset 0 0 0 4px var(--surface-main), inset 0 0 0 16px var(--border-main);
+}
+.input:disabled + .label {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.hasError {
+  border-color: var(--danger);
+}
+.hasError:focus-visible {
+  box-shadow: 0 0 0 3px var(--danger-glow);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-main);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.description {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin: 0;
+  margin-left: calc(16px + var(--space-2)); 
+}
+
+.errorMessage {
+  font-size: var(--font-size-xs);
+  color: var(--danger);
+  margin: 0;
+  margin-left: calc(16px + var(--space-2));
+}

@@ -1,0 +1,95 @@
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  width: 100%;
+}
+
+.success {
+  background-color: var(--success-glow);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+.success .iconContainer { color: var(--success); }
+.success .title { color: var(--success); }
+.success .message { color: var(--success); opacity: 0.9; }
+
+.danger {
+  background-color: var(--danger-glow);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+.danger .iconContainer { color: var(--danger); }
+.danger .title { color: var(--danger); }
+.danger .message { color: var(--danger); opacity: 0.9; }
+
+.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+.warning .iconContainer { color: var(--warning); }
+.warning .title { color: var(--warning); }
+.warning .message { color: var(--warning); opacity: 0.9; }
+
+.info {
+  background-color: rgba(14, 165, 233, 0.1);
+  border-color: rgba(14, 165, 233, 0.2);
+  color: var(--info);
+}
+.info .iconContainer { color: var(--info); }
+.info .title { color: var(--info); }
+.info .message { color: var(--info); opacity: 0.9; }
+
+.iconContainer {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.content {
+  flex: 1;
+}
+
+.title {
+  margin: 0 0 4px 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+.message p {
+  margin: 0 0 8px 0;
+}
+.message p:last-child {
+  margin: 0;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast), background-color var(--transition-fast);
+  margin-right: -4px;
+  margin-top: -4px;
+}
+.closeButton:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+:global(.dark) .closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}

@@ -39,19 +39,20 @@ Read these files in the following order.
 8. ui-design.md
 9. ui-design-system.md
 10. ui-layout.md
-11. ui-navigation.md
-12. ui-page-map.md
-13. ui-user-flows.md
-14. ui-wireframes.md
-15. ui-dashboard-layout.md
-16. ui-responsive-layout.md
-17. ui-table-standard.md
-18. ui-form-standard.md
-19. ui-accessibility.md
-20. ui-component-usage.md
-21. deployment.md
-22. future-roadmap.md
-23. AI-RULES.md
+11. ui-components.md
+12. ui-navigation.md
+13. ui-page-map.md
+14. ui-user-flows.md
+15. ui-wireframes.md
+16. ui-dashboard-layout.md
+17. ui-responsive-layout.md
+18. ui-table-standard.md
+19. ui-form-standard.md
+20. ui-accessibility.md
+21. ui-component-usage.md
+22. deployment.md
+23. future-roadmap.md
+24. AI-RULES.md
 
 Never skip documentation.
 

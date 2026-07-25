@@ -98,7 +98,7 @@ export function CalendarView() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {events.map((ev, evIdx) => (
                       <div key={evIdx} style={{ 
-                        fontSize: '10px', fontWeight: 600, background: \`color-mix(in srgb, \${ev.color} 15%, transparent)\`, 
+                        fontSize: '10px', fontWeight: 600, background: `color-mix(in srgb, ${ev.color} 15%, transparent)`, 
                         color: ev.color, padding: '4px 6px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' 
                       }}>
                         {ev.title}
@@ -111,9 +111,9 @@ export function CalendarView() {
           );
         })}
       </div>
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         .hover-bg-hover:hover { background: var(--surface-hover) !important; }
-      \`}} />
+      `}} />
     </div>
   );
 }

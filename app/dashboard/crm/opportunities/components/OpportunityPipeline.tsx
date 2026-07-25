@@ -37,8 +37,8 @@ export function OpportunityPipeline({ opportunities }: OpportunityPipelineProps)
               </div>
               <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                 <div style={{ 
-                  width: \`\${widthPercent}%\`, 
-                  background: \`var(--primary-\${900 - (index * 100)})\`,
+                  width: `${widthPercent}%`, 
+                  background: `var(--primary-${900 - (index * 100)})`,
                   padding: '12px',
                   display: 'flex',
                   justifyContent: 'center',

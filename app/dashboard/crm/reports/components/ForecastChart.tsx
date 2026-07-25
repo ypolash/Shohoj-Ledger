@@ -21,12 +21,12 @@ export function ForecastChart() {
             
             <div style={{ height: '12px', width: '100%', background: 'var(--surface-hover)', borderRadius: '6px', overflow: 'hidden', position: 'relative' }}>
               {/* Target Line marker */}
-              <div style={{ position: 'absolute', top: 0, bottom: 0, left: \`\${(forecast[i] / 6) * 100}%\`, width: '2px', background: 'var(--warning)', zIndex: 2 }}></div>
+              <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${(forecast[i] / 6) * 100}%`, width: '2px', background: 'var(--warning)', zIndex: 2 }}></div>
               
               {actual[i] > 0 ? (
                 <div style={{ 
                   height: '100%', 
-                  width: \`\${(actual[i] / 6) * 100}%\`, 
+                  width: `${(actual[i] / 6) * 100}%`, 
                   background: actual[i] >= forecast[i] ? 'var(--success)' : 'var(--primary)',
                   borderRadius: '6px',
                   zIndex: 1,
@@ -35,7 +35,7 @@ export function ForecastChart() {
               ) : (
                 <div style={{ 
                   height: '100%', 
-                  width: \`\${((forecast[i]*0.8) / 6) * 100}%\`, 
+                  width: `${((forecast[i]*0.8) / 6) * 100}%`, 
                   background: 'var(--gray-300)',
                   borderRadius: '6px',
                   border: '1px dashed var(--gray-500)',

@@ -43,7 +43,7 @@ export function SalesLeaderboard() {
 
             <div style={{ flex: 1 }}>
               <div style={{ height: '8px', background: 'var(--surface-hover)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: \`\${(user.revenue / maxRev) * 100}%\`, background: 'var(--primary)', borderRadius: '4px' }}></div>
+                <div style={{ height: '100%', width: `${(user.revenue / maxRev) * 100}%`, background: 'var(--primary)', borderRadius: '4px' }}></div>
               </div>
             </div>
 

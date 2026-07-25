@@ -11,13 +11,13 @@ export function CRMLoading() {
           <div style={{ width: '60%', height: '24px', background: 'var(--surface-hover)', borderRadius: '4px', marginTop: '16px', animation: 'pulse 1.5s infinite' }} />
         </div>
       ))}
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes pulse {
           0% { opacity: 0.6; }
           50% { opacity: 0.3; }
           100% { opacity: 0.6; }
         }
-      \`}} />
+      `}} />
     </div>
   );
 }

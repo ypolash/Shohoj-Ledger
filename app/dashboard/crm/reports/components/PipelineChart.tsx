@@ -23,7 +23,7 @@ export function PipelineChart() {
           <svg viewBox="0 0 32 32" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
             {data.map((item, i) => {
               const dash = (item.value / 100) * 100; // Total 100 for SVG circle math
-              const dasharray = \`\${dash} 100\`;
+              const dasharray = `${dash} 100`;
               const offset = -currentAngle;
               currentAngle += dash;
               return (

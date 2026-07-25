@@ -36,7 +36,7 @@ export function OpportunityKanban({ opportunities }: OpportunityKanbanProps) {
             border: '1px solid var(--border-light)'
           }}>
             {/* Column Header */}
-            <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)', borderTop: \`4px solid \${col.color}\`, borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)', borderTop: `4px solid ${col.color}`, borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>{col.name}</h4>
                 <span style={{ fontSize: '11px', fontWeight: 600, background: 'var(--bg-main)', padding: '2px 8px', borderRadius: '12px' }}>

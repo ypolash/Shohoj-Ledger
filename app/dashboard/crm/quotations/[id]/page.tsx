@@ -59,7 +59,7 @@ export default function QuotationDetailPage() {
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <PageHeader 
-              title={quotation.quotationNo || \`Quotation \${quotation.id.substring(0,8)}\`}
+              title={quotation.quotationNo || `Quotation ${quotation.id.substring(0,8)}`}
               description={`Customer: ${quotation.customer?.customerName || 'Unknown'}`}
             />
             <div style={{ marginTop: '-8px' }}>

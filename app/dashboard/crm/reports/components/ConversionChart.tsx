@@ -15,8 +15,8 @@ export function ConversionChart() {
         {months.map((m, i) => (
           <div key={m} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
             <div style={{ height: '150px', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px' }}>
-              <div style={{ width: '100%', height: \`\${(loss[i] / 100) * 100}%\`, background: 'var(--danger)', borderRadius: '4px 4px 0 0', opacity: 0.8 }} title={\`Lost: \${loss[i]}\`}></div>
-              <div style={{ width: '100%', height: \`\${(win[i] / 100) * 100}%\`, background: 'var(--success)', borderRadius: '0 0 4px 4px', opacity: 0.9 }} title={\`Won: \${win[i]}\`}></div>
+              <div style={{ width: '100%', height: `${(loss[i] / 100) * 100}%`, background: 'var(--danger)', borderRadius: '4px 4px 0 0', opacity: 0.8 }} title={`Lost: ${loss[i]}`}></div>
+              <div style={{ width: '100%', height: `${(win[i] / 100) * 100}%`, background: 'var(--success)', borderRadius: '0 0 4px 4px', opacity: 0.9 }} title={`Won: ${win[i]}`}></div>
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{m}</div>
           </div>

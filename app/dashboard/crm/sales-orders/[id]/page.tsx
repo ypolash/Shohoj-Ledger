@@ -59,7 +59,7 @@ export default function SalesOrderDetailPage() {
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <PageHeader 
-              title={order.orderNo || \`Order \${order.id.substring(0,8)}\`}
+              title={order.orderNo || `Order ${order.id.substring(0,8)}`}
               description={`Customer: ${order.customer?.customerName || 'Unknown'}`}
             />
             <div style={{ marginTop: '-8px' }}>

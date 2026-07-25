@@ -24,13 +24,13 @@ export function QuotationLoading() {
           </div>
         ))}
       </div>
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes pulse {
           0% { opacity: 0.6; }
           50% { opacity: 0.3; }
           100% { opacity: 0.6; }
         }
-      \`}} />
+      `}} />
     </div>
   );
 }

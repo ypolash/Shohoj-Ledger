@@ -27,7 +27,7 @@ export function SalesFunnelChart() {
               </div>
               <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                 <div style={{ 
-                  width: \`\${Math.max(widthPercent, 15)}%\`, 
+                  width: `${Math.max(widthPercent, 15)}%`, 
                   background: stage.color,
                   padding: '10px',
                   display: 'flex',

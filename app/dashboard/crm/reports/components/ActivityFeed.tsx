@@ -41,9 +41,9 @@ export function ActivityFeed() {
               
               <div style={{ 
                 width: '40px', height: '40px', borderRadius: '50%', 
-                background: \`color-mix(in srgb, \${color} 15%, transparent)\`,
+                background: `color-mix(in srgb, ${color} 15%, transparent)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 1, border: \`1px solid \${color}\`
+                zIndex: 1, border: `1px solid ${color}`
               }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '20px', color: color }}>{icon}</span>
               </div>

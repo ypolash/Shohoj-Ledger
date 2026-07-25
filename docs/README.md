@@ -37,9 +37,20 @@ Read these files in the following order.
 6. coding-standards.md
 7. security.md
 8. ui-design.md
-9. deployment.md
-10. future-roadmap.md
-11. AI-RULES.md
+9. ui-design-system.md
+10. ui-navigation.md
+11. ui-page-map.md
+12. ui-user-flows.md
+13. ui-wireframes.md
+14. ui-dashboard-layout.md
+15. ui-responsive-layout.md
+16. ui-table-standard.md
+17. ui-form-standard.md
+18. ui-accessibility.md
+19. ui-component-usage.md
+20. deployment.md
+21. future-roadmap.md
+22. AI-RULES.md
 
 Never skip documentation.
 

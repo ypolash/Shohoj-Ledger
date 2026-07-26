@@ -47,7 +47,9 @@ export function SuperAdminSidebar() {
   return (
     <aside className={sidebarClass} aria-label="Super Admin Navigation">
       <div className={styles.brand}>
-        <div className={styles.logoMark} style={{ backgroundColor: 'var(--warning)', boxShadow: '0 0 15px rgba(245, 158, 11, 0.4)' }}>★</div>
+        <div className={styles.logoMark} style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
+          <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
+        </div>
         {sidebarOpen && <span className={styles.brandName}>SaaS Admin</span>}
       </div>
 

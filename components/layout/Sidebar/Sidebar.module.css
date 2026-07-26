@@ -3,21 +3,22 @@
   top: 0;
   left: 0;
   bottom: 0;
-  background-color: var(--surface-main);
-  border-right: 1px solid var(--border-main);
+  background-color: #135447; /* Dark teal from image */
+  border-right: none;
   display: flex;
   flex-direction: column;
   transition: width var(--transition-base), transform var(--transition-base);
   z-index: var(--z-modal);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  color: #e2e8f0; /* Light gray text for contrast */
 }
 
 .open {
-  width: 280px;
+  width: 250px;
 }
 
 .collapsed {
-  width: 80px;
+  width: 70px;
 }
 
 /* Mobile Drawer Behavior */
@@ -34,7 +35,7 @@
   display: flex;
   align-items: center;
   padding: 0 var(--space-4);
-  border-bottom: 1px solid var(--border-main);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   gap: var(--space-3);
   overflow: hidden;
   white-space: nowrap;
@@ -58,7 +59,7 @@
 .brandName {
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
-  color: var(--text-main);
+  color: #ffffff;
   opacity: 1;
   animation: fadeIn var(--transition-fast);
 }
@@ -88,17 +89,20 @@
 .searchInput {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-main);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
-  background-color: var(--bg-main);
-  color: var(--text-main);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ffffff;
   font-size: var(--font-size-sm);
   transition: border-color var(--transition-fast);
 }
+.searchInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
 .searchInput:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 .navGroup {
@@ -110,7 +114,7 @@
 .sectionHeader {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0 var(--space-2);
@@ -122,7 +126,7 @@
   align-items: center;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: background-color var(--transition-fast), color var(--transition-fast);
   gap: var(--space-3);
@@ -130,19 +134,20 @@
 }
 
 .navItem:hover {
-  background-color: var(--surface-hover);
-  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .navItem.active {
-  background-color: var(--primary-50);
-  color: var(--primary);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   font-weight: var(--font-weight-medium);
+  box-shadow: inset 3px 0 0 #ffffff; /* Gives a nice left indicator */
 }
 
 /* In Dark Mode, active background needs to be adjusted */
 :global(.dark) .navItem.active {
-  background-color: rgba(37, 99, 235, 0.1); /* Primary glow */
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
 .navIcon {
@@ -158,6 +163,21 @@
 .collapsed .navItem {
   justify-content: center;
   padding: var(--space-3) 0;
+  position: relative;
+}
+.collapsed .navItem.active {
+  box-shadow: none;
+}
+.collapsed .navItem.active::before {
+  content: '';
+  position: absolute;
+  left: -8px; /* Assuming container padding is 16px */
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  width: 4px;
+  background-color: #ffffff;
+  border-radius: 0 4px 4px 0;
 }
 .collapsed .navContainer {
   padding: var(--space-4) var(--space-2);

@@ -49,7 +49,9 @@ export function Sidebar() {
   return (
     <aside className={sidebarClass} aria-label="Main Navigation">
       <div className={styles.brand}>
-        <div className={styles.logoMark}>S</div>
+        <div className={styles.logoMark} style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
+          <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
+        </div>
         {sidebarOpen && <span className={styles.brandName}>Shohoj Ledger</span>}
       </div>
 

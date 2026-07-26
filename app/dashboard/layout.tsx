@@ -21,7 +21,9 @@ export default function DashboardLayout({
     <div className={styles.dashboardContainer}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <div className={styles.brandIcon}>S</div>
+          <div className={styles.brandIcon}>
+            <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
+          </div>
         </div>
         <nav className={styles.nav}>
           <Link href="/dashboard" className={`${styles.navLink} ${isActive('/dashboard') ? styles.active : ''}`}>

@@ -23,24 +23,24 @@ export function Sidebar() {
   const pathname = usePathname() || '';
 
   const navItems = [
-    { name: 'Dashboard', icon: Home, href: '/dashboard' },
-    { name: 'CRM', icon: Users, href: '/dashboard/crm' },
-    { name: 'Finance', icon: DollarSign, href: '/dashboard/finance' },
-    { name: 'Inventory', icon: Box, href: '/dashboard/inventory' },
-    { name: 'HR', icon: Briefcase, href: '/dashboard/hr' },
-    { name: 'Payroll', icon: CreditCard, href: '/dashboard/payroll' },
-    { name: 'Projects', icon: Folder, href: '/dashboard/projects' },
-    { name: 'Reports', icon: BarChart2, href: '/dashboard/reports' },
+    { name: 'Dashboard', icon: Home, href: '/erp' },
+    { name: 'CRM', icon: Users, href: '/erp/crm' },
+    { name: 'Finance', icon: DollarSign, href: '/erp/finance' },
+    { name: 'Inventory', icon: Box, href: '/erp/inventory' },
+    { name: 'HR', icon: Briefcase, href: '/erp/hr' },
+    { name: 'Payroll', icon: CreditCard, href: '/erp/payroll' },
+    { name: 'Projects', icon: Folder, href: '/erp/projects' },
+    { name: 'Reports', icon: BarChart2, href: '/erp/reports' },
   ];
 
   const adminItems = [
-    { name: 'Settings', icon: Settings, href: '/dashboard/settings' },
-    { name: 'Administration', icon: Shield, href: '/dashboard/admin' },
+    { name: 'Settings', icon: Settings, href: '/erp/settings' },
+    { name: 'Administration', icon: Shield, href: '/erp/admin' },
   ];
 
   const isActive = (path: string) => {
-    if (path === '/dashboard' && pathname === '/dashboard') return true;
-    if (path !== '/dashboard' && pathname.startsWith(path)) return true;
+    if (path === '/erp' && pathname === '/erp') return true;
+    if (path !== '/erp' && pathname.startsWith(path)) return true;
     return false;
   };
 

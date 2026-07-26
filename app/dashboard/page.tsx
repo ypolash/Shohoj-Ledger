@@ -118,15 +118,15 @@ export default function DashboardIndex() {
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, '#5B7CFA'); // Primary
-          gradient.addColorStop(1, 'rgba(91, 124, 250, 0)');
+          gradient.addColorStop(0, '#135447'); // Primary
+          gradient.addColorStop(1, 'rgba(19, 84, 71, 0)');
           return gradient;
         },
         borderRadius: 50,
         barPercentage: 0.3,
         categoryPercentage: 0.8,
         borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
-        borderColor: '#5B7CFA'
+        borderColor: '#135447'
       },
       {
         label: 'Expenses',
@@ -195,7 +195,7 @@ export default function DashboardIndex() {
       {/* Dashboard Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif', color: 'var(--text)' }}>Shohoj Ledger - Premium Dashboard</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif', color: 'var(--text-main)' }}>Shohoj Ledger - Premium Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>A premium, soft-UI financial dashboard</p>
         </div>
       </div>
@@ -275,7 +275,7 @@ export default function DashboardIndex() {
         <div className="glass-card" style={{ padding: '20px', height: '360px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Revenue vs Expense</h3>
-            <div style={{ background: 'var(--border-light)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: 'var(--text)' }}>Month ⌄</div>
+            <div style={{ background: 'var(--border-main)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-main)' }}>Month ⌄</div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <Bar data={revExpData} options={chartOptions as any} />
@@ -286,7 +286,7 @@ export default function DashboardIndex() {
         <div className="glass-card" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Cash Flow</h3>
-            <div style={{ background: 'var(--border-light)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: 'var(--text)' }}>Month ⌄</div>
+            <div style={{ background: 'var(--border-main)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-main)' }}>Month ⌄</div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             <Line data={cashFlowData} options={chartOptions as any} />
@@ -303,7 +303,7 @@ export default function DashboardIndex() {
         </div>
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: 'var(--border-light)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <tr style={{ background: 'var(--border-main)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               <th style={{ padding: '12px', fontWeight: 'normal' }}>Date</th>
               <th style={{ padding: '12px', fontWeight: 'normal' }}>Category</th>
               <th style={{ padding: '12px', fontWeight: 'normal', textAlign: 'right' }}>Amount</th>
@@ -313,7 +313,7 @@ export default function DashboardIndex() {
           <tbody style={{ fontSize: '14px' }}>
             {data.recentTransactions.length > 0 ? (
               data.recentTransactions.map((tx) => (
-                <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <tr key={tx.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
                   <td style={{ padding: '16px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '32px', height: '32px', background: tx.type === 'INCOME' ? 'var(--success-glow)' : 'var(--danger-glow)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -322,7 +322,7 @@ export default function DashboardIndex() {
                         </span>
                       </div>
                       <div>
-                        <div style={{ fontWeight: 500, color: 'var(--text)' }}>
+                        <div style={{ fontWeight: 500, color: 'var(--text-main)' }}>
                           {typeof tx.category === 'object' && tx.category !== null ? tx.category.name : (tx.category || 'Uncategorized')}
                         </div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{tx.subtitle || '-'}</div>
@@ -334,7 +334,7 @@ export default function DashboardIndex() {
                     {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
                   </td>
                   <td style={{ padding: '16px 12px', textAlign: 'center' }}>
-                    <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: 'var(--border-light)', color: 'var(--text-muted)' }}>
+                    <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: 'var(--border-main)', color: 'var(--text-muted)' }}>
                       Completed
                     </span>
                   </td>

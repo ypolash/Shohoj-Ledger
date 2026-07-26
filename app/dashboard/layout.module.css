@@ -1,7 +1,7 @@
 .dashboardContainer {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg);
+  background-color: var(--bg-main);
 }
 
 .sidebar {

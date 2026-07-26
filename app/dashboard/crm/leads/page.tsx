@@ -13,8 +13,8 @@ import { LeadStats } from "./components/LeadStats";
 import { LeadEmptyState } from "./components/LeadEmptyState";
 import { LeadLoading } from "./components/LeadLoading";
 import { LeadCard } from "./components/LeadCard";
-import { FastLeadDrawer } from "../../components/FastLeadDrawer";
-import { CRMFAB } from "../../components/CRMFAB";
+import { FastLeadDrawer } from "../components/FastLeadDrawer";
+import { CRMFAB } from "../components/CRMFAB";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);

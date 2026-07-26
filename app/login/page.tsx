@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [useLegacy, setUseLegacy] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -32,9 +33,9 @@ export default function LoginPage() {
         if (data.role === "EMPLOYEE") {
           // You could redirect employees elsewhere if needed, but per requirements, 
           // ERP is for ADMIN/OWNER.
-          router.push("/erp"); 
+          router.push(useLegacy ? "/dashboard" : "/erp"); 
         } else {
-          router.push("/erp"); // Redirect to ERP dashboard on success
+          router.push(useLegacy ? "/dashboard" : "/erp"); // Redirect to chosen dashboard on success
         }
         router.refresh(); // Refresh router to ensure middleware and states are updated
       }
@@ -83,6 +84,19 @@ export default function LoginPage() {
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-muted)', fontSize: '14px' }}>
+            <input 
+              type="checkbox" 
+              id="useLegacy" 
+              checked={useLegacy} 
+              onChange={(e) => setUseLegacy(e.target.checked)} 
+              style={{ cursor: 'pointer' }}
+            />
+            <label htmlFor="useLegacy" style={{ cursor: 'pointer', userSelect: 'none' }}>
+              Open Legacy Dashboard instead of Enterprise ERP
+            </label>
+          </div>
 
           <button type="submit" className={styles.button} disabled={isLoading}>
             {isLoading ? "Signing In..." : "Sign In"}

@@ -4,18 +4,18 @@ import React, { useState } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader';
 
-export default function SystemSettingsPage() {
+export default function SmsPage() {
   const [loading, setLoading] = useState(false);
 
   return (
     <PageContainer>
       <PageHeader 
-        title="System Settings" 
-        description="Manage enterprise system configurations and global application behavior."
+        title="Sms" 
+        description="Configure and manage enterprise sms settings."
       />
       <div className="glass-card" style={ padding: 'var(--spacing-6)' }>
         <div style={ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }>
-          <h2 style={ margin: 0, fontSize: '18px' }>System Settings Configuration</h2>
+          <h2 style={ margin: 0, fontSize: '18px' }>Sms Configuration</h2>
           <div style={ display: 'flex', gap: '8px' }>
             <button className="btn btn-secondary">
               <span className="material-symbols-outlined">refresh</span> Refresh
@@ -42,7 +42,7 @@ export default function SystemSettingsPage() {
                 <td colSpan={5} style={ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--text-muted)' }>
                   <div style={ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }>
                     <span className="material-symbols-outlined" style={ fontSize: '48px', opacity: 0.5 }>settings_applications</span>
-                    <p style={ margin: 0 }>No system settings configurations found.</p>
+                    <p style={ margin: 0 }>No sms configurations found.</p>
                   </div>
                 </td>
               </tr>

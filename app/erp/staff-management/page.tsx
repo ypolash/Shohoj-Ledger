@@ -16,7 +16,7 @@ export default function StaffManagementDashboard() {
   return (
     <div className="animate-fade-in">
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Staff Management Overview</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Staff Management Overview</h1>
         <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Monitor employees, attendance, and payroll metrics.</p>
       </div>
 

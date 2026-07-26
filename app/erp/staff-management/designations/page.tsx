@@ -110,7 +110,7 @@ export default function DesignationsPage() {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Designations</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Designations</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Manage job titles, grades, and levels.</p>
         </div>
         <button 

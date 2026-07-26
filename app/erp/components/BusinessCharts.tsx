@@ -164,18 +164,18 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
     }}>
       {showFinance && (
         <>
-          <div className="glass-card" style={{ padding: '20px', height: '360px', display: 'flex', flexDirection: 'column' }}>
+          <div className="glass-panel" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Revenue vs Expense</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>Revenue vs Expense</h3>
             </div>
             <div style={{ flex: 1, position: 'relative' }}>
               <Bar data={revExpData} options={chartOptions as any} />
             </div>
           </div>
 
-          <div className="glass-card" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
+          <div className="glass-panel" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Cash Flow</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>Cash Flow</h3>
             </div>
             <div style={{ flex: 1, position: 'relative' }}>
               <Line data={cashFlowData} options={chartOptions as any} />
@@ -185,9 +185,9 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
       )}
 
       {showSales && (
-        <div className="glass-card" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
+        <div className="glass-panel" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Sales Funnel</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>Sales Funnel</h3>
           </div>
           <div style={{ flex: 1, position: 'relative', display: 'flex', justifyContent: 'center' }}>
             <Doughnut data={salesFunnelData} options={donutOptions as any} />

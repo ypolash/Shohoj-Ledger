@@ -46,7 +46,7 @@ export default function ReportsPage() {
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Staff Reports</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Staff Reports</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Detailed attendance and punishment review</p>
         </div>
         {!loading && !error && (

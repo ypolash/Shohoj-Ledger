@@ -20,9 +20,9 @@ export function RecentTables({ data, role }: RecentTablesProps) {
   if (!showFinance) return null;
 
   return (
-    <div className="glass-card" style={{ padding: '24px', overflowX: 'auto', borderRadius: '16px', marginBottom: '24px' }}>
+    <div className="glass-panel" style={{ padding: '24px', overflowX: 'auto', borderRadius: '16px', marginBottom: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Recent Transactions</h3>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Recent Transactions</h3>
         <Link href="/erp/income" style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>View Complete Ledger &rarr;</Link>
       </div>
       

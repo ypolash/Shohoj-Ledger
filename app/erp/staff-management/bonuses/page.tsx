@@ -38,7 +38,7 @@ export default function BonusesPage() {
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Bonuses</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Bonuses</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Manage and view employee bonuses</p>
         </div>
       </div>

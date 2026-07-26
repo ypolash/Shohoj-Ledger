@@ -20,9 +20,9 @@ export function RecentActivity({ role }: RecentActivityProps) {
   if (visibleActivities.length === 0) return null;
 
   return (
-    <div className="glass-card" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
+    <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Recent Activity</h3>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Recent Activity</h3>
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

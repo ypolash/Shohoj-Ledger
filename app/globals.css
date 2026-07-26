@@ -398,3 +398,29 @@ a:hover {
     color: #ffffff !important;
   }
 }
+
+/* ==========================================================================
+   PREMIUM MICRO-ANIMATIONS & UI UTILITIES
+   ========================================================================== */
+.hover-lift {
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+.glass-panel {
+  background: var(--surface-main);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.glow-border-success:hover { border-color: var(--success); box-shadow: 0 0 12px var(--success-glow); }
+.glow-border-danger:hover { border-color: var(--danger); box-shadow: 0 0 12px var(--danger-glow); }
+.glow-border-primary:hover { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
+.glow-border-accent:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(79, 70, 229, 0.2); }
+.glow-border-warning:hover { border-color: var(--warning); box-shadow: 0 0 12px var(--warning-glow); }
+.glow-border-info:hover { border-color: var(--info); box-shadow: 0 0 12px var(--info-glow); }

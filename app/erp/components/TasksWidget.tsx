@@ -11,9 +11,9 @@ export function TasksWidget() {
   ];
 
   return (
-    <div className="glass-card" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
+    <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>My Tasks</h3>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>My Tasks</h3>
         <span style={{ fontSize: '12px', color: 'var(--primary)', cursor: 'pointer', fontWeight: 500 }}>View All</span>
       </div>
 

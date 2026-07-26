@@ -185,7 +185,7 @@ export default function LeadsPage() {
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Lead Management</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Lead Management</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Track, nurture, and convert potential clients.</p>
         </div>
       </div>
@@ -314,7 +314,7 @@ export default function LeadsPage() {
           {/* NEW LEAD FORM */}
           {activeTab === 'new' && (
             <div className="glass-card" style={{ padding: '32px', borderRadius: '16px', maxWidth: '800px' }}>
-              <h2 style={{ marginBottom: '24px', fontSize: '20px', fontFamily: 'serif' }}>Create New Lead</h2>
+              <h2 style={{ marginBottom: '24px', fontSize: '20px' }}>Create New Lead</h2>
               <form onSubmit={handleCreateLead} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 
                 <div style={{ gridColumn: '1 / -1' }}>

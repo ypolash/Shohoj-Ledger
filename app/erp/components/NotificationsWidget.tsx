@@ -10,9 +10,9 @@ export function NotificationsWidget() {
   ];
 
   return (
-    <div className="glass-card" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
+    <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
           Notifications
           <span style={{ background: 'var(--danger)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>{notifications.length}</span>
         </h3>

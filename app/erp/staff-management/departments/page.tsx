@@ -126,7 +126,7 @@ export default function DepartmentsPage() {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif' }}>Departments</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Departments</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: '#94a3b8' }}>Manage company departments and organization structure.</p>
         </div>
         <button 

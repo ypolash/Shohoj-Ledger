@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 
 type FastEntryProps = {
   isOpen: boolean;
@@ -10,19 +9,15 @@ type FastEntryProps = {
   onSuccess: () => void;
 };
 
-type FormData = {
-  amount: number;
-  category: string;
-  paymentMethod: "CASH" | "BANK";
-  note: string;
-};
-
 export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryProps) {
   const [loading, setLoading] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    defaultValues: { paymentMethod: "CASH" }
-  });
+  
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "BANK">("CASH");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -32,16 +27,30 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
     }
   }, [isOpen]);
 
-  const onSubmit = async (data: FormData) => {
+  const reset = () => {
+    setAmount("");
+    setCategory("");
+    setPaymentMethod("CASH");
+    setNote("");
+    setError(false);
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || Number(amount) <= 0 || !category) {
+      setError(true);
+      return;
+    }
+    
     setLoading(true);
     try {
       const endpoint = type === "INCOME" ? "/api/income" : "/api/expenses";
       const payload = {
-        amount: Number(data.amount),
-        categoryId: data.category,
+        amount: Number(amount),
+        categoryId: category,
         date: new Date().toISOString(),
-        paymentMethod: data.paymentMethod,
-        notes: data.note,
+        paymentMethod,
+        notes: note,
         status: "COMPLETED",
       };
 
@@ -84,28 +93,29 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 flex-1 flex flex-col gap-5 overflow-y-auto">
+        <form onSubmit={onSubmit} className="p-6 flex-1 flex flex-col gap-5 overflow-y-auto">
           
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (BDT) <span className="text-red-500">*</span></label>
             <input 
-              {...register("amount", { required: true, min: 1 })}
               type="number"
-              ref={(e) => {
-                register("amount").ref(e);
-                // @ts-ignore
-                amountInputRef.current = e;
-              }}
+              ref={amountInputRef}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+              min="1"
               className="w-full text-2xl px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
               placeholder="0.00"
             />
-            {errors.amount && <span className="text-xs text-red-500 mt-1">Valid amount required</span>}
+            {error && (!amount || Number(amount) <= 0) && <span className="text-xs text-red-500 mt-1">Valid amount required</span>}
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Category <span className="text-red-500">*</span></label>
             <select 
-              {...register("category", { required: true })}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
               className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 outline-none focus:border-blue-500"
             >
               <option value="">Select Category...</option>
@@ -124,17 +134,18 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
                 </>
               )}
             </select>
+            {error && !category && <span className="text-xs text-red-500 mt-1">Category required</span>}
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Paid Via</label>
             <div className="flex gap-4">
               <label className="flex-1 flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20 has-[:checked]:border-blue-500 transition-colors">
-                <input type="radio" value="CASH" {...register("paymentMethod")} className="sr-only" />
+                <input type="radio" value="CASH" checked={paymentMethod === 'CASH'} onChange={() => setPaymentMethod('CASH')} className="sr-only" />
                 <span className="material-symbols-outlined text-[18px]">payments</span> Cash
               </label>
               <label className="flex-1 flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20 has-[:checked]:border-blue-500 transition-colors">
-                <input type="radio" value="BANK" {...register("paymentMethod")} className="sr-only" />
+                <input type="radio" value="BANK" checked={paymentMethod === 'BANK'} onChange={() => setPaymentMethod('BANK')} className="sr-only" />
                 <span className="material-symbols-outlined text-[18px]">account_balance</span> Bank
               </label>
             </div>
@@ -143,8 +154,9 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Note (Optional)</label>
             <input 
-              {...register("note")}
               type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
               className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 outline-none focus:border-blue-500"
               placeholder="e.g. Printer paper"
             />

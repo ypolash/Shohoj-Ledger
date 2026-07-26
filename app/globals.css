@@ -386,3 +386,15 @@ a:hover {
   background-color: var(--danger);
   color: #ffffff;
 }
+
+/* ==========================================================================
+   TAILWIND ERP THEME BRIDGES
+   ========================================================================== */
+@layer utilities {
+  .bg-white {
+    background-color: var(--surface-main) !important;
+  }
+  .text-white {
+    color: #ffffff !important;
+  }
+}

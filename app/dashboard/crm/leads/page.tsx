@@ -13,10 +13,13 @@ import { LeadStats } from "./components/LeadStats";
 import { LeadEmptyState } from "./components/LeadEmptyState";
 import { LeadLoading } from "./components/LeadLoading";
 import { LeadCard } from "./components/LeadCard";
+import { FastLeadDrawer } from "../../components/FastLeadDrawer";
+import { CRMFAB } from "../../components/CRMFAB";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [leadDrawerOpen, setLeadDrawerOpen] = useState(false);
   const [filters, setFilters] = useState({ search: '', status: '', priority: '' });
   const [isMobile, setIsMobile] = useState(false);
 
@@ -84,7 +87,7 @@ export default function LeadsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <LeadSearch onSearch={(q) => setFilters(prev => ({ ...prev, search: q }))} />
-          <LeadToolbar onRefresh={fetchLeads} />
+          <LeadToolbar onRefresh={fetchLeads} onAddLead={() => setLeadDrawerOpen(true)} />
         </div>
 
         <LeadFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
@@ -101,6 +104,17 @@ export default function LeadsPage() {
           <LeadTable leads={leads} onDelete={handleDelete} />
         )}
       </div>
+
+      <FastLeadDrawer 
+        isOpen={leadDrawerOpen} 
+        onClose={() => setLeadDrawerOpen(false)}
+        onSuccess={() => {
+          setLeadDrawerOpen(false);
+          fetchLeads();
+        }}
+      />
+
+      <CRMFAB onAddLead={() => setLeadDrawerOpen(true)} />
     </PageContainer>
   );
 }

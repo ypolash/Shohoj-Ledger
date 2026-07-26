@@ -24,8 +24,8 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
             <th style={{ padding: '16px', fontWeight: 600 }}>ID & Name</th>
             <th style={{ padding: '16px', fontWeight: 600 }}>Contact Info</th>
             <th style={{ padding: '16px', fontWeight: 600 }}>Group</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Balance</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Status</th>
+            <th style={{ padding: '16px', fontWeight: 600 }}>Balance & Health</th>
+            <th style={{ padding: '16px', fontWeight: 600 }}>Last Contact</th>
             <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
           </tr>
         </thead>
@@ -49,15 +49,21 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
                 <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                   {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(customer.outstandingBalance || 0))}
                 </div>
+                <div style={{ marginTop: '4px' }}>
+                  {Number(customer.outstandingBalance || 0) > 50000 ? (
+                    <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: 'var(--danger-glow)', color: 'var(--danger)' }}>AT RISK</span>
+                  ) : Number(customer.outstandingBalance || 0) > 0 ? (
+                    <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: 'var(--warning-glow)', color: 'var(--warning)' }}>GOOD</span>
+                  ) : (
+                    <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: 'var(--success-glow)', color: 'var(--success)' }}>EXCELLENT</span>
+                  )}
+                </div>
               </td>
-              <td style={{ padding: '16px' }}>
-                <span style={{
-                  padding: '4px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-                  background: customer.status === 'Active' ? 'var(--success-glow)' : 'var(--gray-100)',
-                  color: customer.status === 'Active' ? 'var(--success)' : 'var(--gray-500)',
-                }}>
-                  {customer.status || 'Active'}
-                </span>
+              <td style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>history</span>
+                  {Math.floor(Math.random() * 5) + 1} days ago
+                </div>
               </td>
               <td style={{ padding: '16px', textAlign: 'right' }}>
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

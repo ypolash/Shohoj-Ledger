@@ -5,9 +5,10 @@ import Link from 'next/link';
 
 interface LeadToolbarProps {
   onRefresh?: () => void;
+  onAddLead?: () => void;
 }
 
-export function LeadToolbar({ onRefresh }: LeadToolbarProps) {
+export function LeadToolbar({ onRefresh, onAddLead }: LeadToolbarProps) {
   return (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
       <button style={{
@@ -45,8 +46,9 @@ export function LeadToolbar({ onRefresh }: LeadToolbarProps) {
         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
       </button>
 
-      <Link href="/dashboard/crm/leads/create" style={{ textDecoration: 'none' }}>
-        <button style={{
+      <button 
+        onClick={onAddLead}
+        style={{
           padding: '10px 20px',
           background: 'var(--primary)',
           border: '1px solid var(--primary-700)',
@@ -60,10 +62,9 @@ export function LeadToolbar({ onRefresh }: LeadToolbarProps) {
           cursor: 'pointer',
           boxShadow: 'var(--shadow-md)'
         }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          New Lead
-        </button>
-      </Link>
+        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
+        New Lead
+      </button>
     </div>
   );
 }

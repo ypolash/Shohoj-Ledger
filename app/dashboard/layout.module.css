@@ -117,6 +117,6 @@
 .mainContent {
   flex: 1;
   margin-left: 70px; /* Matched to new sidebar width */
-  padding: var(--spacing-8);
+  padding: var(--space-8);
   min-width: 0;
 }

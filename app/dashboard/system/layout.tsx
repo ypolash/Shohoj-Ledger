@@ -9,7 +9,7 @@ export default function SystemLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/system', icon: Server, exact: true },

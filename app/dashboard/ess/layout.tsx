@@ -10,7 +10,7 @@ export default function EssLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const tabs = [
     { name: 'My Profile', path: '/dashboard/ess/profile', icon: 'person' },

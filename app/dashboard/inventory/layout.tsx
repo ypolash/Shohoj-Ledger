@@ -9,7 +9,7 @@ export default function InventoryLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/inventory', icon: Monitor, exact: true },

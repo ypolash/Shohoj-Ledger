@@ -17,7 +17,7 @@ import { usePathname } from 'next/navigation';
 
 export function Topbar() {
   const { toggleSidebar, theme, setTheme } = useUI();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   // Basic breadcrumb generation based on pathname
   const paths = pathname.split('/').filter(Boolean);

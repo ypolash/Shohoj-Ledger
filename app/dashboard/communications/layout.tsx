@@ -9,7 +9,7 @@ export default function CommunicationsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const navigation = [
     { name: 'Inbox', href: '/dashboard/communications', icon: Inbox, exact: true },

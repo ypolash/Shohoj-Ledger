@@ -20,7 +20,7 @@ import {
 
 export function Sidebar() {
   const { sidebarOpen, isMobile } = useUI();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/dashboard' },

@@ -9,7 +9,7 @@ export default function AuditLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const navigation = [
     { name: 'Activity Timeline', href: '/dashboard/audit', icon: Activity, exact: true },

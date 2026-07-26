@@ -10,7 +10,7 @@ export default function StaffManagementLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const tabs = [
     { name: 'Dashboard', path: '/dashboard/staff-management', icon: 'dashboard' },

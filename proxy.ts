@@ -6,8 +6,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next();
 
-  // Protect /dashboard routes
-  if (pathname.startsWith('/dashboard')) {
+  // Protect /dashboard and /erp routes
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/erp')) {
     const session = await getSession();
 
     if (!session) {
@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
       response = NextResponse.redirect(new URL('/login', request.url));
     } else if (session.user.role === 'EMPLOYEE') {
       // Employees should use the mobile app or staff interface.
-      // Redirect them if they try to access the admin dashboard.
+      // Redirect them if they try to access the admin dashboard or erp.
       response = NextResponse.redirect(new URL('/login?error=unauthorized', request.url));
     }
   }

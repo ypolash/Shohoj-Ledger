@@ -230,6 +230,17 @@ a:hover {
   --success-glow: rgba(16, 185, 129, 0.15);
   --danger-glow: rgba(239, 68, 68, 0.15);
   --warning-glow: rgba(245, 158, 11, 0.15);
+
+  /* Legacy aliases for backward compatibility */
+  --bg: var(--bg-main);
+  --background: var(--bg-main);
+  --background-alt: var(--surface-hover);
+  --surface: var(--surface-main);
+  --surface-light: var(--surface-hover);
+  --text: var(--text-main);
+  --border: var(--border-main);
+  --border-light: var(--surface-hover);
+  --card-bg: var(--surface-main);
 }
 
 .glass-card {

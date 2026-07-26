@@ -2,17 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
-// Import widgets
-import { KPICards } from "./components/KPICards";
-import { BusinessCharts } from "./components/BusinessCharts";
-import { QuickActions } from "./components/QuickActions";
-import { RecentActivity } from "./components/RecentActivity";
-import { NotificationsWidget } from "./components/NotificationsWidget";
-import { TasksWidget } from "./components/TasksWidget";
-import { CalendarWidget } from "./components/CalendarWidget";
-import { RecentTables } from "./components/RecentTables";
+// Import new Accounting V2 widgets
+import { BusinessSnapshot } from "./components/BusinessSnapshot";
+import { FrequentActions } from "./components/FrequentActions";
+import { PendingTasks } from "./components/PendingTasks";
+import { FinancialHealth } from "./components/FinancialHealth";
+import { RecentFinancialActivity } from "./components/RecentFinancialActivity";
 
 type MonthlyData = {
   label: string;
@@ -35,7 +31,7 @@ type OverviewData = {
 export default function DashboardIndex() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("Owner"); // Default to Owner
+  const [role, setRole] = useState("Accountant");
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -52,76 +48,71 @@ export default function DashboardIndex() {
     fetchOverview();
   }, []);
 
-  const roles = [
-    "Owner",
-    "CEO",
-    "Accountant",
-    "HR",
-    "Sales",
-    "Inventory",
-    "Project Manager"
-  ];
+  const roles = ["Accountant", "Business Owner", "Admin", "Sales"];
 
   if (loading || !data) {
     return (
       <PageContainer>
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-slate-500 animate-pulse flex flex-col items-center gap-4">
+            <span className="material-symbols-outlined text-4xl">hourglass_empty</span>
+            <span>Loading Financial Data...</span>
+          </div>
+        </div>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-        <PageHeader 
-          title={`Enterprise Dashboard (${role})`}
-          description="A premium, structured overview tailored to your role."
-        />
+      {/* Header & Role Switcher */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Daily Operations Command Center</h1>
+          <p className="text-sm text-slate-500 mt-1">Real-time accounting snapshot and pending actions.</p>
+        </div>
         
-        {/* Role Switcher (For Demo/Testing Purposes) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-main)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-main)', boxShadow: 'var(--shadow-sm)' }}>
-          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>View As:</label>
+        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+          <span className="material-symbols-outlined text-slate-400">shield_person</span>
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Role:</label>
           <select 
             value={role} 
             onChange={(e) => setRole(e.target.value)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-light)',
-              background: 'var(--bg-main)',
-              fontSize: '14px',
-              color: 'var(--text-main)',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
+            className="bg-transparent text-sm font-medium text-slate-900 dark:text-white outline-none cursor-pointer"
           >
             {roles.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
       </div>
 
-      <QuickActions role={role} />
+      {/* 1. Business Snapshot */}
+      {(role === "Accountant" || role === "Business Owner" || role === "Admin") && (
+        <BusinessSnapshot data={data} />
+      )}
 
-      <KPICards data={data} role={role} />
+      {/* 2. Frequent Actions */}
+      <FrequentActions />
 
-      <BusinessCharts data={data} role={role} />
-
-      {/* 3-Column Layout for Auxiliary Widgets */}
-      <div style={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        gap: '24px', 
-        marginBottom: '24px',
-        alignItems: 'stretch'
-      }}>
-        {['Owner', 'CEO', 'Project Manager', 'HR'].includes(role) && <TasksWidget />}
-        <NotificationsWidget />
-        {['Owner', 'CEO', 'HR', 'Accountant'].includes(role) && <CalendarWidget />}
-        <RecentActivity role={role} />
+      {/* 3 & 4. Grid for Pending Tasks & Financial Health */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
+        {/* Pending Tasks (Takes up 5 columns on large screens) */}
+        <div className="lg:col-span-5 flex flex-col h-full">
+          <PendingTasks />
+        </div>
+        
+        {/* Financial Health (Takes up 7 columns on large screens) */}
+        {(role === "Business Owner" || role === "Admin" || role === "Accountant") && (
+          <div className="lg:col-span-7 flex flex-col h-full">
+            <FinancialHealth data={data} />
+          </div>
+        )}
       </div>
 
-      <RecentTables data={data} role={role} />
-
+      {/* 5. Recent Financial Activity (Audit Trail) */}
+      {(role === "Accountant" || role === "Business Owner" || role === "Admin") && (
+        <RecentFinancialActivity data={data} />
+      )}
+      
     </PageContainer>
   );
 }

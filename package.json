@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "next dev",
-    "build": "npx prisma generate && npx prisma db push --accept-data-loss && npx ts-node seed-admin.ts && next build",
+    "build": "npx prisma generate && npx prisma db push --accept-data-loss && next build",
     "start": "next start"
   },
   "repository": {

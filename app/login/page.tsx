@@ -31,10 +31,10 @@ export default function LoginPage() {
       } else {
         if (data.role === "EMPLOYEE") {
           // You could redirect employees elsewhere if needed, but per requirements, 
-          // dashboard is for ADMIN. Middleware redirects them.
-          router.push("/dashboard"); 
+          // ERP is for ADMIN/OWNER.
+          router.push("/erp"); 
         } else {
-          router.push("/dashboard"); // Redirect to dashboard on success
+          router.push("/erp"); // Redirect to ERP dashboard on success
         }
         router.refresh(); // Refresh router to ensure middleware and states are updated
       }

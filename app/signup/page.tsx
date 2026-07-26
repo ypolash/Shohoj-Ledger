@@ -169,8 +169,8 @@ export default function SignupPage() {
             <Link href="/login" className={styles.btnSecondary} style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
               Go to Login
             </Link>
-            <Link href="/dashboard" className={styles.btnPrimary} style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
-              Open Dashboard
+            <Link href="/erp" className={styles.btnPrimary} style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+              Open ERP Dashboard
             </Link>
           </div>
         </div>

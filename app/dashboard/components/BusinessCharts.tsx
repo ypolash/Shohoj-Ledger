@@ -40,16 +40,23 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
   const showFinance = ['Owner', 'CEO', 'Accountant'].includes(role);
   const showSales = ['Owner', 'CEO', 'Sales'].includes(role);
 
+  const getCssVar = (variable: string, fallback: string = '') => {
+    if (typeof document !== 'undefined') {
+      return getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || fallback;
+    }
+    return fallback;
+  };
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'var(--gray-800)',
-        titleColor: 'var(--gray-50)',
-        bodyColor: 'var(--gray-300)',
-        borderColor: 'var(--gray-700)',
+        backgroundColor: getCssVar('--gray-800', '#1f2937'),
+        titleColor: getCssVar('--gray-50', '#f9fafb'),
+        bodyColor: getCssVar('--gray-300', '#d1d5db'),
+        borderColor: getCssVar('--gray-700', '#374151'),
         borderWidth: 1,
         padding: 12,
         displayColors: true,
@@ -59,11 +66,11 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
     scales: {
       x: {
         grid: { display: false, drawBorder: false },
-        ticks: { color: 'var(--text-muted)', font: { family: 'var(--font-sans)', size: 12 } }
+        ticks: { color: getCssVar('--text-muted', '#6b7280'), font: { family: getCssVar('--font-sans', 'sans-serif'), size: 12 } }
       },
       y: {
-        grid: { color: 'var(--border-light)', drawBorder: false, borderDash: [4, 4] },
-        ticks: { color: 'var(--text-muted)', font: { family: 'var(--font-sans)', size: 12 }, maxTicksLimit: 5 }
+        grid: { color: getCssVar('--border-light', '#e5e7eb'), drawBorder: false, borderDash: [4, 4] },
+        ticks: { color: getCssVar('--text-muted', '#6b7280'), font: { family: getCssVar('--font-sans', 'sans-serif'), size: 12 }, maxTicksLimit: 5 }
       }
     }
   };
@@ -82,7 +89,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'var(--primary)'); 
+          gradient.addColorStop(0, getCssVar('--primary', '#3b82f6')); 
           gradient.addColorStop(1, 'transparent');
           return gradient;
         },
@@ -90,7 +97,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         barPercentage: 0.3,
         categoryPercentage: 0.8,
         borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
-        borderColor: 'var(--primary)'
+        borderColor: getCssVar('--primary', '#3b82f6')
       },
       {
         label: 'Expenses',
@@ -98,7 +105,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'var(--danger)');
+          gradient.addColorStop(0, getCssVar('--danger', '#ef4444'));
           gradient.addColorStop(1, 'transparent');
           return gradient;
         },
@@ -106,7 +113,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         barPercentage: 0.3,
         categoryPercentage: 0.8,
         borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
-        borderColor: 'var(--danger)'
+        borderColor: getCssVar('--danger', '#ef4444')
       }
     ]
   };
@@ -117,11 +124,11 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
       {
         label: 'Net Cash',
         data: data?.monthlyData?.map((d: any) => d.netCash) || [],
-        borderColor: 'var(--success)', 
+        borderColor: getCssVar('--success', '#10b981'), 
         backgroundColor: (context: any) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'var(--success-glow)');
+          gradient.addColorStop(0, getCssVar('--success-glow', 'rgba(16, 185, 129, 0.15)'));
           gradient.addColorStop(1, 'transparent');
           return gradient;
         },
@@ -138,11 +145,11 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
     datasets: [{
       data: [300, 150, 75, 30, 15],
       backgroundColor: [
-        'var(--primary-300)',
-        'var(--primary-400)',
-        'var(--primary-500)',
-        'var(--primary-600)',
-        'var(--primary-700)',
+        getCssVar('--primary-300', '#93c5fd'),
+        getCssVar('--primary-400', '#60a5fa'),
+        getCssVar('--primary-500', '#3b82f6'),
+        getCssVar('--primary-600', '#2563eb'),
+        getCssVar('--primary-700', '#1d4ed8'),
       ],
       borderWidth: 0,
     }]

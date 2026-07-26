@@ -167,20 +167,49 @@
 
 /* ==========================================================================
    GLOBAL RESET & BASE STYLES
-   ========================================================================== */
+    ========================================================================== */
+
+/* Comprehensive CSS Reset (Modern Normalize/Tailwind Preflight replacement) */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html {
-  font-family: var(--font-sans);
+html, body {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   font-size: 16px; /* Base 16px for rem scaling */
   background-color: var(--bg-main);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
 }
 
 body {

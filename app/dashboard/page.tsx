@@ -195,7 +195,7 @@ export default function DashboardIndex() {
       {/* Dashboard Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'serif', color: 'var(--text-main)' }}>Shohoj Ledger - Premium Dashboard</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)' }}>Shohoj Ledger - Premium Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>A premium, soft-UI financial dashboard</p>
         </div>
       </div>
@@ -274,7 +274,7 @@ export default function DashboardIndex() {
         {/* Revenue vs Expense Chart */}
         <div className="glass-card" style={{ padding: '20px', height: '360px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Revenue vs Expense</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Revenue vs Expense</h3>
             <div style={{ background: 'var(--border-main)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-main)' }}>Month ⌄</div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
@@ -285,7 +285,7 @@ export default function DashboardIndex() {
         {/* Cash Flow Line Chart */}
         <div className="glass-card" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Cash Flow</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Cash Flow</h3>
             <div style={{ background: 'var(--border-main)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-main)' }}>Month ⌄</div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
@@ -297,7 +297,7 @@ export default function DashboardIndex() {
       {/* Recent Transactions Table */}
       <div className="glass-card" style={{ padding: '24px', overflowX: 'auto', borderRadius: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Recent Transactions</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Recent Transactions</h3>
 
           <Link href="/dashboard/income" style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>View Complete Ledger &rarr;</Link>
         </div>

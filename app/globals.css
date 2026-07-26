@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* We are instructed to use Vanilla CSS for maximum flexibility and control. */
 
 :root {

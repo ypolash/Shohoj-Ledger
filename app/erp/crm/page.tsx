@@ -78,13 +78,13 @@ export default function CRMDashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
         <div>
-          <h1 style={{ margin: 0 }}>CRM & Lead Management</h1>
+          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>CRM & Lead Management</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
             Track leads, analyze pipeline, and manage sales follow-ups.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <Link href="/erp/crm/leads" className="btn btn-primary">
+          <Link href="/erp/crm/leads" className="btn btn-primary hover-lift">
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>view_kanban</span>
             View Pipeline
           </Link>
@@ -94,20 +94,20 @@ export default function CRMDashboardPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
         
         {/* KPI Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-5)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--spacing-5)' }}>
           {[
-            { label: 'Total Leads', value: metrics.totalLeads, color: 'var(--primary)' },
-            { label: 'New Leads', value: metrics.newLeads, color: 'var(--text)' },
-            { label: 'Qualified Leads', value: metrics.qualifiedLeads, color: 'var(--warning)' },
-            { label: 'Won Leads', value: metrics.wonLeads, color: 'var(--success)' },
-            { label: 'Lost Leads', value: metrics.lostLeads, color: 'var(--danger)' },
-            { label: 'Conversion Rate', value: `${metrics.conversionRate || 0}%`, color: 'var(--success)' },
-            { label: 'Pipeline Value', value: formatCurrency(metrics.pipelineValue), color: 'var(--warning)' },
-            { label: 'Total Sales (Won)', value: formatCurrency(metrics.wonValue), color: 'var(--success)' },
+            { label: 'Total Leads', value: metrics.totalLeads, color: 'var(--primary)', glow: 'primary' },
+            { label: 'New Leads', value: metrics.newLeads, color: 'var(--text-main)', glow: 'accent' },
+            { label: 'Qualified Leads', value: metrics.qualifiedLeads, color: 'var(--warning)', glow: 'warning' },
+            { label: 'Won Leads', value: metrics.wonLeads, color: 'var(--success)', glow: 'success' },
+            { label: 'Lost Leads', value: metrics.lostLeads, color: 'var(--danger)', glow: 'danger' },
+            { label: 'Conversion Rate', value: `${metrics.conversionRate || 0}%`, color: 'var(--success)', glow: 'success' },
+            { label: 'Pipeline Value', value: formatCurrency(metrics.pipelineValue), color: 'var(--warning)', glow: 'warning' },
+            { label: 'Total Sales (Won)', value: formatCurrency(metrics.wonValue), color: 'var(--success)', glow: 'success' },
           ].map((kpi, idx) => (
-            <div key={idx} className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-              <h3 style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>{kpi.label}</h3>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: kpi.color, marginTop: '8px' }}>
+            <div key={idx} className={`glass-panel hover-lift glow-border-${kpi.glow}`} style={{ padding: '24px', borderRadius: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '8px' }}>{kpi.label}</h3>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: kpi.color, letterSpacing: '-0.5px' }}>
                 {isLoading ? '...' : kpi.value}
               </div>
             </div>
@@ -116,20 +116,20 @@ export default function CRMDashboardPage() {
 
         {/* Charts & Tables */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--spacing-6)' }}>
-          <div className="glass-card">
-            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0' }}>Monthly Lead Generation</h2>
+          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', color: 'var(--text-main)' }}>Monthly Lead Generation</h2>
             <div style={{ height: '300px' }}>
-              {!isLoading && <Line data={lineChartData} options={{ maintainAspectRatio: false }} />}
+              {!isLoading && <Line data={lineChartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }} />}
             </div>
           </div>
           
-          <div className="glass-card">
-            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0' }}>Top Sales Performers</h2>
+          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', color: 'var(--text-main)' }}>Top Sales Performers</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {!isLoading && charts.topSalesPersons?.length > 0 ? (
                 charts.topSalesPersons.map((p: any, idx: number) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: 'var(--background)', borderRadius: '8px' }}>
-                    <span style={{ fontWeight: 500 }}>{p.name}</span>
+                  <div key={idx} className="hover-lift" style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', backgroundColor: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+                    <span style={{ fontWeight: 500, color: 'var(--text-main)' }}>{p.name}</span>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{formatCurrency(p.value)}</span>
                       <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.won} Deals</span>
@@ -137,7 +137,7 @@ export default function CRMDashboardPage() {
                   </div>
                 ))
               ) : (
-                <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '20px' }}>No deals closed yet.</div>
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px', fontSize: '14px' }}>No deals closed yet.</div>
               )}
             </div>
           </div>

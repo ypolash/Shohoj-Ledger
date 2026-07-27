@@ -2,55 +2,66 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, MapPin, Truck, Box, FileText, Monitor } from "lucide-react";
 
-export default function InventoryLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const navigation = [
+  { name: 'Dashboard', href: '/erp/inventory', icon: 'dashboard', exact: true },
+  { name: 'Products', href: '/erp/inventory/products', icon: 'inventory_2', exact: false },
+  { name: 'Categories', href: '/erp/inventory/categories', icon: 'category', exact: false },
+  { name: 'Warehouses', href: '/erp/inventory/warehouses', icon: 'warehouse', exact: false },
+  { name: 'Stock Control', href: '/erp/inventory/stock', icon: 'move_down', exact: false },
+];
+
+export default function InventoryLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
 
-  const navigation = [
-    { name: 'Dashboard', href: '/erp/inventory', icon: Monitor, exact: true },
-    { name: 'Products', href: '/erp/inventory/products', icon: Package, exact: false },
-    { name: 'Warehouses', href: '/erp/inventory/warehouses', icon: MapPin, exact: false },
-    { name: 'Stock Control', href: '/erp/inventory/stock', icon: Box, exact: false },
-    { name: 'Purchasing', href: '/erp/inventory/purchasing', icon: Truck, exact: false },
-    { name: 'Fixed Assets', href: '/erp/inventory/assets', icon: Monitor, exact: false },
-    { name: 'Reports', href: '/erp/inventory/reports', icon: FileText, exact: false },
-  ];
-
   return (
-    <div className="flex h-full">
-      <div className="w-64 bg-white border-r border-gray-200 p-4 space-y-2 hidden md:block">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4 px-2">Inventory</h2>
-        <nav className="space-y-1">
+    <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: '220px',
+        flexShrink: 0,
+        background: 'var(--surface-card)',
+        borderRight: '1px solid var(--border-main)',
+        padding: 'var(--spacing-4)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--spacing-1)',
+      }}>
+        <div style={{ padding: '12px 8px 16px', borderBottom: '1px solid var(--border-main)', marginBottom: '8px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)', verticalAlign: 'middle', marginRight: '8px' }}>inventory</span>
+          <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-main)', verticalAlign: 'middle' }}>Inventory</span>
+        </div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {navigation.map((item) => {
             const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+                  background: isActive ? 'var(--primary-subtle)' : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'all 0.15s ease',
+                }}
               >
-                <item.icon
-                  className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                    isActive ? 'text-blue-700' : 'text-gray-400'
-                  }`}
-                  aria-hidden="true"
-                />
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: isActive ? 'var(--primary)' : 'var(--text-muted)' }}>{item.icon}</span>
                 {item.name}
               </Link>
             );
           })}
         </nav>
-      </div>
-      <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-8">
+      </aside>
+
+      {/* Main content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--spacing-6)', background: 'var(--surface-bg)' }}>
         {children}
       </div>
     </div>

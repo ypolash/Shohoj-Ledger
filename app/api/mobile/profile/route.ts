@@ -1,4 +1,3 @@
-import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -15,11 +14,7 @@ export async function GET(req: Request) {
     }
 
     const employee = await prisma.employee.findUnique({
-      where: { ...(await withCompany()), employeeId },
-      include: {
-        // If there's a related user for the image
-        // user: true
-      }
+      where: { employeeId },
     });
 
     if (!employee) {
@@ -33,7 +28,7 @@ export async function GET(req: Request) {
     let profileImage = null;
     if (employee.userId) {
         const user = await prisma.user.findUnique({
-            where: { ...(await withCompany()), id: employee.userId }
+            where: { id: employee.userId }
         });
         profileImage = user?.image;
     }

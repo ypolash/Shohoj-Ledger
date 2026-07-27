@@ -1,4 +1,48 @@
 
 > shohoj-ledger@1.0.0 dev
-> next dev
+> next dev -H 0.0.0.0
 
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env
+✓ Ready in 988ms
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+○ Compiling proxy ...
+- Experiments (use with caution):
+  ✓ memoryBasedWorkersCount
+
+✓ Finished filesystem cache database compaction in 21.8s
+Profile API error: Error: UNAUTHORIZED
+    at withCompany (lib/company/companyFilter.ts:12:24)
+    at async GET (app/api/mobile/profile/route.ts:18:20)
+  10 |   
+  11 |   if (!session || !session.user) {
+> 12 |     if (enforce) throw new Error("UNAUTHORIZED");
+     |                        ^
+  13 |     return {};
+  14 |   }
+  15 |
+ GET /api/mobile/profile?employeeId=EMP-1001 500 in 3.3s (next.js: 2.8s, application-code: 525ms)
+ GET /api/mobile/profile?employeeId=EMP-1001 404 in 561ms (next.js: 90ms, application-code: 471ms)
+ GET /api/mobile/profile?employeeId=EMP-1001 200 in 152ms (next.js: 37ms, application-code: 116ms)
+○ Compiling /api/mobile/attendance/history ...
+ GET /api/mobile/attendance/history?employeeId=EMP-1004 401 in 2.6s (next.js: 2.5s, application-code: 130ms)
+ GET /api/mobile/attendance/history?employeeId=EMP-1004 401 in 2.9s (next.js: 2.9s, application-code: 86ms)
+ GET /api/mobile/attendance/history?employeeId=EMP-1004 401 in 6.2s (next.js: 6.1s, application-code: 77ms)
+ GET /api/mobile/attendance/status?employeeId=EMP-1004 401 in 3.2s (next.js: 3.1s, application-code: 69ms)
+ POST /api/mobile/attendance/checkin 401 in 2.2s (next.js: 2.2s, application-code: 29ms)
+✓ Finished writing to filesystem cache in 10.2s
+○ Compiling /api/mobile/login ...
+Login employeeId: EMP-1001
+Employee found: true
+Password match: false
+ POST /api/mobile/login 401 in 4.6s (next.js: 4.0s, application-code: 625ms)
+Login employeeId: EMP-1001
+Employee found: true
+Password match: false
+ POST /api/mobile/login 401 in 79ms (next.js: 56ms, application-code: 23ms)
+[?25h

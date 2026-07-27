@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+/** CORS headers required for Android / mobile HTTP clients */
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+/**
+ * OPTIONS /api/mobile/auth/login
+ * Preflight handler for CORS — required by Android HTTP clients.
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 /**
  * POST /api/mobile/auth/login
  *
@@ -17,7 +32,7 @@ export async function POST(req: Request) {
     if (!employeeId || !password) {
       return NextResponse.json(
         { success: false, message: "Employee ID and password are required" },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
@@ -32,14 +47,14 @@ export async function POST(req: Request) {
     if (!employee) {
       return NextResponse.json(
         { success: false, message: "Invalid Employee ID or Password" },
-        { status: 401 }
+        { status: 401, headers: CORS_HEADERS }
       );
     }
 
     if (!employee.password) {
       return NextResponse.json(
         { success: false, message: "No password set for this account. Please contact your administrator." },
-        { status: 401 }
+        { status: 401, headers: CORS_HEADERS }
       );
     }
 
@@ -56,7 +71,7 @@ export async function POST(req: Request) {
     if (!passwordMatch) {
       return NextResponse.json(
         { success: false, message: "Invalid Employee ID or Password" },
-        { status: 401 }
+        { status: 401, headers: CORS_HEADERS }
       );
     }
 
@@ -74,12 +89,12 @@ export async function POST(req: Request) {
         status: employee.status,
         companyId: employee.companyId ?? null,
       },
-    });
+    }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error("[Mobile Login] API Error:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

@@ -73,7 +73,7 @@ export default function CRMDashboardPage() {
   };
 
   return (
-    <div className="animate-fade-in container">
+    <div className="animate-fade-in container" style={{ padding: 'var(--spacing-6)' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>

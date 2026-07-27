@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUI } from '@/lib/contexts/UIContext';
@@ -19,7 +19,10 @@ import {
 
 export function SuperAdminSidebar() {
   const { sidebarOpen, isMobile } = useUI();
+  const [isHovered, setIsHovered] = useState(false);
   const pathname = usePathname() || '';
+
+  const isExpanded = sidebarOpen || isHovered;
 
   const navItems = [
     { name: 'SaaS Overview', icon: Globe, href: '/super-admin' },
@@ -42,19 +45,24 @@ export function SuperAdminSidebar() {
     return false;
   };
 
-  const sidebarClass = `${styles.sidebar} ${sidebarOpen ? styles.open : styles.collapsed} ${isMobile ? styles.mobile : ''}`;
+  const sidebarClass = `${styles.sidebar} ${isExpanded ? styles.open : styles.collapsed} ${isMobile ? styles.mobile : ''}`;
 
   return (
-    <aside className={sidebarClass} aria-label="Super Admin Navigation">
+    <aside 
+      className={sidebarClass} 
+      aria-label="Super Admin Navigation"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className={styles.brand}>
         <div className={styles.logoMark} style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
           <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
         </div>
-        {sidebarOpen && <span className={styles.brandName}>SaaS Admin</span>}
+        {isExpanded && <span className={styles.brandName}>SaaS Admin</span>}
       </div>
 
       <div className={styles.navContainer}>
-        {sidebarOpen && (
+        {isExpanded && (
           <div className={styles.searchContainer}>
             <input 
               type="text" 
@@ -66,31 +74,31 @@ export function SuperAdminSidebar() {
         )}
 
         <nav className={styles.navGroup}>
-          {sidebarOpen && <div className={styles.sectionHeader}>Multi-Tenant</div>}
+          {isExpanded && <div className={styles.sectionHeader}>Multi-Tenant</div>}
           {navItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={`${styles.navItem} ${isActive(item.href) ? styles.active : ''}`}
-              title={!sidebarOpen ? item.name : undefined}
+              title={!isExpanded ? item.name : undefined}
             >
               <item.icon size={20} className={styles.navIcon} />
-              {sidebarOpen && <span className={styles.navText}>{item.name}</span>}
+              {isExpanded && <span className={styles.navText}>{item.name}</span>}
             </Link>
           ))}
         </nav>
 
         <nav className={styles.navGroup}>
-          {sidebarOpen && <div className={styles.sectionHeader}>System</div>}
+          {isExpanded && <div className={styles.sectionHeader}>System</div>}
           {adminItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={`${styles.navItem} ${isActive(item.href) ? styles.active : ''}`}
-              title={!sidebarOpen ? item.name : undefined}
+              title={!isExpanded ? item.name : undefined}
             >
               <item.icon size={20} className={styles.navIcon} />
-              {sidebarOpen && <span className={styles.navText}>{item.name}</span>}
+              {isExpanded && <span className={styles.navText}>{item.name}</span>}
             </Link>
           ))}
         </nav>

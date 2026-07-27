@@ -34,13 +34,6 @@ export function Topbar() {
   return (
     <header className={styles.topbar}>
       <div className={styles.leftSection}>
-        <button 
-          onClick={toggleSidebar} 
-          className={styles.iconButton}
-          aria-label="Toggle Sidebar"
-        >
-          <Menu size={20} />
-        </button>
 
         <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
           <span className={styles.breadcrumbItem}>Shohoj</span>

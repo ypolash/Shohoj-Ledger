@@ -24,7 +24,7 @@ export async function GET() {
         where: { id, companyId },
         include: {
           departmentRef: { select: { name: true } },
-          designationRef: { select: { title: true } },
+          designationRef: { select: { name: true } },
           reportingManager: { select: { firstName: true, lastName: true } },
         },
       });
@@ -34,7 +34,7 @@ export async function GET() {
         where: { userId: id, companyId },
         include: {
           departmentRef: { select: { name: true } },
-          designationRef: { select: { title: true } },
+          designationRef: { select: { name: true } },
           reportingManager: { select: { firstName: true, lastName: true } },
         },
       });

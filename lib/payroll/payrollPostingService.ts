@@ -16,10 +16,18 @@ export async function postPayroll(runId: string) {
   // 1. Gather totals for the posting engine
   let totalNet = 0;
   let totalTax = 0;
+  let totalFines = 0;
   
   for (const item of run.items) {
     totalNet += Number(item.netSalary);
     // ... calculate tax totals or other deductions
+  }
+
+  const fines = await prisma.employeeFine.findMany({
+    where: { payrollRunId: runId, status: 'DEDUCTED' }
+  });
+  for (const f of fines) {
+    totalFines += Number(f.amount);
   }
 
   // 2. Transmit to legacy Posting Engine
@@ -33,6 +41,18 @@ export async function postPayroll(runId: string) {
   };
 
   // await createJournalEntry(postingPayload);
+
+  if (totalFines > 0) {
+    const finesPayload = {
+      companyId: run.companyId,
+      amount: totalFines,
+      reference: `FINES-${run.period.name}`,
+      description: `Fines collected during ${run.period.name}`,
+      type: 'INCOME',
+      category: 'PENALTY_INCOME'
+    };
+    // await createJournalEntry(finesPayload);
+  }
 
   // 3. Mark as Posted
   return prisma.payrollRun.update({

@@ -72,6 +72,17 @@ export async function calculatePayroll(runId: string) {
     const unpaidDeduction = unpaidLeaves.length * 100; 
     deductions += unpaidDeduction;
 
+    // D. Fetch Pending Fines
+    const fines = await prisma.employeeFine.findMany({
+      where: {
+        employeeId: empSalary.employeeId,
+        status: 'PENDING',
+        date: { lte: run.period.endDate }
+      }
+    });
+    const finesDeduction = fines.reduce((sum, f) => sum + Number(f.amount), 0);
+    deductions += finesDeduction;
+
     gross = allowances; // Simplified gross formula
     const net = gross - deductions;
 
@@ -90,7 +101,7 @@ export async function calculatePayroll(runId: string) {
     snapshotPayload.calculations.push({
       employeeId: empSalary.employeeId,
       gross, allowances, deductions, net,
-      otValue, unpaidDeduction
+      otValue, unpaidDeduction, finesDeduction
     });
   }
 

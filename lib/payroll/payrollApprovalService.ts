@@ -5,7 +5,8 @@ const prisma = new PrismaClient();
 export async function approvePayrollRun(runId: string, approverId: string, comments?: string) {
   return prisma.$transaction(async (tx) => {
     const run = await tx.payrollRun.findUniqueOrThrow({
-      where: { id: runId }
+      where: { id: runId },
+      include: { period: true }
     });
 
     if (run.status !== 'REVIEW') {
@@ -18,6 +19,19 @@ export async function approvePayrollRun(runId: string, approverId: string, comme
         approverId,
         status: 'APPROVED',
         comments
+      }
+    });
+
+    // 3. Mark fines as DEDUCTED
+    await tx.employeeFine.updateMany({
+      where: {
+        status: 'PENDING',
+        date: { lte: run.period.endDate },
+        employeeId: { in: (await tx.payrollItem.findMany({ where: { payrollRunId: runId } })).map(i => i.employeeId) }
+      },
+      data: {
+        status: 'DEDUCTED',
+        payrollRunId: runId
       }
     });
 

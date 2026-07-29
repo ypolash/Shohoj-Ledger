@@ -30,7 +30,7 @@ export async function GET() {
     }
 
     const tasks = await prisma.task.findMany({
-      where: { assignedToEmployeeId: employee.id },
+      where: { assignedToEmployeeId: employee.employeeId },
       orderBy: { createdAt: "desc" },
     });
 

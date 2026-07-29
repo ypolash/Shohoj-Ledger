@@ -9,10 +9,10 @@ export async function PATCH(
 ) {
   try {
 
-        const ownershipGuard = await verifyOwnership("task", params.id);
-        if (ownershipGuard) return ownershipGuard;
-
     const params = await props.params;
+
+    const ownershipGuard = await verifyOwnership("task", params.id);
+    if (ownershipGuard) return ownershipGuard;
     
     if (!params.id) {
       return NextResponse.json(

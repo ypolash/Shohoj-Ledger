@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { exportToCSV } from '@/lib/reports/exportUtils';
 import styles from "../../income/page.module.css";
+import { ReportWrapper } from '@/components/reports/ReportWrapper';
 
 const REPORT_TYPES = [
   { id: "TRIAL_BALANCE", name: "Trial Balance" },
@@ -74,18 +74,6 @@ export default function FinanceReportsHub() {
     }
   };
 
-  const handleExportCSV = async () => {
-    if (reportData.length === 0) return alert("Generate the report first");
-    await logAudit("EXPORTED", "CSV");
-    exportToCSV(reportData, `${selectedReport}_${new Date().toISOString().split("T")[0]}`);
-  };
-
-  const handlePrint = async () => {
-    if (reportData.length === 0) return alert("Generate the report first");
-    await logAudit("PRINTED", "PDF");
-    window.print();
-  };
-
   const renderTableHeaders = () => {
     if (reportData.length === 0) return null;
     const keys = Object.keys(reportData[0]);
@@ -104,17 +92,56 @@ export default function FinanceReportsHub() {
     ));
   };
 
-  return (
-    <div className="animate-fade-in container printable">
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body * { visibility: hidden; }
-          .printable, .printable * { visibility: visible; }
-          .printable { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
-        }
-      `}} />
+  const getReportTitle = () => {
+    const reportName = selectedReport.replace(/_/g, " ");
+    const dateSuffix = startDate && endDate ? `(${startDate} to ${endDate})` : "";
+    return `${reportName} ${dateSuffix}`.trim();
+  };
 
+  const columns = reportData.length > 0 ? Object.keys(reportData[0]) : [];
+
+  const filters = (
+    <>
+      <div style={{ flex: '1 1 200px' }}>
+        <label className="label">Report Type</label>
+        <select className="input" value={selectedReport} onChange={(e) => setSelectedReport(e.target.value)}>
+          {REPORT_TYPES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </select>
+      </div>
+
+      <div style={{ flex: '1 1 130px' }}>
+        <label className="label">Start Date (Optional)</label>
+        <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} />
+      </div>
+
+      <div style={{ flex: '1 1 130px' }}>
+        <label className="label">End Date (Optional)</label>
+        <input type="date" className="input" value={endDate} onChange={e => setEndDate(e.target.value)} />
+      </div>
+
+      {selectedReport === "ACCOUNT_LEDGER" && (
+        <div style={{ flex: '1 1 130px' }}>
+          <label className="label">Account Type</label>
+          <select className="input" value={accountType} onChange={(e) => setAccountType(e.target.value)}>
+            <option value="CASH">Cash</option>
+            <option value="BANK">Bank</option>
+            <option value="EXPENSE">Expense</option>
+            <option value="INCOME">Income</option>
+            <option value="PAYROLL">Payroll</option>
+          </select>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '4px' }}>
+        <button className="btn btn-primary" onClick={generateReport} disabled={isLoading}>
+          {isLoading ? 'Generating...' : 'Generate'}
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <>
       <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
         <div>
           <h1 style={{ margin: 0 }}>Financial Reports Hub</h1>
@@ -124,80 +151,21 @@ export default function FinanceReportsHub() {
         </div>
       </div>
 
-      {/* Control Panel */}
-      <div className="glass-card no-print" style={{ marginBottom: 'var(--spacing-6)' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-4)', alignItems: 'flex-end' }}>
-          
-          <div style={{ flex: '1 1 250px' }}>
-            <label className="label">Report Type</label>
-            <select className="input" value={selectedReport} onChange={(e) => setSelectedReport(e.target.value)}>
-              {REPORT_TYPES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-          </div>
-
-          <div style={{ flex: '1 1 150px' }}>
-            <label className="label">Start Date (Optional)</label>
-            <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} />
-          </div>
-
-          <div style={{ flex: '1 1 150px' }}>
-            <label className="label">End Date (Optional)</label>
-            <input type="date" className="input" value={endDate} onChange={e => setEndDate(e.target.value)} />
-          </div>
-
-          {selectedReport === "ACCOUNT_LEDGER" && (
-            <div style={{ flex: '1 1 150px' }}>
-              <label className="label">Account Type</label>
-              <select className="input" value={accountType} onChange={(e) => setAccountType(e.target.value)}>
-                <option value="CASH">Cash</option>
-                <option value="BANK">Bank</option>
-                <option value="EXPENSE">Expense</option>
-                <option value="INCOME">Income</option>
-                <option value="PAYROLL">Payroll</option>
-              </select>
-            </div>
-          )}
-
-          <div style={{ flex: '1 1 100%' }}></div>
-
-          <button className="btn btn-primary" onClick={generateReport} disabled={isLoading}>
-            {isLoading ? 'Generating...' : 'Generate Report'}
-          </button>
-          
-          <button className="btn btn-secondary" onClick={handleExportCSV} disabled={reportData.length === 0}>
-            <span className="material-symbols-outlined">csv</span> Export CSV
-          </button>
-          
-          <button className="btn btn-secondary" onClick={handlePrint} disabled={reportData.length === 0}>
-            <span className="material-symbols-outlined">print</span> Print / PDF
-          </button>
-        </div>
-      </div>
-
-      {/* Report Preview */}
-      <div className="glass-card printable">
-        <h2 style={{ fontSize: '18px', marginBottom: 'var(--spacing-4)', textTransform: 'capitalize' }}>
-          {selectedReport.replace(/_/g, " ")} {startDate && endDate ? `(${startDate} to ${endDate})` : ""}
-        </h2>
-        
-        {reportData.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table className={styles.table} style={{ width: '100%' }}>
-              <thead>
-                <tr>{renderTableHeaders()}</tr>
-              </thead>
-              <tbody>
-                {renderTableRows()}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div style={{ textAlign: "center", padding: "var(--spacing-6)", color: 'var(--text-muted)' }}>
-            No data generated yet. Please select filters and click "Generate Report".
-          </div>
-        )}
-      </div>
-
-    </div>
+      <ReportWrapper 
+        title={getReportTitle()}
+        data={reportData}
+        columns={columns}
+        filters={filters}
+      >
+        <table className={styles.table} style={{ width: '100%' }}>
+          <thead>
+            <tr>{renderTableHeaders()}</tr>
+          </thead>
+          <tbody>
+            {renderTableRows()}
+          </tbody>
+        </table>
+      </ReportWrapper>
+    </>
   );
 }

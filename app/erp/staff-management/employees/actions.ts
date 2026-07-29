@@ -17,7 +17,7 @@ export async function fetchEmployees() {
   const { companyId } = await verifyAccess("VIEW_EMPLOYEES");
 
   return await prisma.employee.findMany({
-    where: { companyId },
+    where: { companyId, systemSource: "ERP" },
     orderBy: { createdAt: "desc" },
     include: {
       departmentRef: true,
@@ -95,7 +95,8 @@ export async function createEmployee(data: any) {
         basicSalary: data.basicSalary,
         joinDate: new Date(data.joinDate),
         password: data.password || null, // Keeping plain for mockup, hash in production
-        status: "ACTIVE"
+        status: "ACTIVE",
+        systemSource: "ERP"
       }
     });
 

@@ -17,7 +17,7 @@ export async function fetchEmployees() {
   const { companyId } = await verifyAccess("VIEW_EMPLOYEES");
 
   return await prisma.employee.findMany({
-    where: { companyId },
+    where: { companyId, systemSource: "LEGACY" },
     orderBy: { createdAt: "desc" },
     include: {
       departmentRef: true,

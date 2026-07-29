@@ -292,6 +292,7 @@ model Employee {
   joinDate                     DateTime
   basicSalary                  Decimal
   status                       String                        @default("ACTIVE")
+  systemSource                 String                        @default("LEGACY")
   createdAt                    DateTime                      @default(now())
   updatedAt                    DateTime                      @updatedAt
   companyId                    String?

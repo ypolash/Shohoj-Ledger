@@ -9,14 +9,14 @@ interface QuickActionsProps {
 
 export function QuickActions({ role }: QuickActionsProps) {
   const actions = [
-    { label: 'Customer Management', icon: 'person_add', roles: ['Owner', 'Sales', 'CEO'], href: '/dashboard/crm/customers', color: 'var(--primary)' },
+    { label: 'Customer Management', icon: 'groups', roles: ['Owner', 'Sales', 'CEO'], href: '/dashboard/crm/customers', color: 'var(--primary)' },
     { label: 'Lead Management', icon: 'person_search', roles: ['Owner', 'Sales'], href: '/dashboard/crm/leads', color: 'var(--accent)' },
-    { label: 'Create Income', icon: 'payments', roles: ['Owner', 'Accountant'], href: '/dashboard/income/new', color: 'var(--success)' },
-    { label: 'Create Expense', icon: 'receipt_long', roles: ['Owner', 'Accountant'], href: '/dashboard/expenses/new', color: 'var(--danger)' },
-    { label: 'Create Product', icon: 'inventory_2', roles: ['Owner', 'Inventory'], href: '/dashboard/inventory/products/new', color: 'var(--info)' },
-    { label: 'Create Employee', icon: 'badge', roles: ['Owner', 'HR'], href: '/dashboard/staff-management/employees/new', color: 'var(--primary)' },
-    { label: 'Record Attendance', icon: 'how_to_reg', roles: ['Owner', 'HR'], href: '/dashboard/staff-management/attendance', color: 'var(--success)' },
-    { label: 'Create Project', icon: 'account_tree', roles: ['Owner', 'Project Manager'], href: '/dashboard/projects/new', color: 'var(--accent)' },
+    { label: 'Income Management', icon: 'payments', roles: ['Owner', 'Accountant'], href: '/dashboard/income', color: 'var(--success)' },
+    { label: 'Expense Management', icon: 'receipt_long', roles: ['Owner', 'Accountant'], href: '/dashboard/expenses', color: 'var(--danger)' },
+    { label: 'Product Management', icon: 'inventory_2', roles: ['Owner', 'Inventory'], href: '/dashboard/inventory/products', color: 'var(--info)' },
+    { label: 'Employee Management', icon: 'badge', roles: ['Owner', 'HR'], href: '/dashboard/staff-management/employees', color: 'var(--primary)' },
+    { label: 'Attendance Management', icon: 'how_to_reg', roles: ['Owner', 'HR'], href: '/dashboard/staff-management/attendance', color: 'var(--success)' },
+    { label: 'Project Management', icon: 'account_tree', roles: ['Owner', 'Project Manager'], href: '/dashboard/projects', color: 'var(--accent)' },
   ];
 
   const visibleActions = actions.filter(a => a.roles.includes(role));

@@ -6,7 +6,7 @@ import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { createLedgerEntry } from "@/lib/ledger";
 import { getSession } from "@/lib/session";
 
-export async function GET() {
+export async function GET(request: Request) {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
   if (rbacGuard) return rbacGuard;
 
@@ -15,8 +15,11 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const expenses = await prisma.expense.findMany({
-      where: { ...(await withCompany()) },
+      where: { ...(await withCompany()), systemSource },
       orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(expenses);
@@ -44,6 +47,9 @@ export async function POST(request: Request) {
 
     const expenseAmount = parseFloat(amount);
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const expense = await prisma.expense.create({
       data: {
         companyId: companyIdForGuard,
@@ -52,7 +58,8 @@ export async function POST(request: Request) {
         paymentMethod,
         approvalStatus: "PENDING", // Default to pending
         description,
-        projectId
+        projectId,
+        systemSource
       }
     });
 
@@ -79,8 +86,11 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const oldExpense = await prisma.expense.findFirst({
-      where: { ...(await withCompany()), id }
+      where: { ...(await withCompany()), id, systemSource }
     });
 
     if (!oldExpense) {

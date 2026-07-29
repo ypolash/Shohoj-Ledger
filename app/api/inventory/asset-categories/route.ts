@@ -12,8 +12,11 @@ export async function GET(req: Request) {
     const rbacGuard = await requirePermission("VIEW_ASSETS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const categories = await prisma.assetCategory.findMany({
-      where: { companyId },
+      where: { companyId, systemSource },
       include: {
         _count: { select: { assets: true } }
       },
@@ -40,8 +43,11 @@ export async function POST(req: Request) {
 
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existing = await prisma.assetCategory.findFirst({
-      where: { companyId, name }
+      where: { companyId, name, systemSource }
     });
     if (existing) return NextResponse.json({ error: "Category with this name already exists" }, { status: 400 });
 
@@ -49,7 +55,8 @@ export async function POST(req: Request) {
       data: {
         companyId,
         name,
-        description
+        description,
+        systemSource
       }
     });
 

@@ -12,6 +12,7 @@ interface LedgerEntryPayload {
   accountType: AccountType | string;
   description?: string;
   createdById?: string;
+  systemSource?: string;
 }
 
 export async function createLedgerEntry({
@@ -22,7 +23,8 @@ export async function createLedgerEntry({
   isDebit,
   accountType,
   description,
-  createdById
+  createdById,
+  systemSource = "LEGACY"
 }: LedgerEntryPayload) {
   
   // 1. Determine Prefix and Voucher Type
@@ -67,7 +69,7 @@ export async function createLedgerEntry({
   // 2. Generate sequential Voucher No inside a transaction to prevent race conditions if possible, 
   // but for simplicity in Shohoj Ledger, we'll fetch the last one.
   const lastEntry = await prisma.ledgerEntry.findFirst({
-    where: { companyId, voucherNo: { startsWith: prefix } },
+    where: { companyId, voucherNo: { startsWith: prefix }, systemSource },
     orderBy: { createdAt: 'desc' }
   });
 
@@ -97,7 +99,8 @@ export async function createLedgerEntry({
       debit: debitAmount,
       credit: creditAmount,
       description,
-      createdById
+      createdById,
+      systemSource
     }
   });
 

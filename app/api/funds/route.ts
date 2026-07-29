@@ -6,7 +6,7 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
+export async function GET(request: Request) {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
   if (rbacGuard) return rbacGuard;
 
@@ -15,8 +15,11 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const funds = await prisma.fundTransaction.findMany({
-      where: { ...(await withCompany()) },
+      where: { ...(await withCompany()), systemSource },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -50,12 +53,16 @@ export async function POST(request: Request) {
 
     const fundAmount = parseFloat(amount);
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const transaction = await prisma.fundTransaction.create({
       data: {
         companyId: companyIdForGuard,
         amount: fundAmount,
         source,
-        description
+        description,
+        systemSource
       }
     });
 
@@ -71,7 +78,8 @@ export async function POST(request: Request) {
       isDebit: true, // Fund coming in, Cash/Bank increases
       accountType: 'Fund',
       description: `Fund Added: ${source || ''} - ${description || ''}`,
-      createdById: session?.user?.id
+      createdById: session?.user?.id,
+      systemSource
     });
 
     return NextResponse.json(transaction, { status: 201 });

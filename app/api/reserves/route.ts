@@ -6,7 +6,7 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
+export async function GET(request: Request) {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
   if (rbacGuard) return rbacGuard;
 
@@ -15,8 +15,11 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const transactions = await prisma.reserveTransaction.findMany({
-      where: { ...(await withCompany()) },
+      where: { ...(await withCompany()), systemSource },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -54,12 +57,16 @@ export async function POST(request: Request) {
 
     const transactionAmount = parseFloat(amount);
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const transaction = await prisma.reserveTransaction.create({
       data: {
         companyId: companyIdForGuard,
         amount: transactionAmount,
         type, // "DEPOSIT" or "WITHDRAWAL"
-        reason: description // NOTE: schema uses `reason` instead of `description`! Let me fix this mapping.
+        reason: description, // NOTE: schema uses `reason` instead of `description`! Let me fix this mapping.
+        systemSource
       }
     });
 
@@ -75,7 +82,8 @@ export async function POST(request: Request) {
       isDebit: type === 'WITHDRAWAL', // If withdrawing from reserve, cash/bank receives money (Asset +)
       accountType: 'Reserve',
       description: `Reserve ${type}: ${description || ''}`,
-      createdById: session?.user?.id
+      createdById: session?.user?.id,
+      systemSource
     });
 
     return NextResponse.json(transaction, { status: 201 });

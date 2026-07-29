@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { createLedgerEntry } from "@/lib/ledger";
 import { getSession } from "@/lib/session";
 
-export async function GET() {
+export async function GET(request: Request) {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
   if (rbacGuard) return rbacGuard;
 
@@ -16,8 +16,11 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const incomes = await prisma.income.findMany({
-      where: { ...(await withCompany()) },
+      where: { ...(await withCompany()), systemSource },
       orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(incomes);
@@ -53,6 +56,9 @@ export async function POST(request: Request) {
       paymentStatus = "PARTIAL";
     }
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const income = await prisma.income.create({
       data: {
         companyId: companyIdForGuard,
@@ -63,7 +69,8 @@ export async function POST(request: Request) {
         paymentStatus,
         shareable: shareable ?? true,
         description,
-        projectId
+        projectId,
+        systemSource
       }
     });
 
@@ -87,7 +94,7 @@ export async function POST(request: Request) {
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
+    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period, systemSource } });
 
     return NextResponse.json(income, { status: 201 });
   } catch (error) {
@@ -112,8 +119,11 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Income ID is required" }, { status: 400 });
     }
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const income = await prisma.income.findFirst({
-      where: { ...(await withCompany()), id }
+      where: { ...(await withCompany()), id, systemSource }
     });
 
     if (!income) {
@@ -129,7 +139,7 @@ export async function DELETE(req: Request) {
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
+    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period, systemSource } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -157,11 +167,14 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { category, source, amount, received, shareable, description, projectId } = body;
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     let updateData: any = { category, source, shareable, description, projectId };
     let receivedDiff = 0;
 
     if (amount !== undefined && received !== undefined) {
-      const oldIncome = await prisma.income.findFirst({ where: { ...(await withCompany()), id } });
+      const oldIncome = await prisma.income.findFirst({ where: { ...(await withCompany()), id, systemSource } });
       if (!oldIncome) {
         return NextResponse.json({ error: "Income not found" }, { status: 404 });
       }
@@ -185,7 +198,7 @@ export async function PATCH(request: Request) {
     }
 
     const income = await prisma.income.findFirst({
-      where: { ...(await withCompany()), id }
+      where: { ...(await withCompany()), id, systemSource }
     });
     if (!income) {
       return NextResponse.json({ error: "Income not found" }, { status: 404 });
@@ -228,7 +241,7 @@ export async function PATCH(request: Request) {
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period } });
+    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period, systemSource } });
 
     return NextResponse.json(updatedIncome);
   } catch (error) {

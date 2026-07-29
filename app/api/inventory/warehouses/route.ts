@@ -12,8 +12,11 @@ export async function GET(req: Request) {
     const rbacGuard = await requirePermission("VIEW_STOCK");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const warehouses = await prisma.warehouse.findMany({
-      where: { companyId },
+      where: { companyId, systemSource },
       include: {
         manager: { select: { firstName: true, lastName: true } },
         _count: { select: { stockTransactions: true } }
@@ -41,8 +44,11 @@ export async function POST(req: Request) {
 
     if (!code || !name) return NextResponse.json({ error: "Code and Name are required" }, { status: 400 });
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existing = await prisma.warehouse.findFirst({
-      where: { companyId, code }
+      where: { companyId, code, systemSource }
     });
     if (existing) return NextResponse.json({ error: "Warehouse with this code already exists" }, { status: 400 });
 
@@ -60,7 +66,8 @@ export async function POST(req: Request) {
         name,
         location,
         managerId: managerId || null,
-        status: status || "ACTIVE"
+        status: status || "ACTIVE",
+        systemSource
       }
     });
 

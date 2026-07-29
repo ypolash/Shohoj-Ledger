@@ -12,6 +12,9 @@ export async function GET(req: Request) {
     const rbacGuard = await requirePermission("VIEW_PRODUCTS"); // Minimal permission to view inventory dashboard
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     // Concurrently fetch KPIs
     const [
       totalProducts,
@@ -21,11 +24,11 @@ export async function GET(req: Request) {
       recentAudits,
       purchaseOrders
     ] = await Promise.all([
-      prisma.product.count({ where: { companyId } }),
-      prisma.warehouse.count({ where: { companyId } }),
-      prisma.asset.count({ where: { companyId, status: "ACTIVE" } }),
+      prisma.product.count({ where: { companyId, systemSource } }),
+      prisma.warehouse.count({ where: { companyId, systemSource } }),
+      prisma.asset.count({ where: { companyId, systemSource, status: "ACTIVE" } }),
       prisma.stockTransaction.findMany({ 
-        where: { companyId }, 
+        where: { companyId, product: { systemSource } }, 
         include: { product: { select: { minStock: true, purchasePrice: true } } }
       }),
       prisma.inventoryAudit.findMany({ 
@@ -34,7 +37,7 @@ export async function GET(req: Request) {
         orderBy: { createdAt: 'desc' },
         include: { performedBy: { select: { name: true } } }
       }),
-      prisma.purchaseOrder.findMany({ where: { companyId } })
+      prisma.purchaseOrder.findMany({ where: { companyId, systemSource } })
     ]);
 
     // Calculate aggregated inventory values

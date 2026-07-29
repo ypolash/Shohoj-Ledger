@@ -4,13 +4,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 
-export async function GET() {
+export async function GET(req: Request) {
   const companyIdForGuard = await getCompanyId();
   if (!companyIdForGuard) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     let categories = await prisma.incomeCategory.findMany({
-      where: { ...(await withCompany()) },
+      where: { ...(await withCompany()), systemSource },
       orderBy: { name: 'asc' }
     });
 
@@ -26,12 +29,12 @@ export async function GET() {
       ];
 
       await prisma.incomeCategory.createMany({
-        data: defaultCategories.map(c => ({ ...c, companyId: companyIdForGuard })),
+        data: defaultCategories.map(c => ({ ...c, companyId: companyIdForGuard, systemSource })),
         skipDuplicates: true
       });
 
       categories = await prisma.incomeCategory.findMany({
-        where: { ...(await withCompany()) },
+        where: { ...(await withCompany()), systemSource },
         orderBy: { name: 'asc' }
       });
     }
@@ -55,8 +58,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const category = await prisma.incomeCategory.create({
-      data: { name, companyId: companyIdForGuard }
+      data: { name, companyId: companyIdForGuard, systemSource }
     });
 
     return NextResponse.json(category, { status: 201 });
@@ -81,8 +87,11 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
     }
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const category = await prisma.incomeCategory.findFirst({
-      where: { ...(await withCompany()), id }
+      where: { ...(await withCompany()), id, systemSource }
     });
 
     if (!category) {

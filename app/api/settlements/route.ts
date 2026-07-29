@@ -21,10 +21,13 @@ export async function GET(request: Request) {
     const month = parseInt(url.searchParams.get("month") || "");
     const year = parseInt(url.searchParams.get("year") || "");
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     if (isNaN(month) || isNaN(year)) {
       // Just fetch all settlements
       const settlements = await prisma.settlement.findMany({
-        where: { ...(await withCompany()) },
+        where: { ...(await withCompany()), systemSource },
         orderBy: { createdAt: 'desc' }
       });
       return NextResponse.json(settlements);
@@ -38,14 +41,16 @@ export async function GET(request: Request) {
       where: { ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
         paymentStatus: { in: ["PAID", "PARTIAL"] },
-        shareable: true
+        shareable: true,
+        systemSource
       }
     });
 
     const expenses = await prisma.expense.findMany({
       where: { ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
-        approvalStatus: "APPROVED"
+        approvalStatus: "APPROVED",
+        systemSource
       }
     });
 
@@ -152,6 +157,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { period, totalIncome, totalExpenses, ceoShare, developerShare, advisorShare, companyShare } = body;
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const settlement = await prisma.settlement.create({
       data: {
         companyId: companyIdForGuard,
@@ -162,7 +170,8 @@ export async function POST(request: Request) {
         developerShare,
         advisorShare,
         companyShare,
-        status: "PENDING"
+        status: "PENDING",
+        systemSource
       }
     });
 
@@ -189,7 +198,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Invalid execution request" }, { status: 400 });
     }
 
-    const settlement = await prisma.settlement.findFirst({ where: { ...(await withCompany()), id } });
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const settlement = await prisma.settlement.findFirst({ where: { ...(await withCompany()), id, systemSource } });
     if (!settlement || settlement.status !== "PENDING") {
       return NextResponse.json({ error: "Settlement not found or already executed" }, { status: 400 });
     }
@@ -208,6 +220,7 @@ export async function PATCH(request: Request) {
           type: "DEPOSIT",
           amount: settlement.companyShare,
           reason: `Auto-deposit from ${settlement.period} Settlement`,
+          systemSource
           // Note: The current Prisma schema for ReserveTransaction might not have settlementId explicitly linked,
           // but we can add it to the reason/description.
         }
@@ -237,7 +250,10 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Settlement ID is required" }, { status: 400 });
     }
 
-    const settlement = await prisma.settlement.findFirst({ where: { ...(await withCompany()), id } });
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const settlement = await prisma.settlement.findFirst({ where: { ...(await withCompany()), id, systemSource } });
     if (!settlement) {
       return NextResponse.json({ error: "Settlement not found" }, { status: 404 });
     }
@@ -246,7 +262,8 @@ export async function DELETE(req: Request) {
     await prisma.$transaction([
       prisma.reserveTransaction.deleteMany({
         where: { ...(await withCompany()),
-          reason: { contains: settlement.period }
+          reason: { contains: settlement.period },
+          systemSource
         }
       }),
       prisma.settlement.delete({

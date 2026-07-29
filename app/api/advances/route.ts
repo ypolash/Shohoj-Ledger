@@ -6,7 +6,7 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
+export async function GET(request: Request) {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
   if (rbacGuard) return rbacGuard;
 
@@ -15,8 +15,11 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const advances = await prisma.advance.findMany({
-      where: { companyId: companyIdForGuard },
+      where: { companyId: companyIdForGuard, systemSource },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -69,6 +72,9 @@ export async function POST(request: Request) {
 
     const advanceAmount = parseFloat(amount);
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const advance = await prisma.advance.create({
       data: {
         companyId: companyIdForGuard,
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
         remainingAmount: advanceAmount,
         status: "ACTIVE",
         reason: description,
+        systemSource
       }
     });
 
@@ -92,7 +99,8 @@ export async function POST(request: Request) {
       isDebit: false, // Credit Bank (Asset decreases because we give cash to member)
       accountType: 'Advance', // Representing the receivable/cash out side
       description: `Advance Issued to Member: ${description || ''}`,
-      createdById: session?.user?.id
+      createdById: session?.user?.id,
+      systemSource
     });
 
     return NextResponse.json(advance, { status: 201 });

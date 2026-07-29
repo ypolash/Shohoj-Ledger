@@ -6,7 +6,7 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
+export async function GET(request: Request) {
   const rbacGuard = await requirePermission("FINANCE_VIEW");
   if (rbacGuard) return rbacGuard;
 
@@ -15,8 +15,11 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const loans = await prisma.memberLoan.findMany({
-      where: { companyId: companyIdForGuard },
+      where: { companyId: companyIdForGuard, systemSource },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -86,6 +89,9 @@ export async function POST(request: Request) {
     const dueDate = new Date(issueDate);
     dueDate.setMonth(dueDate.getMonth() + 6);
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const loan = await prisma.memberLoan.create({
       data: {
         companyId: companyIdForGuard,
@@ -95,7 +101,8 @@ export async function POST(request: Request) {
         status: "ACTIVE",
         reason: description,
         issueDate,
-        dueDate
+        dueDate,
+        systemSource
       }
     });
 
@@ -137,8 +144,11 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
     
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+    
     const oldLoan = await prisma.memberLoan.findFirst({
-      where: { id, companyId: companyIdForGuard }
+      where: { id, companyId: companyIdForGuard, systemSource }
     });
 
     if (!oldLoan) {

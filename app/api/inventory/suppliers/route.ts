@@ -18,9 +18,13 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const categoryId = url.searchParams.get("categoryId");
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const suppliers = await prisma.supplier.findMany({
       where: {
         companyId,
+        systemSource,
         ...(categoryId ? { categoryId } : {})
       },
       include: {
@@ -54,11 +58,14 @@ export async function POST(req: Request) {
 
     if (!name?.trim()) return NextResponse.json({ error: "Supplier name is required" }, { status: 400 });
 
-    const existing = await prisma.supplier.findFirst({ where: { companyId, name: name.trim() } });
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const existing = await prisma.supplier.findFirst({ where: { companyId, systemSource, name: name.trim() } });
     if (existing) return NextResponse.json({ error: "A supplier with this name already exists" }, { status: 400 });
 
     // Auto-generate a supplier code
-    const count = await prisma.supplier.count({ where: { companyId } });
+    const count = await prisma.supplier.count({ where: { companyId, systemSource } });
     const supplierCode = `SUP-${String(count + 1).padStart(4, "0")}`;
 
     const supplier = await prisma.supplier.create({
@@ -72,6 +79,7 @@ export async function POST(req: Request) {
         address: address || null,
         paymentTerms: paymentTerms || null,
         status: status || "ACTIVE",
+        systemSource,
         ...(categoryId ? { categoryId } : {})
       },
       include: { category: { select: { id: true, name: true } } }

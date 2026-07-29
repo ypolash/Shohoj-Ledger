@@ -12,11 +12,14 @@ export async function GET(req: Request) {
     const rbacGuard = await requirePermission("VIEW_PRODUCTS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const purchases = await prisma.purchaseOrder.findMany({
-      where: { companyId },
+      where: { companyId, systemSource },
       include: {
         supplier: { select: { name: true } },
-        items: true
+        lines: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -49,23 +52,23 @@ export async function POST(req: Request) {
       data: {
         companyId,
         supplierId,
-        poNumber,
+        purchaseOrderNumber: poNumber,
         expectedDate: expectedDate ? new Date(expectedDate) : null,
         supplierRef,
         totalAmount,
         notes,
-        status: "PENDING",
-        items: {
+        status: "DRAFT",
+        systemSource,
+        lines: {
           create: items.map((item: any) => ({
-            companyId,
             productId: item.productId,
             quantity: Number(item.quantity),
             unitPrice: Number(item.unitPrice),
-            totalPrice: Number(item.quantity) * Number(item.unitPrice)
+            lineTotal: Number(item.quantity) * Number(item.unitPrice)
           }))
         }
       },
-      include: { items: true }
+      include: { lines: true }
     });
 
     return NextResponse.json({ purchase: po });

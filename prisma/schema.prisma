@@ -163,6 +163,7 @@ model Income {
   companyId     String?
   attachments   String[] @default([])
   company       Company? @relation(fields: [companyId], references: [id])
+  systemSource String           @default("LEGACY")
 
   @@index([companyId])
 }
@@ -178,6 +179,7 @@ model Expense {
   createdAt      DateTime @default(now())
   companyId      String?
   company        Company? @relation(fields: [companyId], references: [id])
+  systemSource   String   @default("LEGACY")
 
   @@index([companyId])
 }
@@ -190,6 +192,7 @@ model FundTransaction {
   createdAt   DateTime @default(now())
   companyId   String?
   company     Company? @relation(fields: [companyId], references: [id])
+  systemSource String  @default("LEGACY")
 
   @@index([companyId])
 }
@@ -202,6 +205,7 @@ model ReserveTransaction {
   createdAt DateTime @default(now())
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+  systemSource String  @default("LEGACY")
 
   @@index([companyId])
 }
@@ -218,6 +222,7 @@ model MemberLoan {
   reason          String?
   companyId       String?
   company         Company? @relation(fields: [companyId], references: [id])
+  systemSource    String   @default("LEGACY")
 
   @@index([companyId])
 }
@@ -232,6 +237,7 @@ model Advance {
   createdAt       DateTime @default(now())
   companyId       String?
   company         Company? @relation(fields: [companyId], references: [id])
+  systemSource    String   @default("LEGACY")
 
   @@index([companyId])
 }
@@ -249,6 +255,7 @@ model Settlement {
   advisorShare   Decimal
   companyId      String?
   company        Company? @relation(fields: [companyId], references: [id])
+  systemSource   String   @default("LEGACY")
 
   @@index([companyId])
 }
@@ -259,6 +266,7 @@ model IncomeCategory {
   createdAt DateTime @default(now())
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+  systemSource String  @default("LEGACY")
 
   @@index([companyId])
 }
@@ -1020,6 +1028,8 @@ model QuotationLine {
   lineTotal       Decimal
   warehouseId     String?
   remarks         String?
+  taxRate         Decimal?   @default(0)
+  systemSource    String     @default("LEGACY")
   product         Product    @relation(fields: [productId], references: [id])
   quotation       Quotation  @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   warehouse       Warehouse? @relation("QuotationLineWarehouse", fields: [warehouseId], references: [id])
@@ -1939,6 +1949,7 @@ model PayrollAudit {
   newStatus       String
   remarks         String?
   createdAt       DateTime      @default(now())
+  systemSource    String        @default("LEGACY")
   company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   salaryPayment   SalaryPayment @relation(fields: [salaryPaymentId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id])
@@ -1963,6 +1974,7 @@ model LedgerEntry {
   createdById        String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+  systemSource       String            @default("LEGACY")
   accountId          String?
   branchId           String?
   entryDate          DateTime?
@@ -2123,6 +2135,7 @@ model ProductCategory {
   company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   parent      ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    ProductCategory[] @relation("CategoryHierarchy")
+  systemSource String           @default("LEGACY")
 
   @@unique([companyId, name])
   @@index([companyId])
@@ -2149,6 +2162,7 @@ model Product {
   notes                    String?
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
+  systemSource             String                    @default("LEGACY")
   customerReturnLines      CustomerReturnLine[]
   cycleCountLines          CycleCountLine[]
   deliveryOrderLines       DeliveryOrderLine[]
@@ -2196,6 +2210,7 @@ model Warehouse {
   isActive                 Boolean                   @default(true)
   isDefault                Boolean                   @default(false)
   phone                    String?
+  systemSource             String                    @default("LEGACY")
   customerReturns          CustomerReturn[]          @relation("CustomerReturnWarehouse")
   customerReturnLines      CustomerReturnLine[]      @relation("CustomerReturnLineWarehouse")
   cycleCounts              CycleCount[]              @relation("CycleCountWarehouse")
@@ -2242,6 +2257,7 @@ model SupplierCategory {
   updatedAt   DateTime   @updatedAt
   suppliers   Supplier[]
   company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  systemSource String    @default("LEGACY")
 
   @@unique([companyId, name])
 }
@@ -2285,6 +2301,7 @@ model Supplier {
   supplierPayments   SupplierPayment[]
   vendorComparisons  VendorComparisonItem[]
   vendorQuotations   VendorQuotation[]
+  systemSource       String                   @default("LEGACY")
 
   @@unique([companyId, supplierCode])
   @@index([companyId])
@@ -2398,6 +2415,7 @@ model PurchaseOrder {
   stockTransactions    StockTransaction[]
   supplierInvoices     SupplierInvoice[]
   threeWayMatches      ThreeWayMatch[]
+  systemSource         String              @default("LEGACY")
 
   @@unique([companyId, purchaseOrderNumber])
   @@index([companyId])
@@ -2588,6 +2606,7 @@ model AssetCategory {
   updatedAt   DateTime @updatedAt
   assets      Asset[]
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  systemSource String  @default("LEGACY")
 
   @@unique([companyId, name])
   @@index([companyId])
@@ -2613,6 +2632,7 @@ model Asset {
   assignedTo       Employee?     @relation("EmployeeAssets", fields: [assignedToId], references: [id])
   category         AssetCategory @relation(fields: [categoryId], references: [id])
   company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  systemSource     String        @default("LEGACY")
 
   @@unique([companyId, assetCode])
   @@index([companyId])

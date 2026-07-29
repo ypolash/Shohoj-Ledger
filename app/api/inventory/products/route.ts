@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = parseInt(url.searchParams.get("limit") || "50");
 
-    const where: any = { companyId };
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const where: any = { companyId, systemSource };
     if (categoryId) where.categoryId = categoryId;
     if (search) {
       where.OR = [
@@ -95,10 +98,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Product Code and Name are required" }, { status: 400 });
     }
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     // Check unique constraints
     const existing = await prisma.product.findFirst({
       where: {
         companyId,
+        systemSource,
         OR: [{ productCode }, { sku: sku || "DUMMY_NEVER_MATCH" }]
       }
     });
@@ -109,7 +116,7 @@ export async function POST(req: Request) {
 
     if (categoryId) {
       const category = await prisma.productCategory.findFirst({
-        where: { id: categoryId, companyId }
+        where: { id: categoryId, companyId, systemSource }
       });
       if (!category) return NextResponse.json({ error: "Category not found or unauthorized" }, { status: 403 });
     }
@@ -132,7 +139,8 @@ export async function POST(req: Request) {
           maxStock: maxStock || 0,
           reorderLevel: reorderLevel || 0,
           status: status || "ACTIVE",
-          notes
+          notes,
+          systemSource
         }
       });
 

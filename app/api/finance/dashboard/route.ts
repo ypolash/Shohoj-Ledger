@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireModule } from "@/lib/modules/moduleGuard";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
+export async function GET(request: Request) {
   const companyIdForGuard = await getCompanyId();
   if (!companyIdForGuard) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -15,7 +15,10 @@ export async function GET() {
   if (moduleGuard) return moduleGuard;
 
   try {
-    const whereClause = { ...(await withCompany()) };
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const whereClause = { ...(await withCompany()), systemSource };
 
     const ledgers = await prisma.ledgerEntry.findMany({
       where: whereClause,

@@ -1,26 +1,29 @@
-import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const employeeId = searchParams.get("employeeId");
+    try {
+        const { searchParams } = new URL(req.url);
+        const employeeId = searchParams.get("employeeId");
 
-    if (!employeeId) {
-        return NextResponse.json(
-            { error: "employeeId is required" },
-            { status: 400 }
-        );
-    }
-
-    const tasks = await prisma.task.findMany({
-        where: { ...(await withCompany()),
-            assignedToEmployeeId: employeeId
-        },
-        orderBy: {
-            dueDate: "asc"
+        if (!employeeId) {
+            return NextResponse.json(
+                { error: "employeeId is required" },
+                { status: 400 }
+            );
         }
-    });
 
-    return NextResponse.json(tasks);
+        const tasks = await prisma.task.findMany({
+            where: {
+                assignedToEmployeeId: employeeId
+            },
+            orderBy: {
+                dueDate: "asc"
+            }
+        });
+
+        return NextResponse.json(tasks);
+    } catch (error) {
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
 }

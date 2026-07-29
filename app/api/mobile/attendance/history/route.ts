@@ -1,19 +1,7 @@
-import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-import { requireModule } from "@/lib/modules/moduleGuard";
-
-import { requirePermission } from "@/lib/rbac/permissionGuard";
-
 export async function GET(req: Request) {
-  const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
-  if (rbacGuard) return rbacGuard;
-
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
-  if (moduleGuard) return moduleGuard;
-
   try {
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
@@ -25,9 +13,8 @@ export async function GET(req: Request) {
       );
     }
 
-    // Find the employee by their string ID (e.g., "EMP-1001")
     const employee = await prisma.employee.findUnique({
-      where: { ...(await withCompany()), employeeId },
+      where: { employeeId },
     });
 
     if (!employee) {
@@ -37,14 +24,12 @@ export async function GET(req: Request) {
       );
     }
 
-    // Fetch the latest 30 attendance records
     const attendances = await prisma.attendance.findMany({
-      where: { ...(await withCompany()), employeeId: employee.id },
+      where: { employeeId: employee.id },
       orderBy: { checkInTime: "desc" },
       take: 30,
     });
 
-    // Map to the requested JSON format
     const history = attendances.map((record) => {
       let totalWorkingMinutes = record.totalWorkingMinutes || 0;
       if (record.checkInTime && record.checkOutTime && !totalWorkingMinutes) {
@@ -68,10 +53,7 @@ export async function GET(req: Request) {
   } catch (error: any) {
     console.error("Attendance history error:", error);
     return NextResponse.json(
-      {
-        error: error?.message || "Unknown error",
-        stack: process.env.NODE_ENV === "development" ? error?.stack : undefined
-      },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     );
   }

@@ -2,12 +2,13 @@
 
 import React from 'react';
 
-export function NotificationsWidget() {
-  const notifications = [
-    { id: 1, text: 'Your monthly payroll report is ready.', time: '10m ago', priority: 'low' },
-    { id: 2, text: 'Approval required for Purchase Order PO-992.', time: '1h ago', priority: 'high' },
-    { id: 3, text: 'New employee onboarding pending.', time: '2h ago', priority: 'medium' },
-  ];
+export function NotificationsWidget({ data }: { data?: any }) {
+  const notifications = data?.notifications?.map((n: any) => ({
+    id: n.id,
+    text: n.message,
+    time: new Date(n.createdAt).toLocaleDateString(),
+    priority: n.priority?.toLowerCase() || 'low'
+  })) || [];
 
   return (
     <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
@@ -20,7 +21,7 @@ export function NotificationsWidget() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {notifications.map(n => (
+        {notifications.map((n: any) => (
           <div key={n.id} style={{ 
             padding: '12px 16px', 
             borderRadius: '8px', 

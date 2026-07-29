@@ -18,6 +18,10 @@ type OverviewData = {
   activeAdvances: number;
   monthlyData: MonthlyData[];
   recentTransactions: any[];
+  totalEmployees?: number;
+  attendanceToday?: number;
+  inventoryValue?: number;
+  activeProjects?: number;
 };
 
 interface KPICardsProps {
@@ -37,6 +41,10 @@ export function KPICards({ data, role }: KPICardsProps) {
   const showHR = ['Owner', 'CEO', 'HR'].includes(role);
   const showProjects = ['Owner', 'CEO', 'Project Manager'].includes(role);
   const showInventory = ['Owner', 'CEO', 'Inventory'].includes(role);
+
+  const totalEmp = data.totalEmployees || 0;
+  const attToday = data.attendanceToday || 0;
+  const attendancePercent = totalEmp > 0 ? Math.round((attToday / totalEmp) * 100) : 0;
 
   return (
     <div style={{ 
@@ -100,7 +108,7 @@ export function KPICards({ data, role }: KPICardsProps) {
               <span className="material-symbols-outlined" style={{ color: 'var(--info)', fontSize: '22px' }}>group</span>
             </div>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 500 }}>Total Employees</span>
-            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>142</span>
+            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>{totalEmp}</span>
           </div>
 
           {/* Attendance */}
@@ -109,7 +117,7 @@ export function KPICards({ data, role }: KPICardsProps) {
               <span className="material-symbols-outlined" style={{ color: 'var(--success)', fontSize: '22px' }}>how_to_reg</span>
             </div>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 500 }}>Attendance Today</span>
-            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>94%</span>
+            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>{attendancePercent}%</span>
           </div>
         </>
       )}
@@ -122,7 +130,7 @@ export function KPICards({ data, role }: KPICardsProps) {
               <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '22px' }}>inventory_2</span>
             </div>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 500 }}>Inventory Value</span>
-            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>{formatCurrency(1250000)}</span>
+            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>{formatCurrency(data.inventoryValue || 0)}</span>
           </div>
         </>
       )}
@@ -135,7 +143,7 @@ export function KPICards({ data, role }: KPICardsProps) {
               <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '22px' }}>account_tree</span>
             </div>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 500 }}>Active Projects</span>
-            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>12</span>
+            <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>{data.activeProjects || 0}</span>
           </div>
         </>
       )}

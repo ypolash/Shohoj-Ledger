@@ -2,13 +2,20 @@
 
 import React from 'react';
 
-export function TasksWidget() {
-  const tasks = [
-    { id: 1, title: 'Review Q3 Financials', status: 'OVERDUE', color: 'var(--danger)' },
-    { id: 2, title: 'Approve Pending Leaves', status: 'TODAY', color: 'var(--warning)' },
-    { id: 3, title: 'Client Meeting - ACME', status: 'UPCOMING', color: 'var(--primary)' },
-    { id: 4, title: 'Onboard New Developer', status: 'COMPLETED', color: 'var(--success)' },
-  ];
+export function TasksWidget({ data }: { data?: any }) {
+  const tasks = data?.recentTasks?.map((t: any) => {
+    let color = 'var(--primary)';
+    if (t.status === 'OVERDUE') color = 'var(--danger)';
+    else if (t.status === 'COMPLETED' || t.status === 'Done') color = 'var(--success)';
+    else if (t.status === 'PENDING' || t.status === 'To Do') color = 'var(--warning)';
+    
+    return {
+      id: t.id,
+      title: t.title,
+      status: t.status.toUpperCase(),
+      color
+    };
+  }) || [];
 
   return (
     <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', flex: 1, minWidth: '300px' }}>
@@ -18,7 +25,7 @@ export function TasksWidget() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {tasks.map(t => (
+        {tasks.map((t: any) => (
           <div key={t.id} style={{ 
             display: 'flex', 
             alignItems: 'center', 

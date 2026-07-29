@@ -11,6 +11,11 @@ export async function GET() {
     
     const companyId = session.user.companyId;
 
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
     // 1. Optimize sequential awaits using Promise.all
     const [
       reserveTransactions,
@@ -21,7 +26,15 @@ export async function GET() {
       allIncomes,
       allExpenses,
       recentIncomes,
-      recentExpenses
+      recentExpenses,
+      totalEmployees,
+      attendanceToday,
+      inventoryValuationLayers,
+      activeProjects,
+      recentTasks,
+      recentActivities,
+      notifications,
+      calendarEvents
     ] = await Promise.all([
       prisma.reserveTransaction.findMany({ where: { companyId } }),
       prisma.income.aggregate({
@@ -59,7 +72,15 @@ export async function GET() {
         take: 5,
         orderBy: { createdAt: 'desc' },
         select: { id: true, category: true, amount: true, createdAt: true, paymentMethod: true }
-      })
+      }),
+      prisma.employee.count({ where: { companyId } }),
+      prisma.attendance.count({ where: { companyId, date: { gte: startOfDay, lte: endOfDay } } }),
+      prisma.inventoryValuationLayer.findMany({ where: { companyId, remainingQuantity: { gt: 0 } } }),
+      prisma.project.count({ where: { companyId, status: "ACTIVE" } }),
+      prisma.task.findMany({ where: { companyId, status: { not: "COMPLETED" } }, take: 5, include: { employee: true }, orderBy: { dueDate: 'asc' } }),
+      prisma.globalAuditLog.findMany({ where: { companyId }, take: 5, include: { user: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.notification.findMany({ where: { companyId, status: "UNREAD" }, take: 5, orderBy: { createdAt: 'desc' } }),
+      prisma.holidayCalendar.findMany({ where: { companyId, date: { gte: startOfDay } }, take: 5, orderBy: { date: 'asc' } })
     ]);
 
     const reserveBalance = reserveTransactions.reduce((acc, tx) => {
@@ -106,6 +127,10 @@ export async function GET() {
       ...recentExpenses.map(e => ({ id: e.id, type: 'EXPENSE', category: e.category, amount: Number(e.amount), date: e.createdAt, subtitle: e.paymentMethod }))
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
+    const inventoryValue = inventoryValuationLayers.reduce((sum, layer) => {
+      return sum + (Number(layer.remainingQuantity) * Number(layer.unitCost));
+    }, 0);
+
     return NextResponse.json({
       reserveBalance,
       totalIncome,
@@ -114,7 +139,15 @@ export async function GET() {
       outstandingLoans,
       activeAdvances,
       monthlyData,
-      recentTransactions
+      recentTransactions,
+      totalEmployees,
+      attendanceToday,
+      inventoryValue,
+      activeProjects,
+      recentTasks,
+      recentActivities,
+      notifications,
+      calendarEvents
     });
   } catch (error) {
     console.error("Error fetching overview metrics:", error);

@@ -1,22 +1,9 @@
-import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { validateAttendanceRequest, getAttendanceConfig, calculatePunishment } from "../utils";
-
-import { requireModule } from "@/lib/modules/moduleGuard";
-
-import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { validateAttendanceRequest } from "../utils";
 
 export async function POST(request: Request) {
-  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
-  if (rbacGuard) return rbacGuard;
-
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
-  if (moduleGuard) return moduleGuard;
-
   try {
-    console.log("Reached TOKEN validation");
     const body = await request.json();
     
     const employeeId = body.employeeId;
@@ -25,47 +12,13 @@ export async function POST(request: Request) {
     const latitude = body.latitude;
     const longitude = body.longitude;
 
-    console.log("Parsed employeeId:", employeeId);
-    console.log("Parsed SSID:", ssid);
-    console.log("Parsed BSSID:", bssid);
-
     if (!employeeId) {
-      console.log("Returning 400: employeeId is required");
       return NextResponse.json(
         { success: false, message: "employeeId is required" },
         { status: 400 }
       );
     }
 
-    console.log("=== WIFI DEBUG START ===");
-    console.log("Incoming SSID:", ssid);
-    console.log("Incoming BSSID:", bssid);
-
-    const allowedNetworks = await prisma.allowedNetwork.findMany({
-      where: { isActive: true }
-    });
-
-    console.log("Allowed Networks Count:", allowedNetworks.length);
-    allowedNetworks.forEach((n, i) => {
-      console.log(`Network ${i}:`, { ssid: n.ssid, bssid: n.bssid, active: n.isActive });
-    });
-
-    const incomingSsid = (ssid || "").toLowerCase().trim();
-    const incomingBssid = (bssid || "").toLowerCase().trim();
-    allowedNetworks.forEach((n, i) => {
-      const storedSsid = (n.ssid || "").toLowerCase().trim();
-      const storedBssid = (n.bssid || "").toLowerCase().trim();
-      console.log(`Compare ${i}:`, {
-        incomingSsid,
-        storedSsid,
-        ssidMatch: incomingSsid === storedSsid,
-        incomingBssid,
-        storedBssid,
-        bssidMatch: incomingBssid === storedBssid
-      });
-    });
-
-    console.log("Reached WIFI validation");
     const validation = await validateAttendanceRequest(latitude, longitude, ssid, bssid);
     if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";
@@ -77,7 +30,6 @@ export async function POST(request: Request) {
         code = "FORBIDDEN_LOCATION";
       }
 
-      console.log(`Returning 403: ${code} - ${validation.error}`);
       if (validation.details) {
         return NextResponse.json(
           { 
@@ -99,19 +51,16 @@ export async function POST(request: Request) {
     const dhakaTimeString = serverTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
     const currentDhakaTime = new Date(dhakaTimeString);
 
-    // Normalize date to YYYY-MM-DD to use as unique constraint
-    const dateStr = currentDhakaTime.getFullYear() + "-" + 
+    const dateStr = currentDhakaTime.getFullYear() + "-" +
                     String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
                     String(currentDhakaTime.getDate()).padStart(2, '0');
     const today = new Date(dateStr);
 
-    console.log("Reached EMPLOYEE validation");
-    const employee = await prisma.employee.findFirst({
-      where: { employeeId: employeeId, companyId: companyIdForGuard },
+    const employee = await prisma.employee.findUnique({
+      where: { employeeId },
     });
 
     if (!employee) {
-      console.log("Returning 403: Employee not found. Code: FORBIDDEN_EMPLOYEE");
       return NextResponse.json(
         { success: false, code: "FORBIDDEN_EMPLOYEE", message: "Employee not found." },
         { status: 403 }
@@ -126,49 +75,31 @@ export async function POST(request: Request) {
     });
 
     if (existingAttendance && existingAttendance.checkInTime) {
-      console.log("Returning 400: Already checked in today.");
       return NextResponse.json(
         { success: false, message: "Already checked in today.", serverTime: serverTime.toISOString() },
         { status: 400 }
       );
     }
 
-    const config = await prisma.attendanceConfig.findFirst({ where: { ...(await withCompany()) } });
+    const config = await prisma.attendanceConfig.findFirst({
+        where: {
+            // If companyId exists on config, we might need it.
+            // For now, take the first one or default.
+        }
+    });
     
-    console.log("=== ATTENDANCE CONFIG DEBUG ===");
-    console.log("DB shiftStart:", config?.shiftStart);
-    console.log("DB shiftEnd:", config?.shiftEnd);
-    console.log("DB gracePeriod:", config?.gracePeriod);
-
     const isFriday = currentDhakaTime.getDay() === 5;
     let status = "PRESENT";
     let lateMinutes = 0;
     let isLate = false;
-    let reviewStatus: string | null = null;
-    let punishmentReason: string | null = null;
-    let punishmentAmount = 0;
 
     let shiftStartStr = config?.shiftStart || "09:00";
     let startHour = 9;
     let startMin = 0;
     
-    if (shiftStartStr.includes(" ")) {
-      const [timePart, modifier] = shiftStartStr.split(" ");
-      let [hours, minutes] = timePart.split(":");
-      startHour = parseInt(hours, 10);
-      startMin = parseInt(minutes, 10);
-      
-      if (modifier.toUpperCase() === "PM" && startHour < 12) {
-        startHour += 12;
-      }
-      if (modifier.toUpperCase() === "AM" && startHour === 12) {
-        startHour = 0;
-      }
-    } else {
-      const parts = shiftStartStr.split(':');
-      startHour = parseInt(parts[0], 10);
-      startMin = parseInt(parts[1], 10);
-    }
+    const parts = shiftStartStr.split(':');
+    startHour = parseInt(parts[0], 10);
+    startMin = parseInt(parts[1], 10);
     
     const shiftStartDate = new Date(currentDhakaTime);
     shiftStartDate.setHours(startHour, startMin, 0, 0);
@@ -178,8 +109,6 @@ export async function POST(request: Request) {
 
     if (isFriday && config?.fridayOff) {
       status = "OFF_DAY_WORK";
-      reviewStatus = "TEMPORARY_REVIEW";
-      punishmentReason = "Off-day work";
     } else {
       if (currentDhakaTime > lateAfter) {
         status = "LATE";
@@ -189,44 +118,8 @@ export async function POST(request: Request) {
         status = "PRESENT";
         lateMinutes = 0;
       }
-      
-      console.log("Current Dhaka Time:", currentDhakaTime.toISOString());
-      console.log("Shift Start Dhaka:", shiftStartDate.toISOString());
-      console.log("Late After Dhaka:", lateAfter.toISOString());
-      console.log("Calculated Status:", status);
-      console.log("Calculated Late Minutes:", lateMinutes);
-      
-      if (isLate) {
-        const rules = await prisma.punishmentSetting.findMany({
-          where: { type: "LATE", active: true }
-        });
-        
-        let matchedRule = null;
-        for (const rule of rules) {
-          if (lateMinutes >= rule.fromMinutes && lateMinutes <= rule.toMinutes) {
-            matchedRule = rule;
-            break;
-          }
-        }
-        
-        console.log("Matched Rule:", matchedRule);
-        
-        if (matchedRule) {
-          punishmentReason = "Late Arrival";
-          reviewStatus = "TEMPORARY_REVIEW";
-          
-          if (config?.enablePunishmentDeduction) {
-            punishmentAmount = Number(matchedRule.amount);
-          } else {
-            punishmentAmount = 0;
-          }
-        }
-        
-        console.log("Punishment Amount:", punishmentAmount);
-      }
     }
 
-    console.log("Saving check-in time:", new Date());
     if (existingAttendance) {
       await prisma.attendance.update({
         where: { id: existingAttendance.id },
@@ -240,15 +133,11 @@ export async function POST(request: Request) {
           status,
           isLate,
           lateMinutes,
-          reviewStatus,
-          punishmentReason,
-          punishmentAmount,
         },
       });
     } else {
       await prisma.attendance.create({
         data: {
-          companyId: companyIdForGuard,
           employeeId: employee.id,
           date: today,
           checkInTime: serverTime,
@@ -260,28 +149,21 @@ export async function POST(request: Request) {
           status,
           isLate,
           lateMinutes,
-          reviewStatus,
-          punishmentReason,
-          punishmentAmount,
+          companyId: employee.companyId
         },
       });
     }
 
-    console.log("Returning 200: Check-in successful");
     return NextResponse.json({
       success: true,
       message: "Check-in successful",
       serverTime: serverTime.toISOString(),
-      shiftStart: config?.shiftStart,
-      gracePeriod: config?.gracePeriod,
-      lateAfter: lateAfter.toISOString(),
       status,
       lateMinutes
     });
 
   } catch (error) {
     console.error("Check-in error:", error);
-    console.log("Returning 500: Internal server error");
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

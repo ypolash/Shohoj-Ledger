@@ -30,6 +30,14 @@ type OverviewData = {
   activeAdvances: number;
   monthlyData: MonthlyData[];
   recentTransactions: any[];
+  totalEmployees?: number;
+  attendanceToday?: number;
+  inventoryValue?: number;
+  activeProjects?: number;
+  recentTasks?: any[];
+  recentActivities?: any[];
+  notifications?: any[];
+  calendarEvents?: any[];
 };
 
 export default function DashboardIndex() {
@@ -114,10 +122,10 @@ export default function DashboardIndex() {
         marginBottom: '24px',
         alignItems: 'stretch'
       }}>
-        {['Owner', 'CEO', 'Project Manager', 'HR'].includes(role) && <TasksWidget />}
-        <NotificationsWidget />
-        {['Owner', 'CEO', 'HR', 'Accountant'].includes(role) && <CalendarWidget />}
-        <RecentActivity role={role} />
+        {['Owner', 'CEO', 'Project Manager', 'HR'].includes(role) && <TasksWidget data={data} />}
+        <NotificationsWidget data={data} />
+        {['Owner', 'CEO', 'HR', 'Accountant'].includes(role) && <CalendarWidget data={data} />}
+        <RecentActivity role={role} data={data} />
       </div>
 
       <RecentTables data={data} role={role} />

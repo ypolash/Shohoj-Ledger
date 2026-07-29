@@ -4,18 +4,19 @@ import React from 'react';
 
 interface RecentActivityProps {
   role: string;
+  data?: any;
 }
 
-export function RecentActivity({ role }: RecentActivityProps) {
-  const allActivities = [
-    { id: 1, type: 'FINANCE', title: 'Invoice Paid', desc: 'INV-2026-001 was paid by ACME Corp.', time: '10 mins ago', icon: 'payments', color: 'var(--success)', roles: ['Owner', 'CEO', 'Accountant'] },
-    { id: 2, type: 'HR', title: 'Leave Approved', desc: 'John Doe\'s annual leave was approved.', time: '1 hour ago', icon: 'event_available', color: 'var(--info)', roles: ['Owner', 'HR'] },
-    { id: 3, type: 'CRM', title: 'New Lead', desc: 'Sarah Smith signed up for a demo.', time: '2 hours ago', icon: 'person_add', color: 'var(--primary)', roles: ['Owner', 'Sales'] },
-    { id: 4, type: 'INVENTORY', title: 'Stock Alert', desc: 'Product A is below minimum threshold.', time: '3 hours ago', icon: 'warning', color: 'var(--warning)', roles: ['Owner', 'Inventory'] },
-    { id: 5, type: 'SYSTEM', title: 'Backup Completed', desc: 'Daily database backup completed successfully.', time: '5 hours ago', icon: 'cloud_done', color: 'var(--gray-500)', roles: ['Owner'] },
-  ];
-
-  const visibleActivities = allActivities.filter(a => a.roles.includes(role));
+export function RecentActivity({ role, data }: RecentActivityProps) {
+  const visibleActivities = data?.recentActivities?.map((a: any) => ({
+    id: a.id,
+    type: a.module || 'SYSTEM',
+    title: a.action,
+    desc: a.description || `${a.user?.name || 'User'} performed ${a.action}`,
+    time: new Date(a.createdAt).toLocaleDateString(),
+    icon: 'history',
+    color: 'var(--primary)'
+  })) || [];
 
   if (visibleActivities.length === 0) return null;
 
@@ -26,7 +27,7 @@ export function RecentActivity({ role }: RecentActivityProps) {
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {visibleActivities.map((activity, index) => (
+        {visibleActivities.map((activity: any, index: number) => (
           <div key={activity.id} style={{ display: 'flex', gap: '16px', position: 'relative' }}>
             {/* Vertical Line for Timeline */}
             {index !== visibleActivities.length - 1 && (

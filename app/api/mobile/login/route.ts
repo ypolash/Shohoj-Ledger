@@ -57,6 +57,10 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: true,
+          token: "demo-token-123", // Added for Android compatibility
+          userId: employee.id,    // Added for Android compatibility
+          name: `${employee.firstName} ${employee.lastName}`, // Added for Android compatibility
+          email: employee.email,   // Added for Android compatibility
           employee: {
             id: employee.id,
             employeeId: employee.employeeId,

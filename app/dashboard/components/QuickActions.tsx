@@ -9,8 +9,8 @@ interface QuickActionsProps {
 
 export function QuickActions({ role }: QuickActionsProps) {
   const actions = [
-    { label: 'Create Customer', icon: 'person_add', roles: ['Owner', 'Sales', 'CEO'], href: '/dashboard/crm/customers/new', color: 'var(--primary)' },
-    { label: 'Create Lead', icon: 'person_search', roles: ['Owner', 'Sales'], href: '/dashboard/leads/new', color: 'var(--accent)' },
+    { label: 'Customer Management', icon: 'person_add', roles: ['Owner', 'Sales', 'CEO'], href: '/dashboard/crm/customers', color: 'var(--primary)' },
+    { label: 'Lead Management', icon: 'person_search', roles: ['Owner', 'Sales'], href: '/dashboard/crm/leads', color: 'var(--accent)' },
     { label: 'Create Income', icon: 'payments', roles: ['Owner', 'Accountant'], href: '/dashboard/income/new', color: 'var(--success)' },
     { label: 'Create Expense', icon: 'receipt_long', roles: ['Owner', 'Accountant'], href: '/dashboard/expenses/new', color: 'var(--danger)' },
     { label: 'Create Product', icon: 'inventory_2', roles: ['Owner', 'Inventory'], href: '/dashboard/inventory/products/new', color: 'var(--info)' },

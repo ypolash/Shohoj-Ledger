@@ -135,6 +135,7 @@ model Project {
   startDate       DateTime?
   tags            String[]
   updatedAt       DateTime          @updatedAt
+  systemSource    String            @default("LEGACY")
   clientId        String?
   client          Client?           @relation(fields: [clientId], references: [id])
   company         Company?          @relation(fields: [companyId], references: [id])
@@ -402,6 +403,7 @@ model Task {
   dueDate              DateTime?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  systemSource         String                 @default("LEGACY")
   companyId            String?
   actualHours          Decimal?               @default(0)
   attachments          Json?

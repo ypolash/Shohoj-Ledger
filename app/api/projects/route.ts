@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     const managerId = url.searchParams.get("managerId");
     const client = url.searchParams.get("client");
 
-    const where: any = { companyId };
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const where: any = { companyId, systemSource };
     
     if (status) where.status = status;
     if (managerId) where.managerId = managerId;
@@ -71,9 +74,13 @@ export async function POST(req: Request) {
     }
 
     // Duplicate Check for Project Code
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existing = await prisma.project.findFirst({
       where: {
         companyId,
+        systemSource,
         projectCode
       }
     });
@@ -99,6 +106,7 @@ export async function POST(req: Request) {
           endDate: endDate ? new Date(endDate) : null,
           estimatedBudget: estimatedBudget ? Number(estimatedBudget) : null,
           tags: tags || [],
+          systemSource,
           teamMembers: {
             connect: (teamMemberIds || []).map((id: string) => ({ id }))
           }

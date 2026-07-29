@@ -14,8 +14,11 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const rbacGuard = await requirePermission("VIEW_PROJECTS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const project = await prisma.project.findFirst({
-      where: { id: params.id, companyId },
+      where: { id: params.id, companyId, systemSource },
       include: {
         manager: { select: { id: true, firstName: true, lastName: true } },
         lead: { select: { id: true, companyName: true, contactPerson: true } },
@@ -60,8 +63,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const body = await req.json();
     const projectId = params.id;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existingProject = await prisma.project.findFirst({
-      where: { id: projectId, companyId },
+      where: { id: projectId, companyId, systemSource },
       include: { teamMembers: true }
     });
 
@@ -146,8 +152,11 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     const rbacGuard = await requirePermission("DELETE_PROJECTS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existing = await prisma.project.findFirst({
-      where: { id: params.id, companyId }
+      where: { id: params.id, companyId, systemSource }
     });
     if (!existing) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 

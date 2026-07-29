@@ -13,8 +13,11 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const rbacGuard = await requirePermission("VIEW_PROJECTS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const tasks = await prisma.task.findMany({
-      where: { projectId: params.id, companyId },
+      where: { projectId: params.id, companyId, systemSource },
       orderBy: { createdAt: 'desc' },
       include: {
         employee: { select: { id: true, firstName: true, lastName: true } }
@@ -47,8 +50,11 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     }
 
     // Verify Project exists
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const project = await prisma.project.findFirst({
-      where: { id: projectId, companyId }
+      where: { id: projectId, companyId, systemSource }
     });
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -65,6 +71,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           assignedToEmployeeId,
           dueDate: dueDate ? new Date(dueDate) : null,
           estimatedHours: estimatedHours ? Number(estimatedHours) : 0,
+          systemSource
         }
       });
 

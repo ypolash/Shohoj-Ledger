@@ -5,13 +5,19 @@ import bcrypt from 'bcryptjs';
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
-export async function GET() {
+export async function GET(req: Request) {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
   if (rbacGuard) return rbacGuard;
 
   try {
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+    
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const employees = await prisma.employee.findMany({
-      where: await withCompany(),
+      where: { companyId, systemSource },
       orderBy: { createdAt: 'desc' },
       include: {
         departmentRef: true,
@@ -60,6 +66,9 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const employee = await prisma.employee.create({
       data: {
         employeeId,
@@ -76,6 +85,7 @@ export async function POST(request: Request) {
         ...(data.departmentId && { departmentId: data.departmentId }),
         ...(data.designationId && { designationId: data.designationId }),
         ...(data.reportingManagerId && { reportingManagerId: data.reportingManagerId }),
+        systemSource
       }
     });
 

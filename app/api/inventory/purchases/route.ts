@@ -46,6 +46,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Supplier, PO Number, and Items are required" }, { status: 400 });
     }
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const totalAmount = items.reduce((sum: number, item: any) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0);
 
     const po = await prisma.purchaseOrder.create({
@@ -53,7 +56,7 @@ export async function POST(req: Request) {
         companyId,
         supplierId,
         purchaseOrderNumber: poNumber,
-        expectedDate: expectedDate ? new Date(expectedDate) : null,
+        expectedDeliveryDate: expectedDate ? new Date(expectedDate) : null,
         supplierRef,
         totalAmount,
         notes,

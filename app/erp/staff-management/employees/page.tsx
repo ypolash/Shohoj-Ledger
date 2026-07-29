@@ -114,10 +114,15 @@ export default function EmployeesPage() {
         basicSalary: parseFloat(newEmployee.basicSalary)
       };
 
+      let res;
       if (isEditMode && selectedEmployee) {
-        await updateEmployee(selectedEmployee.id, payload);
+        res = await updateEmployee(selectedEmployee.id, payload);
       } else {
-        await createEmployee(payload);
+        res = await createEmployee(payload);
+      }
+      
+      if (res && res.error) {
+        throw new Error(res.error);
       }
       
       await loadData();

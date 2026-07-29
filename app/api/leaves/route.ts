@@ -18,7 +18,10 @@ export async function GET(request: Request) {
   const employeeId = searchParams.get('employeeId');
 
   try {
-    const where: any = { companyId: companyIdForGuard };
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const where: any = { companyId: companyIdForGuard, systemSource };
     if (employeeId) where.employeeId = employeeId;
 
     const leaves = await prisma.leaveRequest.findMany({
@@ -60,6 +63,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 403 });
     }
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const leave = await prisma.leaveRequest.create({
       data: {
         companyId: companyIdForGuard,
@@ -68,7 +74,8 @@ export async function POST(request: Request) {
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
         reason: data.reason,
-        status: 'PENDING'
+        status: 'PENDING',
+        systemSource
       }
     });
 
@@ -94,8 +101,11 @@ export async function PATCH(request: Request) {
     }
 
     // SECURITY HOTFIX: Pre-flight check for ownership
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const targetLeave = await prisma.leaveRequest.findFirst({
-      where: { id: data.id, companyId: companyIdForGuard }
+      where: { id: data.id, companyId: companyIdForGuard, systemSource }
     });
     if (!targetLeave) {
       return NextResponse.json({ error: 'Leave request not found or access denied' }, { status: 404 });

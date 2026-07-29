@@ -19,14 +19,18 @@ export async function GET(request: Request) {
   const employeeId = searchParams.get('employeeId');
 
   try {
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     if (employeeId) {
       const attendances = await prisma.attendance.findMany({
-        where: { ...(await withCompany()), employeeId },
+        where: { ...(await withCompany()), systemSource, employeeId },
         orderBy: { date: 'desc' }
       });
       return NextResponse.json(attendances);
     } else {
       const attendances = await prisma.attendance.findMany({
+        where: { ...(await withCompany()), systemSource },
         orderBy: { date: 'desc' }
       });
       return NextResponse.json(attendances);
@@ -74,6 +78,9 @@ export async function POST(request: Request) {
       }
     }
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const attendance = await prisma.attendance.create({
       data: {
         companyId: companyIdForGuard,
@@ -84,7 +91,8 @@ export async function POST(request: Request) {
         checkOutTime: data.checkOut ? new Date(data.checkOut) : null,
         checkOutLocation: data.checkOutLocation || null,
         status: status,
-        lateMinutes: data.lateMinutes || 0
+        lateMinutes: data.lateMinutes || 0,
+        systemSource
       }
     });
 

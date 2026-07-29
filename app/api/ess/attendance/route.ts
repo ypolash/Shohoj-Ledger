@@ -112,6 +112,7 @@ export async function POST(request: Request) {
           checkInLocation: location || null,
           status: "PRESENT",
           lateMinutes: 0,
+          systemSource: employee.systemSource || "LEGACY",
         },
       });
       return NextResponse.json({ success: true, record, message: "Clocked in successfully." });

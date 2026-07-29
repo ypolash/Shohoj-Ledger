@@ -15,7 +15,7 @@ async function verifyAccess(permission: string) {
 export async function fetchLeaveRequests(employeeId?: string) {
   const { companyId } = await verifyAccess("VIEW_LEAVE");
 
-  const whereClause: any = { companyId };
+  const whereClause: any = { companyId, systemSource: "ERP" };
   if (employeeId) {
     whereClause.employeeId = employeeId;
   }
@@ -51,6 +51,7 @@ export async function createLeaveRequest(data: { employeeId: string; type: strin
   const overlapping = await prisma.leaveRequest.findFirst({
     where: {
       companyId,
+      systemSource: "ERP",
       employeeId: data.employeeId,
       status: { not: "REJECTED" },
       OR: [
@@ -66,6 +67,7 @@ export async function createLeaveRequest(data: { employeeId: string; type: strin
   const req = await prisma.leaveRequest.create({
     data: {
       companyId,
+      systemSource: "ERP",
       employeeId: data.employeeId,
       type: data.type,
       startDate: start,
@@ -82,7 +84,7 @@ export async function createLeaveRequest(data: { employeeId: string; type: strin
 export async function updateLeaveRequest(id: string, data: { type?: string; startDate?: string; endDate?: string; reason?: string }) {
   const { companyId } = await verifyAccess("MANAGE_LEAVE");
   
-  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId } });
+  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId, systemSource: "ERP" } });
   if (!existing) throw new Error("Leave request not found");
   if (existing.status !== "PENDING") throw new Error("Only pending requests can be updated.");
 
@@ -103,7 +105,7 @@ export async function updateLeaveRequest(id: string, data: { type?: string; star
 export async function approveLeaveRequest(id: string) {
   const { companyId } = await verifyAccess("APPROVE_LEAVE");
   
-  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId } });
+  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId, systemSource: "ERP" } });
   if (!existing) throw new Error("Leave request not found");
 
   await prisma.leaveRequest.update({
@@ -118,7 +120,7 @@ export async function approveLeaveRequest(id: string) {
 export async function rejectLeaveRequest(id: string) {
   const { companyId } = await verifyAccess("APPROVE_LEAVE");
   
-  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId } });
+  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId, systemSource: "ERP" } });
   if (!existing) throw new Error("Leave request not found");
 
   await prisma.leaveRequest.update({
@@ -133,7 +135,7 @@ export async function rejectLeaveRequest(id: string) {
 export async function cancelLeaveRequest(id: string) {
   const { companyId } = await verifyAccess("MANAGE_LEAVE");
   
-  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId } });
+  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId, systemSource: "ERP" } });
   if (!existing) throw new Error("Leave request not found");
 
   await prisma.leaveRequest.update({

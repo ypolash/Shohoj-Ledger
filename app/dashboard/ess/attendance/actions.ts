@@ -7,7 +7,7 @@ export async function fetchMyAttendanceHistory(limit: number = 30) {
   const { employeeId, companyId } = await getEssEmployeeId();
 
   return await prisma.attendance.findMany({
-    where: { companyId, employeeId },
+    where: { companyId, systemSource: "LEGACY", employeeId },
     orderBy: { date: "desc" },
     take: limit
   });
@@ -23,6 +23,7 @@ export async function fetchMyAttendanceSummary() {
   const records = await prisma.attendance.findMany({
     where: {
       companyId,
+      systemSource: "LEGACY",
       employeeId,
       date: {
         gte: startOfMonth,

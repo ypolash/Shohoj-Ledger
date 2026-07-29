@@ -42,7 +42,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payroll already generated for this month' }, { status: 400 });
     }
 
-    const employee = await prisma.employee.findFirst({ where: { companyId, id: employeeId } });
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const employee = await prisma.employee.findFirst({ where: { companyId, id: employeeId, systemSource } });
     if (!employee) return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 404 });
 
     // Fetch Attendances for the month
@@ -112,7 +115,8 @@ export async function POST(request: Request) {
         year,
         totalEarnings: payroll.grossSalary,
         totalDeductions: payroll.totalDeductions,
-        netPay: payroll.netSalary
+        netPay: payroll.netSalary,
+        systemSource
       }
     });
 
@@ -151,8 +155,11 @@ export async function GET(request: Request) {
     const month = searchParams.get('month') ? parseInt(searchParams.get('month')!) : new Date().getMonth() + 1;
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : new Date().getFullYear();
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const payments = await prisma.salaryPayment.findMany({
-      where: { ...companyFilter },
+      where: { ...companyFilter, employee: { systemSource } },
       include: { employee: true },
       orderBy: { createdAt: 'desc' }
     });

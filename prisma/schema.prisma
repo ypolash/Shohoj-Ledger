@@ -433,6 +433,7 @@ model Attendance {
   lateMinutes           Int                    @default(0)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  systemSource          String                 @default("LEGACY")
   isLate                Boolean                @default(false)
   latitude              Float?
   longitude             Float?
@@ -691,6 +692,7 @@ model LeaveRequest {
   status        String          @default("PENDING")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  systemSource  String          @default("LEGACY")
   companyId     String?
   approvedById  String?
   attachmentUrl String?
@@ -772,6 +774,7 @@ model Payslip {
   totalDeductions Decimal
   netPay          Decimal
   createdAt       DateTime @default(now())
+  systemSource    String   @default("LEGACY")
   companyId       String?
   company         Company? @relation(fields: [companyId], references: [id])
   employee        Employee @relation(fields: [employeeId], references: [id])

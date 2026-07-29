@@ -77,6 +77,7 @@ export async function POST(request: Request) {
         endDate: new Date(endDate),
         reason,
         status: "PENDING",
+        systemSource: employee.systemSource || "LEGACY"
       },
     });
 

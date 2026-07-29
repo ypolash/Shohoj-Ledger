@@ -8,7 +8,7 @@ export async function fetchMyLeaveRequests() {
   const { employeeId, companyId } = await getEssEmployeeId();
 
   return await prisma.leaveRequest.findMany({
-    where: { companyId, employeeId },
+    where: { companyId, employeeId, systemSource: "ERP" },
     orderBy: { createdAt: "desc" }
   });
 }
@@ -27,6 +27,7 @@ export async function applyMyLeave(data: { type: string; startDate: string; endD
   const overlapping = await prisma.leaveRequest.findFirst({
     where: {
       companyId,
+      systemSource: "ERP",
       employeeId,
       status: { not: "REJECTED" },
       OR: [
@@ -42,6 +43,7 @@ export async function applyMyLeave(data: { type: string; startDate: string; endD
   const req = await prisma.leaveRequest.create({
     data: {
       companyId,
+      systemSource: "ERP",
       employeeId,
       type: data.type,
       startDate: start,
@@ -58,7 +60,7 @@ export async function applyMyLeave(data: { type: string; startDate: string; endD
 export async function cancelMyLeave(id: string) {
   const { employeeId, companyId } = await getEssEmployeeId();
   
-  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId, employeeId } });
+  const existing = await prisma.leaveRequest.findFirst({ where: { id, companyId, employeeId, systemSource: "ERP" } });
   if (!existing) throw new Error("Leave request not found");
   if (existing.status !== "PENDING") throw new Error("You can only cancel pending requests. Contact HR for approved leaves.");
 

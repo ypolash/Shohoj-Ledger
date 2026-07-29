@@ -33,19 +33,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     let targetEmployeeIds: string[] = [];
 
     if (employeeIds && Array.isArray(employeeIds) && employeeIds.length > 0) {
       targetEmployeeIds = employeeIds;
     } else if (departmentId) {
       const employeesInDept = await prisma.employee.findMany({
-        where: { ...companyFilter, departmentId, status: 'ACTIVE' },
+        where: { ...companyFilter, departmentId, status: 'ACTIVE', systemSource },
         select: { id: true }
       });
       targetEmployeeIds = employeesInDept.map(e => e.id);
     } else {
       const allActiveEmployees = await prisma.employee.findMany({
-        where: { ...companyFilter, status: 'ACTIVE' },
+        where: { ...companyFilter, status: 'ACTIVE', systemSource },
         select: { id: true }
       });
       targetEmployeeIds = allActiveEmployees.map(e => e.id);
@@ -146,7 +149,8 @@ export async function POST(request: Request) {
           year,
           totalEarnings: payroll.grossSalary,
           totalDeductions: payroll.totalDeductions,
-          netPay: payroll.netSalary
+          netPay: payroll.netSalary,
+          systemSource
         }
       });
 
@@ -224,9 +228,12 @@ export async function PATCH(request: Request) {
       failed: 0
     };
 
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     for (const id of paymentIds) {
       const existingPayment = await prisma.salaryPayment.findFirst({
-        where: { companyId: companyId!, id },
+        where: { companyId: companyId!, id, employee: { systemSource } },
         include: { employee: true }
       });
 

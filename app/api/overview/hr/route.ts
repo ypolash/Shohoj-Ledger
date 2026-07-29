@@ -8,7 +8,14 @@ export async function GET() {
   if (rbacGuard) return rbacGuard;
 
   try {
-    const companyFilter = await withCompany();
+    const baseCompanyFilter = await withCompany();
+    
+    // Ensure we don't accidentally count legacy CRM data (which has companyId: null)
+    // if the company filter is empty, bypassed, or invalid.
+    const hasValidCompanyId = baseCompanyFilter && typeof (baseCompanyFilter as any).companyId === 'string';
+    const companyFilter = hasValidCompanyId 
+      ? baseCompanyFilter 
+      : { ...baseCompanyFilter, companyId: { not: null } };
 
     // 1. Total Employees
     const totalEmployees = await prisma.employee.count({

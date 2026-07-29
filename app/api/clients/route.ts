@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     const status = url.searchParams.get("status");
     const country = url.searchParams.get("country");
 
-    const where: any = { companyId };
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const where: any = { companyId, systemSource };
     if (industry) where.industry = industry;
     if (status) where.status = status;
     if (country) where.country = country;
@@ -69,6 +72,9 @@ export async function POST(req: Request) {
     }
 
     // Duplicate Check
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const orConditions: any[] = [{ clientCode }];
     if (email) orConditions.push({ email });
     if (phone) orConditions.push({ phone });
@@ -77,6 +83,7 @@ export async function POST(req: Request) {
     const existing = await prisma.client.findFirst({
       where: {
         companyId,
+        systemSource,
         OR: orConditions
       }
     });
@@ -104,7 +111,8 @@ export async function POST(req: Request) {
           postalCode,
           status: status || "ACTIVE",
           notes,
-          tags: tags || []
+          tags: tags || [],
+          systemSource
         }
       });
 

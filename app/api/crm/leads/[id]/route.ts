@@ -14,8 +14,11 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const rbacGuard = await requirePermission("VIEW_LEADS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const lead = await prisma.lead.findFirst({
-      where: { id: params.id, companyId },
+      where: { id: params.id, companyId, systemSource },
       include: {
         assignedTo: { select: { id: true, firstName: true, lastName: true } },
         activities: {
@@ -53,8 +56,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const body = await req.json();
     const leadId = params.id;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existingLead = await prisma.lead.findFirst({
-      where: { id: leadId, companyId }
+      where: { id: leadId, companyId, systemSource }
     });
 
     if (!existingLead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
@@ -145,9 +151,12 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     const rbacGuard = await requirePermission("DELETE_LEADS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     // Verify ownership
     const existing = await prisma.lead.findFirst({
-      where: { id: params.id, companyId }
+      where: { id: params.id, companyId, systemSource }
     });
     if (!existing) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 

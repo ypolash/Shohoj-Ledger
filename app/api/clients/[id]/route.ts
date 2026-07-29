@@ -14,8 +14,11 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const rbacGuard = await requirePermission("VIEW_CLIENTS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const client = await prisma.client.findFirst({
-      where: { id: params.id, companyId },
+      where: { id: params.id, companyId, systemSource },
       include: {
         contacts: { orderBy: { createdAt: 'asc' } },
         documents: { include: { uploadedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
@@ -60,8 +63,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const body = await req.json();
     const clientId = params.id;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existingClient = await prisma.client.findFirst({
-      where: { id: clientId, companyId }
+      where: { id: clientId, companyId, systemSource }
     });
 
     if (!existingClient) return NextResponse.json({ error: "Client not found" }, { status: 404 });
@@ -141,8 +147,11 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     const rbacGuard = await requirePermission("DELETE_CLIENTS");
     if (rbacGuard) return rbacGuard;
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existing = await prisma.client.findFirst({
-      where: { id: params.id, companyId }
+      where: { id: params.id, companyId, systemSource }
     });
     if (!existing) return NextResponse.json({ error: "Client not found" }, { status: 404 });
 

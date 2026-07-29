@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     const priority = url.searchParams.get("priority");
     const assignedToId = url.searchParams.get("assignedToId");
 
-    const where: any = { companyId };
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const where: any = { companyId, systemSource };
     
     if (status) where.status = status;
     if (priority) where.priority = priority;
@@ -72,9 +75,13 @@ export async function POST(req: Request) {
     }
 
     // Duplicate Check
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     const existing = await prisma.lead.findFirst({
       where: {
         companyId,
+        systemSource,
         OR: [
           { phone },
           ...(email ? [{ email }] : [])
@@ -106,7 +113,8 @@ export async function POST(req: Request) {
           address,
           tags: tags || [],
           notes,
-          status: "New"
+          status: "New",
+          systemSource
         }
       });
 

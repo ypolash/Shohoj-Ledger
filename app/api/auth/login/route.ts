@@ -105,6 +105,27 @@ export async function POST(req: Request) {
 
       if (isMatch) {
         console.log("✓ Authentication: Password verified (Employee)");
+        
+        // --- MOBILE APP NETWORK & LOCATION VALIDATION ---
+        if (body.source === "APP") {
+          const { validateAttendanceRequest } = await import("../../mobile/attendance/utils");
+          const validation = await validateAttendanceRequest(
+            body.latitude, 
+            body.longitude, 
+            body.ssid, 
+            body.bssid
+          );
+          
+          if (!validation.isValid) {
+            console.log("✗ Authentication Failed: Mobile Network/Location validation failed:", validation.error);
+            return NextResponse.json(
+              { success: false, message: validation.error },
+              { status: 403 }
+            );
+          }
+        }
+        // ------------------------------------------------
+        
         // Password matches, login as EMPLOYEE
         const context = await getCompanyContext(employee.id, "EMPLOYEE");
         console.log("✓ Company Context resolved:", context.companyId ? "Yes" : "No");

@@ -51,10 +51,22 @@ export async function GET(request: Request) {
       },
     });
 
+    const mapRecord = (rec: any) => ({
+      ...rec,
+      checkIn: rec.checkInTime,
+      checkOut: rec.checkOutTime,
+      isCheckedIn: !!rec.checkInTime && !rec.checkOutTime
+    });
+
     return NextResponse.json({
-      records,
-      today: todayRecord || null,
-      isClockedIn: !!todayRecord?.checkInTime && !todayRecord?.checkOutTime,
+      records: records.map(mapRecord),
+      today: todayRecord ? mapRecord(todayRecord) : null,
+      summary: {
+        present: records.filter((r) => r.status === "PRESENT").length,
+        absent: records.filter((r) => r.status === "ABSENT").length,
+        late: records.filter((r) => r.status === "LATE").length,
+        halfDay: records.filter((r) => r.status === "HALF_DAY").length,
+      }
     });
   } catch (error) {
     console.error("[ESS] Attendance fetch error:", error);
@@ -80,11 +92,19 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { action, location } = body;
+    const { action, location, latitude, longitude, ssid, bssid } = body;
 
     if (!action || !["CLOCK_IN", "CLOCK_OUT"].includes(action)) {
       return NextResponse.json({ error: "Invalid action. Use CLOCK_IN or CLOCK_OUT." }, { status: 400 });
     }
+    
+    // --- NETWORK & LOCATION VALIDATION ---
+    const { validateAttendanceRequest } = await import("../../mobile/attendance/utils");
+    const validation = await validateAttendanceRequest(latitude, longitude, ssid, bssid);
+    if (!validation.isValid) {
+      return NextResponse.json({ error: validation.error }, { status: 403 });
+    }
+    // -------------------------------------
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -97,22 +117,36 @@ export async function POST(request: Request) {
       },
     });
 
+    const locationString = location || (latitude && longitude ? `${latitude},${longitude}` : null);
+
     if (action === "CLOCK_IN") {
       if (todayRecord?.checkInTime) {
         return NextResponse.json({ error: "Already clocked in today." }, { status: 400 });
       }
       const record = await prisma.attendance.upsert({
         where: { id: todayRecord?.id || "" },
-        update: { checkInTime: now, checkInLocation: location || null, status: "PRESENT" },
+        update: { 
+            checkInTime: now, 
+            checkInLocation: locationString, 
+            status: "PRESENT",
+            latitude: latitude,
+            longitude: longitude,
+            wifiSsid: ssid,
+            wifiBssid: bssid
+        },
         create: {
           companyId: employee.companyId,
           employeeId: employee.id,
           date: todayStart,
           checkInTime: now,
-          checkInLocation: location || null,
+          checkInLocation: locationString,
           status: "PRESENT",
           lateMinutes: 0,
           systemSource: employee.systemSource || "LEGACY",
+          latitude: latitude,
+          longitude: longitude,
+          wifiSsid: ssid,
+          wifiBssid: bssid
         },
       });
       return NextResponse.json({ success: true, record, message: "Clocked in successfully." });
@@ -128,7 +162,7 @@ export async function POST(request: Request) {
 
     const record = await prisma.attendance.update({
       where: { id: todayRecord.id },
-      data: { checkOutTime: now, checkOutLocation: location || null },
+      data: { checkOutTime: now, checkOutLocation: locationString },
     });
 
     return NextResponse.json({ success: true, record, message: "Clocked out successfully." });

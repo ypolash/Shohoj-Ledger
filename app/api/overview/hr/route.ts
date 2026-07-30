@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { withCompany } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
   if (rbacGuard) return rbacGuard;
@@ -26,6 +28,7 @@ export async function GET() {
     const activeEmployees = await prisma.employee.count({
       where: {
         ...companyFilter,
+        status: 'ACTIVE',
         employmentStatus: {
           notIn: ['Terminated', 'Resigned', 'Suspended']
         }

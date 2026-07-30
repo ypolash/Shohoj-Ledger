@@ -30,7 +30,7 @@ export default function StaffManagementLayout({
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      <div className="glass-card topo-bg" style={{ padding: '12px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', border: 'none' }}>
+      <div className="glass-card topo-bg" style={{ padding: '12px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)', border: 'none' }}>
         <nav className={styles.tabContainer}>
           {tabs.map((tab) => {
             const isActive = pathname === tab.path;

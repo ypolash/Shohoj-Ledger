@@ -6,6 +6,7 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   flex: 1;
+  min-width: 0;
 }
 
 .tabContainer::-webkit-scrollbar { 
@@ -26,6 +27,7 @@
   background: transparent;
   transition: all 250ms ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab span.material-symbols-outlined {

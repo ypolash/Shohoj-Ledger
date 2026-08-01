@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { FinanceToolbar } from './components/FinanceToolbar';
 import { FinanceFilters } from './components/FinanceFilters';
 import { FinanceKPICards } from './components/FinanceKPICards';
@@ -19,6 +21,42 @@ import { BudgetSummary } from './components/BudgetSummary';
 import { FinanceQuickActions } from './components/FinanceQuickActions';
 
 export default function FinanceDashboardPage() {
+  const [financeData, setFinanceData] = useState<any>(null);
+  const [overviewData, setOverviewData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const [financeRes, overviewRes] = await Promise.all([
+        fetch("/api/finance/dashboard"),
+        fetch("/api/overview")
+      ]);
+      const financeJson = await financeRes.json();
+      const overviewJson = await overviewRes.json();
+      setFinanceData(financeJson);
+      setOverviewData(overviewJson);
+    } catch (err) {
+      console.error("Error fetching finance data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  if (loading || !financeData) {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <div className="text-slate-500 animate-pulse flex flex-col items-center gap-4">
+          <span className="material-symbols-outlined text-4xl">hourglass_empty</span>
+          <span>Calculating Ledger Balances...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       <FinanceToolbar />
@@ -26,33 +64,33 @@ export default function FinanceDashboardPage() {
       
       {/* KPI Cards Row */}
       <div style={{ marginBottom: '24px' }}>
-        <FinanceKPICards />
+        <FinanceKPICards data={financeData} />
       </div>
       
       {/* Top Widgets Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <RevenueWidget />
-        <ExpenseWidget />
-        <CashFlowWidget />
-        <ProfitLossWidget />
+        <RevenueWidget data={financeData} />
+        <ExpenseWidget data={financeData} />
+        <CashFlowWidget data={financeData} />
+        <ProfitLossWidget data={financeData} />
       </div>
 
       {/* Main Charts & Summaries */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px', gridColumn: 'span 2' }}>
-          <IncomeExpenseChart />
+          <IncomeExpenseChart data={financeData} />
         </div>
         <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px' }}>
-          <CashFlowChart />
+          <CashFlowChart data={financeData} />
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px', gridColumn: 'span 2' }}>
-          <RevenueTrendChart />
+          <RevenueTrendChart data={financeData} />
         </div>
         <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px', gridColumn: 'span 2' }}>
-          <ExpenseTrendChart />
+          <ExpenseTrendChart data={financeData} />
         </div>
       </div>
 
@@ -62,16 +100,16 @@ export default function FinanceDashboardPage() {
           <AccountBalanceTable />
         </div>
         <div>
-          <BalanceWidget />
+          <BalanceWidget data={financeData} />
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
         <div style={{ gridColumn: 'span 2' }}>
-          <RecentTransactions />
+          <RecentTransactions transactions={overviewData?.recentTransactions || []} />
         </div>
         <div>
-          <OutstandingWidget />
+          <OutstandingWidget data={financeData} />
         </div>
       </div>
 

@@ -7,7 +7,21 @@ import { PageHeader } from '@/components/layout/PageHeader/PageHeader';
 export default function NotificationsPage() {
   
 
-  return (
+  
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false);
+      alert("Settings saved successfully!");
+    }, 800);
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+return (
     <PageContainer>
       <PageHeader 
         title="Notifications" 
@@ -17,11 +31,11 @@ export default function NotificationsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
           <h2 style={{ margin: 0, fontSize: '18px' }}>Notifications Configuration</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn btn-secondary">
+            <button className="btn btn-secondary" onClick={handleRefresh}>
               <span className="material-symbols-outlined">refresh</span> Refresh
             </button>
-            <button className="btn btn-primary">
-              <span className="material-symbols-outlined">save</span> Save Settings
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+              <span className="material-symbols-outlined" style={saving ? {animation: 'spin 1s linear infinite'} : {}}>{saving ? 'autorenew' : 'save'}</span> {saving ? 'Saving...' : 'Save Settings'}
             </button>
           </div>
         </div>

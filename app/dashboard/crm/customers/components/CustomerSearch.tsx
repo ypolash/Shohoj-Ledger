@@ -15,7 +15,8 @@ export function CustomerSearch({ onSearch }: CustomerSearchProps) {
     }, 300); // Debounce
 
     return () => clearTimeout(handler);
-  }, [query, onSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   return (
     <div style={{ position: 'relative', width: '300px' }}>

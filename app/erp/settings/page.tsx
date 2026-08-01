@@ -2,23 +2,34 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { loadAdminData } from './actions';
 
 export default function SystemSettingsDashboard() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fallback data for the UI if API isn't fully ready yet for this specific dash
   useEffect(() => {
-    // Just simulating a load for the dashboard layout
-    setTimeout(() => {
-      setData({
-        activeUsers: 14,
-        totalRoles: 5,
-        activeModules: 8,
-        lastBackup: new Date().toISOString()
-      });
-      setIsLoading(false);
-    }, 600);
+    const fetchStats = async () => {
+      try {
+        const res = await loadAdminData();
+        const activeUsersCount = res.users.filter(u => u.role !== 'inactive').length;
+        const totalRolesCount = res.roles.length + 2; // +2 for static 'owner' and 'admin' roles
+        const activeModulesCount = res.modules.filter(m => m.isActive).length;
+
+        setData({
+          activeUsers: activeUsersCount,
+          totalRoles: totalRolesCount,
+          activeModules: activeModulesCount,
+          lastBackup: new Date().toISOString() // Since backups aren't in DB yet
+        });
+      } catch (err) {
+        console.error("Failed to load settings data", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStats();
   }, []);
 
   const categories = [

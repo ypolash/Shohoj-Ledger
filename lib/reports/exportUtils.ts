@@ -105,7 +105,7 @@ export function exportToPDF(
       doc.text(`Generated: ${dateStr}`, pageWidth / 2, 28, { align: 'center' });
 
       // Footer
-      const pageCount = doc.internal.getNumberOfPages();
+      const pageCount = (doc.internal as any).getNumberOfPages ? (doc.internal as any).getNumberOfPages() : doc.internal.pages.length - 1;
       doc.setFontSize(8);
       doc.text(
         `Page ${data.pageNumber} of ${pageCount}`,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from "@/lib/rbac/permissionGuard";
-import { withCompany } from "@/lib/company/companyFilter";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");

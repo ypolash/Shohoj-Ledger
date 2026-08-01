@@ -25,7 +25,7 @@ export async function GET(req: Request) {
         reportingManager: true
       }
     });
-    return NextResponse.json(employees);
+    return NextResponse.json(JSON.parse(JSON.stringify(employees)));
   } catch (error) {
     console.error('Failed to fetch employees:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json(employee, { status: 201 });
+    return NextResponse.json(JSON.parse(JSON.stringify(employee)), { status: 201 });
   } catch (error) {
     console.error('Failed to create employee:', error);
     return NextResponse.json({ error: 'Failed to create employee' }, { status: 500 });

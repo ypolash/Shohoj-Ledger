@@ -85,27 +85,6 @@ export default function DashboardIndex() {
           title={`Enterprise Dashboard (${role})`}
           description="A premium, structured overview tailored to your role."
         />
-        
-        {/* Role Switcher (For Demo/Testing Purposes) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-main)', padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-main)', boxShadow: 'var(--shadow-sm)' }}>
-          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>View As:</label>
-          <select 
-            value={role} 
-            onChange={(e) => setRole(e.target.value)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-light)',
-              background: 'var(--bg-main)',
-              fontSize: '14px',
-              color: 'var(--text-main)',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
-          >
-            {roles.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </div>
       </div>
 
       <QuickActions role={role} />

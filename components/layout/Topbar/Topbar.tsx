@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { useUI } from '@/lib/contexts/UIContext';
 import styles from './Topbar.module.css';
 import { 
@@ -49,8 +50,7 @@ export function Topbar() {
       </div>
 
       <div className={styles.rightSection}>
-        {/* Command Palette Trigger */}
-        <button className={styles.searchTrigger} aria-label="Search">
+        <button className={styles.searchTrigger} aria-label="Search" onClick={() => alert("Search functionality is currently being built.")}>
           <Search size={16} />
           <span className={styles.searchPlaceholder}>Search...</span>
           <kbd className={styles.shortcutKey}>Ctrl+K</kbd>
@@ -66,14 +66,18 @@ export function Topbar() {
             <ThemeIcon size={20} />
           </button>
 
-          <button className={styles.iconButton} aria-label="Notifications">
-            <Bell size={20} />
-            <span className={styles.badge}>3</span>
-          </button>
+          <Link href="/erp/settings/notifications" passHref>
+            <button className={styles.iconButton} aria-label="Notifications" title="Notifications">
+              <Bell size={20} />
+              <span className={styles.badge}>3</span>
+            </button>
+          </Link>
 
-          <button className={styles.profileButton} aria-label="Profile Menu">
-            <UserCircle size={24} />
-          </button>
+          <Link href="/erp/settings/profile" passHref>
+            <button className={styles.profileButton} aria-label="Profile Menu" title="Profile Settings">
+              <UserCircle size={24} />
+            </button>
+          </Link>
         </div>
       </div>
     </header>

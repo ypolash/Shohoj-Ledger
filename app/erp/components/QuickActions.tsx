@@ -22,7 +22,7 @@ export function QuickActions({ role }: QuickActionsProps) {
   return (
     <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px', borderRadius: '16px' }}>
       <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 16px 0', color: 'var(--text-main)' }}>Quick Actions</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
         {visibleActions.map((action, idx) => {
           // Map color strings to class names for our global utilities
           let glowClass = 'glow-border-primary';
@@ -37,8 +37,9 @@ export function QuickActions({ role }: QuickActionsProps) {
               <div 
                 className={`hover-lift ${glowClass}`}
                 style={{ 
-                  padding: '16px', 
-                  borderRadius: '12px', 
+                  width: '130px',
+                  height: '130px',
+                  borderRadius: '50%',
                   border: '1px solid var(--border-main)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -47,7 +48,8 @@ export function QuickActions({ role }: QuickActionsProps) {
                   gap: '8px',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  background: 'var(--surface-hover)'
+                  background: 'var(--surface-hover)',
+                  flexShrink: 0
                 }}
               >
                 <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '28px', opacity: 0.9 }}>

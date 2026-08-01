@@ -8,7 +8,8 @@ import { getCompanyContext } from "@/lib/auth/getCompanyContext";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password;
 
     if (!email || !password) {
       return NextResponse.json(

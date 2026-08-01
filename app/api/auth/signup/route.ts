@@ -10,10 +10,10 @@ export async function POST(request: Request) {
     // which creates the Company, default Settings, Industry Templates, Roles,
     // and the founding Owner user account.
     const newCompany = await CompanyService.registerCompany({
-      companyName: payload.companyName,
-      ownerEmail: payload.ownerEmail,
+      companyName: payload.companyName?.trim(),
+      ownerEmail: payload.ownerEmail?.trim().toLowerCase(),
       ownerPasswordRaw: payload.ownerPasswordRaw,
-      ownerName: payload.ownerName || "Company Owner",
+      ownerName: payload.ownerName?.trim() || "Company Owner",
       businessType: payload.businessType || "Product + Service",
       selectedModules: payload.selectedModules || [],
     });

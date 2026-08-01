@@ -115,10 +115,10 @@ export default function FinanceDashboardPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
         <div>
-          <FinancialSummary />
+          <FinancialSummary data={financeData} />
         </div>
         <div>
-          <BudgetSummary />
+          <BudgetSummary data={financeData} />
         </div>
         <div>
           <FinanceQuickActions />

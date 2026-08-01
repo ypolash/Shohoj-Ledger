@@ -11,13 +11,13 @@ interface KPI {
   color: string;
 }
 
-export function FinanceKPICards() {
+export function FinanceKPICards({ data }: { data?: any }) {
   const kpis: KPI[] = [
-    { title: 'Total Revenue', value: '৳ 14.5M', trend: '+12%', trendUp: true, icon: 'account_balance_wallet', color: 'var(--primary)' },
-    { title: 'Total Expenses', value: '৳ 8.2M', trend: '-5%', trendUp: true, icon: 'receipt_long', color: 'var(--success)' },
-    { title: 'Net Profit', value: '৳ 6.3M', trend: '+18%', trendUp: true, icon: 'trending_up', color: 'var(--info)' },
-    { title: 'Cash Balance', value: '৳ 2.1M', trend: '-2%', trendUp: false, icon: 'payments', color: 'var(--warning)' },
-    { title: 'Outstanding Recv', value: '৳ 3.4M', trend: '+4%', trendUp: true, icon: 'move_to_inbox', color: 'var(--primary)' }
+    { title: 'Total Revenue', value: `৳ ${(data?.kpis?.revenue || 0).toLocaleString()}`, trend: '+12%', trendUp: true, icon: 'account_balance_wallet', color: 'var(--primary)' },
+    { title: 'Total Expenses', value: `৳ ${(data?.kpis?.expenses || 0).toLocaleString()}`, trend: '-5%', trendUp: true, icon: 'receipt_long', color: 'var(--success)' },
+    { title: 'Net Profit', value: `৳ ${(data?.kpis?.profit || 0).toLocaleString()}`, trend: '+18%', trendUp: true, icon: 'trending_up', color: 'var(--info)' },
+    { title: 'Cash Balance', value: `৳ ${(data?.kpis?.cash || 0).toLocaleString()}`, trend: '-2%', trendUp: false, icon: 'payments', color: 'var(--warning)' },
+    { title: 'Outstanding Recv', value: `৳ ${(data?.kpis?.loanOutstanding || 0).toLocaleString()}`, trend: '+4%', trendUp: true, icon: 'move_to_inbox', color: 'var(--primary)' }
   ];
 
   return (

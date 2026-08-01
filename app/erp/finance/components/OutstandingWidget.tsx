@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export function OutstandingWidget() {
+export function OutstandingWidget({ data }: { data?: any }) {
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Outstanding Summary</h3>
@@ -15,7 +15,7 @@ export function OutstandingWidget() {
             </div>
             <div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Accounts Receivable</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ 3,450,000</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ {(data?.kpis?.loanOutstanding || 0).toLocaleString()}</div>
             </div>
           </div>
           <button style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-hover)', border: '1px solid var(--border-light)', cursor: 'pointer' }}>View</button>
@@ -30,7 +30,7 @@ export function OutstandingWidget() {
             </div>
             <div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Accounts Payable</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ 1,280,000</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ {(data?.kpis?.advanceOutstanding || 0).toLocaleString()}</div>
             </div>
           </div>
           <button style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-hover)', border: '1px solid var(--border-light)', cursor: 'pointer' }}>View</button>

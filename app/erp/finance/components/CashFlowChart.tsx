@@ -2,9 +2,9 @@
 
 import React from 'react';
 
-export function CashFlowChart() {
-  const categories = ['Op. Balance', 'Inflow', 'Outflow', 'Closing'];
-  const values = [5.0, 14.5, -8.2, 11.3];
+export function CashFlowChart({ data }: { data?: any }) {
+  const categories = data?.charts?.cashflowCategories || ['Op. Balance', 'Inflow', 'Outflow', 'Closing'];
+  const values = data?.charts?.cashflowValues || [0, 0, 0, 0];
 
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -17,18 +17,18 @@ export function CashFlowChart() {
           let color = 'var(--primary)';
 
           if (i === 0) {
-            heightPct = (5.0 / 20) * 100;
+            heightPct = (values[0] / 20) * 100 || 0;
             color = 'var(--info)';
           } else if (i === 1) {
-            bottomPct = (5.0 / 20) * 100;
-            heightPct = (14.5 / 20) * 100;
+            bottomPct = (values[0] / 20) * 100 || 0;
+            heightPct = (values[1] / 20) * 100 || 0;
             color = 'var(--success)';
           } else if (i === 2) {
-            bottomPct = (11.3 / 20) * 100;
-            heightPct = (8.2 / 20) * 100;
+            bottomPct = (values[3] / 20) * 100 || 0;
+            heightPct = (Math.abs(values[2]) / 20) * 100 || 0;
             color = 'var(--danger)';
           } else if (i === 3) {
-            heightPct = (11.3 / 20) * 100;
+            heightPct = (values[3] / 20) * 100 || 0;
             color = 'var(--primary)';
           }
 

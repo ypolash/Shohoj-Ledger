@@ -2,12 +2,12 @@
 
 import React from 'react';
 
-export function RevenueTrendChart() {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-  const values = [8.5, 9.2, 10.1, 9.8, 12.5, 13.0, 14.5];
-  const target = [10, 10, 11, 11, 12, 13, 14];
+export function RevenueTrendChart({ data }: { data?: any }) {
+  const months = data?.charts?.trendMonths || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+  const values = data?.charts?.trendValues || [0, 0, 0, 0, 0, 0, 0];
+  const target = data?.charts?.trendTargets || [0, 0, 0, 0, 0, 0, 0];
   
-  const maxVal = 16;
+  const maxVal = Math.max(...values, ...target) * 1.2 || 1;
   
   const points = values.map((val, i) => {
     const x = (i / (values.length - 1)) * 100;

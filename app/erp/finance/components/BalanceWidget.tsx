@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export function BalanceWidget() {
+export function BalanceWidget({ data }: { data?: any }) {
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Liquidity Overview</h3>
@@ -15,7 +15,7 @@ export function BalanceWidget() {
             </div>
             <div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Bank Accounts</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ 8,500,000</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ {(data?.kpis?.bank || 0).toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -27,7 +27,7 @@ export function BalanceWidget() {
             </div>
             <div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Cash on Hand</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ 450,000</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ {(data?.kpis?.cash || 0).toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function BalanceWidget() {
             </div>
             <div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Reserves</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ 2,000,000</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>৳ {(data?.kpis?.reserve || 0).toLocaleString()}</div>
             </div>
           </div>
         </div>

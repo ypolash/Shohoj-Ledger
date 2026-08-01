@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export function CashFlowWidget() {
+export function CashFlowWidget({ data }: { data?: any }) {
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -15,7 +15,7 @@ export function CashFlowWidget() {
         </div>
       </div>
       <div>
-        <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-main)' }}>৳ 4,150,000</div>
+        <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-main)' }}>৳ {(data?.kpis?.cashFlow || 0).toLocaleString()}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '13px' }}>
           <span style={{ color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span>

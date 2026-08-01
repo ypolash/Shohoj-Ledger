@@ -2,12 +2,12 @@
 
 import React from 'react';
 
-export function IncomeExpenseChart() {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const income = [12, 14, 13, 16, 18, 15];
-  const expense = [8, 9, 7, 10, 11, 9];
+export function IncomeExpenseChart({ data }: { data?: any }) {
+  const months = data?.charts?.months || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const income = data?.charts?.income || [0, 0, 0, 0, 0, 0];
+  const expense = data?.charts?.expense || [0, 0, 0, 0, 0, 0];
 
-  const maxVal = Math.max(...income, ...expense) * 1.2;
+  const maxVal = Math.max(...income, ...expense) * 1.2 || 1;
 
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', height: '100%', display: 'flex', flexDirection: 'column' }}>

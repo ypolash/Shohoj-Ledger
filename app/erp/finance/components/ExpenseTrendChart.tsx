@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-export function ExpenseTrendChart() {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-  const values = [7.1, 7.8, 7.5, 8.2, 8.8, 8.2, 9.1]; // In Millions
+export function ExpenseTrendChart({ data }: { data?: any }) {
+  const months = data?.charts?.expenseMonths || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+  const values = data?.charts?.expenseValues || [0, 0, 0, 0, 0, 0, 0]; 
   
-  const maxVal = 12;
+  const maxVal = Math.max(...values) * 1.2 || 1;
   
   const points = values.map((val, i) => {
     const x = (i / (values.length - 1)) * 100;

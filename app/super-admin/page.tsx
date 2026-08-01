@@ -12,12 +12,19 @@ export default function SaaSSuperAdminPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/system/companies');
-      if (!res.ok) throw new Error('Failed to fetch companies');
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to fetch companies');
+      }
       const data = await res.json();
       setCompanies(data.companies || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to load companies. Ensure you have MANAGE_COMPANIES permission.');
+      alert(`Error: ${error.message}. Ensure you are logged in as a SUPER_ADMIN.`);
     } finally {
       setLoading(false);
     }

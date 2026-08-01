@@ -158,3 +158,16 @@ export async function assignPermissionsAction(roleId: string, actions: string[])
   revalidatePath("/erp/settings");
   return { success: true };
 }
+
+export async function getAuditLogs() {
+  const companyId = await getCompanyId();
+  
+  const logs = await prisma.auditEvent.findMany({
+    where: { companyId },
+    include: { user: true },
+    orderBy: { createdAt: 'desc' },
+    take: 100
+  });
+
+  return logs;
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { updateSalesOrder, deleteSalesOrder, getSalesOrderHistory } from "@/lib/crm/salesOrderService";
 

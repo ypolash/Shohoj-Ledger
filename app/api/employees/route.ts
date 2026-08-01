@@ -60,9 +60,8 @@ export async function POST(request: Request) {
       if (!mgr) return NextResponse.json({ error: 'Invalid manager or cross-tenant reference' }, { status: 403 });
     }
 
-    // Auto-generate employeeId (e.g. EMP-1001)
-    const count = await prisma.employee.count({ where: { companyId } });
-    const employeeId = `EMP-${1000 + count + 1}`;
+    // Auto-generate employeeId to avoid conflicts from deleted rows
+    const employeeId = `EMP-${Date.now().toString().slice(-6)}`;
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -90,8 +89,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(JSON.parse(JSON.stringify(employee)), { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to create employee:', error);
-    return NextResponse.json({ error: 'Failed to create employee' }, { status: 500 });
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: `Unique constraint failed on: ${error.meta?.target?.join(', ')}` }, { status: 400 });
+    }
+    return NextResponse.json({ error: error.message || 'Failed to create employee' }, { status: 500 });
   }
 }

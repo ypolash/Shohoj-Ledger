@@ -22,8 +22,24 @@ export async function POST(request: Request) {
 
     const data = await request.json();
     const session = await getSession();
-    const userId = session?.user?.id;
+    let userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
+    
+    // Resolve valid User.id if the session belongs to an Employee
+    if (session?.user?.loginType === "EMPLOYEE") {
+      const { prisma } = await import("@/lib/prisma");
+      const employee = await prisma.employee.findUnique({ where: { id: userId } });
+      if (employee?.userId) {
+        userId = employee.userId;
+      } else {
+        const fallbackUser = await prisma.user.findFirst({ where: { companyId } });
+        if (fallbackUser) {
+          userId = fallbackUser.id;
+        } else {
+          return NextResponse.json({ error: "No user available to assign creator role." }, { status: 403 });
+        }
+      }
+    }
     
     const group = await customerGroupService.createCustomerGroup(companyId, userId, data);
     return NextResponse.json(group, { status: 201 });

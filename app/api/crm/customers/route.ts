@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { searchCustomers, createCustomer } from "@/lib/crm/customerService";
 
@@ -28,7 +29,9 @@ export async function POST(request: Request) {
 
     const data = await request.json();
     // Use a placeholder userId for now (in a real app, from session)
-    const userId = request.headers.get("x-user-id") || "system"; 
+    const session = await getSession();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
     
     // Transform UI data to Prisma Customer model
     const customerData: any = {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { addActivity } from "@/lib/crm/opportunityService";
 import { prisma } from "@/lib/prisma";
@@ -37,7 +38,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
     if (!opportunity) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const data = await request.json();
-    const userId = request.headers.get("x-user-id") || "system"; 
+    const session = await getSession();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
     
     const activity = await addActivity(
       companyId,

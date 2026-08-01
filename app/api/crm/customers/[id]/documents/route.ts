@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { customerDocumentService } from "@/lib/crm/customerDocumentService";
 
@@ -20,7 +21,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await request.json();
-    const userId = request.headers.get("x-user-id") || "system"; 
+    const session = await getSession();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
     
     const document = await customerDocumentService.addDocument(companyId, userId, params.id, data);
     return NextResponse.json(document, { status: 201 });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { opportunityPipelineService } from "@/lib/crm/opportunityPipelineService";
 
@@ -20,7 +21,9 @@ export async function POST(request: Request) {
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data = await request.json();
-    const userId = request.headers.get("x-user-id") || "system"; 
+    const session = await getSession();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
     
     const pipeline = await opportunityPipelineService.createPipeline(companyId, userId, data);
     return NextResponse.json(pipeline, { status: 201 });

@@ -13,7 +13,9 @@ import { logAudit } from "@/lib/audit/auditService";
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const companyId = req.headers.get("x-company-id");
-    const userId = req.headers.get("x-user-id");
+    const session = await getSession();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!companyId || !userId) return NextResponse.json({ error: "Missing headers" }, { status: 400 });
 
     const { action } = await req.json();

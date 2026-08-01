@@ -30,7 +30,51 @@ export async function POST(request: Request) {
     // Use a placeholder userId for now (in a real app, from session)
     const userId = request.headers.get("x-user-id") || "system"; 
     
-    const customer = await createCustomer(companyId, userId, data);
+    // Transform UI data to Prisma Customer model
+    const customerData: any = {
+      name: data.customerName,
+      customerCode: data.customerCode || undefined,
+      email: data.email || undefined,
+      phone: data.phone || undefined,
+      customerGroupId: data.groupId || undefined,
+      creditLimit: data.creditLimit ? parseFloat(data.creditLimit) : 0,
+      currency: data.currency || "BDT",
+      priceLevel: data.paymentTerms || undefined,
+      taxNumber: data.tinNo || data.binNo || undefined,
+      tradeLicense: data.registrationNo || undefined,
+      contacts: {
+        create: {
+          name: data.primaryContactPerson || data.customerName,
+          email: data.email || undefined,
+          phone: data.phone || undefined,
+          isPrimary: true,
+          companyId
+        }
+      }
+    };
+    
+    const addressesToCreate = [];
+    if (data.billingAddress) {
+      addressesToCreate.push({
+        type: "BILLING",
+        addressLine1: data.billingAddress,
+        isDefault: true,
+        companyId
+      });
+    }
+    if (data.shippingAddress) {
+      addressesToCreate.push({
+        type: "SHIPPING",
+        addressLine1: data.shippingAddress,
+        isDefault: !data.billingAddress,
+        companyId
+      });
+    }
+    if (addressesToCreate.length > 0) {
+      customerData.addresses = { create: addressesToCreate };
+    }
+    
+    const customer = await createCustomer(companyId, userId, customerData);
     return NextResponse.json(customer, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

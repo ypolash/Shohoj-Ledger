@@ -1400,6 +1400,7 @@ model Company {
   createdAt                DateTime                      @default(now())
   updatedAt                DateTime                      @updatedAt
   subscription             Subscription?
+  saasInvoices             SaaSInvoice[]
   accountingPeriods        AccountingPeriod[]
   advances                 Advance[]
   allowedNetworks          AllowedNetwork[]
@@ -5249,4 +5250,21 @@ model Subscription {
 
   company              Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   plan                 SubscriptionPlan @relation(fields: [planId], references: [id])
+}
+
+model SaaSInvoice {
+  id                 String    @id @default(uuid())
+  invoiceNumber      String    @unique
+  companyId          String
+  amount             Float
+  status             String    @default("UNPAID") // UNPAID, PAID, OVERDUE, VOID
+  dueDate            DateTime
+  billingPeriodStart DateTime?
+  billingPeriodEnd   DateTime?
+  stripeInvoiceId    String?
+  pdfUrl             String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }

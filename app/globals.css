@@ -152,10 +152,37 @@
 /* ==========================================================================
    DARK THEME OVERRIDES
    ========================================================================== */
+.dark {
+  /* Backgrounds & Surfaces */
+  --bg-main: #020617; /* Very deep slate/blue for minimal premium look */
+  --surface-main: #0f172a; 
+  --surface-hover: #1e293b;
+  --surface-glass: rgba(15, 23, 42, 0.85);
+  
+  /* Text & Borders */
+  --text-main: var(--gray-50);
+  --text-muted: var(--gray-400);
+  --text-disabled: var(--gray-600);
+  --border-main: var(--gray-800);
+  
+  /* Semantic Adjustments for Dark Mode (better contrast) */
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --success-text: #34d399;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-text: #fbbf24;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --danger-text: #f87171;
+  --info-bg: rgba(14, 165, 233, 0.1);
+  --info-text: #38bdf8;
+  
+  /* Shadow Adjustments (often less visible, use borders instead for depth) */
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root, .dark {
+  :root:not(.light) {
     /* Backgrounds & Surfaces */
-    --bg-main: #020617; /* Very deep slate/blue for minimal premium look */
+    --bg-main: #020617; 
     --surface-main: #0f172a; 
     --surface-hover: #1e293b;
     --surface-glass: rgba(15, 23, 42, 0.85);

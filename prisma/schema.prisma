@@ -1399,6 +1399,7 @@ model Company {
   status                   String                        @default("ACTIVE")
   createdAt                DateTime                      @default(now())
   updatedAt                DateTime                      @updatedAt
+  subscription             Subscription?
   accountingPeriods        AccountingPeriod[]
   advances                 Advance[]
   allowedNetworks          AllowedNetwork[]
@@ -5218,4 +5219,34 @@ enum CustomerStatus {
   ACTIVE
   INACTIVE
   BLOCKED
+}
+
+model SubscriptionPlan {
+  id            String         @id @default(uuid())
+  name          String         
+  price         Float          
+  billingCycle  String         
+  features      String[]       
+  maxUsers      Int?           
+  status        String         @default("ACTIVE") 
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String           @id @default(uuid())
+  companyId            String           @unique
+  planId               String
+  status               String           @default("ACTIVE") 
+  currentPeriodStart   DateTime         @default(now())
+  currentPeriodEnd     DateTime
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  company              Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan                 SubscriptionPlan @relation(fields: [planId], references: [id])
 }

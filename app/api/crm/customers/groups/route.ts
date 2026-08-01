@@ -25,13 +25,18 @@ export async function POST(request: Request) {
     let userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
     
-    // Resolve valid User.id if the session belongs to an Employee
-    if (session?.user?.loginType === "EMPLOYEE") {
-      const { prisma } = await import("@/lib/prisma");
+    const { prisma } = await import("@/lib/prisma");
+    
+    // Ensure userId resolves to a valid User.id for relations
+    let validUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!validUser) {
       const employee = await prisma.employee.findUnique({ where: { id: userId } });
       if (employee?.userId) {
-        userId = employee.userId;
-      } else {
+        validUser = await prisma.user.findUnique({ where: { id: employee.userId } });
+        if (validUser) userId = validUser.id;
+      }
+      
+      if (!validUser) {
         const fallbackUser = await prisma.user.findFirst({ where: { companyId } });
         if (fallbackUser) {
           userId = fallbackUser.id;

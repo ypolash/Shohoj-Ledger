@@ -16,7 +16,7 @@ async function verifyAccess(action: string) {
 export async function fetchEmployees() {
   const { companyId } = await verifyAccess("VIEW_EMPLOYEES");
 
-  return await prisma.employee.findMany({
+  const employees = await prisma.employee.findMany({
     where: { companyId, systemSource: "LEGACY" },
     orderBy: { createdAt: "desc" },
     include: {
@@ -28,6 +28,7 @@ export async function fetchEmployees() {
       }
     }
   });
+  return JSON.parse(JSON.stringify(employees));
 }
 
 export async function createEmployee(data: any) {
@@ -100,7 +101,7 @@ export async function createEmployee(data: any) {
   });
 
   revalidatePath("/dashboard/staff-management/employees");
-  return employee;
+  return JSON.parse(JSON.stringify(employee));
 }
 
 export async function updateEmployee(id: string, data: any) {

@@ -38,7 +38,7 @@ export default function CustomersPage() {
       const res = await fetch(`/api/crm/customers?${qParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setCustomers(data.customers || []);
+        setCustomers(data.data || []);
       }
     } catch (err) {
       console.error(err);

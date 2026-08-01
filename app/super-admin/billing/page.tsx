@@ -20,12 +20,19 @@ export default function BillingPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/system/billing');
-      if (!res.ok) throw new Error('Failed to fetch billing data');
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to fetch billing data');
+      }
       const data = await res.json();
       setInvoices(data.invoices || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to load billing records.');
+      alert(`Error: ${error.message}. Ensure you are logged in as a SUPER_ADMIN.`);
     } finally {
       setLoading(false);
     }

@@ -12,12 +12,19 @@ export default function SubscriptionsPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/system/subscriptions');
-      if (!res.ok) throw new Error('Failed to fetch subscriptions');
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to fetch subscriptions');
+      }
       const data = await res.json();
       setSubscriptions(data.subscriptions || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to load subscriptions.');
+      alert(`Error: ${error.message}. Ensure you are logged in as a SUPER_ADMIN.`);
     } finally {
       setLoading(false);
     }

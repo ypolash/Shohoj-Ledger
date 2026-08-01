@@ -20,12 +20,19 @@ export default function PlansPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/system/plans');
-      if (!res.ok) throw new Error('Failed to fetch plans');
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to fetch plans');
+      }
       const data = await res.json();
       setPlans(data.plans || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to load plans.');
+      alert(`Error: ${error.message}. Ensure you are logged in as a SUPER_ADMIN.`);
     } finally {
       setLoading(false);
     }

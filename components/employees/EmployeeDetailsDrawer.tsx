@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from "@/app/erp/staff-management/page.module.css";
-export function EmployeeDetailsDrawer(props: any) { const { selectedEmployee, setSelectedEmployee, openEditModal, formatCurrency, getAvatarInitials, getStatusBadgeClass, getRoleBadgeClass, handleDeleteEmployee } = props; return <>
+export function EmployeeDetailsDrawer(props: any) { const { selectedEmployee, setSelectedEmployee, openEditModal, formatCurrency, getAvatarInitials, getStatusBadgeClass, getRoleBadgeClass, handleDeleteEmployee } = props; return (<>
       {/* Details Drawer */}
       {selectedEmployee && (
         <div className={styles.modalOverlay} onClick={() => setSelectedEmployee(null)} style={{ justifyContent: 'flex-end', padding: 0 }}>

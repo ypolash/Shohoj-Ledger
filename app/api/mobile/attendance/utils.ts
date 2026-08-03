@@ -50,6 +50,21 @@ export async function validateAttendanceRequest(
   wifiSsid?: string,
   wifiBssid?: string
 ): Promise<{ isValid: boolean; error?: string; details?: any }> {
+  if (companyId) {
+    try {
+      await prisma.globalAuditLog.create({
+        data: {
+          companyId,
+          module: "ATTENDANCE_DEBUG",
+          entityType: "NETWORK_VALIDATION_ENTRY",
+          entityId: "debug",
+          action: "CHECKIN_ATTEMPT",
+          description: `Payload - Lat: ${latitude}, Lng: ${longitude}, SSID: ${wifiSsid || "NULL"}, BSSID: ${wifiBssid || "NULL"}`,
+        }
+      });
+    } catch(e) {}
+  }
+
   if (!companyId) {
     return { isValid: false, error: "Company ID is missing for validation." };
   }
@@ -80,7 +95,7 @@ export async function validateAttendanceRequest(
           entityType: "NETWORK_VALIDATION_START",
           entityId: "debug",
           action: "CHECKIN_ATTEMPT",
-          description: `Networks found: ${allowedNetworks.length}. Phone BSSID: ${wifiBssid}, SSID: ${wifiSsid}`,
+          description: `Networks found: ${allowedNetworks.length}.`,
         }
       });
     } catch(e) {}

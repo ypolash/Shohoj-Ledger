@@ -4,6 +4,8 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
+- **Version 6.0 — Sprint UI-1 (DRY Refactoring):**
+  - **Completed**: Finalized DRY Refactoring for monolithic UI components (>600 lines) across the ERP module to improve maintainability and performance.
 - **Version 1.3 — Phase 0 (Roadmap & Architecture Planning):**
   - **Version 1.2 Complete**: Applied architecture models for Workflow Engine, Approval Engine, Advanced Reporting, Notification Center, API Platform, Multi-Branch, Advanced Inventory, and AI Analytics safely.
   - **V1.3 Planning Complete**: Created documentation for V1.3 in `docs/version-1.3/` spanning the 8 Enterprise Pillars.

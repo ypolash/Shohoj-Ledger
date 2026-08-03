@@ -26,7 +26,7 @@ export function EmployeeDetailsDrawer(props: any) { const { selectedEmployee, se
                   fontSize: '28px', fontWeight: 'bold', color: '#fff',
                   flexShrink: 0
                 }}>
-                  {getInitials(selectedEmployee.firstName, selectedEmployee.lastName)}
+                  {getAvatarInitials ? getAvatarInitials(selectedEmployee.firstName, selectedEmployee.lastName) : `${selectedEmployee.firstName?.[0] || ''}${selectedEmployee.lastName?.[0] || ''}`.toUpperCase()}
                 </div>
                 <div>
                   <h2 style={{ margin: '0 0 4px 0', fontSize: '20px' }}>{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>

@@ -374,7 +374,7 @@ export default function SettlementPageClient() {
         </div>
       </div>
 
-      <SettlementFormModal {...{ isModalOpen, setIsModalOpen, newSettlement, handleInputChange, handleAddSettlement }} />
+      <SettlementFormModal {...{ isModalOpen, setIsModalOpen, preview, handlePreview, month, year, setMonth, setYear, previewing, handleCreateSettlement, formatCurrency, submitting, setPreview }} />
       {/* Details Drawer */}
       {selectedSettlement && (
         <div className={styles.modalOverlay} onClick={() => setSelectedSettlement(null)} style={{ justifyContent: 'flex-end', padding: 0 }}>

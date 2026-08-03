@@ -8,18 +8,19 @@ import { getCompanyContext } from "@/lib/auth/getCompanyContext";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const email = body.email?.trim().toLowerCase();
+    const rawIdentifier = (body.email || body.employeeId)?.trim();
+    const email = rawIdentifier?.toLowerCase();
     const password = body.password;
 
-    if (!email || !password) {
+    if (!rawIdentifier || !password) {
       return NextResponse.json(
-        { success: false, message: "Email and password are required" },
+        { success: false, message: "Email/Employee ID and password are required" },
         { status: 400 }
       );
     }
 
     // 1. Check Admin/CEO users in the `User` table (we look at `Account` for password)
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: { email },
       include: { accounts: true },
     });
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
     // 2. If not found or no match in User table, check `Employee` table
     const employee = await prisma.employee.findFirst({
       where: {
-        OR: [{ email: email }, { employeeId: email }],
+        OR: [{ email: email }, { employeeId: rawIdentifier }],
       },
     });
 

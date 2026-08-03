@@ -18,7 +18,7 @@ export function PayrollHistoryModal(props: any) { const { isHistoryModalOpen, se
               ) : auditLogs.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative' }}>
                   <div style={{ position: 'absolute', left: '16px', top: '10px', bottom: '10px', width: '2px', background: 'var(--border)' }}></div>
-                  {auditLogs.map((log, idx) => (
+                  {auditLogs.map((log: any, idx: number) => (
                     <div key={log.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
                       <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'var(--card-bg)', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>history</span>

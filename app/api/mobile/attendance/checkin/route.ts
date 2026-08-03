@@ -19,7 +19,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const validation = await validateAttendanceRequest(latitude, longitude, ssid, bssid);
+    const employee = await prisma.employee.findUnique({
+      where: { employeeId },
+    });
+
+    if (!employee) {
+      return NextResponse.json(
+        { success: false, code: "FORBIDDEN_EMPLOYEE", message: "Employee not found." },
+        { status: 403 }
+      );
+    }
+
+    const validation = await validateAttendanceRequest(employee.companyId, latitude, longitude, ssid, bssid);
     if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";
       const errorLower = validation.error?.toLowerCase() || "";
@@ -55,17 +66,6 @@ export async function POST(request: Request) {
                     String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
                     String(currentDhakaTime.getDate()).padStart(2, '0');
     const today = new Date(dateStr);
-
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId },
-    });
-
-    if (!employee) {
-      return NextResponse.json(
-        { success: false, code: "FORBIDDEN_EMPLOYEE", message: "Employee not found." },
-        { status: 403 }
-      );
-    }
 
     const existingAttendance = await prisma.attendance.findFirst({
       where: {

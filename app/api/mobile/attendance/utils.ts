@@ -44,11 +44,16 @@ export function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lo
 }
 
 export async function validateAttendanceRequest(
+  companyId: string,
   latitude?: number,
   longitude?: number,
   wifiSsid?: string,
   wifiBssid?: string
 ): Promise<{ isValid: boolean; error?: string; details?: any }> {
+  if (!companyId) {
+    return { isValid: false, error: "Company ID is missing for validation." };
+  }
+
   if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
     return { isValid: false, error: "GPS disabled or location not provided." };
   }
@@ -57,31 +62,35 @@ export async function validateAttendanceRequest(
     return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
-  const allowedNetwork = await prisma.allowedNetwork.findFirst({
-    where: { isActive: true },
+  const allowedNetworks = await prisma.allowedNetwork.findMany({
+    where: { companyId, isActive: true },
   });
 
-  if (!allowedNetwork) {
+  if (!allowedNetworks || allowedNetworks.length === 0) {
     return { isValid: false, error: "No active office Wi-Fi configured." };
   } else {
-    console.log("Stored SSID:", allowedNetwork.ssid);
-    console.log("Stored BSSID:", allowedNetwork.bssid);
-    console.log("Detected SSID:", wifiSsid);
-    console.log("Detected BSSID:", wifiBssid);
-
-    const storedBssid = allowedNetwork.bssid || "";
-    const incomingBssid = wifiBssid || "";
-    const isMatch = incomingBssid.toLowerCase().trim() === storedBssid.toLowerCase().trim();
+    const incomingBssid = (wifiBssid || "").toLowerCase().trim();
+    const incomingSsid = (wifiSsid || "").trim();
+    
+    let isMatch = false;
+    let storedBssid = "";
+    
+    for (const net of allowedNetworks) {
+      storedBssid = (net.bssid || "").toLowerCase().trim();
+      if (incomingBssid === storedBssid) {
+        isMatch = true;
+        break;
+      }
+    }
 
     if (!isMatch) {
       return { 
         isValid: false, 
         error: "Invalid network. Please connect to the office Wi-Fi.",
         details: {
-          storedBssid,
           incomingBssid,
-          storedSsid: allowedNetwork.ssid,
-          detectedSsid: wifiSsid
+          detectedSsid: incomingSsid,
+          allowedCount: allowedNetworks.length
         }
       };
     }

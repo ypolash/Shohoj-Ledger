@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     
     // --- NETWORK & LOCATION VALIDATION ---
     const { validateAttendanceRequest } = await import("../../mobile/attendance/utils");
-    const validation = await validateAttendanceRequest(employee.companyId, latitude, longitude, ssid, bssid);
+    const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, ssid, bssid);
     if (!validation.isValid) {
       return NextResponse.json({ error: validation.error }, { status: 403 });
     }

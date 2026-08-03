@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const validation = await validateAttendanceRequest(employee.companyId, latitude, longitude, ssid, bssid);
+    const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, ssid, bssid);
     if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";
       const errorLower = validation.error?.toLowerCase() || "";

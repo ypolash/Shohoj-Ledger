@@ -112,7 +112,7 @@ export async function POST(req: Request) {
         if (body.source === "APP") {
           const { validateAttendanceRequest } = await import("../../mobile/attendance/utils");
           const validation = await validateAttendanceRequest(
-            employee.companyId,
+            employee.companyId || "",
             body.latitude, 
             body.longitude, 
             body.ssid, 

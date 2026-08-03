@@ -24,6 +24,7 @@ const navigationGroups = [
     group: 'System',
     items: [
       { name: 'Modules', href: '/erp/settings/modules', icon: 'apps', exact: false },
+      { name: 'Attendance', href: '/erp/settings/attendance', icon: 'co_present', exact: false },
       { name: 'Security', href: '/erp/settings/security', icon: 'security', exact: false },
       { name: 'Audit Log', href: '/erp/settings/audit-log', icon: 'history', exact: false },
     ]

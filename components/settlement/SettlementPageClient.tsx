@@ -3,7 +3,7 @@ import { SettlementFormModal } from "./SettlementFormModal";
 
 
 import { useState, useEffect } from "react";
-import styles from "../income/page.module.css";
+import styles from "@/app/erp/income/page.module.css";
 
 type Settlement = {
   id: string;

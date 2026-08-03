@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from "@/app/income/page.module.css";
+import styles from "@/app/erp/income/page.module.css";
 export function SettlementFormModal(props: any) { const { isModalOpen, setIsModalOpen, preview, handlePreview, month, year, setMonth, setYear, previewing, handleCreateSettlement, formatCurrency, submitting, setPreview } = props; return (<>
       {/* Settlement Form Modal */}
       {isModalOpen && (

@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from "@/app/erp/staff-management/page.module.css";
+import styles from "@/app/erp/income/page.module.css";
 export function PayrollHistoryModal(props: any) { const { isHistoryModalOpen, setIsHistoryModalOpen, loadingAudits, auditLogs } = props; return <>
       {/* History Modal */}
       {isHistoryModalOpen && (

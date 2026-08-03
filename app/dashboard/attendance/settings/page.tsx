@@ -97,7 +97,7 @@ export default function AttendanceSettings() {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.message || "Failed to save network.");
+        setError(data.error || data.message || "Failed to save network.");
       } else {
         await fetchNetworks();
         handleCloseModal();

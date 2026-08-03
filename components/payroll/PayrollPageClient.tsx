@@ -3,7 +3,7 @@ import { PayrollHistoryModal } from "./PayrollHistoryModal";
 
 
 import React, { useState, useEffect } from 'react';
-import styles from "@/app/erp/staff-management/page.module.css";
+import styles from "@/app/erp/income/page.module.css";
 import Link from 'next/link';
 
 type SalaryPayment = {

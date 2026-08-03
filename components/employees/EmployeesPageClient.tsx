@@ -4,7 +4,7 @@ import { EmployeeDetailsDrawer } from "./EmployeeDetailsDrawer";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from "../../income/page.module.css";
+import styles from "@/app/erp/income/page.module.css";
 import { fetchEmployees, createEmployee, updateEmployee, deleteEmployee } from "@/app/erp/staff-management/employees/actions";
 
 type Employee = {

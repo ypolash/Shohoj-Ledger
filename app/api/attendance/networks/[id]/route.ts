@@ -11,7 +11,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
   if (rbacGuard) return rbacGuard;
 
-  const companyIdForGuard = await getCompanyId();
+  let companyIdForGuard: string;
+  try {
+    companyIdForGuard = await getCompanyId();
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message || "Company ID required" }, { status: 400 });
+  }
+
   const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
   if (moduleGuard) return moduleGuard;
 
@@ -56,8 +62,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     return NextResponse.json({ success: true, data: updatedNetwork });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to update network:", error);
+
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { success: false, message: "This BSSID is already registered in the system (globally)." }, 
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }
@@ -66,7 +80,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
   if (rbacGuard) return rbacGuard;
 
-  const companyIdForGuard = await getCompanyId();
+  let companyIdForGuard: string;
+  try {
+    companyIdForGuard = await getCompanyId();
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message || "Company ID required" }, { status: 400 });
+  }
+
   const moduleGuard = await requireModule(companyIdForGuard, "ATTENDANCE");
   if (moduleGuard) return moduleGuard;
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from "@/app/erp/staff-management/page.module.css";
+import styles from "@/app/erp/income/page.module.css";
 export function EmployeeDetailsDrawer(props: any) { const { selectedEmployee, setSelectedEmployee, openEditModal, formatCurrency, getAvatarInitials, getStatusBadgeClass, getRoleBadgeClass, handleDeleteEmployee } = props; return (<>
       {/* Details Drawer */}
       {selectedEmployee && (

@@ -538,7 +538,7 @@ export default function EmployeesPageClient() {
         </div>
       )}
 
-      <EmployeeDetailsDrawer {...{ selectedEmployee, setSelectedEmployee, openEditModal, formatCurrency, getAvatarInitials, getStatusBadgeClass, getRoleBadgeClass, handleDeleteEmployee }} />
+      <EmployeeDetailsDrawer {...{ selectedEmployee, setSelectedEmployee, openEditModal, formatCurrency, handleDeleteEmployee }} />
     </div>
   );
 }

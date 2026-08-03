@@ -85,9 +85,26 @@ export async function validateAttendanceRequest(
 
     if (!isMatch) {
       const storedBssidsList = allowedNetworks.map(n => n.bssid).join(", ");
+      const diagMessage = `Network mismatch. Phone sent MAC (BSSID): "${incomingBssid}". Allowed MACs: "${storedBssidsList}".`;
+      
+      try {
+        await prisma.globalAuditLog.create({
+          data: {
+            companyId,
+            module: "ATTENDANCE_DEBUG",
+            entityType: "NETWORK_VALIDATION",
+            entityId: "debug",
+            action: "FAILED_CHECKIN",
+            description: diagMessage,
+          }
+        });
+      } catch (e) {
+        console.error("Failed to write audit log", e);
+      }
+
       return { 
         isValid: false, 
-        error: `Network mismatch. Phone sent MAC (BSSID): "${incomingBssid}". Allowed MACs: "${storedBssidsList}". Please check if you are connected to 2.4GHz/5GHz or if MAC randomization is on.`,
+        error: diagMessage + " Please check if you are connected to 2.4GHz/5GHz or if MAC randomization is on.",
         details: {
           incomingBssid,
           detectedSsid: incomingSsid,

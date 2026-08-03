@@ -66,6 +66,19 @@ export async function validateAttendanceRequest(
     where: { companyId, isActive: true },
   });
 
+  try {
+    await prisma.globalAuditLog.create({
+      data: {
+        companyId,
+        module: "ATTENDANCE_DEBUG",
+        entityType: "NETWORK_VALIDATION_START",
+        entityId: "debug",
+        action: "CHECKIN_ATTEMPT",
+        description: `Networks found: ${allowedNetworks.length}. Phone BSSID: ${wifiBssid}, SSID: ${wifiSsid}`,
+      }
+    });
+  } catch(e) {}
+
   if (!allowedNetworks || allowedNetworks.length === 0) {
     return { isValid: false, error: "No active office Wi-Fi configured." };
   } else {

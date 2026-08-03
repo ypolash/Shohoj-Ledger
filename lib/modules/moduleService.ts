@@ -18,12 +18,12 @@ export class ModuleService {
   static async listActiveModules(companyId: string): Promise<string[]> {
     // 1. Check Cache
     const cached = moduleCache.get(companyId);
-    if (cached) {
+    if (cached && cached.size > 0) {
       return Array.from(cached);
     }
 
     // 2. Fetch from DB
-    const activeModules = await prisma.companyModule.findMany({
+    let activeModules = await prisma.companyModule.findMany({
       where: {
         companyId,
         isActive: true
@@ -32,6 +32,43 @@ export class ModuleService {
         module: true
       }
     });
+
+    // Auto-heal missing modules for existing companies
+    if (activeModules.length === 0) {
+      console.log(`Auto-healing missing modules for company ${companyId}`);
+      const defaultModules = [
+        { key: "ATTENDANCE", name: "Attendance" },
+        { key: "HRM", name: "HR Management" },
+        { key: "PAYROLL", name: "Payroll" },
+        { key: "CRM", name: "Customer Relationship" },
+        { key: "FINANCE", name: "Finance" },
+        { key: "PROJECT", name: "Project Management" },
+        { key: "ESS", name: "Employee Self Service" }
+      ];
+
+      for (const mod of defaultModules) {
+        await prisma.module.upsert({
+          where: { key: mod.key },
+          update: { name: mod.name },
+          create: { key: mod.key, name: mod.name }
+        });
+      }
+
+      const allMods = await prisma.module.findMany();
+      for (const m of allMods) {
+        await prisma.companyModule.upsert({
+          where: { companyId_moduleId: { companyId, moduleId: m.id } },
+          update: { isActive: true },
+          create: { companyId, moduleId: m.id, isActive: true }
+        });
+      }
+
+      // Re-fetch after healing
+      activeModules = await prisma.companyModule.findMany({
+        where: { companyId, isActive: true },
+        include: { module: true }
+      });
+    }
 
     const activeKeys = activeModules.map(cm => cm.module.key);
 

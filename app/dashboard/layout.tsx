@@ -65,7 +65,7 @@ export default function DashboardLayout({
           
           <div className={styles.bottomSection}>
             <div className={styles.separator}></div>
-            <Link href="/dashboard/attendance/settings" title="Settings" className={`${styles.navLink} ${isActive('/dashboard/attendance/settings') ? styles.active : ''}`}>
+            <Link href="/dashboard/settings/attendance" title="Settings" className={`${styles.navLink} ${isActive('/dashboard/settings/attendance') ? styles.active : ''}`}>
               <span className="material-symbols-outlined">settings</span>
             </Link>
             <Link href="#" title="Logout" className={styles.navLink}>

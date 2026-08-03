@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const networks = await prisma.allowedNetwork.findMany({
+      where: { companyId: companyIdForGuard },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ success: true, data: networks });

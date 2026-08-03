@@ -84,9 +84,10 @@ export async function validateAttendanceRequest(
     }
 
     if (!isMatch) {
+      const storedBssidsList = allowedNetworks.map(n => n.bssid).join(", ");
       return { 
         isValid: false, 
-        error: "Invalid network. Please connect to the office Wi-Fi.",
+        error: `Network mismatch. Phone sent MAC (BSSID): "${incomingBssid}". Allowed MACs: "${storedBssidsList}". Please check if you are connected to 2.4GHz/5GHz or if MAC randomization is on.`,
         details: {
           incomingBssid,
           detectedSsid: incomingSsid,

@@ -62,22 +62,29 @@ export async function validateAttendanceRequest(
     return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
+  const whereClause: any = { isActive: true };
+  if (companyId) {
+    whereClause.companyId = companyId;
+  }
+
   const allowedNetworks = await prisma.allowedNetwork.findMany({
-    where: { companyId, isActive: true },
+    where: whereClause,
   });
 
-  try {
-    await prisma.globalAuditLog.create({
-      data: {
-        companyId,
-        module: "ATTENDANCE_DEBUG",
-        entityType: "NETWORK_VALIDATION_START",
-        entityId: "debug",
-        action: "CHECKIN_ATTEMPT",
-        description: `Networks found: ${allowedNetworks.length}. Phone BSSID: ${wifiBssid}, SSID: ${wifiSsid}`,
-      }
-    });
-  } catch(e) {}
+  if (companyId) {
+    try {
+      await prisma.globalAuditLog.create({
+        data: {
+          companyId,
+          module: "ATTENDANCE_DEBUG",
+          entityType: "NETWORK_VALIDATION_START",
+          entityId: "debug",
+          action: "CHECKIN_ATTEMPT",
+          description: `Networks found: ${allowedNetworks.length}. Phone BSSID: ${wifiBssid}, SSID: ${wifiSsid}`,
+        }
+      });
+    } catch(e) {}
+  }
 
   if (!allowedNetworks || allowedNetworks.length === 0) {
     return { isValid: false, error: "No active office Wi-Fi configured." };
@@ -100,19 +107,21 @@ export async function validateAttendanceRequest(
       const storedBssidsList = allowedNetworks.map(n => n.bssid).join(", ");
       const diagMessage = `Network mismatch. Phone sent MAC (BSSID): "${incomingBssid}". Allowed MACs: "${storedBssidsList}".`;
       
-      try {
-        await prisma.globalAuditLog.create({
-          data: {
-            companyId,
-            module: "ATTENDANCE_DEBUG",
-            entityType: "NETWORK_VALIDATION",
-            entityId: "debug",
-            action: "FAILED_CHECKIN",
-            description: diagMessage,
-          }
-        });
-      } catch (e) {
-        console.error("Failed to write audit log", e);
+      if (companyId) {
+        try {
+          await prisma.globalAuditLog.create({
+            data: {
+              companyId,
+              module: "ATTENDANCE_DEBUG",
+              entityType: "NETWORK_VALIDATION",
+              entityId: "debug",
+              action: "FAILED_CHECKIN",
+              description: diagMessage,
+            }
+          });
+        } catch (e) {
+          console.error("Failed to write audit log", e);
+        }
       }
 
       return { 

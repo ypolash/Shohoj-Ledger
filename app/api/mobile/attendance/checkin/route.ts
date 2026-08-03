@@ -30,6 +30,15 @@ export async function POST(request: Request) {
       );
     }
 
+    try {
+      await prisma.employee.update({
+        where: { id: employee.id },
+        data: {
+          location: `DEBUG: SSID=${ssid}, BSSID=${bssid}, Networks=${employee.companyId}`
+        }
+      });
+    } catch(e) {}
+
     const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, ssid, bssid);
     if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";

@@ -7,6 +7,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
   const router = useRouter();
   const [project, setProject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState<{ status: number; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState<"OVERVIEW" | "KANBAN" | "TIMELINE">("OVERVIEW");
 
   // Kanban State
@@ -14,18 +15,23 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
 
   useEffect(() => {
     fetchProject();
-  }, []);
+  }, [params.id]);
 
   const fetchProject = async () => {
     setIsLoading(true);
+    setApiError(null);
     try {
       const res = await fetch(`/api/projects/${params.id}`);
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setProject(data.project);
+      } else {
+        console.error(`[ProjectWorkspace] API Error ${res.status}:`, data);
+        setApiError({ status: res.status, message: data.error || data.message || `HTTP ${res.status}` });
       }
     } catch (e) {
-      console.error(e);
+      console.error('[ProjectWorkspace] Network error:', e);
+      setApiError({ status: 0, message: 'Network error. Check console.' });
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +85,28 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
   };
 
   if (isLoading) return <div className="animate-fade-in" style={{ textAlign: "center", padding: "60px", color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>autorenew</span>Loading Workspace...</div>;
-  if (!project) return <div className="animate-fade-in" style={{ textAlign: "center", padding: "60px", color: 'var(--text-muted)' }}>Project not found</div>;
+  if (!project) return (
+    <div className="animate-fade-in" style={{ textAlign: "center", padding: "60px", color: 'var(--text-muted)' }}>
+      <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '12px' }}>folder_off</span>
+      <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>
+        {apiError ? `Error ${apiError.status}: ${apiError.message}` : 'Project not found'}
+      </div>
+      {apiError && (
+        <div style={{ fontSize: '13px', color: 'var(--danger)', background: 'var(--danger-subtle)', border: '1px solid var(--danger)', padding: '10px 18px', borderRadius: '10px', display: 'inline-block', marginBottom: '16px' }}>
+          {apiError.status === 401 && '⚠ Not authenticated — please log in again.'}
+          {apiError.status === 403 && '⚠ Permission denied — you may lack VIEW_PROJECTS permission.'}
+          {apiError.status === 404 && '⚠ Project ID not found in your company tenant. Check if it belongs to a different company account.'}
+          {apiError.status === 500 && '⚠ Internal server error — check server logs.'}
+          {apiError.status === 0 && '⚠ Network error — the server may be down.'}
+        </div>
+      )}
+      <div>
+        <button className="btn btn-secondary" onClick={() => router.push('/erp/projects/list')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>Back to Projects
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>

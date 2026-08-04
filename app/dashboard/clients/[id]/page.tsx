@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function ClientWorkspacePage({ params }: { params: { id: string } }) {
+export default function ClientWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+  // Next.js 15/16: params is a Promise — unwrap it with React.use()
+  const { id: clientId } = use(params);
   const router = useRouter();
   const [client, setClient] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -12,12 +14,12 @@ export default function ClientWorkspacePage({ params }: { params: { id: string }
 
   useEffect(() => {
     fetchClient();
-  }, []);
+  }, [clientId]);
 
   const fetchClient = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/clients/${params.id}`);
+      const res = await fetch(`/api/clients/${clientId}`);
       if (res.ok) {
         const data = await res.json();
         setClient(data.client);
@@ -32,7 +34,7 @@ export default function ClientWorkspacePage({ params }: { params: { id: string }
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
     try {
-      const res = await fetch(`/api/clients/${params.id}`, {
+      const res = await fetch(`/api/clients/${clientId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })

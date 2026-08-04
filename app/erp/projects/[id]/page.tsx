@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function ProjectWorkspacePage({ params }: { params: { id: string } }) {
+export default function ProjectWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+  // Next.js 15/16: params is a Promise — unwrap it with React.use()
+  const { id: projectId } = use(params);
   const router = useRouter();
   const [project, setProject] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,13 +17,13 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
 
   useEffect(() => {
     fetchProject();
-  }, [params.id]);
+  }, [projectId]);
 
   const fetchProject = async () => {
     setIsLoading(true);
     setApiError(null);
     try {
-      const res = await fetch(`/api/projects/${params.id}`);
+      const res = await fetch(`/api/projects/${projectId}`);
       const data = await res.json();
       if (res.ok) {
         setProject(data.project);
@@ -40,7 +42,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
     try {
-      const res = await fetch(`/api/projects/${params.id}`, {
+      const res = await fetch(`/api/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })
@@ -61,7 +63,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
     }));
     
     try {
-      await fetch(`/api/projects/${params.id}/tasks/${taskId}`, {
+      await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })

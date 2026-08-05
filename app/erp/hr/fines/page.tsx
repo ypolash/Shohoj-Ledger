@@ -99,8 +99,8 @@ export default function FinesPage() {
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
           <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-hover)', borderLeft: '3px solid var(--warning)' }}>
-            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Late Arrival (3+ Days)</div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>৳500 deduction per incident thereafter.</div>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Late Arrival Fine</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Automatically applied based on admin Attendance Settings.</div>
           </div>
           <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-hover)', borderLeft: '3px solid var(--danger)' }}>
             <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Unapproved Absence (AWOL)</div>

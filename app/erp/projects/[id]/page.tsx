@@ -11,6 +11,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState<{ status: number; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState<"OVERVIEW" | "KANBAN" | "TIMELINE">("OVERVIEW");
+  const [isEditingActualCost, setIsEditingActualCost] = useState(false);
+  const [actualCostInput, setActualCostInput] = useState<string>("");
 
   // Kanban State
   const TASK_STAGES = ["To Do", "In Progress", "Review", "Testing", "Completed"];
@@ -48,6 +50,22 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
+        fetchProject();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateActualCost = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actualCost: Number(actualCostInput) })
+      });
+      if (res.ok) {
+        setIsEditingActualCost(false);
         fetchProject();
       }
     } catch (err) {
@@ -192,11 +210,26 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>৳{(project.estimatedBudget || 0).toLocaleString()}</div>
               </div>
               <div style={{ flex: 1, backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border-main)', padding: '16px', borderRadius: '12px' }}>
-                <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--danger)' }}>receipt_long</span>
-                  Actual Cost
-                </strong>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--danger)' }}>৳{(project.actualCost || 0).toLocaleString()}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--danger)' }}>receipt_long</span>
+                    Actual Cost
+                  </strong>
+                  {!isEditingActualCost && (
+                    <button onClick={() => { setIsEditingActualCost(true); setActualCostInput(String(project.actualCost || 0)); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }} title="Edit Actual Cost">
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span>
+                    </button>
+                  )}
+                </div>
+                {isEditingActualCost ? (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <input type="number" value={actualCostInput} onChange={e => setActualCostInput(e.target.value)} style={{ width: '100%', maxWidth: '100px', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '14px', outline: 'none' }} />
+                    <button onClick={handleUpdateActualCost} className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '12px' }}>Save</button>
+                    <button onClick={() => setIsEditingActualCost(false)} className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '12px' }}>Cancel</button>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--danger)' }}>৳{(project.actualCost || 0).toLocaleString()}</div>
+                )}
               </div>
               <div style={{ flex: 1, backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border-main)', padding: '16px', borderRadius: '12px' }}>
                 <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>

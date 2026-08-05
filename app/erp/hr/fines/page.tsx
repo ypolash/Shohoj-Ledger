@@ -76,56 +76,69 @@ export default function FinesPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="text-2xl font-bold">Disciplinary Fines & Penalties</h1>
-          <p className="text-sm text-gray-500">Manage employee deductions and penalties.</p>
+          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Disciplinary Fines & Penalties</h1>
+          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>Manage employee deductions and penalties.</p>
         </div>
         <button 
           onClick={() => setShowModal(true)}
-          className="btn btn-primary"
+          className="btn btn-primary hover-lift"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
+          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           Assign Fine
         </button>
       </div>
 
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="table">
+      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
-              <tr>
-                <th>Date</th>
-                <th>Employee</th>
-                <th>Reason</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Payroll Period</th>
-                <th>Actions</th>
+              <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Date</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Employee</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Reason</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Amount</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Status</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Payroll Period</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-4">Loading fines...</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>Loading fines...</td></tr>
               ) : fines.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-4">No fines assigned.</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>money_off</span>
+                  No fines assigned.
+                </td></tr>
               ) : fines.map((f: any) => (
-                <tr key={f.id}>
-                  <td>{new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(f.date))}</td>
-                  <td>{f.employee?.firstName} {f.employee?.lastName} <br/><span className="text-xs text-gray-400">{f.employee?.employeeId}</span></td>
-                  <td>{f.reason}</td>
-                  <td className="font-medium text-red-600">৳{Number(f.amount).toFixed(2)}</td>
-                  <td>
-                    <span className={`badge ${f.status === 'PENDING' ? 'badge-warning' : f.status === 'DEDUCTED' ? 'badge-success' : 'badge-ghost'}`}>
+                <tr key={f.id} style={{ borderBottom: '1px solid var(--border-main)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(f.date))}</td>
+                  <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--text-main)' }}>
+                    {f.employee?.firstName} {f.employee?.lastName}
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{f.employee?.employeeId}</div>
+                  </td>
+                  <td style={{ padding: '14px 16px', color: 'var(--text-main)' }}>{f.reason}</td>
+                  <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--danger)' }}>৳{Number(f.amount).toFixed(2)}</td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <span style={{ 
+                      padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, 
+                      color: f.status === 'PENDING' ? 'var(--warning)' : f.status === 'DEDUCTED' ? 'var(--success)' : 'var(--text-muted)', 
+                      background: f.status === 'PENDING' ? 'var(--warning-subtle)' : f.status === 'DEDUCTED' ? 'var(--success-subtle)' : 'var(--surface-hover)' 
+                    }}>
                       {f.status}
                     </span>
                   </td>
-                  <td>{f.payrollRun?.period?.name || "-"}</td>
-                  <td>
+                  <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{f.payrollRun?.period?.name || "-"}</td>
+                  <td style={{ padding: '14px 16px' }}>
                     {f.status === "PENDING" && (
                       <button 
                         onClick={() => handleCancelFine(f.id)}
-                        className="btn btn-xs btn-outline btn-error"
+                        className="btn btn-secondary"
+                        style={{ fontSize: '12px', padding: '6px 12px', color: 'var(--danger)', borderColor: 'var(--danger)' }}
                       >
                         Waive / Cancel
                       </button>
@@ -139,58 +152,64 @@ export default function FinesPage() {
       </div>
 
       {showModal && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Assign Penalty</h3>
-            <form onSubmit={handleCreateFine}>
-              <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Employee</span></label>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '460px', borderRadius: '20px', padding: '32px', margin: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Assign Penalty</h2>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
+              </button>
+            </div>
+            <form onSubmit={handleCreateFine} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={ls}>Employee *</label>
                 <select 
-                  className="select select-bordered" 
+                  style={is}
                   value={newFine.employeeId} 
                   onChange={e => setNewFine({...newFine, employeeId: e.target.value})}
                   required
                 >
-                  <option value="">Select Employee...</option>
+                  <option value="">— Select Employee —</option>
                   {employees.map(e => (
                     <option key={e.id} value={e.id}>{e.firstName} {e.lastName} ({e.employeeId})</option>
                   ))}
                 </select>
               </div>
-              <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Amount (৳)</span></label>
+              <div>
+                <label style={ls}>Amount (৳) *</label>
                 <input 
                   type="number" 
                   step="0.01"
-                  className="input input-bordered" 
+                  style={is}
                   value={newFine.amount}
                   onChange={e => setNewFine({...newFine, amount: e.target.value})}
                   required
                 />
               </div>
-              <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Reason</span></label>
+              <div>
+                <label style={ls}>Reason *</label>
                 <input 
                   type="text" 
-                  className="input input-bordered" 
+                  style={is}
                   placeholder="e.g. Late Arrival, Property Damage"
                   value={newFine.reason}
                   onChange={e => setNewFine({...newFine, reason: e.target.value})}
                   required
                 />
               </div>
-              <div className="form-control mb-6">
-                <label className="label"><span className="label-text">Penalty Date</span></label>
+              <div>
+                <label style={ls}>Penalty Date *</label>
                 <input 
                   type="date" 
-                  className="input input-bordered" 
+                  style={is}
                   value={newFine.date}
                   onChange={e => setNewFine({...newFine, date: e.target.value})}
                   required
                 />
               </div>
-              <div className="modal-action">
-                <button type="button" className="btn" onClick={() => setShowModal(false)}>Cancel</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? "Saving..." : "Assign Penalty"}
                 </button>
@@ -202,3 +221,6 @@ export default function FinesPage() {
     </div>
   );
 }
+
+const ls: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' };
+const is: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };

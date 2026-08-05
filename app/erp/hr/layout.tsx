@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Designations', href: '/erp/hr/designations', icon: 'work',         exact: false },
   { name: 'Attendance',   href: '/erp/hr/attendance',   icon: 'fact_check',   exact: false },
   { name: 'Leaves',       href: '/erp/hr/leaves',       icon: 'event_busy',   exact: false },
+  { name: 'Fines',        href: '/erp/hr/fines',        icon: 'money_off',    exact: false },
   { name: 'Payroll',      href: '/erp/hr/payroll',      icon: 'payments',     exact: false },
 ];
 

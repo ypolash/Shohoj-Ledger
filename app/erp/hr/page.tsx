@@ -56,6 +56,7 @@ export default function HRDashboardPage() {
     { href: '/erp/hr/departments', icon: 'corporate_fare',label: 'Departments' },
     { href: '/erp/hr/attendance',  icon: 'fact_check',    label: 'Record Attendance' },
     { href: '/erp/hr/leaves',      icon: 'event_busy',    label: 'Leave Requests' },
+    { href: '/erp/hr/fines',       icon: 'money_off',     label: 'Disciplinary Fines' },
     { href: '/erp/hr/payroll',     icon: 'payments',      label: 'Run Payroll' },
   ];
 

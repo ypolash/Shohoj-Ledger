@@ -136,6 +136,36 @@ export async function POST(req: Request) {
         });
       }
 
+      // -------------------------------------------------------------
+      // NOTIFICATIONS: Notify manager and team members of assignment
+      // -------------------------------------------------------------
+      const assignedEmployeeIds = new Set<string>();
+      if (managerId) assignedEmployeeIds.add(managerId);
+      if (teamMemberIds && Array.isArray(teamMemberIds)) {
+        teamMemberIds.forEach((id: string) => assignedEmployeeIds.add(id));
+      }
+
+      if (assignedEmployeeIds.size > 0) {
+        const employeesToNotify = await tx.employee.findMany({
+          where: { id: { in: Array.from(assignedEmployeeIds) }, companyId, userId: { not: null } },
+          select: { userId: true, id: true }
+        });
+
+        if (employeesToNotify.length > 0) {
+          const notifications = employeesToNotify.map(emp => ({
+            companyId,
+            userId: emp.userId!,
+            title: "New Project Assignment",
+            message: `You have been assigned to project: ${name} (${projectCode})`,
+            category: "SYSTEM",
+            priority: "NORMAL",
+            status: "UNREAD",
+            link: `/erp/projects/${p.id}`
+          }));
+          await tx.notification.createMany({ data: notifications });
+        }
+      }
+
       return p;
     });
 

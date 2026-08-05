@@ -123,6 +123,47 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         await tx.projectActivity.createMany({ data: activitiesToLog });
       }
 
+      // -------------------------------------------------------------
+      // NOTIFICATIONS: Notify NEW manager and NEW team members of assignment
+      // -------------------------------------------------------------
+      const newlyAssignedEmployeeIds = new Set<string>();
+      
+      // If manager changed
+      if (body.managerId && body.managerId !== existingProject.managerId) {
+        newlyAssignedEmployeeIds.add(body.managerId);
+      }
+
+      // If team members changed, find newly added ones
+      if (body.teamMemberIds && Array.isArray(body.teamMemberIds)) {
+        const oldTeamMemberIds = new Set(existingProject.teamMembers.map(m => m.id));
+        body.teamMemberIds.forEach((id: string) => {
+          if (!oldTeamMemberIds.has(id)) {
+            newlyAssignedEmployeeIds.add(id);
+          }
+        });
+      }
+
+      if (newlyAssignedEmployeeIds.size > 0) {
+        const employeesToNotify = await tx.employee.findMany({
+          where: { id: { in: Array.from(newlyAssignedEmployeeIds) }, companyId, userId: { not: null } },
+          select: { userId: true, id: true }
+        });
+
+        if (employeesToNotify.length > 0) {
+          const notifications = employeesToNotify.map(emp => ({
+            companyId,
+            userId: emp.userId!,
+            title: "Project Assignment",
+            message: `You have been added to project: ${p.name}`,
+            category: "SYSTEM",
+            priority: "NORMAL",
+            status: "UNREAD",
+            link: `/erp/projects/${p.id}`
+          }));
+          await tx.notification.createMany({ data: notifications });
+        }
+      }
+
       return p;
     });
 

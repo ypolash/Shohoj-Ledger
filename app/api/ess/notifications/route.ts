@@ -32,14 +32,16 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "30");
 
+    const userId = employee.userId as string;
+
     const notifications = await prisma.notification.findMany({
-      where: { companyId: employee.companyId, userId: employee.userId },
+      where: { companyId: employee.companyId, userId },
       orderBy: { createdAt: "desc" },
       take: limit,
     });
 
     const unreadCount = await prisma.notification.count({
-      where: { companyId: employee.companyId, userId: employee.userId, status: "UNREAD" }
+      where: { companyId: employee.companyId, userId, status: "UNREAD" }
     });
 
     return NextResponse.json({ notifications, unreadCount });

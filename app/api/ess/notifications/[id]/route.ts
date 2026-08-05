@@ -32,8 +32,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const body = await req.json();
     const { status } = body;
 
+    const userId = employee.userId as string;
+
     const existing = await prisma.notification.findFirst({
-      where: { id, companyId: employee.companyId, userId: employee.userId }
+      where: { id, companyId: employee.companyId, userId }
     });
 
     if (!existing) {
@@ -52,7 +54,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
           action: "READ",
           entityType: "NOTIFICATION",
           entityId: id,
-          performedById: employee.userId
+          performedById: userId
         }
       });
     }

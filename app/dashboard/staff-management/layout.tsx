@@ -24,7 +24,6 @@ export default function StaffManagementLayout({
     { name: 'Departments', path: '/dashboard/staff-management/departments', icon: 'domain' },
     { name: 'Designations', path: '/dashboard/staff-management/designations', icon: 'work' },
     { name: 'Org Chart', path: '/dashboard/staff-management/org-chart', icon: 'account_tree' },
-    { name: 'Rules & Policies', path: '/dashboard/staff-management/punishments', icon: 'policy' },
   ];
 
   return (

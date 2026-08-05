@@ -92,6 +92,31 @@ export default function FinesPage() {
         </button>
       </div>
 
+      <div className="glass-panel" style={{ borderRadius: '16px', padding: '20px', marginBottom: '8px' }}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--warning)' }}>policy</span>
+          Standard Disciplinary Rules
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+          <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-hover)', borderLeft: '3px solid var(--warning)' }}>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Late Arrival (3+ Days)</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>৳500 deduction per incident thereafter.</div>
+          </div>
+          <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-hover)', borderLeft: '3px solid var(--danger)' }}>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Unapproved Absence (AWOL)</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Equivalent to 1 day's basic salary deduction.</div>
+          </div>
+          <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-hover)', borderLeft: '3px solid var(--accent)' }}>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Property Damage / Loss</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Deduction as per actual repair or replacement cost.</div>
+          </div>
+          <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--surface-hover)', borderLeft: '3px solid var(--primary)' }}>
+            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>General Policy Violation</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Up to ৳5,000 based on disciplinary committee decision.</div>
+          </div>
+        </div>
+      </div>
+
       <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>

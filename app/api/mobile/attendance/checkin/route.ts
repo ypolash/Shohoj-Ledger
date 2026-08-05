@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateAttendanceRequest } from "../utils";
+import { calculateAttendanceStatus } from "@/lib/attendance";
 
 export async function POST(request: Request) {
   try {
@@ -98,36 +99,12 @@ export async function POST(request: Request) {
     });
     
     const isFriday = currentDhakaTime.getDay() === 5;
-    let status = "PRESENT";
-    let lateMinutes = 0;
-    let isLate = false;
-
-    let shiftStartStr = config?.shiftStart || "09:00";
-    let startHour = 9;
-    let startMin = 0;
     
-    const parts = shiftStartStr.split(':');
-    startHour = parseInt(parts[0], 10);
-    startMin = parseInt(parts[1], 10);
-    
-    const shiftStartDate = new Date(currentDhakaTime);
-    shiftStartDate.setHours(startHour, startMin, 0, 0);
-    
-    const lateAfter = new Date(shiftStartDate);
-    lateAfter.setMinutes(lateAfter.getMinutes() + (config?.gracePeriod || 0));
-
-    if (isFriday && config?.fridayOff) {
-      status = "OFF_DAY_WORK";
-    } else {
-      if (currentDhakaTime > lateAfter) {
-        status = "LATE";
-        isLate = true;
-        lateMinutes = Math.floor((currentDhakaTime.getTime() - shiftStartDate.getTime()) / 60000);
-      } else {
-        status = "PRESENT";
-        lateMinutes = 0;
-      }
-    }
+    // Default to PRESENT but let the utility calculate the correct status, isLate and lateMinutes
+    const calc = await calculateAttendanceStatus(employee.companyId || "", employee.id, serverTime);
+    let status = calc.status;
+    let lateMinutes = calc.lateMinutes;
+    let isLate = calc.isLate;
 
     if (existingAttendance) {
       await prisma.attendance.update({

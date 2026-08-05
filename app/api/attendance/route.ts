@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { isWithinOfficeRadius } from '@/lib/gps';
 
 import { requireModule } from "@/lib/modules/moduleGuard";
+import { calculateAttendanceStatus } from "@/lib/attendance";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
@@ -78,6 +79,24 @@ export async function POST(request: Request) {
       }
     }
 
+    let finalLateMinutes = data.lateMinutes || 0;
+    let finalStatus = status;
+    let isLate = false;
+
+    if (finalLateMinutes === 0 && data.checkIn) {
+      const calc = await calculateAttendanceStatus(companyIdForGuard, data.employeeId, new Date(data.checkIn));
+      finalLateMinutes = calc.lateMinutes;
+      isLate = calc.isLate;
+      if (!data.status || data.status === 'PRESENT') {
+        finalStatus = calc.status;
+      }
+    } else if (finalLateMinutes > 0) {
+      isLate = true;
+      if (!data.status || data.status === 'PRESENT') {
+        finalStatus = 'LATE';
+      }
+    }
+
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
@@ -90,8 +109,9 @@ export async function POST(request: Request) {
         checkInLocation: data.checkInLocation || null,
         checkOutTime: data.checkOut ? new Date(data.checkOut) : null,
         checkOutLocation: data.checkOutLocation || null,
-        status: status,
-        lateMinutes: data.lateMinutes || 0,
+        status: finalStatus,
+        isLate,
+        lateMinutes: finalLateMinutes,
         systemSource
       }
     });

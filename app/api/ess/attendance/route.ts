@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { calculateAttendanceStatus } from "@/lib/attendance";
 
 /**
  * Resolves the current employee's ID and companyId from session.
@@ -123,12 +124,17 @@ export async function POST(request: Request) {
       if (todayRecord?.checkInTime) {
         return NextResponse.json({ error: "Already clocked in today." }, { status: 400 });
       }
+
+      const calc = await calculateAttendanceStatus(employee.companyId || "", employee.id, now);
+
       const record = await prisma.attendance.upsert({
         where: { id: todayRecord?.id || "" },
         update: { 
             checkInTime: now, 
             checkInLocation: locationString, 
-            status: "PRESENT",
+            status: calc.status,
+            isLate: calc.isLate,
+            lateMinutes: calc.lateMinutes,
             latitude: latitude,
             longitude: longitude,
             wifiSsid: ssid,
@@ -140,8 +146,9 @@ export async function POST(request: Request) {
           date: todayStart,
           checkInTime: now,
           checkInLocation: locationString,
-          status: "PRESENT",
-          lateMinutes: 0,
+          status: calc.status,
+          isLate: calc.isLate,
+          lateMinutes: calc.lateMinutes,
           systemSource: employee.systemSource || "LEGACY",
           latitude: latitude,
           longitude: longitude,

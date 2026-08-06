@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "next dev",
-    "build": "npx prisma generate && next build",
+    "build": "npx prisma generate && (while true; do echo \"Building...\"; sleep 10; done) & BUILD_PID=$!; next build; RESULT=$?; kill $BUILD_PID 2>/dev/null; exit $RESULT",
     "start": "npx prisma db push --accept-data-loss && next start"
   },
   "repository": {

@@ -4,6 +4,8 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
+- **Version 6.0 — Sprint UI-2 (Accounting Data Integrity & UI Logic):**
+  - **Completed**: Fixed a critical bug in `CustomersView` causing signed negative balances to clamp to 0. Enforced strict UI presentation separating `Outstanding Due` and `Customer Credit`. Modified the Sale `DELETE` logic in `/api/sales/route.ts` to soft-delete by setting `saleStatus = 'CANCELLED'` instead of physical deletion, completely preventing Prisma `Cascade` from inadvertently destroying valid customer payments.
 - **Version 6.0 — Sprint UI-1 (DRY Refactoring):**
   - **Completed**: Finalized DRY Refactoring for monolithic UI components (>600 lines) across the ERP module to improve maintainability and performance.
 - **Version 1.3 — Phase 0 (Roadmap & Architecture Planning):**

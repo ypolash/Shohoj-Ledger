@@ -59,6 +59,7 @@ type OverviewData = {
 export default function DashboardIndex() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [businessModel, setBusinessModel] = useState<'ALL' | 'PRODUCT' | 'SERVICE'>('ALL');
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -198,6 +199,28 @@ export default function DashboardIndex() {
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)' }}>Shohoj Ledger - Premium Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>A premium, soft-UI financial dashboard</p>
         </div>
+        <div>
+          <select 
+            value={businessModel}
+            onChange={(e) => setBusinessModel(e.target.value as 'ALL' | 'PRODUCT' | 'SERVICE')}
+            style={{ 
+              padding: '8px 16px', 
+              borderRadius: '12px', 
+              border: '1px solid var(--border-main)', 
+              background: 'var(--bg-main)', 
+              color: 'var(--text-main)',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              outline: 'none',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            <option value="ALL">All Models</option>
+            <option value="PRODUCT">Product Based</option>
+            <option value="SERVICE">Service Based</option>
+          </select>
+        </div>
       </div>
 
       {/* Bento Grid Summary Cards */}
@@ -226,7 +249,7 @@ export default function DashboardIndex() {
           <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.totalExpenses)}</span>
         </div>
 
-        {/* Reserve Balance */}
+        {/* Reserve Balance (Common) */}
         <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
           <div style={{ width: '36px', height: '36px', background: 'var(--primary-glow)', border: '1px solid var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
             <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '18px' }}>savings</span>
@@ -235,7 +258,29 @@ export default function DashboardIndex() {
           <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.reserveBalance)}</span>
         </div>
 
-        {/* Due Balance */}
+        {/* Product Based Exclusive Cards */}
+        {(businessModel === 'ALL' || businessModel === 'PRODUCT') && (
+          <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ width: '36px', height: '36px', background: 'var(--info-glow, #e0f2fe)', border: '1px solid var(--info, #0ea5e9)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--info, #0ea5e9)', fontSize: '18px' }}>inventory_2</span>
+            </div>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Inventory Value</span>
+            <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency((data as any).inventoryValue || 0)}</span>
+          </div>
+        )}
+
+        {/* Service Based Exclusive Cards */}
+        {(businessModel === 'ALL' || businessModel === 'SERVICE') && (
+          <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ width: '36px', height: '36px', background: 'var(--warning-glow, #fef3c7)', border: '1px solid var(--warning, #f59e0b)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--warning, #f59e0b)', fontSize: '18px' }}>assignment</span>
+            </div>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Active Projects</span>
+            <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{(data as any).activeProjects || 0}</span>
+          </div>
+        )}
+
+        {/* Common: Due Balance */}
         <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
           <div style={{ width: '36px', height: '36px', background: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
             <span className="material-symbols-outlined" style={{ color: 'var(--danger)', fontSize: '18px' }}>calendar_today</span>
@@ -244,24 +289,16 @@ export default function DashboardIndex() {
           <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{formatCurrency(data.activeAdvances)}</span>
         </div>
 
-        {/* Pending Payments */}
-        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
-          <div style={{ width: '36px', height: '36px', background: 'var(--warning)', border: '1px solid var(--warning)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
-            <span className="material-symbols-outlined" style={{ color: 'var(--text-inverse)', fontSize: '18px' }}>pending_actions</span>
-          </div>
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Pending Payments</span>
-          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>0</span>
-        </div>
-
         {/* Active Loans */}
-        <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
-          <div style={{ width: '36px', height: '36px', background: 'var(--primary-glow)', border: '1px solid var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
-            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '18px' }}>monetization_on</span>
+        {businessModel === 'ALL' && (
+          <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ width: '36px', height: '36px', background: 'var(--primary-glow)', border: '1px solid var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
+              <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '18px' }}>monetization_on</span>
+            </div>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Active Loans</span>
+            <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{data.outstandingLoans > 0 ? formatCurrency(data.outstandingLoans) : '0'}</span>
           </div>
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Active Loans</span>
-          <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{data.outstandingLoans > 0 ? formatCurrency(data.outstandingLoans) : '0'}</span>
-        </div>
-
+        )}
       </div>
 
       {/* Charts Section */}

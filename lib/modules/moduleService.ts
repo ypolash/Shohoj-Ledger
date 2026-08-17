@@ -41,9 +41,13 @@ export class ModuleService {
         { key: "HRM", name: "HR Management" },
         { key: "PAYROLL", name: "Payroll" },
         { key: "CRM", name: "Customer Relationship" },
-        { key: "FINANCE", name: "Finance" },
-        { key: "PROJECT", name: "Project Management" },
-        { key: "ESS", name: "Employee Self Service" }
+        { key: "ACCOUNTING", name: "Accounting & Finance" },
+        { key: "PROJECTS", name: "Project Management" },
+        { key: "ESS", name: "Employee Self Service" },
+        { key: "INVENTORY", name: "Inventory" },
+        { key: "PURCHASE", name: "Purchase" },
+        { key: "SALES", name: "Sales" },
+        { key: "LEAD_MANAGEMENT", name: "Lead Management" }
       ];
 
       for (const mod of defaultModules) {

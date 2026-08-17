@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FundHistory } from './components/FundHistory';
 
 export default function FundsPage() {
-  const [funds, setFunds] = useState([]);
+  const [funds, setFunds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchFunds = useCallback(async () => {

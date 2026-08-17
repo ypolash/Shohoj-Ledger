@@ -75,7 +75,8 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
         onSuccess();
         onClose();
       } else {
-        alert("Failed to save. Please try again.");
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || "Failed to save. Please try again.");
       }
     } catch (e) {
       console.error(e);

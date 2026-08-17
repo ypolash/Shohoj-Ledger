@@ -7,7 +7,7 @@ import { ExpenseTable } from './components/ExpenseTable';
 import { FastEntryDrawer } from '@/app/dashboard/finance/components/FastEntryDrawer';
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -15,7 +15,12 @@ export default function ExpensesPage() {
     try {
       const res = await fetch('/api/expenses');
       const data = await res.json();
-      setExpenses(data);
+      if (Array.isArray(data)) {
+        setExpenses(data);
+      } else {
+        setExpenses([]);
+        console.error("API returned non-array:", data);
+      }
     } catch (error) {
       console.error("Failed to fetch expenses", error);
     } finally {

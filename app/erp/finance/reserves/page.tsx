@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ReserveDashboard } from './components/ReserveDashboard';
 
 export default function ReservesPage() {
-  const [data, setData] = useState({ totalReserve: 0, transactions: [] });
+  const [data, setData] = useState<{ totalReserve: number; transactions: any[] }>({ totalReserve: 0, transactions: [] });
   const [loading, setLoading] = useState(true);
 
   const fetchReserves = useCallback(async () => {

@@ -5,14 +5,19 @@ import { SettlementToolbar } from './components/SettlementToolbar';
 import { SettlementTable } from './components/SettlementTable';
 
 export default function SettlementsPage() {
-  const [settlements, setSettlements] = useState([]);
+  const [settlements, setSettlements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSettlements = useCallback(async () => {
     try {
       const res = await fetch('/api/settlements');
       const data = await res.json();
-      setSettlements(data);
+      if (Array.isArray(data)) {
+        setSettlements(data);
+      } else {
+        setSettlements([]);
+        console.error("API returned non-array:", data);
+      }
     } catch (error) {
       console.error("Failed to fetch settlements", error);
     } finally {

@@ -7,14 +7,14 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function GET(request: Request) {
-  const rbacGuard = await requirePermission("FINANCE_VIEW");
-  if (rbacGuard) return rbacGuard;
-
-  const companyIdForGuard = await getCompanyId();
-  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
-  if (moduleGuard) return moduleGuard;
-
   try {
+    const rbacGuard = await requirePermission("FINANCE_VIEW");
+    if (rbacGuard) return rbacGuard;
+
+    const companyIdForGuard = await getCompanyId();
+    const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+    if (moduleGuard) return moduleGuard;
+
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 

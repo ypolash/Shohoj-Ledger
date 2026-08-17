@@ -7,7 +7,7 @@ import { IncomeTable } from './components/IncomeTable';
 import { FastEntryDrawer } from '@/app/dashboard/finance/components/FastEntryDrawer';
 
 export default function IncomePage() {
-  const [incomes, setIncomes] = useState([]);
+  const [incomes, setIncomes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -15,7 +15,12 @@ export default function IncomePage() {
     try {
       const res = await fetch('/api/income');
       const data = await res.json();
-      setIncomes(data);
+      if (Array.isArray(data)) {
+        setIncomes(data);
+      } else {
+        setIncomes([]);
+        console.error("API returned non-array:", data);
+      }
     } catch (error) {
       console.error("Failed to fetch incomes", error);
     } finally {

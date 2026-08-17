@@ -31,16 +31,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(',')[0] || request.headers.get("x-real-ip") || '127.0.0.1';
+
     try {
       await prisma.employee.update({
         where: { id: employee.id },
         data: {
-          location: `DEBUG: SSID=${ssid}, BSSID=${bssid}, Networks=${employee.companyId}`
+          location: `DEBUG: SSID=${ssid}, BSSID=${bssid}, IP=${ipAddress}, Networks=${employee.companyId}`
         }
       });
     } catch(e) {}
 
-    const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, ssid, bssid);
+    const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, ssid, bssid, ipAddress);
     if (!validation.isValid) {
       let code = "FORBIDDEN_UNKNOWN";
       const errorLower = validation.error?.toLowerCase() || "";

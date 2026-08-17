@@ -25,7 +25,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, wifiSsid, wifiBssid);
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(',')[0] || request.headers.get("x-real-ip") || '127.0.0.1';
+    
+    const validation = await validateAttendanceRequest(employee.companyId || "", latitude, longitude, wifiSsid, wifiBssid, ipAddress);
     if (!validation.isValid) {
       return NextResponse.json(
         { success: false, message: validation.error },

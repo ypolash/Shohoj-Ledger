@@ -48,7 +48,8 @@ export async function validateAttendanceRequest(
   latitude?: number,
   longitude?: number,
   wifiSsid?: string,
-  wifiBssid?: string
+  wifiBssid?: string,
+  ipAddress?: string
 ): Promise<{ isValid: boolean; error?: string; details?: any }> {
   if (companyId) {
     try {
@@ -59,7 +60,7 @@ export async function validateAttendanceRequest(
           entityType: "NETWORK_VALIDATION_ENTRY",
           entityId: "debug",
           action: "CHECKIN_ATTEMPT",
-          description: `Payload - Lat: ${latitude}, Lng: ${longitude}, SSID: ${wifiSsid || "NULL"}, BSSID: ${wifiBssid || "NULL"}`,
+          description: `Payload - Lat: ${latitude}, Lng: ${longitude}, SSID: ${wifiSsid || "NULL"}, BSSID: ${wifiBssid || "NULL"}, IP: ${ipAddress || "NULL"}`,
         }
       });
     } catch(e) {}
@@ -71,10 +72,6 @@ export async function validateAttendanceRequest(
 
   if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
     return { isValid: false, error: "GPS disabled or location not provided." };
-  }
-
-  if (!wifiSsid || !wifiBssid) {
-    return { isValid: false, error: "Wi-Fi information is missing." };
   }
 
   const whereClause: any = { isActive: true };
@@ -102,25 +99,35 @@ export async function validateAttendanceRequest(
   }
 
   if (!allowedNetworks || allowedNetworks.length === 0) {
-    return { isValid: false, error: "No active office Wi-Fi configured." };
+    return { isValid: false, error: "No active office Wi-Fi / Network configured." };
   } else {
     const incomingBssid = (wifiBssid || "").toLowerCase().trim();
     const incomingSsid = (wifiSsid || "").trim();
+    const incomingIp = (ipAddress || "").trim();
     
     let isMatch = false;
     let storedBssid = "";
+    let storedIp = "";
     
     for (const net of allowedNetworks) {
       storedBssid = (net.bssid || "").toLowerCase().trim();
-      if (incomingBssid === storedBssid) {
+      storedIp = (net.ipAddress || "").trim();
+      
+      if (storedBssid && incomingBssid && incomingBssid === storedBssid) {
+        isMatch = true;
+        break;
+      }
+      
+      if (storedIp && incomingIp && incomingIp === storedIp) {
         isMatch = true;
         break;
       }
     }
 
     if (!isMatch) {
-      const storedBssidsList = allowedNetworks.map(n => n.bssid).join(", ");
-      const diagMessage = `Network mismatch. Phone sent MAC (BSSID): "${incomingBssid}". Allowed MACs: "${storedBssidsList}".`;
+      const storedBssidsList = allowedNetworks.filter(n => n.bssid).map(n => n.bssid).join(", ");
+      const storedIpsList = allowedNetworks.filter(n => n.ipAddress).map(n => n.ipAddress).join(", ");
+      const diagMessage = `Network mismatch. Phone MAC: "${incomingBssid}", IP: "${incomingIp}". Allowed MACs: "${storedBssidsList}", IPs: "${storedIpsList}".`;
       
       if (companyId) {
         try {
@@ -141,10 +148,11 @@ export async function validateAttendanceRequest(
 
       return { 
         isValid: false, 
-        error: diagMessage + " Please check if you are connected to 2.4GHz/5GHz or if MAC randomization is on.",
+        error: "You are not connected to an allowed office network.",
         details: {
           incomingBssid,
           detectedSsid: incomingSsid,
+          incomingIp,
           allowedCount: allowedNetworks.length
         }
       };

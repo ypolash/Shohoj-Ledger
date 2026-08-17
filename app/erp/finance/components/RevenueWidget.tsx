@@ -17,11 +17,19 @@ export function RevenueWidget({ data }: { data?: any }) {
       <div>
         <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-main)' }}>৳ {(data?.kpis?.revenue || 0).toLocaleString()}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '13px' }}>
-          <span style={{ color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span>
-            +12.5%
-          </span>
-          <span style={{ color: 'var(--text-muted)' }}>vs last month</span>
+          {data?.trends?.revenue !== undefined ? (
+            <>
+              <span style={{ color: (data?.trends?.revenue || 0) >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                  {(data?.trends?.revenue || 0) >= 0 ? 'trending_up' : 'trending_down'}
+                </span>
+                {(data?.trends?.revenue || 0) > 0 ? '+' : ''}{(data?.trends?.revenue || 0).toFixed(1)}%
+              </span>
+              <span style={{ color: 'var(--text-muted)' }}>vs last month</span>
+            </>
+          ) : (
+            <span style={{ color: 'var(--text-muted)' }}>No historical data</span>
+          )}
         </div>
       </div>
     </div>

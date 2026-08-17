@@ -17,10 +17,7 @@ export function CashFlowWidget({ data }: { data?: any }) {
       <div>
         <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-main)' }}>৳ {(data?.kpis?.cashFlow || 0).toLocaleString()}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '13px' }}>
-          <span style={{ color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span>
-            Healthy
-          </span>
+          <span style={{ color: 'var(--text-muted)' }}>Net cash flow for the period</span>
         </div>
       </div>
     </div>

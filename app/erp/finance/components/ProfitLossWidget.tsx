@@ -17,11 +17,19 @@ export function ProfitLossWidget({ data }: { data?: any }) {
       <div>
         <div style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-main)' }}>৳ {(data?.kpis?.profit || 0).toLocaleString()}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '13px' }}>
-          <span style={{ color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span>
-            +2.1%
-          </span>
-          <span style={{ color: 'var(--text-muted)' }}>vs last quarter</span>
+          {data?.trends?.profit !== undefined ? (
+            <>
+              <span style={{ color: (data?.trends?.profit || 0) >= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                  {(data?.trends?.profit || 0) >= 0 ? 'trending_up' : 'trending_down'}
+                </span>
+                {(data?.trends?.profit || 0) > 0 ? '+' : ''}{(data?.trends?.profit || 0).toFixed(1)}%
+              </span>
+              <span style={{ color: 'var(--text-muted)' }}>vs last month</span>
+            </>
+          ) : (
+            <span style={{ color: 'var(--text-muted)' }}>No historical data</span>
+          )}
         </div>
       </div>
     </div>

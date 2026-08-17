@@ -19,13 +19,13 @@ export async function GET(request: Request) {
 
     const ledgers = await prisma.ledgerEntry.findMany({
       where: whereClause,
-      select: { id: true, debit: true, credit: true, module: true, accountType: true, date: true, description: true, reference: true, status: true },
+      select: { id: true, debit: true, credit: true, module: true, accountType: true, date: true, description: true, referenceId: true, status: true },
       orderBy: { date: 'desc' }
     });
     
     // We can use the first 5 ledgers for the recent transactions
     const recentTransactions = ledgers.slice(0, 5).map(l => ({
-      id: l.reference || l.id,
+      id: l.referenceId || l.id,
       date: l.date,
       description: l.description || 'Ledger Entry',
       status: l.status || 'POSTED',

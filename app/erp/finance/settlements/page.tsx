@@ -25,6 +25,10 @@ export default function SettlementsPage() {
   const [advisorPercent, setAdvisorPercent] = useState(0);
   const [companyPercent, setCompanyPercent] = useState(0);
 
+  // UI State for dynamic shareholder rows
+  const [activeRoles, setActiveRoles] = useState<string[]>(['ceo']);
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
   const fetchSettlements = useCallback(async () => {
     try {
       setError(null);
@@ -64,6 +68,12 @@ export default function SettlementsPage() {
           setDevPercent(parsed.devPercent ?? 0);
           setAdvisorPercent(parsed.advisorPercent ?? 0);
           setCompanyPercent(parsed.companyPercent ?? 0);
+          
+          const roles = ['ceo'];
+          if ((parsed.devPercent ?? 0) > 0) roles.push('dev');
+          if ((parsed.advisorPercent ?? 0) > 0) roles.push('advisor');
+          if ((parsed.companyPercent ?? 0) > 0) roles.push('company');
+          setActiveRoles(roles);
         }
       }
     } catch(e) {}
@@ -78,13 +88,21 @@ export default function SettlementsPage() {
         setDevPercent(parsed.devPercent ?? 0);
         setAdvisorPercent(parsed.advisorPercent ?? 0);
         setCompanyPercent(parsed.companyPercent ?? 0);
+
+        const roles = ['ceo'];
+        if ((parsed.devPercent ?? 0) > 0) roles.push('dev');
+        if ((parsed.advisorPercent ?? 0) > 0) roles.push('advisor');
+        if ((parsed.companyPercent ?? 0) > 0) roles.push('company');
+        setActiveRoles(roles);
       } else {
         setCeoPercent(100);
         setDevPercent(0);
         setAdvisorPercent(0);
         setCompanyPercent(0);
+        setActiveRoles(['ceo']);
       }
     } catch(e) {}
+    setShowAddMenu(false);
     setIsShareholderModalOpen(true);
   };
 
@@ -107,14 +125,22 @@ export default function SettlementsPage() {
         setDevPercent(parsed.devPercent ?? 0);
         setAdvisorPercent(parsed.advisorPercent ?? 0);
         setCompanyPercent(parsed.companyPercent ?? 0);
+
+        const roles = ['ceo'];
+        if ((parsed.devPercent ?? 0) > 0) roles.push('dev');
+        if ((parsed.advisorPercent ?? 0) > 0) roles.push('advisor');
+        if ((parsed.companyPercent ?? 0) > 0) roles.push('company');
+        setActiveRoles(roles);
       } else {
         setCeoPercent(100);
         setDevPercent(0);
         setAdvisorPercent(0);
         setCompanyPercent(0);
+        setActiveRoles(['ceo']);
       }
     } catch(e) {}
 
+    setShowAddMenu(false);
     setPreview(null);
     setIsModalOpen(true);
   };
@@ -190,6 +216,121 @@ export default function SettlementsPage() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(val || 0));
   };
 
+  const addRole = (role: string) => {
+    setActiveRoles([...activeRoles, role]);
+    setShowAddMenu(false);
+  };
+
+  const removeRole = (role: string) => {
+    setActiveRoles(activeRoles.filter(r => r !== role));
+    if (role === 'dev') setDevPercent(0);
+    if (role === 'advisor') setAdvisorPercent(0);
+    if (role === 'company') setCompanyPercent(0);
+  };
+
+  const availableRoles = [
+    { id: 'dev', label: 'Developer' },
+    { id: 'advisor', label: 'Advisor' },
+    { id: 'company', label: 'Company Reserve' }
+  ].filter(r => !activeRoles.includes(r.id));
+
+  const totalPercent = ceoPercent + devPercent + advisorPercent + companyPercent;
+
+  const renderShareholderRows = (showAmounts = false) => {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+        {activeRoles.includes('ceo') && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Company Owner / CEO</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input type="number" min="0" max="100" value={ceoPercent} onChange={e => setCeoPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+              <span>%</span>
+              {showAmounts && preview && (
+                <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (ceoPercent / 100))}</span>
+              )}
+              <div style={{ width: '28px' }}></div> {/* Spacer for alignment with remove buttons */}
+            </div>
+          </div>
+        )}
+        
+        {activeRoles.includes('dev') && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Developer</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input type="number" min="0" max="100" value={devPercent} onChange={e => setDevPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+              <span>%</span>
+              {showAmounts && preview && (
+                <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (devPercent / 100))}</span>
+              )}
+              <button onClick={() => removeRole('dev')} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeRoles.includes('advisor') && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Advisor</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input type="number" min="0" max="100" value={advisorPercent} onChange={e => setAdvisorPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+              <span>%</span>
+              {showAmounts && preview && (
+                <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (advisorPercent / 100))}</span>
+              )}
+              <button onClick={() => removeRole('advisor')} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeRoles.includes('company') && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Company Reserve</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input type="number" min="0" max="100" value={companyPercent} onChange={e => setCompanyPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+              <span>%</span>
+              {showAmounts && preview && (
+                <span style={{ width: '100px', textAlign: 'right', color: 'var(--primary)' }}>{formatCurrency(Number(preview.netProfit) * (companyPercent / 100))}</span>
+              )}
+              <button onClick={() => removeRole('company')} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {availableRoles.length > 0 && (
+          <div style={{ marginTop: '8px', position: 'relative' }}>
+            <button 
+              onClick={() => setShowAddMenu(!showAddMenu)} 
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, padding: '4px 0' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
+              Add Shareholder
+            </button>
+            
+            {showAddMenu && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 10 }}>
+                {availableRoles.map(role => (
+                  <button 
+                    key={role.id} 
+                    onClick={() => addRole(role.id)}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', borderRadius: '4px' }}
+                    className="hover-bg-surface-hover"
+                  >
+                    {role.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
       <SettlementToolbar onGenerate={handleOpenModal} onEditShareholders={handleOpenShareholderModal} />
@@ -216,45 +357,16 @@ export default function SettlementsPage() {
               Set the default percentages to be used when generating new settlements.
             </p>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ color: 'var(--text-muted)' }}>Company Owner / CEO</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="number" min="0" max="100" value={ceoPercent} onChange={e => setCeoPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
-                  <span>%</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ color: 'var(--text-muted)' }}>Developer</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="number" min="0" max="100" value={devPercent} onChange={e => setDevPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
-                  <span>%</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ color: 'var(--text-muted)' }}>Advisor</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="number" min="0" max="100" value={advisorPercent} onChange={e => setAdvisorPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
-                  <span>%</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <label style={{ color: 'var(--text-muted)' }}>Company Reserve</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input type="number" min="0" max="100" value={companyPercent} onChange={e => setCompanyPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
-                  <span>%</span>
-                </div>
-              </div>
-            </div>
+            {renderShareholderRows(false)}
 
-            { (ceoPercent + devPercent + advisorPercent + companyPercent) !== 100 && (
+            { totalPercent !== 100 && (
               <div style={{ marginBottom: '16px', padding: '8px', background: 'rgba(255,0,0,0.1)', color: 'var(--danger)', borderRadius: '4px', fontSize: '13px' }}>
-                Warning: Percentages must sum to 100%. Currently: {ceoPercent + devPercent + advisorPercent + companyPercent}%.
+                Warning: Percentages must sum to 100%. Currently: {totalPercent}%.
               </div>
             )}
             
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={handleSaveShareholders} disabled={(ceoPercent + devPercent + advisorPercent + companyPercent) !== 100} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: ((ceoPercent + devPercent + advisorPercent + companyPercent) !== 100) ? 0.5 : 1 }}>
+              <button onClick={handleSaveShareholders} disabled={totalPercent !== 100} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: (totalPercent !== 100) ? 0.5 : 1 }}>
                 Save Defaults
               </button>
               <button onClick={() => setIsShareholderModalOpen(false)} style={{ padding: '10px 16px', background: 'var(--surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer' }}>
@@ -316,49 +428,16 @@ export default function SettlementsPage() {
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <h3 style={{ margin: 0, fontSize: '16px' }}>Shareholder Distribution</h3>
-                    <span style={{ fontSize: '12px', color: (ceoPercent + devPercent + advisorPercent + companyPercent) === 100 ? 'var(--success)' : 'var(--danger)' }}>
-                      Total: {ceoPercent + devPercent + advisorPercent + companyPercent}%
+                    <span style={{ fontSize: '12px', color: totalPercent === 100 ? 'var(--success)' : 'var(--danger)' }}>
+                      Total: {totalPercent}%
                     </span>
                   </div>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ flex: 1, color: 'var(--text-muted)' }}>Company Owner / CEO</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="number" min="0" max="100" value={ceoPercent} onChange={e => setCeoPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
-                        <span style={{ width: '20px' }}>%</span>
-                        <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (ceoPercent / 100))}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ flex: 1, color: 'var(--text-muted)' }}>Developer</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="number" min="0" max="100" value={devPercent} onChange={e => setDevPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
-                        <span style={{ width: '20px' }}>%</span>
-                        <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (devPercent / 100))}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ flex: 1, color: 'var(--text-muted)' }}>Advisor</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="number" min="0" max="100" value={advisorPercent} onChange={e => setAdvisorPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
-                        <span style={{ width: '20px' }}>%</span>
-                        <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (advisorPercent / 100))}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ flex: 1, color: 'var(--text-muted)' }}>Company Reserve</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="number" min="0" max="100" value={companyPercent} onChange={e => setCompanyPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
-                        <span style={{ width: '20px' }}>%</span>
-                        <span style={{ width: '100px', textAlign: 'right', color: 'var(--primary)' }}>{formatCurrency(Number(preview.netProfit) * (companyPercent / 100))}</span>
-                      </div>
-                    </div>
-                  </div>
+                  {renderShareholderRows(true)}
                 </div>
                 
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <button onClick={handleCreate} disabled={submitLoading || (ceoPercent + devPercent + advisorPercent + companyPercent) !== 100} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: (submitLoading || (ceoPercent + devPercent + advisorPercent + companyPercent) !== 100) ? 0.5 : 1 }}>
+                  <button onClick={handleCreate} disabled={submitLoading || totalPercent !== 100} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: (submitLoading || totalPercent !== 100) ? 0.5 : 1 }}>
                     {submitLoading ? 'Saving...' : 'Confirm & Save'}
                   </button>
                   <button onClick={() => setPreview(null)} style={{ padding: '10px 16px', background: 'var(--surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer' }}>

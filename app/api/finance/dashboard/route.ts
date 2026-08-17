@@ -15,10 +15,7 @@ export async function GET(request: Request) {
   if (moduleGuard) return moduleGuard;
 
   try {
-    const referer = request.headers.get("referer") || "";
-    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
-
-    const whereClause = { ...(await withCompany()), systemSource };
+    const whereClause = { ...(await withCompany()) };
 
     const ledgers = await prisma.ledgerEntry.findMany({
       where: whereClause,

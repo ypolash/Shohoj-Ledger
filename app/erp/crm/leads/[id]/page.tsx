@@ -14,6 +14,7 @@ import { LeadTimeline } from "../components/LeadTimeline";
 import { LeadNotes } from "../components/LeadNotes";
 import { LeadActivity } from "../components/LeadActivity";
 import { LeadHistory } from "../components/LeadHistory";
+import { LeadProgress } from "../components/LeadProgress";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -21,6 +22,10 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+
+  const handleStatusChange = (newStatus: string) => {
+    setLead((prev: any) => ({ ...prev, status: newStatus }));
+  };
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -81,6 +86,9 @@ export default function LeadDetailPage() {
           </button>
         </div>
       </div>
+
+      {/* Progress System */}
+      <LeadProgress leadId={lead.id} currentStatus={lead.status} onStatusChange={handleStatusChange} />
 
       {/* Hero Section */}
       <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '32px', marginBottom: '24px' }}>

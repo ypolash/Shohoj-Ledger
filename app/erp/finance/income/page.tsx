@@ -9,10 +9,12 @@ import { FastEntryDrawer } from '@/app/dashboard/finance/components/FastEntryDra
 export default function IncomePage() {
   const [incomes, setIncomes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchIncomes = useCallback(async () => {
     try {
+      setError(null);
       const res = await fetch('/api/income');
       
       if (!res.ok) {
@@ -25,10 +27,10 @@ export default function IncomePage() {
         setIncomes(data);
       } else {
         setIncomes([]);
-        console.error("API returned non-array:", data);
+        setError("API returned unexpected data format.");
       }
-    } catch (error: any) {
-      console.error("Failed to fetch incomes:", error.message || error);
+    } catch (err: any) {
+      setError(err.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,11 @@ export default function IncomePage() {
     <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       <IncomeToolbar onRecordIncome={() => setDrawerOpen(true)} />
       <IncomeFilters />
-      {loading ? (
+      {error ? (
+        <div style={{ padding: '48px', textAlign: 'center', color: 'var(--destructive, red)' }}>
+          <p>Error: {error}</p>
+        </div>
+      ) : loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       ) : (
         <IncomeTable incomes={incomes} />

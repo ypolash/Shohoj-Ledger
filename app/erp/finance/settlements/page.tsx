@@ -7,9 +7,11 @@ import { SettlementTable } from './components/SettlementTable';
 export default function SettlementsPage() {
   const [settlements, setSettlements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchSettlements = useCallback(async () => {
     try {
+      setError(null);
       const res = await fetch('/api/settlements');
       
       if (!res.ok) {
@@ -22,10 +24,10 @@ export default function SettlementsPage() {
         setSettlements(data);
       } else {
         setSettlements([]);
-        console.error("API returned non-array:", data);
+        setError("API returned unexpected data format.");
       }
-    } catch (error: any) {
-      console.error("Failed to fetch settlements:", error.message || error);
+    } catch (err: any) {
+      setError(err.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -91,7 +93,11 @@ export default function SettlementsPage() {
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       <SettlementToolbar onGenerate={handleGenerate} />
-      {loading ? (
+      {error ? (
+        <div style={{ padding: '48px', textAlign: 'center', color: 'var(--destructive, red)' }}>
+          <p>Error: {error}</p>
+        </div>
+      ) : loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       ) : (
         <SettlementTable settlements={settlements} onExecute={handleExecute} />

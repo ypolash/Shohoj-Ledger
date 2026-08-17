@@ -9,10 +9,12 @@ import { FastEntryDrawer } from '@/app/dashboard/finance/components/FastEntryDra
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchExpenses = useCallback(async () => {
     try {
+      setError(null);
       const res = await fetch('/api/expenses');
       
       if (!res.ok) {
@@ -25,10 +27,10 @@ export default function ExpensesPage() {
         setExpenses(data);
       } else {
         setExpenses([]);
-        console.error("API returned non-array:", data);
+        setError("API returned unexpected data format.");
       }
-    } catch (error: any) {
-      console.error("Failed to fetch expenses:", error.message || error);
+    } catch (err: any) {
+      setError(err.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,11 @@ export default function ExpensesPage() {
     <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       <ExpenseToolbar onRecordExpense={() => setDrawerOpen(true)} />
       <ExpenseFilters />
-      {loading ? (
+      {error ? (
+        <div style={{ padding: '48px', textAlign: 'center', color: 'var(--destructive, red)' }}>
+          <p>Error: {error}</p>
+        </div>
+      ) : loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       ) : (
         <ExpenseTable expenses={expenses} />

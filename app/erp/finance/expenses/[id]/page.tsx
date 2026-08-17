@@ -19,6 +19,11 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
 
   if (!expense) return notFound();
 
+  const serializedExpense = {
+    ...expense,
+    amount: Number(expense.amount),
+  };
+
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 600, marginBottom: '24px' }}>
@@ -29,7 +34,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         <span style={{ color: 'var(--text-main)' }}>EXP-{expense.id.split('-')[0].toUpperCase()}</span>
       </div>
 
-      <ExpenseSummary expense={expense} />
+      <ExpenseSummary expense={serializedExpense} />
       
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
         <Link href={`/erp/finance/expenses/${expense.id}/edit`} style={{ padding: '10px 24px', borderRadius: '8px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>Edit Expense</Link>

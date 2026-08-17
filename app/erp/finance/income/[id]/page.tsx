@@ -19,6 +19,12 @@ export default async function IncomeDetailPage({ params }: { params: Promise<{ i
 
   if (!income) return notFound();
 
+  const serializedIncome = {
+    ...income,
+    amount: Number(income.amount),
+    received: Number(income.received),
+  };
+
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 600, marginBottom: '24px' }}>
@@ -29,7 +35,7 @@ export default async function IncomeDetailPage({ params }: { params: Promise<{ i
         <span style={{ color: 'var(--text-main)' }}>INC-{income.id.split('-')[0].toUpperCase()}</span>
       </div>
 
-      <IncomeSummary income={income} />
+      <IncomeSummary income={serializedIncome} />
     </div>
   );
 }

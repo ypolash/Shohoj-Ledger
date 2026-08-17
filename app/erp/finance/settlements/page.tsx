@@ -11,6 +11,12 @@ export default function SettlementsPage() {
   const fetchSettlements = useCallback(async () => {
     try {
       const res = await fetch('/api/settlements');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
       if (Array.isArray(data)) {
         setSettlements(data);
@@ -18,8 +24,8 @@ export default function SettlementsPage() {
         setSettlements([]);
         console.error("API returned non-array:", data);
       }
-    } catch (error) {
-      console.error("Failed to fetch settlements", error);
+    } catch (error: any) {
+      console.error("Failed to fetch settlements:", error.message || error);
     } finally {
       setLoading(false);
     }

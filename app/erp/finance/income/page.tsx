@@ -14,6 +14,12 @@ export default function IncomePage() {
   const fetchIncomes = useCallback(async () => {
     try {
       const res = await fetch('/api/income');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
       if (Array.isArray(data)) {
         setIncomes(data);
@@ -21,8 +27,8 @@ export default function IncomePage() {
         setIncomes([]);
         console.error("API returned non-array:", data);
       }
-    } catch (error) {
-      console.error("Failed to fetch incomes", error);
+    } catch (error: any) {
+      console.error("Failed to fetch incomes:", error.message || error);
     } finally {
       setLoading(false);
     }

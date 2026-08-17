@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-
+import Link from 'next/link';
 type Member = {
   id: string;
   name: string;
@@ -102,6 +102,25 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
           </div>
           <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{member.name}</h2>
           <p style={{ color: '#94a3b8', margin: '0 0 16px 0', fontSize: '14px' }}>{member.role}</p>
+
+          <Link href={`/erp/members/${member.id}/edit`} style={{ 
+            padding: '8px 16px', 
+            borderRadius: '8px', 
+            background: 'rgba(255,255,255,0.05)', 
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#fff', 
+            fontSize: '13px', 
+            fontWeight: 600, 
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginBottom: '20px',
+            transition: 'background 0.2s'
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+            Edit Profile
+          </Link>
           <div style={{ 
             background: 'rgba(16, 185, 129, 0.1)', 
             border: '1px solid rgba(16, 185, 129, 0.2)',

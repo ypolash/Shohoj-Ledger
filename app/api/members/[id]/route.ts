@@ -108,3 +108,38 @@ export async function GET(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { name, role, email, phone, status } = body;
+
+    const existingMember = await prisma.member.findUnique({
+      where: { ...(await withCompany()), id }
+    });
+
+    if (!existingMember) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+    }
+
+    const updatedMember = await prisma.member.update({
+      where: { id },
+      data: {
+        name,
+        role,
+        email,
+        phone,
+        status
+      }
+    });
+
+    return NextResponse.json(updatedMember);
+  } catch (error) {
+    console.error('Failed to update member:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

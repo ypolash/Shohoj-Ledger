@@ -45,14 +45,24 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
     setLoading(true);
     try {
       const endpoint = type === "INCOME" ? "/api/income" : "/api/expenses";
-      const payload = {
-        amount: Number(amount),
-        categoryId: category,
-        date: new Date().toISOString(),
-        paymentMethod,
-        notes: note,
-        status: "COMPLETED",
-      };
+      let payload: any = {};
+      
+      if (type === "INCOME") {
+        payload = {
+          amount: Number(amount),
+          received: Number(amount),
+          category: category,
+          source: "Fast Entry", // Default source
+          description: note
+        };
+      } else {
+        payload = {
+          amount: Number(amount),
+          category: category,
+          paymentMethod: paymentMethod,
+          description: note
+        };
+      }
 
       const res = await fetch(endpoint, {
         method: "POST",

@@ -1,33 +1,23 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 
-export function IncomeToolbar() {
+export function IncomeToolbar({ onRecordIncome }: { onRecordIncome?: () => void }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
       <div>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>Income & Receivables</h1>
-        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Manage direct and indirect income</p>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 8px 0' }}>Income & Receivables</h1>
+        <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>Manage direct and indirect income</p>
       </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button style={{ 
-          display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
-          borderRadius: '8px', background: 'var(--surface-hover)', color: 'var(--text-main)', 
-          border: '1px solid var(--border-main)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' 
-        }}>
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover-bg-surface-hover">
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
           Export
         </button>
-        <Link href="/erp/finance/income/create" style={{ 
-          display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
-          borderRadius: '8px', background: 'var(--primary)', color: 'white', 
-          border: 'none', fontSize: '13px', fontWeight: 600, textDecoration: 'none' 
-        }}>
+        <button onClick={onRecordIncome} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover-bg-primary-hover shadow-sm">
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
           Record Income
-        </Link>
+        </button>
       </div>
     </div>
   );

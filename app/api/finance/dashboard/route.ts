@@ -22,8 +22,20 @@ export async function GET(request: Request) {
 
     const ledgers = await prisma.ledgerEntry.findMany({
       where: whereClause,
-      select: { debit: true, credit: true, module: true, accountType: true, date: true }
+      select: { id: true, debit: true, credit: true, module: true, accountType: true, date: true, description: true, reference: true, status: true },
+      orderBy: { date: 'desc' }
     });
+    
+    // We can use the first 5 ledgers for the recent transactions
+    const recentTransactions = ledgers.slice(0, 5).map(l => ({
+      id: l.reference || l.id,
+      date: l.date,
+      description: l.description || 'Ledger Entry',
+      status: l.status || 'POSTED',
+      credit: Number(l.credit || 0),
+      debit: Number(l.debit || 0),
+      type: Number(l.credit || 0) > 0 ? 'INCOME' : 'EXPENSE'
+    }));
 
     // KPIs
     let totalIncome = 0;
@@ -38,7 +50,7 @@ export async function GET(request: Request) {
     let reserveBalance = 0;
 
     // Chart Data
-    const monthlyData: Record<string, { income: number; expense: number; profit: number }> = {};
+    const monthlyData: Record<string, { income: number; expense: number; profit: number; cashIn?: number; cashOut?: number }> = {};
     
     ledgers.forEach(l => {
       const debit = Number(l.debit || 0);
@@ -62,7 +74,12 @@ export async function GET(request: Request) {
       // Chart Aggregation (Monthly)
       const monthKey = `${l.date.getFullYear()}-${(l.date.getMonth() + 1).toString().padStart(2, '0')}`;
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { income: 0, expense: 0, profit: 0 };
+        monthlyData[monthKey] = { income: 0, expense: 0, profit: 0, cashIn: 0, cashOut: 0 };
+      }
+
+      if (l.accountType === 'CASH' || l.accountType === 'BANK') {
+        monthlyData[monthKey].cashIn = (monthlyData[monthKey].cashIn || 0) + debit;
+        monthlyData[monthKey].cashOut = (monthlyData[monthKey].cashOut || 0) + credit;
       }
 
       if (l.module === 'INCOME' || l.module === 'Income') monthlyData[monthKey].income += netCredit;
@@ -120,7 +137,31 @@ export async function GET(request: Request) {
       loanOutstanding: 0
     };
 
+    // Format Chart Arrays (Last 6 Months)
+    const chartMonths: string[] = [];
+    const chartIncome: number[] = [];
+    const chartExpense: number[] = [];
+    const chartProfit: number[] = [];
+    const chartCashFlow: number[] = [];
+    const chartTargets: number[] = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      const shortMonth = d.toLocaleString('default', { month: 'short' });
+      
+      chartMonths.push(shortMonth);
+      const mData = monthlyData[mKey] || { income: 0, expense: 0, profit: 0, cashIn: 0, cashOut: 0 };
+      
+      chartIncome.push(mData.income);
+      chartExpense.push(mData.expense);
+      chartProfit.push(mData.profit);
+      chartCashFlow.push((mData.cashIn || 0) - (mData.cashOut || 0));
+      chartTargets.push(mData.income * 1.1); // Placeholder target: 10% above actual income
+    }
+
     return NextResponse.json({
+      transactions: recentTransactions,
       kpis: {
         revenue: totalIncome,
         expenses: totalExpense,
@@ -131,11 +172,22 @@ export async function GET(request: Request) {
         payroll: totalPayroll,
         loanOutstanding: loans._sum.remainingAmount || 0,
         advanceOutstanding: advances._sum.remainingAmount || 0,
-        cashFlow: netCashFlow
+        cashFlow: netCashFlow,
+        cogs: 0 // Optional placeholder for COGS if it's used somewhere
       },
       trends,
       charts: {
         monthlyData,
+        months: chartMonths,
+        income: chartIncome,
+        expense: chartExpense,
+        trendMonths: chartMonths,
+        trendValues: chartIncome,
+        trendTargets: chartTargets,
+        expenseMonths: chartMonths,
+        expenseValues: chartExpense,
+        cashFlowMonths: chartMonths,
+        cashFlowData: chartCashFlow,
         expenseCategories: expenseCategories.map(c => ({ label: c.category, value: Number(c._sum.amount || 0) })),
         revenueCategories: revenueCategories.map(c => ({ label: c.category, value: Number(c._sum.amount || 0) }))
       }

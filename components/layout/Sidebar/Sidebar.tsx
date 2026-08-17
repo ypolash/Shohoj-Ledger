@@ -20,9 +20,11 @@ import {
 
 interface SidebarProps {
   businessType?: string;
+  companyName?: string;
+  logoUrl?: string | null;
 }
 
-export function Sidebar({ businessType = 'Product + Service' }: SidebarProps) {
+export function Sidebar({ businessType = 'Product + Service', companyName = 'Shohoj Ledger', logoUrl = null }: SidebarProps) {
   const { sidebarOpen, isMobile } = useUI();
   const [isHovered, setIsHovered] = useState(false);
   const pathname = usePathname() || '';
@@ -65,10 +67,14 @@ export function Sidebar({ businessType = 'Product + Service' }: SidebarProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className={styles.brand}>
-        <div className={styles.logoMark} style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
-          <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
+        <div className={styles.logoMark} style={{ backgroundColor: 'transparent', boxShadow: 'none', overflow: 'hidden' }}>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          ) : (
+            <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
+          )}
         </div>
-        {isExpanded && <span className={styles.brandName}>Shohoj Ledger</span>}
+        {isExpanded && <span className={styles.brandName}>{companyName}</span>}
       </div>
 
       <div className={styles.navContainer}>

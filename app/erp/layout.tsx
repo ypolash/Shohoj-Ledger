@@ -10,22 +10,25 @@ export default async function DashboardLayout({
   const session = await getSession();
   
   let businessType = session?.user?.businessType;
+  let companyName = "Shohoj Ledger";
+  let logoUrl = null;
   
-  // If businessType is missing from an old session, fallback to database
-  if (!businessType && session?.user?.companyId) {
+  if (session?.user?.companyId) {
     const company = await prisma.company.findUnique({
       where: { id: session.user.companyId },
-      select: { businessType: true }
+      select: { businessType: true, name: true, logoUrl: true }
     });
     if (company) {
-      businessType = company.businessType;
+      businessType = company.businessType || businessType;
+      companyName = company.name || companyName;
+      logoUrl = company.logoUrl;
     }
   }
   
   businessType = businessType || 'Product + Service';
 
   return (
-    <AppShell businessType={businessType}>
+    <AppShell businessType={businessType} companyName={companyName} logoUrl={logoUrl}>
       {children}
     </AppShell>
   );

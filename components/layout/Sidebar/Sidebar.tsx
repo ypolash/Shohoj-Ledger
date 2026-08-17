@@ -47,7 +47,6 @@ export function Sidebar({ businessType = 'Product + Service' }: SidebarProps) {
 
   const adminItems = [
     { name: 'Settings', icon: Settings, href: '/erp/settings' },
-    { name: 'Administration', icon: Shield, href: '/dashboard/super-admin' },
   ];
 
   const isActive = (path: string) => {

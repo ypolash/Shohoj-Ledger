@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         referenceId: income.id,
         amount: receivedAmount,
         isDebit: true, // Debit Bank/Cash (Asset increases)
-        accountType: 'Bank', // Default
+        accountType: income.source || 'Bank',
         description: `Income Received: ${category} ${description ? '(' + description + ')' : ''}`,
         createdById: session?.user?.id
       });
@@ -217,7 +217,7 @@ export async function PATCH(request: Request) {
         referenceId: updatedIncome.id,
         amount: receivedDiff,
         isDebit: true,
-        accountType: 'Bank',
+        accountType: updatedIncome.source || 'Bank',
         description: `Additional Income Received: ${category}`,
         createdById: session?.user?.id
       });
@@ -230,7 +230,7 @@ export async function PATCH(request: Request) {
          referenceId: updatedIncome.id,
          amount: Math.abs(receivedDiff),
          isDebit: false, // Credit Bank (Asset decreases)
-         accountType: 'Bank',
+         accountType: updatedIncome.source || 'Bank',
          description: `Income Receipt Adjusted/Refunded: ${category}`,
          createdById: session?.user?.id
        });

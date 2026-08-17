@@ -240,23 +240,23 @@ export default function SettlementsPage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
         {activeRoles.includes('ceo') && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Company Owner / CEO</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <label style={{ color: 'var(--text-muted)', flex: '1 1 120px' }}>Company Owner / CEO</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <input type="number" min="0" max="100" value={ceoPercent} onChange={e => setCeoPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
               <span>%</span>
               {showAmounts && preview && (
                 <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (ceoPercent / 100))}</span>
               )}
-              <div style={{ width: '28px' }}></div> {/* Spacer for alignment with remove buttons */}
+              <div style={{ width: '28px', display: 'flex' }}></div> {/* Spacer for alignment with remove buttons */}
             </div>
           </div>
         )}
         
         {activeRoles.includes('dev') && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Developer</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <label style={{ color: 'var(--text-muted)', flex: '1 1 120px' }}>Developer</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <input type="number" min="0" max="100" value={devPercent} onChange={e => setDevPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
               <span>%</span>
               {showAmounts && preview && (
@@ -270,9 +270,9 @@ export default function SettlementsPage() {
         )}
 
         {activeRoles.includes('advisor') && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Advisor</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <label style={{ color: 'var(--text-muted)', flex: '1 1 120px' }}>Advisor</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <input type="number" min="0" max="100" value={advisorPercent} onChange={e => setAdvisorPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
               <span>%</span>
               {showAmounts && preview && (
@@ -286,9 +286,9 @@ export default function SettlementsPage() {
         )}
 
         {activeRoles.includes('company') && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <label style={{ color: 'var(--text-muted)', flex: 1 }}>Company Reserve</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <label style={{ color: 'var(--text-muted)', flex: '1 1 120px' }}>Company Reserve</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <input type="number" min="0" max="100" value={companyPercent} onChange={e => setCompanyPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
               <span>%</span>
               {showAmounts && preview && (

@@ -103,7 +103,7 @@ export function FinanceKPICards({ data }: { data?: any }) {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            <div style={{ padding: '24px' }}>
+            <div style={{ padding: '24px', overflowX: 'auto' }}>
               {renderChart()}
             </div>
           </div>

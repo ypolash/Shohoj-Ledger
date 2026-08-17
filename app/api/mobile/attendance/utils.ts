@@ -110,8 +110,8 @@ export async function validateAttendanceRequest(
     let storedIp = "";
     
     for (const net of allowedNetworks) {
-      storedBssid = (net.bssid || "").toLowerCase().trim();
-      storedIp = (net.ipAddress || "").trim();
+      storedBssid = ((net as any).bssid || "").toLowerCase().trim();
+      storedIp = ((net as any).ipAddress || "").trim();
       
       if (storedBssid && incomingBssid && incomingBssid === storedBssid) {
         isMatch = true;
@@ -125,8 +125,8 @@ export async function validateAttendanceRequest(
     }
 
     if (!isMatch) {
-      const storedBssidsList = allowedNetworks.filter(n => n.bssid).map(n => n.bssid).join(", ");
-      const storedIpsList = allowedNetworks.filter(n => n.ipAddress).map(n => n.ipAddress).join(", ");
+      const storedBssidsList = allowedNetworks.filter(n => (n as any).bssid).map(n => (n as any).bssid).join(", ");
+      const storedIpsList = allowedNetworks.filter(n => (n as any).ipAddress).map(n => (n as any).ipAddress).join(", ");
       const diagMessage = `Network mismatch. Phone MAC: "${incomingBssid}", IP: "${incomingIp}". Allowed MACs: "${storedBssidsList}", IPs: "${storedIpsList}".`;
       
       if (companyId) {

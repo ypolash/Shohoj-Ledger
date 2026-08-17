@@ -8,8 +8,8 @@ export function ExpenseTrendChart() {
   
   const maxVal = 12;
   
-  const points = values.map((val, i) => {
-    const x = (i / (values.length - 1)) * 100;
+  const points = values.map((val: number, i: number) => {
+    const x = (i / Math.max(1, values.length - 1)) * 100;
     const y = 100 - ((val / maxVal) * 100);
     return `${x},${y}`;
   }).join(' ');
@@ -47,20 +47,34 @@ export function ExpenseTrendChart() {
                 <stop offset="100%" stopColor="var(--danger)" stopOpacity="0" />
               </linearGradient>
             </defs>
-            <polyline points={areaPoints} fill="url(#expenseGradient)" />
-            <polyline points={points} fill="none" stroke="var(--danger)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            
-            {values.map((val, i) => {
-              const x = (i / (values.length - 1)) * 100;
-              const y = 100 - ((val / maxVal) * 100);
-              return (
-                <circle key={i} cx={x} cy={y} r="3" fill="var(--bg-main)" stroke="var(--danger)" strokeWidth="2" />
-              );
-            })}
+            <polyline points={areaPoints} fill="url(#expenseGradient)" stroke="none" />
+            <polyline points={points} fill="none" stroke="var(--danger)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           </svg>
+          
+          {values.map((val: number, i: number) => {
+            const x = (i / Math.max(1, values.length - 1)) * 100;
+            const y = 100 - ((val / maxVal) * 100);
+            return (
+              <div 
+                key={i} 
+                style={{ 
+                  position: 'absolute', 
+                  left: `${x}%`, 
+                  top: `${y}%`, 
+                  width: '10px', 
+                  height: '10px', 
+                  background: 'var(--bg-main)', 
+                  border: '2px solid var(--danger)', 
+                  borderRadius: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 10
+                }} 
+              />
+            );
+          })}
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: '-24px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
-            {months.map(m => <span key={m}>{m}</span>)}
+            {months.map((m: string) => <span key={m}>{m}</span>)}
           </div>
         </div>
       </div>

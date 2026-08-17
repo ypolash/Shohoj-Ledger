@@ -24,10 +24,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try {
     const { id } = await params;
     const body = await req.json();
-    const { name, ssid, bssid, isActive } = body;
+    const { name, ssid, bssid, isActive, ipAddress } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, message: "ID is required" }, { status: 400 });
+    }
+    
+    if (ssid === undefined && bssid === undefined && ipAddress === undefined && isActive === undefined && name === undefined) {
+        // Nothing to update
+        return NextResponse.json({ success: false, message: "No data to update" }, { status: 400 });
+    }
+
+    let detectedIp = ipAddress;
+    if (ipAddress === 'auto') {
+      detectedIp = req.headers.get("x-forwarded-for")?.split(',')[0] || req.headers.get("x-real-ip") || '127.0.0.1';
     }
 
     if (bssid) {
@@ -50,15 +60,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!targetNetwork) {
       return NextResponse.json({ success: false, message: "Network not found or access denied" }, { status: 404 });
     }
+    
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (ssid !== undefined) updateData.ssid = ssid;
+    if (bssid !== undefined) updateData.bssid = bssid;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (detectedIp !== undefined) updateData.ipAddress = detectedIp;
 
     const updatedNetwork = await prisma.allowedNetwork.update({
       where: { id },
-      data: {
-        name,
-        ssid,
-        bssid,
-        isActive,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ success: true, data: updatedNetwork });

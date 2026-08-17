@@ -42,32 +42,41 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, ssid, bssid, isActive } = body;
+    const { name, ssid, bssid, isActive, ipAddress } = body;
 
-    if (!ssid || !bssid) {
+    if (!ssid && !bssid && !ipAddress) {
       return NextResponse.json(
-        { success: false, message: "SSID and BSSID are required" },
+        { success: false, message: "At least one identifier (SSID, BSSID, or IP Address) is required" },
         { status: 400 }
       );
     }
 
-    const existingNetwork = await prisma.allowedNetwork.findFirst({
-      where: { bssid, companyId: companyIdForGuard },
-    });
+    let detectedIp = ipAddress;
+    if (ipAddress === 'auto') {
+      detectedIp = req.headers.get("x-forwarded-for")?.split(',')[0] || req.headers.get("x-real-ip") || '127.0.0.1';
+    }
 
-    if (existingNetwork) {
-      return NextResponse.json(
-        { success: false, message: "A network with this BSSID already exists" },
-        { status: 400 }
-      );
+    // Check for existing network with same bssid (if provided)
+    if (bssid) {
+      const existingNetwork = await prisma.allowedNetwork.findFirst({
+        where: { bssid, companyId: companyIdForGuard },
+      });
+
+      if (existingNetwork) {
+        return NextResponse.json(
+          { success: false, message: "A network with this BSSID already exists" },
+          { status: 400 }
+        );
+      }
     }
 
     const newNetwork = await prisma.allowedNetwork.create({
       data: {
         companyId: companyIdForGuard,
-        name: name || ssid,
-        ssid,
-        bssid,
+        name: name || ssid || detectedIp || "Unnamed Network",
+        ssid: ssid || null,
+        bssid: bssid || null,
+        ipAddress: detectedIp || null,
         isActive: isActive !== undefined ? isActive : true,
       },
     });

@@ -1353,8 +1353,9 @@ model SalesCommission {
 model AllowedNetwork {
   id        String   @id @default(cuid())
   name      String
-  ssid      String
-  bssid     String   @unique
+  ssid      String?
+  bssid     String?
+  ipAddress String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

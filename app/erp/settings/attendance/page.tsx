@@ -9,8 +9,9 @@ import styles from "./styles.module.css";
 interface Network {
   id: string;
   name: string;
-  ssid: string;
-  bssid: string;
+  ssid: string | null;
+  bssid: string | null;
+  ipAddress: string | null;
   isActive: boolean;
 }
 
@@ -27,6 +28,7 @@ export default function AttendanceSettings() {
   const [name, setName] = useState("");
   const [ssid, setSsid] = useState("");
   const [bssid, setBssid] = useState("");
+  const [ipAddress, setIpAddress] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -168,6 +170,7 @@ export default function AttendanceSettings() {
     setName("");
     setSsid("");
     setBssid("");
+    setIpAddress("");
     setIsActive(true);
     setError("");
     setEditingNetwork(null);
@@ -177,8 +180,9 @@ export default function AttendanceSettings() {
     if (network) {
       setEditingNetwork(network);
       setName(network.name);
-      setSsid(network.ssid);
-      setBssid(network.bssid);
+      setSsid(network.ssid || "");
+      setBssid(network.bssid || "");
+      setIpAddress(network.ipAddress || "");
       setIsActive(network.isActive);
     } else {
       resetForm();
@@ -193,8 +197,8 @@ export default function AttendanceSettings() {
 
   const handleSaveNetwork = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ssid.trim() || !bssid.trim()) {
-      setError("SSID and BSSID are required.");
+    if (!ssid.trim() && !bssid.trim() && !ipAddress.trim()) {
+      setError("Please provide at least one identifier (SSID, BSSID, or IP Address).");
       return;
     }
     setSaving(true);
@@ -207,10 +211,18 @@ export default function AttendanceSettings() {
       
       const method = editingNetwork ? "PATCH" : "POST";
 
+      const payload = { 
+        name, 
+        ssid: ssid || null, 
+        bssid: bssid || null, 
+        ipAddress: ipAddress || null,
+        isActive 
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, ssid, bssid, isActive }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -429,8 +441,9 @@ export default function AttendanceSettings() {
             <thead>
               <tr>
                 <th className={styles.th}>Name</th>
+                <th className={styles.th}>IP Address</th>
                 <th className={styles.th}>SSID</th>
-                <th className={styles.th}>BSSID (MAC Address)</th>
+                <th className={styles.th}>BSSID (MAC)</th>
                 <th className={styles.th}>Status</th>
                 <th className={styles.th}>Actions</th>
               </tr>
@@ -446,8 +459,9 @@ export default function AttendanceSettings() {
                 networks.map((network) => (
                   <tr key={network.id}>
                     <td className={styles.td}>{network.name}</td>
-                    <td className={styles.td}>{network.ssid}</td>
-                    <td className={styles.td}>{network.bssid}</td>
+                    <td className={styles.td} style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{network.ipAddress || '-'}</td>
+                    <td className={styles.td}>{network.ssid || '-'}</td>
+                    <td className={styles.td}>{network.bssid || '-'}</td>
                     <td className={styles.td}>
                       <button 
                         style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
@@ -485,12 +499,33 @@ export default function AttendanceSettings() {
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Main Office Wi-Fi" />
               </div>
               <div className={styles.formGroup}>
-                <label>SSID *</label>
-                <input type="text" value={ssid} onChange={(e) => setSsid(e.target.value)} placeholder="e.g. SHOHOJ-OFFICE" required />
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Public IP Address</span>
+                  <button 
+                    type="button" 
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('https://api.ipify.org?format=json');
+                        const data = await res.json();
+                        setIpAddress(data.ip);
+                      } catch(e) {
+                        setIpAddress('auto');
+                      }
+                    }}
+                    style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}
+                  >
+                    Auto-Detect My IP
+                  </button>
+                </label>
+                <input type="text" value={ipAddress} onChange={(e) => setIpAddress(e.target.value)} placeholder="e.g. 192.168.1.1 (or click Auto-Detect)" />
               </div>
               <div className={styles.formGroup}>
-                <label>BSSID (Router MAC) *</label>
-                <input type="text" value={bssid} onChange={(e) => setBssid(e.target.value)} placeholder="e.g. 3C:84:6A:11:22:33" required />
+                <label>SSID (Optional)</label>
+                <input type="text" value={ssid} onChange={(e) => setSsid(e.target.value)} placeholder="e.g. SHOHOJ-OFFICE" />
+              </div>
+              <div className={styles.formGroup}>
+                <label>BSSID / Router MAC (Optional)</label>
+                <input type="text" value={bssid} onChange={(e) => setBssid(e.target.value)} placeholder="e.g. 3C:84:6A:11:22:33" />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.checkboxLabel}>

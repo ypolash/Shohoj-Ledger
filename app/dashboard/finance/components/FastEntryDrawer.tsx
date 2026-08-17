@@ -178,9 +178,7 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
               Cancel
             </button>
             <button type="submit" disabled={loading} className={`flex-1 py-3 rounded-lg font-semibold text-white transition-colors flex justify-center items-center gap-2 ${type === 'INCOME' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'} ${loading ? 'opacity-70' : ''}`}>
-              {loading ? 'Saving...' : (
-                <>Save <span className="text-xs ml-1 font-mono hidden md:inline border border-white/30 px-1 rounded">Enter</span></>
-              )}
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>

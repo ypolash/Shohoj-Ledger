@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ExpenseSummary } from '../components/ExpenseSummary';
+import { MarkPaidButton } from '../components/MarkPaidButton';
 import { prisma } from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
@@ -37,7 +38,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
       <ExpenseSummary expense={serializedExpense} />
       
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-        <Link href={`/erp/finance/expenses/${expense.id}/edit`} style={{ padding: '10px 24px', borderRadius: '8px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>Edit Expense</Link>
+        <MarkPaidButton expenseId={expense.id} initialStatus={expense.approvalStatus} />
       </div>
     </div>
   );

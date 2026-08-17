@@ -66,6 +66,19 @@ export default function FinanceDashboardPage() {
       <div style={{ marginBottom: '24px' }}>
         <FinanceKPICards data={financeData} />
       </div>
+
+      {/* Action & Overview Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+        <div>
+          <BalanceWidget data={financeData} />
+        </div>
+        <div>
+          <OutstandingWidget data={financeData} />
+        </div>
+        <div>
+          <FinanceQuickActions />
+        </div>
+      </div>
       
       {/* Top Widgets Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
@@ -95,22 +108,9 @@ export default function FinanceDashboardPage() {
       </div>
 
       {/* Tables and Info Columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <div style={{ gridColumn: 'span 2' }}>
-          <AccountBalanceTable />
-        </div>
-        <div>
-          <BalanceWidget data={financeData} />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <div style={{ gridColumn: 'span 2' }}>
-          <RecentTransactions transactions={overviewData?.recentTransactions || []} />
-        </div>
-        <div>
-          <OutstandingWidget data={financeData} />
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+        <AccountBalanceTable />
+        <RecentTransactions transactions={overviewData?.recentTransactions || []} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
@@ -119,9 +119,6 @@ export default function FinanceDashboardPage() {
         </div>
         <div>
           <BudgetSummary data={financeData} />
-        </div>
-        <div>
-          <FinanceQuickActions />
         </div>
       </div>
       

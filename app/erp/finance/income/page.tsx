@@ -51,7 +51,7 @@ export default function IncomePage() {
       ) : loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       ) : (
-        <IncomeTable incomes={incomes} />
+        <IncomeTable incomes={incomes} onRefresh={fetchIncomes} />
       )}
 
       <FastEntryDrawer 

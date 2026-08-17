@@ -3,7 +3,22 @@
 import React from 'react';
 import Link from 'next/link';
 
-export function IncomeTable({ incomes = [] }: { incomes?: any[] }) {
+export function IncomeTable({ incomes = [], onRefresh }: { incomes?: any[], onRefresh?: () => void }) {
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this income?')) return;
+    try {
+      const res = await fetch(`/api/income?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        onRefresh?.();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || 'Failed to delete income');
+      }
+    } catch (err) {
+      alert('Failed to delete income');
+    }
+  };
+
   return (
     <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
@@ -43,13 +58,29 @@ export function IncomeTable({ incomes = [] }: { incomes?: any[] }) {
                   </span>
                 </td>
                 <td style={{ padding: '16px', textAlign: 'right' }}>
-                  <Link href={'/erp/finance/income/' + inc.id} style={{ 
-                    padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, 
-                    background: 'var(--surface-main)', color: 'var(--text-main)', border: '1px solid var(--border-main)', 
-                    textDecoration: 'none', display: 'inline-block' 
-                  }}>
-                    View
-                  </Link>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <Link href={'/erp/finance/income/' + inc.id} style={{ 
+                      padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, 
+                      background: 'var(--surface-main)', color: 'var(--text-main)', border: '1px solid var(--border-main)', 
+                      textDecoration: 'none', display: 'inline-block' 
+                    }}>
+                      View
+                    </Link>
+                    <Link href={'/erp/finance/income/' + inc.id + '/edit'} style={{ 
+                      padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, 
+                      background: 'var(--primary-glow)', color: 'var(--primary)', border: '1px solid var(--primary)', 
+                      textDecoration: 'none', display: 'inline-block' 
+                    }}>
+                      Edit
+                    </Link>
+                    <button onClick={() => handleDelete(inc.id)} style={{ 
+                      padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, 
+                      background: 'var(--danger-glow)', color: 'var(--danger)', border: '1px solid var(--danger)', 
+                      cursor: 'pointer' 
+                    }}>
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))

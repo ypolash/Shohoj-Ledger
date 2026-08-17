@@ -51,7 +51,7 @@ export default function ExpensesPage() {
       ) : loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       ) : (
-        <ExpenseTable expenses={expenses} />
+        <ExpenseTable expenses={expenses} onRefresh={fetchExpenses} />
       )}
 
       <FastEntryDrawer 

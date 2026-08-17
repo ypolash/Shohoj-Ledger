@@ -4,10 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FinanceToolbar } from './components/FinanceToolbar';
 import { FinanceFilters } from './components/FinanceFilters';
 import { FinanceKPICards } from './components/FinanceKPICards';
-import { RevenueWidget } from './components/RevenueWidget';
-import { ExpenseWidget } from './components/ExpenseWidget';
-import { CashFlowWidget } from './components/CashFlowWidget';
-import { ProfitLossWidget } from './components/ProfitLossWidget';
 import { BalanceWidget } from './components/BalanceWidget';
 import { OutstandingWidget } from './components/OutstandingWidget';
 import { RecentTransactions } from './components/RecentTransactions';
@@ -73,14 +69,6 @@ export default function FinanceDashboardPage() {
         <div>
           <OutstandingWidget data={financeData} />
         </div>
-      </div>
-      
-      {/* Top Widgets Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <RevenueWidget data={financeData} />
-        <ExpenseWidget data={financeData} />
-        <CashFlowWidget data={financeData} />
-        <ProfitLossWidget data={financeData} />
       </div>
 
       {/* Tables and Info Columns */}

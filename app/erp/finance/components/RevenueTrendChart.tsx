@@ -33,18 +33,32 @@ export function RevenueTrendChart({ data }: { data?: any }) {
 
           <svg style={{ position: 'absolute', width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none" viewBox="0 0 100 100">
             {/* Target Line */}
-            <polyline points={targetPoints} fill="none" stroke="var(--border-main)" strokeWidth="2" strokeDasharray="4 4" />
+            <polyline points={targetPoints} fill="none" stroke="var(--border-main)" strokeWidth="2" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
             {/* Actual Line */}
-            <polyline points={points} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            
-            {values.map((val, i) => {
-              const x = (i / (values.length - 1)) * 100;
-              const y = 100 - ((val / maxVal) * 100);
-              return (
-                <circle key={i} cx={x} cy={y} r="4" fill="var(--bg-main)" stroke="var(--primary)" strokeWidth="2" />
-              );
-            })}
+            <polyline points={points} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           </svg>
+          
+          {values.map((val, i) => {
+            const x = (i / (values.length - 1)) * 100;
+            const y = 100 - ((val / maxVal) * 100);
+            return (
+              <div 
+                key={i} 
+                style={{ 
+                  position: 'absolute', 
+                  left: `${x}%`, 
+                  top: `${y}%`, 
+                  width: '10px', 
+                  height: '10px', 
+                  background: 'var(--bg-main)', 
+                  border: '2px solid var(--primary)', 
+                  borderRadius: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 10
+                }} 
+              />
+            );
+          })}
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: '-24px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
             {months.map(m => <span key={m}>{m}</span>)}

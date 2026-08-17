@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/lib/contexts/UIContext';
@@ -25,7 +25,25 @@ export function Topbar() {
   const { toggleSidebar, theme, setTheme } = useUI();
   const pathname = usePathname() || '';
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/erp/notifications?limit=5');
+        const data = await res.json();
+        if (data.success) {
+          setNotifications(data.data || []);
+          setUnreadCount(data.meta?.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error("Failed to load notifications", error);
+      }
+    };
+    fetchNotifications();
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
@@ -88,15 +106,24 @@ export function Topbar() {
               trigger={
                 <button className={styles.iconButton} aria-label="Notifications" title="Notifications">
                   <Bell size={20} />
-                  <span className={styles.badge}>3</span>
+                  {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
                 </button>
               }
-              items={[
-                { label: 'System update available', icon: <Bell size={16} /> },
-                { label: 'New employee onboarded', icon: <Bell size={16} /> },
-                { label: 'Monthly report generated', icon: <Bell size={16} /> },
-                { label: 'View all notifications', onClick: () => window.location.href = '/erp/settings/notifications' }
-              ]}
+              items={
+                notifications.length > 0
+                  ? [
+                      ...notifications.map(n => ({
+                        label: n.title,
+                        icon: <Bell size={16} />,
+                        onClick: () => window.location.href = '/erp/notifications'
+                      })),
+                      { label: 'View all notifications', onClick: () => window.location.href = '/erp/notifications' }
+                    ]
+                  : [
+                      { label: 'No new notifications', icon: <Bell size={16} /> },
+                      { label: 'View all notifications', onClick: () => window.location.href = '/erp/notifications' }
+                    ]
+              }
             />
 
             <Dropdown 

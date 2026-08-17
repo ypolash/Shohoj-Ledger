@@ -431,6 +431,47 @@ a:hover {
 }
 
 /* ==========================================================================
+   TABLE COMPONENTS
+   ========================================================================== */
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-main);
+  color: var(--text-main);
+}
+
+.table th {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  background-color: var(--surface-hover);
+  text-transform: uppercase;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.05em;
+}
+
+.table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background-color: var(--surface-hover);
+}
+
+/* ==========================================================================
    PREMIUM MICRO-ANIMATIONS & UI UTILITIES
    ========================================================================== */
 .hover-lift {

@@ -62,9 +62,14 @@ export default function FinanceDashboardPage() {
       <FinanceToolbar />
       <FinanceFilters />
       
-      {/* KPI Cards Row */}
-      <div style={{ marginBottom: '24px' }}>
-        <FinanceKPICards data={financeData} />
+      {/* Top Section: KPIs & Quick Actions */}
+      <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+        <div style={{ flex: 1, minWidth: '300px' }}>
+          <FinanceKPICards data={financeData} />
+        </div>
+        <div style={{ width: '250px', flexShrink: 0 }}>
+          <FinanceQuickActions />
+        </div>
       </div>
 
       {/* Action & Overview Row */}
@@ -74,9 +79,6 @@ export default function FinanceDashboardPage() {
         </div>
         <div>
           <OutstandingWidget data={financeData} />
-        </div>
-        <div>
-          <FinanceQuickActions />
         </div>
       </div>
       

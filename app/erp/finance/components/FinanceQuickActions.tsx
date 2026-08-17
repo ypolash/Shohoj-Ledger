@@ -13,24 +13,24 @@ export function FinanceQuickActions() {
   ];
 
   return (
-    <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+    <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', height: '100%' }}>
       <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: 600 }}>Quick Actions</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {actions.map(action => (
           <button 
             key={action.label}
             style={{ 
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              padding: '16px', borderRadius: '8px', background: 'var(--surface-hover)', border: '1px solid var(--border-light)',
-              cursor: 'pointer', transition: 'all 0.2s', color: 'var(--text-main)'
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '12px 16px', borderRadius: '8px', background: 'var(--surface-hover)', border: '1px solid var(--border-light)',
+              cursor: 'pointer', transition: 'all 0.2s', color: 'var(--text-main)', width: '100%', textAlign: 'left'
             }}
             onMouseOver={(e) => e.currentTarget.style.borderColor = action.color}
             onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
           >
-            <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '24px' }}>
+            <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '20px' }}>
               {action.icon}
             </span>
-            <span style={{ fontSize: '12px', fontWeight: 600 }}>{action.label}</span>
+            <span style={{ fontSize: '13px', fontWeight: 600 }}>{action.label}</span>
           </button>
         ))}
       </div>

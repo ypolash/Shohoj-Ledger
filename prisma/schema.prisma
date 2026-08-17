@@ -1395,6 +1395,7 @@ model AttendanceConfig {
 model Company {
   id                       String                        @id @default(uuid())
   name                     String
+  logoUrl                  String?
   businessType             String
   status                   String                        @default("ACTIVE")
   createdAt                DateTime                      @default(now())

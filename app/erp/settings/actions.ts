@@ -61,9 +61,14 @@ export async function updateProfile(data: any) {
   
   if (!data.name?.trim()) throw new Error("Company Name is required.");
 
+  const updateData: any = { name: data.name };
+  if (data.logoUrl !== undefined) {
+    updateData.logoUrl = data.logoUrl;
+  }
+
   await prisma.company.update({
     where: { id: companyId },
-    data: { name: data.name }
+    data: updateData
   });
   
   revalidatePath("/erp/settings");

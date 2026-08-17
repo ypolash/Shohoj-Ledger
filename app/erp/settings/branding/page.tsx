@@ -9,13 +9,30 @@ export default function BrandingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
 
   useEffect(() => {
     loadAdminData().then((res) => {
       setCompanyName(res.company?.name || "");
+      setLogoUrl(res.company?.logoUrl || "");
       setLoading(false);
     }).catch(console.error);
   }, []);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Logo file is too large. Max size is 2MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = async () => {
     if (!companyName.trim()) {
@@ -24,7 +41,7 @@ export default function BrandingPage() {
     }
     setSaving(true);
     try {
-      await updateProfile({ name: companyName });
+      await updateProfile({ name: companyName, logoUrl });
       alert("Settings saved successfully!");
     } catch (err: any) {
       alert(err.message || "Failed to save settings");
@@ -72,11 +89,29 @@ export default function BrandingPage() {
             </div>
             
             <div className="form-group">
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600 }}>Company Logo (Coming Soon)</label>
-              <div style={{ width: '100px', height: '100px', borderRadius: '12px', border: '2px dashed var(--border-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--surface-hover)', cursor: 'not-allowed' }}>
-                <span className="material-symbols-outlined">image</span>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600 }}>Company Logo</label>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ width: '100px', height: '100px', borderRadius: '12px', border: '2px dashed var(--border-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--surface-hover)', overflow: 'hidden', position: 'relative' }}>
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Company Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <span className="material-symbols-outlined">image</span>
+                  )}
+                </div>
+                <div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleLogoUpload} 
+                    id="logo-upload"
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="logo-upload" className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload New Logo
+                  </label>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Recommended: 256x256px, max 2MB.</p>
+                </div>
               </div>
-              <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Image upload will be supported in a future update.</p>
             </div>
           </div>
         )}

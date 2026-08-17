@@ -3,14 +3,14 @@
   top: 0;
   left: 0;
   bottom: 0;
-  background-color: #135447; /* Dark teal from image */
+  background-color: var(--surface-main);
   border-right: none;
   display: flex;
   flex-direction: column;
   transition: width var(--transition-base), transform var(--transition-base);
   z-index: var(--z-modal);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  color: #e2e8f0; /* Light gray text for contrast */
+  color: var(--text-main);
 }
 
 .open {
@@ -45,8 +45,8 @@
   width: 32px;
   height: 32px;
   min-width: 32px;
-  background-color: var(--primary);
-  color: #fff;
+  background-color: var(--surface-hover);
+  color: var(--primary);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -59,7 +59,7 @@
 .brandName {
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
-  color: #ffffff;
+  color: var(--text-main);
   opacity: 1;
   animation: fadeIn var(--transition-fast);
 }
@@ -91,18 +91,18 @@
   padding: var(--space-2) var(--space-3);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
-  background-color: rgba(0, 0, 0, 0.2);
-  color: #ffffff;
+  background-color: var(--surface-hover);
+  color: var(--text-main);
   font-size: var(--font-size-sm);
   transition: border-color var(--transition-fast);
 }
 .searchInput::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 .searchInput:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .navGroup {
@@ -114,7 +114,7 @@
 .sectionHeader {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0 var(--space-2);
@@ -126,7 +126,7 @@
   align-items: center;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-main);
   text-decoration: none;
   transition: background-color var(--transition-fast), color var(--transition-fast);
   gap: var(--space-3);
@@ -134,15 +134,15 @@
 }
 
 .navItem:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background-color: var(--surface-hover);
+  color: var(--text-main);
 }
 
 .navItem.active {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background-color: var(--surface-hover);
+  color: var(--primary);
   font-weight: var(--font-weight-medium);
-  box-shadow: inset 3px 0 0 #ffffff; /* Gives a nice left indicator */
+  box-shadow: inset 3px 0 0 var(--primary); /* Gives a nice left indicator */
 }
 
 /* In Dark Mode, active background needs to be adjusted */
@@ -176,7 +176,7 @@
   transform: translateY(-50%);
   height: 20px;
   width: 4px;
-  background-color: #ffffff;
+  background-color: var(--primary);
   border-radius: 0 4px 4px 0;
 }
 .collapsed .navContainer {

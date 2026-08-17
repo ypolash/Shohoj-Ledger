@@ -9,13 +9,13 @@ export function RevenueTrendChart() {
   
   const maxVal = 16;
   
-  const points = values.map((val, i) => {
+  const points = values.map((val: number, i: number) => {
     const x = (i / (values.length - 1)) * 100;
     const y = 100 - ((val / maxVal) * 100);
     return `${x},${y}`;
   }).join(' ');
 
-  const targetPoints = target.map((val, i) => {
+  const targetPoints = target.map((val: number, i: number) => {
     const x = (i / (values.length - 1)) * 100;
     const y = 100 - ((val / maxVal) * 100);
     return `${x},${y}`;
@@ -38,7 +38,7 @@ export function RevenueTrendChart() {
             <polyline points={points} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           </svg>
           
-          {values.map((val, i) => {
+          {values.map((val: number, i: number) => {
             const x = (i / (values.length - 1)) * 100;
             const y = 100 - ((val / maxVal) * 100);
             return (
@@ -61,7 +61,7 @@ export function RevenueTrendChart() {
           })}
 
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: '-24px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
-            {months.map(m => <span key={m}>{m}</span>)}
+            {months.map((m: string) => <span key={m}>{m}</span>)}
           </div>
         </div>
       </div>

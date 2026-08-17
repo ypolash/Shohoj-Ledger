@@ -10,14 +10,7 @@ import { CashFlowWidget } from './components/CashFlowWidget';
 import { ProfitLossWidget } from './components/ProfitLossWidget';
 import { BalanceWidget } from './components/BalanceWidget';
 import { OutstandingWidget } from './components/OutstandingWidget';
-import { IncomeExpenseChart } from './components/IncomeExpenseChart';
-import { CashFlowChart } from './components/CashFlowChart';
-import { RevenueTrendChart } from './components/RevenueTrendChart';
-import { ExpenseTrendChart } from './components/ExpenseTrendChart';
-import { AccountBalanceTable } from './components/AccountBalanceTable';
 import { RecentTransactions } from './components/RecentTransactions';
-import { FinancialSummary } from './components/FinancialSummary';
-import { BudgetSummary } from './components/BudgetSummary';
 import { FinanceQuickActions } from './components/FinanceQuickActions';
 
 export default function FinanceDashboardPage() {
@@ -90,38 +83,9 @@ export default function FinanceDashboardPage() {
         <ProfitLossWidget data={financeData} />
       </div>
 
-      {/* Main Charts & Summaries */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px', gridColumn: 'span 2' }}>
-          <IncomeExpenseChart data={financeData} />
-        </div>
-        <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px' }}>
-          <CashFlowChart data={financeData} />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px', gridColumn: 'span 2' }}>
-          <RevenueTrendChart data={financeData} />
-        </div>
-        <div style={{ display: 'grid', gridTemplateRows: '1fr', gap: '24px', gridColumn: 'span 2' }}>
-          <ExpenseTrendChart data={financeData} />
-        </div>
-      </div>
-
       {/* Tables and Info Columns */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
-        <AccountBalanceTable />
         <RecentTransactions transactions={overviewData?.recentTransactions || []} />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-        <div>
-          <FinancialSummary data={financeData} />
-        </div>
-        <div>
-          <BudgetSummary data={financeData} />
-        </div>
       </div>
       
     </div>

@@ -1,17 +1,24 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { LeadStatus } from './LeadStatus';
 import { LeadPriority } from './LeadPriority';
 import { LeadOwner } from './LeadOwner';
+import { LeadProgress } from './LeadProgress';
 
 interface LeadTableProps {
   leads: any[];
   onDelete?: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: string) => void;
 }
 
-export function LeadTable({ leads, onDelete }: LeadTableProps) {
+export function LeadTable({ leads, onDelete, onStatusChange }: LeadTableProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
   return (
     <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -36,7 +43,16 @@ export function LeadTable({ leads, onDelete }: LeadTableProps) {
         </thead>
         <tbody style={{ fontSize: '14px' }}>
           {leads.map((lead) => (
-            <tr key={lead.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <React.Fragment key={lead.id}>
+              <tr 
+                onClick={() => toggleExpand(lead.id)}
+                style={{ 
+                  borderBottom: '1px solid var(--border-light)',
+                  cursor: 'pointer',
+                  background: expandedId === lead.id ? 'var(--surface-hover)' : 'transparent',
+                  transition: 'background var(--transition-fast)'
+                }}
+              >
               <td style={{ padding: '16px' }}>
                 <Link href={`/erp/crm/leads/${lead.id}`} style={{ fontWeight: 600, color: 'var(--primary)' }}>
                   {lead.companyName}
@@ -77,7 +93,29 @@ export function LeadTable({ leads, onDelete }: LeadTableProps) {
                   </button>
                 </div>
               </td>
-            </tr>
+              </tr>
+              {expandedId === lead.id && (
+                <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+                  <td colSpan={8} style={{ padding: '0 24px 24px 24px' }}>
+                    <div style={{ padding: '16px', background: 'var(--surface-main)', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+                      <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-main)', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Progress & Actions</span>
+                        <Link href={`/erp/crm/leads/${lead.id}`} style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>
+                          View Full Details &rarr;
+                        </Link>
+                      </h4>
+                      <LeadProgress 
+                        leadId={lead.id} 
+                        currentStatus={lead.status} 
+                        onStatusChange={(newStatus) => {
+                          if (onStatusChange) onStatusChange(lead.id, newStatus);
+                        }} 
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>

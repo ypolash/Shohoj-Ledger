@@ -98,7 +98,13 @@ export default function LeadsPage() {
             {leads.map(lead => <LeadCard key={lead.id} lead={lead} onDelete={handleDelete} />)}
           </div>
         ) : (
-          <LeadTable leads={leads} onDelete={handleDelete} />
+          <LeadTable 
+            leads={leads} 
+            onDelete={handleDelete} 
+            onStatusChange={(id, newStatus) => {
+              setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l));
+            }}
+          />
         )}
       </div>
     </PageContainer>

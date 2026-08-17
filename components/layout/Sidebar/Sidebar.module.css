@@ -139,15 +139,15 @@
 }
 
 .navItem.active {
-  background-color: var(--surface-hover);
-  color: var(--primary);
+  background-color: var(--success-bg);
+  color: var(--success);
   font-weight: var(--font-weight-medium);
-  box-shadow: inset 3px 0 0 var(--primary); /* Gives a nice left indicator */
+  box-shadow: inset 3px 0 0 var(--success); /* Gives a nice left indicator */
 }
 
 /* In Dark Mode, active background needs to be adjusted */
 :global(.dark) .navItem.active {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: var(--success-bg);
 }
 
 .navIcon {
@@ -176,7 +176,7 @@
   transform: translateY(-50%);
   height: 20px;
   width: 4px;
-  background-color: var(--primary);
+  background-color: var(--success);
   border-radius: 0 4px 4px 0;
 }
 .collapsed .navContainer {

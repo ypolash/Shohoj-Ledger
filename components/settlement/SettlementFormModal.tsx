@@ -1,6 +1,13 @@
 import React from 'react';
 import styles from "@/app/erp/income/page.module.css";
-export function SettlementFormModal(props: any) { const { isModalOpen, setIsModalOpen, preview, handlePreview, month, year, setMonth, setYear, previewing, handleCreateSettlement, formatCurrency, submitting, setPreview } = props; return (<>
+export function SettlementFormModal(props: any) { 
+  const { 
+    isModalOpen, setIsModalOpen, preview, handlePreview, month, year, setMonth, setYear, 
+    previewing, handleCreateSettlement, formatCurrency, submitting, setPreview,
+    ceoPercent, setCeoPercent, devPercent, setDevPercent, advisorPercent, setAdvisorPercent, companyPercent, setCompanyPercent
+  } = props; 
+  
+  return (<>
       {/* Settlement Form Modal */}
       {isModalOpen && (
         <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
@@ -60,23 +67,54 @@ export function SettlementFormModal(props: any) { const { isModalOpen, setIsModa
                     <span>{formatCurrency(preview.netProfit)}</span>
                   </div>
 
-                  <h5 style={{ marginBottom: "var(--spacing-2)", color: "var(--text-muted)" }}>Distributions</h5>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span>CEO Share (40%):</span>
-                    <span>{formatCurrency(preview.ceoShare)}</span>
+                  <h5 style={{ marginBottom: "var(--spacing-2)", color: "var(--text-muted)", display: "flex", justifyContent: "space-between" }}>
+                    <span>Distributions</span>
+                    <span style={{ fontSize: "0.875rem" }}>Total: {ceoPercent + devPercent + advisorPercent + companyPercent}%</span>
+                  </h5>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ flex: 1, color: 'var(--text-muted)' }}>Company Owner / CEO</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="number" min="0" max="100" value={ceoPercent} onChange={e => setCeoPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                        <span style={{ width: '20px' }}>%</span>
+                        <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (ceoPercent / 100))}</span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ flex: 1, color: 'var(--text-muted)' }}>Developer</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="number" min="0" max="100" value={devPercent} onChange={e => setDevPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                        <span style={{ width: '20px' }}>%</span>
+                        <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (devPercent / 100))}</span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ flex: 1, color: 'var(--text-muted)' }}>Advisor</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="number" min="0" max="100" value={advisorPercent} onChange={e => setAdvisorPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                        <span style={{ width: '20px' }}>%</span>
+                        <span style={{ width: '100px', textAlign: 'right' }}>{formatCurrency(Number(preview.netProfit) * (advisorPercent / 100))}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ flex: 1, color: 'var(--text-muted)' }}>Company Reserve</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="number" min="0" max="100" value={companyPercent} onChange={e => setCompanyPercent(Number(e.target.value))} style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)' }} />
+                        <span style={{ width: '20px' }}>%</span>
+                        <span style={{ width: '100px', textAlign: 'right', color: 'var(--primary)' }}>{formatCurrency(Number(preview.netProfit) * (companyPercent / 100))}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span>Developer Share (20%):</span>
-                    <span>{formatCurrency(preview.developerShare)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span>Advisor Share (20%):</span>
-                    <span>{formatCurrency(preview.advisorShare)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <span>Company Reserve (20%):</span>
-                    <span style={{ color: 'var(--primary)' }}>{formatCurrency(preview.companyShare)}</span>
-                  </div>
+                  
+                  { (ceoPercent + devPercent + advisorPercent + companyPercent) !== 100 && (
+                    <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(255,0,0,0.1)', color: 'var(--danger)', borderRadius: '4px', fontSize: '12px' }}>
+                      Warning: Percentages should sum up to 100%. Currently: {ceoPercent + devPercent + advisorPercent + companyPercent}%.
+                    </div>
+                  )}
                 </div>
                 
                 <div style={{ display: 'flex', gap: '16px', marginTop: 'var(--spacing-4)' }}>

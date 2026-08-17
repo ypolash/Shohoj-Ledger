@@ -41,6 +41,12 @@ export default function SettlementPageClient() {
   const [previewing, setPreviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Shareholder percentages
+  const [ceoPercent, setCeoPercent] = useState(100);
+  const [devPercent, setDevPercent] = useState(0);
+  const [advisorPercent, setAdvisorPercent] = useState(0);
+  const [companyPercent, setCompanyPercent] = useState(0);
+
   const fetchSettlements = async () => {
     try {
       const res = await fetch("/api/settlements");
@@ -75,10 +81,18 @@ export default function SettlementPageClient() {
     if (!preview) return;
     setSubmitting(true);
     try {
+      const payload = {
+        ...preview,
+        ceoShare: Number(preview.netProfit) * (ceoPercent / 100),
+        developerShare: Number(preview.netProfit) * (devPercent / 100),
+        advisorShare: Number(preview.netProfit) * (advisorPercent / 100),
+        companyShare: Number(preview.netProfit) * (companyPercent / 100),
+      };
+
       const res = await fetch("/api/settlements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preview),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -178,6 +192,10 @@ export default function SettlementPageClient() {
     setPreview(null);
     setMonth((new Date().getMonth() + 1).toString());
     setYear(new Date().getFullYear().toString());
+    setCeoPercent(100);
+    setDevPercent(0);
+    setAdvisorPercent(0);
+    setCompanyPercent(0);
     setIsModalOpen(true);
   };
 
@@ -374,7 +392,11 @@ export default function SettlementPageClient() {
         </div>
       </div>
 
-      <SettlementFormModal {...{ isModalOpen, setIsModalOpen, preview, handlePreview, month, year, setMonth, setYear, previewing, handleCreateSettlement, formatCurrency, submitting, setPreview }} />
+      <SettlementFormModal {...{ 
+        isModalOpen, setIsModalOpen, preview, handlePreview, month, year, setMonth, setYear, 
+        previewing, handleCreateSettlement, formatCurrency, submitting, setPreview,
+        ceoPercent, setCeoPercent, devPercent, setDevPercent, advisorPercent, setAdvisorPercent, companyPercent, setCompanyPercent
+      }} />
       {/* Details Drawer */}
       {selectedSettlement && (
         <div className={styles.modalOverlay} onClick={() => setSelectedSettlement(null)} style={{ justifyContent: 'flex-end', padding: 0 }}>

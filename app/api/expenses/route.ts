@@ -56,11 +56,23 @@ export async function POST(request: Request) {
         category,
         amount: expenseAmount,
         paymentMethod,
-        approvalStatus: "PENDING", // Default to pending
+        approvalStatus: "APPROVED", // Auto-approved as paid
         description,
         projectId,
         systemSource
       }
+    });
+
+    const session = await getSession();
+    await createLedgerEntry({
+      companyId: companyIdForGuard,
+      module: 'Expense',
+      referenceId: expense.id,
+      amount: expenseAmount,
+      isDebit: false, // Credit Bank/Cash (Asset decreases)
+      accountType: paymentMethod || 'Bank',
+      description: `Expense Paid: ${category} ${description ? '(' + description + ')' : ''}`,
+      createdById: session?.user?.id
     });
 
     return NextResponse.json(expense, { status: 201 });

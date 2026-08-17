@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       status: l.status || 'POSTED',
       credit: Number(l.credit || 0),
       debit: Number(l.debit || 0),
-      type: Number(l.credit || 0) > 0 ? 'INCOME' : 'EXPENSE'
+      type: Number(l.debit || 0) > 0 ? 'INCOME' : 'EXPENSE'
     }));
 
     // KPIs
@@ -55,21 +55,25 @@ export async function GET(request: Request) {
     ledgers.forEach(l => {
       const debit = Number(l.debit || 0);
       const credit = Number(l.credit || 0);
-      const net = debit - credit;
-      const netCredit = credit - debit;
+      const net = debit - credit;       // Asset increase (debit) - Asset decrease (credit)
+      const netCredit = credit - debit; // Asset decrease (credit) - Asset increase (debit)
+
+      const accType = (l.accountType || '').toUpperCase();
+      const mod = (l.module || '').toUpperCase();
 
       // KPI Aggregation
-      if (l.accountType === 'CASH' || l.accountType === 'BANK') {
+      if (accType.includes('CASH') || accType.includes('BANK')) {
         totalCashIn += debit;
         totalCashOut += credit;
       }
-      if (l.accountType === 'CASH') cashBalance += net;
-      if (l.accountType === 'BANK') bankBalance += net;
-      if (l.accountType === 'RESERVE') reserveBalance += netCredit;
+      
+      if (accType.includes('CASH')) cashBalance += net;
+      if (accType.includes('BANK')) bankBalance += net;
+      if (accType.includes('RESERVE') || mod === 'RESERVE') reserveBalance += netCredit; // Reserve balance increases when Cash goes out (Credit)
 
-      if (l.module === 'INCOME' || l.module === 'Income') totalIncome += netCredit; // Income increases on Credit
-      if (l.module === 'EXPENSE' || l.module === 'Expense') totalExpense += net; // Expense increases on Debit
-      if (l.module === 'PAYROLL' || l.module === 'Payroll') totalPayroll += net; // Payroll increases on Debit
+      if (mod === 'INCOME') totalIncome += debit; // Income is money received (Debit)
+      if (mod === 'EXPENSE') totalExpense += credit; // Expense is money paid (Credit)
+      if (mod === 'PAYROLL') totalPayroll += credit; // Payroll is money paid (Credit)
 
       // Chart Aggregation (Monthly)
       const monthKey = `${l.date.getFullYear()}-${(l.date.getMonth() + 1).toString().padStart(2, '0')}`;
@@ -77,14 +81,13 @@ export async function GET(request: Request) {
         monthlyData[monthKey] = { income: 0, expense: 0, profit: 0, cashIn: 0, cashOut: 0 };
       }
 
-      if (l.accountType === 'CASH' || l.accountType === 'BANK') {
+      if (accType.includes('CASH') || accType.includes('BANK')) {
         monthlyData[monthKey].cashIn = (monthlyData[monthKey].cashIn || 0) + debit;
         monthlyData[monthKey].cashOut = (monthlyData[monthKey].cashOut || 0) + credit;
       }
 
-      if (l.module === 'INCOME' || l.module === 'Income') monthlyData[monthKey].income += netCredit;
-      if (l.module === 'EXPENSE' || l.module === 'Expense') monthlyData[monthKey].expense += net;
-      if (l.module === 'PAYROLL' || l.module === 'Payroll') monthlyData[monthKey].expense += net;
+      if (mod === 'INCOME') monthlyData[monthKey].income += debit;
+      if (mod === 'EXPENSE' || mod === 'PAYROLL') monthlyData[monthKey].expense += credit;
     });
 
     Object.keys(monthlyData).forEach(m => {

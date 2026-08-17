@@ -98,6 +98,28 @@ export async function GET(request: Request) {
       _sum: { amount: true }
     });
 
+    // Calculate Trends
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthKey = `${lastMonthDate.getFullYear()}-${(lastMonthDate.getMonth() + 1).toString().padStart(2, '0')}`;
+
+    const currMonthData = monthlyData[currentMonthKey] || { income: 0, expense: 0, profit: 0 };
+    const prevMonthData = monthlyData[lastMonthKey] || { income: 0, expense: 0, profit: 0 };
+
+    const calculateTrend = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0;
+      return ((curr - prev) / prev) * 100;
+    };
+
+    const trends = {
+      revenue: calculateTrend(currMonthData.income, prevMonthData.income),
+      expenses: calculateTrend(currMonthData.expense, prevMonthData.expense),
+      profit: calculateTrend(currMonthData.profit, prevMonthData.profit),
+      cash: 0, // Simplified: cash and outstanding don't have easy MoM tracking here
+      loanOutstanding: 0
+    };
+
     return NextResponse.json({
       kpis: {
         revenue: totalIncome,
@@ -111,6 +133,7 @@ export async function GET(request: Request) {
         advanceOutstanding: advances._sum.remainingAmount || 0,
         cashFlow: netCashFlow
       },
+      trends,
       charts: {
         monthlyData,
         expenseCategories: expenseCategories.map(c => ({ label: c.category, value: Number(c._sum.amount || 0) })),

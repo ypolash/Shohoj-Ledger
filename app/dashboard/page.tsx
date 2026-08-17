@@ -57,9 +57,8 @@ type OverviewData = {
 
 
 export default function DashboardIndex() {
-  const [data, setData] = useState<OverviewData | null>(null);
+  const [data, setData] = useState<OverviewData & { businessType?: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [businessModel, setBusinessModel] = useState<'ALL' | 'PRODUCT' | 'SERVICE'>('ALL');
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -199,28 +198,6 @@ export default function DashboardIndex() {
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-main)' }}>Shohoj Ledger - Premium Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>A premium, soft-UI financial dashboard</p>
         </div>
-        <div>
-          <select 
-            value={businessModel}
-            onChange={(e) => setBusinessModel(e.target.value as 'ALL' | 'PRODUCT' | 'SERVICE')}
-            style={{ 
-              padding: '8px 16px', 
-              borderRadius: '12px', 
-              border: '1px solid var(--border-main)', 
-              background: 'var(--bg-main)', 
-              color: 'var(--text-main)',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              outline: 'none',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <option value="ALL">All Models</option>
-            <option value="PRODUCT">Product Based</option>
-            <option value="SERVICE">Service Based</option>
-          </select>
-        </div>
       </div>
 
       {/* Bento Grid Summary Cards */}
@@ -259,7 +236,7 @@ export default function DashboardIndex() {
         </div>
 
         {/* Product Based Exclusive Cards */}
-        {(businessModel === 'ALL' || businessModel === 'PRODUCT') && (
+        {(data.businessType === 'Product + Service' || data.businessType === 'Product') && (
           <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
             <div style={{ width: '36px', height: '36px', background: 'var(--info-glow, #e0f2fe)', border: '1px solid var(--info, #0ea5e9)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
               <span className="material-symbols-outlined" style={{ color: 'var(--info, #0ea5e9)', fontSize: '18px' }}>inventory_2</span>
@@ -270,7 +247,7 @@ export default function DashboardIndex() {
         )}
 
         {/* Service Based Exclusive Cards */}
-        {(businessModel === 'ALL' || businessModel === 'SERVICE') && (
+        {(data.businessType === 'Product + Service' || data.businessType === 'Service') && (
           <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
             <div style={{ width: '36px', height: '36px', background: 'var(--warning-glow, #fef3c7)', border: '1px solid var(--warning, #f59e0b)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
               <span className="material-symbols-outlined" style={{ color: 'var(--warning, #f59e0b)', fontSize: '18px' }}>assignment</span>
@@ -290,7 +267,7 @@ export default function DashboardIndex() {
         </div>
 
         {/* Active Loans */}
-        {businessModel === 'ALL' && (
+        {data.businessType === 'Product + Service' && (
           <div className="glass-card topo-bg" style={{ display: 'flex', flexDirection: 'column', padding: '24px', borderRadius: '16px' }}>
             <div style={{ width: '36px', height: '36px', background: 'var(--primary-glow)', border: '1px solid var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', boxShadow: 'var(--shadow-sm)' }}>
               <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '18px' }}>monetization_on</span>

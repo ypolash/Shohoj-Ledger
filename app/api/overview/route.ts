@@ -34,7 +34,8 @@ export async function GET() {
       recentTasks,
       recentActivities,
       notifications,
-      calendarEvents
+      calendarEvents,
+      companyInfo
     ] = await Promise.all([
       prisma.reserveTransaction.findMany({ where: { companyId } }),
       prisma.income.aggregate({
@@ -80,7 +81,8 @@ export async function GET() {
       prisma.task.findMany({ where: { companyId, status: { not: "COMPLETED" } }, take: 5, include: { employee: true }, orderBy: { dueDate: 'asc' } }),
       prisma.globalAuditLog.findMany({ where: { companyId }, take: 5, include: { user: true }, orderBy: { createdAt: 'desc' } }),
       prisma.notification.findMany({ where: { companyId, status: "UNREAD" }, take: 5, orderBy: { createdAt: 'desc' } }),
-      prisma.holidayCalendar.findMany({ where: { companyId, date: { gte: startOfDay } }, take: 5, orderBy: { date: 'asc' } })
+      prisma.holidayCalendar.findMany({ where: { companyId, date: { gte: startOfDay } }, take: 5, orderBy: { date: 'asc' } }),
+      prisma.company.findUnique({ where: { id: companyId }, select: { businessType: true } })
     ]);
 
     const reserveBalance = reserveTransactions.reduce((acc, tx) => {
@@ -132,6 +134,7 @@ export async function GET() {
     }, 0);
 
     return NextResponse.json({
+      businessType: companyInfo?.businessType || 'Product + Service',
       reserveBalance,
       totalIncome,
       totalExpenses,

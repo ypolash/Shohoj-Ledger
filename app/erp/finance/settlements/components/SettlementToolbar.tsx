@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export function SettlementToolbar({ onGenerate }: { onGenerate?: () => void }) {
+export function SettlementToolbar({ onGenerate, onEditShareholders }: { onGenerate?: () => void, onEditShareholders?: () => void }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
       <div>
@@ -10,6 +10,10 @@ export function SettlementToolbar({ onGenerate }: { onGenerate?: () => void }) {
         <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>Calculate and distribute net profits based on partnership agreements</p>
       </div>
       <div style={{ display: 'flex', gap: '12px' }}>
+        <button onClick={onEditShareholders} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-hover)', color: 'var(--text-main)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>group</span>
+          Shareholders
+        </button>
         <button onClick={onGenerate} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover-bg-primary-hover shadow-sm">
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calculate</span>
           Generate Settlement

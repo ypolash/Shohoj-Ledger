@@ -11,6 +11,8 @@ export default function SettlementsPage() {
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isShareholderModalOpen, setIsShareholderModalOpen] = useState(false);
+  
   const [month, setMonth] = useState((new Date().getMonth() + 1).toString());
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [preview, setPreview] = useState<any>(null);
@@ -51,13 +53,68 @@ export default function SettlementsPage() {
     fetchSettlements();
   }, [fetchSettlements]);
 
+  // Load defaults on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('settlement_defaults');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed) {
+          setCeoPercent(parsed.ceoPercent ?? 100);
+          setDevPercent(parsed.devPercent ?? 0);
+          setAdvisorPercent(parsed.advisorPercent ?? 0);
+          setCompanyPercent(parsed.companyPercent ?? 0);
+        }
+      }
+    } catch(e) {}
+  }, []);
+
+  const handleOpenShareholderModal = () => {
+    try {
+      const stored = localStorage.getItem('settlement_defaults');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setCeoPercent(parsed.ceoPercent ?? 100);
+        setDevPercent(parsed.devPercent ?? 0);
+        setAdvisorPercent(parsed.advisorPercent ?? 0);
+        setCompanyPercent(parsed.companyPercent ?? 0);
+      } else {
+        setCeoPercent(100);
+        setDevPercent(0);
+        setAdvisorPercent(0);
+        setCompanyPercent(0);
+      }
+    } catch(e) {}
+    setIsShareholderModalOpen(true);
+  };
+
+  const handleSaveShareholders = () => {
+    const payload = { ceoPercent, devPercent, advisorPercent, companyPercent };
+    localStorage.setItem('settlement_defaults', JSON.stringify(payload));
+    setIsShareholderModalOpen(false);
+  };
+
   const handleOpenModal = () => {
     setMonth((new Date().getMonth() + 1).toString());
     setYear(new Date().getFullYear().toString());
-    setCeoPercent(100);
-    setDevPercent(0);
-    setAdvisorPercent(0);
-    setCompanyPercent(0);
+    
+    // Read from local storage to initialize Generate modal
+    try {
+      const stored = localStorage.getItem('settlement_defaults');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setCeoPercent(parsed.ceoPercent ?? 100);
+        setDevPercent(parsed.devPercent ?? 0);
+        setAdvisorPercent(parsed.advisorPercent ?? 0);
+        setCompanyPercent(parsed.companyPercent ?? 0);
+      } else {
+        setCeoPercent(100);
+        setDevPercent(0);
+        setAdvisorPercent(0);
+        setCompanyPercent(0);
+      }
+    } catch(e) {}
+
     setPreview(null);
     setIsModalOpen(true);
   };
@@ -135,7 +192,7 @@ export default function SettlementsPage() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
-      <SettlementToolbar onGenerate={handleOpenModal} />
+      <SettlementToolbar onGenerate={handleOpenModal} onEditShareholders={handleOpenShareholderModal} />
       {error ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--destructive, red)' }}>
           <p>Error: {error}</p>
@@ -146,6 +203,69 @@ export default function SettlementsPage() {
         <SettlementTable settlements={settlements} onExecute={handleExecute} />
       )}
       
+      {/* Configuration Modal for Shareholder Defaults */}
+      {isShareholderModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--surface)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px' }}>Global Default Distributions</h2>
+              <button onClick={() => setIsShareholderModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+            
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+              Set the default percentages to be used when generating new settlements.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ color: 'var(--text-muted)' }}>Company Owner / CEO</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input type="number" min="0" max="100" value={ceoPercent} onChange={e => setCeoPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+                  <span>%</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ color: 'var(--text-muted)' }}>Developer</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input type="number" min="0" max="100" value={devPercent} onChange={e => setDevPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+                  <span>%</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ color: 'var(--text-muted)' }}>Advisor</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input type="number" min="0" max="100" value={advisorPercent} onChange={e => setAdvisorPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+                  <span>%</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ color: 'var(--text-muted)' }}>Company Reserve</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input type="number" min="0" max="100" value={companyPercent} onChange={e => setCompanyPercent(Number(e.target.value))} style={{ width: '80px', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }} />
+                  <span>%</span>
+                </div>
+              </div>
+            </div>
+
+            { (ceoPercent + devPercent + advisorPercent + companyPercent) !== 100 && (
+              <div style={{ marginBottom: '16px', padding: '8px', background: 'rgba(255,0,0,0.1)', color: 'var(--danger)', borderRadius: '4px', fontSize: '13px' }}>
+                Warning: Percentages must sum to 100%. Currently: {ceoPercent + devPercent + advisorPercent + companyPercent}%.
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={handleSaveShareholders} disabled={(ceoPercent + devPercent + advisorPercent + companyPercent) !== 100} style={{ flex: 1, padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', opacity: ((ceoPercent + devPercent + advisorPercent + companyPercent) !== 100) ? 0.5 : 1 }}>
+                Save Defaults
+              </button>
+              <button onClick={() => setIsShareholderModalOpen(false)} style={{ padding: '10px 16px', background: 'var(--surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Settlement Modal */}
       {isModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'var(--surface)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>

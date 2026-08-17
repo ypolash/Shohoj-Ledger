@@ -8,9 +8,10 @@ import { Topbar } from '../Topbar/Topbar';
 
 interface AppShellProps {
   children: React.ReactNode;
+  businessType?: string;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, businessType = 'Product + Service' }: AppShellProps) {
   const { sidebarOpen, isMobile, setSidebarOpen } = useUI();
 
   return (
@@ -25,7 +26,7 @@ export function AppShell({ children }: AppShellProps) {
       )}
 
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar businessType={businessType} />
 
       {/* Main Content Area */}
       <div 

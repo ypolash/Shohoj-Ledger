@@ -41,7 +41,7 @@ export async function POST(req: Request) {
           try {
             isMatch = await verifyPassword({ hash: account.password, password });
           } catch (e) {
-            console.error("Better-auth verify error:", e);
+            // Ignore better-auth format errors for bcrypt hashes
           }
         }
 
@@ -160,9 +160,9 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log("✗ Authentication Failed: Invalid credentials");
+    console.log(`✗ Authentication Failed: Invalid credentials for ${email || rawIdentifier}`);
     return NextResponse.json(
-      { success: false, message: "Invalid credentials" },
+      { success: false, message: "Invalid credentials. Please check your email and password." },
       { status: 401 }
     );
   } catch (error) {

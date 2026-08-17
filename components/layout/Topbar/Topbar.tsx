@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useUI } from '@/lib/contexts/UIContext';
 import styles from './Topbar.module.css';
 import { 
@@ -24,6 +25,17 @@ export function Topbar() {
   const { toggleSidebar, theme, setTheme } = useUI();
   const pathname = usePathname() || '';
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (e) {
+      console.error('Logout error', e);
+      router.push('/login');
+    }
+  };
 
   // Basic breadcrumb generation based on pathname
   const paths = pathname.split('/').filter(Boolean);
@@ -97,7 +109,7 @@ export function Topbar() {
               items={[
                 { label: 'My Profile', icon: <User size={16} />, onClick: () => window.location.href = '/erp/settings/profile' },
                 { label: 'Account Settings', icon: <Settings size={16} />, onClick: () => window.location.href = '/erp/settings' },
-                { label: 'Sign Out', icon: <LogOut size={16} />, danger: true, onClick: () => alert('Sign out logic here') }
+                { label: 'Sign Out', icon: <LogOut size={16} />, danger: true, onClick: handleLogout }
               ]}
             />
           </div>

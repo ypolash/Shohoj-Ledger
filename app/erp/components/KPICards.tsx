@@ -22,6 +22,7 @@ type OverviewData = {
   attendanceToday?: number;
   inventoryValue?: number;
   activeProjects?: number;
+  businessType?: string;
 };
 
 interface KPICardsProps {
@@ -36,11 +37,13 @@ const formatCurrency = (val: number | string) => {
 export function KPICards({ data, role }: KPICardsProps) {
   if (!data) return null;
 
-  // Visibility based on role
+  // Visibility based on role and business type
   const showFinance = ['Owner', 'CEO', 'Accountant'].includes(role);
   const showHR = ['Owner', 'CEO', 'HR'].includes(role);
-  const showProjects = ['Owner', 'CEO', 'Project Manager'].includes(role);
-  const showInventory = ['Owner', 'CEO', 'Inventory'].includes(role);
+  const businessType = (data.businessType || 'Product + Service').toUpperCase();
+  
+  const showProjects = ['Owner', 'CEO', 'Project Manager'].includes(role) && businessType !== 'PRODUCT';
+  const showInventory = ['Owner', 'CEO', 'Inventory'].includes(role) && businessType !== 'SERVICE';
 
   const totalEmp = data.totalEmployees || 0;
   const attToday = data.attendanceToday || 0;
@@ -147,6 +150,7 @@ export function KPICards({ data, role }: KPICardsProps) {
           </div>
         </>
       )}
+
     </div>
   );
 }

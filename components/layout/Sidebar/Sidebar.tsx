@@ -18,7 +18,11 @@ import {
   Shield 
 } from 'lucide-react';
 
-export function Sidebar() {
+interface SidebarProps {
+  businessType?: string;
+}
+
+export function Sidebar({ businessType = 'Product + Service' }: SidebarProps) {
   const { sidebarOpen, isMobile } = useUI();
   const [isHovered, setIsHovered] = useState(false);
   const pathname = usePathname() || '';
@@ -34,7 +38,12 @@ export function Sidebar() {
     { name: 'Payroll', icon: CreditCard, href: '/erp/payroll' },
     { name: 'Projects', icon: Folder, href: '/erp/projects' },
     { name: 'Reports', icon: BarChart2, href: '/erp/reports' },
-  ];
+  ].filter(item => {
+    const type = businessType.toUpperCase();
+    if (item.name === 'Inventory' && type === 'SERVICE') return false;
+    if (item.name === 'Projects' && type === 'PRODUCT') return false;
+    return true;
+  });
 
   const adminItems = [
     { name: 'Settings', icon: Settings, href: '/erp/settings' },

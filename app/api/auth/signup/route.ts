@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { CompanyService } from "@/lib/company/companyService";
 import { ApiErrorHandler } from "@/lib/security/errorHandler";
+import { getCompanyContext } from "@/lib/auth/getCompanyContext";
+import { createSession } from "@/lib/session";
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +19,20 @@ export async function POST(request: Request) {
       businessType: payload.businessType || "Product + Service",
       selectedModules: payload.selectedModules || [],
     });
+
+    // Automatically log the new owner in by generating their session
+    const context = await getCompanyContext(newCompany.owner.id, "ADMIN");
+    
+    const sessionPayload = {
+      id: newCompany.owner.id,
+      email: newCompany.owner.email,
+      name: newCompany.owner.name,
+      loginType: "ADMIN",
+      role: context.dbRoleName || "Owner",
+      ...context,
+    };
+    
+    await createSession(sessionPayload);
 
     return NextResponse.json({
       success: true,

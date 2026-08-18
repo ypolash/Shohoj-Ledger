@@ -94,7 +94,7 @@ export default function CRMDashboardPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
         
         {/* KPI Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--spacing-5)' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--spacing-5)' }}>
           {[
             { label: 'Total Leads', value: metrics.totalLeads, color: 'var(--primary)', glow: 'primary' },
             { label: 'New Leads', value: metrics.newLeads, color: 'var(--text-main)', glow: 'accent' },

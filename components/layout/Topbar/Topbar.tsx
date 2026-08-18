@@ -15,7 +15,8 @@ import {
   UserCircle,
   Settings,
   LogOut,
-  User
+  User,
+  Menu
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Dropdown } from '@/components/ui/Dropdown/Dropdown';
@@ -71,6 +72,15 @@ export function Topbar() {
     <>
       <header className={styles.topbar}>
         <div className={styles.leftSection}>
+          <button 
+            className={`${styles.iconButton} ${styles.menuButton}`} 
+            onClick={toggleSidebar}
+            aria-label="Toggle Menu"
+            title="Toggle Menu"
+          >
+            <Menu size={20} />
+          </button>
+          
           <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
             <span className={styles.breadcrumbItem}>Shohoj</span>
             {breadcrumbs.map((crumb, i) => (

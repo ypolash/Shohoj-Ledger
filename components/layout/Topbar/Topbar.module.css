@@ -132,7 +132,17 @@
   color: var(--primary);
 }
 
+.menuButton {
+  display: none;
+}
+
 /* Responsive Overrides */
+@media (max-width: 1023px) {
+  .menuButton {
+    display: flex;
+  }
+}
+
 @media (max-width: 768px) {
   .searchTrigger {
     display: none; /* Hide global search input on mobile topbar, move to a button if needed */

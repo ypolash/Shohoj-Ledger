@@ -509,6 +509,19 @@ a:hover {
   }
 }
 
+/* Tablet & Mobile Grid Classes */
+.grid-responsive-charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (max-width: 1024px) {
+  .grid-responsive-charts {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Mobile-Specific Overrides */
 @media (max-width: 768px) {
   /* 1. Grid Collapsing 

@@ -115,7 +115,7 @@ export default function CRMDashboardPage() {
         </div>
 
         {/* Charts & Tables */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--spacing-6)' }}>
+        <div className="grid-responsive-charts">
           <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
             <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', color: 'var(--text-main)' }}>Monthly Lead Generation</h2>
             <div style={{ height: '300px' }}>

@@ -19,7 +19,7 @@ export function CustomerSearch({ onSearch }: CustomerSearchProps) {
   }, [query]);
 
   return (
-    <div style={{ position: 'relative', width: '300px' }}>
+    <div style={{ position: 'relative', flex: '1 1 250px', maxWidth: '400px' }}>
       <span 
         className="material-symbols-outlined" 
         style={{ 

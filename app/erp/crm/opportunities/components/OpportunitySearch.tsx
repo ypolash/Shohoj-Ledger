@@ -17,7 +17,7 @@ export function OpportunitySearch({ onSearch }: OpportunitySearchProps) {
   }, [term, onSearch]);
 
   return (
-    <div style={{ position: 'relative', width: '300px' }}>
+    <div style={{ position: 'relative', flex: '1 1 250px', maxWidth: '400px' }}>
       <span className="material-symbols-outlined" style={{
         position: 'absolute',
         left: '12px',

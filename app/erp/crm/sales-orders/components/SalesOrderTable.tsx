@@ -69,13 +69,13 @@ export function SalesOrderTable({ orders, onDelete }: SalesOrderTableProps) {
                 </span>
               </td>
               <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
                   <Link href={`/erp/crm/sales-orders/${order.id}/edit`}>
                     <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} title="Edit">
                       <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>edit</span>
                     </button>
                   </Link>
-                  <button onClick={() => onDelete && onDelete(order.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--danger)' }} title="Delete">
+                  <button onClick={(e) => { e.stopPropagation(); onDelete && onDelete(order.id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--danger)' }} title="Delete">
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
                   </button>
                 </div>

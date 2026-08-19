@@ -7,10 +7,28 @@ import { recordRelease } from "./customerCreditService"; // Integration with Pha
  * Generates a unique Payment number.
  */
 export async function generatePaymentNumber(companyId: string): Promise<string> {
-  const count = await prisma.customerPayment.count({ where: { companyId } });
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const nextNumber = (count + 1).toString().padStart(4, "0");
-  return `PAY-${dateStr}-${nextNumber}`;
+  const prefix = companyId.substring(0, 3).toUpperCase();
+  
+  const latestPayment = await prisma.customerPayment.findFirst({
+    where: { 
+      companyId,
+      paymentNumber: { startsWith: `PAY-${prefix}-${dateStr}-` }
+    },
+    orderBy: { paymentNumber: 'desc' }
+  });
+
+  if (latestPayment) {
+    const parts = latestPayment.paymentNumber.split('-');
+    const lastNumStr = parts[parts.length - 1];
+    const lastNum = parseInt(lastNumStr, 10);
+    if (!isNaN(lastNum)) {
+      const nextNumber = (lastNum + 1).toString().padStart(4, "0");
+      return `PAY-${prefix}-${dateStr}-${nextNumber}`;
+    }
+  }
+  
+  return `PAY-${prefix}-${dateStr}-0001`;
 }
 
 /**

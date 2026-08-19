@@ -105,8 +105,8 @@ export default function SalesOrderDetailPage() {
         </div>
         <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--success)' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Shipment Status</div>
-          <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 500, color: order.shipmentStatus === 'Delivered' ? 'var(--success)' : 'var(--info)' }}>
-            {order.shipmentStatus || 'Pending'}
+          <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 500, color: order.status === 'DELIVERED' ? 'var(--success)' : 'var(--info)' }}>
+            {order.status === 'DELIVERED' ? 'Delivered' : order.status === 'PARTIALLY_DELIVERED' ? 'Partial' : 'Pending'}
           </div>
         </div>
       </div>

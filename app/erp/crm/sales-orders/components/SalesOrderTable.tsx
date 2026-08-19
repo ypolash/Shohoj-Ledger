@@ -57,10 +57,10 @@ export function SalesOrderTable({ orders, onDelete }: SalesOrderTableProps) {
               <td style={{ padding: '16px 24px' }}>
                 <span style={{
                   padding: '4px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
-                  background: order.shipmentStatus === 'Delivered' ? 'var(--success-glow)' : 'var(--info-glow)',
-                  color: order.shipmentStatus === 'Delivered' ? 'var(--success)' : 'var(--info)'
+                  background: order.status === 'DELIVERED' ? 'var(--success-glow)' : 'var(--info-glow)',
+                  color: order.status === 'DELIVERED' ? 'var(--success)' : 'var(--info)'
                 }}>
-                  {order.shipmentStatus || 'Pending'}
+                  {order.status === 'DELIVERED' ? 'Delivered' : order.status === 'PARTIALLY_DELIVERED' ? 'Partial' : 'Pending'}
                 </span>
               </td>
               <td style={{ padding: '16px 24px', textAlign: 'right' }}>

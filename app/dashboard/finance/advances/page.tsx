@@ -10,7 +10,7 @@ export default function AdvancesPage() {
   
   // Modal state
   const [members, setMembers] = useState<any[]>([]);
-  const [form, setForm] = useState({ memberId: '', amount: '', reason: '' });
+  const [form, setForm] = useState({ memberId: '', amount: '', reason: '', date: new Date().toISOString().split('T')[0] });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -62,7 +62,7 @@ export default function AdvancesPage() {
 
       setSuccess('Advance issued successfully');
       setShowModal(false);
-      setForm({ memberId: '', amount: '', reason: '' });
+      setForm({ memberId: '', amount: '', reason: '', date: new Date().toISOString().split('T')[0] });
       fetchAdvances();
       
       setTimeout(() => setSuccess(''), 3000);
@@ -139,6 +139,17 @@ export default function AdvancesPage() {
                   value={form.amount} 
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                   placeholder="0.00" 
+                  required 
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Date *</label>
+                <input 
+                  type="date" 
+                  value={form.date} 
+                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                   required 
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }} 
                 />

@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         remainingAmount: parseFloat(data.amount), // Initially remaining = full amount
         reason: data.reason || null,
         status: 'ACTIVE',
+        createdAt: data.date ? new Date(data.date) : new Date(),
       }
     });
 

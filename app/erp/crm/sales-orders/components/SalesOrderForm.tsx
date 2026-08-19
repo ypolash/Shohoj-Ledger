@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SalesOrderItems } from './SalesOrderItems';
 import { QuotationTotals } from '../../quotations/components/QuotationTotals'; // Reuse totals component
@@ -8,6 +8,7 @@ import { QuotationTotals } from '../../quotations/components/QuotationTotals'; /
 export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     customerId: initialData.customerId || '',
     quotationId: initialData.quotationId || '',
@@ -23,6 +24,21 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
 
   const [taxRate, setTaxRate] = useState(15); 
   const [globalDiscount, setGlobalDiscount] = useState(0);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const res = await fetch('/api/crm/customers?take=100');
+        if (res.ok) {
+          const data = await res.json();
+          setCustomers(data.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount), 0);
@@ -65,8 +81,9 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
             <label style={labelStyle}>Customer *</label>
             <select name="customerId" required value={formData.customerId} onChange={handleChange} style={inputStyle}>
               <option value="">Select Customer...</option>
-              <option value="cust_1">Acme Corporation</option>
-              <option value="cust_2">Globex Inc.</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
             </select>
           </div>
           <div>

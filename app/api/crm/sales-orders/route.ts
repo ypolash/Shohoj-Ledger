@@ -3,10 +3,11 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { createSalesOrder } from "@/lib/crm/salesOrderService";
 import { SalesOrderStatus } from "@prisma/client";
+import { getCompanyId } from "@/lib/company/companyFilter";
 
 export async function GET(req: NextRequest) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     const searchParams = req.nextUrl.searchParams;

@@ -29,7 +29,7 @@ export default function SalesOrdersPage() {
       const res = await fetch(`/api/crm/sales-orders?${qParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setOrders(data.orders || []);
+        setOrders(data.data || []);
       }
     } catch (err) {
       console.error(err);

@@ -103,14 +103,25 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
     Number(data.shippingAmount || 0)
   );
 
+  const parsedOrderDate = data.orderDate ? new Date(data.orderDate) : new Date();
+  const validOrderDate = isNaN(parsedOrderDate.getTime()) ? new Date() : parsedOrderDate;
+
+  let validReqDate = null;
+  if (data.requestedDeliveryDate) {
+    const parsed = new Date(data.requestedDeliveryDate);
+    if (!isNaN(parsed.getTime())) {
+      validReqDate = parsed;
+    }
+  }
+
   const salesOrder = await prisma.salesOrder.create({
     data: {
       companyId,
       salesOrderNumber: data.salesOrderNumber,
       quotationId: data.quotationId || null,
       customerId: data.customerId,
-      orderDate: data.orderDate ? new Date(data.orderDate) : new Date(),
-      requestedDeliveryDate: data.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null,
+      orderDate: validOrderDate,
+      requestedDeliveryDate: validReqDate,
       currency: data.currency || "BDT",
       subtotal,
       taxAmount,
@@ -172,6 +183,14 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
     Number(data.shippingAmount || existing.shippingAmount)
   );
 
+  let validReqDate = null;
+  if (data.requestedDeliveryDate) {
+    const parsed = new Date(data.requestedDeliveryDate);
+    if (!isNaN(parsed.getTime())) {
+      validReqDate = parsed;
+    }
+  }
+
   const salesOrder = await prisma.$transaction(async (tx) => {
     await tx.salesOrderLine.deleteMany({ where: { salesOrderId: id } });
 
@@ -179,7 +198,7 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
       where: { id },
       data: {
         customerId: data.customerId,
-        requestedDeliveryDate: data.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null,
+        requestedDeliveryDate: validReqDate,
         currency: data.currency || "BDT",
         subtotal,
         taxAmount,

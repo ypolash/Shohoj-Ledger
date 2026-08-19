@@ -39,12 +39,46 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // In a real implementation, this would POST to /api/crm/quotations
-    setTimeout(() => {
-      alert("Quotation saved successfully! (Mock)");
-      router.push('/erp/crm/quotations');
+    const url = isEdit ? `/api/crm/quotations/${initialData.id}` : '/api/crm/quotations';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: formData.customerId,
+          opportunityId: formData.opportunityId || undefined,
+          quotationDate: formData.issueDate,
+          expiryDate: formData.expiryDate || undefined,
+          status: formData.status,
+          notes: formData.notes,
+          terms: formData.terms,
+          discountAmount: globalDiscount,
+          taxRate: taxRate,
+          lines: items.map(item => ({
+            productId: item.productId || 'dummy',
+            warehouseId: item.warehouseId || 'dummy',
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            discountAmount: item.discount,
+            description: item.description
+          }))
+        })
+      });
+      if (res.ok) {
+        alert(`Quotation ${isEdit ? 'updated' : 'created'} successfully!`);
+        router.push(isEdit ? `/erp/crm/quotations/${initialData.id}` : '/erp/crm/quotations');
+      } else {
+        const error = await res.json();
+        alert(`Failed to save quotation: ${error.error}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Error: ${err.message}`);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const inputStyle = {

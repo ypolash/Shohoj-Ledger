@@ -55,11 +55,11 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
     e.preventDefault();
     setLoading(true);
     try {
-      // Find a default product and warehouse to use since UI doesn't select them yet
-      const defaultDataRes = await fetch('/api/crm/dashboard'); // Use a lightweight route, or just create directly
+      const url = isEdit ? `/api/crm/sales-orders/${initialData.id}` : '/api/crm/sales-orders';
+      const method = isEdit ? 'PUT' : 'POST';
       
-      const res = await fetch('/api/crm/sales-orders', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: formData.customerId,
@@ -81,8 +81,8 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
         })
       });
       if (res.ok) {
-        alert("Sales Order created successfully!");
-        router.push('/erp/crm/sales-orders');
+        alert(`Sales Order ${isEdit ? 'updated' : 'created'} successfully!`);
+        router.push(isEdit ? `/erp/crm/sales-orders/${initialData.id}` : '/erp/crm/sales-orders');
       } else {
         const error = await res.json();
         alert(`Failed to save order: ${error.error}`);

@@ -35,7 +35,6 @@ export function AdvanceTable({ advances, isLoading, onEdit, onDelete }: { advanc
               <th style={{ padding: '16px', fontWeight: 600 }}>Beneficiary</th>
               <th style={{ padding: '16px', fontWeight: 600 }}>Reason</th>
               <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Issued Amount</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Unrecovered</th>
               <th style={{ padding: '16px', fontWeight: 600, textAlign: 'center' }}>Status</th>
               <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
             </tr>
@@ -61,9 +60,6 @@ export function AdvanceTable({ advances, isLoading, onEdit, onDelete }: { advanc
                   </td>
                   <td style={{ padding: '16px', fontWeight: 600, textAlign: 'right', color: 'var(--text-muted)' }}>
                     {Number(advance.amount).toLocaleString()}
-                  </td>
-                  <td style={{ padding: '16px', fontWeight: 700, textAlign: 'right', color: advance.remainingAmount > 0 ? 'var(--warning)' : 'var(--success)' }}>
-                    {Number(advance.remainingAmount).toLocaleString()}
                   </td>
                   <td style={{ padding: '16px', textAlign: 'center' }}>
                     <span style={{ 

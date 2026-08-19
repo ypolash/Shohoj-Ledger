@@ -114,7 +114,7 @@ export default function EditCustomerPage() {
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             <div>
-              <label style={labelStyle}>Company Name *</label>
+              <label style={labelStyle}>Company/Customer Name *</label>
               <input name="customerName" required value={formData.customerName} onChange={handleChange} style={inputStyle} />
             </div>
             <div>

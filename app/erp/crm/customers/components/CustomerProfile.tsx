@@ -13,7 +13,7 @@ export function CustomerProfile({ customer }: CustomerProfileProps) {
         <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>General Information</h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div><strong>Customer Code:</strong> {customer.customerCode || '-'}</div>
-          <div><strong>Company Name:</strong> {customer.customerName}</div>
+          <div><strong>Company/Customer Name:</strong> {customer.customerName}</div>
           <div><strong>Customer Group:</strong> {customer.group?.name || '-'}</div>
           <div><strong>Currency:</strong> {customer.currency || 'BDT'}</div>
           <div><strong>Payment Terms:</strong> {customer.paymentTerms || '-'}</div>

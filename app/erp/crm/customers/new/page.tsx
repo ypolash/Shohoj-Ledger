@@ -83,7 +83,7 @@ export default function CreateCustomerPage() {
             <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>General Information</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
               <div>
-                <label style={labelStyle}>Company Name *</label>
+                <label style={labelStyle}>Company/Customer Name *</label>
                 <input name="customerName" required value={formData.customerName} onChange={handleChange} style={inputStyle} placeholder="Acme Corporation" />
               </div>
               <div>

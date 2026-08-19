@@ -29,7 +29,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const history = await getSalesOrderHistory(companyId, resolvedParams.id);
 
-    return NextResponse.json({ ...salesOrder, history });
+    const allocations = await prisma.customerPaymentAllocation.findMany({
+      where: { referenceType: "SALES_ORDER", referenceId: resolvedParams.id }
+    });
+    const amountPaid = allocations.reduce((sum, alloc) => sum + Number(alloc.allocatedAmount), 0);
+    const grandTotal = Number(salesOrder.totalAmount);
+    
+    let paymentStatus = "Unpaid";
+    if (amountPaid > 0) {
+      paymentStatus = amountPaid >= grandTotal ? "Paid" : "Partial";
+    }
+
+    return NextResponse.json({ ...salesOrder, history, amountPaid, paymentStatus });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

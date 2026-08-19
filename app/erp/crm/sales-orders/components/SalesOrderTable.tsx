@@ -48,8 +48,8 @@ export function SalesOrderTable({ orders, onDelete }: SalesOrderTableProps) {
               <td style={{ padding: '16px 24px' }}>
                 <span style={{
                   padding: '4px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
-                  background: order.paymentStatus === 'Paid' ? 'var(--success-glow)' : 'var(--warning-glow)',
-                  color: order.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)'
+                  background: order.paymentStatus === 'Paid' ? 'var(--success-glow)' : order.paymentStatus === 'Partial' ? 'var(--info-glow)' : 'var(--warning-glow)',
+                  color: order.paymentStatus === 'Paid' ? 'var(--success)' : order.paymentStatus === 'Partial' ? 'var(--info)' : 'var(--warning)'
                 }}>
                   {order.paymentStatus || 'Unpaid'}
                 </span>

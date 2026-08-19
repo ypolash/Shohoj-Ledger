@@ -46,7 +46,29 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return NextResponse.json({ data });
+    const orderIds = data.map((d: any) => d.id);
+    const allocations = await prisma.customerPaymentAllocation.findMany({
+      where: { referenceType: "SALES_ORDER", referenceId: { in: orderIds } }
+    });
+
+    const enrichedData = data.map((order: any) => {
+      const orderAllocations = allocations.filter(a => a.referenceId === order.id);
+      const amountPaid = orderAllocations.reduce((sum, a) => sum + Number(a.allocatedAmount), 0);
+      const grandTotal = Number(order.totalAmount);
+      
+      let paymentStatus = "Unpaid";
+      if (amountPaid > 0) {
+        paymentStatus = amountPaid >= grandTotal ? "Paid" : "Partial";
+      }
+
+      return {
+        ...order,
+        amountPaid,
+        paymentStatus
+      };
+    });
+
+    return NextResponse.json({ data: enrichedData });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

@@ -97,9 +97,9 @@ export default function SalesOrderDetailPage() {
             {new Date(order.orderDate || order.createdAt).toLocaleDateString()}
           </div>
         </div>
-        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--warning)' }}>
+        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: `4px solid ${order.paymentStatus === 'Paid' ? 'var(--success)' : order.paymentStatus === 'Partial' ? 'var(--info)' : 'var(--warning)'}` }}>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Payment Status</div>
-          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: order.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--warning)' }}>
+          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: order.paymentStatus === 'Paid' ? 'var(--success)' : order.paymentStatus === 'Partial' ? 'var(--info)' : 'var(--warning)' }}>
             {order.paymentStatus || 'Unpaid'}
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function SalesOrderDetailPage() {
           </div>
         )}
 
-        {activeTab === 'payments' && <SalesOrderPayments />}
+        {activeTab === 'payments' && <SalesOrderPayments order={order} />}
         {activeTab === 'invoices' && <SalesOrderInvoices />}
         {activeTab === 'shipments' && <SalesOrderShipment />}
 

@@ -15,15 +15,26 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
     expiryDate: initialData.expiryDate ? new Date(initialData.expiryDate).toISOString().split('T')[0] : '',
     terms: initialData.terms || 'Standard payment terms apply (Net 30).',
     status: initialData.status || 'Draft',
-    notes: initialData.notes || ''
+    notes: initialData.remarks || initialData.notes || ''
   });
 
-  const [items, setItems] = useState<any[]>(initialData.items || [
+  const defaultItems = initialData.lines ? initialData.lines.map((line: any) => ({
+    id: line.id || Math.random().toString(),
+    productId: line.productId,
+    warehouseId: line.warehouseId,
+    description: line.remarks || line.product?.name || '',
+    quantity: Number(line.quantity),
+    unitPrice: Number(line.unitPrice),
+    discount: Number(line.discountAmount) || 0,
+    total: Number(line.lineTotal) || 0
+  })) : initialData.items;
+
+  const [items, setItems] = useState<any[]>(defaultItems || [
     { id: '1', description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
   ]);
 
   const [taxRate, setTaxRate] = useState(15); // e.g. 15% VAT
-  const [globalDiscount, setGlobalDiscount] = useState(0);
+  const [globalDiscount, setGlobalDiscount] = useState(Number(initialData.discountAmount) || 0);
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount), 0);

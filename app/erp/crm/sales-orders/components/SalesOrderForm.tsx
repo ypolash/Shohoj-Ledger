@@ -15,15 +15,26 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
     orderDate: initialData.orderDate ? new Date(initialData.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     expectedDelivery: initialData.expectedDelivery ? new Date(initialData.expectedDelivery).toISOString().split('T')[0] : '',
     status: initialData.status || 'Confirmed',
-    notes: initialData.notes || ''
+    notes: initialData.remarks || initialData.notes || ''
   });
 
-  const [items, setItems] = useState<any[]>(initialData.items || [
+  const defaultItems = initialData.lines ? initialData.lines.map((line: any) => ({
+    id: line.id || Math.random().toString(),
+    productId: line.productId,
+    warehouseId: line.warehouseId,
+    description: line.remarks || line.product?.name || '',
+    quantity: Number(line.quantity),
+    unitPrice: Number(line.unitPrice),
+    discount: Number(line.discountAmount) || 0,
+    total: Number(line.lineTotal) || 0
+  })) : initialData.items;
+
+  const [items, setItems] = useState<any[]>(defaultItems || [
     { id: '1', description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
   ]);
 
   const [taxRate, setTaxRate] = useState(15); 
-  const [globalDiscount, setGlobalDiscount] = useState(0);
+  const [globalDiscount, setGlobalDiscount] = useState(Number(initialData.discountAmount) || 0);
 
   useEffect(() => {
     const fetchCustomers = async () => {

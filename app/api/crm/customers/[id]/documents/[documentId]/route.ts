@@ -1,15 +1,24 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getCompanyId } from "@/lib/company/companyFilter";
-import { customerDocumentService } from "@/lib/crm/customerDocumentService";
 
-export async function DELETE(request: Request, { params }: { params: { documentId: string } }) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string, documentId: string }> }) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const params = await context.params;
 
-    await customerDocumentService.removeDocument(companyId, params.documentId);
+    await prisma.customerDocument.delete({
+      where: { 
+        id: params.documentId,
+        companyId,
+        customerId: params.id
+      }
+    });
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("DELETE Customer Document Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

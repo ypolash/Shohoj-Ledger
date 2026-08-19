@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface CustomerAddressesProps {
   customer: any;
@@ -24,6 +25,7 @@ export function CustomerAddresses({ customer }: CustomerAddressesProps) {
   });
 
   const fetchAddresses = async () => {
+    if (!customer?.id) return;
     try {
       const res = await fetch(`/api/crm/customers/${customer.id}/addresses`);
       if (res.ok) {
@@ -36,8 +38,10 @@ export function CustomerAddresses({ customer }: CustomerAddressesProps) {
   };
 
   useEffect(() => {
-    fetchAddresses();
-  }, [customer.id]);
+    if (customer?.id) {
+      fetchAddresses();
+    }
+  }, [customer?.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -54,6 +58,7 @@ export function CustomerAddresses({ customer }: CustomerAddressesProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!customer?.id) return;
     setLoading(true);
     try {
       const url = editingId 
@@ -111,6 +116,7 @@ export function CustomerAddresses({ customer }: CustomerAddressesProps) {
                 </button>
                 <button 
                   onClick={async () => {
+                    if (!customer?.id) return;
                     if (confirm('Are you sure you want to delete this address?')) {
                       await fetch(`/api/crm/customers/${customer.id}/addresses/${a.id}`, { method: 'DELETE' });
                       fetchAddresses();
@@ -141,9 +147,9 @@ export function CustomerAddresses({ customer }: CustomerAddressesProps) {
         )}
       </div>
 
-      {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div style={{ background: 'var(--surface-main)', padding: '24px', borderRadius: '12px', width: '400px', border: '1px solid var(--border-light)' }}>
+      {showModal && typeof document !== 'undefined' && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'var(--surface-main)', padding: '24px', borderRadius: '12px', width: '400px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-light)' }}>
             <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>{editingId ? 'Edit Address' : 'Add Address'}</h3>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
@@ -195,7 +201,8 @@ export function CustomerAddresses({ customer }: CustomerAddressesProps) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface CustomerActivitiesProps {
   customer: any;
@@ -20,6 +21,7 @@ export function CustomerActivities({ customer }: CustomerActivitiesProps) {
   });
 
   const fetchActivities = async () => {
+    if (!customer?.id) return;
     try {
       const res = await fetch(`/api/crm/customers/${customer.id}/activities`);
       if (res.ok) {
@@ -32,8 +34,10 @@ export function CustomerActivities({ customer }: CustomerActivitiesProps) {
   };
 
   useEffect(() => {
-    fetchActivities();
-  }, [customer.id]);
+    if (customer?.id) {
+      fetchActivities();
+    }
+  }, [customer?.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -45,6 +49,7 @@ export function CustomerActivities({ customer }: CustomerActivitiesProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!customer?.id) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/crm/customers/${customer.id}/activities`, {
@@ -125,26 +130,26 @@ export function CustomerActivities({ customer }: CustomerActivitiesProps) {
         </div>
       )}
 
-      {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div style={{ background: 'var(--surface-main)', padding: '24px', borderRadius: '12px', width: '400px', border: '1px solid var(--border-light)' }}>
+      {showModal && typeof document !== 'undefined' && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: 'var(--surface-main)', padding: '24px', borderRadius: '12px', width: '400px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-light)' }}>
             <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>Add Activity</h3>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Activity Type *</label>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Type *</label>
                 <select name="type" value={formData.type} onChange={handleChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--surface-hover)', color: 'var(--text-main)' }}>
-                  <option value="TASK">Task</option>
                   <option value="CALL">Call</option>
                   <option value="MEETING">Meeting</option>
+                  <option value="TASK">Task</option>
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Title / Subject *</label>
-                <input required name="title" value={formData.title} onChange={handleChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--surface-hover)', color: 'var(--text-main)' }} placeholder="e.g. Follow up on proposal" />
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Title *</label>
+                <input required name="title" value={formData.title} onChange={handleChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--surface-hover)', color: 'var(--text-main)' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Date & Time *</label>
-                <input type="datetime-local" required name="date" value={formData.date} onChange={handleChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--surface-hover)', color: 'var(--text-main)' }} />
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Date/Time *</label>
+                <input required type="datetime-local" name="date" value={formData.date} onChange={handleChange} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-light)', background: 'var(--surface-hover)', color: 'var(--text-main)' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Status *</label>
@@ -167,7 +172,8 @@ export function CustomerActivities({ customer }: CustomerActivitiesProps) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

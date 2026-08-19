@@ -42,16 +42,7 @@ export function CustomerNotes() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--surface-main)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--warning)' }}>push_pin</span>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>PINNED NOTE</span>
-            </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Yesterday</span>
-          </div>
-          <p style={{ fontSize: '14px', color: 'var(--text-main)', margin: 0, whiteSpace: 'pre-wrap' }}>Customer requires a 10% discount on wholesale orders above 50,000 BDT.</p>
-        </div>
+        <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No notes recorded yet.</div>
       </div>
     </div>
   );

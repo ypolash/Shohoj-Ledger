@@ -113,7 +113,18 @@ export default function CreateLeadPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div>
               <label style={labelStyle}>Service Type *</label>
-              <input name="serviceType" required value={formData.serviceType} onChange={handleChange} style={inputStyle} placeholder="e.g. Implementation" />
+              <select name="serviceType" required value={formData.serviceType} onChange={handleChange} style={inputStyle}>
+                <option value="" disabled>Select a service type</option>
+                <option value="Web Development">Web Development</option>
+                <option value="Mobile App Development">Mobile App Development</option>
+                <option value="UI/UX Design">UI/UX Design</option>
+                <option value="Digital Marketing">Digital Marketing</option>
+                <option value="SEO Optimization">SEO Optimization</option>
+                <option value="Custom Software">Custom Software</option>
+                <option value="IT Consulting">IT Consulting</option>
+                <option value="Maintenance & Support">Maintenance & Support</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
               <label style={labelStyle}>Expected Value (BDT) *</label>

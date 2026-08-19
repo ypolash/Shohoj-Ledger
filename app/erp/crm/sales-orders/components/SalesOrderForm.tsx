@@ -152,11 +152,14 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
             <div>
               <label style={labelStyle}>Status</label>
               <select name="status" value={formData.status} onChange={handleChange} style={inputStyle}>
-                <option value="Confirmed">Confirmed</option>
-                <option value="Processing">Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
+                <option value="DRAFT">Draft</option>
+                <option value="PENDING_APPROVAL">Pending Approval</option>
+                <option value="APPROVED">Approved</option>
+                <option value="OPEN">Open</option>
+                <option value="PARTIALLY_DELIVERED">Partially Delivered</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="CLOSED">Closed</option>
               </select>
             </div>
           )}

@@ -137,10 +137,14 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
             <div>
               <label style={labelStyle}>Status</label>
               <select name="status" value={formData.status} onChange={handleChange} style={inputStyle}>
-                <option value="Draft">Draft</option>
-                <option value="Sent">Sent</option>
-                <option value="Accepted">Accepted</option>
-                <option value="Rejected">Rejected</option>
+                <option value="DRAFT">Draft</option>
+                <option value="PENDING_APPROVAL">Pending Approval</option>
+                <option value="APPROVED">Approved</option>
+                <option value="SENT">Sent</option>
+                <option value="ACCEPTED">Accepted</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="EXPIRED">Expired</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
           )}

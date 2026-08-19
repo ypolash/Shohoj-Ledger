@@ -187,6 +187,7 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
         discountAmount,
         totalAmount,
         remarks: data.remarks || null,
+        status: data.status ? data.status : existing.status,
         lines: {
           create: processedLines.map(line => ({
             productId: line.productId,

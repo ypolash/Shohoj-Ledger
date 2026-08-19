@@ -204,6 +204,7 @@ export async function updateQuotation(companyId: string, id: string, userId: str
         discountAmount,
         totalAmount,
         remarks: data.remarks || null,
+        status: data.status ? data.status : existing.status,
         lines: {
           create: processedLines.map(line => ({
             productId: line.productId,

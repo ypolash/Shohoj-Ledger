@@ -26,10 +26,11 @@ export function QuickActions({ role }: QuickActionsProps) {
   return (
     <div className="glass-card" style={{ padding: '24px', marginBottom: '24px', borderRadius: '16px' }}>
       <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 16px 0', fontFamily: 'serif' }}>Quick Actions</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '16px' }}>
         {visibleActions.map((action, idx) => (
           <Link href={action.href} key={idx} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ 
+              aspectRatio: '1 / 1',
               padding: '16px', 
               borderRadius: '12px', 
               border: '1px solid var(--border-main)',
@@ -37,7 +38,7 @@ export function QuickActions({ role }: QuickActionsProps) {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px',
+              gap: '12px',
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all var(--transition-base)',
@@ -52,7 +53,7 @@ export function QuickActions({ role }: QuickActionsProps) {
               e.currentTarget.style.boxShadow = 'none';
             }}
             >
-              <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '24px' }}>
+              <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '32px' }}>
                 {action.icon}
               </span>
               <span style={{ fontSize: '13px', fontWeight: 500 }}>{action.label}</span>

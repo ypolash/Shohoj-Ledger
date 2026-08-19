@@ -22,7 +22,7 @@ export function QuickActions({ role }: QuickActionsProps) {
   return (
     <div className="glass-panel" style={{ padding: '16px 24px', marginBottom: '16px', borderRadius: '16px' }}>
       <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text-main)' }}>Quick Actions</h3>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '16px' }}>
         {visibleActions.map((action, idx) => {
           // Map color strings to class names for our global utilities
           let glowClass = 'glow-border-primary';
@@ -37,22 +37,24 @@ export function QuickActions({ role }: QuickActionsProps) {
               <div 
                 className={`hover-lift ${glowClass}`}
                 style={{ 
-                  height: '56px',
+                  aspectRatio: '1 / 1',
                   borderRadius: '12px',
                   border: '1px solid var(--border-main)',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  padding: '0 20px',
+                  justifyContent: 'center',
+                  padding: '16px',
                   gap: '12px',
+                  textAlign: 'center',
                   cursor: 'pointer',
-                  background: 'var(--surface-hover)',
-                  flexShrink: 0
+                  background: 'var(--surface-hover)'
                 }}
               >
-                <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '24px', opacity: 0.9 }}>
+                <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '32px', opacity: 0.9 }}>
                   {action.icon}
                 </span>
-                <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-main)' }}>{action.label}</span>
+                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)' }}>{action.label}</span>
               </div>
             </Link>
           );

@@ -14,7 +14,8 @@ export function SalesOrderSearch({ onSearch }: SalesOrderSearchProps) {
       onSearch(term);
     }, 300); // 300ms debounce
     return () => clearTimeout(delay);
-  }, [term, onSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [term]);
 
   return (
     <div style={{ position: 'relative', width: '300px' }}>

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
-import { customerAddressService } from "@/lib/crm/customerAddressService";
-
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -11,12 +9,12 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const params = await props.params;
-    const addresses = await prisma.customerAddress.findMany({
+    const activities = await prisma.customerActivity.findMany({
       where: { companyId, customerId: params.id },
-      orderBy: { isDefault: 'desc' }
+      orderBy: { date: 'desc' }
     });
 
-    return NextResponse.json(addresses);
+    return NextResponse.json(activities);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -34,12 +32,20 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     
     const params = await props.params;
 
-    // Auto-mark as default if no addresses exist
-    const count = await prisma.customerAddress.count({ where: { companyId, customerId: params.id }});
-    if (count === 0) data.isDefault = true;
+    const activity = await prisma.customerActivity.create({
+      data: {
+        companyId,
+        customerId: params.id,
+        performedById: userId,
+        type: data.type || "TASK",
+        title: data.title,
+        date: data.date ? new Date(data.date) : new Date(),
+        status: data.status || "UPCOMING",
+        notes: data.notes || null,
+      }
+    });
 
-    const address = await customerAddressService.addAddress(companyId, userId, params.id, data);
-    return NextResponse.json(address, { status: 201 });
+    return NextResponse.json(activity, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -33,6 +33,7 @@ model User {
   createdCreditHistories        CustomerCreditHistory[]  @relation("CreditHistoryCreator")
   createdCustomerPayments       CustomerPayment[]        @relation("CustomerPaymentCreator")
   createdCustomerReturns        CustomerReturn[]         @relation("CustomerReturnCreator")
+  customerActivities            CustomerActivity[]
   createdDeliveryOrders         DeliveryOrder[]          @relation("DeliveryOrderCreator")
   globalAuditLogs               GlobalAuditLog[]
   approvedGoodsReceiptNotes     GoodsReceiptNote[]       @relation("GoodsReceiptApprover")
@@ -1433,6 +1434,7 @@ model Company {
   settings                 CompanySetting?
   costCenters              CostCenter[]
   customers                Customer[]
+  customerActivities       CustomerActivity[]
   customerAddresses        CustomerAddress[]
   customerContacts         CustomerContact[]
   creditHistories          CustomerCreditHistory[]
@@ -4208,6 +4210,7 @@ model Customer {
   customerGroup    CustomerGroup?          @relation(fields: [customerGroupId], references: [id])
   addresses        CustomerAddress[]
   contacts         CustomerContact[]
+  activities       CustomerActivity[]
   creditHistories  CustomerCreditHistory[]
   creditProfile    CustomerCreditProfile?
   documents        CustomerDocument[]
@@ -4279,6 +4282,27 @@ model CustomerContact {
   updatedAt   DateTime @updatedAt
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([customerId])
+}
+
+model CustomerActivity {
+  id            String   @id @default(uuid())
+  companyId     String
+  customerId    String
+  type          String   // e.g., CALL, MEETING, TASK
+  title         String?  // subject or title
+  date          DateTime @default(now())
+  status        String   @default("UPCOMING") // UPCOMING, COMPLETED, OVERDUE
+  notes         String?
+  performedById String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  performedBy   User     @relation(fields: [performedById], references: [id])
 
   @@index([companyId])
   @@index([customerId])

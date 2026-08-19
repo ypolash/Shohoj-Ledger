@@ -69,7 +69,9 @@ export default function CustomerDetailPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button 
+            onClick={() => router.push(`/erp/crm/sales-orders/new?customerId=${customer.id}`)}
+            style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_shopping_cart</span>
             New Order
           </button>

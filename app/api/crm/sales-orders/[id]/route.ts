@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getCompanyId } from "@/lib/company/companyFilter";
 import { prisma } from "@/lib/prisma";
 import { updateSalesOrder, deleteSalesOrder, getSalesOrderHistory } from "@/lib/crm/salesOrderService";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     const salesOrder = await prisma.salesOrder.findFirst({
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,7 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     await deleteSalesOrder(companyId, params.id);

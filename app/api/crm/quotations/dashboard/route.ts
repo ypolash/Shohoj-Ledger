@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     const [

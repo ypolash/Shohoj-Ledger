@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getCompanyId } from "@/lib/company/companyFilter";
 import { 
   approveQuotation, 
   sendQuotation, 
@@ -12,7 +13,7 @@ import {
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

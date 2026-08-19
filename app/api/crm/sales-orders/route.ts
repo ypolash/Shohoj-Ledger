@@ -54,11 +54,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!companyId || !userId) return NextResponse.json({ error: "Missing headers" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Missing headers" }, { status: 400 });
 
     const body = await req.json();
 

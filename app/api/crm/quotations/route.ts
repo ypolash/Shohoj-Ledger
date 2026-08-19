@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getCompanyId } from "@/lib/company/companyFilter";
 import { prisma } from "@/lib/prisma";
 import { createQuotation } from "@/lib/crm/quotationService";
 import { QuotationStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     const searchParams = req.nextUrl.searchParams;
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const companyId = req.headers.get("x-company-id");
+    const companyId = await getCompanyId();
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

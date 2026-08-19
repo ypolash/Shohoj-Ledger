@@ -30,6 +30,31 @@ export function CustomerNotes({ customer }: { customer: any }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this note?")) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/crm/customers/${customer.id}/notes`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: "" })
+      });
+      if (res.ok) {
+        setDisplayedNote("");
+        setNewNote("");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = () => {
+    setNewNote(displayedNote);
+    // Optionally focus the textarea if needed, but simply setting it is fine.
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ padding: '16px', background: 'var(--surface-hover)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
@@ -79,6 +104,19 @@ export function CustomerNotes({ customer }: { customer: any }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--warning)' }}>push_pin</span>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>PINNED NOTE</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={handleEdit}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                </button>
+                <button 
+                  onClick={handleDelete}
+                  disabled={saving}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', opacity: saving ? 0.5 : 1 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                </button>
               </div>
             </div>
             <p style={{ fontSize: '14px', color: 'var(--text-main)', margin: 0, whiteSpace: 'pre-wrap' }}>{displayedNote}</p>

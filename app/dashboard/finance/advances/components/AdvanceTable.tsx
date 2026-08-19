@@ -14,7 +14,7 @@ interface Advance {
   createdAt: string;
 }
 
-export function AdvanceTable({ advances, isLoading }: { advances: Advance[], isLoading: boolean }) {
+export function AdvanceTable({ advances, isLoading, onEdit, onDelete }: { advances: Advance[], isLoading: boolean, onEdit?: (a: Advance) => void, onDelete?: (id: string) => void }) {
   if (isLoading) {
     return (
       <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', opacity: 0.6 }}>
@@ -37,12 +37,13 @@ export function AdvanceTable({ advances, isLoading }: { advances: Advance[], isL
               <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Issued Amount</th>
               <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Unrecovered</th>
               <th style={{ padding: '16px', fontWeight: 600, textAlign: 'center' }}>Status</th>
+              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody style={{ fontSize: '13px' }}>
             {advances.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No active advances found.
                 </td>
               </tr>
@@ -75,6 +76,18 @@ export function AdvanceTable({ advances, isLoading }: { advances: Advance[], isL
                     }}>
                       {advance.status}
                     </span>
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'right' }}>
+                    {onEdit && (
+                      <button onClick={() => onEdit(advance)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', marginRight: '12px' }} title="Edit">
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button onClick={() => onDelete(advance.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }} title="Delete">
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))

@@ -4,13 +4,14 @@ import { getCompanyId } from "@/lib/company/companyFilter";
 import { prisma } from "@/lib/prisma";
 import { updateSalesOrder, deleteSalesOrder, getSalesOrderHistory } from "@/lib/crm/salesOrderService";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
+    const resolvedParams = await params;
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     const salesOrder = await prisma.salesOrder.findFirst({
-      where: { id: params.id, companyId },
+      where: { id: resolvedParams.id, companyId },
       include: {
         customer: true,
         quotation: true,
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     if (!salesOrder) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const history = await getSalesOrderHistory(companyId, params.id);
+    const history = await getSalesOrderHistory(companyId, resolvedParams.id);
 
     return NextResponse.json({ ...salesOrder, history });
   } catch (err: any) {
@@ -34,9 +35,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
+    const resolvedParams = await params;
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -75,7 +77,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       }));
     }
 
-    const salesOrder = await updateSalesOrder(companyId, params.id, userId, body);
+    const salesOrder = await updateSalesOrder(companyId, resolvedParams.id, userId, body);
 
     return NextResponse.json(salesOrder);
   } catch (err: any) {
@@ -83,12 +85,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
+    const resolvedParams = await params;
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
-    await deleteSalesOrder(companyId, params.id);
+    await deleteSalesOrder(companyId, resolvedParams.id);
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

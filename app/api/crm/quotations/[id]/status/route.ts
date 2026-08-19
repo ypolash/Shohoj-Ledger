@@ -11,9 +11,10 @@ import {
   duplicateQuotation 
 } from "@/lib/crm/quotationService";
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
+    const resolvedParams = await params;
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,25 +25,25 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     switch (action) {
       case "APPROVE":
-        result = await approveQuotation(companyId, params.id, userId);
+        result = await approveQuotation(companyId, resolvedParams.id, userId);
         break;
       case "SEND":
-        result = await sendQuotation(companyId, params.id, userId);
+        result = await sendQuotation(companyId, resolvedParams.id, userId);
         break;
       case "ACCEPT":
-        result = await acceptQuotation(companyId, params.id, userId);
+        result = await acceptQuotation(companyId, resolvedParams.id, userId);
         break;
       case "REJECT":
-        result = await rejectQuotation(companyId, params.id, userId);
+        result = await rejectQuotation(companyId, resolvedParams.id, userId);
         break;
       case "EXPIRE":
-        result = await expireQuotation(companyId, params.id, userId);
+        result = await expireQuotation(companyId, resolvedParams.id, userId);
         break;
       case "CONVERT":
-        result = await convertToSalesOrder(companyId, params.id, userId);
+        result = await convertToSalesOrder(companyId, resolvedParams.id, userId);
         break;
       case "DUPLICATE":
-        result = await duplicateQuotation(companyId, params.id, userId);
+        result = await duplicateQuotation(companyId, resolvedParams.id, userId);
         break;
       default:
         throw new Error(`Invalid action: ${action}`);

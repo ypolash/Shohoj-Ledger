@@ -12,9 +12,10 @@ import { SalesOrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
+    const resolvedParams = await params;
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,28 +26,28 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     switch (action) {
       case "SUBMIT_APPROVAL":
-        const so = await prisma.salesOrder.findFirst({ where: { id: params.id, companyId } });
+        const so = await prisma.salesOrder.findFirst({ where: { id: resolvedParams.id, companyId } });
         if (!so || so.status !== "DRAFT") throw new Error("Can only submit DRAFT orders");
         result = await prisma.salesOrder.update({
-          where: { id: params.id },
+          where: { id: resolvedParams.id },
           data: { status: "PENDING_APPROVAL" }
         });
-        await logAudit({ module: "CRM", entityType: "SalesOrder", entityId: params.id, action: "UPDATE", description: `Submitted Sales Order ${result.salesOrderNumber} for approval` });
+        await logAudit({ module: "CRM", entityType: "SalesOrder", entityId: resolvedParams.id, action: "UPDATE", description: `Submitted Sales Order ${result.salesOrderNumber} for approval` });
         break;
       case "APPROVE":
-        result = await approveSalesOrder(companyId, params.id, userId);
+        result = await approveSalesOrder(companyId, resolvedParams.id, userId);
         break;
       case "RESERVE":
-        result = await reserveInventory(companyId, params.id, userId);
+        result = await reserveInventory(companyId, resolvedParams.id, userId);
         break;
       case "RELEASE":
-        result = await releaseReservation(companyId, params.id, userId);
+        result = await releaseReservation(companyId, resolvedParams.id, userId);
         break;
       case "CANCEL":
-        result = await cancelSalesOrder(companyId, params.id, userId);
+        result = await cancelSalesOrder(companyId, resolvedParams.id, userId);
         break;
       case "CLOSE":
-        result = await closeSalesOrder(companyId, params.id, userId);
+        result = await closeSalesOrder(companyId, resolvedParams.id, userId);
         break;
       default:
         throw new Error(`Invalid action: ${action}`);

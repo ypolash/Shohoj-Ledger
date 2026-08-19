@@ -208,8 +208,12 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
   });
   
   if (!existing || existing.companyId !== companyId) throw new Error("Sales Order not found");
-  if (existing.status !== SalesOrderStatus.DRAFT && existing.status !== SalesOrderStatus.PENDING_APPROVAL) {
-    throw new Error("Cannot modify a Sales Order that is already approved or open");
+  if (
+    existing.status !== SalesOrderStatus.DRAFT && 
+    existing.status !== SalesOrderStatus.PENDING_APPROVAL &&
+    existing.status !== SalesOrderStatus.APPROVED
+  ) {
+    throw new Error("Cannot modify a Sales Order that is already open or delivered");
   }
 
   await validateSalesOrder(companyId, data);

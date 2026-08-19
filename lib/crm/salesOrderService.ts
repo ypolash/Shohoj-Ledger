@@ -36,11 +36,12 @@ export async function validateSalesOrder(companyId: string, data: any) {
  */
 export async function generateSalesOrderNumber(companyId: string): Promise<string> {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const prefix = companyId.substring(0, 3).toUpperCase();
   
   const latestOrder = await prisma.salesOrder.findFirst({
     where: { 
       companyId,
-      salesOrderNumber: { startsWith: `SO-${dateStr}-` }
+      salesOrderNumber: { startsWith: `SO-${prefix}-${dateStr}-` }
     },
     orderBy: { salesOrderNumber: 'desc' }
   });
@@ -51,11 +52,11 @@ export async function generateSalesOrderNumber(companyId: string): Promise<strin
     const lastNum = parseInt(lastNumStr, 10);
     if (!isNaN(lastNum)) {
       const nextNumber = (lastNum + 1).toString().padStart(4, "0");
-      return `SO-${dateStr}-${nextNumber}`;
+      return `SO-${prefix}-${dateStr}-${nextNumber}`;
     }
   }
   
-  return `SO-${dateStr}-0001`;
+  return `SO-${prefix}-${dateStr}-0001`;
 }
 
 /**
@@ -135,6 +136,7 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
   let retries = 0;
   while (retries < 3) {
     try {
+      console.log(`[SalesOrder Create] Attempt ${retries + 1} with number:`, data.salesOrderNumber);
       salesOrder = await prisma.salesOrder.create({
         data: {
           companyId,

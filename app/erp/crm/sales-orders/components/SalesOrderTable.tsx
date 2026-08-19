@@ -27,7 +27,12 @@ export function SalesOrderTable({ orders, onDelete }: SalesOrderTableProps) {
         </thead>
         <tbody style={{ fontSize: '14px' }}>
           {orders.map((order) => (
-            <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)', transition: 'background var(--transition-fast)' }} className="hover-row">
+            <tr 
+              key={order.id} 
+              style={{ borderBottom: '1px solid var(--border-light)', transition: 'background var(--transition-fast)', cursor: 'pointer' }} 
+              className="hover-row"
+              onClick={() => window.location.href = `/erp/crm/sales-orders/${order.id}`}
+            >
               <td style={{ padding: '16px 24px' }}>
                 <Link href={`/erp/crm/sales-orders/${order.id}`} style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
                   {order.orderNo || order.id.substring(0, 8)}

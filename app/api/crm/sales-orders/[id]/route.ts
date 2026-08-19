@@ -42,6 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ ...salesOrder, history, amountPaid, paymentStatus });
   } catch (err: any) {
+    require('fs').appendFileSync('api-error.log', new Date().toISOString() + ' GET /api/crm/sales-orders/[id] ' + err.stack + '\n');
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

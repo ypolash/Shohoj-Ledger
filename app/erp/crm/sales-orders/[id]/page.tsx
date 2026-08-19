@@ -30,6 +30,10 @@ export default function SalesOrderDetailPage() {
           const data = await res.json();
           setOrder(data.order || data);
         } else {
+          if (res.status === 404) {
+            router.push('/erp/crm/sales-orders');
+            return;
+          }
           console.error("API Error Response", res.status);
           const errData = await res.json();
           alert("Failed to load order: " + errData.error);

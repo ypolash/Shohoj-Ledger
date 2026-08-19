@@ -289,9 +289,23 @@ export async function deleteSalesOrder(companyId: string, id: string) {
   });
 
   if (!existing) throw new Error("Sales Order not found");
-  if (existing.status !== SalesOrderStatus.DRAFT) throw new Error("Only DRAFT Sales Orders can be deleted");
 
-  await prisma.salesOrder.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    // Delete payment allocations
+    await tx.customerPaymentAllocation.deleteMany({
+      where: { referenceType: "SALES_ORDER", referenceId: id }
+    });
+
+    // Delete deliveries and related returns
+    const deliveries = await tx.deliveryOrder.findMany({ where: { salesOrderId: id } });
+    for (const d of deliveries) {
+      await tx.customerReturn.deleteMany({ where: { deliveryOrderId: d.id } });
+      await tx.deliveryOrder.delete({ where: { id: d.id } });
+    }
+
+    // Delete the sales order (cascades to lines)
+    await tx.salesOrder.delete({ where: { id } });
+  });
 
   await logAudit({
     module: "CRM",

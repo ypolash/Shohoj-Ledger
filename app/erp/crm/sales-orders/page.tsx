@@ -47,7 +47,12 @@ export default function SalesOrdersPage() {
     if (!confirm("Are you sure you want to delete this sales order?")) return;
     try {
       const res = await fetch(`/api/crm/sales-orders/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchOrders();
+      if (res.ok) {
+        fetchOrders();
+      } else {
+        const error = await res.json();
+        alert(`Failed to delete order: ${error.error || 'Unknown error'}`);
+      }
     } catch (err) {
       console.error(err);
     }

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { getCustomer, updateCustomer, deleteCustomer } from "@/lib/crm/customerService";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const params = await props.params;
     const customer = await getCustomer(companyId, params.id);
     if (!customer) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -16,7 +17,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,6 +54,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     // Assuming we just update the basic customer record for now.
     // Updating contacts/addresses requires checking existence or creating new ones.
+    const params = await props.params;
     const customer = await updateCustomer(companyId, params.id, customerData);
     return NextResponse.json(customer);
   } catch (error: any) {
@@ -60,11 +62,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const params = await props.params;
     await deleteCustomer(companyId, params.id);
     return NextResponse.json({ success: true });
   } catch (error: any) {

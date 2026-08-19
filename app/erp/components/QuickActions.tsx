@@ -22,7 +22,7 @@ export function QuickActions({ role }: QuickActionsProps) {
   return (
     <div className="glass-panel" style={{ padding: '16px 24px', marginBottom: '16px', borderRadius: '16px' }}>
       <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text-main)' }}>Quick Actions</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 108px)', gap: '16px' }}>
         {visibleActions.map((action, idx) => {
           // Map color strings to class names for our global utilities
           let glowClass = 'glow-border-primary';
@@ -44,17 +44,17 @@ export function QuickActions({ role }: QuickActionsProps) {
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '16px',
-                  gap: '12px',
+                  padding: '12px',
+                  gap: '8px',
                   textAlign: 'center',
                   cursor: 'pointer',
                   background: 'var(--surface-hover)'
                 }}
               >
-                <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '32px', opacity: 0.9 }}>
+                <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '28px', opacity: 0.9 }}>
                   {action.icon}
                 </span>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)' }}>{action.label}</span>
+                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-main)', lineHeight: '1.2' }}>{action.label}</span>
               </div>
             </Link>
           );

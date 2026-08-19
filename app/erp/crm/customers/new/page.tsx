@@ -94,9 +94,6 @@ export default function CreateCustomerPage() {
                 <label style={labelStyle}>Customer Group</label>
                 <select name="groupId" value={formData.groupId} onChange={handleChange} style={inputStyle}>
                   <option value="">None</option>
-                  <option value="retail">Retail</option>
-                  <option value="wholesale">Wholesale</option>
-                  <option value="enterprise">Enterprise</option>
                 </select>
               </div>
             </div>

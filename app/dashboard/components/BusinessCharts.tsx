@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,7 +9,6 @@ import {
   BarElement,
   PointElement,
   LineElement,
-  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -22,7 +21,6 @@ ChartJS.register(
   BarElement,
   PointElement,
   LineElement,
-  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -38,7 +36,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
   if (!data) return null;
 
   const showFinance = ['Owner', 'CEO', 'Accountant'].includes(role);
-  const showSales = ['Owner', 'CEO', 'Sales'].includes(role);
+
 
   const getCssVar = (variable: string, fallback: string = '') => {
     if (typeof document !== 'undefined') {
@@ -75,10 +73,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
     }
   };
 
-  const donutOptions = {
-    ...chartOptions,
-    scales: undefined,
-  };
+
 
   const revExpData = {
     labels: data?.monthlyData?.map((d: any) => d.label) || [],
@@ -140,20 +135,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
     ]
   };
 
-  const salesFunnelData = {
-    labels: ['Leads', 'Qualified', 'Proposals', 'Negotiation', 'Closed'],
-    datasets: [{
-      data: [300, 150, 75, 30, 15],
-      backgroundColor: [
-        getCssVar('--primary-300', '#93c5fd'),
-        getCssVar('--primary-400', '#60a5fa'),
-        getCssVar('--primary-500', '#3b82f6'),
-        getCssVar('--primary-600', '#2563eb'),
-        getCssVar('--primary-700', '#1d4ed8'),
-      ],
-      borderWidth: 0,
-    }]
-  };
+
 
   return (
     <div style={{ 
@@ -184,16 +166,6 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         </>
       )}
 
-      {showSales && (
-        <div className="glass-card" style={{ padding: '24px', height: '360px', display: 'flex', flexDirection: 'column', borderRadius: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Sales Funnel</h3>
-          </div>
-          <div style={{ flex: 1, position: 'relative', display: 'flex', justifyContent: 'center' }}>
-            <Doughnut data={salesFunnelData} options={donutOptions as any} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

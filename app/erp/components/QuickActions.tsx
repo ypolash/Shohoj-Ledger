@@ -20,9 +20,9 @@ export function QuickActions({ role }: QuickActionsProps) {
   if (visibleActions.length === 0) return null;
 
   return (
-    <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px', borderRadius: '16px' }}>
-      <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 16px 0', color: 'var(--text-main)' }}>Quick Actions</h3>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+    <div className="glass-panel" style={{ padding: '16px 24px', marginBottom: '16px', borderRadius: '16px' }}>
+      <h3 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text-main)' }}>Quick Actions</h3>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
         {visibleActions.map((action, idx) => {
           // Map color strings to class names for our global utilities
           let glowClass = 'glow-border-primary';
@@ -37,25 +37,22 @@ export function QuickActions({ role }: QuickActionsProps) {
               <div 
                 className={`hover-lift ${glowClass}`}
                 style={{ 
-                  width: '130px',
-                  height: '130px',
-                  borderRadius: '50%',
+                  height: '56px',
+                  borderRadius: '12px',
                   border: '1px solid var(--border-main)',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  textAlign: 'center',
+                  padding: '0 20px',
+                  gap: '12px',
                   cursor: 'pointer',
                   background: 'var(--surface-hover)',
                   flexShrink: 0
                 }}
               >
-                <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '28px', opacity: 0.9 }}>
+                <span className="material-symbols-outlined" style={{ color: action.color, fontSize: '24px', opacity: 0.9 }}>
                   {action.icon}
                 </span>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)' }}>{action.label}</span>
+                <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-main)' }}>{action.label}</span>
               </div>
             </Link>
           );

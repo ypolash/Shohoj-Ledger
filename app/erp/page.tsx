@@ -9,10 +9,7 @@ import { KPICards } from "./components/KPICards";
 import { BusinessCharts } from "./components/BusinessCharts";
 import { QuickActions } from "./components/QuickActions";
 import { RecentActivity } from "./components/RecentActivity";
-import { NotificationsWidget } from "./components/NotificationsWidget";
-import { TasksWidget } from "./components/TasksWidget";
-import { CalendarWidget } from "./components/CalendarWidget";
-import { RecentTables } from "./components/RecentTables";
+
 
 type MonthlyData = {
   label: string;
@@ -93,7 +90,6 @@ export default function DashboardIndex() {
 
       <BusinessCharts data={data} role={role} />
 
-      {/* 3-Column Layout for Auxiliary Widgets */}
       <div style={{ 
         display: 'flex', 
         flexWrap: 'wrap', 
@@ -101,13 +97,8 @@ export default function DashboardIndex() {
         marginBottom: '24px',
         alignItems: 'stretch'
       }}>
-        {['Owner', 'CEO', 'Project Manager', 'HR'].includes(role) && <TasksWidget data={data} />}
-        <NotificationsWidget data={data} />
-        {['Owner', 'CEO', 'HR', 'Accountant'].includes(role) && <CalendarWidget data={data} />}
         <RecentActivity role={role} data={data} />
       </div>
-
-      <RecentTables data={data} role={role} />
 
     </PageContainer>
   );

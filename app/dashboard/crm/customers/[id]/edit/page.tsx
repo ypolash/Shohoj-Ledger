@@ -22,6 +22,8 @@ export default function EditCustomerPage() {
     paymentTerms: 'NET 30',
     billingAddress: '',
     shippingAddress: '',
+    binNo: '',
+    registrationNo: '',
     status: 'Active'
   });
 
@@ -33,17 +35,19 @@ export default function EditCustomerPage() {
           const data = await res.json();
           const customer = data.customer || data;
           setFormData({
-            customerName: customer.customerName || '',
+            customerName: customer.name || '',
             customerCode: customer.customerCode || '',
-            primaryContactPerson: customer.primaryContactPerson || '',
+            primaryContactPerson: customer.contacts?.[0]?.name || '',
             phone: customer.phone || '',
             email: customer.email || '',
-            groupId: customer.groupId || '',
+            groupId: customer.customerGroupId || '',
             creditLimit: customer.creditLimit || '',
             currency: customer.currency || 'BDT',
-            paymentTerms: customer.paymentTerms || 'NET 30',
-            billingAddress: customer.billingAddress || customer.address || '',
-            shippingAddress: customer.shippingAddress || '',
+            paymentTerms: customer.priceLevel || 'NET 30',
+            billingAddress: customer.addresses?.find((a: any) => a.type === 'BILLING')?.addressLine1 || '',
+            shippingAddress: customer.addresses?.find((a: any) => a.type === 'SHIPPING')?.addressLine1 || '',
+            binNo: customer.taxNumber || '',
+            registrationNo: customer.tradeLicense || '',
             status: customer.status || 'Active'
           });
         }
@@ -122,6 +126,12 @@ export default function EditCustomerPage() {
               <input name="customerCode" value={formData.customerCode} onChange={handleChange} style={inputStyle} />
             </div>
             <div>
+              <label style={labelStyle}>Customer Group</label>
+              <select name="groupId" value={formData.groupId} onChange={handleChange} style={inputStyle}>
+                <option value="">None</option>
+              </select>
+            </div>
+            <div>
               <label style={labelStyle}>Status</label>
               <select name="status" value={formData.status} onChange={handleChange} style={inputStyle}>
                 <option value="Active">Active</option>
@@ -159,6 +169,17 @@ export default function EditCustomerPage() {
                 <option value="NET 45">Net 45</option>
                 <option value="NET 60">Net 60</option>
               </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>BIN / VAT / TIN No</label>
+              <input name="binNo" value={formData.binNo} onChange={handleChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Trade License / Registration No</label>
+              <input name="registrationNo" value={formData.registrationNo} onChange={handleChange} style={inputStyle} />
             </div>
           </div>
 

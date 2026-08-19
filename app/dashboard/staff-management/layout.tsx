@@ -15,6 +15,7 @@ export default function StaffManagementLayout({
   const tabs = [
     { name: 'Dashboard', path: '/dashboard/staff-management', icon: 'dashboard' },
     { name: 'Employees', path: '/dashboard/staff-management/employees', icon: 'badge' },
+    { name: 'Members', path: '/dashboard/staff-management/members', icon: 'groups' },
     { name: 'Attendance', path: '/dashboard/staff-management/attendance', icon: 'how_to_reg' },
     { name: 'Leave', path: '/dashboard/staff-management/leave', icon: 'event_busy' },
     { name: 'Payroll', path: '/dashboard/staff-management/payroll', icon: 'payments' },

@@ -29,6 +29,8 @@ To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) ap
   - **Completed**: Created `CustomerCreditProfile` and `CustomerCreditHistory` models. Built `customerCreditService.ts` to enforce credit limits, calculate available credit, automatically evaluate risk levels, and manage manual credit holds.
 - **Version 1.3 — Phase 3G (Enterprise Customer Payments):**
   - **Completed**: Created `CustomerPayment` and `CustomerPaymentAllocation` models. Built `customerPaymentService.ts` for financial ledger integration. Added `GET /api/crm/customer-payments` and `POST /api/crm/customer-payments` APIs. Rewrote the `SalesOrderPayments.tsx` frontend to dynamically record and allocate payments to Sales Orders, and implemented dynamic payment status calculations (Paid/Partial/Unpaid) across the CRM system.
+- **Version 1.3 — Phase 4A (Enterprise HR & Staff Management):**
+  - **Completed**: Added full CRUD capabilities for the `Member` model within the HR module. Created `GET/POST /api/hr/members` and `GET/PUT/DELETE /api/hr/members/[id]` APIs. Built the `MembersPage` UI with dynamic modal forms, integrated into both `/erp/hr/layout.tsx` and `/dashboard/staff-management/layout.tsx` navigations.
 - **Version 1.3 — Phase 3J (Enterprise Sales Commission Engine):**
   - **Completed**: Created `CommissionPolicy` and `SalesCommission` models. Built `commissionService.ts` to handle math evaluation, recalculation, and approval loops, effectively bridging CRM transactions with future Payroll capabilities.
 - **Version 1.3 — Phase 3K (Enterprise Customer Portal Services):**

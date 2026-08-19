@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Member {
   id: string;
@@ -10,6 +11,7 @@ interface Member {
   phone?: string;
   status: string;
   joinedAt: string;
+  advanceBalance?: number;
 }
 
 export default function MembersPage() {
@@ -28,7 +30,12 @@ export default function MembersPage() {
     setIsLoading(true);
     try {
       const res = await fetch('/api/hr/members');
-      if (res.ok) setMembers(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        // For each member, we need their balance. But the existing GET /api/hr/members route doesn't return balances.
+        // Wait, I should update GET /api/hr/members to also return advanceBalance. I'll do that separately.
+        setMembers(data);
+      }
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
@@ -66,7 +73,8 @@ export default function MembersPage() {
     finally { setSubmitting(false); }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     if (!confirm('Are you sure you want to delete this member?')) return;
     try {
       const res = await fetch(`/api/hr/members/${id}`, { method: 'DELETE' });
@@ -90,7 +98,8 @@ export default function MembersPage() {
     setError('');
   };
 
-  const openEditModal = (member: Member) => {
+  const openEditModal = (e: React.MouseEvent, member: Member) => {
+    e.preventDefault();
     setForm({
       id: member.id,
       name: member.name,
@@ -132,7 +141,7 @@ export default function MembersPage() {
             No members yet.
           </div>
         ) : members.map(member => (
-          <div key={member.id} className="glass-panel hover-lift" style={{ borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <Link href={`/dashboard/staff-management/members/${member.id}`} key={member.id} className="glass-panel hover-lift" style={{ borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px', textDecoration: 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -144,10 +153,10 @@ export default function MembersPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '4px' }}>
-                <button onClick={() => openEditModal(member)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }} title="Edit">
+                <button onClick={(e) => openEditModal(e, member)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }} title="Edit">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                 </button>
-                <button onClick={() => handleDelete(member.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }} title="Delete">
+                <button onClick={(e) => handleDelete(e, member.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }} title="Delete">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                 </button>
               </div>
@@ -174,7 +183,7 @@ export default function MembersPage() {
                 {member.status}
               </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

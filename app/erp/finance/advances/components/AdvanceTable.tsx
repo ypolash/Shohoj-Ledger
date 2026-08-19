@@ -1,33 +1,87 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export function AdvanceTable() {
+interface Advance {
+  id: string;
+  memberId: string;
+  memberName?: string;
+  memberRole?: string;
+  amount: number;
+  remainingAmount: number;
+  reason?: string;
+  status: string;
+  createdAt: string;
+}
+
+export function AdvanceTable({ advances, isLoading }: { advances: Advance[], isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', opacity: 0.6 }}>
+        <h2 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Active Advances</h2>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
       <h2 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Active Advances</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
-        <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Beneficiary</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Type</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Expected Recovery</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Issued Amount</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Unrecovered</th>
-          </tr>
-        </thead>
-        <tbody style={{ fontSize: '13px' }}>
-          <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-            <td style={{ padding: '16px', color: 'var(--text-muted)' }}>2026-07-20</td>
-            <td style={{ padding: '16px', fontWeight: 600, color: 'var(--primary)' }}>Tech Solutions Ltd</td>
-            <td style={{ padding: '16px', color: 'var(--text-main)' }}>Supplier Advance</td>
-            <td style={{ padding: '16px', color: 'var(--text-main)' }}>2026-08-20</td>
-            <td style={{ padding: '16px', fontWeight: 600, textAlign: 'right', color: 'var(--text-muted)' }}>500,000</td>
-            <td style={{ padding: '16px', fontWeight: 700, textAlign: 'right', color: 'var(--warning)' }}>500,000</td>
-          </tr>
-        </tbody>
-      </table>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
+          <thead>
+            <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
+              <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
+              <th style={{ padding: '16px', fontWeight: 600 }}>Beneficiary</th>
+              <th style={{ padding: '16px', fontWeight: 600 }}>Reason</th>
+              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Issued Amount</th>
+              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Unrecovered</th>
+              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'center' }}>Status</th>
+            </tr>
+          </thead>
+          <tbody style={{ fontSize: '13px' }}>
+            {advances.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No active advances found.
+                </td>
+              </tr>
+            ) : (
+              advances.map(advance => (
+                <tr key={advance.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                  <td style={{ padding: '16px', color: 'var(--text-muted)' }}>
+                    {new Date(advance.createdAt).toLocaleDateString()}
+                  </td>
+                  <td style={{ padding: '16px', fontWeight: 600, color: 'var(--primary)' }}>
+                    {advance.memberName} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: '8px' }}>({advance.memberRole})</span>
+                  </td>
+                  <td style={{ padding: '16px', color: 'var(--text-main)' }}>
+                    {advance.reason || '-'}
+                  </td>
+                  <td style={{ padding: '16px', fontWeight: 600, textAlign: 'right', color: 'var(--text-muted)' }}>
+                    {Number(advance.amount).toLocaleString()}
+                  </td>
+                  <td style={{ padding: '16px', fontWeight: 700, textAlign: 'right', color: advance.remainingAmount > 0 ? 'var(--warning)' : 'var(--success)' }}>
+                    {Number(advance.remainingAmount).toLocaleString()}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'center' }}>
+                    <span style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: '20px', 
+                      fontSize: '11px', 
+                      fontWeight: 600, 
+                      backgroundColor: advance.status === 'ACTIVE' ? 'var(--warning-subtle)' : 'var(--success-subtle)',
+                      color: advance.status === 'ACTIVE' ? 'var(--warning)' : 'var(--success)'
+                    }}>
+                      {advance.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

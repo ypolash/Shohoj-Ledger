@@ -9,6 +9,7 @@ export function FinanceQuickActions() {
   const actions = [
     { label: 'Create Income', icon: 'add_circle', color: 'var(--success)', path: '/erp/finance/income' },
     { label: 'Create Expense', icon: 'remove_circle', color: 'var(--danger)', path: '/erp/finance/expenses' },
+    { label: 'Advance', icon: 'payments', color: 'var(--warning)', path: '/erp/finance/advances' },
     { label: 'Settlement', icon: 'receipt_long', color: 'var(--primary)', path: '/erp/finance/settlements' },
     { label: 'Export Report', icon: 'download', color: 'var(--text-main)', path: '/erp/finance/reports' }
   ];

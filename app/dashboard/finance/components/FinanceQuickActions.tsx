@@ -1,15 +1,18 @@
 "use client";
 
-import React from 'react';
+import { useRouter } from 'next/navigation';
 
 export function FinanceQuickActions() {
+  const router = useRouter();
+  
   const actions = [
-    { label: 'Create Income', icon: 'add_circle', color: 'var(--success)' },
-    { label: 'Create Expense', icon: 'remove_circle', color: 'var(--danger)' },
-    { label: 'Transfer Funds', icon: 'swap_horiz', color: 'var(--info)' },
-    { label: 'Settlement', icon: 'receipt_long', color: 'var(--primary)' },
-    { label: 'Reserve Deposit', icon: 'savings', color: 'var(--warning)' },
-    { label: 'Export Report', icon: 'download', color: 'var(--text-main)' }
+    { label: 'Create Income', icon: 'add_circle', color: 'var(--success)', path: '/dashboard/finance/income' },
+    { label: 'Create Expense', icon: 'remove_circle', color: 'var(--danger)', path: '/dashboard/finance/expenses' },
+    { label: 'Transfer Funds', icon: 'swap_horiz', color: 'var(--info)', path: '/dashboard/finance/funds' },
+    { label: 'Advance', icon: 'payments', color: 'var(--warning)', path: '/dashboard/finance/advances' },
+    { label: 'Settlement', icon: 'receipt_long', color: 'var(--primary)', path: '/dashboard/finance/settlements' },
+    { label: 'Reserve Deposit', icon: 'savings', color: 'var(--warning)', path: '/dashboard/finance/reserves' },
+    { label: 'Export Report', icon: 'download', color: 'var(--text-main)', path: '/dashboard/finance/reports' }
   ];
 
   return (
@@ -19,6 +22,7 @@ export function FinanceQuickActions() {
         {actions.map(action => (
           <button 
             key={action.label}
+            onClick={() => router.push(action.path)}
             style={{ 
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
               padding: '16px', borderRadius: '8px', background: 'var(--surface-hover)', border: '1px solid var(--border-light)',

@@ -341,7 +341,7 @@ export default function SettlementsPage() {
       ) : loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       ) : (
-        <SettlementTable settlements={settlements} onExecute={handleExecute} />
+        <SettlementTable settlements={settlements} activeRoles={activeRoles} onExecute={handleExecute} />
       )}
       
       {/* Configuration Modal for Shareholder Defaults */}

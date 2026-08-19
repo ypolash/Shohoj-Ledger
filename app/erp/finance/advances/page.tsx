@@ -10,7 +10,6 @@ export default function AdvancesPage() {
   
   // Modal state
   const [members, setMembers] = useState<any[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ memberId: '', amount: '', reason: '', date: new Date().toISOString().split('T')[0] });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -48,8 +47,8 @@ export default function AdvancesPage() {
     setError('');
 
     try {
-      const url = editingId ? `/api/finance/advances/${editingId}` : '/api/finance/advances';
-      const method = editingId ? 'PATCH' : 'POST';
+      const url = '/api/finance/advances';
+      const method = 'POST';
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -59,13 +58,12 @@ export default function AdvancesPage() {
       const data = await res.json();
       
       if (!res.ok) {
-        setError(data.error || `Failed to ${editingId ? 'update' : 'issue'} advance`);
+        setError(data.error || 'Failed to issue advance');
         return;
       }
 
-      setSuccess(editingId ? 'Advance updated successfully' : 'Advance issued successfully');
+      setSuccess('Advance issued successfully');
       setShowModal(false);
-      setEditingId(null);
       setForm({ memberId: '', amount: '', reason: '', date: new Date().toISOString().split('T')[0] });
       fetchAdvances();
       
@@ -77,16 +75,7 @@ export default function AdvancesPage() {
     }
   };
 
-  const handleEdit = (advance: any) => {
-    setForm({
-      memberId: advance.memberId,
-      amount: advance.amount.toString(),
-      reason: advance.reason || '',
-      date: new Date(advance.createdAt).toISOString().split('T')[0]
-    });
-    setEditingId(advance.id);
-    setShowModal(true);
-  };
+
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this advance?')) return;
@@ -115,7 +104,6 @@ export default function AdvancesPage() {
         <div style={{ display: 'flex', gap: '12px' }}>
           <button 
             onClick={() => {
-              setEditingId(null);
               setForm({ memberId: '', amount: '', reason: '', date: new Date().toISOString().split('T')[0] });
               setShowModal(true);
             }}
@@ -134,7 +122,7 @@ export default function AdvancesPage() {
         </div>
       )}
 
-      <AdvanceTable advances={advances} isLoading={isLoading} onEdit={handleEdit} onDelete={handleDelete} />
+      <AdvanceTable advances={advances} isLoading={isLoading} onDelete={handleDelete} />
 
       {/* Modal for Issuing Advance */}
       {showModal && (
@@ -142,7 +130,7 @@ export default function AdvancesPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '460px', borderRadius: '20px', padding: '32px', margin: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>{editingId ? 'Edit Advance' : 'Issue Advance'}</h2>
+              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Issue Advance</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
               </button>
@@ -205,7 +193,7 @@ export default function AdvancesPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--surface-hover)', color: 'var(--text-main)', cursor: 'pointer' }}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: 'white', cursor: 'pointer', fontWeight: 600 }}>
-                  {submitting ? (editingId ? 'Updating...' : 'Issuing...') : (editingId ? 'Update Advance' : 'Issue Advance')}
+                  {submitting ? 'Issuing...' : 'Issue Advance'}
                 </button>
               </div>
             </form>

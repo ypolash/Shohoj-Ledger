@@ -42,7 +42,7 @@ export async function generateSalesOrderNumber(companyId: string): Promise<strin
       companyId,
       salesOrderNumber: { startsWith: `SO-${dateStr}-` }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { salesOrderNumber: 'desc' }
   });
 
   if (latestOrder) {

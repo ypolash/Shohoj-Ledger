@@ -54,12 +54,45 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // In a real implementation, this would POST to /api/crm/sales-orders
-    setTimeout(() => {
-      alert("Sales Order saved successfully! (Mock)");
-      router.push('/erp/crm/sales-orders');
+    try {
+      // Find a default product and warehouse to use since UI doesn't select them yet
+      const defaultDataRes = await fetch('/api/crm/dashboard'); // Use a lightweight route, or just create directly
+      
+      const res = await fetch('/api/crm/sales-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: formData.customerId,
+          quotationId: formData.quotationId || undefined,
+          orderDate: formData.orderDate,
+          requestedDeliveryDate: formData.expectedDelivery || undefined,
+          status: formData.status,
+          notes: formData.notes,
+          discountAmount: globalDiscount,
+          taxRate: taxRate,
+          lines: items.map(item => ({
+            productId: item.productId || 'dummy',
+            warehouseId: item.warehouseId || 'dummy',
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            discountAmount: item.discount,
+            remarks: item.description
+          }))
+        })
+      });
+      if (res.ok) {
+        alert("Sales Order created successfully!");
+        router.push('/erp/crm/sales-orders');
+      } else {
+        const error = await res.json();
+        alert(`Failed to save order: ${error.error}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Error: ${err.message}`);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const inputStyle = {

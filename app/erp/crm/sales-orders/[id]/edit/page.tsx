@@ -33,7 +33,7 @@ export default function EditSalesOrderPage() {
     if (params.id) fetchOrder();
   }, [params.id, router]);
 
-  if (loading) {
+  if (loading || !order) {
     return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading...</div></PageContainer>;
   }
 
@@ -46,7 +46,7 @@ export default function EditSalesOrderPage() {
         &larr; Back to Sales Order
       </button>
       <PageHeader 
-        title={`Edit Order: ${order.orderNo || order.id.substring(0,8)}`}
+        title={`Edit Order: ${order.salesOrderNumber || order.id?.substring(0,8) || 'Unknown'}`}
         description="Modify order items, status, and dates."
       />
 

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       include: {
         customer: true,
         quotation: true,
-        createdBy: { select: { id: true, firstName: true, lastName: true } },
+        createdBy: { select: { id: true, name: true } },
         lines: {
           include: {
             product: true,

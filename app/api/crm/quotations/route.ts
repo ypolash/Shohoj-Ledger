@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         customer: { select: { id: true, name: true } },
-        createdBy: { select: { id: true, firstName: true, lastName: true } }
+        createdBy: { select: { id: true, name: true } }
       },
       orderBy: { createdAt: 'desc' }
     });

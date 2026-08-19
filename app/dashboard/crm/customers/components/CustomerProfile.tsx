@@ -13,19 +13,18 @@ export function CustomerProfile({ customer }: CustomerProfileProps) {
         <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>General Information</h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div><strong>Customer Code:</strong> {customer.customerCode || '-'}</div>
-          <div><strong>Company/Customer Name:</strong> {customer.customerName}</div>
-          <div><strong>Customer Group:</strong> {customer.group?.name || '-'}</div>
+          <div><strong>Company/Customer Name:</strong> {customer.name || '-'}</div>
+          <div><strong>Customer Group:</strong> {customer.customerGroup?.name || '-'}</div>
           <div><strong>Currency:</strong> {customer.currency || 'BDT'}</div>
-          <div><strong>Payment Terms:</strong> {customer.paymentTerms || '-'}</div>
+          <div><strong>Payment Terms:</strong> {customer.priceLevel || '-'}</div>
           <div><strong>Credit Limit:</strong> {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(customer.creditLimit || 0))}</div>
         </div>
       </div>
       <div>
         <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Registration Details</h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div><strong>BIN/VAT No:</strong> {customer.binNo || '-'}</div>
-          <div><strong>TIN No:</strong> {customer.tinNo || '-'}</div>
-          <div><strong>Registration No:</strong> {customer.registrationNo || '-'}</div>
+          <div><strong>BIN/VAT/TIN No:</strong> {customer.taxNumber || '-'}</div>
+          <div><strong>Registration No:</strong> {customer.tradeLicense || '-'}</div>
           <div><strong>Created At:</strong> {new Date(customer.createdAt).toLocaleDateString()}</div>
         </div>
       </div>

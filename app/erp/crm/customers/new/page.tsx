@@ -148,6 +148,25 @@ export default function CreateCustomerPage() {
             </div>
           </div>
 
+          {/* Registration Details Section */}
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>Registration Details</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+              <div>
+                <label style={labelStyle}>BIN / VAT No</label>
+                <input name="binNo" value={formData.binNo} onChange={handleChange} style={inputStyle} placeholder="123456789" />
+              </div>
+              <div>
+                <label style={labelStyle}>TIN No</label>
+                <input name="tinNo" value={formData.tinNo} onChange={handleChange} style={inputStyle} placeholder="987654321" />
+              </div>
+              <div>
+                <label style={labelStyle}>Trade License / Registration No</label>
+                <input name="registrationNo" value={formData.registrationNo} onChange={handleChange} style={inputStyle} placeholder="REG-1234" />
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <button 
               type="button" 

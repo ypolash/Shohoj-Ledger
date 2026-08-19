@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const data = await request.json();
     
     // Validate if advance exists
     const existing = await prisma.advance.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
     
     if (!existing) {
@@ -15,7 +16,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     const updated = await prisma.advance.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         memberId: data.memberId,
         amount: data.amount ? parseFloat(data.amount) : undefined,
@@ -31,10 +32,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const existing = await prisma.advance.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
     
     if (!existing) {
@@ -42,7 +44,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     await prisma.advance.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ success: true });

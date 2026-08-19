@@ -26,6 +26,22 @@ export default function EditCustomerPage() {
     registrationNo: '',
     status: 'Active'
   });
+  const [customerGroups, setCustomerGroups] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const res = await fetch('/api/crm/customer-groups');
+        if (res.ok) {
+          const data = await res.json();
+          setCustomerGroups(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch customer groups", err);
+      }
+    };
+    fetchGroups();
+  }, []);
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -129,6 +145,9 @@ export default function EditCustomerPage() {
               <label style={labelStyle}>Customer Group</label>
               <select name="groupId" value={formData.groupId} onChange={handleChange} style={inputStyle}>
                 <option value="">None</option>
+                {customerGroups.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
               </select>
             </div>
             <div>

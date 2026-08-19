@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
@@ -24,6 +24,22 @@ export default function CreateCustomerPage() {
     tinNo: '',
     registrationNo: ''
   });
+  const [customerGroups, setCustomerGroups] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const res = await fetch('/api/crm/customer-groups');
+        if (res.ok) {
+          const data = await res.json();
+          setCustomerGroups(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch customer groups", err);
+      }
+    };
+    fetchGroups();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -94,6 +110,9 @@ export default function CreateCustomerPage() {
                 <label style={labelStyle}>Customer Group</label>
                 <select name="groupId" value={formData.groupId} onChange={handleChange} style={inputStyle}>
                   <option value="">None</option>
+                  {customerGroups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

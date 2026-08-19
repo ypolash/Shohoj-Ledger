@@ -191,12 +191,12 @@ export default function MembersPage() {
             </div>
             {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <Field2 label="Full Name *" value={form.name} onChange={v => handleForm('name', v)} placeholder="e.g. Jane Doe" required />
-              <Field2 label="Role *" value={form.role} onChange={v => handleForm('role', v)} placeholder="e.g. Volunteer" required />
+              <Field2 label="Full Name *" value={form.name} onChange={(v: string) => handleForm('name', v)} placeholder="e.g. Jane Doe" required />
+              <Field2 label="Role *" value={form.role} onChange={(v: string) => handleForm('role', v)} placeholder="e.g. Volunteer" required />
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <Field2 label="Email" type="email" value={form.email} onChange={v => handleForm('email', v)} placeholder="jane@example.com" />
-                <Field2 label="Phone" type="tel" value={form.phone} onChange={v => handleForm('phone', v)} placeholder="+1234567890" />
+                <Field2 label="Email" type="email" value={form.email} onChange={(v: string) => handleForm('email', v)} placeholder="jane@example.com" />
+                <Field2 label="Phone" type="tel" value={form.phone} onChange={(v: string) => handleForm('phone', v)} placeholder="+1234567890" />
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
@@ -207,7 +207,7 @@ export default function MembersPage() {
                     <option value="INACTIVE">Inactive</option>
                   </select>
                 </div>
-                <Field2 label="Join Date" type="date" value={form.joinedAt} onChange={v => handleForm('joinedAt', v)} />
+                <Field2 label="Join Date" type="date" value={form.joinedAt} onChange={(v: string) => handleForm('joinedAt', v)} />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface SalesOrderSearchProps {
   onSearch: (query: string) => void;
@@ -8,14 +8,16 @@ interface SalesOrderSearchProps {
 
 export function SalesOrderSearch({ onSearch }: SalesOrderSearchProps) {
   const [term, setTerm] = useState("");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      onSearch(term);
-    }, 300); // 300ms debounce
-    return () => clearTimeout(delay);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [term]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTerm(val);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onSearch(val);
+    }, 300);
+  };
 
   return (
     <div style={{ position: 'relative', width: '300px' }}>
@@ -33,7 +35,7 @@ export function SalesOrderSearch({ onSearch }: SalesOrderSearchProps) {
         type="text"
         placeholder="Search orders (Order No, Customer)..."
         value={term}
-        onChange={(e) => setTerm(e.target.value)}
+        onChange={handleChange}
         style={{
           width: '100%',
           padding: '10px 12px 10px 40px',

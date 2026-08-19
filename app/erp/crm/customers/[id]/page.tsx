@@ -135,7 +135,7 @@ export default function CustomerDetailPage() {
 
         {activeTab === 'related' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <CustomerOrders />
+            <CustomerOrders customer={customer} />
             <CustomerProjects />
           </div>
         )}

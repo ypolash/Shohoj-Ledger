@@ -43,6 +43,38 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     if (!companyId || !userId) return NextResponse.json({ error: "Missing headers" }, { status: 400 });
 
     const body = await req.json();
+
+    // TEMPORARY: Inject dummy product/warehouse for MVP if missing
+    if (body.lines) {
+      let defaultProduct = await prisma.product.findFirst({ where: { companyId } });
+      if (!defaultProduct) {
+        defaultProduct = await prisma.product.create({
+          data: {
+            companyId,
+            productCode: "DUMMY",
+            name: "Dummy Product",
+          }
+        });
+      }
+      
+      let defaultWarehouse = await prisma.warehouse.findFirst({ where: { companyId } });
+      if (!defaultWarehouse) {
+        defaultWarehouse = await prisma.warehouse.create({
+          data: {
+            companyId,
+            code: "MAIN",
+            name: "Main Warehouse",
+          }
+        });
+      }
+
+      body.lines = body.lines.map((line: any) => ({
+        ...line,
+        productId: line.productId === 'dummy' || !line.productId ? defaultProduct?.id : line.productId,
+        warehouseId: line.warehouseId === 'dummy' || !line.warehouseId ? defaultWarehouse?.id : line.warehouseId,
+      }));
+    }
+
     const salesOrder = await updateSalesOrder(companyId, params.id, userId, body);
 
     return NextResponse.json(salesOrder);

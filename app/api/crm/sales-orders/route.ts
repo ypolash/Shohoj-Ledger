@@ -64,8 +64,28 @@ export async function POST(req: NextRequest) {
 
     // TEMPORARY: Inject dummy product/warehouse for MVP if missing
     if (body.lines) {
-      const defaultProduct = await prisma.product.findFirst({ where: { companyId } });
-      const defaultWarehouse = await prisma.warehouse.findFirst({ where: { companyId } });
+      let defaultProduct = await prisma.product.findFirst({ where: { companyId } });
+      if (!defaultProduct) {
+        defaultProduct = await prisma.product.create({
+          data: {
+            companyId,
+            productCode: "DUMMY",
+            name: "Dummy Product",
+          }
+        });
+      }
+      
+      let defaultWarehouse = await prisma.warehouse.findFirst({ where: { companyId } });
+      if (!defaultWarehouse) {
+        defaultWarehouse = await prisma.warehouse.create({
+          data: {
+            companyId,
+            code: "MAIN",
+            name: "Main Warehouse",
+          }
+        });
+      }
+
       body.lines = body.lines.map((line: any) => ({
         ...line,
         productId: line.productId === 'dummy' || !line.productId ? defaultProduct?.id : line.productId,

@@ -35,10 +35,27 @@ export async function validateSalesOrder(companyId: string, data: any) {
  * Generates a unique Sales Order number.
  */
 export async function generateSalesOrderNumber(companyId: string): Promise<string> {
-  const count = await prisma.salesOrder.count({ where: { companyId } });
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const nextNumber = (count + 1).toString().padStart(4, "0");
-  return `SO-${dateStr}-${nextNumber}`;
+  
+  const latestOrder = await prisma.salesOrder.findFirst({
+    where: { 
+      companyId,
+      salesOrderNumber: { startsWith: `SO-${dateStr}-` }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  if (latestOrder) {
+    const parts = latestOrder.salesOrderNumber.split('-');
+    const lastNumStr = parts[parts.length - 1];
+    const lastNum = parseInt(lastNumStr, 10);
+    if (!isNaN(lastNum)) {
+      const nextNumber = (lastNum + 1).toString().padStart(4, "0");
+      return `SO-${dateStr}-${nextNumber}`;
+    }
+  }
+  
+  return `SO-${dateStr}-0001`;
 }
 
 /**

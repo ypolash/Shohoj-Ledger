@@ -61,10 +61,10 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
   let taxAmount = 0;
 
   const processedLines = lines.map(line => {
-    const qty = Number(line.quantity);
-    const price = Number(line.unitPrice);
-    const discPct = Number(line.discountPercent || 0);
-    const taxPct = Number(line.taxPercent || 0);
+    const qty = Number(line.quantity) || 0;
+    const price = Number(line.unitPrice) || 0;
+    const discPct = Number(line.discountPercent) || 0;
+    const taxPct = Number(line.taxPercent) || 0;
 
     const grossLineTotal = qty * price;
     const discountAmt = grossLineTotal * (discPct / 100);
@@ -77,6 +77,10 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
 
     return {
       ...line,
+      quantity: qty,
+      unitPrice: price,
+      discountPercent: discPct,
+      taxPercent: taxPct,
       discountAmount: discountAmt,
       taxAmount: lineTaxAmt,
       lineTotal
@@ -116,31 +120,31 @@ export async function createQuotation(companyId: string, userId: string, data: a
       companyId,
       quotationNumber: data.quotationNumber,
       customerId: data.customerId,
-      opportunityId: data.opportunityId,
-      quotationDate: data.quotationDate || new Date(),
-      expiryDate: data.expiryDate,
+      opportunityId: data.opportunityId || null,
+      quotationDate: data.quotationDate ? new Date(data.quotationDate) : new Date(),
+      expiryDate: data.expiryDate ? new Date(data.expiryDate) : new Date(),
       currency: data.currency || "BDT",
-      priceLevel: data.priceLevel,
+      priceLevel: data.priceLevel || null,
       subtotal,
       taxAmount,
       shippingAmount,
       discountAmount,
       totalAmount,
-      remarks: data.remarks,
+      remarks: data.remarks || null,
       createdById: userId,
       lines: {
         create: processedLines.map(line => ({
           productId: line.productId,
-          description: line.description,
+          description: line.description || null,
           quantity: line.quantity,
           unitPrice: line.unitPrice,
-          discountPercent: line.discountPercent || 0,
+          discountPercent: line.discountPercent,
           discountAmount: line.discountAmount,
-          taxPercent: line.taxPercent || 0,
+          taxPercent: line.taxPercent,
           taxAmount: line.taxAmount,
           lineTotal: line.lineTotal,
-          warehouseId: line.warehouseId,
-          remarks: line.remarks
+          warehouseId: line.warehouseId || null,
+          remarks: line.remarks || null
         }))
       }
     },
@@ -190,29 +194,29 @@ export async function updateQuotation(companyId: string, id: string, userId: str
       where: { id },
       data: {
         customerId: data.customerId,
-        opportunityId: data.opportunityId,
-        expiryDate: data.expiryDate,
-        currency: data.currency,
-        priceLevel: data.priceLevel,
+        opportunityId: data.opportunityId || null,
+        expiryDate: data.expiryDate ? new Date(data.expiryDate) : new Date(),
+        currency: data.currency || "BDT",
+        priceLevel: data.priceLevel || null,
         subtotal,
         taxAmount,
         shippingAmount,
         discountAmount,
         totalAmount,
-        remarks: data.remarks,
+        remarks: data.remarks || null,
         lines: {
           create: processedLines.map(line => ({
             productId: line.productId,
-            description: line.description,
+            description: line.description || null,
             quantity: line.quantity,
             unitPrice: line.unitPrice,
-            discountPercent: line.discountPercent || 0,
+            discountPercent: line.discountPercent,
             discountAmount: line.discountAmount,
-            taxPercent: line.taxPercent || 0,
+            taxPercent: line.taxPercent,
             taxAmount: line.taxAmount,
             lineTotal: line.lineTotal,
-            warehouseId: line.warehouseId,
-            remarks: line.remarks
+            warehouseId: line.warehouseId || null,
+            remarks: line.remarks || null
           }))
         }
       },

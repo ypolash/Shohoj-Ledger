@@ -49,10 +49,10 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
   let taxAmount = 0;
 
   const processedLines = lines.map(line => {
-    const qty = Number(line.quantity);
-    const price = Number(line.unitPrice);
-    const discPct = Number(line.discountPercent || 0);
-    const taxPct = Number(line.taxPercent || 0);
+    const qty = Number(line.quantity) || 0;
+    const price = Number(line.unitPrice) || 0;
+    const discPct = Number(line.discountPercent) || 0;
+    const taxPct = Number(line.taxPercent) || 0;
 
     const grossLineTotal = qty * price;
     const discountAmt = grossLineTotal * (discPct / 100);
@@ -65,6 +65,10 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
 
     return {
       ...line,
+      quantity: qty,
+      unitPrice: price,
+      discountPercent: discPct,
+      taxPercent: taxPct,
       discountAmount: discountAmt,
       taxAmount: lineTaxAmt,
       lineTotal
@@ -103,17 +107,17 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
     data: {
       companyId,
       salesOrderNumber: data.salesOrderNumber,
-      quotationId: data.quotationId,
+      quotationId: data.quotationId || null,
       customerId: data.customerId,
-      orderDate: data.orderDate || new Date(),
-      requestedDeliveryDate: data.requestedDeliveryDate,
+      orderDate: data.orderDate ? new Date(data.orderDate) : new Date(),
+      requestedDeliveryDate: data.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null,
       currency: data.currency || "BDT",
       subtotal,
       taxAmount,
       shippingAmount,
       discountAmount,
       totalAmount,
-      remarks: data.remarks,
+      remarks: data.remarks || null,
       createdById: userId,
       lines: {
         create: processedLines.map(line => ({
@@ -122,12 +126,12 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
           quantity: line.quantity,
           reservedQuantity: 0,
           unitPrice: line.unitPrice,
-          discountPercent: line.discountPercent || 0,
+          discountPercent: line.discountPercent,
           discountAmount: line.discountAmount,
-          taxPercent: line.taxPercent || 0,
+          taxPercent: line.taxPercent,
           taxAmount: line.taxAmount,
           lineTotal: line.lineTotal,
-          remarks: line.remarks
+          remarks: line.remarks || null
         }))
       }
     },
@@ -175,14 +179,14 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
       where: { id },
       data: {
         customerId: data.customerId,
-        requestedDeliveryDate: data.requestedDeliveryDate,
-        currency: data.currency,
+        requestedDeliveryDate: data.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null,
+        currency: data.currency || "BDT",
         subtotal,
         taxAmount,
         shippingAmount,
         discountAmount,
         totalAmount,
-        remarks: data.remarks,
+        remarks: data.remarks || null,
         lines: {
           create: processedLines.map(line => ({
             productId: line.productId,
@@ -190,12 +194,12 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
             quantity: line.quantity,
             reservedQuantity: 0,
             unitPrice: line.unitPrice,
-            discountPercent: line.discountPercent || 0,
+            discountPercent: line.discountPercent,
             discountAmount: line.discountAmount,
-            taxPercent: line.taxPercent || 0,
+            taxPercent: line.taxPercent,
             taxAmount: line.taxAmount,
             lineTotal: line.lineTotal,
-            remarks: line.remarks
+            remarks: line.remarks || null
           }))
         }
       },

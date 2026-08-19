@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface CustomerTableProps {
   customers: any[];
@@ -9,6 +10,8 @@ interface CustomerTableProps {
 }
 
 export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
+  const router = useRouter();
+  
   return (
     <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -31,7 +34,13 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
         </thead>
         <tbody style={{ fontSize: '14px' }}>
           {customers.map((customer) => (
-            <tr key={customer.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <tr 
+              key={customer.id} 
+              onClick={() => router.push(`/erp/crm/customers/${customer.id}`)}
+              style={{ borderBottom: '1px solid var(--border-light)', cursor: 'pointer' }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            >
               <td style={{ padding: '16px' }}>
                 <Link href={`/erp/crm/customers/${customer.id}`} style={{ fontWeight: 600, color: 'var(--primary)', display: 'block' }}>
                   {customer.customerName}
@@ -61,14 +70,18 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
               </td>
               <td style={{ padding: '16px', textAlign: 'right' }}>
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <Link href={`/erp/crm/customers/${customer.id}/edit`}>
-                    <button style={{ padding: '6px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-                    </button>
-                  </Link>
                   <button 
-                    onClick={() => onDelete && onDelete(customer.id)}
-                    style={{ padding: '6px', color: 'var(--danger)', borderRadius: '6px', background: 'var(--danger-glow)' }}
+                    onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/customers/${customer.id}/edit`); }}
+                    style={{ padding: '6px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)', border: 'none', cursor: 'pointer' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                  </button>
+                  <button 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      if (onDelete) onDelete(customer.id); 
+                    }}
+                    style={{ padding: '6px', color: 'var(--danger)', borderRadius: '6px', background: 'var(--danger-glow)', border: 'none', cursor: 'pointer' }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                   </button>

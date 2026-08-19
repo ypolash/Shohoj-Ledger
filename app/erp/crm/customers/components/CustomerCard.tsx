@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface CustomerCardProps {
   customer: any;
@@ -9,8 +10,14 @@ interface CustomerCardProps {
 }
 
 export function CustomerCard({ customer, onDelete }: CustomerCardProps) {
+  const router = useRouter();
+
   return (
-    <div className="glass-card" style={{ padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div 
+      className="glass-card" 
+      onClick={() => router.push(`/erp/crm/customers/${customer.id}`)}
+      style={{ padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px', cursor: 'pointer' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <Link href={`/erp/crm/customers/${customer.id}`} style={{ fontSize: '16px', fontWeight: 600, color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>
@@ -42,14 +49,17 @@ export function CustomerCard({ customer, onDelete }: CustomerCardProps) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
-        <Link href={`/erp/crm/customers/${customer.id}/edit`}>
-          <button style={{ padding: '8px 16px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)', fontSize: '12px', fontWeight: 600 }}>
-            Edit
-          </button>
-        </Link>
         <button 
-          onClick={() => onDelete && onDelete(customer.id)}
-          style={{ padding: '8px 16px', color: 'var(--danger)', borderRadius: '6px', background: 'var(--danger-glow)', fontSize: '12px', fontWeight: 600 }}
+          onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/customers/${customer.id}/edit`); }}
+          style={{ padding: '8px 16px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+          Edit
+        </button>
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (onDelete) onDelete(customer.id); 
+          }}
+          style={{ padding: '8px 16px', color: 'var(--danger)', borderRadius: '6px', background: 'var(--danger-glow)', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer' }}
         >
           Delete
         </button>

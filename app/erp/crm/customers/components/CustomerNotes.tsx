@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 
 export function CustomerNotes({ customer }: { customer: any }) {
   const [newNote, setNewNote] = useState(customer?.notes || "");
+  const [displayedNote, setDisplayedNote] = useState(customer?.notes || "");
   const [saving, setSaving] = useState(false);
-  const router = useRouter();
 
   const handleSave = async () => {
     if (!customer?.id) return;
@@ -18,7 +18,7 @@ export function CustomerNotes({ customer }: { customer: any }) {
         body: JSON.stringify({ notes: newNote })
       });
       if (res.ok) {
-        router.refresh();
+        setDisplayedNote(newNote);
       } else {
         throw new Error("Failed to save note");
       }
@@ -73,7 +73,7 @@ export function CustomerNotes({ customer }: { customer: any }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {customer?.notes ? (
+        {displayedNote ? (
           <div style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--surface-main)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -81,7 +81,7 @@ export function CustomerNotes({ customer }: { customer: any }) {
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>PINNED NOTE</span>
               </div>
             </div>
-            <p style={{ fontSize: '14px', color: 'var(--text-main)', margin: 0, whiteSpace: 'pre-wrap' }}>{customer.notes}</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-main)', margin: 0, whiteSpace: 'pre-wrap' }}>{displayedNote}</p>
           </div>
         ) : (
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No notes recorded yet.</div>

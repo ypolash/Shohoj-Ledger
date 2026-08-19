@@ -146,7 +146,7 @@ export default function CustomerDetailPage() {
 
         {activeTab === 'notes & files' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px' }}>
-            <CustomerNotes />
+            <CustomerNotes customer={customer} />
             <CustomerFiles customer={customer} />
           </div>
         )}

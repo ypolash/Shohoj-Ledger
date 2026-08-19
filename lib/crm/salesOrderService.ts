@@ -131,40 +131,58 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
     }
   }
 
-  const salesOrder = await prisma.salesOrder.create({
-    data: {
-      companyId,
-      salesOrderNumber: data.salesOrderNumber,
-      quotationId: data.quotationId || null,
-      customerId: data.customerId,
-      orderDate: validOrderDate,
-      requestedDeliveryDate: validReqDate,
-      currency: data.currency || "BDT",
-      subtotal,
-      taxAmount,
-      shippingAmount,
-      discountAmount,
-      totalAmount,
-      remarks: data.remarks || null,
-      createdById: userId,
-      lines: {
-        create: processedLines.map(line => ({
-          productId: line.productId,
-          warehouseId: line.warehouseId,
-          quantity: line.quantity,
-          reservedQuantity: 0,
-          unitPrice: line.unitPrice,
-          discountPercent: line.discountPercent,
-          discountAmount: line.discountAmount,
-          taxPercent: line.taxPercent,
-          taxAmount: line.taxAmount,
-          lineTotal: line.lineTotal,
-          remarks: line.remarks || null
-        }))
+  let salesOrder;
+  let retries = 0;
+  while (retries < 3) {
+    try {
+      salesOrder = await prisma.salesOrder.create({
+        data: {
+          companyId,
+          salesOrderNumber: data.salesOrderNumber,
+          quotationId: data.quotationId || null,
+          customerId: data.customerId,
+          orderDate: validOrderDate,
+          requestedDeliveryDate: validReqDate,
+          currency: data.currency || "BDT",
+          subtotal,
+          taxAmount,
+          shippingAmount,
+          discountAmount,
+          totalAmount,
+          remarks: data.remarks || null,
+          createdById: userId,
+          lines: {
+            create: processedLines.map(line => ({
+              productId: line.productId,
+              warehouseId: line.warehouseId,
+              quantity: line.quantity,
+              reservedQuantity: 0,
+              unitPrice: line.unitPrice,
+              discountPercent: line.discountPercent,
+              discountAmount: line.discountAmount,
+              taxPercent: line.taxPercent,
+              taxAmount: line.taxAmount,
+              lineTotal: line.lineTotal,
+              remarks: line.remarks || null
+            }))
+          }
+        },
+        include: { lines: true }
+      });
+      break;
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        retries++;
+        data.salesOrderNumber = await generateSalesOrderNumber(companyId);
+      } else {
+        throw error;
       }
-    },
-    include: { lines: true }
-  });
+    }
+  }
+
+  if (!salesOrder) {
+    throw new Error("Failed to generate a unique Sales Order number. Please try again.");
+  }
 
   await logAudit({
     module: "CRM",

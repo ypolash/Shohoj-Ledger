@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
+import { createLedgerEntry } from "@/lib/ledger";
 import { SalesOrderStatus } from "@prisma/client";
 import { productWarehouseService } from "@/lib/inventory/productWarehouseService";
 
@@ -195,6 +196,13 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
     afterValue: salesOrder,
   });
 
+  // Sync to Income for Legacy Dashboard KPI
+  try {
+    await syncSalesOrderIncome(companyId, salesOrder, userId);
+  } catch (err: any) {
+    console.error("Failed to sync Sales Order Income:", err.message);
+  }
+
   return salesOrder;
 }
 
@@ -277,6 +285,13 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
     afterValue: salesOrder,
   });
 
+  // Sync to Income for Legacy Dashboard KPI
+  try {
+    await syncSalesOrderIncome(companyId, salesOrder, userId);
+  } catch (err: any) {
+    console.error("Failed to sync Sales Order Income:", err.message);
+  }
+
   return salesOrder;
 }
 
@@ -315,6 +330,18 @@ export async function deleteSalesOrder(companyId: string, id: string) {
     description: `Deleted Sales Order ${existing.salesOrderNumber}`,
     beforeValue: existing,
   });
+
+  // Sync deletion of Income/Ledger
+  try {
+    const description = `Sales Order ${existing.salesOrderNumber}`;
+    const income = await prisma.income.findFirst({ where: { companyId, description, systemSource: "ERP_CRM" } });
+    if (income) {
+      await prisma.ledgerEntry.deleteMany({ where: { companyId, referenceId: income.id, module: 'Income' } });
+      await prisma.income.delete({ where: { id: income.id } });
+    }
+  } catch (err: any) {
+    console.error("Failed to delete Sales Order Income:", err.message);
+  }
 
   return true;
 }
@@ -526,4 +553,53 @@ export async function getSalesOrderHistory(companyId: string, id: string) {
     },
     orderBy: { createdAt: 'desc' }
   });
+}
+
+/**
+ * Synchronizes Sales Order amounts to the Legacy Income and Ledger tables for Dashboard KPI visibility.
+ * Implements accrual accounting: recognizes Revenue and Accounts Receivable at the time of Sales Order creation/update.
+ */
+async function syncSalesOrderIncome(companyId: string, order: any, userId: string) {
+  const description = `Sales Order ${order.salesOrderNumber}`;
+  let income = await prisma.income.findFirst({
+    where: { companyId, description, systemSource: "ERP_CRM" }
+  });
+
+  if (!income) {
+    income = await prisma.income.create({
+      data: {
+        companyId,
+        category: "Product Sales",
+        source: "Sales Order",
+        amount: order.totalAmount,
+        received: 0,
+        paymentStatus: "UNPAID",
+        description,
+        systemSource: "ERP_CRM"
+      }
+    });
+    // Create LedgerEntry for Accounts Receivable to reflect in KPIs
+    await createLedgerEntry({
+      companyId,
+      module: 'Income',
+      referenceId: income.id,
+      amount: Number(order.totalAmount),
+      isDebit: true,
+      accountType: 'Receivable',
+      description: `Accrued Income: ${description}`,
+      createdById: userId,
+      systemSource: "ERP_CRM"
+    });
+  } else {
+    // Update Income
+    await prisma.income.update({
+      where: { id: income.id },
+      data: { amount: order.totalAmount }
+    });
+    // Update LedgerEntry manually to sync the new amount
+    await prisma.ledgerEntry.updateMany({
+      where: { companyId, referenceId: income.id, module: 'Income' },
+      data: { debit: order.totalAmount }
+    });
+  }
 }

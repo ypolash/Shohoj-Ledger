@@ -15,11 +15,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Advance not found' }, { status: 404 });
     }
 
+    const oldAmount = parseFloat(existing.amount.toString());
+    const oldRemaining = parseFloat(existing.remainingAmount.toString());
+    const recoveredAmount = oldAmount - oldRemaining;
+    const newAmount = data.amount ? parseFloat(data.amount) : oldAmount;
+    const newRemainingAmount = newAmount - recoveredAmount;
+
+    if (newRemainingAmount < 0) {
+      return NextResponse.json({ error: 'New amount cannot be less than the amount already recovered' }, { status: 400 });
+    }
+
     const updated = await prisma.advance.update({
       where: { id },
       data: {
         memberId: data.memberId,
-        amount: data.amount ? parseFloat(data.amount) : undefined,
+        amount: newAmount,
+        remainingAmount: newRemainingAmount,
         reason: data.reason,
         createdAt: data.date ? new Date(data.date) : undefined,
       }

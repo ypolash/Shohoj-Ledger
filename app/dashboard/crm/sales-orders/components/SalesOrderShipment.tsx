@@ -2,10 +2,8 @@
 
 import React from 'react';
 
-export function SalesOrderShipment() {
-  const shipments = [
-    { id: 'SHP-001', date: '2026-07-25', status: 'Shipped', trackingNo: 'TRK-1234567890', carrier: 'FedEx' }
-  ];
+export function SalesOrderShipment({ order }: { order?: any }) {
+  const shipments = order?.deliveryOrders || [];
 
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
@@ -28,17 +26,24 @@ export function SalesOrderShipment() {
           </tr>
         </thead>
         <tbody style={{ fontSize: '14px' }}>
-          {shipments.map((shp) => (
+          {shipments.length === 0 && (
+            <tr>
+              <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                No shipments found for this order.
+              </td>
+            </tr>
+          )}
+          {shipments.map((shp: any) => (
             <tr key={shp.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '12px', fontWeight: 600 }}>{shp.id}</td>
-              <td style={{ padding: '12px' }}>{new Date(shp.date).toLocaleDateString()}</td>
-              <td style={{ padding: '12px' }}>{shp.carrier}</td>
-              <td style={{ padding: '12px', color: 'var(--primary)', fontWeight: 500 }}>{shp.trackingNo}</td>
+              <td style={{ padding: '12px', fontWeight: 600 }}>{shp.deliveryOrderNumber || shp.id}</td>
+              <td style={{ padding: '12px' }}>{new Date(shp.deliveryDate || shp.createdAt).toLocaleDateString()}</td>
+              <td style={{ padding: '12px' }}>{shp.carrier || 'N/A'}</td>
+              <td style={{ padding: '12px', color: 'var(--primary)', fontWeight: 500 }}>{shp.trackingNumber || 'N/A'}</td>
               <td style={{ padding: '12px' }}>
                 <span style={{
                   padding: '4px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
-                  background: shp.status === 'Delivered' ? 'var(--success-glow)' : 'var(--info-glow)',
-                  color: shp.status === 'Delivered' ? 'var(--success)' : 'var(--info)'
+                  background: shp.status === 'DELIVERED' ? 'var(--success-glow)' : 'var(--info-glow)',
+                  color: shp.status === 'DELIVERED' ? 'var(--success)' : 'var(--info)'
                 }}>
                   {shp.status}
                 </span>

@@ -17,6 +17,7 @@ import { CustomerCard } from "./components/CustomerCard";
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, active: 0, outstanding: 0, salesTotal: 0 });
   const [filters, setFilters] = useState({ query: '', status: '', groupId: '' });
   const [isMobile, setIsMobile] = useState(false);
 
@@ -47,10 +48,26 @@ export default function CustomersPage() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await fetch('/api/crm/customers/stats');
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch stats", err);
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to archive or delete this customer?")) return;
@@ -62,13 +79,7 @@ export default function CustomersPage() {
     }
   };
 
-  // Mock Stats calculation
-  const stats = {
-    total: customers.length,
-    active: customers.filter(c => c.status !== 'Inactive').length,
-    outstanding: customers.reduce((acc, curr) => acc + Number(curr.outstandingBalance || 0), 0),
-    salesTotal: 450000, // Placeholder
-  };
+  // Stats are fetched from the API now
 
   return (
     <PageContainer>

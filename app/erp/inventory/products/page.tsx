@@ -177,7 +177,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Table */}
-      <div className="glass-panel" style={{ borderRadius: '16px' }}>
+      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>

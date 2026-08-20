@@ -11,6 +11,7 @@ export function QuickActions({ role }: QuickActionsProps) {
   const actions = [
     { label: 'Customer Management', icon: 'groups', roles: ['Owner', 'Sales', 'CEO'], href: '/dashboard/crm/customers', color: 'var(--primary)' },
     { label: 'Lead Management', icon: 'person_search', roles: ['Owner', 'Sales'], href: '/dashboard/crm/leads', color: 'var(--accent)' },
+    { label: 'New Sales Order', icon: 'add_shopping_cart', roles: ['Owner', 'Sales'], href: '/dashboard/crm/sales-orders/new', color: 'var(--warning)' },
     { label: 'Income Management', icon: 'payments', roles: ['Owner', 'Accountant'], href: '/dashboard/income', color: 'var(--success)' },
     { label: 'Expense Management', icon: 'receipt_long', roles: ['Owner', 'Accountant'], href: '/dashboard/expenses', color: 'var(--danger)' },
     { label: 'Product Management', icon: 'inventory_2', roles: ['Owner', 'Inventory'], href: '/dashboard/inventory/products', color: 'var(--info)' },

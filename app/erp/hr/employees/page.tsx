@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Employee {
   id: string;
@@ -45,6 +46,7 @@ export default function EmployeesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const router = useRouter();
 
   useEffect(() => { loadAll(); }, []);
 
@@ -153,7 +155,8 @@ export default function EmployeesPage() {
             ) : filtered.map(emp => {
               const s = statusColor[emp.status] || { color: 'var(--text-muted)', bg: 'var(--surface-hover)' };
               return (
-                <tr key={emp.id} style={{ borderBottom: '1px solid var(--border-main)' }}
+                <tr key={emp.id} style={{ borderBottom: '1px solid var(--border-main)', cursor: 'pointer' }}
+                  onClick={() => router.push(`/erp/hr/employees/${emp.id}`)}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}>
                   <td style={{ padding: '14px 16px' }}>

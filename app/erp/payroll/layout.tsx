@@ -50,15 +50,7 @@ export default function PayrollLayout({ children }: { children: React.ReactNode 
           })}
         </nav>
 
-        {/* Status workflow guide */}
-        <div style={{ marginTop: 'auto', padding: '14px', borderRadius: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.05em' }}>WORKFLOW</div>
-          {['DRAFT', 'SUBMITTED', 'APPROVED', 'PAID', 'LOCKED'].map((s, i, arr) => (
-            <div key={s} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', padding: '2px 0' }}>→ {s}</span>
-            </div>
-          ))}
-        </div>
+
       </aside>
 
       {/* Content */}

@@ -145,6 +145,7 @@ export default function LeadDetailPage() {
             <div>
               <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Company Details</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div><strong>Company Name:</strong> {lead.companyName || '-'}</div>
                 <div><strong>Industry:</strong> {lead.industry || '-'}</div>
                 <div><strong>Website:</strong> {lead.website ? <a href={lead.website} target="_blank" rel="noreferrer">{lead.website}</a> : '-'}</div>
                 <div><strong>Address:</strong> {lead.address || '-'}</div>

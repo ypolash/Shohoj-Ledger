@@ -52,11 +52,13 @@ export default function QuotationDetailPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
           <button 
-            onClick={() => router.push('/dashboard/crm/quotations')}
-            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-          >
-            &larr; Back to Quotations
-          </button>
+          onClick={() => router.push('/dashboard/crm/quotations')}
+          className="btn btn-secondary"
+          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+        >
+          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          Back to Quotations
+        </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <PageHeader 
               title={quotation.quotationNo || `Quotation ${quotation.id.substring(0,8)}`}

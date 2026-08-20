@@ -40,11 +40,13 @@ export default function EditSalesOrderPage() {
   return (
     <PageContainer>
       <button 
-        onClick={() => router.push(`/erp/crm/sales-orders/${params.id}`)}
-        style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-      >
-        &larr; Back to Sales Order
-      </button>
+          onClick={() => router.push(`/erp/crm/sales-orders/${params.id}`)}
+          className="btn btn-secondary"
+          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+        >
+          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          Back to Sales Order
+        </button>
       <PageHeader 
         title={`Edit Order: ${order.salesOrderNumber || order.id?.substring(0,8) || 'Unknown'}`}
         description="Modify order items, status, and dates."

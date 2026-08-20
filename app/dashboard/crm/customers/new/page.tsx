@@ -81,11 +81,13 @@ export default function CreateCustomerPage() {
   return (
     <PageContainer>
       <button 
-        onClick={() => router.push('/dashboard/crm/customers')}
-        style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
-      >
-        &larr; Back to Customers
-      </button>
+          onClick={() => router.push('/dashboard/crm/customers')}
+          className="btn btn-secondary"
+          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+        >
+          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          Back to Customers
+        </button>
       <PageHeader 
         title="Create New Customer"
         description="Onboard a new enterprise customer to your CRM."

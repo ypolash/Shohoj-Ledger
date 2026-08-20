@@ -79,11 +79,13 @@ export default function LeadDetailPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <button 
-            onClick={() => router.push('/erp/crm/leads')}
-            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
-          >
-            &larr; Back to Leads
-          </button>
+          onClick={() => router.push('/erp/crm/leads')}
+          className="btn btn-secondary"
+          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+        >
+          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          Back to Leads
+        </button>
           <PageHeader 
             title={lead.companyName}
             description={`Contact: ${lead.contactPerson} | ${lead.email || lead.phone}`}

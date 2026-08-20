@@ -52,11 +52,13 @@ export default function OpportunityDetailPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
           <button 
-            onClick={() => router.push('/dashboard/crm/opportunities')}
-            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
-          >
-            &larr; Back to Opportunities
-          </button>
+          onClick={() => router.push('/dashboard/crm/opportunities')}
+          className="btn btn-secondary"
+          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+        >
+          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          Back to Opportunities
+        </button>
           <PageHeader 
             title={opportunity.name}
             description={`Customer: ${opportunity.customer?.customerName || 'Unknown'} | Stage: ${opportunity.stage?.name || 'New'}`}

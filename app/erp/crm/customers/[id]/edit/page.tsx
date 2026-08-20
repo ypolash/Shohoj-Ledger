@@ -119,11 +119,13 @@ export default function EditCustomerPage() {
   return (
     <PageContainer>
       <button 
-        onClick={() => router.push(`/erp/crm/customers/${params.id}`)}
-        style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
-      >
-        &larr; Back to Customer
-      </button>
+          onClick={() => router.push(`/erp/crm/customers/${params.id}`)}
+          className="btn btn-secondary"
+          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+        >
+          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          Back to Customer
+        </button>
       <PageHeader 
         title={`Edit ${formData.customerName}`}
         description="Update customer details and status."

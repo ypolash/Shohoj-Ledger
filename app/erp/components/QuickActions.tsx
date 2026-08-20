@@ -12,8 +12,6 @@ export function QuickActions({ role }: QuickActionsProps) {
     { label: 'Customer Management', icon: 'groups', roles: ['Owner', 'Sales', 'CEO'], href: '/erp/crm/customers', color: 'var(--primary)' },
     { label: 'Lead Management', icon: 'person_search', roles: ['Owner', 'Sales'], href: '/erp/crm/leads', color: 'var(--accent)' },
     { label: 'New Sales Order', icon: 'add_shopping_cart', roles: ['Owner', 'Sales'], href: '/erp/crm/sales-orders/new', color: 'var(--warning)' },
-    { label: 'Income Management', icon: 'payments', roles: ['Owner', 'Accountant'], href: '/erp/income', color: 'var(--success)' },
-    { label: 'Expense Management', icon: 'receipt_long', roles: ['Owner', 'Accountant'], href: '/erp/expenses', color: 'var(--danger)' },
   ];
 
   const visibleActions = actions.filter(a => a.roles.includes(role));

@@ -54,34 +54,39 @@ export default function CustomerDetailPage() {
 
   return (
     <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <button 
-            onClick={() => router.push('/erp/crm/customers')}
-            style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}
-          >
-            &larr; Back to Customers
-          </button>
-          <PageHeader 
-            title={customer.customerName}
-            description={`Code: ${customer.customerCode || customer.id} | Status: ${customer.status || 'Active'}`}
-          />
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+        <button 
+          onClick={() => router.push('/erp/crm/customers')}
+          className="btn btn-secondary"
+          style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px' }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
+          Back to Customers
+        </button>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => router.push(`/erp/crm/sales-orders/new?customerId=${customer.id}`)}
-            style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_shopping_cart</span>
-            New Order
-          </button>
-          <button 
-            onClick={() => router.push(`/erp/crm/customers/${customer.id}/edit`)}
-            style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-            Edit Customer
-          </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+          <PageHeader 
+            title={customer.name || customer.displayName || 'Customer Details'}
+            description={`Code: ${customer.customerCode || customer.id} | Status: ${customer.status || 'ACTIVE'}`}
+          />
+
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button 
+              onClick={() => router.push(`/erp/crm/sales-orders/new?customerId=${customer.id}`)}
+              className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_shopping_cart</span>
+              New Order
+            </button>
+            <button 
+              onClick={() => router.push(`/erp/crm/customers/${customer.id}/edit`)}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+              Edit Customer
+            </button>
+          </div>
         </div>
       </div>
 

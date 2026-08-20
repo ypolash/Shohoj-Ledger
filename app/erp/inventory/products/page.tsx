@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 /** Product record from API */
 interface Product {
@@ -18,6 +19,9 @@ interface Product {
   reorderLevel: number;
   status: string;
   currentStock: number;
+  categoryId?: string | null;
+  description?: string | null;
+  notes?: string | null;
   category?: { name: string };
 }
 
@@ -52,6 +56,8 @@ export default function ProductsPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [menuOpen, setMenuOpen] = useState<{ id: string, top: number, right: number } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const router = useRouter();
   const LIMIT = 20;
 
   useEffect(() => { fetchCategories(); }, []);
@@ -93,13 +99,16 @@ export default function ProductsPage() {
   /** Handles form field changes */
   const handleForm = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  /** Submits the new product to the API */
+  /** Submits the new/edited product to the API */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true); setError('');
     try {
-      const res = await fetch('/api/inventory/products', {
-        method: 'POST',
+      const url = editingId ? `/api/inventory/products/${editingId}` : '/api/inventory/products';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
@@ -112,14 +121,58 @@ export default function ProductsPage() {
         })
       });
       const d = await res.json();
-      if (!res.ok) { setError(d.error || 'Failed to create product'); return; }
-      setSuccessMsg('Product created successfully!');
+      if (!res.ok) { setError(d.error || `Failed to ${editingId ? 'update' : 'create'} product`); return; }
+      setSuccessMsg(`Product ${editingId ? 'updated' : 'created'} successfully!`);
       setShowModal(false);
       setForm(EMPTY_FORM);
+      setEditingId(null);
       fetchProducts();
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (e) { setError('Network error'); }
     finally { setSubmitting(false); }
+  };
+
+  const handleEditClick = (pId: string) => {
+    const p = products.find(prod => prod.id === pId);
+    if (!p) return;
+    setEditingId(p.id);
+    setForm({
+      productCode: p.productCode || '',
+      name: p.name || '',
+      sku: p.sku || '',
+      barcode: p.barcode || '',
+      brand: p.brand || '',
+      unit: p.unit || '',
+      purchasePrice: p.purchasePrice?.toString() || '',
+      sellingPrice: p.sellingPrice?.toString() || '',
+      minStock: p.minStock?.toString() || '',
+      maxStock: p.maxStock?.toString() || '',
+      reorderLevel: p.reorderLevel?.toString() || '',
+      status: p.status || 'ACTIVE',
+      categoryId: p.categoryId || '',
+      description: p.description || '',
+      notes: p.notes || ''
+    });
+    setShowModal(true);
+    setMenuOpen(null);
+  };
+
+  const handleDelete = async (pId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    setMenuOpen(null);
+    try {
+      const res = await fetch(`/api/inventory/products/${pId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSuccessMsg("Product deleted successfully.");
+        setTimeout(() => setSuccessMsg(''), 4000);
+        fetchProducts();
+      } else {
+        const d = await res.json();
+        alert(d.error || "Failed to delete product");
+      }
+    } catch (e) {
+      alert("Network error while deleting");
+    }
   };
 
   /** Returns a badge style based on current stock vs. min stock threshold */
@@ -142,7 +195,7 @@ export default function ProductsPage() {
             {total} product{total !== 1 ? 's' : ''} total
           </p>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button className="btn btn-primary hover-lift" onClick={() => { setEditingId(null); setForm(EMPTY_FORM); setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           Add Product
         </button>
@@ -288,21 +341,24 @@ export default function ProductsPage() {
           <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onClick={() => alert('View Details coming soon')}
+            onClick={() => {
+              setMenuOpen(null);
+              router.push(`/erp/inventory/products/${menuOpen.id}`);
+            }}
           >
             View Details
           </button>
           <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onClick={() => alert('Edit Product coming soon')}
+            onClick={() => handleEditClick(menuOpen.id)}
           >
             Edit Product
           </button>
           <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger)', borderRadius: '4px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-subtle)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onClick={() => alert('Delete Product coming soon')}
+            onClick={() => handleDelete(menuOpen.id)}
           >
             Delete
           </button>
@@ -315,7 +371,7 @@ export default function ProductsPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="glass-panel" style={{ width: '100%', maxWidth: '640px', borderRadius: '20px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', margin: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Add New Product</h2>
+              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>{editingId ? 'Edit Product' : 'Add New Product'}</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
               </button>
@@ -368,7 +424,7 @@ export default function ProductsPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Creating…' : 'Create Product'}
+                  {submitting ? 'Saving…' : editingId ? 'Update Product' : 'Create Product'}
                 </button>
               </div>
             </form>

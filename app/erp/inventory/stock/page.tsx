@@ -67,8 +67,8 @@ export default function StockControlPage() {
   const handleForm = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   /** Opens a fresh modal */
-  const openModal = () => {
-    setForm({ productId: '', warehouseId: '', type: 'IN', quantity: '', reference: '', notes: '', toWarehouseId: '' });
+  const openModal = (type = 'IN') => {
+    setForm({ productId: '', warehouseId: '', type, quantity: '', reference: '', notes: '', toWarehouseId: '' });
     setError('');
     setShowModal(true);
   };
@@ -127,7 +127,7 @@ export default function StockControlPage() {
             Record stock movements and view current stock levels.
           </p>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={openModal} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button className="btn btn-primary hover-lift" onClick={() => openModal('IN')} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           Record Transaction
         </button>
@@ -144,10 +144,15 @@ export default function StockControlPage() {
         <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px' }}>TRANSACTION TYPES</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {TRANSACTION_TYPES.map(t => (
-            <div key={t.value} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)' }}>
+            <button 
+              key={t.value}
+              onClick={() => openModal(t.value)}
+              className="hover-lift"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', cursor: 'pointer', outline: 'none' }}
+            >
               <span className="material-symbols-outlined" style={{ fontSize: '16px', color: t.color }}>{t.icon}</span>
               <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)' }}>{t.label}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>

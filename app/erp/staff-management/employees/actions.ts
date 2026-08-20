@@ -97,7 +97,33 @@ export async function createEmployee(data: any) {
         joinDate: new Date(data.joinDate),
         password: data.password || null, // Keeping plain for mockup, hash in production
         status: "ACTIVE",
-        systemSource: "ERP"
+        systemSource: "ERP",
+        profile: data.profile ? {
+          create: {
+            ...data.profile,
+            dateOfBirth: data.profile.dateOfBirth ? new Date(data.profile.dateOfBirth) : null,
+          }
+        } : undefined,
+        education: data.education && data.education.length > 0 ? {
+          create: data.education.map((e: any) => ({
+            degree: e.degree,
+            institution: e.institution,
+            board: e.board,
+            subject: e.subject,
+            result: e.result,
+            passingYear: e.passingYear ? parseInt(e.passingYear) : null
+          }))
+        } : undefined,
+        experience: data.experience && data.experience.length > 0 ? {
+          create: data.experience.map((e: any) => ({
+            company: e.company,
+            position: e.position,
+            reason: e.reason,
+            salary: e.salary ? parseFloat(e.salary) : null,
+            joiningDate: e.joiningDate ? new Date(e.joiningDate) : null,
+            leavingDate: e.leavingDate ? new Date(e.leavingDate) : null
+          }))
+        } : undefined
       }
     });
 

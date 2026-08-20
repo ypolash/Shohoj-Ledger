@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 interface Employee {
   id: string;
@@ -110,10 +111,10 @@ export default function EmployeesPage() {
             {employees.length} employee{employees.length !== 1 ? 's' : ''} total
           </p>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Link href="/erp/hr/employees/new" className="btn btn-primary hover-lift" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person_add</span>
           Add Employee
-        </button>
+        </Link>
       </div>
 
       {successMsg && <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>✓ {successMsg}</div>}
@@ -180,74 +181,6 @@ export default function EmployeesPage() {
           </tbody>
         </table>
       </div>
-
-      {/* Add Employee Modal */}
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
-          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '680px', borderRadius: '20px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', margin: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Add New Employee</h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
-              </button>
-            </div>
-
-            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <Field label="First Name *" value={form.firstName} onChange={v => handleForm('firstName', v)} placeholder="John" required />
-                <Field label="Last Name *" value={form.lastName} onChange={v => handleForm('lastName', v)} placeholder="Doe" required />
-                <Field label="Email *" value={form.email} onChange={v => handleForm('email', v)} placeholder="john@company.com" required type="email" />
-                <Field label="Phone" value={form.phone} onChange={v => handleForm('phone', v)} placeholder="+880 1700-000000" />
-                <Field label="Password *" value={form.password} onChange={v => handleForm('password', v)} placeholder="Initial login password" required type="password" />
-                <Field label="Join Date *" value={form.joinDate} onChange={v => handleForm('joinDate', v)} required type="date" />
-                <Field label="Basic Salary (৳) *" value={form.basicSalary} onChange={v => handleForm('basicSalary', v)} placeholder="0" required type="number" />
-                <div>
-                  <label style={ls}>Status</label>
-                  <select value={form.status} onChange={e => handleForm('status', e.target.value)} style={is}>
-                    <option value="ACTIVE">Active</option>
-                    <option value="ON_LEAVE">On Leave</option>
-                    <option value="TERMINATED">Terminated</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={ls}>Department</label>
-                  <select value={form.departmentId} onChange={e => {
-                    const d = departments.find(d => d.id === e.target.value);
-                    handleForm('departmentId', e.target.value);
-                    if (d) handleForm('department', d.name);
-                  }} style={is}>
-                    <option value="">— Select Department —</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={ls}>Designation</label>
-                  <select value={form.designationId} onChange={e => {
-                    const d = designations.find(d => d.id === e.target.value);
-                    handleForm('designationId', e.target.value);
-                    if (d) handleForm('designation', d.name);
-                  }} style={is}>
-                    <option value="">— Select Designation —</option>
-                    {designations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                </div>
-                <Field label="Designation (Text, if no list)" value={form.designation} onChange={v => handleForm('designation', v)} placeholder="e.g. Software Engineer" required />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Adding…' : 'Add Employee'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

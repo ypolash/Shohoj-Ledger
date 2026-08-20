@@ -125,9 +125,9 @@ export default function MembersPage() {
           <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Members</h1>
           <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>{members.length} member{members.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Link href="/dashboard/staff-management/members/new" className="btn btn-primary hover-lift" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>Add Member
-        </button>
+        </Link>
       </div>
 
       {successMsg && <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>✓ {successMsg}</div>}

@@ -73,13 +73,7 @@ export default function EmployeesPageClient() {
   };
 
   const openAddModal = () => {
-    setIsEditMode(false);
-    setNewEmployee({ 
-      firstName: '', lastName: '', email: '', phone: '', designation: '', department: '', 
-      departmentId: '', designationId: '', reportingManagerId: '', employmentType: '', location: '', shift: '', employmentStatus: 'Probation',
-      basicSalary: '', joinDate: '', password: '', status: 'ACTIVE' 
-    });
-    setIsModalOpen(true);
+    router.push('/dashboard/staff-management/employees/new');
   };
 
   const openEditModal = (emp: any) => {

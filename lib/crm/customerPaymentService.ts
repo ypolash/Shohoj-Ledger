@@ -203,6 +203,23 @@ export async function allocatePayment(companyId: string, id: string, userId: str
       description: `Allocated ${amountToAllocate} to ${referenceType} ${referenceId}`
     });
 
+    // Sync to Income for Settlement if reference is Sales Order
+    if (referenceType === "SALES_ORDER") {
+      const so = await tx.salesOrder.findUnique({ where: { id: referenceId } });
+      if (so) {
+        const description = `Sales Order ${so.salesOrderNumber}`;
+        const income = await tx.income.findFirst({ where: { companyId, description, systemSource: "ERP_CRM" } });
+        if (income) {
+          const newReceived = Number(income.received) + amountToAllocate;
+          const newPaymentStatus = newReceived >= Number(income.amount) ? "PAID" : "PARTIAL";
+          await tx.income.update({
+            where: { id: income.id },
+            data: { received: newReceived, paymentStatus: newPaymentStatus }
+          });
+        }
+      }
+    }
+
     return updatedPayment;
   });
 }
@@ -249,6 +266,23 @@ export async function removeAllocation(companyId: string, id: string, allocation
       action: "UPDATE",
       description: `Removed allocation of ${allocation.allocatedAmount} from ${allocation.referenceType}`
     });
+
+    // Sync to Income for Settlement if reference is Sales Order
+    if (allocation.referenceType === "SALES_ORDER") {
+      const so = await tx.salesOrder.findUnique({ where: { id: allocation.referenceId } });
+      if (so) {
+        const description = `Sales Order ${so.salesOrderNumber}`;
+        const income = await tx.income.findFirst({ where: { companyId, description, systemSource: "ERP_CRM" } });
+        if (income) {
+          const newReceived = Math.max(0, Number(income.received) - Number(allocation.allocatedAmount));
+          const newPaymentStatus = newReceived === 0 ? "UNPAID" : (newReceived >= Number(income.amount) ? "PAID" : "PARTIAL");
+          await tx.income.update({
+            where: { id: income.id },
+            data: { received: newReceived, paymentStatus: newPaymentStatus }
+          });
+        }
+      }
+    }
 
     return updatedPayment;
   });

@@ -159,7 +159,7 @@ export default function SalesOrderDetailPage() {
           </div>
         )}
 
-        {activeTab === 'payments' && <SalesOrderPayments order={order} />}
+        {activeTab === 'payments' && <SalesOrderPayments order={order} onRefresh={() => { fetch(`/api/crm/sales-orders/${params.id}`).then(res => res.json()).then(data => { setOrder(data.order || data); }); }} />}
         {activeTab === 'invoices' && <SalesOrderInvoices />}
         {activeTab === 'shipments' && <SalesOrderShipment />}
 

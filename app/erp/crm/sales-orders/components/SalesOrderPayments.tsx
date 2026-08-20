@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export function SalesOrderPayments({ order }: { order: any }) {
+export function SalesOrderPayments({ order, onRefresh }: { order: any, onRefresh?: () => void }) {
   const router = useRouter();
   const [allocations, setAllocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +79,7 @@ export function SalesOrderPayments({ order }: { order: any }) {
       setShowModal(false);
       fetchPayments();
       // Force page refresh to update KPIs and Status
+      if (onRefresh) onRefresh();
       router.refresh();
     } catch (err) {
       console.error(err);

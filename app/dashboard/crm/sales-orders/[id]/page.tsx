@@ -11,7 +11,6 @@ import { SalesOrderItems } from "../components/SalesOrderItems";
 import { QuotationTotals } from "../../quotations/components/QuotationTotals";
 import { SalesOrderTimeline } from "../components/SalesOrderTimeline";
 import { SalesOrderHistory } from "../components/SalesOrderHistory";
-import { SalesOrderInvoices } from "../components/SalesOrderInvoices";
 import { SalesOrderPayments } from "../components/SalesOrderPayments";
 import { SalesOrderShipment } from "../components/SalesOrderShipment";
 
@@ -113,7 +112,7 @@ export default function SalesOrderDetailPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '2px' }}>
-        {['overview', 'payments', 'invoices', 'shipments', 'timeline', 'history'].map(tab => (
+        {['overview', 'payments', 'shipments', 'timeline', 'history'].map(tab => (
           <div 
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -154,7 +153,6 @@ export default function SalesOrderDetailPage() {
         )}
 
         {activeTab === 'payments' && <SalesOrderPayments />}
-        {activeTab === 'invoices' && <SalesOrderInvoices />}
         {activeTab === 'shipments' && <SalesOrderShipment />}
 
         {activeTab === 'timeline' && (

@@ -64,6 +64,20 @@ export function LeadActivity({ leadId }: LeadActivityProps) {
     }
   };
 
+  const handleDeleteActivity = async (activityId: string) => {
+    if (!confirm("Are you sure you want to delete this activity?")) return;
+    try {
+      const res = await fetch(`/api/crm/leads/${leadId}/activities/${activityId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchActivities();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -181,6 +195,14 @@ export function LeadActivity({ leadId }: LeadActivityProps) {
                 }}>
                   {status}
                 </span>
+                
+                <button 
+                  onClick={() => handleDeleteActivity(act.id)}
+                  style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', borderRadius: '4px', opacity: 0.7 }}
+                  title="Delete Activity"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                </button>
               </div>
             );
           })}

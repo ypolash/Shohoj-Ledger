@@ -49,9 +49,8 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState<{ id: string, top: number, right: number } | null>(null);
   const LIMIT = 20;
 
   useEffect(() => { fetchCategories(); }, []);
@@ -178,7 +177,7 @@ export default function ProductsPage() {
 
       {/* Table */}
       <div className="glass-panel" style={{ borderRadius: '16px' }}>
-        <div style={{ overflowX: 'auto', minHeight: '300px' }}>
+        <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
@@ -229,52 +228,25 @@ export default function ProductsPage() {
                         {p.status}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right', position: 'relative' }}>
+                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === p.id ? null : p.id); }}
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (menuOpen?.id === p.id) {
+                            setMenuOpen(null);
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenuOpen({
+                              id: p.id,
+                              top: rect.bottom,
+                              right: window.innerWidth - rect.right
+                            });
+                          }
+                        }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
                       >
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
                       </button>
-                      
-                      {menuOpen === p.id && (
-                        <div style={{
-                          position: 'absolute',
-                          right: '16px',
-                          top: '40px',
-                          background: 'var(--surface-bg)',
-                          border: '1px solid var(--border-main)',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          padding: '4px',
-                          zIndex: 10,
-                          minWidth: '140px',
-                          display: 'flex',
-                          flexDirection: 'column'
-                        }}>
-                          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            onClick={() => alert('View Details coming soon')}
-                          >
-                            View Details
-                          </button>
-                          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            onClick={() => alert('Edit Product coming soon')}
-                          >
-                            Edit Product
-                          </button>
-                          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger)', borderRadius: '4px' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-subtle)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            onClick={() => alert('Delete Product coming soon')}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
                     </td>
                   </tr>
                 );
@@ -295,6 +267,46 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+
+      {/* Global Dropdown Menu */}
+      {menuOpen && (
+        <div style={{
+          position: 'fixed',
+          right: `${menuOpen.right}px`,
+          top: `${menuOpen.top + 4}px`,
+          background: 'var(--surface-bg)',
+          border: '1px solid var(--border-main)',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          padding: '4px',
+          zIndex: 9999,
+          minWidth: '140px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            onClick={() => alert('View Details coming soon')}
+          >
+            View Details
+          </button>
+          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            onClick={() => alert('Edit Product coming soon')}
+          >
+            Edit Product
+          </button>
+          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger)', borderRadius: '4px' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-subtle)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            onClick={() => alert('Delete Product coming soon')}
+          >
+            Delete
+          </button>
+        </div>
+      )}
 
       {/* Add Product Modal */}
       {showModal && (

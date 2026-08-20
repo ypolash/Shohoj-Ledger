@@ -121,7 +121,7 @@ export default function CustomerDetailPage() {
             <CustomerProfile customer={customer} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
               <CustomerContacts customer={customer} />
-              <CustomerActivities />
+              <CustomerActivities customer={customer} />
             </div>
             <CustomerAddresses customer={customer} />
           </div>

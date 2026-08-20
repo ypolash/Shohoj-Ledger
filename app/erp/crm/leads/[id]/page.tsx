@@ -182,7 +182,7 @@ export default function LeadDetailPage() {
         {activeTab === 'history' && (
           <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
             <h4 style={{ margin: '0 0 24px 0', fontSize: '16px', fontWeight: 600 }}>Audit History</h4>
-            <LeadHistory />
+            <LeadHistory leadId={lead.id} />
           </div>
         )}
       </div>

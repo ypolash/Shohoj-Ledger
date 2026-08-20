@@ -1,13 +1,40 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export function LeadHistory() {
-  const historyLogs = [
-    { id: 1, action: 'Lead Assigned', user: 'Admin User', date: '2026-07-25 09:00 AM', detail: 'Assigned to John Doe' },
-    { id: 2, action: 'Status Changed', user: 'John Doe', date: '2026-07-25 10:30 AM', detail: 'New → Contacted' },
-    { id: 3, action: 'Priority Updated', user: 'John Doe', date: '2026-07-25 10:35 AM', detail: 'Medium → High' },
-  ];
+interface LeadHistoryProps {
+  leadId: string;
+}
+
+export function LeadHistory({ leadId }: LeadHistoryProps) {
+  const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (leadId) {
+      fetch(`/api/crm/leads/${leadId}/activities`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.activities) {
+            // Keep everything EXCEPT notes and tasks (FOLLOW_UP_)
+            const logs = data.activities.filter((act: any) => 
+              act.type !== 'NOTE' && !(act.type || '').startsWith('FOLLOW_UP_')
+            );
+            setHistoryLogs(logs);
+          }
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoading(false));
+    }
+  }, [leadId]);
+
+  if (loading) {
+    return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading history...</div>;
+  }
+
+  if (historyLogs.length === 0) {
+    return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>No history available.</div>;
+  }
 
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -21,14 +48,28 @@ export function LeadHistory() {
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>
-          {historyLogs.map(log => (
-            <tr key={log.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '16px 12px', color: 'var(--text-muted)' }}>{log.date}</td>
-              <td style={{ padding: '16px 12px', fontWeight: 500, color: 'var(--text-main)' }}>{log.action}</td>
-              <td style={{ padding: '16px 12px' }}>{log.user}</td>
-              <td style={{ padding: '16px 12px', color: 'var(--text-muted)' }}>{log.detail}</td>
-            </tr>
-          ))}
+          {historyLogs.map(log => {
+            const dateStr = new Date(log.createdAt).toLocaleString();
+            
+            // Format action to be more readable
+            const actionFormat = (log.type || 'SYSTEM_ACTION').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+            
+            const user = log.performedBy?.name || 'System';
+            
+            let detail = log.description || '';
+            if (log.oldValue && log.newValue) {
+              detail = `${log.oldValue} → ${log.newValue}`;
+            }
+
+            return (
+              <tr key={log.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <td style={{ padding: '16px 12px', color: 'var(--text-muted)' }}>{dateStr}</td>
+                <td style={{ padding: '16px 12px', fontWeight: 500, color: 'var(--text-main)' }}>{actionFormat}</td>
+                <td style={{ padding: '16px 12px' }}>{user}</td>
+                <td style={{ padding: '16px 12px', color: 'var(--text-muted)' }}>{detail}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

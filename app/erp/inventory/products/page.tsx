@@ -177,8 +177,8 @@ export default function ProductsPage() {
       </div>
 
       {/* Table */}
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
+      <div className="glass-panel" style={{ borderRadius: '16px' }}>
+        <div style={{ overflowX: 'auto', minHeight: '300px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>

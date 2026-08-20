@@ -4,6 +4,36 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+  try {
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rbacGuard = await requirePermission("VIEW_LEADS");
+    if (rbacGuard) return rbacGuard;
+
+    const url = new URL(req.url);
+    const type = url.searchParams.get("type");
+
+    const where: any = { companyId, leadId: params.id };
+    if (type) where.type = type;
+
+    const activities = await prisma.leadActivity.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        performedBy: { select: { id: true, name: true, image: true } }
+      }
+    });
+
+    return NextResponse.json({ activities });
+  } catch (error) {
+    console.error("GET Lead Activities Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   try {

@@ -170,7 +170,7 @@ export default function LeadDetailPage() {
         )}
 
         {activeTab === 'notes' && (
-          <LeadNotes notes={lead.notes} />
+          <LeadNotes leadId={lead.id} />
         )}
 
         {activeTab === 'activities' && (

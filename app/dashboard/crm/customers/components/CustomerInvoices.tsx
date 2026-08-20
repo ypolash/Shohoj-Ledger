@@ -44,7 +44,7 @@ export function CustomerInvoices({ customer }: { customer: any }) {
             <tr><td colSpan={5} style={{ padding: '16px 24px', textAlign: 'center' }}>No invoices found</td></tr>
           ) : invoices.map(inv => (
             <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{inv.orderNumber}</td>
+              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{inv.salesOrderNumber}</td>
               <td style={{ padding: '16px 24px' }}>{new Date(inv.orderDate).toISOString().split('T')[0]}</td>
               <td style={{ padding: '16px 24px' }}>{inv.deliveryDate ? new Date(inv.deliveryDate).toISOString().split('T')[0] : 'N/A'}</td>
               <td style={{ padding: '16px 24px', fontWeight: 600 }}>

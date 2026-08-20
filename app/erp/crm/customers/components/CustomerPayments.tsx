@@ -43,7 +43,7 @@ export function CustomerPayments({ customer }: { customer: any }) {
             <tr><td colSpan={5} style={{ padding: '16px 24px', textAlign: 'center' }}>No payments found</td></tr>
           ) : payments.map(pay => (
             <tr key={pay.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{pay.receiptNumber}</td>
+              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{pay.paymentNumber}</td>
               <td style={{ padding: '16px 24px' }}>{new Date(pay.paymentDate).toISOString().split('T')[0]}</td>
               <td style={{ padding: '16px 24px' }}>{pay.paymentMethod}</td>
               <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--success)' }}>

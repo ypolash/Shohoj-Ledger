@@ -181,7 +181,7 @@ export default function LeadDetailPage() {
                 + Add Activity
               </button>
             </div>
-            <LeadActivity />
+            <LeadActivity leadId={lead.id} />
           </div>
         )}
 

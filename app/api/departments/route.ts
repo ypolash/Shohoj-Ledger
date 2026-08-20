@@ -8,8 +8,26 @@ export async function GET() {
   if (rbacGuard) return rbacGuard;
 
   try {
+    const companyFilter = await withCompany();
+    
+    // Auto-seed default departments if none exist for this company
+    const count = await prisma.department.count({ where: companyFilter });
+    if (count === 0) {
+      const companyId = await getCompanyId();
+      if (companyId) {
+        const defaultDepts = [
+          { companyId, name: 'Human Resources', code: 'HR', description: 'HR and Administration' },
+          { companyId, name: 'Finance', code: 'FIN', description: 'Finance and Accounting' },
+          { companyId, name: 'Engineering', code: 'ENG', description: 'Software Engineering and Development' },
+          { companyId, name: 'Sales & Marketing', code: 'SM', description: 'Sales and Marketing Team' },
+          { companyId, name: 'Operations', code: 'OPS', description: 'General Operations' }
+        ];
+        await prisma.department.createMany({ data: defaultDepts, skipDuplicates: true });
+      }
+    }
+
     const departments = await prisma.department.findMany({
-      where: await withCompany(),
+      where: companyFilter,
       orderBy: { name: 'asc' },
       include: {
         head: {

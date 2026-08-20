@@ -51,10 +51,16 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const LIMIT = 20;
 
   useEffect(() => { fetchCategories(); }, []);
   useEffect(() => { fetchProducts(); }, [page, search, categoryFilter]);
+  useEffect(() => {
+    const handleClick = () => setMenuOpen(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
 
   /** Loads categories for the filter dropdown and create form */
   const fetchCategories = async () => {
@@ -223,10 +229,52 @@ export default function ProductsPage() {
                         {p.status}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', position: 'relative' }}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === p.id ? null : p.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                      >
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
                       </button>
+                      
+                      {menuOpen === p.id && (
+                        <div style={{
+                          position: 'absolute',
+                          right: '16px',
+                          top: '40px',
+                          background: 'var(--surface-bg)',
+                          border: '1px solid var(--border-main)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          padding: '4px',
+                          zIndex: 10,
+                          minWidth: '140px',
+                          display: 'flex',
+                          flexDirection: 'column'
+                        }}>
+                          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                            onClick={() => alert('View Details coming soon')}
+                          >
+                            View Details
+                          </button>
+                          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                            onClick={() => alert('Edit Product coming soon')}
+                          >
+                            Edit Product
+                          </button>
+                          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger)', borderRadius: '4px' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-subtle)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                            onClick={() => alert('Delete Product coming soon')}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

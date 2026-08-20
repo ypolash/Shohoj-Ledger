@@ -6,7 +6,7 @@ async function main() {
     where: { referenceType: 'SALES_ORDER' },
   });
   
-  const soAllocations = {};
+  const soAllocations: Record<string, number> = {};
   for (const alloc of allocations) {
     const soId = alloc.referenceId;
     if (!soAllocations[soId]) soAllocations[soId] = 0;
@@ -29,5 +29,7 @@ async function main() {
       }
     }
   }
+  
+  console.log("Finished updating older sales orders.");
 }
 main().catch(console.error).finally(() => prisma.$disconnect());

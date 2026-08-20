@@ -172,7 +172,7 @@ export async function allocatePayment(companyId: string, id: string, userId: str
     const newAllocated = Number(payment.allocatedAmount) + amountToAllocate;
     const newUnallocated = Number(payment.unallocatedAmount) - amountToAllocate;
     
-    let newStatus = CustomerPaymentStatus.PARTIALLY_ALLOCATED;
+    let newStatus: CustomerPaymentStatus = CustomerPaymentStatus.PARTIALLY_ALLOCATED;
     if (newUnallocated === 0) {
       newStatus = CustomerPaymentStatus.FULLY_ALLOCATED;
     }
@@ -243,7 +243,7 @@ export async function removeAllocation(companyId: string, id: string, allocation
     const newAllocated = Number(payment.allocatedAmount) - Number(allocation.allocatedAmount);
     const newUnallocated = Number(payment.unallocatedAmount) + Number(allocation.allocatedAmount);
     
-    let newStatus = CustomerPaymentStatus.PARTIALLY_ALLOCATED;
+    let newStatus: CustomerPaymentStatus = CustomerPaymentStatus.PARTIALLY_ALLOCATED;
     if (newAllocated === 0) {
       newStatus = CustomerPaymentStatus.POSTED;
     }

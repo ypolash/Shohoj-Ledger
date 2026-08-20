@@ -49,6 +49,7 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [menuOpen, setMenuOpen] = useState<{ id: string, top: number, right: number } | null>(null);
   const LIMIT = 20;

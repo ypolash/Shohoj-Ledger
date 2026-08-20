@@ -46,6 +46,24 @@ export default function LeadDetailPage() {
     if (params.id) fetchLead();
   }, [params.id, router]);
 
+  const handleConvert = async () => {
+    if (!confirm("Are you sure you want to convert this lead to a Customer?")) return;
+    try {
+      const res = await fetch(`/api/crm/leads/${params.id}/convert`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        // Redirect to the new customer's page
+        router.push(`/dashboard/crm/customers/${data.customer.id}`);
+      } else {
+        const error = await res.json();
+        alert(error.error || "Failed to convert lead");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to convert lead");
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -73,9 +91,17 @@ export default function LeadDetailPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button style={{ padding: '8px 16px', background: 'var(--success)', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', border: 'none' }}>
+          <button 
+            onClick={handleConvert}
+            disabled={lead.leadStatus === 'CONVERTED'}
+            style={{ 
+              padding: '8px 16px', background: lead.leadStatus === 'CONVERTED' ? 'var(--gray-500)' : 'var(--success)', 
+              color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, 
+              display: 'flex', alignItems: 'center', gap: '6px', border: 'none',
+              cursor: lead.leadStatus === 'CONVERTED' ? 'not-allowed' : 'pointer' 
+            }}>
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
-            Convert
+            {lead.leadStatus === 'CONVERTED' ? 'Converted' : 'Convert'}
           </button>
           <button 
             onClick={() => router.push(`/dashboard/crm/leads/${lead.id}/edit`)}

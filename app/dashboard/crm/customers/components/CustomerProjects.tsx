@@ -20,7 +20,7 @@ export function CustomerProjects() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
         {projects.map(proj => (
           <div key={proj.id} style={{ padding: '16px', border: '1px solid var(--border-light)', borderRadius: '8px', background: 'var(--surface-hover)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}}>
               <div>
                 <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--primary)' }}>{proj.name}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{proj.id}</div>

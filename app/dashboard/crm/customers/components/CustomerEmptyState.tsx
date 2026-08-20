@@ -6,7 +6,7 @@ import Link from 'next/link';
 export function CustomerEmptyState() {
   return (
     <div className="glass-card" style={{ padding: '48px', textAlign: 'center', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ width: '64px', height: '64px', background: 'var(--gray-100)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+      <div style={{ width: '64px', height: '64px', background: 'var(--gray-100)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}}>
         <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--gray-400)' }}>group_off</span>
       </div>
       <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 8px 0' }}>No Customers Found</h3>

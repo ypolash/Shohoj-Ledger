@@ -5,7 +5,7 @@ import React from 'react';
 export function CashFlowTable() {
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}}>
         <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Statement of Cash Flows</h2>
         <div style={{ textAlign: 'right', fontSize: '12px', color: 'var(--text-muted)' }}>
           Period: July 1 - July 26, 2026<br/>All amounts in BDT
@@ -13,7 +13,7 @@ export function CashFlowTable() {
       </div>
 
       {/* Operating Activities */}
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '16px' }}}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>Operating Activities</h3>
         <div style={{ paddingLeft: '16px', borderLeft: '1px dashed var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: 'var(--text-muted)' }}>
@@ -36,7 +36,7 @@ export function CashFlowTable() {
       </div>
 
       {/* Investing Activities */}
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '16px' }}}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--warning)', textTransform: 'uppercase' }}>Investing Activities</h3>
         <div style={{ paddingLeft: '16px', borderLeft: '1px dashed var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: 'var(--text-muted)' }}>
@@ -51,7 +51,7 @@ export function CashFlowTable() {
       </div>
 
       {/* Financing Activities */}
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '16px' }}}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--success)', textTransform: 'uppercase' }}>Financing Activities</h3>
         <div style={{ paddingLeft: '16px', borderLeft: '1px dashed var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: 'var(--text-muted)' }}>

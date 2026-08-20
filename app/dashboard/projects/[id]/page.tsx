@@ -172,7 +172,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
             </div>
 
             <h2 style={{ fontSize: '16px', margin: '24px 0 var(--spacing-4) 0' }}>Financials & Progress</h2>
-            <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}}>
               <div style={{ flex: 1, backgroundColor: 'var(--background-alt)', padding: '16px', borderRadius: '8px' }}>
                 <strong style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)' }}>Estimated Budget</strong>
                 <div style={{ fontSize: '20px', fontWeight: 'bold' }}>BDT {project.estimatedBudget || 0}</div>

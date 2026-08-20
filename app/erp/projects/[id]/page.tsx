@@ -112,7 +112,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         {apiError ? `Error ${apiError.status}: ${apiError.message}` : 'Project not found'}
       </div>
       {apiError && (
-        <div style={{ fontSize: '13px', color: 'var(--danger)', background: 'var(--danger-subtle)', border: '1px solid var(--danger)', padding: '10px 18px', borderRadius: '10px', display: 'inline-block', marginBottom: '16px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--danger)', background: 'var(--danger-subtle)', border: '1px solid var(--danger)', padding: '10px 18px', borderRadius: '10px', display: 'inline-block', marginBottom: '16px' }}}>
           {apiError.status === 401 && '⚠ Not authenticated — please log in again.'}
           {apiError.status === 403 && '⚠ Permission denied — you may lack VIEW_PROJECTS permission.'}
           {apiError.status === 404 && '⚠ Project ID not found in your company tenant. Check if it belongs to a different company account.'}

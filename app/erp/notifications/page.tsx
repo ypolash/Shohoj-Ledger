@@ -52,7 +52,7 @@ export default function NotificationsInboxPage() {
           </div>
         ) : notifications.length === 0 ? (
           <div style={{ padding: 'var(--spacing-12)', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.5, marginBottom: '16px' }}>notifications_off</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.5, marginBottom: '16px' }}}>notifications_off</span>
             <p style={{ margin: 0, fontSize: '16px' }}>You have no notifications.</p>
           </div>
         ) : (

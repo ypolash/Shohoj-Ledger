@@ -424,7 +424,7 @@ export default function IncomePage() {
       {activeTab === 'categories' && (
         <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: '1fr 2fr' }}>
           <div className="glass-card" style={{ height: 'fit-content' }}>
-            <h3 style={{ marginBottom: '16px' }}>Add New Category</h3>
+            <h3 style={{ marginBottom: '16px' }}}>Add New Category</h3>
             {catError && (
               <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>
                 {catError}
@@ -442,7 +442,7 @@ export default function IncomePage() {
           </div>
 
           <div className="glass-card" style={{ height: 'fit-content' }}>
-            <h3 style={{ marginBottom: '16px' }}>Existing Categories</h3>
+            <h3 style={{ marginBottom: '16px' }}}>Existing Categories</h3>
             {loading ? (
               <p style={{ color: 'var(--text-muted)' }}>Loading categories...</p>
             ) : categories.length === 0 ? (

@@ -49,13 +49,13 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)',
         overflowY: 'auto'
       }}>
-        <div style={{ padding: '12px 8px 16px', borderBottom: '1px solid var(--border-main)', marginBottom: '16px' }}>
+        <div style={{ padding: '12px 8px 16px', borderBottom: '1px solid var(--border-main)', marginBottom: '16px' }}}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)', verticalAlign: 'middle', marginRight: '8px' }}>admin_panel_settings</span>
           <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-main)', verticalAlign: 'middle' }}>Enterprise Settings</span>
         </div>
         
         {navigationGroups.map((group, gIdx) => (
-          <div key={gIdx} style={{ marginBottom: '16px' }}>
+          <div key={gIdx} style={{ marginBottom: '16px' }}}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', paddingLeft: '12px' }}>
               {group.group}
             </div>

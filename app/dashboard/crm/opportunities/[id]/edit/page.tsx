@@ -105,9 +105,9 @@ export default function EditOpportunityPage() {
       <button 
           onClick={() => router.push(`/dashboard/crm/opportunities/${params.id}`)}
           className="btn btn-secondary"
-          style={ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }
+          style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }}
         >
-          <span className="material-symbols-outlined" style={ fontSize: '18px' }>arrow_back</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
           Back to Opportunity
         </button>
       <PageHeader 

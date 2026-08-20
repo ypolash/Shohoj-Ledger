@@ -47,7 +47,7 @@ export function JournalEntry() {
       </div>
 
       <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600 }}>Journal Lines</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginBottom: '16px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginBottom: '16px' }}}>
         <thead>
           <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
             <th style={{ padding: '12px 16px', fontWeight: 600, width: '30%' }}>Account <span style={{ color: 'var(--danger)' }}>*</span></th>

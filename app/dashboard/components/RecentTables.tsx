@@ -21,7 +21,7 @@ export function RecentTables({ data, role }: RecentTablesProps) {
 
   return (
     <div className="glass-card" style={{ padding: '24px', overflowX: 'auto', borderRadius: '16px', marginBottom: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}}>
         <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0, fontFamily: 'serif' }}>Recent Transactions</h3>
         <Link href="/dashboard/income" style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>View Complete Ledger &rarr;</Link>
       </div>

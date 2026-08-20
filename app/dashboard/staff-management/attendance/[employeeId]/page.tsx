@@ -440,7 +440,7 @@ export default function EmployeeAttendancePage() {
               </div>
 
               {/* Time Metrics */}
-              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}>
+              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}}>
                 <h4 style={{ margin: '0 0 16px 0' }}>Time Tracking</h4>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '8px 0', borderBottom: '1px dashed var(--border)' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Late Arrival</span>

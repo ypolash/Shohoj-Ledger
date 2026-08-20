@@ -29,13 +29,12 @@ export default function LoginPage() {
       if (!res.ok || !data.success) {
         setError(data.message || "Invalid credentials. Please try again.");
       } else {
-        const isAdminLegacy = email.toLowerCase() === "admin@shohojsolution.com" || email.toLowerCase() === "admin@shojojsolution.com";
         if (data.role === "EMPLOYEE") {
           // You could redirect employees elsewhere if needed, but per requirements, 
           // ERP is for ADMIN/OWNER.
-          router.push(isAdminLegacy ? "/dashboard" : "/erp"); 
+          router.push("/erp"); 
         } else {
-          router.push(isAdminLegacy ? "/dashboard" : "/erp"); // Redirect to chosen dashboard on success
+          router.push("/erp"); // Redirect to chosen dashboard on success
         }
         router.refresh(); // Refresh router to ensure middleware and states are updated
       }

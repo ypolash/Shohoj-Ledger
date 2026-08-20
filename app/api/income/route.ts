@@ -17,10 +17,11 @@ export async function GET(request: Request) {
     if (moduleGuard) return moduleGuard;
 
     const referer = request.headers.get("referer") || "";
-    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+    const isErp = referer.includes("/erp");
+    const systemSourceCondition = isErp ? { in: ["ERP", "ERP_CRM"] } : { in: ["LEGACY", "ERP_CRM"] };
 
     const incomes = await prisma.income.findMany({
-      where: { ...(await withCompany()), systemSource },
+      where: { ...(await withCompany()), systemSource: systemSourceCondition },
       orderBy: { createdAt: 'desc' }
     });
     return NextResponse.json(incomes);

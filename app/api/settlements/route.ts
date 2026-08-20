@@ -22,7 +22,9 @@ export async function GET(request: Request) {
     const year = parseInt(url.searchParams.get("year") || "");
 
     const referer = request.headers.get("referer") || "";
-    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+    const isErp = referer.includes("/erp");
+    const systemSource = isErp ? "ERP" : "LEGACY";
+    const systemSourceCondition = isErp ? { in: ["ERP", "ERP_CRM"] } : { in: ["LEGACY", "ERP_CRM"] };
 
     if (isNaN(month) || isNaN(year)) {
       // Just fetch all settlements
@@ -42,7 +44,7 @@ export async function GET(request: Request) {
         createdAt: { gte: startDate, lte: endDate },
         paymentStatus: { in: ["PAID", "PARTIAL"] },
         shareable: true,
-        systemSource
+        systemSource: systemSourceCondition
       }
     });
 
@@ -50,7 +52,7 @@ export async function GET(request: Request) {
       where: { ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
         approvalStatus: "APPROVED",
-        systemSource
+        systemSource: systemSourceCondition
       }
     });
 

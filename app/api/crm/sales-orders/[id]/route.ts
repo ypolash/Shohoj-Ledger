@@ -21,7 +21,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             product: true,
             warehouse: true
           }
-        }
+        },
+        deliveryOrders: true
       }
     });
 

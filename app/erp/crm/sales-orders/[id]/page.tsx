@@ -159,7 +159,7 @@ export default function SalesOrderDetailPage() {
         )}
 
         {activeTab === 'payments' && <SalesOrderPayments order={order} onRefresh={() => { fetch(`/api/crm/sales-orders/${params.id}`).then(res => res.json()).then(data => { setOrder(data.order || data); }); }} />}
-        {activeTab === 'shipments' && <SalesOrderShipment />}
+        {activeTab === 'shipments' && <SalesOrderShipment order={order} />}
 
         {activeTab === 'timeline' && (
           <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>

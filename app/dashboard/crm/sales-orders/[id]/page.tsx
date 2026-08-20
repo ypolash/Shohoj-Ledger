@@ -152,8 +152,8 @@ export default function SalesOrderDetailPage() {
           </div>
         )}
 
-        {activeTab === 'payments' && <SalesOrderPayments />}
-        {activeTab === 'shipments' && <SalesOrderShipment />}
+        {activeTab === 'payments' && <SalesOrderPayments order={order} />}
+        {activeTab === 'shipments' && <SalesOrderShipment order={order} />}
 
         {activeTab === 'timeline' && (
           <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>

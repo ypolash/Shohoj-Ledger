@@ -134,6 +134,22 @@ export default function CreateLeadPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div>
+              <label style={labelStyle}>Industry</label>
+              <input name="industry" value={formData.industry} onChange={handleChange} style={inputStyle} placeholder="e.g. Technology" />
+            </div>
+            <div>
+              <label style={labelStyle}>Website</label>
+              <input name="website" type="url" value={formData.website} onChange={handleChange} style={inputStyle} placeholder="https://example.com" />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Address</label>
+            <input name="address" value={formData.address} onChange={handleChange} style={inputStyle} placeholder="123 Main St, City, Country" />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
               <label style={labelStyle}>Lead Source</label>
               <select name="leadSource" value={formData.leadSource} onChange={handleChange} style={inputStyle}>
                 <option value="Website">Website</option>

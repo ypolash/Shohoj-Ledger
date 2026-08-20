@@ -181,6 +181,22 @@ export default function EditLeadPage() {
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Industry</label>
+              <input name="industry" value={formData.industry} onChange={handleChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Website</label>
+              <input name="website" type="url" value={formData.website} onChange={handleChange} style={inputStyle} />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Address</label>
+            <input name="address" value={formData.address} onChange={handleChange} style={inputStyle} />
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <button 
               type="button" 

@@ -5,14 +5,14 @@ import React from 'react';
 export function ProfitLossTable() {
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}>
         <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Profit & Loss (Income Statement)</h2>
         <div style={{ textAlign: 'right', fontSize: '12px', color: 'var(--text-muted)' }}>
           Period: July 1 - July 26, 2026<br/>All amounts in BDT
         </div>
       </div>
 
-      <div style={{ marginBottom: '16px' }}}>
+      <div style={{ marginBottom: '16px' }}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>Operating Income</h3>
         <div style={{ paddingLeft: '16px', borderLeft: '1px dashed var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: 'var(--text-muted)' }}>
@@ -30,7 +30,7 @@ export function ProfitLossTable() {
         </div>
       </div>
 
-      <div style={{ marginBottom: '16px' }}}>
+      <div style={{ marginBottom: '16px' }}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--warning)', textTransform: 'uppercase' }}>Cost of Goods Sold</h3>
         <div style={{ paddingLeft: '16px', borderLeft: '1px dashed var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: 'var(--text-muted)' }}>
@@ -49,7 +49,7 @@ export function ProfitLossTable() {
         <span style={{ fontSize: '14px', fontWeight: 700 }}>6,200,000</span>
       </div>
 
-      <div style={{ marginBottom: '16px' }}}>
+      <div style={{ marginBottom: '16px' }}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 700, color: 'var(--danger)', textTransform: 'uppercase' }}>Operating Expenses</h3>
         <div style={{ paddingLeft: '16px', borderLeft: '1px dashed var(--border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', color: 'var(--text-muted)' }}>

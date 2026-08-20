@@ -460,14 +460,14 @@ export default function AdvancesPage() {
                 </div>
               </div>
 
-              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}}>
+              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}>
                 <h4 style={{ margin: '0 0 8px 0' }}>Advance Information</h4>
                 <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
                   <strong>Notes:</strong> {selectedAdvance.reason || selectedAdvance.description || 'N/A'}
                 </div>
               </div>
 
-              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}}>
+              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}>
                 <h4 style={{ margin: '0 0 16px 0' }}>Amount Summary</h4>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '8px 0', borderBottom: '1px dashed var(--border)' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Total Advanced</span>
@@ -489,7 +489,7 @@ export default function AdvancesPage() {
 
               <div style={{ marginBottom: '32px' }}>
                 <h4 style={{ margin: '0 0 16px 0' }}>Activity Timeline</h4>
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}}>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--primary)', marginTop: '4px' }}></div>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 500 }}>Advance Issued</div>

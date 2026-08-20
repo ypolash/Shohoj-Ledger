@@ -348,7 +348,7 @@ export default function SettlementsPage() {
       {isShareholderModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'var(--surface)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, fontSize: '20px' }}>Global Default Distributions</h2>
               <button onClick={() => setIsShareholderModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
             </div>
@@ -381,14 +381,14 @@ export default function SettlementsPage() {
       {isModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'var(--surface)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, fontSize: '20px' }}>Generate Settlement</h2>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
             </div>
             
             {!preview ? (
               <form onSubmit={handlePreview}>
-                <div style={{ marginBottom: '16px' }}}>
+                <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>Month</label>
                   <select value={month} onChange={e => setMonth(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface-hover)' }}>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
@@ -406,7 +406,7 @@ export default function SettlementsPage() {
               </form>
             ) : (
               <div>
-                <div style={{ background: 'var(--surface-hover)', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}}>
+                <div style={{ background: 'var(--surface-hover)', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Period:</span>
                     <strong>{preview.period}</strong>

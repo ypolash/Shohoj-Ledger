@@ -210,7 +210,7 @@ export default function FinanceReportsHub() {
           </div>
         ) : (
           <div style={{ textAlign: "center", padding: "60px 0", color: 'var(--text-muted)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.3, display: 'block', marginBottom: '16px' }}}>receipt_long</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.3, display: 'block', marginBottom: '16px' }}>receipt_long</span>
             No data generated yet. Please select filters and click "Generate Report".
           </div>
         )}

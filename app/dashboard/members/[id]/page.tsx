@@ -150,7 +150,7 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '24px' }}>
         
         <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
             <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '20px' }}>payments</span>
             <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Total Earned</span>
           </div>
@@ -158,7 +158,7 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
             <span className="material-symbols-outlined" style={{ color: '#ef4444', fontSize: '20px' }}>account_balance</span>
             <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Active Loans</span>
           </div>
@@ -166,7 +166,7 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="glass-card topo-bg" style={{ padding: '24px', borderRadius: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
             <span className="material-symbols-outlined" style={{ color: '#a5b4fc', fontSize: '20px' }}>receipt_long</span>
             <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>Total Deductions Pending</span>
           </div>

@@ -247,7 +247,7 @@ export default function LeadsPage() {
           {/* ALL LEADS */}
           {activeTab === 'all' && (
             <div className="glass-card" style={{ padding: '24px', borderRadius: '16px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}}>
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
                 <select 
                   value={filterStatus} 
                   onChange={e => setFilterStatus(e.target.value)}
@@ -376,7 +376,7 @@ export default function LeadsPage() {
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', minHeight: '600px' }}>
               {pipelineStatuses.map(status => (
                 <div key={status} style={{ minWidth: '300px', flex: 1, background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: getStatusColor(status) }}>{status}</h3>
                     <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>
                       {leads.filter(l => l.status === status).length}

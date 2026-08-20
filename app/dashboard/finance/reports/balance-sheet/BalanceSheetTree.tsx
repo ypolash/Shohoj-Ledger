@@ -5,7 +5,7 @@ import React from 'react';
 export function BalanceSheetTree() {
   return (
     <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}>
         <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Balance Sheet</h2>
         <div style={{ textAlign: 'right', fontSize: '12px', color: 'var(--text-muted)' }}>
           As of July 26, 2026<br/>All amounts in BDT

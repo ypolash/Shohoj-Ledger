@@ -165,7 +165,7 @@ export default function SalesOrderDetailPage() {
         {activeTab === 'history' && (
           <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
             <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Audit Logs</h4>
-            <SalesOrderHistory />
+            <SalesOrderHistory history={order.history} />
           </div>
         )}
       </div>

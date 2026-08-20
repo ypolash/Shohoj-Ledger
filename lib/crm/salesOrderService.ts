@@ -551,6 +551,9 @@ export async function getSalesOrderHistory(companyId: string, id: string) {
       entityType: "SalesOrder",
       entityId: id,
     },
+    include: {
+      user: { select: { id: true, name: true } }
+    },
     orderBy: { createdAt: 'desc' }
   });
 }

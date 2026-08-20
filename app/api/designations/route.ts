@@ -8,8 +8,27 @@ export async function GET() {
   if (rbacGuard) return rbacGuard;
 
   try {
+    const companyFilter = await withCompany();
+
+    // Auto-seed default designations if none exist for this company
+    const count = await prisma.designation.count({ where: companyFilter });
+    if (count === 0) {
+      const companyId = await getCompanyId();
+      if (companyId) {
+        const defaultDesignations = [
+          { companyId, name: 'Managing Director', grade: 'L1', level: 'Executive', description: 'Chief Executive / Managing Director' },
+          { companyId, name: 'General Manager', grade: 'L2', level: 'Management', description: 'General Manager / Head of Operations' },
+          { companyId, name: 'Senior Software Engineer', grade: 'L3', level: 'Senior Professional', description: 'Senior Software Engineer' },
+          { companyId, name: 'Software Engineer', grade: 'L4', level: 'Professional', description: 'Software Engineer' },
+          { companyId, name: 'Sales Executive', grade: 'L5', level: 'Staff', description: 'Sales and Marketing Executive' },
+          { companyId, name: 'HR Manager', grade: 'L3', level: 'Management', description: 'Human Resources Manager' }
+        ];
+        await prisma.designation.createMany({ data: defaultDesignations, skipDuplicates: true });
+      }
+    }
+
     const designations = await prisma.designation.findMany({
-      where: await withCompany(),
+      where: companyFilter,
       orderBy: { name: 'asc' },
       include: {
         _count: {

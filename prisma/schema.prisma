@@ -1844,20 +1844,33 @@ model EmployeeLifecycle {
 }
 
 model EmployeeProfile {
-  id            String    @id @default(uuid())
-  employeeId    String    @unique
-  nationalId    String?
-  passport      String?
-  dateOfBirth   DateTime?
-  gender        String?
-  maritalStatus String?
-  bloodGroup    String?
-  nationality   String?
-  religion      String?
-  photo         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id              String    @id @default(uuid())
+  employeeId      String    @unique
+  nationalId      String?
+  passport        String?
+  dateOfBirth     DateTime?
+  gender          String?
+  maritalStatus   String?
+  bloodGroup      String?
+  nationality     String?
+  religion        String?
+  photo           String?
+  secondaryPhone  String?
+  currentAddress  String?
+  mainAddress     String?
+  bankName        String?
+  accountName     String?
+  accountNumber   String?
+  fatherName      String?
+  motherName      String?
+  spouseName      String?
+  nomineeName     String?
+  nomineeRelation String?
+  nomineePhoto    String?
+  nomineeNid      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  employee        Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
 }
@@ -1897,6 +1910,7 @@ model EmployeeEducation {
   degree      String
   institution String
   board       String?
+  subject     String?
   passingYear Int?
   result      String?
   createdAt   DateTime @default(now())
@@ -1913,6 +1927,7 @@ model EmployeeExperience {
   position    String
   joiningDate DateTime?
   leavingDate DateTime?
+  salary      Decimal?
   reason      String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

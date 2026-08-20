@@ -20,8 +20,7 @@ export async function updateExtendedProfile(employeeId: string, data: any) {
   });
   if (!existing) throw new Error("Employee not found.");
 
-  // Update ONLY the fields that exist in the Prisma Employee schema.
-  // Extended fields (bloodGroup, bankName, etc.) are discarded safely here to comply with the "Do NOT modify Database schema" rule.
+  // 1. Update base Employee
   await prisma.employee.update({
     where: { id: employeeId },
     data: {
@@ -33,8 +32,67 @@ export async function updateExtendedProfile(employeeId: string, data: any) {
       department: data.department,
       basicSalary: data.basicSalary,
       status: data.status,
+      employeeId: data.employeeId,
+      joinDate: data.joinDate ? new Date(data.joinDate) : undefined,
+      location: data.location,
     }
   });
+
+  // 2. Upsert EmployeeProfile
+  if (data.profile) {
+    await prisma.employeeProfile.upsert({
+      where: { employeeId },
+      update: {
+        ...data.profile,
+        dateOfBirth: data.profile.dateOfBirth ? new Date(data.profile.dateOfBirth) : null,
+      },
+      create: {
+        employeeId,
+        ...data.profile,
+        dateOfBirth: data.profile.dateOfBirth ? new Date(data.profile.dateOfBirth) : null,
+      }
+    });
+  }
+
+  // 3. Sync Education
+  if (data.education && Array.isArray(data.education)) {
+    await prisma.employeeEducation.deleteMany({ where: { employeeId } });
+    for (const edu of data.education) {
+      if (edu.degree && edu.institution) {
+        await prisma.employeeEducation.create({
+          data: {
+            employeeId,
+            degree: edu.degree,
+            institution: edu.institution,
+            board: edu.board,
+            subject: edu.subject,
+            passingYear: edu.passingYear ? Number(edu.passingYear) : null,
+            result: edu.result
+          }
+        });
+      }
+    }
+  }
+
+  // 4. Sync Experience
+  if (data.experience && Array.isArray(data.experience)) {
+    await prisma.employeeExperience.deleteMany({ where: { employeeId } });
+    for (const exp of data.experience) {
+      if (exp.company && exp.position) {
+        await prisma.employeeExperience.create({
+          data: {
+            employeeId,
+            company: exp.company,
+            position: exp.position,
+            joiningDate: exp.joiningDate ? new Date(exp.joiningDate) : null,
+            leavingDate: exp.leavingDate ? new Date(exp.leavingDate) : null,
+            salary: exp.salary ? Number(exp.salary) : null,
+            reason: exp.reason
+          }
+        });
+      }
+    }
+  }
 
   if (existing.userId) {
     await prisma.user.update({

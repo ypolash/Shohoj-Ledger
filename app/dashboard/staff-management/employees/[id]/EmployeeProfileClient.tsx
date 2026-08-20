@@ -46,33 +46,40 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
   
   // Extended Form State (Mapped to Prisma fields where possible, localized where schema lacks)
   const [formData, setFormData] = useState({
-    firstName: employee.firstName,
-    lastName: employee.lastName,
-    email: employee.email,
+    firstName: employee.firstName || '',
+    lastName: employee.lastName || '',
+    email: employee.email || '',
     phone: employee.phone || '',
-    designation: employee.designation,
+    designation: employee.designation || '',
     department: employee.department || '',
-    basicSalary: employee.basicSalary,
-    status: employee.status,
-    // The following fields fulfill Phase 3B UI contract but are simulated due to strict schema constraints
-    dateOfBirth: '',
-    gender: 'Male',
-    bloodGroup: 'O+',
-    nationalId: '',
-    maritalStatus: 'Single',
-    employmentType: 'Full-Time',
-    confirmationDate: '',
-    reportingManager: '',
-    officeLocation: 'Head Office',
-    shift: 'Day Shift',
-    allowances: '0',
-    bankName: '',
-    accountNumber: '',
-    routingNumber: '',
-    mobileBanking: '',
-    emergencyName: '',
-    emergencyRelation: '',
-    emergencyPhone: ''
+    basicSalary: employee.basicSalary || '',
+    status: employee.status || '',
+    employeeId: employee.employeeId || '',
+    joinDate: employee.joinDate ? new Date(employee.joinDate).toISOString().split('T')[0] : '',
+    location: employee.location || '',
+    profile: {
+      dateOfBirth: employee.profile?.dateOfBirth ? new Date(employee.profile.dateOfBirth).toISOString().split('T')[0] : '',
+      gender: employee.profile?.gender || 'Male',
+      bloodGroup: employee.profile?.bloodGroup || '',
+      nationalId: employee.profile?.nationalId || '',
+      maritalStatus: employee.profile?.maritalStatus || 'Single',
+      photo: employee.profile?.photo || '',
+      secondaryPhone: employee.profile?.secondaryPhone || '',
+      currentAddress: employee.profile?.currentAddress || '',
+      mainAddress: employee.profile?.mainAddress || '',
+      bankName: employee.profile?.bankName || '',
+      accountName: employee.profile?.accountName || '',
+      accountNumber: employee.profile?.accountNumber || '',
+      fatherName: employee.profile?.fatherName || '',
+      motherName: employee.profile?.motherName || '',
+      spouseName: employee.profile?.spouseName || '',
+      nomineeName: employee.profile?.nomineeName || '',
+      nomineeRelation: employee.profile?.nomineeRelation || '',
+      nomineePhoto: employee.profile?.nomineePhoto || '',
+      nomineeNid: employee.profile?.nomineeNid || ''
+    },
+    education: employee.education?.length ? employee.education : [],
+    experience: employee.experience?.length ? employee.experience : []
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -122,6 +129,56 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
   };
 
   const getInitials = (f: string, l: string) => `${f ? f[0] : ''}${l ? l[0] : ''}`.toUpperCase();
+
+  const handleProfileChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, profile: { ...prev.profile, [field]: value } }));
+  };
+
+  const handleAddEducation = () => {
+    setFormData(prev => ({
+      ...prev,
+      education: [...prev.education, { degree: '', institution: '', board: '', subject: '', passingYear: '', result: '' }]
+    }));
+  };
+
+  const handleRemoveEducation = (index: number) => {
+    setFormData(prev => {
+      const newEdu = [...prev.education];
+      newEdu.splice(index, 1);
+      return { ...prev, education: newEdu };
+    });
+  };
+
+  const handleEducationChange = (index: number, field: string, value: any) => {
+    setFormData(prev => {
+      const newEdu = [...prev.education];
+      newEdu[index] = { ...newEdu[index], [field]: value };
+      return { ...prev, education: newEdu };
+    });
+  };
+
+  const handleAddExperience = () => {
+    setFormData(prev => ({
+      ...prev,
+      experience: [...prev.experience, { company: '', position: '', joiningDate: '', leavingDate: '', salary: '', reason: '' }]
+    }));
+  };
+
+  const handleRemoveExperience = (index: number) => {
+    setFormData(prev => {
+      const newExp = [...prev.experience];
+      newExp.splice(index, 1);
+      return { ...prev, experience: newExp };
+    });
+  };
+
+  const handleExperienceChange = (index: number, field: string, value: any) => {
+    setFormData(prev => {
+      const newExp = [...prev.experience];
+      newExp[index] = { ...newExp[index], [field]: value };
+      return { ...prev, experience: newExp };
+    });
+  };
 
   const tabs = ["Profile", "Documents", "Notes", "Timeline"];
 
@@ -178,65 +235,123 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
       {activeTab === "Profile" && (
         <form onSubmit={handleSaveProfile} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
           
+          {/* Personal Information */}
           <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Personal Information</h3>
           <div className={styles.filtersRow}>
             <div className={styles.filterGroup}><label className="label">First Name *</label><input type="text" className="input" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} required /></div>
             <div className={styles.filterGroup}><label className="label">Last Name *</label><input type="text" className="input" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} required /></div>
-            <div className={styles.filterGroup}><label className="label">Email *</label><input type="email" className="input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required /></div>
+            <div className={styles.filterGroup}><label className="label">Date of Birth</label><input type="date" className="input" value={formData.profile.dateOfBirth} onChange={e => handleProfileChange('dateOfBirth', e.target.value)} /></div>
           </div>
           <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}><label className="label">Phone</label><input type="text" className="input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Date of Birth</label><input type="date" className="input" value={formData.dateOfBirth} onChange={e => setFormData({...formData, dateOfBirth: e.target.value})} /></div>
             <div className={styles.filterGroup}><label className="label">Gender</label>
-              <select className="input" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}>
+              <select className="input" value={formData.profile.gender} onChange={e => handleProfileChange('gender', e.target.value)}>
                 <option>Male</option><option>Female</option><option>Other</option>
               </select>
             </div>
-            <div className={styles.filterGroup}><label className="label">Blood Group</label><input type="text" className="input" value={formData.bloodGroup} onChange={e => setFormData({...formData, bloodGroup: e.target.value})} /></div>
+            <div className={styles.filterGroup}><label className="label">Blood Group</label><input type="text" className="input" value={formData.profile.bloodGroup} onChange={e => handleProfileChange('bloodGroup', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">NID Number</label><input type="text" className="input" value={formData.profile.nationalId} onChange={e => handleProfileChange('nationalId', e.target.value)} /></div>
           </div>
           <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}><label className="label">National ID</label><input type="text" className="input" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} /></div>
             <div className={styles.filterGroup}><label className="label">Marital Status</label>
-              <select className="input" value={formData.maritalStatus} onChange={e => setFormData({...formData, maritalStatus: e.target.value})}>
+              <select className="input" value={formData.profile.maritalStatus} onChange={e => handleProfileChange('maritalStatus', e.target.value)}>
                 <option>Single</option><option>Married</option><option>Divorced</option>
               </select>
             </div>
+            <div className={styles.filterGroup}><label className="label">Photo URL</label><input type="text" className="input" value={formData.profile.photo} onChange={e => handleProfileChange('photo', e.target.value)} /></div>
+            <div className={styles.filterGroup}></div>
           </div>
 
-          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Employment Information</h3>
+          {/* Contact Information */}
+          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Contact Information</h3>
           <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}><label className="label">Department</label><input type="text" className="input" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Designation</label><input type="text" className="input" value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Employment Type</label>
-              <select className="input" value={formData.employmentType} onChange={e => setFormData({...formData, employmentType: e.target.value})}>
-                <option>Full-Time</option><option>Part-Time</option><option>Contract</option>
-              </select>
+            <div className={styles.filterGroup}><label className="label">Personal Number</label><input type="text" className="input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
+            <div className={styles.filterGroup}><label className="label">Secondary Number</label><input type="text" className="input" value={formData.profile.secondaryPhone} onChange={e => handleProfileChange('secondaryPhone', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Personal Email</label><input type="email" className="input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required /></div>
+          </div>
+          <div className={styles.filtersRow}>
+            <div className={styles.filterGroup}><label className="label">Current Address</label><input type="text" className="input" value={formData.profile.currentAddress} onChange={e => handleProfileChange('currentAddress', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Main Address</label><input type="text" className="input" value={formData.profile.mainAddress} onChange={e => handleProfileChange('mainAddress', e.target.value)} /></div>
+          </div>
+
+          {/* Educational Information */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 'var(--spacing-4) 0 0 0', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+            <h3 style={{ margin: 0, color: 'var(--primary)' }}>Educational Information</h3>
+            <button type="button" className="btn btn-secondary" onClick={handleAddEducation} style={{ padding: '4px 12px', fontSize: '13px' }}>+ Add More</button>
+          </div>
+          {formData.education.map((edu: any, index: number) => (
+            <div key={index} style={{ background: 'var(--surface-light)', padding: '16px', borderRadius: '8px', position: 'relative' }}>
+              <button type="button" onClick={() => handleRemoveEducation(index)} style={{ position: 'absolute', top: '16px', right: '16px', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><span className="material-symbols-outlined">delete</span></button>
+              <div className={styles.filtersRow} style={{ marginBottom: '16px', paddingRight: '32px' }}>
+                <div className={styles.filterGroup}><label className="label">Degree Name</label><input type="text" className="input" value={edu.degree} onChange={e => handleEducationChange(index, 'degree', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Institution</label><input type="text" className="input" value={edu.institution} onChange={e => handleEducationChange(index, 'institution', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Board/University</label><input type="text" className="input" value={edu.board} onChange={e => handleEducationChange(index, 'board', e.target.value)} /></div>
+              </div>
+              <div className={styles.filtersRow}>
+                <div className={styles.filterGroup}><label className="label">Subject</label><input type="text" className="input" value={edu.subject} onChange={e => handleEducationChange(index, 'subject', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">GPA/CGPA</label><input type="text" className="input" value={edu.result} onChange={e => handleEducationChange(index, 'result', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Passing Year</label><input type="number" className="input" value={edu.passingYear} onChange={e => handleEducationChange(index, 'passingYear', e.target.value)} /></div>
+              </div>
             </div>
+          ))}
+
+          {/* Work Experience */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 'var(--spacing-4) 0 0 0', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+            <h3 style={{ margin: 0, color: 'var(--primary)' }}>Work Experience</h3>
+            <button type="button" className="btn btn-secondary" onClick={handleAddExperience} style={{ padding: '4px 12px', fontSize: '13px' }}>+ Add More</button>
           </div>
+          {formData.experience.map((exp: any, index: number) => (
+            <div key={index} style={{ background: 'var(--surface-light)', padding: '16px', borderRadius: '8px', position: 'relative' }}>
+              <button type="button" onClick={() => handleRemoveExperience(index)} style={{ position: 'absolute', top: '16px', right: '16px', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><span className="material-symbols-outlined">delete</span></button>
+              <div className={styles.filtersRow} style={{ marginBottom: '16px', paddingRight: '32px' }}>
+                <div className={styles.filterGroup}><label className="label">Company Name</label><input type="text" className="input" value={exp.company} onChange={e => handleExperienceChange(index, 'company', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Designation</label><input type="text" className="input" value={exp.position} onChange={e => handleExperienceChange(index, 'position', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Salary</label><input type="number" className="input" value={exp.salary} onChange={e => handleExperienceChange(index, 'salary', e.target.value)} /></div>
+              </div>
+              <div className={styles.filtersRow}>
+                <div className={styles.filterGroup}><label className="label">Joining Date</label><input type="date" className="input" value={exp.joiningDate ? new Date(exp.joiningDate).toISOString().split('T')[0] : ''} onChange={e => handleExperienceChange(index, 'joiningDate', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Leaving Date</label><input type="date" className="input" value={exp.leavingDate ? new Date(exp.leavingDate).toISOString().split('T')[0] : ''} onChange={e => handleExperienceChange(index, 'leavingDate', e.target.value)} /></div>
+                <div className={styles.filterGroup}><label className="label">Reason for Leaving</label><input type="text" className="input" value={exp.reason} onChange={e => handleExperienceChange(index, 'reason', e.target.value)} /></div>
+              </div>
+            </div>
+          ))}
+
+          {/* Financial & Tax Details */}
+          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Financial & Tax Details</h3>
           <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}><label className="label">Confirmation Date</label><input type="date" className="input" value={formData.confirmationDate} onChange={e => setFormData({...formData, confirmationDate: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Reporting Manager</label><input type="text" className="input" value={formData.reportingManager} onChange={e => setFormData({...formData, reportingManager: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Office Location</label><input type="text" className="input" value={formData.officeLocation} onChange={e => setFormData({...formData, officeLocation: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Shift</label><input type="text" className="input" value={formData.shift} onChange={e => setFormData({...formData, shift: e.target.value})} /></div>
+            <div className={styles.filterGroup}><label className="label">Bank Name</label><input type="text" className="input" value={formData.profile.bankName} onChange={e => handleProfileChange('bankName', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Account Holder Name</label><input type="text" className="input" value={formData.profile.accountName} onChange={e => handleProfileChange('accountName', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Account Number</label><input type="text" className="input" value={formData.profile.accountNumber} onChange={e => handleProfileChange('accountNumber', e.target.value)} /></div>
           </div>
 
-          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Financial Information</h3>
+          {/* Family & Nominee Details */}
+          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Family & Nominee Details</h3>
           <div className={styles.filtersRow}>
+            <div className={styles.filterGroup}><label className="label">Father's Name</label><input type="text" className="input" value={formData.profile.fatherName} onChange={e => handleProfileChange('fatherName', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Mother's Name</label><input type="text" className="input" value={formData.profile.motherName} onChange={e => handleProfileChange('motherName', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Spouse Name</label><input type="text" className="input" value={formData.profile.spouseName} onChange={e => handleProfileChange('spouseName', e.target.value)} /></div>
+          </div>
+          <div className={styles.filtersRow}>
+            <div className={styles.filterGroup}><label className="label">Nominee Name</label><input type="text" className="input" value={formData.profile.nomineeName} onChange={e => handleProfileChange('nomineeName', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Relationship</label><input type="text" className="input" value={formData.profile.nomineeRelation} onChange={e => handleProfileChange('nomineeRelation', e.target.value)} /></div>
+            <div className={styles.filterGroup}><label className="label">Nominee NID</label><input type="text" className="input" value={formData.profile.nomineeNid} onChange={e => handleProfileChange('nomineeNid', e.target.value)} /></div>
+          </div>
+          <div className={styles.filtersRow}>
+            <div className={styles.filterGroup}><label className="label">Nominee Photo URL</label><input type="text" className="input" value={formData.profile.nomineePhoto} onChange={e => handleProfileChange('nomineePhoto', e.target.value)} /></div>
+            <div className={styles.filterGroup}></div>
+            <div className={styles.filterGroup}></div>
+          </div>
+
+          {/* HR & Departmental Use Only */}
+          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>HR & Departmental Use Only</h3>
+          <div className={styles.filtersRow}>
+            <div className={styles.filterGroup}><label className="label">Employee ID</label><input type="text" className="input" value={formData.employeeId} readOnly disabled style={{ background: 'var(--surface-light)' }} /></div>
+            <div className={styles.filterGroup}><label className="label">Date of Joining</label><input type="date" className="input" value={formData.joinDate} onChange={e => setFormData({...formData, joinDate: e.target.value})} /></div>
+            <div className={styles.filterGroup}><label className="label">Department</label><input type="text" className="input" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} /></div>
+          </div>
+          <div className={styles.filtersRow}>
+            <div className={styles.filterGroup}><label className="label">Designation</label><input type="text" className="input" value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} /></div>
+            <div className={styles.filterGroup}><label className="label">Work Location</label><input type="text" className="input" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} /></div>
             <div className={styles.filterGroup}><label className="label">Basic Salary</label><input type="number" className="input" value={formData.basicSalary} onChange={e => setFormData({...formData, basicSalary: e.target.value})} required /></div>
-            <div className={styles.filterGroup}><label className="label">Allowances</label><input type="number" className="input" value={formData.allowances} onChange={e => setFormData({...formData, allowances: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Bank Name</label><input type="text" className="input" value={formData.bankName} onChange={e => setFormData({...formData, bankName: e.target.value})} /></div>
-          </div>
-          <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}><label className="label">Account Number</label><input type="text" className="input" value={formData.accountNumber} onChange={e => setFormData({...formData, accountNumber: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Routing Number</label><input type="text" className="input" value={formData.routingNumber} onChange={e => setFormData({...formData, routingNumber: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Mobile Banking</label><input type="text" className="input" placeholder="e.g. bKash No." value={formData.mobileBanking} onChange={e => setFormData({...formData, mobileBanking: e.target.value})} /></div>
-          </div>
-
-          <h3 style={{ margin: 'var(--spacing-4) 0 0 0', color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Emergency Contact</h3>
-          <div className={styles.filtersRow}>
-            <div className={styles.filterGroup}><label className="label">Contact Name</label><input type="text" className="input" value={formData.emergencyName} onChange={e => setFormData({...formData, emergencyName: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Relationship</label><input type="text" className="input" value={formData.emergencyRelation} onChange={e => setFormData({...formData, emergencyRelation: e.target.value})} /></div>
-            <div className={styles.filterGroup}><label className="label">Phone Number</label><input type="text" className="input" value={formData.emergencyPhone} onChange={e => setFormData({...formData, emergencyPhone: e.target.value})} /></div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--spacing-6)' }}>

@@ -175,12 +175,6 @@ export default function LeadDetailPage() {
 
         {activeTab === 'activities' && (
           <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Activities & Tasks</h4>
-              <button style={{ padding: '6px 12px', background: 'var(--primary)', color: 'white', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
-                + Add Activity
-              </button>
-            </div>
             <LeadActivity leadId={lead.id} />
           </div>
         )}

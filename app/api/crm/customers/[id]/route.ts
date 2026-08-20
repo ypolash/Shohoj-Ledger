@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { getCustomer, updateCustomer, deleteCustomer } from "@/lib/crm/customerService";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
@@ -11,7 +12,24 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     const customer = await getCustomer(companyId, params.id);
     if (!customer) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    return NextResponse.json(customer);
+    const currentYear = new Date().getFullYear();
+    const salesAgg = await prisma.salesOrder.aggregate({
+      _sum: { totalAmount: true },
+      where: {
+        companyId,
+        customerId: customer.id,
+        status: { not: "CANCELLED" },
+        orderDate: {
+          gte: new Date(currentYear, 0, 1),
+          lte: new Date(currentYear, 11, 31, 23, 59, 59, 999)
+        }
+      }
+    });
+
+    return NextResponse.json({
+      ...customer,
+      salesTotalYTD: Number(salesAgg._sum.totalAmount || 0)
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

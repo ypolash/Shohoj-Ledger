@@ -1,11 +1,28 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export function CustomerInvoices() {
-  const invoices = [
-    { id: 'INV-2026-001', date: '2026-07-20', dueDate: '2026-08-20', amount: 50000, status: 'Unpaid' },
-  ];
+export function CustomerInvoices({ customer }: { customer: any }) {
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const res = await fetch(`/api/crm/sales-orders?customerId=${customer.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Using sales orders as invoices, filtering out cancelled/draft ones maybe?
+          setInvoices(data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch invoices", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (customer?.id) fetchInvoices();
+  }, [customer?.id]);
 
   return (
     <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px', marginTop: '24px' }}>
@@ -21,20 +38,24 @@ export function CustomerInvoices() {
           </tr>
         </thead>
         <tbody style={{ fontSize: '14px' }}>
-          {invoices.map(inv => (
+          {loading ? (
+            <tr><td colSpan={5} style={{ padding: '16px 24px', textAlign: 'center' }}>Loading...</td></tr>
+          ) : invoices.length === 0 ? (
+            <tr><td colSpan={5} style={{ padding: '16px 24px', textAlign: 'center' }}>No invoices found</td></tr>
+          ) : invoices.map(inv => (
             <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{inv.id}</td>
-              <td style={{ padding: '16px 24px' }}>{inv.date}</td>
-              <td style={{ padding: '16px 24px' }}>{inv.dueDate}</td>
+              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{inv.orderNumber}</td>
+              <td style={{ padding: '16px 24px' }}>{new Date(inv.orderDate).toISOString().split('T')[0]}</td>
+              <td style={{ padding: '16px 24px' }}>{inv.deliveryDate ? new Date(inv.deliveryDate).toISOString().split('T')[0] : 'N/A'}</td>
               <td style={{ padding: '16px 24px', fontWeight: 600 }}>
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(inv.amount)}
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: inv.currency || 'BDT' }).format(inv.totalAmount)}
               </td>
               <td style={{ padding: '16px 24px' }}>
                 <span style={{
                   padding: '4px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
-                  background: inv.status === 'Paid' ? 'var(--success-glow)' : 'var(--danger-glow)',
-                  color: inv.status === 'Paid' ? 'var(--success)' : 'var(--danger)',
-                }}>{inv.status}</span>
+                  background: inv.paymentStatus === 'Paid' ? 'var(--success-glow)' : 'var(--danger-glow)',
+                  color: inv.paymentStatus === 'Paid' ? 'var(--success)' : 'var(--danger)',
+                }}>{inv.paymentStatus || 'Unpaid'}</span>
               </td>
             </tr>
           ))}

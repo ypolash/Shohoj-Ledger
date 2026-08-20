@@ -26,7 +26,7 @@ export function CustomerFinancialSummary({ customer }: CustomerFinancialSummaryP
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--surface-hover)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Sales (YTD)</span>
-          <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{formatter.format(150000)}</span> {/* Placeholder */}
+          <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{formatter.format(customer.salesTotalYTD || 0)}</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: 'var(--surface-hover)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>

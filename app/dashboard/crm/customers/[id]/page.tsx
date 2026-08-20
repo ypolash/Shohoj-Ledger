@@ -126,8 +126,8 @@ export default function CustomerDetailPage() {
         {activeTab === 'financials' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <CustomerFinancialSummary customer={customer} />
-            <CustomerInvoices />
-            <CustomerPayments />
+            <CustomerInvoices customer={customer} />
+            <CustomerPayments customer={customer} />
           </div>
         )}
 

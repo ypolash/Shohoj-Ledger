@@ -1,11 +1,27 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export function CustomerPayments() {
-  const payments = [
-    { id: 'PAY-001', date: '2026-07-25', method: 'Bank Transfer', amount: 25000, status: 'Completed' },
-  ];
+export function CustomerPayments({ customer }: { customer: any }) {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const res = await fetch(`/api/crm/customer-payments?customerId=${customer.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPayments(data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch payments", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (customer?.id) fetchPayments();
+  }, [customer?.id]);
 
   return (
     <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px', marginTop: '24px' }}>
@@ -21,19 +37,23 @@ export function CustomerPayments() {
           </tr>
         </thead>
         <tbody style={{ fontSize: '14px' }}>
-          {payments.map(pay => (
+          {loading ? (
+            <tr><td colSpan={5} style={{ padding: '16px 24px', textAlign: 'center' }}>Loading...</td></tr>
+          ) : payments.length === 0 ? (
+            <tr><td colSpan={5} style={{ padding: '16px 24px', textAlign: 'center' }}>No payments found</td></tr>
+          ) : payments.map(pay => (
             <tr key={pay.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{pay.id}</td>
-              <td style={{ padding: '16px 24px' }}>{pay.date}</td>
-              <td style={{ padding: '16px 24px' }}>{pay.method}</td>
+              <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--primary)' }}>{pay.receiptNumber}</td>
+              <td style={{ padding: '16px 24px' }}>{new Date(pay.paymentDate).toISOString().split('T')[0]}</td>
+              <td style={{ padding: '16px 24px' }}>{pay.paymentMethod}</td>
               <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--success)' }}>
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(pay.amount)}
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: pay.currency || 'BDT' }).format(pay.amount)}
               </td>
               <td style={{ padding: '16px 24px' }}>
                 <span style={{
                   padding: '4px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
-                  background: pay.status === 'Completed' ? 'var(--success-glow)' : 'var(--warning-glow)',
-                  color: pay.status === 'Completed' ? 'var(--success)' : 'var(--warning)',
+                  background: pay.status === 'COMPLETED' || pay.status === 'ALLOCATED' ? 'var(--success-glow)' : 'var(--warning-glow)',
+                  color: pay.status === 'COMPLETED' || pay.status === 'ALLOCATED' ? 'var(--success)' : 'var(--warning)',
                 }}>{pay.status}</span>
               </td>
             </tr>

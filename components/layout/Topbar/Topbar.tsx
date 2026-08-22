@@ -61,7 +61,8 @@ export function Topbar() {
   const breadcrumbs = paths.map((path, index) => {
     const isLast = index === paths.length - 1;
     const name = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
-    return { name, isLast };
+    const href = '/' + paths.slice(0, index + 1).join('/');
+    return { name, isLast, href };
   });
 
   const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
@@ -82,17 +83,19 @@ export function Topbar() {
           </button>
           
           <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
-            <div className={styles.breadcrumbItem}>
-              <div className={styles.iconCompleted}><Check size={12} strokeWidth={3} /></div>
+            <Link href="/erp/dashboard" className={styles.breadcrumbItem}>
               Shohoj
-            </div>
+            </Link>
             {breadcrumbs.map((crumb, i) => (
-              <div key={i} className={`${styles.breadcrumbItem} ${crumb.isLast ? styles.active : ''}`}>
-                <div className={crumb.isLast ? styles.iconPending : styles.iconCompleted}>
-                  <Check size={12} strokeWidth={3} />
+              crumb.isLast ? (
+                <div key={i} className={`${styles.breadcrumbItem} ${styles.active}`}>
+                  {crumb.name}
                 </div>
-                {crumb.name}
-              </div>
+              ) : (
+                <Link key={i} href={crumb.href} className={styles.breadcrumbItem}>
+                  {crumb.name}
+                </Link>
+              )
             ))}
           </nav>
         </div>

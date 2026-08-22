@@ -44,7 +44,7 @@
 .breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   font-size: var(--font-size-sm);
   background-color: var(--surface-main);
   border-radius: var(--radius-md);
@@ -54,13 +54,18 @@
 .breadcrumbItem {
   color: var(--text-muted);
   background-color: var(--surface-hover);
-  padding: 8px 16px 8px 24px;
-  clip-path: polygon(calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%, 0 0);
+  padding: 6px 14px 6px 20px;
+  clip-path: polygon(calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%, 0 0);
   display: flex;
   align-items: center;
-  gap: 8px;
   font-weight: 500;
   transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.breadcrumbItem:hover {
+  background-color: var(--border-light);
+  color: var(--text-main);
 }
 
 .breadcrumbItem.active {
@@ -69,34 +74,12 @@
 }
 
 .breadcrumbItem:first-child {
-  clip-path: polygon(calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 0 0);
-  padding-left: 16px;
+  clip-path: polygon(calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 0 0);
+  padding-left: 14px;
 }
 
 .breadcrumbItem:last-child {
-  padding-right: 20px;
-}
-
-.iconCompleted {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  background-color: var(--success);
-  border-radius: 50%;
-  color: #ffffff;
-}
-
-.iconPending {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  color: rgba(255, 255, 255, 0.8);
+  padding-right: 18px;
 }
 
 .searchTrigger {

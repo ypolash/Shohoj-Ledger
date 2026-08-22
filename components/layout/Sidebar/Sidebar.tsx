@@ -27,6 +27,7 @@ interface SidebarProps {
 export function Sidebar({ businessType = 'Product + Service', companyName = 'Shohoj Ledger', logoUrl = null }: SidebarProps) {
   const { sidebarOpen, isMobile } = useUI();
   const [isHovered, setIsHovered] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const pathname = usePathname() || '';
 
   const isExpanded = sidebarOpen || isHovered;
@@ -57,6 +58,14 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     return false;
   };
 
+  const filteredNavItems = navItems.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const filteredAdminItems = adminItems.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const sidebarClass = `${styles.sidebar} ${isExpanded ? styles.open : styles.collapsed} ${isMobile ? styles.mobile : ''}`;
 
   return (
@@ -85,13 +94,15 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
               placeholder="Filter menu..." 
               className={styles.searchInput}
               aria-label="Filter menu items"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         )}
 
         <nav className={styles.navGroup}>
-          {isExpanded && <div className={styles.sectionHeader}>Main</div>}
-          {navItems.map((item) => (
+          {isExpanded && filteredNavItems.length > 0 && <div className={styles.sectionHeader}>Main</div>}
+          {filteredNavItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
@@ -105,8 +116,8 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
         </nav>
 
         <nav className={styles.navGroup}>
-          {isExpanded && <div className={styles.sectionHeader}>System</div>}
-          {adminItems.map((item) => (
+          {isExpanded && filteredAdminItems.length > 0 && <div className={styles.sectionHeader}>System</div>}
+          {filteredAdminItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}

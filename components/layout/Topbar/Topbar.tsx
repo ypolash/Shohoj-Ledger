@@ -83,9 +83,6 @@ export function Topbar() {
           </button>
           
           <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
-            <Link href="/erp/dashboard" className={styles.breadcrumbItem}>
-              Shohoj
-            </Link>
             {breadcrumbs.map((crumb, i) => (
               crumb.isLast ? (
                 <div key={i} className={`${styles.breadcrumbItem} ${styles.active}`}>

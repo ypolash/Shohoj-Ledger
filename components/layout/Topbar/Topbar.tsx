@@ -101,7 +101,6 @@ export function Topbar() {
           <button className={styles.searchTrigger} aria-label="Search" onClick={() => setIsSearchOpen(true)}>
             <Search size={16} />
             <span className={styles.searchPlaceholder}>Search...</span>
-            <kbd className={styles.shortcutKey}>Ctrl+K</kbd>
           </button>
 
           <div className={styles.actions}>

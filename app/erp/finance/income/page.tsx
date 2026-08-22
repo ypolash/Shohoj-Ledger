@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { IncomeToolbar } from './components/IncomeToolbar';
 import { IncomeFilters } from './components/IncomeFilters';
 import { IncomeTable } from './components/IncomeTable';
-import { FastEntryDrawer } from '@/app/dashboard/finance/components/FastEntryDrawer';
+import { FastEntryDrawer } from '@/app/erp/finance/components/FastEntryDrawer';
 
 export default function IncomePage() {
   const [incomes, setIncomes] = useState<any[]>([]);

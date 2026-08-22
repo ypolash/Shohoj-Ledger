@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ExpenseToolbar } from './components/ExpenseToolbar';
 import { ExpenseFilters } from './components/ExpenseFilters';
 import { ExpenseTable } from './components/ExpenseTable';
-import { FastEntryDrawer } from '@/app/dashboard/finance/components/FastEntryDrawer';
+import { FastEntryDrawer } from '@/app/erp/finance/components/FastEntryDrawer';
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<any[]>([]);

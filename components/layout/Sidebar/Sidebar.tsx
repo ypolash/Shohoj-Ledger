@@ -14,8 +14,7 @@ import {
   CreditCard, 
   Folder, 
   BarChart2, 
-  Settings, 
-  Shield 
+  Settings
 } from 'lucide-react';
 
 interface SidebarProps {

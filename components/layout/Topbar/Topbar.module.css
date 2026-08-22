@@ -50,11 +50,19 @@
 
 .breadcrumbItem {
   color: var(--text-muted);
+  background-color: var(--surface-hover);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-main);
+  transition: all var(--transition-fast);
 }
 
 .breadcrumbItem.active {
-  color: var(--text-main);
+  color: var(--primary);
+  background-color: var(--surface-main);
+  border-color: var(--primary);
   font-weight: var(--font-weight-medium);
+  box-shadow: 0 0 0 2px var(--primary-glow);
 }
 
 .breadcrumbSeparator {

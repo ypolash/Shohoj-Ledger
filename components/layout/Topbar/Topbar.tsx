@@ -11,7 +11,7 @@ import {
   Moon, 
   Sun, 
   Monitor,
-  ChevronRight,
+  Check,
   UserCircle,
   Settings,
   LogOut,
@@ -82,14 +82,17 @@ export function Topbar() {
           </button>
           
           <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
-            <span className={styles.breadcrumbItem}>Shohoj</span>
+            <div className={styles.breadcrumbItem}>
+              <div className={styles.iconCompleted}><Check size={12} strokeWidth={3} /></div>
+              Shohoj
+            </div>
             {breadcrumbs.map((crumb, i) => (
-              <React.Fragment key={i}>
-                <ChevronRight size={16} className={styles.breadcrumbSeparator} />
-                <span className={`${styles.breadcrumbItem} ${crumb.isLast ? styles.active : ''}`}>
-                  {crumb.name}
-                </span>
-              </React.Fragment>
+              <div key={i} className={`${styles.breadcrumbItem} ${crumb.isLast ? styles.active : ''}`}>
+                <div className={crumb.isLast ? styles.iconPending : styles.iconCompleted}>
+                  <Check size={12} strokeWidth={3} />
+                </div>
+                {crumb.name}
+              </div>
             ))}
           </nav>
         </div>

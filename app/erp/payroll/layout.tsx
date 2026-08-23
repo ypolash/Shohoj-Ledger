@@ -15,6 +15,7 @@ const navigation = [
  * Wraps the dedicated Payroll section with a sidebar, isolated from the HR module.
  */
 export default function PayrollLayout({ children }: { children: React.ReactNode }) {
+  // force recompile
   const pathname = usePathname() || '';
 
   return (

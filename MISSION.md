@@ -4,6 +4,8 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
+- **Version 6.0 — Sprint Auth-1 (Dynamic Role-Based Access Control):**
+  - **Completed**: Implemented dynamic Role-Based Access Control (RBAC). Validated that `Role`, `Permission`, and `RolePermission` models already existed. Created `lib/auth/rbac.ts` utility for backend API protection with strict types. Engineered a `<RequirePermission>` React Server Component for UI-level access control.
 - **Version 6.0 — Sprint UI-2 (Accounting Data Integrity & UI Logic):**
   - **Completed**: Fixed a critical bug in `CustomersView` causing signed negative balances to clamp to 0. Enforced strict UI presentation separating `Outstanding Due` and `Customer Credit`. Modified the Sale `DELETE` logic in `/api/sales/route.ts` to soft-delete by setting `saleStatus = 'CANCELLED'` instead of physical deletion, completely preventing Prisma `Cascade` from inadvertently destroying valid customer payments.
 - **Version 6.0 — Sprint UI-1 (DRY Refactoring):**

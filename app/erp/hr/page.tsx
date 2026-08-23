@@ -12,7 +12,6 @@ export default function HRDashboardPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [leaves, setLeaves] = useState<any[]>([]);
-  const [payroll, setPayroll] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => { loadAll(); }, []);
@@ -21,16 +20,14 @@ export default function HRDashboardPage() {
   const loadAll = async () => {
     setIsLoading(true);
     try {
-      const [empRes, deptRes, leaveRes, payRes] = await Promise.all([
+      const [empRes, deptRes, leaveRes] = await Promise.all([
         fetch('/api/employees'),
         fetch('/api/departments'),
         fetch('/api/leaves'),
-        fetch('/api/payroll'),
       ]);
       if (empRes.ok)   setEmployees(await empRes.json());
       if (deptRes.ok)  setDepartments(await deptRes.json());
       if (leaveRes.ok) setLeaves(await leaveRes.json());
-      if (payRes.ok)   setPayroll(await payRes.json());
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
@@ -40,24 +37,12 @@ export default function HRDashboardPage() {
 
   const activeEmployees = employees.filter(e => e.status === 'ACTIVE').length;
   const pendingLeaves   = leaves.filter(l => l.status === 'PENDING').length;
-  const summary         = payroll?.summary || {};
 
   const kpis = [
     { label: 'Total Employees',    value: employees.length,      icon: 'badge',         color: 'var(--primary)',   glow: 'primary' },
     { label: 'Active Employees',   value: activeEmployees,       icon: 'how_to_reg',    color: 'var(--success)',   glow: 'success' },
     { label: 'Departments',        value: departments.length,    icon: 'corporate_fare',color: 'var(--accent)',    glow: 'accent' },
     { label: 'Pending Leaves',     value: pendingLeaves,         icon: 'event_busy',    color: 'var(--warning)',   glow: 'warning' },
-    { label: 'Payroll (Net)',       value: isLoading ? '—' : formatCurrency(summary.totalNetPay), icon: 'payments', color: 'var(--success)', glow: 'success' },
-    { label: 'Pending Payslips',   value: summary.pendingCount ?? '—', icon: 'pending_actions', color: 'var(--warning)', glow: 'warning' },
-  ];
-
-  const quickLinks = [
-    { href: '/erp/hr/employees',   icon: 'badge',         label: 'Manage Employees' },
-    { href: '/erp/hr/departments', icon: 'corporate_fare',label: 'Departments' },
-    { href: '/erp/hr/attendance',  icon: 'fact_check',    label: 'Record Attendance' },
-    { href: '/erp/hr/leaves',      icon: 'event_busy',    label: 'Leave Requests' },
-    { href: '/erp/hr/fines',       icon: 'money_off',     label: 'Disciplinary Fines' },
-    { href: '/erp/hr/payroll',     icon: 'payments',      label: 'Run Payroll' },
   ];
 
   // Recent leave requests for activity feed
@@ -101,25 +86,8 @@ export default function HRDashboardPage() {
         ))}
       </div>
 
-      {/* Quick Links + Leave Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--spacing-6)' }}>
-
-        {/* Quick Links */}
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 16px' }}>Quick Actions</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {quickLinks.map(ql => (
-              <Link key={ql.href} href={ql.href} className="hover-lift"
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '12px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', textDecoration: 'none', fontWeight: 500, fontSize: '14px', transition: 'all 0.15s' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>{ql.icon}</span>
-                {ql.label}
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)', marginLeft: 'auto' }}>chevron_right</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Leave Requests */}
+      {/* Leave Activity */}
+      <div>
         <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
           <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 16px' }}>Recent Leave Requests</h2>
           {isLoading ? (

@@ -185,143 +185,241 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
   const tabs = ["Profile", "Documents", "Notes", "Timeline"];
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* Left Sidebar (Picture & Basic Info) */}
-        <div style={{ flex: '1 1 300px', maxWidth: '350px', position: 'sticky', top: '24px' }}>
-          <div className="glass-card" style={{ padding: 'var(--spacing-6)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px' }}>
-            <div style={{ 
-              width: '120px', height: '120px', borderRadius: '50%', 
-              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '40px', fontWeight: 'bold', color: '#fff',
-              flexShrink: 0,
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-            }}>
-              {getInitials(employee.firstName, employee.lastName)}
-            </div>
-            <div>
-              <h1 style={{ margin: '0 0 8px 0', fontSize: '24px' }}>{employee.firstName} {employee.lastName}</h1>
-              <div style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '15px', marginBottom: '12px' }}>
-                {employee.designation}
-                {employee.department && <><br/>{employee.department}</>}
-              </div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-                ID: {employee.employeeId}
-              </div>
-              <span className={`${styles.badge} ${
-                employee.status === 'ACTIVE' ? styles['badge-paid'] : 
-                employee.status === 'ON_LEAVE' ? styles['badge-partial'] : styles['badge-unpaid']
-              }`}>
-                {employee.status}
-              </span>
-            </div>
-          </div>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      
+      {/* Top Tabs & Edit Button Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {tabs.map(t => (
+            <button 
+              key={t}
+              onClick={() => setActiveTab(t)}
+              style={{ 
+                padding: '12px 24px', 
+                background: 'none', 
+                border: 'none', 
+                borderBottom: activeTab === t ? '2px solid var(--primary)' : '2px solid transparent',
+                color: activeTab === t ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: activeTab === t ? 600 : 400,
+                cursor: 'pointer',
+                fontSize: '15px',
+                marginBottom: '-9px'
+              }}
+            >
+              {t}
+            </button>
+          ))}
         </div>
-
-        {/* Right Content Area (Tabs & Details) */}
-        <div style={{ flex: '2 1 600px', minWidth: 0 }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
-            {tabs.map(t => (
-              <button 
-                key={t}
-                onClick={() => setActiveTab(t)}
-                style={{ 
-                  padding: '12px 24px', 
-                  background: 'none', 
-                  border: 'none', 
-                  borderBottom: activeTab === t ? '2px solid var(--primary)' : '2px solid transparent',
-                  color: activeTab === t ? 'var(--primary)' : 'var(--text-muted)',
-                  fontWeight: activeTab === t ? 600 : 400,
-                  cursor: 'pointer',
-                  fontSize: '15px'
-                }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        
+        {activeTab === "Profile" && (
+          <button type="button" onClick={() => setIsEditing(!isEditing)} className={isEditing ? "btn btn-secondary" : "btn btn-primary"} style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {isEditing ? (
+              <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span> Cancel Edit</>
+            ) : (
+              <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span> Edit Profile</>
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Profile Tab */}
       {activeTab === "Profile" && (
-        <div className="glass-card" style={{ position: 'relative' }}>
-          <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}>
-            <button type="button" onClick={() => setIsEditing(!isEditing)} className={isEditing ? "btn btn-secondary" : "btn btn-primary"} style={{ padding: '6px 12px', fontSize: '13px' }}>
-              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
-            </button>
-          </div>
-
+        <div style={{ position: 'relative' }}>
           {!isEditing ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)', marginTop: '24px' }}>
-              <div>
-                <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Personal Information</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>First Name</div><div style={{ fontWeight: 500 }}>{formData.firstName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Last Name</div><div style={{ fontWeight: 500 }}>{formData.lastName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Date of Birth</div><div style={{ fontWeight: 500 }}>{formData.profile.dateOfBirth || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Gender</div><div style={{ fontWeight: 500 }}>{formData.profile.gender || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Blood Group</div><div style={{ fontWeight: 500 }}>{formData.profile.bloodGroup || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>NID Number</div><div style={{ fontWeight: 500 }}>{formData.profile.nationalId || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Marital Status</div><div style={{ fontWeight: 500 }}>{formData.profile.maritalStatus || '-'}</div></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* Basic Information Card */}
+              <div className="glass-card" style={{ padding: '32px', display: 'flex', gap: '48px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Left Side: Avatar & Name */}
+                <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: '1 1 300px' }}>
+                  <div style={{ 
+                    width: '120px', height: '120px', borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '40px', fontWeight: 'bold', color: '#fff',
+                    flexShrink: 0
+                  }}>
+                    {getInitials(employee.firstName, employee.lastName)}
+                  </div>
+                  <div>
+                    <h2 style={{ margin: '0 0 4px 0', fontSize: '24px', fontWeight: 600 }}>{employee.firstName} {employee.lastName}</h2>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>{employee.employeeId}</div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{formData.profile.gender === 'Female' ? 'female' : 'male'}</span> {formData.profile.gender || '-'}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mail</span> {formData.email || '-'}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>call</span> {formData.phone || '-'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div style={{ width: '1px', height: '150px', background: 'var(--border)', display: 'block' }}></div>
+
+                {/* Right Side: Additional Basic Info */}
+                <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                    <div style={{ fontWeight: 500 }}>Department</div>
+                    <div style={{ color: 'var(--text-muted)' }}>{formData.department || '-'}</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                    <div style={{ fontWeight: 500 }}>Designation</div>
+                    <div style={{ color: 'var(--text-muted)' }}>{formData.designation || '-'}</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                    <div style={{ fontWeight: 500 }}>Birth date</div>
+                    <div style={{ color: 'var(--text-muted)' }}>{formData.profile.dateOfBirth || '-'}</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                    <div style={{ fontWeight: 500 }}>Blood type</div>
+                    <div style={{ color: 'var(--text-muted)' }}>{formData.profile.bloodGroup || '-'}</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                    <div style={{ fontWeight: 500 }}>Marital Status</div>
+                    <div style={{ color: 'var(--text-muted)' }}>{formData.profile.maritalStatus || '-'}</div>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Contact Information</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Personal Number</div><div style={{ fontWeight: 500 }}>{formData.phone || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Secondary Number</div><div style={{ fontWeight: 500 }}>{formData.profile.secondaryPhone || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Personal Email</div><div style={{ fontWeight: 500 }}>{formData.email || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Current Address</div><div style={{ fontWeight: 500 }}>{formData.profile.currentAddress || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Main Address</div><div style={{ fontWeight: 500 }}>{formData.profile.mainAddress || '-'}</div></div>
-                </div>
-              </div>
-
-              {formData.education.length > 0 && (
-                <div>
-                  <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Educational Information</h3>
-                  {formData.education.map((edu: any, idx: number) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '16px', background: 'var(--surface-light)', padding: '16px', borderRadius: '8px', marginBottom: '8px' }}>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Degree</div><div style={{ fontWeight: 500 }}>{edu.degree || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Institution</div><div style={{ fontWeight: 500 }}>{edu.institution || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Board</div><div style={{ fontWeight: 500 }}>{edu.board || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Passing Year</div><div style={{ fontWeight: 500 }}>{edu.passingYear || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Result</div><div style={{ fontWeight: 500 }}>{edu.result || '-'}</div></div>
+              {/* 2-Column Grid for the rest */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+                
+                {/* Left Column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  
+                  {/* Address Card */}
+                  <div className="glass-card" style={{ padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Address</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Current address</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.currentAddress || '-'}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Main address</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.mainAddress || '-'}</div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
 
-              {formData.experience.length > 0 && (
-                <div>
-                  <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Work Experience</h3>
-                  {formData.experience.map((exp: any, idx: number) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '16px', background: 'var(--surface-light)', padding: '16px', borderRadius: '8px', marginBottom: '8px' }}>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Company</div><div style={{ fontWeight: 500 }}>{exp.company || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Designation</div><div style={{ fontWeight: 500 }}>{exp.position || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Salary</div><div style={{ fontWeight: 500 }}>{exp.salary || '-'}</div></div>
-                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Duration</div><div style={{ fontWeight: 500 }}>{(exp.joiningDate ? new Date(exp.joiningDate).toLocaleDateString() : '')} - {(exp.leavingDate ? new Date(exp.leavingDate).toLocaleDateString() : 'Present')}</div></div>
+                  {/* Education Card (Timeline Style) */}
+                  <div className="glass-card" style={{ padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Education</h3>
+                    {formData.education.length > 0 ? (
+                      <div style={{ position: 'relative', paddingLeft: '16px', borderLeft: '2px solid var(--border)' }}>
+                        {formData.education.map((edu: any, idx: number) => (
+                          <div key={idx} style={{ position: 'relative', marginBottom: idx === formData.education.length - 1 ? 0 : '24px' }}>
+                            <div style={{ position: 'absolute', left: '-21px', top: '2px', width: '8px', height: '8px', borderRadius: '50%', background: '#e2e8f0', border: '2px solid #fff' }}></div>
+                            <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{edu.degree} - {edu.institution}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '4px' }}>{edu.subject || edu.board || '-'}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>GPA ({edu.result || '-'})</div>
+                            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>{edu.passingYear || '-'}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--text-muted)' }}>No education records found.</div>
+                    )}
+                  </div>
+                  
+                  {/* Work Experience Card (Timeline Style) */}
+                  <div className="glass-card" style={{ padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Work Experience</h3>
+                    {formData.experience.length > 0 ? (
+                      <div style={{ position: 'relative', paddingLeft: '16px', borderLeft: '2px solid var(--border)' }}>
+                        {formData.experience.map((exp: any, idx: number) => (
+                          <div key={idx} style={{ position: 'relative', marginBottom: idx === formData.experience.length - 1 ? 0 : '24px' }}>
+                            <div style={{ position: 'absolute', left: '-21px', top: '2px', width: '8px', height: '8px', borderRadius: '50%', background: '#e2e8f0', border: '2px solid #fff' }}></div>
+                            <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{exp.position} - {exp.company}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '4px' }}>Salary: {exp.salary || '-'}</div>
+                            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '4px' }}>
+                              {(exp.joiningDate ? new Date(exp.joiningDate).toLocaleDateString() : '')} - {(exp.leavingDate ? new Date(exp.leavingDate).toLocaleDateString() : 'Present')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--text-muted)' }}>No experience records found.</div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Right Column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  
+                  {/* Emergency / Secondary Contact */}
+                  <div className="glass-card" style={{ padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Emergency contact</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Name</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.nomineeName || '-'}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Relationship</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.nomineeRelation || '-'}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Phone number</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.secondaryPhone || '-'}</div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
 
-              <div>
-                <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Financial & Family</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Bank Name</div><div style={{ fontWeight: 500 }}>{formData.profile.bankName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Account Name</div><div style={{ fontWeight: 500 }}>{formData.profile.accountName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Account Number</div><div style={{ fontWeight: 500 }}>{formData.profile.accountNumber || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Father's Name</div><div style={{ fontWeight: 500 }}>{formData.profile.fatherName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Mother's Name</div><div style={{ fontWeight: 500 }}>{formData.profile.motherName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Spouse Name</div><div style={{ fontWeight: 500 }}>{formData.profile.spouseName || '-'}</div></div>
-                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nominee Name</div><div style={{ fontWeight: 500 }}>{formData.profile.nomineeName || '-'}</div></div>
+                  {/* Family Table */}
+                  <div className="glass-card" style={{ padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Family</h3>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--surface-light)' }}>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, borderBottom: '1px solid var(--border)' }}>Family type</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 500, borderBottom: '1px solid var(--border)' }}>Person name</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Father</td>
+                            <td style={{ padding: '12px 16px', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{formData.profile.fatherName || '-'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Mother</td>
+                            <td style={{ padding: '12px 16px', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{formData.profile.motherName || '-'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '12px 16px' }}>Spouse</td>
+                            <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{formData.profile.spouseName || '-'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  {/* Financial & Banking Table */}
+                  <div className="glass-card" style={{ padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Financial & Banking</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Bank Name</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.bankName || '-'}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Account Name</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.accountName || '-'}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr' }}>
+                        <div style={{ fontWeight: 500 }}>Account Number</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{formData.profile.accountNumber || '-'}</div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)', marginTop: '24px' }}>
+            <form onSubmit={handleSaveProfile} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
               
               {/* Personal Information */}
           <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Personal Information</h3>

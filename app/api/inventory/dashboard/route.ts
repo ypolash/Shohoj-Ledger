@@ -22,7 +22,8 @@ export async function GET(req: Request) {
       totalAssets,
       stockTransactions,
       recentAudits,
-      purchaseOrders
+      purchaseOrders,
+      recentProducts
     ] = await Promise.all([
       prisma.product.count({ where: { companyId, systemSource } }),
       prisma.warehouse.count({ where: { companyId, systemSource } }),
@@ -37,7 +38,12 @@ export async function GET(req: Request) {
         orderBy: { createdAt: 'desc' },
         include: { performedBy: { select: { name: true } } }
       }),
-      prisma.purchaseOrder.findMany({ where: { companyId, systemSource } })
+      prisma.purchaseOrder.findMany({ where: { companyId, systemSource } }),
+      prisma.product.findMany({ 
+        where: { companyId, systemSource }, 
+        take: 10, 
+        orderBy: { createdAt: 'desc' } 
+      })
     ]);
 
     // Calculate aggregated inventory values
@@ -74,7 +80,8 @@ export async function GET(req: Request) {
         inventoryValue,
         purchaseValue
       },
-      recentTransactions: recentAudits
+      recentTransactions: recentAudits,
+      recentProducts
     });
   } catch (error) {
     console.error("GET Inventory Dashboard Error:", error);

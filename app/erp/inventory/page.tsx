@@ -39,7 +39,7 @@ export default function InventoryDashboardPage() {
     new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(val || 0);
 
   const kpis = data?.kpis || {};
-  const recentTransactions: any[] = data?.recentTransactions || [];
+  const recentProducts: any[] = data?.recentProducts || [];
 
   const kpiCards = [
     { label: 'Total Products', value: kpis.totalProducts ?? '—', icon: 'inventory_2', color: 'var(--primary)', glow: 'primary' },
@@ -107,14 +107,14 @@ export default function InventoryDashboardPage() {
                 <div key={i} style={{ height: '48px', borderRadius: '10px', background: 'var(--surface-hover)', opacity: 0.5 }} />
               ))}
             </div>
-          ) : recentTransactions.length === 0 ? (
+          ) : recentProducts.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>history</span>
-              No activity yet.
+              <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>inventory_2</span>
+              No products created yet.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {recentTransactions.map((tx: any, idx: number) => (
+              {recentProducts.map((product: any, idx: number) => (
                 <div key={idx} style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -124,13 +124,13 @@ export default function InventoryDashboardPage() {
                   background: 'var(--surface-hover)',
                   border: '1px solid var(--border-main)',
                 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)', flexShrink: 0 }}>history</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)', flexShrink: 0 }}>inventory_2</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {tx.description}
+                      Created product: {product.name}
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {tx.performedBy?.name} · {new Date(tx.createdAt).toLocaleDateString()}
+                      SKU: {product.sku || 'N/A'} · {new Date(product.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import ProductModal from './components/ProductModal';
 
 /**
  * ERP Inventory Dashboard Page
@@ -11,6 +11,8 @@ import Link from 'next/link';
 export default function InventoryDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     fetchDashboard();
@@ -65,12 +67,18 @@ export default function InventoryDashboardPage() {
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
             Refresh
           </button>
-          <Link href="/erp/inventory/products/new" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
             Create Product
-          </Link>
+          </button>
         </div>
       </div>
+
+      {successMsg && (
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>
+          ✓ {successMsg}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-4)' }}>
@@ -131,6 +139,17 @@ export default function InventoryDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Add Product Modal */}
+      <ProductModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={() => {
+          setSuccessMsg('Product created successfully!');
+          setTimeout(() => setSuccessMsg(''), 4000);
+          fetchDashboard();
+        }}
+      />
     </div>
   );
 }

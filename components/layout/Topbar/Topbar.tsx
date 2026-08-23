@@ -23,7 +23,7 @@ import { Dropdown } from '@/components/ui/Dropdown/Dropdown';
 import { Modal } from '@/components/ui/Modal/Modal';
 
 export function Topbar() {
-  const { toggleSidebar, theme, setTheme } = useUI();
+  const { toggleSidebar, theme, setTheme, pageTitleOverride } = useUI();
   const pathname = usePathname() || '';
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -60,7 +60,10 @@ export function Topbar() {
   const paths = pathname.split('/').filter(Boolean);
   const breadcrumbs = paths.map((path, index) => {
     const isLast = index === paths.length - 1;
-    const name = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+    let name = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+    if (isLast && pageTitleOverride) {
+      name = pageTitleOverride;
+    }
     const href = '/' + paths.slice(0, index + 1).join('/');
     return { name, isLast, href };
   });

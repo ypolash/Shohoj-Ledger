@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
+import { useUI } from '@/lib/contexts/UIContext';
+
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { setPageTitleOverride } = useUI();
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,6 +19,9 @@ export default function ProductDetailsPage() {
         if (res.ok) {
           const d = await res.json();
           setProduct(d.product);
+          if (d.product?.name) {
+            setPageTitleOverride(d.product.name);
+          }
         }
       } catch (error) {
         console.error(error);
@@ -24,7 +30,10 @@ export default function ProductDetailsPage() {
       }
     };
     if (id) fetchProduct();
-  }, [id]);
+    
+    // Cleanup on unmount (optional since UIContext handles pathname changes, but good practice)
+    return () => setPageTitleOverride(null);
+  }, [id, setPageTitleOverride]);
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>

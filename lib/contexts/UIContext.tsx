@@ -11,14 +11,25 @@ interface UIContextType {
   isMobile: boolean;
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  pageTitleOverride: string | null;
+  setPageTitleOverride: (title: string | null) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
+
+import { usePathname } from 'next/navigation';
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [theme, setThemeState] = useState<Theme>('system');
+  const [pageTitleOverride, setPageTitleOverride] = useState<string | null>(null);
+  const pathname = usePathname();
+
+  // Reset page title override on route change
+  useEffect(() => {
+    setPageTitleOverride(null);
+  }, [pathname]);
 
   // Handle responsive sidebar behavior
   useEffect(() => {
@@ -65,7 +76,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
 
   return (
-    <UIContext.Provider value={{ sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, theme, setTheme }}>
+    <UIContext.Provider value={{ sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, theme, setTheme, pageTitleOverride, setPageTitleOverride }}>
       {children}
     </UIContext.Provider>
   );

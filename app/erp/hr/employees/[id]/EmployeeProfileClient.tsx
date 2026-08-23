@@ -652,10 +652,9 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
           </div>
         </div>
       )}
-        </div>
-      </div>
+    </div>
 
-      {/* Lifecycle Modal */}
+    {/* Lifecycle Modal */}
       {isLifecycleModalOpen && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 

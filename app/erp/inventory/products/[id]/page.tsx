@@ -64,17 +64,6 @@ export default function ProductDetailsPage() {
               <span style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, color: product.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)', background: product.status === 'ACTIVE' ? 'var(--success-subtle)' : 'var(--surface-hover)' }}>
                 {product.status}
               </span>
-
-              <div style={{ marginTop: '24px', width: '100%', display: 'flex', justifyContent: 'space-around', borderTop: '1px solid var(--border-main)', paddingTop: '16px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Purchase Price</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>৳{Number(product.purchasePrice).toLocaleString()}</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Selling Price</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>৳{Number(product.sellingPrice).toLocaleString()}</div>
-                </div>
-              </div>
               
               {/* Vertical Stock Badge on the border */}
               <div style={{
@@ -104,8 +93,19 @@ export default function ProductDetailsPage() {
             {/* Right Column */}
             <div style={{ flex: '2 1 500px', padding: '24px' }}>
               <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-main)', paddingBottom: '12px' }}>Product Information</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                 <DetailItem label="Product Code" value={product.productCode} />
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <div className="glass-panel" style={{ flex: '1 1 200px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Purchase Price</div>
+                  <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>৳{Number(product.purchasePrice).toLocaleString()}</div>
+                </div>
+                <div className="glass-panel" style={{ flex: '1 1 200px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Selling Price</div>
+                  <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>৳{Number(product.sellingPrice).toLocaleString()}</div>
+                </div>
               </div>
             </div>
           </div>

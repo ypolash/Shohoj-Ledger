@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import ProductModal, { EMPTY_PRODUCT_FORM } from '../components/ProductModal';
+import BulkProductUploadModal from '../components/BulkProductUploadModal';
 
 /** Product record from API */
 interface Product {
@@ -46,6 +47,7 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [menuOpen, setMenuOpen] = useState<{ id: string, top: number, right: number } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -134,10 +136,16 @@ export default function ProductsPage() {
             {total} product{total !== 1 ? 's' : ''} total
           </p>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={() => { setEditingId(null); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          Add Product
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn btn-secondary hover-lift" onClick={() => setIsBulkUploadOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>upload</span>
+            Bulk Upload
+          </button>
+          <button className="btn btn-primary hover-lift" onClick={() => { setEditingId(null); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
+            Add Product
+          </button>
+        </div>
       </div>
 
       {successMsg && (
@@ -325,6 +333,17 @@ export default function ProductsPage() {
         }}
         editingId={editingId}
         initialData={editingId ? products.find(p => p.id === editingId) : null}
+      />
+
+      <BulkProductUploadModal 
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        onSuccess={(count) => {
+          setIsBulkUploadOpen(false);
+          fetchProducts();
+          setSuccessMsg(`Successfully imported ${count} products.`);
+          setTimeout(() => setSuccessMsg(''), 4000);
+        }}
       />
     </div>
   );

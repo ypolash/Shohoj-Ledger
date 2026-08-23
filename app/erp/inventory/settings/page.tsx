@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useUI } from '@/lib/contexts/UIContext';
+import ProductModal from '../components/ProductModal';
 
 export default function InventorySettingsPage() {
   const { setPageTitleOverride } = useUI();
 
-  const [warehousesEnabled, setWarehousesEnabled] = React.useState(false);
+  const [warehousesEnabled, setWarehousesEnabled] = useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
 
   useEffect(() => {
     setWarehousesEnabled(localStorage.getItem('shohoj_inventory_warehouses_enabled') === 'true');
@@ -112,7 +114,52 @@ export default function InventorySettingsPage() {
           </div>
         </div>
 
+        {/* Add Form Editor Event */}
+        <div className="glass-panel" style={{ 
+          padding: '24px', 
+          borderRadius: '16px', 
+          border: '1px solid var(--border-main)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ 
+              width: '48px', height: '48px', 
+              background: 'var(--primary-subtle)', 
+              color: 'var(--primary)',
+              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>edit_document</span>
+            </div>
+            <div>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>Add Form Editor Event</h3>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>Launch the necessary product editor to input text.</p>
+            </div>
+          </div>
+          
+          <div style={{ marginLeft: '16px' }}>
+            <button 
+              className="btn btn-primary hover-lift"
+              onClick={() => setShowProductModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+              Edit Product
+            </button>
+          </div>
+        </div>
+
       </div>
+
+      <ProductModal
+        isOpen={showProductModal}
+        onClose={() => setShowProductModal(false)}
+        onSuccess={() => setShowProductModal(false)}
+        editingId={null}
+        initialData={null}
+      />
     </div>
   );
 }

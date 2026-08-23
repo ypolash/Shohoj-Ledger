@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-
+import Link from 'next/link';
 
 /**
  * ERP Inventory Dashboard Page
@@ -60,10 +60,16 @@ export default function InventoryDashboardPage() {
             Track stock levels, monitor warehouses, and manage your inventory assets.
           </p>
         </div>
-        <button onClick={fetchDashboard} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={fetchDashboard} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
+            Refresh
+          </button>
+          <Link href="/erp/inventory/products/new" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+            Create Product
+          </Link>
+        </div>
       </div>
 
       {/* KPI Cards */}

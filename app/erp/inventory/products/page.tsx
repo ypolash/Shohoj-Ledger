@@ -200,7 +200,8 @@ export default function ProductsPage() {
               ) : products.map((p) => {
                 const badge = stockBadge(p);
                 return (
-                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.1s' }}
+                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.1s', cursor: 'pointer' }}
+                    onClick={() => router.push(`/erp/inventory/products/${p.id}`)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <td style={{ padding: '10px 16px', width: '50px' }}>

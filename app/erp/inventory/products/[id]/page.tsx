@@ -98,11 +98,11 @@ export default function ProductDetailsPage() {
               </div>
               
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <div className="glass-panel" style={{ width: '160px', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+                <div className="glass-panel" style={{ width: '160px', minHeight: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>Purchase Price</div>
                   <div style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-main)' }}>৳{Number(product.purchasePrice).toLocaleString()}</div>
                 </div>
-                <div className="glass-panel" style={{ width: '160px', minHeight: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+                <div className="glass-panel" style={{ width: '160px', minHeight: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>Selling Price</div>
                   <div style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-main)' }}>৳{Number(product.sellingPrice).toLocaleString()}</div>
                 </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useUI } from '@/lib/contexts/UIContext';
+import ProductModal from '../components/ProductModal';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -11,24 +12,26 @@ export default function ProductDetailsPage() {
   const { setPageTitleOverride } = useUI();
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+
+  const fetchProduct = async () => {
+    try {
+      const res = await fetch(`/api/inventory/products/${id}`);
+      if (res.ok) {
+        const d = await res.json();
+        setProduct(d.product);
+        if (d.product?.name) {
+          setPageTitleOverride(d.product.name);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await fetch(`/api/inventory/products/${id}`);
-        if (res.ok) {
-          const d = await res.json();
-          setProduct(d.product);
-          if (d.product?.name) {
-            setPageTitleOverride(d.product.name);
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     if (id) fetchProduct();
     
     // Cleanup on unmount (optional since UIContext handles pathname changes, but good practice)
@@ -38,13 +41,23 @@ export default function ProductDetailsPage() {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
         <button 
           onClick={() => router.push('/erp/inventory/products')}
           className="ios-back-button"
         >
           Back to Products
         </button>
+        {product && (
+          <button 
+            className="btn btn-secondary hover-lift" 
+            onClick={() => setShowModal(true)} 
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+            Edit Product
+          </button>
+        )}
       </div>
 
       {!isLoading && product && (
@@ -172,6 +185,20 @@ export default function ProductDetailsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {product && (
+        <ProductModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSuccess={() => {
+            setShowModal(false);
+            fetchProduct();
+          }}
+          editingId={product.id}
+          initialData={product}
+        />
       )}
     </div>
   );

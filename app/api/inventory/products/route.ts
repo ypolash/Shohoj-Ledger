@@ -145,6 +145,20 @@ export async function POST(req: Request) {
         }
       });
 
+      if (body.openingStock && Number(body.openingStock) > 0) {
+        await tx.stockTransaction.create({
+          data: {
+            companyId,
+            productId: p.id,
+            type: "OPENING",
+            quantity: Number(body.openingStock),
+            reference: "Initial Opening Stock",
+            performedById: session.user.id,
+            systemSource
+          }
+        });
+      }
+
       await tx.inventoryAudit.create({
         data: {
           companyId,

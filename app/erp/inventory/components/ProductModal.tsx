@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 export const EMPTY_PRODUCT_FORM = {
   productCode: '', name: '', sku: '', barcode: '', brand: '', unit: '',
-  purchasePrice: '', sellingPrice: '', minStock: '', maxStock: '',
+  purchasePrice: '', sellingPrice: '', minStock: '', openingStock: '',
   reorderLevel: '', status: 'ACTIVE', categoryId: '', description: '', notes: '',
   imageUrl: '',
 };
@@ -130,7 +130,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
           purchasePrice: Number(form.purchasePrice) || 0,
           sellingPrice: Number(form.sellingPrice) || 0,
           minStock: Number(form.minStock) || 0,
-          maxStock: Number(form.maxStock) || 0,
+          openingStock: Number(form.openingStock) || 0,
           reorderLevel: Number(form.reorderLevel) || 0,
           categoryId: form.categoryId || undefined,
         })
@@ -167,13 +167,45 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
         {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Image Picker Card */}
+          <div 
+            onClick={() => document.getElementById('productImageUpload')?.click()}
+            style={{ 
+              width: '100%', height: '180px', borderRadius: '16px', border: '2px dashed var(--border-main)', 
+              background: form.imageUrl ? 'var(--surface-main)' : 'var(--surface-hover)', 
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'all 0.2s ease',
+              marginBottom: '8px'
+            }}
+          >
+            {form.imageUrl ? (
+              <img src={form.imageUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <span className="material-symbols-outlined" style={{ fontSize: '40px', color: 'var(--text-muted)', marginBottom: '8px' }}>add_photo_alternate</span>
+                <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)' }}>Click to upload product image</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Max 30KB, auto-compressed)</span>
+              </>
+            )}
+            <input id="productImageUpload" type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <Field label="Product Code *" value={form.productCode} onChange={v => handleForm('productCode', v)} placeholder="e.g. PROD-001" required />
             <Field label="Product Name *" value={form.name} onChange={v => handleForm('name', v)} placeholder="e.g. Wireless Mouse" required />
             <Field label="SKU" value={form.sku} onChange={v => handleForm('sku', v)} placeholder="Optional unique SKU" />
             <Field label="Barcode" value={form.barcode} onChange={v => handleForm('barcode', v)} placeholder="EAN / UPC" />
             <Field label="Brand" value={form.brand} onChange={v => handleForm('brand', v)} placeholder="Brand name" />
-            <Field label="Unit" value={form.unit} onChange={v => handleForm('unit', v)} placeholder="pcs, kg, litre…" />
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Unit</label>
+              <select value={form.unit} onChange={e => handleForm('unit', e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}>
+                <option value="">— Select Unit —</option>
+                <option value="pcs">pcs</option>
+                <option value="kgs">kgs</option>
+                <option value="liter">liter</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -189,7 +221,12 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
             <Field label="Purchase Price (৳)" value={form.purchasePrice} onChange={v => handleForm('purchasePrice', v)} placeholder="0.00" type="number" />
             <Field label="Selling Price (৳)" value={form.sellingPrice} onChange={v => handleForm('sellingPrice', v)} placeholder="0.00" type="number" />
             <Field label="Min Stock" value={form.minStock} onChange={v => handleForm('minStock', v)} placeholder="0" type="number" />
-            <Field label="Max Stock" value={form.maxStock} onChange={v => handleForm('maxStock', v)} placeholder="0" type="number" />
+            
+            {/* Opening Stock (Only show when creating a new product) */}
+            {!editingId && (
+              <Field label="Opening Stock" value={form.openingStock} onChange={v => handleForm('openingStock', v)} placeholder="0" type="number" />
+            )}
+            
             <Field label="Reorder Level" value={form.reorderLevel} onChange={v => handleForm('reorderLevel', v)} placeholder="0" type="number" />
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Status</label>
@@ -206,16 +243,6 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Notes</label>
             <textarea value={form.notes} onChange={e => handleForm('notes', e.target.value)} placeholder="Optional notes about this product" rows={2}
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Product Image</label>
-            {form.imageUrl && (
-              <img src={form.imageUrl} alt="Product Preview" style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '10px', marginBottom: '8px', objectFit: 'cover' }} />
-            )}
-            <input type="file" accept="image/*" onChange={handleImageUpload} 
-              style={{ width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }} />
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Image will be compressed automatically (max 30KB).</p>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>

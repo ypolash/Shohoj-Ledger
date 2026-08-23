@@ -57,9 +57,8 @@ export async function POST(req: Request) {
         supplierId,
         purchaseOrderNumber: poNumber,
         expectedDeliveryDate: expectedDate ? new Date(expectedDate) : null,
-        supplierRef,
         totalAmount,
-        notes,
+        remarks: notes,
         status: "DRAFT",
         systemSource,
         lines: {

@@ -6,7 +6,7 @@ export const EMPTY_PRODUCT_FORM = {
   productCode: '', name: '', sku: '', barcode: '', brand: '', unit: '',
   purchasePrice: '', sellingPrice: '', minStock: '', openingStock: '',
   reorderLevel: '', status: 'ACTIVE', categoryId: '', description: '', notes: '',
-  imageUrl: '',
+  imageUrl: '', customFields: {} as Record<string, string>,
 };
 
 interface Category {
@@ -31,12 +31,18 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
   const [showBarcode, setShowBarcode] = useState(false);
   const [showBrand, setShowBrand] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
+  const [showNewFieldInput, setShowNewFieldInput] = useState(false);
+  const [newFieldName, setNewFieldName] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
       if (initialData) {
-        setForm(initialData);
+        let parsedCustomFields = initialData.customFields || {};
+        if (typeof parsedCustomFields === 'string') {
+          try { parsedCustomFields = JSON.parse(parsedCustomFields); } catch(e){}
+        }
+        setForm({ ...initialData, customFields: parsedCustomFields });
         if (initialData.sku) setShowSku(true); else setShowSku(false);
         if (initialData.barcode) setShowBarcode(true); else setShowBarcode(false);
         if (initialData.brand) setShowBrand(true); else setShowBrand(false);
@@ -124,6 +130,22 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
   };
 
   const handleForm = (k: string, v: string) => setForm((f: any) => ({ ...f, [k]: v }));
+  const handleCustomField = (k: string, v: string) => setForm((f: any) => ({ ...f, customFields: { ...f.customFields, [k]: v } }));
+  const removeCustomField = (k: string) => {
+    setForm((f: any) => {
+      const updated = { ...f.customFields };
+      delete updated[k];
+      return { ...f, customFields: updated };
+    });
+  };
+
+  const handleAddField = () => {
+    if (newFieldName.trim()) {
+      handleCustomField(newFieldName.trim(), '');
+      setNewFieldName('');
+      setShowNewFieldInput(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,6 +165,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
           barcode: showBarcode ? form.barcode : '',
           brand: showBrand ? form.brand : '',
           description: showDescription ? form.description : '',
+          customFields: form.customFields || {},
           purchasePrice: Number(form.purchasePrice) || 0,
           sellingPrice: Number(form.sellingPrice) || 0,
           minStock: Number(form.minStock) || 0,
@@ -257,11 +280,40 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
             </div>
           )}
 
+          {/* Render Dynamic Custom Fields */}
+          {form.customFields && Object.keys(form.customFields).map((key) => (
+            <div key={key} style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px', position: 'relative' }}>
+              <Field label={key} value={form.customFields[key]} onChange={v => handleCustomField(key, v)} placeholder={`Enter ${key}`} />
+              <button 
+                type="button" 
+                onClick={() => removeCustomField(key)} 
+                style={{ position: 'absolute', right: '12px', top: '34px', background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
+                title={`Remove ${key}`}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+              </button>
+            </div>
+          ))}
+
+          {/* New Custom Field Input UI */}
+          {showNewFieldInput && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', background: 'var(--surface-hover)', padding: '12px', borderRadius: '12px', border: '1px dashed var(--border-main)' }}>
+              <div style={{ flex: 1 }}>
+                <Field label="New Field Name" value={newFieldName} onChange={setNewFieldName} placeholder="e.g. Warranty, Color, Material" />
+              </div>
+              <button type="button" onClick={handleAddField} className="btn btn-primary" style={{ padding: '10px 16px' }}>Add</button>
+              <button type="button" onClick={() => { setShowNewFieldInput(false); setNewFieldName(''); }} className="btn btn-secondary" style={{ padding: '10px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
             {!showSku && <button type="button" onClick={() => setShowSku(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> SKU</button>}
             {!showBarcode && <button type="button" onClick={() => setShowBarcode(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> Barcode</button>}
             {!showBrand && <button type="button" onClick={() => setShowBrand(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> Brand</button>}
             {!showDescription && <button type="button" onClick={() => setShowDescription(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> Description</button>}
+            {!showNewFieldInput && <button type="button" onClick={() => setShowNewFieldInput(true)} style={{ background: 'var(--primary-subtle)', border: '1px solid var(--primary)', color: 'var(--primary)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add_circle</span> Add Custom Field</button>}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>

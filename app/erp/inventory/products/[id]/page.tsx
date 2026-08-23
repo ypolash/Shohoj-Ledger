@@ -96,6 +96,14 @@ export default function ProductDetailsPage() {
               <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-main)', paddingBottom: '12px' }}>Product Information</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                 <DetailItem label="Product Code" value={product.productCode} />
+                {product.sku && <DetailItem label="SKU" value={product.sku} />}
+                {product.barcode && <DetailItem label="Barcode" value={product.barcode} />}
+                {product.brand && <DetailItem label="Brand" value={product.brand} />}
+                
+                {/* Render Dynamic Custom Fields */}
+                {product.customFields && typeof product.customFields === 'object' && Object.keys(product.customFields).map(key => (
+                  <DetailItem key={key} label={key} value={product.customFields[key]} />
+                ))}
               </div>
               
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>

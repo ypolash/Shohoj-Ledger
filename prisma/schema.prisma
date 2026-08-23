@@ -2186,6 +2186,7 @@ model Product {
   status                   String                    @default("ACTIVE")
   imageUrl                 String?
   notes                    String?
+  customFields             Json?                     @default("{}")
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   systemSource             String                    @default("LEGACY")

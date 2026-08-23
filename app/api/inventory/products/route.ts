@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const { 
       productCode, barcode, sku, name, description, categoryId, 
       brand, unit, purchasePrice, sellingPrice, minStock, 
-      maxStock, reorderLevel, status, notes, imageUrl 
+      maxStock, reorderLevel, status, notes, imageUrl, customFields
     } = body;
 
     if (!productCode || !name) {
@@ -141,6 +141,7 @@ export async function POST(req: Request) {
           status: status || "ACTIVE",
           notes,
           imageUrl,
+          customFields: customFields || {},
           systemSource
         }
       });

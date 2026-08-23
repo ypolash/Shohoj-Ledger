@@ -17,13 +17,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
     const decodedId = decodeURIComponent(id);
+    const searchName = decodedId.replace(/_/g, ' ');
+    const nameMatches = [{ name: searchName }, { name: " " + searchName }, { name: searchName + " " }];
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
 
     const product = await prisma.product.findFirst({
       where: { 
         companyId, 
         systemSource,
-        OR: isUUID ? [{ id: decodedId }, { name: decodedId }] : [{ name: decodedId }]
+        OR: isUUID ? [{ id: decodedId }, ...nameMatches] : nameMatches
       },
       include: {
         category: { select: { name: true } },
@@ -70,13 +72,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     } = body;
 
     const decodedId = decodeURIComponent(id);
+    const searchName = decodedId.replace(/_/g, ' ');
+    const nameMatches = [{ name: searchName }, { name: " " + searchName }, { name: searchName + " " }];
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
 
     const existingProduct = await prisma.product.findFirst({
       where: { 
         companyId, 
         systemSource,
-        OR: isUUID ? [{ id: decodedId }, { name: decodedId }] : [{ name: decodedId }]
+        OR: isUUID ? [{ id: decodedId }, ...nameMatches] : nameMatches
       }
     });
 
@@ -167,13 +171,15 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
     const decodedId = decodeURIComponent(id);
+    const searchName = decodedId.replace(/_/g, ' ');
+    const nameMatches = [{ name: searchName }, { name: " " + searchName }, { name: searchName + " " }];
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
 
     const product = await prisma.product.findFirst({
       where: { 
         companyId, 
         systemSource,
-        OR: isUUID ? [{ id: decodedId }, { name: decodedId }] : [{ name: decodedId }]
+        OR: isUUID ? [{ id: decodedId }, ...nameMatches] : nameMatches
       }
     });
 

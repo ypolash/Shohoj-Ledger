@@ -209,7 +209,7 @@ export default function ProductsPage() {
                 const badge = stockBadge(p);
                 return (
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.1s', cursor: 'pointer' }}
-                    onClick={() => router.push(`/erp/inventory/products/${encodeURIComponent(p.name)}`)}
+                    onClick={() => router.push(`/erp/inventory/products/${encodeURIComponent(p.name.trim().replace(/ /g, '_'))}`)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <td style={{ padding: '10px 16px', width: '50px' }}>
@@ -301,7 +301,7 @@ export default function ProductsPage() {
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => {
               setMenuOpen(null);
-              router.push(`/erp/inventory/products/${encodeURIComponent(menuOpen.name)}`);
+              router.push(`/erp/inventory/products/${encodeURIComponent(menuOpen.name.trim().replace(/ /g, '_'))}`);
             }}
           >
             View Details

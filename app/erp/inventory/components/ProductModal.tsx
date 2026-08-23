@@ -27,14 +27,18 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showSku, setShowSku] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
       if (initialData) {
         setForm(initialData);
+        if (initialData.sku) setShowSku(true);
+        else setShowSku(false);
       } else {
         setForm(EMPTY_PRODUCT_FORM);
+        setShowSku(false);
       }
       setError('');
     }
@@ -127,6 +131,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          sku: showSku ? form.sku : '',
           purchasePrice: Number(form.purchasePrice) || 0,
           sellingPrice: Number(form.sellingPrice) || 0,
           minStock: Number(form.minStock) || 0,
@@ -214,6 +219,21 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
+
+          {showSku && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+              <Field label="SKU (Stock Keeping Unit)" value={form.sku} onChange={v => handleForm('sku', v)} placeholder="e.g. SKU-12345" />
+            </div>
+          )}
+
+          {!showSku && (
+            <div style={{ display: 'flex' }}>
+              <button type="button" onClick={() => setShowSku(true)} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_circle</span>
+                Add SKU
+              </button>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <Field label="Purchase Price (৳)" value={form.purchasePrice} onChange={v => handleForm('purchasePrice', v)} placeholder="0.00" type="number" />

@@ -38,7 +38,7 @@ export default function ProductDetailsPage() {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
       {/* Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '4px' }}>
         <button 
           onClick={() => router.push('/erp/inventory/products')}
           className="btn btn-secondary"
@@ -46,17 +46,6 @@ export default function ProductDetailsPage() {
         >
           &larr; Back to Products
         </button>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ margin: 0, color: 'var(--text-main)' }}>
-              {isLoading ? 'Loading...' : product?.name || 'Product Not Found'}
-            </h1>
-            <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
-              {product?.productCode}
-            </p>
-          </div>
-        </div>
       </div>
 
       {!isLoading && product && (

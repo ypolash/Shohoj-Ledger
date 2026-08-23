@@ -53,7 +53,7 @@ export default function ProductDetailsPage() {
       {!isLoading && product && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Top Row: Left (Image/Name) + Right (Info) */}
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
             {/* Left Column */}
             <div className="glass-panel" style={{ flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
               {product.imageUrl ? (
@@ -85,15 +85,19 @@ export default function ProductDetailsPage() {
                 <DetailItem label="Max Stock" value={product.maxStock} />
                 <DetailItem label="Reorder Level" value={product.reorderLevel} />
               </div>
-              
-              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-main)' }}>
-                <DetailItem label="Description" value={product.description || '—'} />
-              </div>
-              <div style={{ marginTop: '16px' }}>
-                <DetailItem label="Notes" value={product.notes || '—'} />
-              </div>
             </div>
           </div>
+
+          {/* Additional Details (Description & Notes) */}
+          {(product.description || product.notes) && (
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: 'var(--text-main)' }}>Additional Details</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {product.description && <DetailItem label="Description" value={product.description} />}
+                {product.notes && <DetailItem label="Notes" value={product.notes} />}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Row: Stock History */}
           <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>

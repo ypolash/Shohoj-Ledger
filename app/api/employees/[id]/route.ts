@@ -18,8 +18,23 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const decodedId = decodeURIComponent(id);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+    
+    let actualId = decodedId;
+    if (!isUUID) {
+      const searchName = decodedId.replace(/_/g, ' ').toLowerCase();
+      const employees = await prisma.employee.findMany({
+        where: { companyId },
+        select: { id: true, firstName: true, lastName: true }
+      });
+      const matched = employees.find(e => `${e.firstName} ${e.lastName}`.trim().toLowerCase() === searchName);
+      if (!matched) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      actualId = matched.id;
+    }
+
     // Validate ownership before update
-    const existingEmp = await prisma.employee.findFirst({ where: { id, companyId } });
+    const existingEmp = await prisma.employee.findFirst({ where: { id: actualId, companyId } });
     if (!existingEmp) {
       return NextResponse.json({ error: "Employee not found or unauthorized" }, { status: 404 });
     }
@@ -39,7 +54,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     }
 
     const employee = await prisma.employee.update({
-      where: { id },
+      where: { id: actualId },
       data: {
         firstName: data.firstName,
         lastName: data.lastName,

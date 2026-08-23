@@ -11,12 +11,35 @@ export default async function EmployeeProfilePage(props: { params: Promise<{ id:
     redirect("/login");
   }
 
-  const employee = await prisma.employee.findFirst({
-    where: {
-      id: params.id,
-      companyId: session.user.companyId,
-    },
-  });
+  const decodedId = decodeURIComponent(params.id);
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+  
+  let employee = null;
+  
+  if (isUUID) {
+    employee = await prisma.employee.findFirst({
+      where: {
+        id: decodedId,
+        companyId: session.user.companyId,
+      },
+    });
+  } else {
+    const searchName = decodedId.replace(/_/g, ' ').toLowerCase();
+    const employees = await prisma.employee.findMany({
+      where: { companyId: session.user.companyId },
+      select: { id: true, firstName: true, lastName: true }
+    });
+    
+    const matched = employees.find(e => 
+      `${e.firstName} ${e.lastName}`.trim().toLowerCase() === searchName
+    );
+    
+    if (matched) {
+      employee = await prisma.employee.findFirst({
+        where: { id: matched.id }
+      });
+    }
+  }
 
   if (!employee) {
     return <div>Employee not found</div>;

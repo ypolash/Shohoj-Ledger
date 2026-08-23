@@ -4,6 +4,8 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
+- **Version 6.0 — Sprint UI-3 (Employee Profile Redesign):**
+  - **Completed**: Redesigned the Employee Profile page (`EmployeeProfileClient.tsx`) into a modern two-column layout. Relocated the employee avatar, name, and designation into a sticky left sidebar, and placed all detailed navigation tabs (Profile, Documents, Notes, Timeline) and the comprehensive Personal Information form into the main right-side content area. No backend schema modifications were made.
 - **Version 6.0 — Sprint Auth-1 (Dynamic Role-Based Access Control):**
   - **Completed**: Implemented dynamic Role-Based Access Control (RBAC). Validated that `Role`, `Permission`, and `RolePermission` models already existed. Created `lib/auth/rbac.ts` utility for backend API protection with strict types. Engineered a `<RequirePermission>` React Server Component for UI-level access control.
 - **Version 6.0 — Sprint UI-2 (Accounting Data Integrity & UI Logic):**

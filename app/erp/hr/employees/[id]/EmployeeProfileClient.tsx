@@ -6,6 +6,7 @@ import { updateExtendedProfile, saveDocumentMetadata, saveNote } from "./actions
 
 export default function EmployeeProfileClient({ employee }: { employee: any }) {
   const [activeTab, setActiveTab] = useState("Profile");
+  const [isEditing, setIsEditing] = useState(false);
   const [lifecycles, setLifecycles] = useState<any[]>([]);
   const [isLifecycleModalOpen, setIsLifecycleModalOpen] = useState(false);
   const [newLifecycle, setNewLifecycle] = useState({ eventType: 'HIRE', effectiveDate: new Date().toISOString().split('T')[0], description: '' });
@@ -93,6 +94,7 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
     try {
       await updateExtendedProfile(employee.id, formData);
       alert("Profile updated successfully!");
+      setIsEditing(false);
     } catch (err: any) {
       alert("Failed to update profile: " + err.message);
     } finally {
@@ -243,9 +245,85 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
 
       {/* Profile Tab */}
       {activeTab === "Profile" && (
-        <form onSubmit={handleSaveProfile} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-          
-          {/* Personal Information */}
+        <div className="glass-card" style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 10 }}>
+            <button type="button" onClick={() => setIsEditing(!isEditing)} className={isEditing ? "btn btn-secondary" : "btn btn-primary"} style={{ padding: '6px 12px', fontSize: '13px' }}>
+              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+            </button>
+          </div>
+
+          {!isEditing ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)', marginTop: '24px' }}>
+              <div>
+                <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Personal Information</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>First Name</div><div style={{ fontWeight: 500 }}>{formData.firstName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Last Name</div><div style={{ fontWeight: 500 }}>{formData.lastName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Date of Birth</div><div style={{ fontWeight: 500 }}>{formData.profile.dateOfBirth || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Gender</div><div style={{ fontWeight: 500 }}>{formData.profile.gender || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Blood Group</div><div style={{ fontWeight: 500 }}>{formData.profile.bloodGroup || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>NID Number</div><div style={{ fontWeight: 500 }}>{formData.profile.nationalId || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Marital Status</div><div style={{ fontWeight: 500 }}>{formData.profile.maritalStatus || '-'}</div></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Contact Information</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Personal Number</div><div style={{ fontWeight: 500 }}>{formData.phone || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Secondary Number</div><div style={{ fontWeight: 500 }}>{formData.profile.secondaryPhone || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Personal Email</div><div style={{ fontWeight: 500 }}>{formData.email || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Current Address</div><div style={{ fontWeight: 500 }}>{formData.profile.currentAddress || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Main Address</div><div style={{ fontWeight: 500 }}>{formData.profile.mainAddress || '-'}</div></div>
+                </div>
+              </div>
+
+              {formData.education.length > 0 && (
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Educational Information</h3>
+                  {formData.education.map((edu: any, idx: number) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '16px', background: 'var(--surface-light)', padding: '16px', borderRadius: '8px', marginBottom: '8px' }}>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Degree</div><div style={{ fontWeight: 500 }}>{edu.degree || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Institution</div><div style={{ fontWeight: 500 }}>{edu.institution || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Board</div><div style={{ fontWeight: 500 }}>{edu.board || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Passing Year</div><div style={{ fontWeight: 500 }}>{edu.passingYear || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Result</div><div style={{ fontWeight: 500 }}>{edu.result || '-'}</div></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {formData.experience.length > 0 && (
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Work Experience</h3>
+                  {formData.experience.map((exp: any, idx: number) => (
+                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '16px', background: 'var(--surface-light)', padding: '16px', borderRadius: '8px', marginBottom: '8px' }}>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Company</div><div style={{ fontWeight: 500 }}>{exp.company || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Designation</div><div style={{ fontWeight: 500 }}>{exp.position || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Salary</div><div style={{ fontWeight: 500 }}>{exp.salary || '-'}</div></div>
+                      <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Duration</div><div style={{ fontWeight: 500 }}>{(exp.joiningDate ? new Date(exp.joiningDate).toLocaleDateString() : '')} - {(exp.leavingDate ? new Date(exp.leavingDate).toLocaleDateString() : 'Present')}</div></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div>
+                <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px' }}>Financial & Family</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Bank Name</div><div style={{ fontWeight: 500 }}>{formData.profile.bankName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Account Name</div><div style={{ fontWeight: 500 }}>{formData.profile.accountName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Account Number</div><div style={{ fontWeight: 500 }}>{formData.profile.accountNumber || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Father's Name</div><div style={{ fontWeight: 500 }}>{formData.profile.fatherName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Mother's Name</div><div style={{ fontWeight: 500 }}>{formData.profile.motherName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Spouse Name</div><div style={{ fontWeight: 500 }}>{formData.profile.spouseName || '-'}</div></div>
+                  <div><div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nominee Name</div><div style={{ fontWeight: 500 }}>{formData.profile.nomineeName || '-'}</div></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)', marginTop: '24px' }}>
+              
+              {/* Personal Information */}
           <h3 style={{ margin: 0, color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>Personal Information</h3>
           <div className={styles.filtersRow}>
             <div className={styles.filterGroup}><label className="label">First Name *</label><input type="text" className="input" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} required /></div>
@@ -369,7 +447,9 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
               {isSaving ? "Saving Profile..." : "Save Profile"}
             </button>
           </div>
-        </form>
+            </form>
+          )}
+        </div>
       )}
 
       {/* Documents Tab */}

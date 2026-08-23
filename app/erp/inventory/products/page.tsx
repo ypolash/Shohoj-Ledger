@@ -91,8 +91,6 @@ export default function ProductsPage() {
     const p = products.find(prod => prod.id === pId);
     if (!p) return;
     setEditingId(p.id);
-      notes: p.notes || ''
-    };
     setShowModal(true);
     setMenuOpen(null);
   };
@@ -134,7 +132,6 @@ export default function ProductsPage() {
           <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
             {total} product{total !== 1 ? 's' : ''} total
           </p>
-        </div>
         </div>
         <button className="btn btn-primary hover-lift" onClick={() => { setEditingId(null); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>

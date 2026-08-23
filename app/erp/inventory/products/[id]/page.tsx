@@ -57,7 +57,7 @@ export default function ProductDetailsPage() {
             {/* Left Column */}
             <div style={{ flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', borderRight: '1px solid var(--border-main)' }}>
               {product.imageUrl ? (
-                <img src={product.imageUrl} alt={product.name} style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }} />
+                <img src={product.imageUrl} alt={product.name} style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', objectFit: 'contain', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', background: 'var(--surface-bg)' }} />
               ) : (
                 <div style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', background: 'var(--surface-hover)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', border: '1px solid var(--border-main)' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '64px', color: 'var(--text-muted)' }}>image</span>

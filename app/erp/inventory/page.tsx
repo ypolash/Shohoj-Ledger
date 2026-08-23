@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import ProductModal from './components/ProductModal';
 
 /**
@@ -42,12 +43,12 @@ export default function InventoryDashboardPage() {
   const recentProducts: any[] = data?.recentProducts || [];
 
   const kpiCards = [
-    { label: 'Total Products', value: kpis.totalProducts ?? '—', icon: 'inventory_2', color: 'var(--primary)', glow: 'primary' },
-    { label: 'Warehouses', value: kpis.totalWarehouses ?? '—', icon: 'warehouse', color: 'var(--accent)', glow: 'accent' },
-    { label: 'Active Assets', value: kpis.totalAssets ?? '—', icon: 'precision_manufacturing', color: 'var(--text-main)', glow: 'accent' },
-    { label: 'Low Stock Items', value: kpis.lowStockCount ?? '—', icon: 'warning', color: 'var(--warning)', glow: 'warning' },
-    { label: 'Out of Stock', value: kpis.outOfStockCount ?? '—', icon: 'block', color: 'var(--danger)', glow: 'danger' },
-    { label: 'Inventory Value', value: isLoading ? '—' : formatCurrency(kpis.inventoryValue), icon: 'payments', color: 'var(--success)', glow: 'success' },
+    { label: 'Total Products', value: kpis.totalProducts ?? '—', icon: 'inventory_2', color: 'var(--primary)', glow: 'primary', href: '/erp/inventory/products' },
+    { label: 'Warehouses', value: kpis.totalWarehouses ?? '—', icon: 'warehouse', color: 'var(--accent)', glow: 'accent', href: '/erp/inventory/warehouses' },
+    { label: 'Active Assets', value: kpis.totalAssets ?? '—', icon: 'precision_manufacturing', color: 'var(--text-main)', glow: 'accent', href: '/erp/inventory/assets' },
+    { label: 'Low Stock Items', value: kpis.lowStockCount ?? '—', icon: 'warning', color: 'var(--warning)', glow: 'warning', href: '/erp/inventory/stock' },
+    { label: 'Out of Stock', value: kpis.outOfStockCount ?? '—', icon: 'block', color: 'var(--danger)', glow: 'danger', href: '/erp/inventory/stock' },
+    { label: 'Inventory Value', value: isLoading ? '—' : formatCurrency(kpis.inventoryValue), icon: 'payments', color: 'var(--success)', glow: 'success', href: '/erp/inventory/reports' },
   ];
 
 
@@ -83,7 +84,7 @@ export default function InventoryDashboardPage() {
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-4)' }}>
         {kpiCards.map((kpi) => (
-          <div key={kpi.label} className={`glass-panel hover-lift glow-border-${kpi.glow}`} style={{ padding: '24px', borderRadius: '16px' }}>
+          <Link key={kpi.label} href={kpi.href || '#'} className={`glass-panel hover-lift glow-border-${kpi.glow}`} style={{ padding: '24px', borderRadius: '16px', textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '22px', color: kpi.color }}>{kpi.icon}</span>
               <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>{kpi.label}</span>
@@ -91,7 +92,7 @@ export default function InventoryDashboardPage() {
             <div style={{ fontSize: '30px', fontWeight: 700, color: kpi.color, letterSpacing: '-0.5px' }}>
               {isLoading ? <span style={{ opacity: 0.4 }}>···</span> : kpi.value}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

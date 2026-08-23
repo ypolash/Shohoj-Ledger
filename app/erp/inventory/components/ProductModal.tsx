@@ -28,17 +28,25 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showSku, setShowSku] = useState(false);
+  const [showBarcode, setShowBarcode] = useState(false);
+  const [showBrand, setShowBrand] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
       if (initialData) {
         setForm(initialData);
-        if (initialData.sku) setShowSku(true);
-        else setShowSku(false);
+        if (initialData.sku) setShowSku(true); else setShowSku(false);
+        if (initialData.barcode) setShowBarcode(true); else setShowBarcode(false);
+        if (initialData.brand) setShowBrand(true); else setShowBrand(false);
+        if (initialData.description) setShowDescription(true); else setShowDescription(false);
       } else {
         setForm(EMPTY_PRODUCT_FORM);
         setShowSku(false);
+        setShowBarcode(false);
+        setShowBrand(false);
+        setShowDescription(false);
       }
       setError('');
     }
@@ -132,6 +140,9 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
         body: JSON.stringify({
           ...form,
           sku: showSku ? form.sku : '',
+          barcode: showBarcode ? form.barcode : '',
+          brand: showBrand ? form.brand : '',
+          description: showDescription ? form.description : '',
           purchasePrice: Number(form.purchasePrice) || 0,
           sellingPrice: Number(form.sellingPrice) || 0,
           minStock: Number(form.minStock) || 0,
@@ -226,16 +237,34 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
             </div>
           )}
 
-          {!showSku && (
-            <div style={{ display: 'flex' }}>
-              <button type="button" onClick={() => setShowSku(true)} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_circle</span>
-                Add SKU
-              </button>
+          {showBarcode && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+              <Field label="Barcode" value={form.barcode} onChange={v => handleForm('barcode', v)} placeholder="Scan or enter barcode" />
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          {showBrand && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+              <Field label="Brand" value={form.brand} onChange={v => handleForm('brand', v)} placeholder="e.g. Samsung, Apple" />
+            </div>
+          )}
+
+          {showDescription && (
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Description</label>
+              <textarea value={form.description} onChange={e => handleForm('description', e.target.value)} placeholder="Detailed product description" rows={3}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+            {!showSku && <button type="button" onClick={() => setShowSku(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> SKU</button>}
+            {!showBarcode && <button type="button" onClick={() => setShowBarcode(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> Barcode</button>}
+            {!showBrand && <button type="button" onClick={() => setShowBrand(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> Brand</button>}
+            {!showDescription && <button type="button" onClick={() => setShowDescription(true)} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '6px 12px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span> Description</button>}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
             <Field label="Purchase Price (৳)" value={form.purchasePrice} onChange={v => handleForm('purchasePrice', v)} placeholder="0.00" type="number" />
             <Field label="Selling Price (৳)" value={form.sellingPrice} onChange={v => handleForm('sellingPrice', v)} placeholder="0.00" type="number" />
             <Field label="Min Stock" value={form.minStock} onChange={v => handleForm('minStock', v)} placeholder="0" type="number" />

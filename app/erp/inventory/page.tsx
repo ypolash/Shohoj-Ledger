@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+
 
 /**
  * ERP Inventory Dashboard Page
@@ -48,12 +48,6 @@ export default function InventoryDashboardPage() {
     { label: 'Inventory Value', value: isLoading ? '—' : formatCurrency(kpis.inventoryValue), icon: 'payments', color: 'var(--success)', glow: 'success' },
   ];
 
-  const quickLinks = [
-    { href: '/erp/inventory/products', icon: 'inventory_2', label: 'Manage Products' },
-    { href: '/erp/inventory/categories', icon: 'category', label: 'Product Categories' },
-    { href: '/erp/inventory/warehouses', icon: 'warehouse', label: 'Warehouses' },
-    { href: '/erp/inventory/stock', icon: 'move_down', label: 'Record Stock Movement' },
-  ];
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
@@ -87,40 +81,8 @@ export default function InventoryDashboardPage() {
         ))}
       </div>
 
-      {/* Quick Links + Recent Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--spacing-6)' }}>
-
-        {/* Quick Links */}
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 16px' }}>Quick Actions</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {quickLinks.map((ql) => (
-              <Link
-                key={ql.href}
-                href={ql.href}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '14px 16px',
-                  borderRadius: '12px',
-                  background: 'var(--surface-hover)',
-                  border: '1px solid var(--border-main)',
-                  color: 'var(--text-main)',
-                  textDecoration: 'none',
-                  fontWeight: 500,
-                  fontSize: '14px',
-                  transition: 'all 0.15s ease',
-                }}
-                className="hover-lift"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>{ql.icon}</span>
-                {ql.label}
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)', marginLeft: 'auto' }}>chevron_right</span>
-              </Link>
-            ))}
-          </div>
-        </div>
+      {/* Recent Activity */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
 
         {/* Recent Activity */}
         <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>

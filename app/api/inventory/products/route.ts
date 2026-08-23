@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const { 
       productCode, barcode, sku, name, description, categoryId, 
       brand, unit, purchasePrice, sellingPrice, minStock, 
-      maxStock, reorderLevel, status, notes 
+      maxStock, reorderLevel, status, notes, imageUrl 
     } = body;
 
     if (!productCode || !name) {
@@ -140,6 +140,7 @@ export async function POST(req: Request) {
           reorderLevel: reorderLevel ? parseInt(reorderLevel, 10) : 0,
           status: status || "ACTIVE",
           notes,
+          imageUrl,
           systemSource
         }
       });

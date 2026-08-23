@@ -6,6 +6,7 @@ export const EMPTY_PRODUCT_FORM = {
   productCode: '', name: '', sku: '', barcode: '', brand: '', unit: '',
   purchasePrice: '', sellingPrice: '', minStock: '', maxStock: '',
   reorderLevel: '', status: 'ACTIVE', categoryId: '', description: '', notes: '',
+  imageUrl: '',
 };
 
 interface Category {
@@ -48,6 +49,65 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
       }
     } catch (e) { 
       console.error(e); 
+    }
+  };
+
+  const compressImage = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          let quality = 0.9;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+          // 30kb is approx 40000 characters in base64 string
+          while (dataUrl.length > 40000 && quality > 0.1) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          resolve(dataUrl);
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        const compressedBase64 = await compressImage(file);
+        handleForm('imageUrl', compressedBase64);
+      } catch (err) {
+        setError('Failed to compress image.');
+      }
     }
   };
 
@@ -146,6 +206,16 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Notes</label>
             <textarea value={form.notes} onChange={e => handleForm('notes', e.target.value)} placeholder="Optional notes about this product" rows={2}
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Product Image</label>
+            {form.imageUrl && (
+              <img src={form.imageUrl} alt="Product Preview" style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '10px', marginBottom: '8px', objectFit: 'cover' }} />
+            )}
+            <input type="file" accept="image/*" onChange={handleImageUpload} 
+              style={{ width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }} />
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Image will be compressed automatically (max 30KB).</p>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>

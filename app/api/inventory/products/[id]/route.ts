@@ -49,7 +49,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const { 
       productCode, barcode, sku, name, description, categoryId, 
       brand, unit, purchasePrice, sellingPrice, minStock, 
-      maxStock, reorderLevel, status, notes 
+      maxStock, reorderLevel, status, notes, imageUrl 
     } = body;
 
     const existingProduct = await prisma.product.findFirst({
@@ -103,7 +103,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
           maxStock: maxStock ? parseInt(maxStock, 10) : 0,
           reorderLevel: reorderLevel ? parseInt(reorderLevel, 10) : 0,
           status: status || "ACTIVE",
-          notes
+          notes,
+          imageUrl
         }
       });
 

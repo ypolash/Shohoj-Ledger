@@ -23,6 +23,7 @@ interface Product {
   categoryId?: string | null;
   description?: string | null;
   notes?: string | null;
+  imageUrl?: string | null;
   category?: { name: string };
 }
 
@@ -173,7 +174,7 @@ export default function ProductsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-                {['Code', 'Name', 'Category', 'Unit', 'Stock', 'Sell Price', 'Status', ''].map(h => (
+                {['Image', 'Code', 'Name', 'Category', 'Unit', 'Stock', 'Sell Price', 'Status', ''].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -182,7 +183,7 @@ export default function ProductsPage() {
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                    {Array.from({ length: 8 }).map((_, j) => (
+                    {Array.from({ length: 9 }).map((_, j) => (
                       <td key={j} style={{ padding: '14px 16px' }}>
                         <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
                       </td>
@@ -191,7 +192,7 @@ export default function ProductsPage() {
                 ))
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>inventory_2</span>
                     No products found. Add one to get started.
                   </td>
@@ -202,6 +203,15 @@ export default function ProductsPage() {
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.1s' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                    <td style={{ padding: '10px 16px', width: '50px' }}>
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }} />
+                      ) : (
+                        <div style={{ width: '40px', height: '40px', background: 'var(--surface-hover)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--text-muted)' }}>image</span>
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary)', fontWeight: 600 }}>{p.productCode}</td>
                     <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--text-main)' }}>
                       <div>{p.name}</div>

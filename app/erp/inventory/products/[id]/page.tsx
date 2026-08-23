@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useUI } from '@/lib/contexts/UIContext';
-import ProductModal from '../components/ProductModal';
+import ProductModal from '../../components/ProductModal';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();

@@ -76,6 +76,8 @@ model User {
   createdVendorComparisons      VendorComparison[]       @relation("VendorComparisonCreator")
   webhooks                      Webhook[]                @relation("WebhookCreator")
   createdWorkflows              Workflow[]               @relation("WorkflowCreator")
+  systemRoleId                  String?
+  systemRole                    Role?                    @relation("UserRole", fields: [systemRoleId], references: [id])
 }
 
 model Session {
@@ -1590,6 +1592,7 @@ model Role {
   reportPermissions ReportPermission[]
   company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   permissions       RolePermission[]
+  users             User[]             @relation("UserRole")
 }
 
 model Permission {

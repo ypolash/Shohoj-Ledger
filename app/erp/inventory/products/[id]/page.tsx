@@ -95,6 +95,8 @@ export default function ProductDetailsPage() {
               <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-main)', paddingBottom: '12px' }}>Product Information</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
                 <DetailItem label="Product Code" value={product.productCode} />
+                <DetailItem label="Purchase Price" value={`৳${Number(product.purchasePrice).toLocaleString()}`} />
+                <DetailItem label="Selling Price" value={`৳${Number(product.sellingPrice).toLocaleString()}`} />
               </div>
             </div>
           </div>

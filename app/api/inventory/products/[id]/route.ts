@@ -16,8 +16,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
+    const decodedId = decodeURIComponent(id);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+
     const product = await prisma.product.findFirst({
-      where: { id, companyId, systemSource },
+      where: { 
+        companyId, 
+        systemSource,
+        OR: isUUID ? [{ id: decodedId }, { name: decodedId }] : [{ name: decodedId }]
+      },
       include: {
         category: { select: { name: true } },
         stockTransactions: {
@@ -30,7 +37,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
     const stockAgg = await prisma.stockTransaction.aggregate({
-      where: { productId: id },
+      where: { productId: product.id },
       _sum: { quantity: true }
     });
     const currentStock = stockAgg._sum.quantity || 0;
@@ -62,8 +69,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       maxStock, reorderLevel, status, notes, imageUrl 
     } = body;
 
+    const decodedId = decodeURIComponent(id);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+
     const existingProduct = await prisma.product.findFirst({
-      where: { id, companyId, systemSource }
+      where: { 
+        companyId, 
+        systemSource,
+        OR: isUUID ? [{ id: decodedId }, { name: decodedId }] : [{ name: decodedId }]
+      }
     });
 
     if (!existingProduct) {
@@ -76,7 +90,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         where: {
           companyId,
           systemSource,
-          id: { not: id },
+          id: { not: existingProduct.id },
           OR: [
             { productCode },
             sku ? { sku } : { id: "never_match" }
@@ -97,7 +111,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const updatedProduct = await prisma.$transaction(async (tx) => {
       const p = await tx.product.update({
-        where: { id },
+        where: { id: existingProduct.id },
         data: {
           productCode,
           barcode: barcode || null,
@@ -152,8 +166,15 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
+    const decodedId = decodeURIComponent(id);
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+
     const product = await prisma.product.findFirst({
-      where: { id, companyId, systemSource }
+      where: { 
+        companyId, 
+        systemSource,
+        OR: isUUID ? [{ id: decodedId }, { name: decodedId }] : [{ name: decodedId }]
+      }
     });
 
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -162,7 +183,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     // Prisma will throw a foreign key constraint error if we try to delete a product with stock transactions.
     // For safety, we can just delete and let Prisma throw, or check beforehand.
     const transactionsCount = await prisma.stockTransaction.count({
-      where: { productId: id }
+      where: { productId: product.id }
     });
 
     if (transactionsCount > 0) {
@@ -170,7 +191,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.product.delete({ where: { id } });
+      await tx.product.delete({ where: { id: product.id } });
 
       await tx.inventoryAudit.create({
         data: {

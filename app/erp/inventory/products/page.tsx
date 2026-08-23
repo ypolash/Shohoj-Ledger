@@ -49,7 +49,7 @@ export default function ProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const [menuOpen, setMenuOpen] = useState<{ id: string, top: number, right: number } | null>(null);
+  const [menuOpen, setMenuOpen] = useState<{ id: string, name: string, top: number, right: number } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const router = useRouter();
   const LIMIT = 20;
@@ -209,7 +209,7 @@ export default function ProductsPage() {
                 const badge = stockBadge(p);
                 return (
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.1s', cursor: 'pointer' }}
-                    onClick={() => router.push(`/erp/inventory/products/${p.id}`)}
+                    onClick={() => router.push(`/erp/inventory/products/${encodeURIComponent(p.name)}`)}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <td style={{ padding: '10px 16px', width: '50px' }}>
@@ -249,6 +249,7 @@ export default function ProductsPage() {
                             const rect = e.currentTarget.getBoundingClientRect();
                             setMenuOpen({
                               id: p.id,
+                              name: p.name,
                               top: rect.bottom,
                               right: window.innerWidth - rect.right
                             });
@@ -300,7 +301,7 @@ export default function ProductsPage() {
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => {
               setMenuOpen(null);
-              router.push(`/erp/inventory/products/${menuOpen.id}`);
+              router.push(`/erp/inventory/products/${encodeURIComponent(menuOpen.name)}`);
             }}
           >
             View Details

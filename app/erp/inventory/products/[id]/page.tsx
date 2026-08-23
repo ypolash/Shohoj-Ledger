@@ -51,28 +51,92 @@ export default function ProductDetailsPage() {
       </div>
 
       {!isLoading && product && (
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
-          <h2 style={{ margin: '0 0 16px 0', fontSize: '18px', color: 'var(--text-main)' }}>Product Details</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <DetailItem label="Code" value={product.productCode} />
-            <DetailItem label="Name" value={product.name} />
-            <DetailItem label="Category" value={product.category?.name || '—'} />
-            <DetailItem label="Brand" value={product.brand || '—'} />
-            <DetailItem label="SKU" value={product.sku || '—'} />
-            <DetailItem label="Barcode" value={product.barcode || '—'} />
-            <DetailItem label="Unit" value={product.unit || '—'} />
-            <DetailItem label="Purchase Price" value={`৳${product.purchasePrice}`} />
-            <DetailItem label="Selling Price" value={`৳${product.sellingPrice}`} />
-            <DetailItem label="Min Stock" value={product.minStock} />
-            <DetailItem label="Max Stock" value={product.maxStock} />
-            <DetailItem label="Reorder Level" value={product.reorderLevel} />
-            <DetailItem label="Status" value={product.status} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Top Row: Left (Image/Name) + Right (Info) */}
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+            {/* Left Column */}
+            <div className="glass-panel" style={{ flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              {product.imageUrl ? (
+                <img src={product.imageUrl} alt={product.name} style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }} />
+              ) : (
+                <div style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', background: 'var(--surface-hover)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', border: '1px solid var(--border-main)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '64px', color: 'var(--text-muted)' }}>image</span>
+                </div>
+              )}
+              <h2 style={{ margin: '0 0 12px 0', fontSize: '24px', color: 'var(--text-main)', fontWeight: 600 }}>{product.name}</h2>
+              <span style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, color: product.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)', background: product.status === 'ACTIVE' ? 'var(--success-subtle)' : 'var(--surface-hover)' }}>
+                {product.status}
+              </span>
+            </div>
+
+            {/* Right Column */}
+            <div className="glass-panel" style={{ flex: '2 1 500px', padding: '24px', borderRadius: '16px' }}>
+              <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-main)', paddingBottom: '12px' }}>Product Information</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
+                <DetailItem label="Product Code" value={product.productCode} />
+                <DetailItem label="Category" value={product.category?.name || '—'} />
+                <DetailItem label="Brand" value={product.brand || '—'} />
+                <DetailItem label="SKU" value={product.sku || '—'} />
+                <DetailItem label="Barcode" value={product.barcode || '—'} />
+                <DetailItem label="Unit" value={product.unit || '—'} />
+                <DetailItem label="Purchase Price" value={`৳${Number(product.purchasePrice).toLocaleString()}`} />
+                <DetailItem label="Selling Price" value={`৳${Number(product.sellingPrice).toLocaleString()}`} />
+                <DetailItem label="Min Stock" value={product.minStock} />
+                <DetailItem label="Max Stock" value={product.maxStock} />
+                <DetailItem label="Reorder Level" value={product.reorderLevel} />
+              </div>
+              
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-main)' }}>
+                <DetailItem label="Description" value={product.description || '—'} />
+              </div>
+              <div style={{ marginTop: '16px' }}>
+                <DetailItem label="Notes" value={product.notes || '—'} />
+              </div>
+            </div>
           </div>
-          <div style={{ marginTop: '20px' }}>
-            <DetailItem label="Description" value={product.description || '—'} />
-          </div>
-          <div style={{ marginTop: '20px' }}>
-            <DetailItem label="Notes" value={product.notes || '—'} />
+
+          {/* Bottom Row: Stock History */}
+          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-main)' }}>Stock History</h3>
+            {product.stockTransactions && product.stockTransactions.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Date</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Type</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Quantity</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Reference</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {product.stockTransactions.map((tx: any) => (
+                      <tr key={tx.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-main)' }}>{new Date(tx.createdAt).toLocaleString()}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ 
+                            padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+                            background: tx.type === 'IN' || tx.type === 'OPENING' || tx.type === 'RETURN' ? 'var(--success-subtle)' : 'var(--danger-subtle)',
+                            color: tx.type === 'IN' || tx.type === 'OPENING' || tx.type === 'RETURN' ? 'var(--success)' : 'var(--danger)'
+                          }}>
+                            {tx.type}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-main)' }}>
+                          {tx.quantity > 0 ? `+${tx.quantity}` : tx.quantity}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{tx.reference || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '32px', opacity: 0.5, display: 'block', marginBottom: '8px' }}>history</span>
+                No stock transactions found.
+              </div>
+            )}
           </div>
         </div>
       )}

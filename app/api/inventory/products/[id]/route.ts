@@ -19,7 +19,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const product = await prisma.product.findFirst({
       where: { id, companyId, systemSource },
       include: {
-        category: { select: { name: true } }
+        category: { select: { name: true } },
+        stockTransactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 50 // limit to last 50 transactions for performance
+        }
       }
     });
 

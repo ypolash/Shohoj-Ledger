@@ -184,52 +184,62 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
-      <div className="glass-card" style={{ padding: 'var(--spacing-6)', marginBottom: 'var(--spacing-6)', display: 'flex', alignItems: 'center', gap: '24px' }}>
-        <div style={{ 
-          width: '80px', height: '80px', borderRadius: '50%', 
-          background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '28px', fontWeight: 'bold', color: '#fff',
-          flexShrink: 0
-        }}>
-          {getInitials(employee.firstName, employee.lastName)}
-        </div>
-        <div>
-          <h1 style={{ margin: '0 0 4px 0', fontSize: '24px' }}>{employee.firstName} {employee.lastName}</h1>
-          <div style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '15px', marginBottom: '8px' }}>
-            {employee.designation} {employee.department && `• ${employee.department}`} • {employee.employeeId}
+      <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        {/* Left Sidebar (Picture & Basic Info) */}
+        <div style={{ flex: '1 1 300px', maxWidth: '350px', position: 'sticky', top: '24px' }}>
+          <div className="glass-card" style={{ padding: 'var(--spacing-6)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px' }}>
+            <div style={{ 
+              width: '120px', height: '120px', borderRadius: '50%', 
+              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '40px', fontWeight: 'bold', color: '#fff',
+              flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            }}>
+              {getInitials(employee.firstName, employee.lastName)}
+            </div>
+            <div>
+              <h1 style={{ margin: '0 0 8px 0', fontSize: '24px' }}>{employee.firstName} {employee.lastName}</h1>
+              <div style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '15px', marginBottom: '12px' }}>
+                {employee.designation}
+                {employee.department && <><br/>{employee.department}</>}
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
+                ID: {employee.employeeId}
+              </div>
+              <span className={`${styles.badge} ${
+                employee.status === 'ACTIVE' ? styles['badge-paid'] : 
+                employee.status === 'ON_LEAVE' ? styles['badge-partial'] : styles['badge-unpaid']
+              }`}>
+                {employee.status}
+              </span>
+            </div>
           </div>
-          <span className={`${styles.badge} ${
-            employee.status === 'ACTIVE' ? styles['badge-paid'] : 
-            employee.status === 'ON_LEAVE' ? styles['badge-partial'] : styles['badge-unpaid']
-          }`}>
-            {employee.status}
-          </span>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--border)' }}>
-        {tabs.map(t => (
-          <button 
-            key={t}
-            onClick={() => setActiveTab(t)}
-            style={{ 
-              padding: '12px 24px', 
-              background: 'none', 
-              border: 'none', 
-              borderBottom: activeTab === t ? '2px solid var(--primary)' : '2px solid transparent',
-              color: activeTab === t ? 'var(--primary)' : 'var(--text-muted)',
-              fontWeight: activeTab === t ? 600 : 400,
-              cursor: 'pointer',
-              fontSize: '15px'
-            }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+        {/* Right Content Area (Tabs & Details) */}
+        <div style={{ flex: '2 1 600px', minWidth: 0 }}>
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--spacing-6)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+            {tabs.map(t => (
+              <button 
+                key={t}
+                onClick={() => setActiveTab(t)}
+                style={{ 
+                  padding: '12px 24px', 
+                  background: 'none', 
+                  border: 'none', 
+                  borderBottom: activeTab === t ? '2px solid var(--primary)' : '2px solid transparent',
+                  color: activeTab === t ? 'var(--primary)' : 'var(--text-muted)',
+                  fontWeight: activeTab === t ? 600 : 400,
+                  cursor: 'pointer',
+                  fontSize: '15px'
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
 
       {/* Profile Tab */}
       {activeTab === "Profile" && (
@@ -464,6 +474,8 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
           </div>
         </div>
       )}
+        </div>
+      </div>
 
       {/* Lifecycle Modal */}
       {isLifecycleModalOpen && (

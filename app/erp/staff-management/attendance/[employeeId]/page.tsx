@@ -171,8 +171,8 @@ export default function EmployeeAttendancePage() {
     return (
       <div className="animate-fade-in container" style={{ padding: '40px', textAlign: 'center' }}>
         <h2>Employee not found</h2>
-        <Link href="/erp/staff-management/attendance">
-          <button className="btn btn-primary" style={{ marginTop: '16px' }}>Back to Directory</button>
+        <Link className="ios-back-button" href="/erp/staff-management/attendance">
+          <button className="ios-back-button" style={{ marginTop: '16px' }}>Back to Directory</button>
         </Link>
       </div>
     );

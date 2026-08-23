@@ -47,7 +47,21 @@ export default function StockControlPage() {
     quantity: '', reference: '', notes: '', toWarehouseId: ''
   });
 
-  useEffect(() => { loadData(); }, []);
+  const [showWarehouses, setShowWarehouses] = useState(false);
+
+  useEffect(() => {
+    const checkSettings = () => {
+      setShowWarehouses(localStorage.getItem('shohoj_inventory_warehouses_enabled') === 'true');
+    };
+    checkSettings();
+    window.addEventListener('storage', checkSettings);
+    window.addEventListener('inventorySettingsChanged', checkSettings);
+    loadData();
+    return () => {
+      window.removeEventListener('storage', checkSettings);
+      window.removeEventListener('inventorySettingsChanged', checkSettings);
+    };
+  }, []);
 
   /** Loads products and warehouses concurrently */
   const loadData = async () => {
@@ -76,8 +90,8 @@ export default function StockControlPage() {
   /** Submits the stock transaction to the API */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.productId || !form.warehouseId || !form.type || !form.quantity) {
-      setError('Product, Warehouse, Type, and Quantity are all required.'); return;
+    if (!form.productId || (showWarehouses && !form.warehouseId) || !form.type || !form.quantity) {
+      setError('Product, Type, and Quantity are required. Warehouse is required if enabled.'); return;
     }
     if (form.type === 'TRANSFER' && !form.toWarehouseId) {
       setError('Please select a destination warehouse for transfer.'); return;
@@ -143,7 +157,7 @@ export default function StockControlPage() {
       <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '14px' }}>
         <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px' }}>TRANSACTION TYPES</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-          {TRANSACTION_TYPES.map(t => (
+          {TRANSACTION_TYPES.filter(t => showWarehouses || t.value !== 'TRANSFER').map(t => (
             <button 
               key={t.value}
               onClick={() => openModal(t.value)}
@@ -232,7 +246,7 @@ export default function StockControlPage() {
 
             {/* Type Selector */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', marginBottom: '20px' }}>
-              {TRANSACTION_TYPES.map(t => (
+              {TRANSACTION_TYPES.filter(t => showWarehouses || t.value !== 'TRANSFER').map(t => (
                 <button key={t.value} type="button" onClick={() => handleForm('type', t.value)}
                   style={{ padding: '10px 12px', borderRadius: '12px', border: `2px solid ${form.type === t.value ? t.color : 'var(--border-main)'}`, background: form.type === t.value ? `${t.color}20` : 'var(--surface-hover)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: form.type === t.value ? t.color : 'var(--text-secondary)', transition: 'all 0.15s' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{t.icon}</span>
@@ -250,15 +264,17 @@ export default function StockControlPage() {
                 </select>
               </div>
 
-              <div>
-                <label style={labelStyle}>{isTransfer ? 'Source Warehouse *' : 'Warehouse *'}</label>
-                <select value={form.warehouseId} onChange={e => handleForm('warehouseId', e.target.value)} required style={inputStyle}>
-                  <option value="">— Select Warehouse —</option>
-                  {warehouses.map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
-                </select>
-              </div>
+              {showWarehouses && (
+                <div>
+                  <label style={labelStyle}>{isTransfer ? 'Source Warehouse *' : 'Warehouse *'}</label>
+                  <select value={form.warehouseId} onChange={e => handleForm('warehouseId', e.target.value)} required style={inputStyle}>
+                    <option value="">— Select Warehouse —</option>
+                    {warehouses.map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
+                  </select>
+                </div>
+              )}
 
-              {isTransfer && (
+              {showWarehouses && isTransfer && (
                 <div>
                   <label style={labelStyle}>Destination Warehouse *</label>
                   <select value={form.toWarehouseId} onChange={e => handleForm('toWarehouseId', e.target.value)} style={inputStyle}>
@@ -291,13 +307,13 @@ export default function StockControlPage() {
               </div>
 
               {/* Summary preview */}
-              {form.productId && form.warehouseId && form.quantity && selectedType && (
+              {form.productId && (!showWarehouses || form.warehouseId) && form.quantity && selectedType && (
                 <div style={{ padding: '14px 16px', borderRadius: '12px', background: `${selectedType.color}15`, border: `1px solid ${selectedType.color}40`, display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '20px', color: selectedType.color }}>{selectedType.icon}</span>
                   <span style={{ fontSize: '14px', color: 'var(--text-main)' }}>
                     <strong>{selectedType.label}</strong> of <strong>{Math.abs(Number(form.quantity))}</strong> units
-                    {form.warehouseId && ` in warehouse ${warehouses.find(w => w.id === form.warehouseId)?.name}`}
-                    {isTransfer && form.toWarehouseId && ` → ${warehouses.find(w => w.id === form.toWarehouseId)?.name}`}
+                    {showWarehouses && form.warehouseId && ` in warehouse ${warehouses.find(w => w.id === form.warehouseId)?.name}`}
+                    {showWarehouses && isTransfer && form.toWarehouseId && ` → ${warehouses.find(w => w.id === form.toWarehouseId)?.name}`}
                   </span>
                 </div>
               )}

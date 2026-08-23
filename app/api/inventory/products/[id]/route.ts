@@ -29,7 +29,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
-    return NextResponse.json({ product });
+    const stockAgg = await prisma.stockTransaction.aggregate({
+      where: { productId: id },
+      _sum: { quantity: true }
+    });
+    const currentStock = stockAgg._sum.quantity || 0;
+
+    return NextResponse.json({ product: { ...product, currentStock } });
   } catch (error) {
     console.error("GET Product Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

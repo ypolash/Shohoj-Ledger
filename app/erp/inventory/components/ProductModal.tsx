@@ -138,7 +138,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
       
       const d = await res.json();
       if (!res.ok) { 
-        setError(d.error || `Failed to ${editingId ? 'update' : 'create'} product`); 
+        setError((d.error || `Failed to ${editingId ? 'update' : 'create'} product`) + (d.details ? ' - ' + d.details : '')); 
         return; 
       }
       
@@ -193,9 +193,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <Field label="Product Code *" value={form.productCode} onChange={v => handleForm('productCode', v)} placeholder="e.g. PROD-001" required />
             <Field label="Product Name *" value={form.name} onChange={v => handleForm('name', v)} placeholder="e.g. Wireless Mouse" required />
-            <Field label="SKU" value={form.sku} onChange={v => handleForm('sku', v)} placeholder="Optional unique SKU" />
-            <Field label="Barcode" value={form.barcode} onChange={v => handleForm('barcode', v)} placeholder="EAN / UPC" />
-            <Field label="Brand" value={form.brand} onChange={v => handleForm('brand', v)} placeholder="Brand name" />
+
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Unit</label>
               <select value={form.unit} onChange={e => handleForm('unit', e.target.value)}
@@ -227,7 +225,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editingId, in
               <Field label="Opening Stock" value={form.openingStock} onChange={v => handleForm('openingStock', v)} placeholder="0" type="number" />
             )}
             
-            <Field label="Reorder Level" value={form.reorderLevel} onChange={v => handleForm('reorderLevel', v)} placeholder="0" type="number" />
+
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Status</label>
               <select value={form.status} onChange={e => handleForm('status', e.target.value)}

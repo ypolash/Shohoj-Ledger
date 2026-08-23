@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -7,12 +8,31 @@ const navigation = [
   { name: 'Dashboard', href: '/erp/inventory', icon: 'dashboard', exact: true },
   { name: 'Products', href: '/erp/inventory/products', icon: 'inventory_2', exact: false },
   { name: 'Categories', href: '/erp/inventory/categories', icon: 'category', exact: false },
-  { name: 'Warehouses', href: '/erp/inventory/warehouses', icon: 'warehouse', exact: false },
   { name: 'Stock Control', href: '/erp/inventory/stock', icon: 'move_down', exact: false },
+  { name: 'Settings', href: '/erp/inventory/settings', icon: 'settings', exact: false },
 ];
 
 export default function InventoryLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
+  const [showWarehouses, setShowWarehouses] = useState(false);
+
+  useEffect(() => {
+    const checkSettings = () => {
+      setShowWarehouses(localStorage.getItem('shohoj_inventory_warehouses_enabled') === 'true');
+    };
+    checkSettings();
+    window.addEventListener('storage', checkSettings);
+    window.addEventListener('inventorySettingsChanged', checkSettings);
+    return () => {
+      window.removeEventListener('storage', checkSettings);
+      window.removeEventListener('inventorySettingsChanged', checkSettings);
+    };
+  }, []);
+
+  const dynamicNavigation = [...navigation];
+  if (showWarehouses) {
+    dynamicNavigation.splice(dynamicNavigation.length - 1, 0, { name: 'Warehouses', href: '/erp/inventory/warehouses', icon: 'warehouse', exact: false });
+  }
 
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
@@ -32,7 +52,7 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
           <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-main)', verticalAlign: 'middle' }}>Inventory</span>
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {navigation.map((item) => {
+          {dynamicNavigation.map((item) => {
             const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link

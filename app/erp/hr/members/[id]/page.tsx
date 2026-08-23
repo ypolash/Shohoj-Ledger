@@ -50,7 +50,7 @@ export default function MemberDetailsPage({ params }: { params: Promise<{ id: st
       <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)' }}>
         <h2>Error</h2>
         <p>{error || 'Member not found'}</p>
-        <button className="btn btn-secondary" onClick={() => router.push('/erp/hr/members')} style={{ marginTop: '16px' }}>Back to Members</button>
+        <button className="ios-back-button" onClick={() => router.push('/erp/hr/members')} style={{ marginTop: '16px' }}>Back to Members</button>
       </div>
     );
   }

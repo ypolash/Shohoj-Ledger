@@ -16,14 +16,14 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const expectedHeaders = [
-    "Product Code*", "Name*", "Category", "SKU", "Barcode", "Brand", "Unit", 
-    "Purchase Price", "Selling Price", "Min Stock", "Max Stock", "Reorder Level", "Description", "Notes"
+    "Product Code*", "Name*", "Category", "Unit", 
+    "Purchase Price", "Selling Price", "Min Stock", "Description", "Notes"
   ];
 
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
       expectedHeaders,
-      ["PRD-001", "Sample Product", "Electronics", "SKU-001", "123456789", "BrandX", "pcs", 100, 150, 5, 100, 10, "A great product", "Keep dry"]
+      ["PRD-001", "Sample Product", "Electronics", "pcs", 100, 150, 5, "A great product", "Keep dry"]
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Products Template");
@@ -60,15 +60,10 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
           productCode: row["Product Code*"] || row["Product Code"] || row["productCode"] || row["code"],
           name: row["Name*"] || row["Name"] || row["name"],
           categoryName: row["Category"] || row["category"],
-          sku: row["SKU"] || row["sku"],
-          barcode: row["Barcode"] || row["barcode"],
-          brand: row["Brand"] || row["brand"],
           unit: row["Unit"] || row["unit"],
           purchasePrice: row["Purchase Price"] || row["purchasePrice"] || 0,
           sellingPrice: row["Selling Price"] || row["sellingPrice"] || 0,
           minStock: row["Min Stock"] || row["minStock"] || 0,
-          maxStock: row["Max Stock"] || row["maxStock"] || 0,
-          reorderLevel: row["Reorder Level"] || row["reorderLevel"] || 0,
           description: row["Description"] || row["description"],
           notes: row["Notes"] || row["notes"]
         }));

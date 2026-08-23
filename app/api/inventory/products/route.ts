@@ -146,17 +146,27 @@ export async function POST(req: Request) {
       });
 
       if (body.openingStock && Number(body.openingStock) > 0) {
-        await tx.stockTransaction.create({
-          data: {
-            companyId,
-            productId: p.id,
-            type: "OPENING",
-            quantity: Number(body.openingStock),
-            reference: "Initial Opening Stock",
-            performedById: session.user.id,
-            systemSource
-          }
+        let targetWarehouse = await tx.warehouse.findFirst({
+          where: { companyId, isDefault: true }
         });
+        if (!targetWarehouse) {
+          targetWarehouse = await tx.warehouse.findFirst({
+            where: { companyId }
+          });
+        }
+        if (targetWarehouse) {
+          await tx.stockTransaction.create({
+            data: {
+              companyId,
+              warehouseId: targetWarehouse.id,
+              productId: p.id,
+              type: "OPENING",
+              quantity: Number(body.openingStock),
+              reference: "Initial Opening Stock",
+              performedById: session.user.id
+            }
+          });
+        }
       }
 
       await tx.inventoryAudit.create({
@@ -174,8 +184,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ product: newProduct });
-  } catch (error) {
+  } catch (error: any) {
     console.error("POST Product Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error", details: error?.message || String(error) }, { status: 500 });
   }
 }

@@ -122,7 +122,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       )}
       <div>
         <button className="btn btn-secondary" onClick={() => router.push('/erp/projects/list')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>Back to Projects
+          Back to Projects
         </button>
       </div>
     </div>

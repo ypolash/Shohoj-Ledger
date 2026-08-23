@@ -51,7 +51,7 @@ export default function CustomerGroupsPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Customer Groups</h1>
-        <Link href="/erp/crm/customers" className="bg-gray-200 text-gray-800 px-4 py-2 rounded">
+        <Link href="/erp/crm/customers" className="ios-back-button">
           Back to Customers
         </Link>
       </div>

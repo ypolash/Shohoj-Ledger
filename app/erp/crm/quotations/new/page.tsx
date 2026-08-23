@@ -15,10 +15,9 @@ export default function CreateQuotationPage() {
     <PageContainer>
       <button 
           onClick={() => router.push('/erp/crm/quotations')}
-          className="btn btn-secondary"
+          className="ios-back-button"
           style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
           Back to Quotations
         </button>
       <PageHeader 

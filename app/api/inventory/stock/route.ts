@@ -18,7 +18,14 @@ export async function POST(req: Request) {
     // type can be OPENING, IN, OUT, ADJUSTMENT, DAMAGE, RETURN, TRANSFER
     // quantity should be passed as absolute value by client, we apply the sign here
 
-    if (!warehouseId || !productId || !type || !quantity) {
+    let finalWarehouseId = warehouseId;
+    if (!finalWarehouseId) {
+      const defaultW = await prisma.warehouse.findFirst({ where: { companyId, isDefault: true } }) || 
+                       await prisma.warehouse.findFirst({ where: { companyId } });
+      if (defaultW) finalWarehouseId = defaultW.id;
+    }
+
+    if (!finalWarehouseId || !productId || !type || !quantity) {
       return NextResponse.json({ error: "Warehouse, Product, Type, and Quantity are required" }, { status: 400 });
     }
 
@@ -43,7 +50,7 @@ export async function POST(req: Request) {
     if (!product) return NextResponse.json({ error: "Product not found or unauthorized" }, { status: 403 });
 
     const warehouse = await prisma.warehouse.findFirst({
-      where: { id: warehouseId, companyId }
+      where: { id: finalWarehouseId, companyId }
     });
     if (!warehouse) return NextResponse.json({ error: "Warehouse not found or unauthorized" }, { status: 403 });
 
@@ -60,7 +67,7 @@ export async function POST(req: Request) {
         await tx.stockTransaction.create({
           data: {
             companyId,
-            warehouseId,
+            warehouseId: finalWarehouseId,
             productId,
             type: "TRANSFER",
             quantity: -absoluteQty,
@@ -78,7 +85,7 @@ export async function POST(req: Request) {
             type: "TRANSFER",
             quantity: absoluteQty,
             reference,
-            notes: notes || `Transfer from warehouse ${warehouseId}`,
+            notes: notes || `Transfer from warehouse ${finalWarehouseId}`,
             performedById: session.user.id
           }
         });
@@ -89,7 +96,7 @@ export async function POST(req: Request) {
             action: "WAREHOUSE_TRANSFER",
             entityType: "STOCK",
             entityId: productId,
-            description: `Transferred ${absoluteQty} units from W-${warehouseId} to W-${toWarehouseId}`,
+            description: `Transferred ${absoluteQty} units from W-${finalWarehouseId} to W-${toWarehouseId}`,
             performedById: session.user.id
           }
         });
@@ -97,7 +104,7 @@ export async function POST(req: Request) {
         await tx.stockTransaction.create({
           data: {
             companyId,
-            warehouseId,
+            warehouseId: finalWarehouseId,
             productId,
             type,
             quantity: signedQty,
@@ -113,7 +120,7 @@ export async function POST(req: Request) {
             action: "STOCK_CHANGED",
             entityType: "STOCK",
             entityId: productId,
-            description: `${type} ${signedQty} units in W-${warehouseId}`,
+            description: `${type} ${signedQty} units in W-${finalWarehouseId}`,
             performedById: session.user.id
           }
         });

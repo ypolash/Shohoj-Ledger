@@ -55,7 +55,7 @@ export default function PipelinesPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manage Pipelines</h1>
-        <Link href="/erp/crm/opportunities" className="bg-gray-200 text-gray-800 px-4 py-2 rounded">
+        <Link href="/erp/crm/opportunities" className="ios-back-button">
           Back to Opportunities
         </Link>
       </div>

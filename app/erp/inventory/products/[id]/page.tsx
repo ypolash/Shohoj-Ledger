@@ -41,10 +41,9 @@ export default function ProductDetailsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '4px' }}>
         <button 
           onClick={() => router.push('/erp/inventory/products')}
-          className="btn btn-secondary"
-          style={{ width: 'fit-content', padding: '6px 14px', fontSize: '13px' }}
+          className="ios-back-button"
         >
-          &larr; Back to Products
+          Back to Products
         </button>
       </div>
 
@@ -53,7 +52,7 @@ export default function ProductDetailsPage() {
           {/* Top Row: Combined Panel */}
           <div className="glass-panel" style={{ display: 'flex', flexWrap: 'wrap', borderRadius: '16px' }}>
             {/* Left Column */}
-            <div style={{ flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', borderRight: '1px solid var(--border-main)' }}>
+            <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', borderRight: '1px solid var(--border-main)' }}>
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', objectFit: 'contain', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', background: 'var(--surface-bg)' }} />
               ) : (
@@ -65,6 +64,30 @@ export default function ProductDetailsPage() {
               <span style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, color: product.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)', background: product.status === 'ACTIVE' ? 'var(--success-subtle)' : 'var(--surface-hover)' }}>
                 {product.status}
               </span>
+              
+              {/* Vertical Stock Badge on the border */}
+              <div style={{
+                position: 'absolute',
+                top: '35%',
+                right: '-1px', // Flush with the right border
+                transform: 'translateY(-50%)',
+                background: product.currentStock >= (product.minStock || 0) ? 'var(--success)' : 'var(--danger)',
+                color: '#fff',
+                padding: '16px 6px',
+                borderRadius: '16px 0 0 16px', // Notch style (flat on the right, rounded on the left)
+                fontWeight: 700,
+                fontSize: '12px',
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                boxShadow: '-4px 0px 12px rgba(0,0,0,0.15)', // Shadow only to the left
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                letterSpacing: '1px'
+              }}>
+                STOCK {product.currentStock}
+              </div>
             </div>
 
             {/* Right Column */}
@@ -80,7 +103,7 @@ export default function ProductDetailsPage() {
                 <DetailItem label="Purchase Price" value={`৳${Number(product.purchasePrice).toLocaleString()}`} />
                 <DetailItem label="Selling Price" value={`৳${Number(product.sellingPrice).toLocaleString()}`} />
                 <DetailItem label="Min Stock" value={product.minStock} />
-                <DetailItem label="Max Stock" value={product.maxStock} />
+                <DetailItem label="Current Stock" value={product.currentStock} />
                 <DetailItem label="Reorder Level" value={product.reorderLevel} />
               </div>
             </div>

@@ -652,7 +652,6 @@ export default function EmployeeProfileClient({ employee }: { employee: any }) {
           </div>
         </div>
       )}
-    </div>
 
     {/* Lifecycle Modal */}
       {isLifecycleModalOpen && (

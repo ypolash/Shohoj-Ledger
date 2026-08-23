@@ -106,10 +106,10 @@ export default function ProductDetailsPage() {
                   </div>
                 </div>
                 
-                <div style={{ width: '160px', minHeight: '180px', borderRadius: '16px', background: 'var(--danger)', display: 'flex', flexDirection: 'column', border: '1px solid var(--border-main)', overflow: 'hidden', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
+                <div style={{ width: '160px', minHeight: '180px', borderRadius: '16px', background: 'var(--info)', display: 'flex', flexDirection: 'column', border: '1px solid var(--border-main)', overflow: 'hidden', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
                   <div style={{ height: '12px', flexShrink: 0, width: '100%' }}></div>
                   <div style={{ flexGrow: 1, background: 'var(--surface-main)', borderTopLeftRadius: '50% 16px', borderTopRightRadius: '50% 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 16px 16px 16px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--danger)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selling Price</div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--info)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selling Price</div>
                     <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-main)' }}>৳{Number(product.sellingPrice).toLocaleString()}</div>
                   </div>
                 </div>

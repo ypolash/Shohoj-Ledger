@@ -52,10 +52,10 @@ export default function ProductDetailsPage() {
 
       {!isLoading && product && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Top Row: Left (Image/Name) + Right (Info) */}
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          {/* Top Row: Combined Panel */}
+          <div className="glass-panel" style={{ display: 'flex', flexWrap: 'wrap', borderRadius: '16px' }}>
             {/* Left Column */}
-            <div className="glass-panel" style={{ flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{ flex: '1 1 300px', maxWidth: '400px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', borderRight: '1px solid var(--border-main)' }}>
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} style={{ width: '100%', maxWidth: '250px', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-main)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }} />
               ) : (
@@ -70,7 +70,7 @@ export default function ProductDetailsPage() {
             </div>
 
             {/* Right Column */}
-            <div className="glass-panel" style={{ flex: '2 1 500px', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ flex: '2 1 500px', padding: '24px' }}>
               <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-main)', borderBottom: '1px solid var(--border-main)', paddingBottom: '12px' }}>Product Information</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
                 <DetailItem label="Product Code" value={product.productCode} />

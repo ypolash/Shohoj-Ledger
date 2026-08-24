@@ -46,6 +46,26 @@ export default function SalesOrderDetailPage() {
     if (params.id) fetchOrder();
   }, [params.id, router]);
 
+  const handleStatusAction = async (action: string) => {
+    try {
+      const res = await fetch(`/api/crm/sales-orders/${params.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      if (res.ok) {
+        const data = await (await fetch(`/api/crm/sales-orders/${params.id}`)).json();
+        setOrder(data.order || data);
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update status");
+    }
+  };
+
   if (loading) {
     return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Order...</div></PageContainer>;
   }
@@ -75,10 +95,35 @@ export default function SalesOrderDetailPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>local_shipping</span>
-            Fulfill Order
-          </button>
+          {order.status === 'DRAFT' && (
+            <button 
+              onClick={() => handleStatusAction('APPROVE')}
+              style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
+              Approve Order
+            </button>
+          )}
+          
+          {order.status === 'APPROVED' && (
+            <button 
+              onClick={() => handleStatusAction('RESERVE')}
+              style={{ padding: '8px 16px', background: 'var(--info-glow)', border: '1px solid var(--info)', color: 'var(--info)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>inventory_2</span>
+              Reserve Stock
+            </button>
+          )}
+          
+          {(order.status === 'OPEN' || order.status === 'PARTIALLY_DELIVERED') && (
+            <button 
+              onClick={() => handleStatusAction('CLOSE')}
+              style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>local_shipping</span>
+              Fulfill Order
+            </button>
+          )}
           <button 
             onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/edit`)}
             style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}

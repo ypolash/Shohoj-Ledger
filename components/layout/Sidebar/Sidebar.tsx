@@ -14,7 +14,8 @@ import {
   CreditCard, 
   Folder, 
   BarChart2, 
-  Settings
+  Settings,
+  Megaphone
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,6 +39,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     { name: 'HR', icon: Briefcase, href: '/erp/hr' },
     { name: 'Payroll', icon: CreditCard, href: '/erp/payroll' },
     { name: 'Projects', icon: Folder, href: '/erp/projects' },
+    { name: 'Marketing', icon: Megaphone, href: '/erp/marketing' },
     { name: 'Reports', icon: BarChart2, href: '/erp/reports' },
   ].filter(item => {
     const type = businessType.toUpperCase();

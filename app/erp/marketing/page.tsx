@@ -169,6 +169,7 @@ export default function MarketingDashboardPage() {
             </table>
           </div>
         </div>
+      </div>
 
       {isModalOpen && (
         <div style={{

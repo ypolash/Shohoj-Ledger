@@ -43,7 +43,7 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
             >
               <td style={{ padding: '16px' }}>
                 <Link href={`/erp/crm/customers/${customer.id}`} style={{ fontWeight: 600, color: 'var(--primary)', display: 'block' }}>
-                  {customer.customerName}
+                  {customer.displayName || customer.name}
                 </Link>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>#{customer.customerCode || customer.id.slice(0, 8)}</div>
               </td>

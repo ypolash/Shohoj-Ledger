@@ -150,8 +150,8 @@ export default function SalesOrderDetailPage() {
               <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--surface-main)' }}>
                 <QuotationTotals 
                   subtotal={order.subtotal || 0} 
-                  totalDiscount={order.discount || 0} 
-                  totalTax={order.tax || 0} 
+                  totalDiscount={order.discountAmount || 0} 
+                  totalTax={order.taxAmount || 0} 
                   grandTotal={order.grandTotal || order.totalAmount || 0} 
                 />
               </div>

@@ -1,31 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  PointElement,
-  LineElement,
-  ArcElement
-} from 'chart.js';
-import { Line, Doughnut } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 export default function MarketingDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -86,40 +61,6 @@ export default function MarketingDashboardPage() {
   };
 
   const metrics = data?.stats || {};
-  const chartDataRaw = data?.chartData || [];
-
-  // Dummy monthly reach since we don't track reach over time yet in our schema
-  const sortedMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const monthlyReach = [12000, 19000, 15000, 22000, 25000, 29000];
-  
-  const lineChartData = {
-    labels: sortedMonths,
-    datasets: [
-      {
-        label: 'Audience Reach',
-        data: monthlyReach,
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.5)',
-      },
-    ],
-  };
-
-  const doughnutData = {
-    labels: chartDataRaw.map((d: any) => d.name),
-    datasets: [
-      {
-        data: chartDataRaw.map((d: any) => d.value),
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(16, 185, 129, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(139, 92, 246, 0.8)',
-          'rgba(236, 72, 153, 0.8)'
-        ],
-        borderWidth: 0,
-      }
-    ]
-  };
 
   return (
     <div className="animate-fade-in w-full" style={{ padding: 'var(--spacing-6)' }}>
@@ -161,29 +102,7 @@ export default function MarketingDashboardPage() {
           ))}
         </div>
 
-        {/* Charts & Tables */}
-        <div className="grid-responsive-charts">
-          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
-            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', color: 'var(--text-main)' }}>Monthly Reach Trend</h2>
-            <div style={{ height: '300px' }}>
-              {!isLoading && <Line data={lineChartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }} />}
-            </div>
-          </div>
-          
-          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ fontSize: '16px', margin: '0 0 var(--spacing-4) 0', color: 'var(--text-main)' }}>Spend by Channel</h2>
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {!isLoading && chartDataRaw.length > 0 && (
-                <div style={{ width: '250px', height: '250px' }}>
-                  <Doughnut data={doughnutData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ccc' } } } }} />
-                </div>
-              )}
-              {!isLoading && chartDataRaw.length === 0 && (
-                <div style={{ color: 'var(--text-muted)' }}>No data available</div>
-              )}
-            </div>
-          </div>
-        </div>
+
 
       </div>
 
@@ -193,23 +112,23 @@ export default function MarketingDashboardPage() {
           backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
         }}>
           <div className="glass-panel" style={{ padding: '32px', borderRadius: '16px', width: '400px', maxWidth: '90%' }}>
-            <h2 style={{ marginTop: 0, marginBottom: '24px' }}>New Campaign</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '24px', color: 'var(--text-main)', fontSize: '20px' }}>New Campaign</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px' }}>Campaign Name</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Campaign Name</label>
                 <input 
                   required
                   type="text"
-                  className="input-field w-full"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }}
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px' }}>Channel</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Channel</label>
                 <select 
                   required
-                  className="input-field w-full"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }}
                   value={formData.channel}
                   onChange={(e) => setFormData({...formData, channel: e.target.value})}
                 >
@@ -222,31 +141,29 @@ export default function MarketingDashboardPage() {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px' }}>Budget (Spend)</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Budget (Spend)</label>
                 <input 
                   required
                   type="number"
                   min="0"
                   step="0.01"
-                  className="input-field w-full"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }}
                   value={formData.spend}
                   onChange={(e) => setFormData({...formData, spend: e.target.value})}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px' }}>Start Date</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Start Date</label>
                 <input 
                   required
                   type="date"
-                  className="input-field w-full"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }}
                   value={formData.startDate}
                   onChange={(e) => setFormData({...formData, startDate: e.target.value})}
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? 'Creating...' : 'Create Campaign'}
                 </button>

@@ -20,17 +20,17 @@ export async function GET(request: Request) {
     });
 
     const totalCampaigns = campaigns.length;
-    const activeCampaigns = campaigns.filter(c => c.status === "ACTIVE").length;
-    const totalReach = campaigns.reduce((acc, c) => acc + (c.reach || 0), 0);
-    const conversions = campaigns.reduce((acc, c) => acc + (c.conversions || 0), 0);
-    const totalSpend = campaigns.reduce((acc, c) => acc + Number(c.spend || 0), 0);
+    const activeCampaigns = campaigns.filter((c: any) => c.status === "ACTIVE").length;
+    const totalReach = campaigns.reduce((acc: number, c: any) => acc + (c.reach || 0), 0);
+    const conversions = campaigns.reduce((acc: number, c: any) => acc + (c.conversions || 0), 0);
+    const totalSpend = campaigns.reduce((acc: number, c: any) => acc + Number(c.spend || 0), 0);
     
     // Simple ROI calculation: (conversions * 10 - spend) / spend for example purposes,
     // or just let the frontend calculate it or just provide raw data.
     // We will provide raw data and computed stats.
     
     // Prepare chart data (e.g., grouped by month or channel)
-    const spendByChannel = campaigns.reduce((acc: any, c) => {
+    const spendByChannel = campaigns.reduce((acc: any, c: any) => {
       const channel = c.channel || "Other";
       if (!acc[channel]) acc[channel] = 0;
       acc[channel] += Number(c.spend || 0);

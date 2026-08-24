@@ -4,6 +4,8 @@
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
 ## Current Status
+- **Version 6.0 — Sprint CRM-Marketing (Marketing Module & Expense Integration):**
+  - **Completed**: Replaced dummy data in the Marketing dashboard with live data powered by real APIs (`/api/marketing/dashboard`). Made the "New Campaign" button fully functional by creating a modal and wiring it to `/api/marketing/campaigns` (POST). Integrated the creation of marketing campaigns with the core Finance Engine so that each campaign seamlessly and automatically generates an `Expense` record and `LedgerEntry` for accurate accounting visibility.
 - **Version 6.0 — Sprint UI-4 (Employee Profile Masonry Layout):**
   - **Completed**: Refactored the Employee Profile page (`EmployeeProfileClient.tsx`) to match a new design mockup featuring a masonry card layout. Removed the sticky left sidebar, placed the avatar in a full-width Basic Information card, and utilized a 2-column grid for Address, Education (timeline style), Experience, Emergency Contact, and Family tables. Simplified edit mode toggling.
 - **Version 6.0 — Sprint UI-3 (Employee Profile Redesign):**

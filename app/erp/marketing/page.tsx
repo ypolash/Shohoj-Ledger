@@ -102,9 +102,73 @@ export default function MarketingDashboardPage() {
           ))}
         </div>
 
-
-
-      </div>
+        {/* Campaign List */}
+        <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '16px', margin: '0', color: 'var(--text-main)' }}>Recent Campaigns</h2>
+          </div>
+          
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table" style={{ width: '100%', minWidth: '800px', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-light)', color: 'var(--text-muted)' }}>
+                  <th style={{ padding: '12px 16px', fontWeight: 500 }}>Campaign Name</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 500 }}>Channel</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 500 }}>Start Date</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'right' }}>Spend</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'center' }}>Reach</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'center' }}>Conversions</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 500 }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading campaigns...</td>
+                  </tr>
+                ) : data?.campaigns?.length > 0 ? (
+                  data.campaigns.map((campaign: any) => (
+                    <tr key={campaign.id} style={{ borderBottom: '1px solid var(--border-light)', transition: 'background-color 0.2s' }} className="hover:bg-[var(--surface-hover)]">
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)', fontWeight: 500 }}>{campaign.name}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)' }}>
+                        <span style={{ padding: '4px 8px', borderRadius: '4px', background: 'var(--surface-hover)', fontSize: '12px' }}>
+                          {campaign.channel || 'Other'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)' }}>
+                        {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)', textAlign: 'right', fontWeight: 500 }}>
+                        {formatCurrency(campaign.spend)}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)', textAlign: 'center' }}>
+                        {campaign.reach?.toLocaleString() || 0}
+                      </td>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-main)', textAlign: 'center' }}>
+                        {campaign.conversions?.toLocaleString() || 0}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ 
+                          padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 500,
+                          background: campaign.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                          color: campaign.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)'
+                        }}>
+                          {campaign.status || 'ACTIVE'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      No campaigns found. Click "New Campaign" to create one.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       {isModalOpen && (
         <div style={{

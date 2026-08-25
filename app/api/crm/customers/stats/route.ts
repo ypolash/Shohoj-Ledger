@@ -11,11 +11,11 @@ export async function GET() {
     const rbacGuard = await requirePermission("VIEW_CUSTOMERS");
     if (rbacGuard) return rbacGuard;
 
-    const [total, active, outAgg, salesAgg] = await Promise.all([
+    const [total, active, creditAgg, salesAgg] = await Promise.all([
       prisma.customer.count({ where: { companyId } }),
-      prisma.customer.count({ where: { companyId, status: "Active" } }),
+      prisma.customer.count({ where: { companyId, status: "ACTIVE" } }),
       prisma.customer.aggregate({
-        _sum: { outstandingBalance: true },
+        _sum: { creditLimit: true },
         where: { companyId }
       }),
       prisma.salesOrder.aggregate({
@@ -34,7 +34,7 @@ export async function GET() {
     return NextResponse.json({
       total,
       active,
-      outstanding: Number(outAgg._sum.outstandingBalance || 0),
+      outstanding: Number(creditAgg._sum.creditLimit || 0),
       salesTotal: Number(salesAgg._sum.totalAmount || 0)
     });
   } catch (error: any) {

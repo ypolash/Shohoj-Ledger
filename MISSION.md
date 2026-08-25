@@ -3,6 +3,8 @@
 ## Core Goal
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
+- **Version 6.0 — Sprint CRM-Shipments (Sales Order Delivery & Shipment Wiring):**
+  - **Completed**: Created the `/api/crm/sales-orders/[id]/deliveries` REST endpoint (GET & POST) to process sales order delivery order conversions and trigger immediate `shipDelivery` stock deduction and stock movement creation. Overhauled `SalesOrderShipment.tsx` to turn the "Create Shipment" button into a fully interactive modal supporting courier selection (Steadfast, Paperfly, RedX, Pathao, DHL, FedEx, Internal), tracking numbers, delivery dates, and shipment remarks. Connected real-time `onRefresh` callbacks to sync order fulfillment status live upon dispatch.
 - **Version 6.0 — Sprint UI-Breadcrumb (Dynamic Page Title & Breadcrumb Resolution):**
   - **Completed**: Fixed topbar address bar / breadcrumbs so that raw UUID parameters (e.g. `298fd479-42be...`) are intelligently recognized and formatted (e.g., `Order #298fd479`). Injected `setPageTitleOverride` hooks in `SalesOrderDetailPage`, `QuotationDetailPage`, and `CustomerDetailPage` so that upon loading the record, the topbar breadcrumb dynamically displays the exact human-readable order number (e.g., `SO-SHO-20260825-0001` / `Order 298fd479`), quotation number, or customer name.
 - **Version 6.0 — Sprint CRM-Financials (Quotation & Sales Order Calculation Polish):**

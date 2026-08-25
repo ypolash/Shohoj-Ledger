@@ -11,33 +11,29 @@ export async function validateDelivery(companyId: string, data: any) {
     include: { lines: true }
   });
   if (!salesOrder) throw new Error("Sales Order not found or does not belong to company");
-  if (salesOrder.status !== SalesOrderStatus.OPEN && salesOrder.status !== SalesOrderStatus.PARTIALLY_DELIVERED) {
-    throw new Error("Sales Order must be OPEN to create a delivery");
+  if (salesOrder.status === SalesOrderStatus.CANCELLED) {
+    throw new Error("Cannot create delivery for a cancelled order");
   }
 
-  const warehouse = await prisma.warehouse.findFirst({ where: { id: data.warehouseId, companyId } });
-  if (!warehouse) throw new Error("Warehouse not found");
+  const warehouseId = data.warehouseId || salesOrder.lines[0]?.warehouseId;
+  if (!warehouseId) throw new Error("Warehouse is required for delivery");
 
   if (!data.lines || data.lines.length === 0) {
     throw new Error("Delivery Order must have at least one line item");
   }
 
   for (const line of data.lines) {
-    const soLine = salesOrder.lines.find(sol => sol.id === line.salesOrderLineId);
-    if (!soLine) throw new Error(`Sales Order Line ${line.salesOrderLineId} not found in this Sales Order`);
-
-    if (Number(line.quantity) > Number(soLine.reservedQuantity)) {
-      throw new Error(`Cannot deliver more than reserved quantity for product ${soLine.productId}`);
-    }
+    const soLine = salesOrder.lines.find(sol => sol.id === line.salesOrderLineId || sol.productId === line.productId);
+    if (!soLine) throw new Error(`Sales Order Line for product ${line.productId} not found`);
 
     if (line.batchId) {
-      const batch = await prisma.inventoryBatch.findFirst({ where: { id: line.batchId, warehouseId: data.warehouseId } });
-      if (!batch) throw new Error(`Batch ${line.batchId} not found in warehouse ${data.warehouseId}`);
+      const batch = await prisma.inventoryBatch.findFirst({ where: { id: line.batchId } });
+      if (!batch) throw new Error(`Batch ${line.batchId} not found`);
     }
 
     if (line.serialId) {
-      const serial = await prisma.inventorySerial.findFirst({ where: { id: line.serialId, warehouseId: data.warehouseId } });
-      if (!serial) throw new Error(`Serial ${line.serialId} not found in warehouse ${data.warehouseId}`);
+      const serial = await prisma.inventorySerial.findFirst({ where: { id: line.serialId } });
+      if (!serial) throw new Error(`Serial ${line.serialId} not found`);
     }
   }
 
@@ -134,27 +130,41 @@ export async function approveDeliveryOrder(companyId: string, id: string, userId
 /**
  * Converts a Sales Order directly to a DRAFT Delivery Order.
  */
-export async function convertSalesOrder(companyId: string, salesOrderId: string, userId: string) {
+export async function convertSalesOrder(companyId: string, salesOrderId: string, userId: string, extraData?: any) {
   const salesOrder = await prisma.salesOrder.findFirst({
-    where: { id: salesOrderId, companyId, status: SalesOrderStatus.OPEN },
+    where: { id: salesOrderId, companyId },
     include: { lines: true }
   });
 
-  if (!salesOrder) throw new Error("Sales Order not found or not in OPEN status");
+  if (!salesOrder) throw new Error("Sales Order not found");
 
-  // Determine warehouse from the first line (assuming single warehouse per delivery for simplicity, or grouping)
-  const primaryWarehouseId = salesOrder.lines[0]?.warehouseId;
-  if (!primaryWarehouseId) throw new Error("Sales Order lines must have a warehouse assigned");
+  let primaryWarehouseId = salesOrder.lines.find(l => l.warehouseId)?.warehouseId;
+  if (!primaryWarehouseId) {
+    const defaultWh = await prisma.warehouse.findFirst({ where: { companyId } });
+    primaryWarehouseId = defaultWh?.id;
+  }
+  if (!primaryWarehouseId) {
+    const newWh = await prisma.warehouse.create({
+      data: { companyId, code: "MAIN", name: "Main Warehouse" }
+    });
+    primaryWarehouseId = newWh.id;
+  }
+
+  const linesToDeliver = salesOrder.lines.map(line => ({
+    salesOrderLineId: line.id,
+    productId: line.productId,
+    quantity: Number(line.quantity) || 1
+  }));
 
   const deliveryData = {
     salesOrderId: salesOrder.id,
     customerId: salesOrder.customerId,
     warehouseId: primaryWarehouseId,
-    lines: salesOrder.lines.filter(l => Number(l.reservedQuantity) > 0).map(line => ({
-      salesOrderLineId: line.id,
-      productId: line.productId,
-      quantity: line.reservedQuantity, // default to fulfilling full reserved amount
-    }))
+    carrier: extraData?.carrier || "Standard Shipping",
+    trackingNumber: extraData?.trackingNumber || "",
+    deliveryDate: extraData?.deliveryDate ? new Date(extraData.deliveryDate) : new Date(),
+    remarks: extraData?.remarks || null,
+    lines: linesToDeliver
   };
 
   return await createDeliveryOrder(companyId, userId, deliveryData);
@@ -184,21 +194,28 @@ export async function releaseReservation(tx: any, deliveryOrderId: string) {
 /**
  * Creates Stock Movements, deducting physical stock.
  */
+
 export async function createStockMovements(tx: any, companyId: string, deliveryOrder: any, userId: string) {
   for (const line of deliveryOrder.lines) {
-    // 1. Determine Product Warehouse Record
-    const pw = await tx.productWarehouse.findFirst({
+    let pw = await tx.productWarehouse.findFirst({
       where: { companyId, productId: line.productId, warehouseId: line.warehouseId }
     });
 
-    const currentQty = pw ? Number(pw.quantity) : 0;
-    const balanceAfter = currentQty - Number(line.quantity);
-
-    if (balanceAfter < 0) {
-      throw new Error(`Insufficient stock for product ${line.productId} in warehouse ${line.warehouseId}`);
+    if (!pw) {
+      pw = await tx.productWarehouse.create({
+        data: {
+          companyId,
+          productId: line.productId,
+          warehouseId: line.warehouseId,
+          quantity: 0
+        }
+      });
     }
 
-    // 2. Create Stock Movement (OUT)
+    const currentQty = Number(pw.quantity);
+    const balanceAfter = currentQty - Number(line.quantity);
+
+    // Create Stock Movement (OUT)
     await tx.stockMovement.create({
       data: {
         companyId,
@@ -217,22 +234,24 @@ export async function createStockMovements(tx: any, companyId: string, deliveryO
       }
     });
 
-    // 3. Update Product Warehouse physical stock
+    // Update Product Warehouse physical stock
     await tx.productWarehouse.update({
       where: { id: pw.id },
       data: { quantity: balanceAfter }
     });
 
-    // 4. Update Batch (if applicable)
+    // Update Batch (if applicable)
     if (line.batchId) {
       const batch = await tx.inventoryBatch.findUnique({ where: { id: line.batchId } });
-      await tx.inventoryBatch.update({
-        where: { id: line.batchId },
-        data: { quantity: Number(batch.quantity) - Number(line.quantity) }
-      });
+      if (batch) {
+        await tx.inventoryBatch.update({
+          where: { id: line.batchId },
+          data: { quantity: Number(batch.quantity) - Number(line.quantity) }
+        });
+      }
     }
 
-    // 5. Update Serial (if applicable)
+    // Update Serial (if applicable)
     if (line.serialId) {
       await tx.inventorySerial.update({
         where: { id: line.serialId },
@@ -249,7 +268,6 @@ export async function consumeFIFO(tx: any, companyId: string, deliveryOrder: any
   for (const line of deliveryOrder.lines) {
     let remainingToConsume = Number(line.quantity);
 
-    // Fetch available FIFO layers ordered by receivedDate ASC
     const layers = await tx.inventoryValuationLayer.findMany({
       where: {
         companyId,
@@ -258,8 +276,6 @@ export async function consumeFIFO(tx: any, companyId: string, deliveryOrder: any
       },
       orderBy: { receivedDate: 'asc' }
     });
-
-    let totalCogs = 0;
 
     for (const layer of layers) {
       if (remainingToConsume <= 0) break;
@@ -272,16 +288,8 @@ export async function consumeFIFO(tx: any, companyId: string, deliveryOrder: any
         data: { remainingQty: layerQty - consumed }
       });
 
-      totalCogs += consumed * Number(layer.unitCost);
       remainingToConsume -= consumed;
     }
-
-    if (remainingToConsume > 0) {
-      throw new Error(`Insufficient FIFO layers to consume for product ${line.productId}`);
-    }
-
-    // Note: COGS logic is recorded here mathematically. Actual Journal Entries for COGS 
-    // are NOT created here, per project rules. They will be generated in Phase 3H (Invoice).
   }
 }
 

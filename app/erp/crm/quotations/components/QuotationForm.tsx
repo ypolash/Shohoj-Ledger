@@ -36,10 +36,10 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
   const [taxRate, setTaxRate] = useState(15); // e.g. 15% VAT
   const [globalDiscount, setGlobalDiscount] = useState(Number(initialData.discountAmount) || 0);
 
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount), 0);
+  const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
+  const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount || 0), 0);
   const totalDiscount = itemDiscounts + globalDiscount;
-  const taxableAmount = Math.max(0, subtotal - globalDiscount);
+  const taxableAmount = Math.max(0, subtotal - totalDiscount);
   const totalTax = (taxableAmount * taxRate) / 100;
   const grandTotal = taxableAmount + totalTax;
 

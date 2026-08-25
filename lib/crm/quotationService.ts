@@ -57,7 +57,8 @@ export async function generateQuotationNumber(companyId: string): Promise<string
  * Calculates totals for a quotation.
  */
 export function calculateTotals(lines: any[], globalDiscount: number = 0, globalShipping: number = 0) {
-  let subtotal = 0;
+  let grossSubtotal = 0;
+  let lineDiscountsTotal = 0;
   let taxAmount = 0;
 
   const processedLines = lines.map(line => {
@@ -67,12 +68,16 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
     const taxPct = Number(line.taxPercent) || 0;
 
     const grossLineTotal = qty * price;
-    const discountAmt = grossLineTotal * (discPct / 100);
+    const discountAmt = line.discountAmount !== undefined && Number(line.discountAmount) > 0 
+      ? Number(line.discountAmount) 
+      : grossLineTotal * (discPct / 100);
+
     const lineSubtotal = grossLineTotal - discountAmt;
     const lineTaxAmt = lineSubtotal * (taxPct / 100);
     const lineTotal = lineSubtotal + lineTaxAmt;
 
-    subtotal += lineSubtotal;
+    grossSubtotal += grossLineTotal;
+    lineDiscountsTotal += discountAmt;
     taxAmount += lineTaxAmt;
 
     return {
@@ -87,13 +92,15 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
     };
   });
 
-  const totalAmount = subtotal + taxAmount + globalShipping - globalDiscount;
+  const totalDiscount = lineDiscountsTotal + globalDiscount;
+  const taxableAmount = Math.max(0, grossSubtotal - totalDiscount);
+  const totalAmount = taxableAmount + taxAmount + globalShipping;
 
   return {
-    subtotal,
+    subtotal: grossSubtotal,
     taxAmount,
     shippingAmount: globalShipping,
-    discountAmount: globalDiscount,
+    discountAmount: totalDiscount,
     totalAmount,
     processedLines
   };

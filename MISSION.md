@@ -3,7 +3,8 @@
 ## Core Goal
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
-## Current Status
+- **Version 6.0 — Sprint CRM-Financials (Quotation & Sales Order Calculation Polish):**
+  - **Completed**: Refactored calculation engines in `quotationService.ts`, `salesOrderService.ts`, `QuotationForm.tsx`, `SalesOrderForm.tsx`, and detail views (`[id]/page.tsx`). Fixed gross subtotal calculation to preserve item gross amounts (e.g., BDT 5,000.00), sum line and global discounts into `discountAmount` (e.g., - BDT 500.00), compute Tax/VAT over net taxable subtotal (e.g., + BDT 675.00), and yield exact Grand Total (e.g., BDT 5,175.00).
 - **Version 6.0 — Sprint CRM-Marketing (Marketing Module & Expense Integration):**
   - **Completed**: Replaced dummy data in the Marketing dashboard with live data powered by real APIs (`/api/marketing/dashboard`). Made the "New Campaign" button fully functional by creating a modal and wiring it to `/api/marketing/campaigns` (POST). Integrated the creation of marketing campaigns with the core Finance Engine so that each campaign seamlessly and automatically generates an `Expense` record and `LedgerEntry` for accurate accounting visibility.
 - **Version 6.0 — Sprint UI-4 (Employee Profile Masonry Layout):**

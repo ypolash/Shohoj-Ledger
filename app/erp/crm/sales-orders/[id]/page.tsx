@@ -189,7 +189,16 @@ export default function SalesOrderDetailPage() {
       <div style={{ minHeight: '500px' }}>
         {activeTab === 'overview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <SalesOrderItems items={order.items || []} readOnly={true} />
+            <SalesOrderItems items={
+              order.items || (order.lines ? order.lines.map((line: any) => ({
+                id: line.id,
+                description: line.remarks || line.product?.name || '',
+                quantity: Number(line.quantity),
+                unitPrice: Number(line.unitPrice),
+                discount: Number(line.discountAmount) || 0,
+                total: Number(line.lineTotal) || 0
+              })) : [])
+            } readOnly={true} />
             
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '32px', flexWrap: 'wrap' }}>
               <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--surface-main)' }}>

@@ -63,8 +63,9 @@ export async function generateSalesOrderNumber(companyId: string): Promise<strin
 /**
  * Calculates totals for a Sales Order.
  */
-export function calculateTotals(lines: any[], globalDiscount: number = 0, globalShipping: number = 0) {
-  let subtotal = 0;
+export function calculateTotals(lines: any[], globalDiscount: number = 0, globalShipping: number = 0, globalTaxRate: number = 0) {
+  let grossSubtotal = 0;
+  let lineDiscountsTotal = 0;
   let taxAmount = 0;
 
   const processedLines = lines.map(line => {
@@ -74,12 +75,16 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
     const taxPct = Number(line.taxPercent) || 0;
 
     const grossLineTotal = qty * price;
-    const discountAmt = grossLineTotal * (discPct / 100);
+    // Prefer explicitly provided discountAmount, fallback to percentage-based calculation
+    const discountAmt = line.discountAmount !== undefined ? Number(line.discountAmount) : (grossLineTotal * (discPct / 100));
     const lineSubtotal = grossLineTotal - discountAmt;
-    const lineTaxAmt = lineSubtotal * (taxPct / 100);
+    
+    // Prefer explicitly provided taxAmount, fallback to percentage-based calculation
+    const lineTaxAmt = line.taxAmount !== undefined ? Number(line.taxAmount) : (lineSubtotal * (taxPct / 100));
     const lineTotal = lineSubtotal + lineTaxAmt;
 
-    subtotal += lineSubtotal;
+    grossSubtotal += grossLineTotal;
+    lineDiscountsTotal += discountAmt;
     taxAmount += lineTaxAmt;
 
     return {
@@ -94,13 +99,20 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
     };
   });
 
-  const totalAmount = subtotal + taxAmount + globalShipping - globalDiscount;
+  const totalDiscount = lineDiscountsTotal + globalDiscount;
+  const taxableAmount = Math.max(0, grossSubtotal - totalDiscount);
+  // If globalTaxRate is provided, override the summed line tax amount
+  if (globalTaxRate > 0) {
+    taxAmount = (taxableAmount * globalTaxRate) / 100;
+  }
+
+  const totalAmount = taxableAmount + taxAmount + globalShipping;
 
   return {
-    subtotal,
+    subtotal: grossSubtotal,
     taxAmount,
     shippingAmount: globalShipping,
-    discountAmount: globalDiscount,
+    discountAmount: totalDiscount,
     totalAmount,
     processedLines
   };
@@ -119,7 +131,8 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
   const { subtotal, taxAmount, shippingAmount, discountAmount, totalAmount, processedLines } = calculateTotals(
     data.lines, 
     Number(data.discountAmount || 0), 
-    Number(data.shippingAmount || 0)
+    Number(data.shippingAmount || 0),
+    Number(data.taxRate || 0)
   );
 
   const parsedOrderDate = data.orderDate ? new Date(data.orderDate) : new Date();
@@ -228,7 +241,8 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
   const { subtotal, taxAmount, shippingAmount, discountAmount, totalAmount, processedLines } = calculateTotals(
     data.lines, 
     Number(data.discountAmount || existing.discountAmount), 
-    Number(data.shippingAmount || existing.shippingAmount)
+    Number(data.shippingAmount || existing.shippingAmount),
+    Number(data.taxRate || 0)
   );
 
   let validReqDate = null;

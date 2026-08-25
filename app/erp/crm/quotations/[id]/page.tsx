@@ -154,9 +154,9 @@ export default function QuotationDetailPage() {
               <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--surface-main)' }}>
                 <QuotationTotals 
                   subtotal={quotation.subtotal || 0} 
-                  totalDiscount={quotation.discount || 0} 
-                  totalTax={quotation.tax || 0} 
-                  grandTotal={quotation.grandTotal || quotation.totalAmount || 0} 
+                  totalDiscount={quotation.discountAmount ?? quotation.discount ?? 0} 
+                  totalTax={quotation.taxAmount ?? quotation.tax ?? 0} 
+                  grandTotal={quotation.totalAmount ?? quotation.grandTotal ?? 0} 
                 />
               </div>
             </div>

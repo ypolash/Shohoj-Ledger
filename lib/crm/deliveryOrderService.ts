@@ -361,15 +361,14 @@ export async function completeDelivery(companyId: string, id: string, userId: st
  * Cancels a Delivery Order.
  */
 export async function cancelDelivery(companyId: string, id: string, userId: string) {
-  const existing = await prisma.deliveryOrder.findUnique({ where: { id } });
-  if (existing?.status === DeliveryOrderStatus.SHIPPED || existing?.status === DeliveryOrderStatus.DELIVERED) {
+  const existing = await prisma.deliveryOrder.findFirst({ where: { id, companyId } });
+  if (!existing) throw new Error("Record not found or access denied");
+  if (existing.status === DeliveryOrderStatus.SHIPPED || existing.status === DeliveryOrderStatus.DELIVERED) {
     throw new Error("Cannot cancel a shipped or delivered order.");
   }
 
-  const existing = await prisma.deliveryOrder.findFirst({ where: { id, companyId } });
-    if (!existing) throw new Error("Record not found or access denied");
-    const delivery = await prisma.deliveryOrder.update({
-      where: { id },
+  const delivery = await prisma.deliveryOrder.update({
+    where: { id },
     data: { status: DeliveryOrderStatus.CANCELLED }
   });
 

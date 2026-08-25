@@ -758,8 +758,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_addresses_addressid_route",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -769,8 +769,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_addresses_addressid_route_put",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "put()"
     },
     {
@@ -780,8 +780,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_addresses_addressid_route_delete",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "delete()"
     },
     {
@@ -791,8 +791,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_addresses_route",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -802,8 +802,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_addresses_route_get",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -813,8 +813,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_addresses_route_post",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "post()"
     },
     {
@@ -824,8 +824,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_contactid_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "route.ts"
     },
     {
@@ -835,8 +835,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_contactid_route_put",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "put()"
     },
     {
@@ -846,8 +846,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_contactid_route_delete",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "delete()"
     },
     {
@@ -857,8 +857,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "route.ts"
     },
     {
@@ -868,8 +868,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "get()"
     },
     {
@@ -879,8 +879,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "post()"
     },
     {
@@ -1077,8 +1077,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -1088,8 +1088,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_crm_customers_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "get()"
     },
     {
@@ -1099,8 +1099,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_api_crm_customers_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -1187,8 +1187,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_leads_id_activities_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -1198,8 +1198,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_crm_leads_id_activities_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "get()"
     },
     {
@@ -1209,8 +1209,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "app_api_crm_leads_id_activities_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -1220,8 +1220,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_leads_id_convert_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1231,8 +1231,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_api_crm_leads_id_convert_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "post()"
     },
     {
@@ -1440,8 +1440,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_pipelines_id_route",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -1451,8 +1451,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_pipelines_id_route_put",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "put()"
     },
     {
@@ -1462,8 +1462,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_pipelines_id_route_delete",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "delete()"
     },
     {
@@ -1473,8 +1473,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_pipelines_route",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -1484,8 +1484,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_pipelines_route_get",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -1495,8 +1495,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_pipelines_route_post",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "post()"
     },
     {
@@ -1506,8 +1506,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -1517,8 +1517,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -1528,8 +1528,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_api_crm_opportunities_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "post()"
     },
     {
@@ -1748,8 +1748,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_sales_orders_id_route",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 34,
+      "community_name": "salesOrderService.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1759,8 +1759,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_crm_sales_orders_id_route_get",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 34,
+      "community_name": "salesOrderService.ts",
       "norm_label": "get()"
     },
     {
@@ -1770,8 +1770,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "app_api_crm_sales_orders_id_route_put",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "put()"
     },
     {
@@ -1781,8 +1781,8 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "app_api_crm_sales_orders_id_route_delete",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 34,
+      "community_name": "salesOrderService.ts",
       "norm_label": "delete()"
     },
     {
@@ -2815,8 +2815,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_income_categories_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "route.ts"
     },
     {
@@ -2826,8 +2826,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_income_categories_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "get()"
     },
     {
@@ -2837,8 +2837,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "app_api_income_categories_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "post()"
     },
     {
@@ -2848,8 +2848,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "app_api_income_categories_route_delete",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "delete()"
     },
     {
@@ -2947,8 +2947,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_assets_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -2958,8 +2958,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_assets_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "get()"
     },
     {
@@ -2969,8 +2969,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_api_inventory_assets_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -3101,8 +3101,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_products_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -3112,8 +3112,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_products_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "get()"
     },
     {
@@ -3123,8 +3123,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "app_api_inventory_products_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -4091,8 +4091,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_projects_id_tasks_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4102,8 +4102,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_projects_id_tasks_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4113,8 +4113,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_api_projects_id_tasks_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -21416,8 +21416,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_audit_auditservice",
-      "community": 51,
-      "community_name": "auditService.ts",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "auditservice.ts"
     },
     {
@@ -21427,8 +21427,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "lib_audit_auditservice_logauditparams",
-      "community": 51,
-      "community_name": "auditService.ts",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "logauditparams"
     },
     {
@@ -21438,8 +21438,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "lib_audit_auditservice_sensitive_keys",
-      "community": 51,
-      "community_name": "auditService.ts",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "sensitive_keys"
     },
     {
@@ -21449,8 +21449,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "lib_audit_auditservice_masksensitivedata",
-      "community": 51,
-      "community_name": "auditService.ts",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "masksensitivedata()"
     },
     {
@@ -22472,8 +22472,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_crm_customeraddressservice",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "customeraddressservice.ts"
     },
     {
@@ -22483,8 +22483,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_crm_customeraddressservice_customeraddressservice",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "customeraddressservice"
     },
     {
@@ -22494,8 +22494,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_crm_customercontactservice",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "customercontactservice.ts"
     },
     {
@@ -22505,8 +22505,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_crm_customercontactservice_customercontactservice",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 101,
+      "community_name": "purchaseRequisitionService.ts",
       "norm_label": "customercontactservice"
     },
     {
@@ -22549,8 +22549,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "lib_crm_customercreditservice_calculateexposure",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "calculateexposure()"
     },
     {
@@ -22560,8 +22560,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "lib_crm_customercreditservice_calculateavailablecredit",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "calculateavailablecredit()"
     },
     {
@@ -22648,8 +22648,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_crm_customerdocumentservice",
-      "community": 51,
-      "community_name": "auditService.ts",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "customerdocumentservice.ts"
     },
     {
@@ -22659,8 +22659,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_crm_customerdocumentservice_customerdocumentservice",
-      "community": 51,
-      "community_name": "auditService.ts",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "customerdocumentservice"
     },
     {
@@ -22802,8 +22802,8 @@
       "source_location": "L345",
       "_origin": "ast",
       "id": "lib_crm_customerpaymentservice_calculatecustomerbalance",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "calculatecustomerbalance()"
     },
     {
@@ -23055,8 +23055,8 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "lib_crm_customerservice_searchcustomers",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "searchcustomers()"
     },
     {
@@ -23173,12 +23173,67 @@
       "label": "createStockMovements()",
       "file_type": "code",
       "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L197",
+      "source_location": "L198",
       "_origin": "ast",
       "id": "lib_crm_deliveryorderservice_createstockmovements",
       "community": 74,
       "community_name": "deliveryOrderService.ts",
       "norm_label": "createstockmovements()"
+    },
+    {
+      "label": "consumeFIFO()",
+      "file_type": "code",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L267",
+      "_origin": "ast",
+      "id": "lib_crm_deliveryorderservice_consumefifo",
+      "community": 74,
+      "community_name": "deliveryOrderService.ts",
+      "norm_label": "consumefifo()"
+    },
+    {
+      "label": "shipDelivery()",
+      "file_type": "code",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L300",
+      "_origin": "ast",
+      "id": "lib_crm_deliveryorderservice_shipdelivery",
+      "community": 74,
+      "community_name": "deliveryOrderService.ts",
+      "norm_label": "shipdelivery()"
+    },
+    {
+      "label": "completeDelivery()",
+      "file_type": "code",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L341",
+      "_origin": "ast",
+      "id": "lib_crm_deliveryorderservice_completedelivery",
+      "community": 74,
+      "community_name": "deliveryOrderService.ts",
+      "norm_label": "completedelivery()"
+    },
+    {
+      "label": "cancelDelivery()",
+      "file_type": "code",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L363",
+      "_origin": "ast",
+      "id": "lib_crm_deliveryorderservice_canceldelivery",
+      "community": 74,
+      "community_name": "deliveryOrderService.ts",
+      "norm_label": "canceldelivery()"
+    },
+    {
+      "label": "getDeliveryHistory()",
+      "file_type": "code",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L390",
+      "_origin": "ast",
+      "id": "lib_crm_deliveryorderservice_getdeliveryhistory",
+      "community": 74,
+      "community_name": "deliveryOrderService.ts",
+      "norm_label": "getdeliveryhistory()"
     },
     {
       "label": "leadService.ts",
@@ -23187,8 +23242,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_crm_leadservice",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "leadservice.ts"
     },
     {
@@ -23198,8 +23253,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "lib_crm_leadservice_validatelead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "validatelead()"
     },
     {
@@ -23209,8 +23264,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "lib_crm_leadservice_generateleadnumber",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "generateleadnumber()"
     },
     {
@@ -23220,8 +23275,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "lib_crm_leadservice_createlead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "createlead()"
     },
     {
@@ -23231,8 +23286,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "lib_crm_leadservice_updatelead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "updatelead()"
     },
     {
@@ -23242,8 +23297,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "lib_crm_leadservice_deletelead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "deletelead()"
     },
     {
@@ -23253,8 +23308,8 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "lib_crm_leadservice_getlead",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "getlead()"
     },
     {
@@ -23264,8 +23319,8 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "lib_crm_leadservice_searchleads",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "searchleads()"
     },
     {
@@ -23275,8 +23330,8 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "lib_crm_leadservice_assignlead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "assignlead()"
     },
     {
@@ -23286,8 +23341,8 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "lib_crm_leadservice_qualifylead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "qualifylead()"
     },
     {
@@ -23297,8 +23352,8 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "lib_crm_leadservice_convertlead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "convertlead()"
     },
     {
@@ -23308,8 +23363,8 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "lib_crm_leadservice_closelostlead",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "closelostlead()"
     },
     {
@@ -23319,8 +23374,8 @@
       "source_location": "L280",
       "_origin": "ast",
       "id": "lib_crm_leadservice_addactivity",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "addactivity()"
     },
     {
@@ -23330,8 +23385,8 @@
       "source_location": "L305",
       "_origin": "ast",
       "id": "lib_crm_leadservice_getleadhistory",
-      "community": 75,
-      "community_name": "leadService.ts",
+      "community": 57,
+      "community_name": "customerService.ts",
       "norm_label": "getleadhistory()"
     },
     {
@@ -23341,8 +23396,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_crm_opportunitypipelineservice",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "opportunitypipelineservice.ts"
     },
     {
@@ -23352,8 +23407,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_crm_opportunitypipelineservice_opportunitypipelineservice",
-      "community": 150,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "opportunitypipelineservice"
     },
     {
@@ -23440,8 +23495,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "lib_crm_opportunityservice_searchopportunities",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "searchopportunities()"
     },
     {
@@ -23792,8 +23847,8 @@
       "source_location": "L315",
       "_origin": "ast",
       "id": "lib_crm_salesorderservice_deletesalesorder",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 34,
+      "community_name": "salesOrderService.ts",
       "norm_label": "deletesalesorder()"
     },
     {
@@ -23869,8 +23924,8 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "lib_crm_salesorderservice_getsalesorderhistory",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 34,
+      "community_name": "salesOrderService.ts",
       "norm_label": "getsalesorderhistory()"
     },
     {
@@ -26421,8 +26476,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "customerportalservice.ts"
     },
     {
@@ -26432,8 +26487,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_validateportalaccess",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "validateportalaccess()"
     },
     {
@@ -26443,8 +26498,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_authenticatecustomer",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "authenticatecustomer()"
     },
     {
@@ -26454,8 +26509,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_changepassword",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "changepassword()"
     },
     {
@@ -26465,8 +26520,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getcustomerprofile",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getcustomerprofile()"
     },
     {
@@ -26476,8 +26531,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_updatecustomerprofile",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "updatecustomerprofile()"
     },
     {
@@ -26487,8 +26542,8 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getquotations",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getquotations()"
     },
     {
@@ -26498,8 +26553,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getsalesorders",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getsalesorders()"
     },
     {
@@ -26509,8 +26564,8 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getdeliveries",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getdeliveries()"
     },
     {
@@ -26520,8 +26575,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getreturns",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getreturns()"
     },
     {
@@ -26531,8 +26586,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getpayments",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getpayments()"
     },
     {
@@ -26542,8 +26597,8 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getoutstandingbalance",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getoutstandingbalance()"
     },
     {
@@ -26553,8 +26608,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getaccountstatement",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getaccountstatement()"
     },
     {
@@ -26564,8 +26619,8 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_downloaddocuments",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "downloaddocuments()"
     },
     {
@@ -26575,8 +26630,8 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getportaldashboard",
-      "community": 205,
-      "community_name": "react",
+      "community": 15,
+      "community_name": "Funds Page",
       "norm_label": "getportaldashboard()"
     },
     {
@@ -26883,8 +26938,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "purchaserequisitionservice.ts"
     },
     {
@@ -26894,8 +26949,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_createrequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "createrequisition()"
     },
     {
@@ -26905,8 +26960,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_updaterequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "updaterequisition()"
     },
     {
@@ -26916,8 +26971,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_submitrequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "submitrequisition()"
     },
     {
@@ -26927,8 +26982,8 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_approverequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "approverequisition()"
     },
     {
@@ -26938,8 +26993,8 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_rejectrequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "rejectrequisition()"
     },
     {
@@ -26949,8 +27004,8 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_cancelrequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "cancelrequisition()"
     },
     {
@@ -26960,8 +27015,8 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_converttorfq",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "converttorfq()"
     },
     {
@@ -26971,8 +27026,8 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_generaterequisitionnumber",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "generaterequisitionnumber()"
     },
     {
@@ -26982,8 +27037,8 @@
       "source_location": "L204",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_validaterequisition",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "validaterequisition()"
     },
     {
@@ -26993,8 +27048,8 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "lib_procurement_purchaserequisitionservice_getrequisitionhistory",
-      "community": 101,
-      "community_name": "purchaseRequisitionService.ts",
+      "community": 20,
+      "community_name": "Settlement Page",
       "norm_label": "getrequisitionhistory()"
     },
     {
@@ -27664,8 +27719,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_procurement_vendorquotationservice",
-      "community": 20,
-      "community_name": "Settlement Page",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "vendorquotationservice.ts"
     },
     {
@@ -27675,8 +27730,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "lib_procurement_vendorquotationservice_createvendorquotation",
-      "community": 20,
-      "community_name": "Settlement Page",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "createvendorquotation()"
     },
     {
@@ -27686,8 +27741,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "lib_procurement_vendorquotationservice_submitvendorquotation",
-      "community": 20,
-      "community_name": "Settlement Page",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "submitvendorquotation()"
     },
     {
@@ -27697,8 +27752,8 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "lib_procurement_vendorquotationservice_acceptvendorquotation",
-      "community": 20,
-      "community_name": "Settlement Page",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "acceptvendorquotation()"
     },
     {
@@ -27708,8 +27763,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "lib_procurement_vendorquotationservice_rejectvendorquotation",
-      "community": 20,
-      "community_name": "Settlement Page",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "rejectvendorquotation()"
     },
     {
@@ -27719,8 +27774,8 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "lib_procurement_vendorquotationservice_validatevendorquotation",
-      "community": 20,
-      "community_name": "Settlement Page",
+      "community": 75,
+      "community_name": "leadService.ts",
       "norm_label": "validatevendorquotation()"
     },
     {
@@ -30906,8 +30961,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "test_route",
-      "community": 149,
-      "community_name": "route.ts",
+      "community": 34,
+      "community_name": "salesOrderService.ts",
       "norm_label": "test-route.ts"
     },
     {
@@ -50412,61 +50467,6 @@
       "community": 296,
       "community_name": "[1.1.0] - 2026-07-23",
       "norm_label": "security"
-    },
-    {
-      "label": "consumeFIFO",
-      "file_type": "code",
-      "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L276",
-      "_origin": "ast",
-      "id": "lib_crm_deliveryorderservice_consumefifo",
-      "community": 517,
-      "community_name": "consumeFIFO",
-      "norm_label": "consumefifo"
-    },
-    {
-      "label": "shipDelivery",
-      "file_type": "code",
-      "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L309",
-      "_origin": "ast",
-      "id": "lib_crm_deliveryorderservice_shipdelivery",
-      "community": 74,
-      "community_name": "deliveryOrderService.ts",
-      "norm_label": "shipdelivery"
-    },
-    {
-      "label": "completeDelivery",
-      "file_type": "code",
-      "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L350",
-      "_origin": "ast",
-      "id": "lib_crm_deliveryorderservice_completedelivery",
-      "community": 516,
-      "community_name": "completeDelivery",
-      "norm_label": "completedelivery"
-    },
-    {
-      "label": "cancelDelivery",
-      "file_type": "code",
-      "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L372",
-      "_origin": "ast",
-      "id": "lib_crm_deliveryorderservice_canceldelivery",
-      "community": 515,
-      "community_name": "cancelDelivery",
-      "norm_label": "canceldelivery"
-    },
-    {
-      "label": "getDeliveryHistory",
-      "file_type": "code",
-      "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L399",
-      "_origin": "ast",
-      "id": "lib_crm_deliveryorderservice_getdeliveryhistory",
-      "community": 518,
-      "community_name": "getDeliveryHistory",
-      "norm_label": "getdeliveryhistory"
     }
   ],
   "links": [
@@ -95609,9 +95609,42 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L376",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice_canceldelivery",
+      "target": "lib_audit_auditservice_logaudit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L349",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice_completedelivery",
+      "target": "lib_audit_auditservice_logaudit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/crm/deliveryOrderService.ts",
       "source_location": "L92",
       "weight": 1.0,
       "source": "lib_crm_deliveryorderservice_createdeliveryorder",
+      "target": "lib_audit_auditservice_logaudit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L327",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice_shipdelivery",
       "target": "lib_audit_auditservice_logaudit"
     },
     {
@@ -98919,6 +98952,36 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L363",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice",
+      "target": "lib_crm_deliveryorderservice_canceldelivery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L341",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice",
+      "target": "lib_crm_deliveryorderservice_completedelivery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L267",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice",
+      "target": "lib_crm_deliveryorderservice_consumefifo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
       "source_location": "L133",
       "weight": 1.0,
       "source": "lib_crm_deliveryorderservice",
@@ -98939,7 +99002,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/crm/deliveryOrderService.ts",
-      "source_location": "L197",
+      "source_location": "L198",
       "weight": 1.0,
       "source": "lib_crm_deliveryorderservice",
       "target": "lib_crm_deliveryorderservice_createstockmovements",
@@ -98959,10 +99022,30 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L390",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice",
+      "target": "lib_crm_deliveryorderservice_getdeliveryhistory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
       "source_location": "L176",
       "weight": 1.0,
       "source": "lib_crm_deliveryorderservice",
       "target": "lib_crm_deliveryorderservice_releasereservation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L300",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice",
+      "target": "lib_crm_deliveryorderservice_shipdelivery",
       "confidence_score": 1.0
     },
     {
@@ -99017,6 +99100,39 @@
       "weight": 1.0,
       "source": "lib_crm_deliveryorderservice_convertsalesorder",
       "target": "lib_crm_deliveryorderservice_createdeliveryorder",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L312",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice_shipdelivery",
+      "target": "lib_crm_deliveryorderservice_releasereservation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L315",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice_shipdelivery",
+      "target": "lib_crm_deliveryorderservice_createstockmovements",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/crm/deliveryOrderService.ts",
+      "source_location": "L318",
+      "weight": 1.0,
+      "source": "lib_crm_deliveryorderservice_shipdelivery",
+      "target": "lib_crm_deliveryorderservice_consumefifo",
       "confidence_score": 1.0
     },
     {
@@ -122931,5 +123047,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c67c0d2613583f34f8958ee2c6b999148ddeb77f"
+  "built_at_commit": "31576289c3a371a8e9ca8231a576b1df19ffc55a"
 }

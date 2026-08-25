@@ -3,6 +3,8 @@
 ## Core Goal
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
+- **Version 6.0 — Sprint CRM-CustomerReferences (Customer Reference Discounts & Git Push):**
+  - **Completed**: Added `CustomerReference` model to `schema.prisma` and generated REST endpoints (`/api/crm/customer-references`). Built an interactive Reference Management Modal in `CustomerToolbar.tsx` for creating, editing, and deleting customer references with associated discount amounts. Integrated a reference selection field into `SalesOrderForm.tsx` that automatically applies saved reference discounts to new sales orders. Pushed all changes directly to remote repository (`origin/main`).
 - **Version 6.0 — Sprint CRM-Shipments (Sales Order Delivery & Shipment Wiring):**
   - **Completed**: Created the `/api/crm/sales-orders/[id]/deliveries` REST endpoint (GET & POST) to process sales order delivery order conversions and trigger immediate `shipDelivery` stock deduction and stock movement creation. Overhauled `SalesOrderShipment.tsx` to turn the "Create Shipment" button into a fully interactive modal supporting courier selection (Steadfast, Paperfly, RedX, Pathao, DHL, FedEx, Internal), tracking numbers, delivery dates, and shipment remarks. Connected real-time `onRefresh` callbacks to sync order fulfillment status live upon dispatch.
 - **Version 6.0 — Sprint UI-Breadcrumb (Dynamic Page Title & Breadcrumb Resolution):**

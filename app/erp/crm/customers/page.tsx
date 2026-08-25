@@ -93,7 +93,7 @@ export default function CustomersPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <CustomerSearch onSearch={(q) => setFilters(prev => ({ ...prev, query: q }))} />
-          <CustomerToolbar onRefresh={fetchCustomers} />
+          <CustomerToolbar onRefresh={fetchCustomers} customers={customers} />
         </div>
 
         <CustomerFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />

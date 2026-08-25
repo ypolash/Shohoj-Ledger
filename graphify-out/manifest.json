@@ -1150,8 +1150,8 @@
     "semantic_hash": ""
   },
   "app/erp/crm/customers/components/CustomerToolbar.tsx": {
-    "mtime": 1785050177.706203,
-    "ast_hash": "7b0d9e41deebb32f19fe513c695c361b",
+    "mtime": 1787655217.65792,
+    "ast_hash": "9aced5f287c6234d57eeb229df5e0092",
     "semantic_hash": ""
   },
   "app/erp/crm/customers/groups/page.tsx": {
@@ -1165,8 +1165,8 @@
     "semantic_hash": ""
   },
   "app/erp/crm/customers/page.tsx": {
-    "mtime": 1787202096.8649464,
-    "ast_hash": "a2fb85129bd4ce7ee6b3718181b3be38",
+    "mtime": 1787655272.6036932,
+    "ast_hash": "c51374174cca310b4c3add698660c8b2",
     "semantic_hash": ""
   },
   "app/erp/crm/leads/[id]/edit/page.tsx": {

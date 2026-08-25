@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "app/api/crm/sales-orders/[id]/status/route.ts": {
-    "mtime": 1787134753.5751076,
-    "ast_hash": "43f6ae4569176644c9a75a289c6ac212",
+    "mtime": 1787654679.8524263,
+    "ast_hash": "7da5c248cf44591dc0c684e8386bf569",
     "semantic_hash": ""
   },
   "app/api/crm/sales-orders/dashboard/route.ts": {
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "app/erp/crm/sales-orders/[id]/page.tsx": {
-    "mtime": 1787653557.780197,
-    "ast_hash": "c903278c417e18dc97d8e031ae8c3006",
+    "mtime": 1787654734.207845,
+    "ast_hash": "6f6d8c65d89da999dda711426ad06e91",
     "semantic_hash": ""
   },
   "app/erp/crm/sales-orders/components/SalesOrderEmptyState.tsx": {

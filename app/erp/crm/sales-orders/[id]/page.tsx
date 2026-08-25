@@ -55,6 +55,26 @@ export default function SalesOrderDetailPage() {
     return () => setPageTitleOverride(null);
   }, [params.id, router, setPageTitleOverride]);
 
+  const handleShipmentStatusChange = async (newStatus: string) => {
+    try {
+      const res = await fetch(`/api/crm/sales-orders/${params.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        const data = await (await fetch(`/api/crm/sales-orders/${params.id}`)).json();
+        setOrder(data.order || data);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to update shipment status");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Error updating status");
+    }
+  };
+
   const handleStatusAction = async (action: string) => {
     try {
       const res = await fetch(`/api/crm/sales-orders/${params.id}/status`, {
@@ -163,10 +183,53 @@ export default function SalesOrderDetailPage() {
             {order.paymentStatus || 'Unpaid'}
           </div>
         </div>
-        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--success)' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Shipment Status</div>
-          <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 500, color: order.status === 'DELIVERED' ? 'var(--success)' : 'var(--info)' }}>
-            {order.status === 'DELIVERED' ? 'Delivered' : order.status === 'PARTIALLY_DELIVERED' ? 'Partial' : 'Pending'}
+        <div className="glass-card" style={{ 
+          padding: '16px', 
+          borderRadius: '12px', 
+          borderLeft: `4px solid ${
+            order.status === 'DELIVERED' 
+              ? 'var(--success)' 
+              : order.status === 'PARTIALLY_DELIVERED' 
+              ? '#a855f7' 
+              : order.status === 'APPROVED' 
+              ? 'var(--info)' 
+              : 'var(--warning)'
+          }` 
+        }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Shipment Status</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px', opacity: 0.7 }}>edit_note</span>
+          </div>
+          <div style={{ marginTop: '4px' }}>
+            <select 
+              value={order.status || 'DRAFT'}
+              onChange={(e) => handleShipmentStatusChange(e.target.value)}
+              style={{
+                background: 'var(--surface-hover)',
+                border: '1px solid var(--border-main)',
+                borderRadius: '6px',
+                padding: '6px 10px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: order.status === 'DELIVERED' 
+                  ? 'var(--success)' 
+                  : order.status === 'PARTIALLY_DELIVERED' 
+                  ? '#c084fc' 
+                  : order.status === 'APPROVED' 
+                  ? 'var(--info)' 
+                  : 'var(--warning)',
+                cursor: 'pointer',
+                outline: 'none',
+                width: '100%'
+              }}
+            >
+              <option value="DRAFT" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Pending</option>
+              <option value="OPEN" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Open / Processing</option>
+              <option value="APPROVED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Approved for Delivery</option>
+              <option value="PARTIALLY_DELIVERED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Partially Delivered</option>
+              <option value="DELIVERED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Delivered</option>
+              <option value="CANCELLED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Cancelled</option>
+            </select>
           </div>
         </div>
       </div>

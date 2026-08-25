@@ -21,9 +21,26 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!companyId || !userId) return NextResponse.json({ error: "Missing headers" }, { status: 400 });
 
-    const { action } = await req.json();
-    let result;
+    const body = await req.json();
+    const { action, status } = body;
 
+    // Allow direct status updates (e.g. from Shipment Status KPI card)
+    if (status) {
+      const updated = await prisma.salesOrder.update({
+        where: { id: resolvedParams.id },
+        data: { status: status as SalesOrderStatus }
+      });
+      await logAudit({
+        module: "CRM",
+        entityType: "SalesOrder",
+        entityId: resolvedParams.id,
+        action: "UPDATE",
+        description: `Updated Sales Order status to ${status}`
+      });
+      return NextResponse.json(updated);
+    }
+
+    let result;
     switch (action) {
       case "SUBMIT_APPROVAL":
         const so = await prisma.salesOrder.findFirst({ where: { id: resolvedParams.id, companyId } });

@@ -1,7 +1,7 @@
 # Graph Report - Shohoj Ledger  (2026-08-25)
 
 ## Corpus Check
-- 1073 files · ~398,525 words
+- 1073 files · ~398,769 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c5f3ec1d`
+- Built from commit: `4990bdbe`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

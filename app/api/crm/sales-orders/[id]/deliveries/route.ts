@@ -32,14 +32,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
     const body = await req.json().catch(() => ({}));
-    const { carrier, trackingNumber, deliveryDate, remarks } = body;
+    const { carrier, trackingNumber, deliveryDate, remarks, lines } = body;
 
     // 1. Convert Sales Order into a Delivery Order
     const deliveryOrder = await convertSalesOrder(companyId, resolvedParams.id, userId, {
-      carrier: carrier || "Standard Courier",
+      carrier: carrier || "Standard Delivery",
       trackingNumber: trackingNumber || "",
       deliveryDate: deliveryDate ? new Date(deliveryDate) : new Date(),
-      remarks: remarks || "Shipment created from Sales Order Workspace"
+      remarks: remarks || "Shipment created from Sales Order Workspace",
+      lines: lines || undefined
     });
 
     // 2. Ship the Delivery (deducts stock and records stock movement)

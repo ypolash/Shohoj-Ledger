@@ -150,7 +150,7 @@ export async function convertSalesOrder(companyId: string, salesOrderId: string,
     primaryWarehouseId = newWh.id;
   }
 
-  const linesToDeliver = salesOrder.lines.map(line => ({
+  const linesToDeliver = extraData?.lines && extraData.lines.length > 0 ? extraData.lines : salesOrder.lines.map(line => ({
     salesOrderLineId: line.id,
     productId: line.productId,
     quantity: Number(line.quantity) || 1

@@ -1443,6 +1443,7 @@ model Company {
   creditProfiles           CustomerCreditProfile[]
   customerDocuments        CustomerDocument[]
   customerGroups           CustomerGroup[]
+  customerReferences       CustomerReference[]
   customerPayments         CustomerPayment[]
   customerReturns          CustomerReturn[]
   cycleCounts              CycleCount[]
@@ -4265,6 +4266,19 @@ model CustomerDocument {
 
   @@index([companyId])
   @@index([customerId])
+}
+
+model CustomerReference {
+  id             String   @id @default(uuid())
+  companyId      String
+  referenceText  String
+  discountAmount Decimal  @default(0)
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
 }
 
 model CustomerAddress {

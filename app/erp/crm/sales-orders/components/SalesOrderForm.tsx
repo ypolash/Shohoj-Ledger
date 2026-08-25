@@ -3,12 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SalesOrderItems } from './SalesOrderItems';
-import { QuotationTotals } from '../../quotations/components/QuotationTotals'; // Reuse totals component
+import { QuotationTotals } from '../../quotations/components/QuotationTotals';
 
 export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [references, setReferences] = useState<any[]>([]);
+  const [selectedReferenceId, setSelectedReferenceId] = useState('');
+
   const [formData, setFormData] = useState({
     customerId: initialData.customerId || '',
     quotationId: initialData.quotationId || '',
@@ -48,8 +51,43 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
         console.error(err);
       }
     };
+
+    const fetchReferences = async () => {
+      try {
+        const res = await fetch('/api/crm/customer-references');
+        if (res.ok) {
+          const data = await res.json();
+          setReferences(data.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchCustomers();
+    fetchReferences();
   }, []);
+
+  const handleReferenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const refId = e.target.value;
+    setSelectedReferenceId(refId);
+
+    const refObj = references.find(r => r.id === refId);
+    if (refObj) {
+      // Auto-apply saved reference discount amount
+      const refDiscount = Number(refObj.discountAmount || 0);
+      setGlobalDiscount(refDiscount);
+
+      // Append reference note to private notes if not already present
+      const noteTag = `[Reference: ${refObj.referenceText}]`;
+      if (!formData.notes.includes(noteTag)) {
+        setFormData(prev => ({
+          ...prev,
+          notes: prev.notes ? `${prev.notes} ${noteTag}` : noteTag
+        }));
+      }
+    }
+  };
 
   const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
   const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount || 0), 0);
@@ -120,7 +158,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         
         {/* Header Section */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
           <div>
             <label style={labelStyle}>Customer *</label>
             <select name="customerId" required value={formData.customerId} onChange={handleChange} style={inputStyle}>
@@ -130,11 +168,24 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
               ))}
             </select>
           </div>
+
           <div>
             <label style={labelStyle}>Link to Quotation</label>
             <select name="quotationId" value={formData.quotationId} onChange={handleChange} style={inputStyle}>
               <option value="">Select Quotation (Optional)...</option>
               <option value="qt_1">QT-2026-001</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Customer Reference / Discount</label>
+            <select value={selectedReferenceId} onChange={handleReferenceChange} style={inputStyle}>
+              <option value="">Select Saved Reference (Auto-Discount)...</option>
+              {references.map(r => (
+                <option key={r.id} value={r.id}>
+                  {r.referenceText} {Number(r.discountAmount) > 0 ? `(- BDT ${Number(r.discountAmount).toLocaleString()})` : ''}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -173,7 +224,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
 
         {/* Totals Section */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '32px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '200px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '220px' }}>
             <div>
               <label style={labelStyle}>Global Discount (Amount)</label>
               <input type="number" value={globalDiscount} onChange={e => setGlobalDiscount(Number(e.target.value))} style={inputStyle} min="0" />
@@ -194,7 +245,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
           <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>Additional Information</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-              <label style={labelStyle}>Private Notes</label>
+              <label style={labelStyle}>Private Notes & Reference Tag</label>
               <textarea name="notes" value={formData.notes} onChange={handleChange} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}></textarea>
             </div>
           </div>

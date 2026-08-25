@@ -20,9 +20,12 @@ import { CustomerPayments } from "../components/CustomerPayments";
 import { CustomerProjects } from "../components/CustomerProjects";
 import { CustomerTags } from "../components/CustomerTags";
 
+import { useUI } from "@/lib/contexts/UIContext";
+
 export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { setPageTitleOverride } = useUI();
   const [customer, setCustomer] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,7 +36,12 @@ export default function CustomerDetailPage() {
         const res = await fetch(`/api/crm/customers/${params.id}`);
         if (res.ok) {
           const data = await res.json();
-          setCustomer(data.customer || data);
+          const cust = data.customer || data;
+          setCustomer(cust);
+          if (cust) {
+            const title = cust.name || cust.customerCode || 'Customer Details';
+            setPageTitleOverride(title);
+          }
         } else {
           router.push('/erp/crm/customers');
         }
@@ -44,7 +52,8 @@ export default function CustomerDetailPage() {
       }
     };
     if (params.id) fetchCustomer();
-  }, [params.id, router]);
+    return () => setPageTitleOverride(null);
+  }, [params.id, router, setPageTitleOverride]);
 
   if (loading) {
     return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Customer Master...</div></PageContainer>;

@@ -60,10 +60,31 @@ export function Topbar() {
   const paths = pathname.split('/').filter(Boolean);
   const breadcrumbs = paths.map((path, index) => {
     const isLast = index === paths.length - 1;
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(path) || (path.length > 20 && !path.includes(' '));
+    
     let name = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+
+    if (isUuid) {
+      const prevPath = index > 0 ? paths[index - 1] : '';
+      if (prevPath === 'sales-orders') {
+        name = `Order #${path.substring(0, 8)}`;
+      } else if (prevPath === 'quotations') {
+        name = `Quotation #${path.substring(0, 8)}`;
+      } else if (prevPath === 'customers') {
+        name = `Customer #${path.substring(0, 8)}`;
+      } else if (prevPath === 'leads') {
+        name = `Lead #${path.substring(0, 8)}`;
+      } else if (prevPath === 'opportunities') {
+        name = `Opportunity #${path.substring(0, 8)}`;
+      } else {
+        name = `Details`;
+      }
+    }
+
     if (isLast && pageTitleOverride) {
       name = pageTitleOverride;
     }
+
     const href = '/' + paths.slice(0, index + 1).join('/');
     return { name, isLast, href };
   });

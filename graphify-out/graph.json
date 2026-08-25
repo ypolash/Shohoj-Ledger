@@ -32,8 +32,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "app_api_advances_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -153,8 +153,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_audit_export_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -164,8 +164,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_audit_export_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -175,8 +175,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_audit_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -186,8 +186,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_audit_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -241,8 +241,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_auth_logout_route",
-      "community": 367,
-      "community_name": "route.ts",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -252,8 +252,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_api_auth_logout_route_post",
-      "community": 367,
-      "community_name": "route.ts",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -417,8 +417,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_clients_dashboard_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -428,8 +428,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_clients_dashboard_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -439,8 +439,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_clients_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -450,8 +450,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_clients_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -461,8 +461,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "app_api_clients_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -472,8 +472,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_communications_announcements_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -483,8 +483,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_api_communications_announcements_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -494,8 +494,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "app_api_communications_announcements_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -560,8 +560,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_communications_preferences_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -571,8 +571,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_communications_preferences_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -582,8 +582,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_api_communications_preferences_route_patch",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "patch()"
     },
     {
@@ -593,8 +593,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_communications_templates_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -604,8 +604,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_communications_templates_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -615,8 +615,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "app_api_communications_templates_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -824,8 +824,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_contactid_route",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -835,8 +835,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_contactid_route_put",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "put()"
     },
     {
@@ -846,8 +846,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_contactid_route_delete",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "delete()"
     },
     {
@@ -857,8 +857,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_route",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "route.ts"
     },
     {
@@ -868,8 +868,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_route_get",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "get()"
     },
     {
@@ -879,8 +879,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_api_crm_customers_id_contacts_route_post",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "post()"
     },
     {
@@ -1110,8 +1110,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_customers_stats_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1121,8 +1121,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_crm_customers_stats_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -1132,8 +1132,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_crm_dashboard_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1143,8 +1143,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_crm_dashboard_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -1891,8 +1891,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_departments_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1902,8 +1902,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_departments_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -1913,8 +1913,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "app_api_departments_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -1946,8 +1946,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_designations_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1957,8 +1957,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_designations_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -1968,8 +1968,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "app_api_designations_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -1979,8 +1979,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_employees_id_lifecycle_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -1990,8 +1990,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_employees_id_lifecycle_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -2001,8 +2001,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "app_api_employees_id_lifecycle_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -2023,8 +2023,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_employees_id_route_put",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "put()"
     },
     {
@@ -2452,8 +2452,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_expenses_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -2474,8 +2474,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_api_expenses_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -2485,8 +2485,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "app_api_expenses_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "patch()"
     },
     {
@@ -2529,8 +2529,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_finance_advances_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -2540,8 +2540,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_finance_advances_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -2551,8 +2551,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "app_api_finance_advances_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -2606,8 +2606,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "app_api_funds_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -2639,8 +2639,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_hr_fines_id_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -2650,8 +2650,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_hr_fines_id_route_patch",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "patch()"
     },
     {
@@ -2661,8 +2661,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "app_api_hr_fines_id_route_delete",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "delete()"
     },
     {
@@ -2749,8 +2749,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_hr_members_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -2760,8 +2760,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_hr_members_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -2771,8 +2771,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_api_hr_members_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -2782,8 +2782,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_income_categories_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "route.ts"
     },
     {
@@ -2793,8 +2793,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_income_categories_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "get()"
     },
     {
@@ -2804,8 +2804,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "app_api_income_categories_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "post()"
     },
     {
@@ -2815,8 +2815,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "app_api_income_categories_route_delete",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "delete()"
     },
     {
@@ -2826,8 +2826,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_income_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -2848,8 +2848,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_api_income_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -2870,8 +2870,8 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "app_api_income_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "patch()"
     },
     {
@@ -2881,8 +2881,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_asset_categories_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -2892,8 +2892,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_asset_categories_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -2903,8 +2903,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_api_inventory_asset_categories_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -2914,8 +2914,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_assets_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -2925,8 +2925,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_assets_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -2936,8 +2936,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "app_api_inventory_assets_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "post()"
     },
     {
@@ -2980,8 +2980,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_dashboard_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "route.ts"
     },
     {
@@ -2991,8 +2991,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_dashboard_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "get()"
     },
     {
@@ -3002,8 +3002,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_products_id_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -3013,8 +3013,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_products_id_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -3024,8 +3024,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "app_api_inventory_products_id_route_put",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "put()"
     },
     {
@@ -3035,8 +3035,8 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "app_api_inventory_products_id_route_delete",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "delete()"
     },
     {
@@ -3068,8 +3068,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_products_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -3079,8 +3079,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_products_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -3090,8 +3090,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "app_api_inventory_products_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "post()"
     },
     {
@@ -3101,8 +3101,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_purchases_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -3112,8 +3112,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_purchases_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -3123,8 +3123,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_api_inventory_purchases_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -3156,8 +3156,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_suppliers_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -3167,8 +3167,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_api_inventory_suppliers_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -3178,8 +3178,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "app_api_inventory_suppliers_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -3189,8 +3189,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_inventory_warehouses_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -3200,8 +3200,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_inventory_warehouses_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -3211,8 +3211,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_api_inventory_warehouses_route_post",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -3398,8 +3398,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "app_api_loans_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -3409,8 +3409,8 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "app_api_loans_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "patch()"
     },
     {
@@ -3420,8 +3420,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_marketing_campaigns_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "route.ts"
     },
     {
@@ -3431,8 +3431,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "app_api_marketing_campaigns_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -3464,8 +3464,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_members_id_route",
-      "community": 8,
-      "community_name": "Advances API",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "route.ts"
     },
     {
@@ -3475,8 +3475,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_members_id_route_get",
-      "community": 8,
-      "community_name": "Advances API",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "get()"
     },
     {
@@ -3486,8 +3486,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "app_api_members_id_route_patch",
-      "community": 8,
-      "community_name": "Advances API",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "patch()"
     },
     {
@@ -3937,8 +3937,8 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "app_api_payroll_bulk_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "patch()"
     },
     {
@@ -4058,8 +4058,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_projects_id_tasks_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "route.ts"
     },
     {
@@ -4069,8 +4069,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_projects_id_tasks_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "get()"
     },
     {
@@ -4080,8 +4080,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "app_api_projects_id_tasks_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "post()"
     },
     {
@@ -4091,8 +4091,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_projects_dashboard_route",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4102,8 +4102,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_projects_dashboard_route_get",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4113,8 +4113,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_projects_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4124,8 +4124,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_projects_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4135,8 +4135,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "app_api_projects_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4212,8 +4212,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "app_api_reserves_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "post()"
     },
     {
@@ -4245,8 +4245,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_settlements_route",
-      "community": 6,
-      "community_name": "Settlements & Calculations",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "route.ts"
     },
     {
@@ -4256,8 +4256,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "app_api_settlements_route_get",
-      "community": 6,
-      "community_name": "Settlements & Calculations",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "get()"
     },
     {
@@ -4267,8 +4267,8 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "app_api_settlements_route_post",
-      "community": 6,
-      "community_name": "Settlements & Calculations",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "post()"
     },
     {
@@ -4311,8 +4311,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_staff_bonus_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4333,8 +4333,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_staff_report_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4377,8 +4377,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_staff_settings_punishments_id_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "route.ts"
     },
     {
@@ -4388,8 +4388,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "app_api_staff_settings_punishments_id_route_put",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "put()"
     },
     {
@@ -4399,8 +4399,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_api_staff_settings_punishments_id_route_delete",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 6,
+      "community_name": "Settlements & Calculations",
       "norm_label": "delete()"
     },
     {
@@ -4410,8 +4410,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_staff_settings_punishments_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4421,8 +4421,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_api_staff_settings_punishments_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4432,8 +4432,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "app_api_staff_settings_punishments_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4509,8 +4509,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_backups_route",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4520,8 +4520,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_system_backups_route_get",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4531,8 +4531,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "app_api_system_backups_route_post",
-      "community": 7,
-      "community_name": "Income API",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4542,8 +4542,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_billing_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4553,8 +4553,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_system_billing_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4564,8 +4564,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "app_api_system_billing_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4575,8 +4575,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "app_api_system_billing_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "patch()"
     },
     {
@@ -4586,8 +4586,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_companies_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4597,8 +4597,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_system_companies_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4608,8 +4608,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_api_system_companies_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "patch()"
     },
     {
@@ -4619,8 +4619,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_dashboard_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4630,8 +4630,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_api_system_dashboard_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4641,8 +4641,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_features_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4652,8 +4652,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_system_features_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4663,8 +4663,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_api_system_features_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4674,8 +4674,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_plans_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4685,8 +4685,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_system_plans_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4696,8 +4696,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_api_system_plans_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4707,8 +4707,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "app_api_system_plans_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "patch()"
     },
     {
@@ -4718,8 +4718,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_settings_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4729,8 +4729,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_system_settings_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4740,8 +4740,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "app_api_system_settings_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4751,8 +4751,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_api_system_subscriptions_route",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "route.ts"
     },
     {
@@ -4762,8 +4762,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_api_system_subscriptions_route_get",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "get()"
     },
     {
@@ -4773,8 +4773,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "app_api_system_subscriptions_route_post",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "post()"
     },
     {
@@ -4784,8 +4784,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "app_api_system_subscriptions_route_patch",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "patch()"
     },
     {
@@ -5727,11 +5727,11 @@
       "label": "CustomerDetailPage()",
       "file_type": "code",
       "source_file": "app/erp/crm/customers/[id]/page.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "app_erp_crm_customers_id_page_customerdetailpage",
-      "community": 18,
-      "community_name": "Projects Page",
+      "community": 23,
+      "community_name": "App Home Page",
       "norm_label": "customerdetailpage()"
     },
     {
@@ -5840,8 +5840,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_crm_customers_components_customercontacts",
-      "community": 18,
-      "community_name": "Projects Page",
+      "community": 412,
+      "community_name": "isWithinOfficeRadius",
       "norm_label": "customercontacts.tsx"
     },
     {
@@ -5851,8 +5851,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "app_erp_crm_customers_components_customercontacts_customercontactsprops",
-      "community": 18,
-      "community_name": "Projects Page",
+      "community": 412,
+      "community_name": "isWithinOfficeRadius",
       "norm_label": "customercontactsprops"
     },
     {
@@ -5862,8 +5862,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "app_erp_crm_customers_components_customercontacts_customercontacts",
-      "community": 18,
-      "community_name": "Projects Page",
+      "community": 412,
+      "community_name": "isWithinOfficeRadius",
       "norm_label": "customercontacts()"
     },
     {
@@ -7784,11 +7784,11 @@
       "label": "QuotationDetailPage()",
       "file_type": "code",
       "source_file": "app/erp/crm/quotations/[id]/page.tsx",
-      "source_location": "L18",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "app_erp_crm_quotations_id_page_quotationdetailpage",
-      "community": 35,
-      "community_name": "page.tsx",
+      "community": 23,
+      "community_name": "App Home Page",
       "norm_label": "quotationdetailpage()"
     },
     {
@@ -8216,7 +8216,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_crm_quotations_components_quotationtotals",
-      "community": 35,
+      "community": 46,
       "community_name": "page.tsx",
       "norm_label": "quotationtotals.tsx"
     },
@@ -8227,7 +8227,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_erp_crm_quotations_components_quotationtotals_quotationtotalsprops",
-      "community": 35,
+      "community": 46,
       "community_name": "page.tsx",
       "norm_label": "quotationtotalsprops"
     },
@@ -8238,7 +8238,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "app_erp_crm_quotations_components_quotationtotals_quotationtotals",
-      "community": 35,
+      "community": 46,
       "community_name": "page.tsx",
       "norm_label": "quotationtotals()"
     },
@@ -8950,11 +8950,11 @@
       "label": "SalesOrderDetailPage()",
       "file_type": "code",
       "source_file": "app/erp/crm/sales-orders/[id]/page.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "app_erp_crm_sales_orders_id_page_salesorderdetailpage",
-      "community": 46,
-      "community_name": "page.tsx",
+      "community": 23,
+      "community_name": "App Home Page",
       "norm_label": "salesorderdetailpage()"
     },
     {
@@ -13738,8 +13738,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_layout",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "layout.tsx"
     },
     {
@@ -13749,8 +13749,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_erp_layout_dashboardlayout",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "dashboardlayout()"
     },
     {
@@ -13859,8 +13859,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_members_id_edit_page",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "page.tsx"
     },
     {
@@ -13870,8 +13870,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_erp_members_id_edit_page_editmemberpage",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "editmemberpage()"
     },
     {
@@ -13881,8 +13881,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_members_id_page",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "page.tsx"
     },
     {
@@ -13892,8 +13892,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "app_erp_members_id_page_member",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "member"
     },
     {
@@ -13903,8 +13903,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "app_erp_members_id_page_memberprofilepage",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "memberprofilepage()"
     },
     {
@@ -15806,7 +15806,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_employeeprofileclient",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "employeeprofileclient.tsx"
     },
@@ -15817,7 +15817,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_employeeprofileclient_employeeprofileclient",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "employeeprofileclient()"
     },
@@ -15828,7 +15828,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_actions",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "actions.ts"
     },
@@ -15839,7 +15839,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_actions_verifyaccess",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "verifyaccess()"
     },
@@ -15850,7 +15850,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_actions_updateextendedprofile",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "updateextendedprofile()"
     },
@@ -15861,7 +15861,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_actions_savedocumentmetadata",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "savedocumentmetadata()"
     },
@@ -15872,7 +15872,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "app_erp_staff_management_employees_id_actions_savenote",
-      "community": 208,
+      "community": 203,
       "community_name": "actions.ts",
       "norm_label": "savenote()"
     },
@@ -16224,8 +16224,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "app_erp_staff_management_payroll_payslip_id_page_payslippage",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 5,
+      "community_name": "Next.js TS Config",
       "norm_label": "payslippage()"
     },
     {
@@ -16653,8 +16653,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "app_page",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 367,
+      "community_name": "route.ts",
       "norm_label": "page.tsx"
     },
     {
@@ -16664,8 +16664,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "app_page_home",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 367,
+      "community_name": "route.ts",
       "norm_label": "home()"
     },
     {
@@ -17511,8 +17511,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_layout_appshell_appshell",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "appshell.tsx"
     },
     {
@@ -17522,8 +17522,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "components_layout_appshell_appshell_appshellprops",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "appshellprops"
     },
     {
@@ -17533,8 +17533,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "components_layout_appshell_appshell_appshell",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "appshell()"
     },
     {
@@ -17610,8 +17610,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_layout_sidebar_sidebar",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 367,
+      "community_name": "route.ts",
       "norm_label": "sidebar.tsx"
     },
     {
@@ -17621,8 +17621,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_layout_sidebar_sidebar_sidebarprops",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 367,
+      "community_name": "route.ts",
       "norm_label": "sidebarprops"
     },
     {
@@ -17632,8 +17632,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "components_layout_sidebar_sidebar_sidebar",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 367,
+      "community_name": "route.ts",
       "norm_label": "sidebar()"
     },
     {
@@ -17731,8 +17731,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_layout_topbar_topbar",
-      "community": 64,
-      "community_name": "Topbar.tsx",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "topbar.tsx"
     },
     {
@@ -17742,8 +17742,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "components_layout_topbar_topbar_topbar",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "topbar()"
     },
     {
@@ -18490,8 +18490,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_dialog_dialog",
-      "community": 60,
-      "community_name": "Button.tsx",
+      "community": 64,
+      "community_name": "Topbar.tsx",
       "norm_label": "dialog.tsx"
     },
     {
@@ -18501,8 +18501,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_ui_dialog_dialog_dialogvariant",
-      "community": 60,
-      "community_name": "Button.tsx",
+      "community": 64,
+      "community_name": "Topbar.tsx",
       "norm_label": "dialogvariant"
     },
     {
@@ -18512,8 +18512,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_ui_dialog_dialog_dialogprops",
-      "community": 60,
-      "community_name": "Button.tsx",
+      "community": 64,
+      "community_name": "Topbar.tsx",
       "norm_label": "dialogprops"
     },
     {
@@ -18523,8 +18523,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_ui_dialog_dialog_dialog",
-      "community": 60,
-      "community_name": "Button.tsx",
+      "community": 64,
+      "community_name": "Topbar.tsx",
       "norm_label": "dialog()"
     },
     {
@@ -18589,8 +18589,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_ui_dropdown_dropdown",
-      "community": 64,
-      "community_name": "Topbar.tsx",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "dropdown.tsx"
     },
     {
@@ -18600,8 +18600,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_ui_dropdown_dropdown_dropdownitemprops",
-      "community": 64,
-      "community_name": "Topbar.tsx",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "dropdownitemprops"
     },
     {
@@ -18611,8 +18611,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "components_ui_dropdown_dropdown_dropdownprops",
-      "community": 64,
-      "community_name": "Topbar.tsx",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "dropdownprops"
     },
     {
@@ -18622,8 +18622,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "components_ui_dropdown_dropdown_dropdown",
-      "community": 64,
-      "community_name": "Topbar.tsx",
+      "community": 208,
+      "community_name": "actions.ts",
       "norm_label": "dropdown()"
     },
     {
@@ -21922,8 +21922,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_calculations",
-      "community": 6,
-      "community_name": "Settlements & Calculations",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "calculations.ts"
     },
     {
@@ -21933,8 +21933,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_calculations_calculatesettlement",
-      "community": 6,
-      "community_name": "Settlements & Calculations",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "calculatesettlement()"
     },
     {
@@ -21944,8 +21944,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_calculations_applyduebalance",
-      "community": 6,
-      "community_name": "Settlements & Calculations",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "applyduebalance()"
     },
     {
@@ -21955,8 +21955,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_company_companyfilter",
-      "community": 5,
-      "community_name": "Next.js TS Config",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "companyfilter.ts"
     },
     {
@@ -22252,8 +22252,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_contexts_uicontext",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 13,
+      "community_name": "Root Layout",
       "norm_label": "uicontext.tsx"
     },
     {
@@ -22263,8 +22263,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "lib_contexts_uicontext_theme",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 13,
+      "community_name": "Root Layout",
       "norm_label": "theme"
     },
     {
@@ -22274,8 +22274,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "lib_contexts_uicontext_uicontexttype",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 13,
+      "community_name": "Root Layout",
       "norm_label": "uicontexttype"
     },
     {
@@ -22285,8 +22285,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "lib_contexts_uicontext_uicontext",
-      "community": 23,
-      "community_name": "App Home Page",
+      "community": 13,
+      "community_name": "Root Layout",
       "norm_label": "uicontext"
     },
     {
@@ -22461,8 +22461,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_crm_customercontactservice",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "customercontactservice.ts"
     },
     {
@@ -22472,8 +22472,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_crm_customercontactservice_customercontactservice",
-      "community": 148,
-      "community_name": "route.ts",
+      "community": 8,
+      "community_name": "Advances API",
       "norm_label": "customercontactservice"
     },
     {
@@ -22516,8 +22516,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "lib_crm_customercreditservice_calculateexposure",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "calculateexposure()"
     },
     {
@@ -22527,8 +22527,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "lib_crm_customercreditservice_calculateavailablecredit",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "calculateavailablecredit()"
     },
     {
@@ -22769,8 +22769,8 @@
       "source_location": "L345",
       "_origin": "ast",
       "id": "lib_crm_customerpaymentservice_calculatecustomerbalance",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "calculatecustomerbalance()"
     },
     {
@@ -23913,8 +23913,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_gps",
-      "community": 412,
-      "community_name": "isWithinOfficeRadius",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "gps.ts"
     },
     {
@@ -23924,8 +23924,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_gps_getdistanceinmeters",
-      "community": 412,
-      "community_name": "isWithinOfficeRadius",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "getdistanceinmeters()"
     },
     {
@@ -23935,8 +23935,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "lib_gps_iswithinofficeradius",
-      "community": 412,
-      "community_name": "isWithinOfficeRadius",
+      "community": 0,
+      "community_name": "API Routes & Prisma",
       "norm_label": "iswithinofficeradius()"
     },
     {
@@ -25717,8 +25717,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_ledger",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "ledger.ts"
     },
     {
@@ -25728,8 +25728,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "lib_ledger_moduletype",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "moduletype"
     },
     {
@@ -25739,8 +25739,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "lib_ledger_accounttype",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "accounttype"
     },
     {
@@ -25750,8 +25750,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "lib_ledger_ledgerentrypayload",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "ledgerentrypayload"
     },
     {
@@ -25761,8 +25761,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "lib_ledger_createledgerentry",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "createledgerentry()"
     },
     {
@@ -26443,8 +26443,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "customerportalservice.ts"
     },
     {
@@ -26454,8 +26454,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_validateportalaccess",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "validateportalaccess()"
     },
     {
@@ -26465,8 +26465,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_authenticatecustomer",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "authenticatecustomer()"
     },
     {
@@ -26476,8 +26476,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_changepassword",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "changepassword()"
     },
     {
@@ -26487,8 +26487,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getcustomerprofile",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getcustomerprofile()"
     },
     {
@@ -26498,8 +26498,8 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_updatecustomerprofile",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "updatecustomerprofile()"
     },
     {
@@ -26509,8 +26509,8 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getquotations",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getquotations()"
     },
     {
@@ -26520,8 +26520,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getsalesorders",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getsalesorders()"
     },
     {
@@ -26531,8 +26531,8 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getdeliveries",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getdeliveries()"
     },
     {
@@ -26542,8 +26542,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getreturns",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getreturns()"
     },
     {
@@ -26553,8 +26553,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getpayments",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getpayments()"
     },
     {
@@ -26564,8 +26564,8 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getoutstandingbalance",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getoutstandingbalance()"
     },
     {
@@ -26575,8 +26575,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getaccountstatement",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getaccountstatement()"
     },
     {
@@ -26586,8 +26586,8 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_downloaddocuments",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "downloaddocuments()"
     },
     {
@@ -26597,8 +26597,8 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "lib_portal_customerportalservice_getportaldashboard",
-      "community": 15,
-      "community_name": "Funds Page",
+      "community": 205,
+      "community_name": "react",
       "norm_label": "getportaldashboard()"
     },
     {
@@ -27873,8 +27873,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "lib_rbac_permissionguard_requirepermission",
-      "community": 0,
-      "community_name": "API Routes & Prisma",
+      "community": 148,
+      "community_name": "route.ts",
       "norm_label": "requirepermission()"
     },
     {
@@ -28357,8 +28357,8 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "lib_session_deletesession",
-      "community": 367,
-      "community_name": "route.ts",
+      "community": 7,
+      "community_name": "Income API",
       "norm_label": "deletesession()"
     },
     {
@@ -28940,8 +28940,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "package_dependencies_react",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "react"
     },
     {
@@ -28951,8 +28951,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "react",
-      "community": 205,
-      "community_name": "react",
+      "community": 203,
+      "community_name": "actions.ts",
       "norm_label": "react"
     },
     {
@@ -31849,7 +31849,7 @@
       "label": "Production Roadmap (Version 1.4)",
       "file_type": "document",
       "source_file": "MISSION.md",
-      "source_location": "L52",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "mission_production_roadmap_version_1_4",
       "community": 294,
@@ -31860,7 +31860,7 @@
       "label": "Goal Pivots & Architectural Decisions",
       "file_type": "document",
       "source_file": "MISSION.md",
-      "source_location": "L103",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "mission_goal_pivots_architectural_decisions",
       "community": 294,
@@ -31871,7 +31871,7 @@
       "label": "Production Roadmap",
       "file_type": "document",
       "source_file": "MISSION.md",
-      "source_location": "L113",
+      "source_location": "L115",
       "_origin": "ast",
       "id": "mission_production_roadmap",
       "community": 294,
@@ -71579,7 +71579,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/erp/crm/customers/[id]/page.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "app_erp_crm_customers_id_page",
       "target": "app_erp_crm_customers_id_page_customerdetailpage",
@@ -71628,6 +71628,39 @@
       "source": "app_erp_crm_customers_id_page",
       "target": "components_layout_pageheader_pageheader_pageheader",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/erp/crm/customers/[id]/page.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "app_erp_crm_customers_id_page",
+      "target": "lib_contexts_uicontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/erp/crm/customers/[id]/page.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "app_erp_crm_customers_id_page",
+      "target": "lib_contexts_uicontext_useui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/erp/crm/customers/[id]/page.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "app_erp_crm_customers_id_page_customerdetailpage",
+      "target": "lib_contexts_uicontext_useui"
     },
     {
       "relation": "contains",
@@ -75008,7 +75041,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/erp/crm/quotations/[id]/page.tsx",
-      "source_location": "L18",
+      "source_location": "L20",
       "weight": 1.0,
       "source": "app_erp_crm_quotations_id_page",
       "target": "app_erp_crm_quotations_id_page_quotationdetailpage",
@@ -75057,6 +75090,39 @@
       "source": "app_erp_crm_quotations_id_page",
       "target": "components_layout_pageheader_pageheader_pageheader",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/erp/crm/quotations/[id]/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "app_erp_crm_quotations_id_page",
+      "target": "lib_contexts_uicontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/erp/crm/quotations/[id]/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "app_erp_crm_quotations_id_page",
+      "target": "lib_contexts_uicontext_useui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/erp/crm/quotations/[id]/page.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "app_erp_crm_quotations_id_page_quotationdetailpage",
+      "target": "lib_contexts_uicontext_useui"
     },
     {
       "relation": "contains",
@@ -77138,7 +77204,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/erp/crm/sales-orders/[id]/page.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "app_erp_crm_sales_orders_id_page",
       "target": "app_erp_crm_sales_orders_id_page_salesorderdetailpage",
@@ -77187,6 +77253,39 @@
       "source": "app_erp_crm_sales_orders_id_page",
       "target": "components_layout_pageheader_pageheader_pageheader",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/erp/crm/sales-orders/[id]/page.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "app_erp_crm_sales_orders_id_page",
+      "target": "lib_contexts_uicontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/erp/crm/sales-orders/[id]/page.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "app_erp_crm_sales_orders_id_page",
+      "target": "lib_contexts_uicontext_useui",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/erp/crm/sales-orders/[id]/page.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "app_erp_crm_sales_orders_id_page_salesorderdetailpage",
+      "target": "lib_contexts_uicontext_useui"
     },
     {
       "relation": "contains",
@@ -107804,7 +107903,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "MISSION.md",
-      "source_location": "L103",
+      "source_location": "L105",
       "weight": 1.0,
       "source": "mission_mission_md",
       "target": "mission_goal_pivots_architectural_decisions",
@@ -107814,7 +107913,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "MISSION.md",
-      "source_location": "L113",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "mission_mission_md",
       "target": "mission_production_roadmap",
@@ -107824,7 +107923,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "MISSION.md",
-      "source_location": "L52",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "mission_mission_md",
       "target": "mission_production_roadmap_version_1_4",
@@ -122752,5 +122851,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4b489a5d94f311a873093442005c2ab1cfaea693"
+  "built_at_commit": "63b0b7a2961e7da163465b452074c9a232ee56e8"
 }

@@ -15,9 +15,12 @@ import { QuotationNotes } from "../components/QuotationNotes";
 import { QuotationAttachments } from "../components/QuotationAttachments";
 import { QuotationTerms } from "../components/QuotationTerms";
 
+import { useUI } from "@/lib/contexts/UIContext";
+
 export default function QuotationDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { setPageTitleOverride } = useUI();
   const [quotation, setQuotation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -28,7 +31,12 @@ export default function QuotationDetailPage() {
         const res = await fetch(`/api/crm/quotations/${params.id}`);
         if (res.ok) {
           const data = await res.json();
-          setQuotation(data.quotation || data);
+          const q = data.quotation || data;
+          setQuotation(q);
+          if (q) {
+            const title = q.quotationNumber || q.quotationNo || `Quotation ${q.id ? q.id.substring(0, 8) : ''}`;
+            setPageTitleOverride(title);
+          }
         } else {
           router.push('/erp/crm/quotations');
         }
@@ -39,7 +47,8 @@ export default function QuotationDetailPage() {
       }
     };
     if (params.id) fetchQuotation();
-  }, [params.id, router]);
+    return () => setPageTitleOverride(null);
+  }, [params.id, router, setPageTitleOverride]);
 
   if (loading) {
     return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Quotation...</div></PageContainer>;

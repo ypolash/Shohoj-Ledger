@@ -3,6 +3,8 @@
 ## Core Goal
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
+- **Version 6.0 — Sprint UI-Breadcrumb (Dynamic Page Title & Breadcrumb Resolution):**
+  - **Completed**: Fixed topbar address bar / breadcrumbs so that raw UUID parameters (e.g. `298fd479-42be...`) are intelligently recognized and formatted (e.g., `Order #298fd479`). Injected `setPageTitleOverride` hooks in `SalesOrderDetailPage`, `QuotationDetailPage`, and `CustomerDetailPage` so that upon loading the record, the topbar breadcrumb dynamically displays the exact human-readable order number (e.g., `SO-SHO-20260825-0001` / `Order 298fd479`), quotation number, or customer name.
 - **Version 6.0 — Sprint CRM-Financials (Quotation & Sales Order Calculation Polish):**
   - **Completed**: Refactored calculation engines in `quotationService.ts`, `salesOrderService.ts`, `QuotationForm.tsx`, `SalesOrderForm.tsx`, and detail views (`[id]/page.tsx`). Fixed gross subtotal calculation to preserve item gross amounts (e.g., BDT 5,000.00), sum line and global discounts into `discountAmount` (e.g., - BDT 500.00), compute Tax/VAT over net taxable subtotal (e.g., + BDT 675.00), and yield exact Grand Total (e.g., BDT 5,175.00).
 - **Version 6.0 — Sprint CRM-Marketing (Marketing Module & Expense Integration):**

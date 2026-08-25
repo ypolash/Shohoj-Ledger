@@ -14,9 +14,12 @@ import { SalesOrderHistory } from "../components/SalesOrderHistory";
 import { SalesOrderPayments } from "../components/SalesOrderPayments";
 import { SalesOrderShipment } from "../components/SalesOrderShipment";
 
+import { useUI } from "@/lib/contexts/UIContext";
+
 export default function SalesOrderDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { setPageTitleOverride } = useUI();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -27,7 +30,12 @@ export default function SalesOrderDetailPage() {
         const res = await fetch(`/api/crm/sales-orders/${params.id}`);
         if (res.ok) {
           const data = await res.json();
-          setOrder(data.order || data);
+          const ord = data.order || data;
+          setOrder(ord);
+          if (ord) {
+            const title = ord.salesOrderNumber || ord.orderNo || `Order ${ord.id ? ord.id.substring(0, 8) : ''}`;
+            setPageTitleOverride(title);
+          }
         } else {
           if (res.status === 404) {
             router.push('/erp/crm/sales-orders');
@@ -44,7 +52,8 @@ export default function SalesOrderDetailPage() {
       }
     };
     if (params.id) fetchOrder();
-  }, [params.id, router]);
+    return () => setPageTitleOverride(null);
+  }, [params.id, router, setPageTitleOverride]);
 
   const handleStatusAction = async (action: string) => {
     try {
@@ -85,8 +94,8 @@ export default function SalesOrderDetailPage() {
         </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <PageHeader 
-              title={order.orderNo || `Order ${order.id.substring(0,8)}`}
-              description={`Customer: ${order.customer?.customerName || 'Unknown'}`}
+              title={order.salesOrderNumber || order.orderNo || `Order ${order.id.substring(0,8)}`}
+              description={`Customer: ${order.customer?.name || order.customer?.customerName || 'Unknown'}`}
             />
             <div style={{ marginTop: '-8px' }}>
               <SalesOrderStatus status={order.status} />

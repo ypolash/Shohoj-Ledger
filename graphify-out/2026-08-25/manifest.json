@@ -1150,8 +1150,8 @@
     "semantic_hash": ""
   },
   "app/erp/crm/customers/components/CustomerToolbar.tsx": {
-    "mtime": 1787655217.65792,
-    "ast_hash": "9aced5f287c6234d57eeb229df5e0092",
+    "mtime": 1787656167.0076437,
+    "ast_hash": "845c2414ac3138174b9b10295b1d755e",
     "semantic_hash": ""
   },
   "app/erp/crm/customers/groups/page.tsx": {
@@ -1665,8 +1665,8 @@
     "semantic_hash": ""
   },
   "app/erp/crm/sales-orders/components/SalesOrderForm.tsx": {
-    "mtime": 1787652933.1313267,
-    "ast_hash": "fffa8031a23f9702fc5e24f889866f46",
+    "mtime": 1787656182.0609207,
+    "ast_hash": "e897dbcfd77aa3c53e5f8ef5c99d7eb0",
     "semantic_hash": ""
   },
   "app/erp/crm/sales-orders/components/SalesOrderHistory.tsx": {
@@ -5377,6 +5377,16 @@
   "app/api/crm/sales-orders/[id]/deliveries/route.ts": {
     "mtime": 1787654242.1750093,
     "ast_hash": "39148277ac2bcdc705007bd252de850e",
+    "semantic_hash": ""
+  },
+  "app/api/crm/customer-references/[id]/route.ts": {
+    "mtime": 1787656152.2373798,
+    "ast_hash": "dd08178c46c60709f5903321d3792a34",
+    "semantic_hash": ""
+  },
+  "app/api/crm/customer-references/route.ts": {
+    "mtime": 1787656138.3191388,
+    "ast_hash": "ccd6b9718269f5f59aac00dd8254397f",
     "semantic_hash": ""
   }
 }

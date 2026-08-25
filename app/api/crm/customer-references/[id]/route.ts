@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+function getRefModel() {
+  return (prisma as any).customerReference || new PrismaClient().customerReference;
+}
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,12 +16,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json();
     const { referenceText, discountAmount, description } = body;
 
-    const existing = await prisma.customerReference.findFirst({
+    const model = getRefModel();
+    const existing = await model.findFirst({
       where: { id: resolvedParams.id, companyId }
     });
     if (!existing) return NextResponse.json({ error: "Reference not found" }, { status: 404 });
 
-    const updated = await prisma.customerReference.update({
+    const updated = await model.update({
       where: { id: resolvedParams.id },
       data: {
         referenceText: referenceText !== undefined ? referenceText.trim() : existing.referenceText,
@@ -37,12 +43,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const resolvedParams = await params;
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
-    const existing = await prisma.customerReference.findFirst({
+    const model = getRefModel();
+    const existing = await model.findFirst({
       where: { id: resolvedParams.id, companyId }
     });
     if (!existing) return NextResponse.json({ error: "Reference not found" }, { status: 404 });
 
-    await prisma.customerReference.delete({
+    await model.delete({
       where: { id: resolvedParams.id }
     });
 

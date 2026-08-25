@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+function getRefModel() {
+  return (prisma as any).customerReference || new PrismaClient().customerReference;
+}
 
 export async function GET(req: NextRequest) {
   try {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Missing company ID" }, { status: 400 });
 
-    const references = await prisma.customerReference.findMany({
+    const model = getRefModel();
+    const references = await model.findMany({
       where: { companyId },
       orderBy: { createdAt: 'desc' }
     });
@@ -30,7 +36,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Reference Text is required" }, { status: 400 });
     }
 
-    const reference = await prisma.customerReference.create({
+    const model = getRefModel();
+    const reference = await model.create({
       data: {
         companyId,
         referenceText: referenceText.trim(),

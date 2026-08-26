@@ -12,7 +12,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 4rem;
+  padding: 0.75rem 4rem;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   position: sticky;
@@ -81,8 +81,8 @@
   position: relative;
   overflow: hidden;
   height: 100vh;
-  margin-top: -80px; /* Overlap navbar to make it truly full screen */
-  padding-top: calc(4rem + 80px); /* Add padding to account for navbar */
+  margin-top: -60px; /* Overlap navbar to make it truly full screen */
+  padding-top: calc(4rem + 60px); /* Add padding to account for navbar */
   background-image: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.95)), url('/crm-bg-v2.jpg');
   background-size: cover;
   background-position: center;

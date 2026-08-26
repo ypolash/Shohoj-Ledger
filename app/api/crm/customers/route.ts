@@ -12,10 +12,12 @@ export async function GET(request: Request) {
     const query = searchParams.get("query") || undefined;
     const status = searchParams.get("status") as any || undefined;
     const groupId = searchParams.get("groupId") || undefined;
+    const hasCreditLimit = searchParams.get("hasCreditLimit") || undefined;
+    const hasBalance = searchParams.get("hasBalance") || undefined;
     const skip = parseInt(searchParams.get("skip") || "0");
     const take = parseInt(searchParams.get("take") || "50");
 
-    const result = await searchCustomers(companyId, { query, status, groupId, skip, take });
+    const result = await searchCustomers(companyId, { query, status, groupId, hasCreditLimit, hasBalance, skip, take });
     return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

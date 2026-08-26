@@ -1047,6 +1047,7 @@ model SalesOrder {
   id                    String            @id @default(uuid())
   companyId             String
   salesOrderNumber      String            @unique @default(cuid())
+  referenceNumber       String?
   quotationId           String?
   customerId            String
   status                SalesOrderStatus  @default(DRAFT)

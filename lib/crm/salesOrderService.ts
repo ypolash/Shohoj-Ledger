@@ -155,6 +155,7 @@ export async function createSalesOrder(companyId: string, userId: string, data: 
         data: {
           companyId,
           salesOrderNumber: data.salesOrderNumber,
+          referenceNumber: data.referenceNumber || null,
           quotationId: data.quotationId || null,
           customerId: data.customerId,
           orderDate: validOrderDate,
@@ -260,6 +261,7 @@ export async function updateSalesOrder(companyId: string, id: string, userId: st
       where: { id },
       data: {
         customerId: data.customerId,
+        referenceNumber: data.referenceNumber !== undefined ? data.referenceNumber : existing.referenceNumber,
         requestedDeliveryDate: validReqDate,
         currency: data.currency || "BDT",
         subtotal,

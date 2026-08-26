@@ -35,6 +35,8 @@ export default function CustomersPage() {
       if (filters.query) qParams.append("query", filters.query);
       if (filters.status) qParams.append("status", filters.status);
       if (filters.groupId) qParams.append("groupId", filters.groupId);
+      if (filters.hasCreditLimit) qParams.append("hasCreditLimit", filters.hasCreditLimit);
+      if (filters.hasBalance) qParams.append("hasBalance", filters.hasBalance);
 
       const res = await fetch(`/api/crm/customers?${qParams.toString()}`);
       if (res.ok) {

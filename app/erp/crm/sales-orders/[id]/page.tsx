@@ -115,7 +115,7 @@ export default function SalesOrderDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <PageHeader 
               title={order.salesOrderNumber || order.orderNo || `Order ${order.id.substring(0,8)}`}
-              description={`Customer: ${order.customer?.name || order.customer?.customerName || 'Unknown'}`}
+              description={`Customer: ${order.customer?.name || order.customer?.customerName || 'Unknown'} ${order.referenceNumber ? `| Ref: ${order.referenceNumber}` : ''}`}
             />
             <div style={{ marginTop: '-8px' }}>
               <SalesOrderStatus status={order.status} />

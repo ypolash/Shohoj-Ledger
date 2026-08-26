@@ -155,7 +155,7 @@ export async function getCustomer(companyId: string, id: string) {
  */
 export async function searchCustomers(
   companyId: string,
-  params: { query?: string; status?: CustomerStatus; groupId?: string; skip?: number; take?: number }
+  params: { query?: string; status?: CustomerStatus; groupId?: string; hasCreditLimit?: string; hasBalance?: string; skip?: number; take?: number }
 ) {
   const where: any = { companyId };
   
@@ -170,6 +170,16 @@ export async function searchCustomers(
 
   if (params.status) where.status = params.status;
   if (params.groupId) where.customerGroupId = params.groupId;
+
+  if (params.hasCreditLimit) {
+    if (params.hasCreditLimit === 'yes') where.creditLimit = { gt: 0 };
+    if (params.hasCreditLimit === 'no') where.creditLimit = 0;
+  }
+  
+  if (params.hasBalance) {
+    if (params.hasBalance === 'positive') where.balance = { gt: 0 };
+    if (params.hasBalance === 'zero') where.balance = 0;
+  }
 
   const [data, total] = await Promise.all([
     prisma.customer.findMany({

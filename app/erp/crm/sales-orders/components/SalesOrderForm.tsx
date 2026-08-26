@@ -14,6 +14,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
 
   const [formData, setFormData] = useState({
     customerId: initialData.customerId || '',
+    referenceNumber: initialData.referenceNumber || '',
     quotationId: initialData.quotationId || '',
     orderDate: initialData.orderDate ? new Date(initialData.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     expectedDelivery: initialData.expectedDelivery ? new Date(initialData.expectedDelivery).toISOString().split('T')[0] : '',
@@ -112,6 +113,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: formData.customerId,
+          referenceNumber: formData.referenceNumber || undefined,
           quotationId: formData.quotationId || undefined,
           orderDate: formData.orderDate,
           requestedDeliveryDate: formData.expectedDelivery || undefined,
@@ -175,6 +177,11 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
               <option value="">Select Quotation (Optional)...</option>
               <option value="qt_1">QT-2026-001</option>
             </select>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Reference Number</label>
+            <input type="text" name="referenceNumber" value={formData.referenceNumber} onChange={handleChange} style={inputStyle} placeholder="e.g. PO-1234" />
           </div>
 
           <div>

@@ -49,7 +49,32 @@ export function CustomerToolbar({ onRefresh, onExport, onReference }: CustomerTo
     if (onExport) {
       onExport();
     } else {
-      alert("Exporting customer list...");
+      if (!customers || customers.length === 0) {
+        alert("No customers to export.");
+        return;
+      }
+      
+      const headers = ['Name', 'Email', 'Phone', 'Status', 'Balance', 'Credit Limit'];
+      const csvContent = [
+        headers.join(','),
+        ...customers.map(c => [
+          `"${c.name || ''}"`,
+          `"${c.email || ''}"`,
+          `"${c.phone || ''}"`,
+          `"${c.status || ''}"`,
+          `"${c.balance || '0'}"`,
+          `"${c.creditLimit || '0'}"`
+        ].join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `customers_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 

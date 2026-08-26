@@ -35,36 +35,6 @@ export default function Home() {
           </Link>
         </div>
         
-        <div className={styles.heroImageWrapper}>
-          <div className={styles.heroImageGlow}></div>
-          <div className={styles.heroImagePlaceholder}>
-            <div className={styles.mockDashboard}>
-              <div className={styles.mockSidebar}>
-                <div className={styles.mockSidebarItem} style={{width: '60%'}}></div>
-                <div className={styles.mockSidebarItem} style={{width: '80%'}}></div>
-                <div className={styles.mockSidebarItem} style={{width: '50%'}}></div>
-                <div className={styles.mockSidebarItem} style={{width: '70%'}}></div>
-              </div>
-              <div className={styles.mockMain}>
-                 <div className={styles.mockHeader}>
-                    <div className={styles.mockHeaderItem} style={{width: '200px'}}></div>
-                    <div className={styles.mockHeaderItem} style={{width: '40px', borderRadius: '50%'}}></div>
-                 </div>
-                 <div className={styles.mockCards}>
-                    <div className={styles.mockCard}></div>
-                    <div className={styles.mockCard}></div>
-                    <div className={styles.mockCard}></div>
-                 </div>
-                 <div className={styles.mockTable}>
-                    <div className={styles.mockTableRow}></div>
-                    <div className={styles.mockTableRow}></div>
-                    <div className={styles.mockTableRow}></div>
-                    <div className={styles.mockTableRow}></div>
-                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Features Grid */}

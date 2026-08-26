@@ -127,7 +127,7 @@ export default function Home() {
             <p className={styles.footerDescription}>
               The ultimate unified Enterprise ERP platform. Streamlining Finance, HR, Payroll, and Projects into one powerful, secure, and fast workspace for modern businesses.
             </p>
-            <p className={styles.copyright}>© 2026 Shohoj. All rights reserved.</p>
+            <p className={styles.copyright}>© 2026 Shohoj Solution. All rights reserved.</p>
           </div>
         </div>
       </footer>

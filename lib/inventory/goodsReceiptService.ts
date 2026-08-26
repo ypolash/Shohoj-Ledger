@@ -14,7 +14,7 @@ export const goodsReceiptService = {
 
   generateReceiptNumber: async (companyId: string) => {
     // Basic generator for GRN
-    const count = await prisma.goodsReceipt.count({ where: { companyId } });
+    const count = await prisma.goodsReceiptNote.count({ where: { companyId } });
     return `GRN-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`;
   },
 
@@ -44,7 +44,7 @@ export const goodsReceiptService = {
     
     const receiptNumber = await goodsReceiptService.generateReceiptNumber(data.companyId);
 
-    return prisma.goodsReceipt.create({
+    return prisma.goodsReceiptNote.create({
       data: {
         companyId: data.companyId,
         warehouseId: data.warehouseId,
@@ -68,7 +68,7 @@ export const goodsReceiptService = {
     lineId: string;
     receivedQuantity: number | Decimal;
   }[]) => {
-    const receipt = await prisma.goodsReceipt.findFirst({ where: { id, companyId }, include: { lines: true } });
+    const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id, companyId }, include: { lines: true } });
     if (!receipt) throw new Error("Goods Receipt not found.");
     if (receipt.status !== "DRAFT" && receipt.status !== "RECEIVING") throw new Error("Cannot update items in this status.");
 
@@ -108,7 +108,7 @@ export const goodsReceiptService = {
       unitCost?: number | Decimal;
     }[];
   }) => {
-    const receipt = await prisma.goodsReceipt.findFirst({ where: { id: data.receiptId, companyId: data.companyId }, include: { lines: true } });
+    const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id: data.receiptId, companyId: data.companyId }, include: { lines: true } });
     if (!receipt) throw new Error("Goods Receipt not found.");
     if (receipt.status === "COMPLETED" || receipt.status === "CANCELLED") throw new Error("Receipt cannot be modified.");
 
@@ -201,7 +201,7 @@ export const goodsReceiptService = {
   },
 
   completeReceipt: async (id: string, companyId: string, userId: string) => {
-    const receipt = await prisma.goodsReceipt.findFirst({ where: { id, companyId }, include: { lines: true } });
+    const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id, companyId }, include: { lines: true } });
     if (!receipt) throw new Error("Goods Receipt not found.");
 
     // This is the step where Accounting Posting is officially invoked.
@@ -212,32 +212,32 @@ export const goodsReceiptService = {
     //   ... (Generate Journal Entry mapping Inventory Assets and Accounts Payable or GRNI)
     // });
 
-    return prisma.goodsReceipt.update({
+    return prisma.goodsReceiptNote.update({
       where: { id },
       data: { status: "COMPLETED", receivedById: userId }
     });
   },
 
   cancelReceipt: async (id: string, companyId: string) => {
-    const receipt = await prisma.goodsReceipt.findFirst({ where: { id, companyId } });
+    const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id, companyId } });
     if (!receipt) throw new Error("Goods Receipt not found.");
     if (receipt.status === "COMPLETED") throw new Error("Cannot cancel a completed receipt.");
 
-    return prisma.goodsReceipt.update({
+    return prisma.goodsReceiptNote.update({
       where: { id },
       data: { status: "CANCELLED" }
     });
   },
 
   getReceipt: async (id: string, companyId: string) => {
-    return prisma.goodsReceipt.findFirst({
+    return prisma.goodsReceiptNote.findFirst({
       where: { id, companyId },
       include: { lines: { include: { product: true, batch: true, serial: true, bin: true } }, supplier: true, warehouse: true }
     });
   },
 
   listReceipts: async (companyId: string) => {
-    return prisma.goodsReceipt.findMany({
+    return prisma.goodsReceiptNote.findMany({
       where: { companyId },
       orderBy: { createdAt: "desc" },
       include: { supplier: true, warehouse: true }

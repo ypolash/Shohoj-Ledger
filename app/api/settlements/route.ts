@@ -264,7 +264,7 @@ export async function DELETE(req: Request) {
     await prisma.$transaction([
       prisma.reserveTransaction.deleteMany({
         where: { ...(await withCompany()),
-          reason: { contains: settlement.period },
+          reason: `Auto-deposit from ${settlement.period} Settlement`,
           systemSource
         }
       }),

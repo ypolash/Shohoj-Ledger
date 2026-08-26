@@ -45,11 +45,6 @@ export async function POST(req: Request) {
           }
         }
 
-        // Fallback for plaintext or if they manually inserted passwords in DB for testing
-        if (!isMatch && account.password === password) {
-          isMatch = true;
-        }
-
         if (isMatch) {
           console.log("✓ Authentication: Password verified (User)");
           // Password matches, login as ADMIN
@@ -98,11 +93,6 @@ export async function POST(req: Request) {
         isMatch = await bcrypt.compare(password, employee.password);
       } catch (e) {
         console.error("Bcrypt compare error:", e);
-      }
-
-      // Fallback for plaintext testing passwords
-      if (!isMatch && employee.password === password) {
-        isMatch = true;
       }
 
       if (isMatch) {

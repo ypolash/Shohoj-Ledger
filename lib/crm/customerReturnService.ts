@@ -112,9 +112,6 @@ export async function approveReturn(companyId: string, id: string, userId: strin
   if (!existing || existing.status !== CustomerReturnStatus.DRAFT) {
     throw new Error("Only DRAFT returns can be approved");
   }
-
-  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
-    if (!existing) throw new Error("Record not found or access denied");
     const customerReturn = await prisma.customerReturn.update({
       where: { id },
     data: { 
@@ -143,9 +140,6 @@ export async function inspectReturn(companyId: string, id: string, userId: strin
   if (!existing || (existing.status !== CustomerReturnStatus.APPROVED && existing.status !== CustomerReturnStatus.PENDING_APPROVAL)) {
     throw new Error("Return must be APPROVED before inspection");
   }
-
-  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
-    if (!existing) throw new Error("Record not found or access denied");
     const customerReturn = await prisma.customerReturn.update({
       where: { id },
     data: { 

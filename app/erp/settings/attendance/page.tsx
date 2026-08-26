@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader/PageHeader';
+import NetworkModal from './components/NetworkModal';
+import PunishmentRuleModal from './components/PunishmentRuleModal';
 import styles from "./styles.module.css";
 
 interface Network {
@@ -487,134 +489,27 @@ export default function AttendanceSettings() {
         </div>
       </div>
 
-      {/* Network Modal */}
-      {isModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h2>{editingNetwork ? "Edit Network" : "Add Network"}</h2>
-            <form onSubmit={handleSaveNetwork}>
-              {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
-              <div className={styles.formGroup}>
-                <label>Network Name (Optional)</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Main Office Wi-Fi" />
-              </div>
-              <div className={styles.formGroup}>
-                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Public IP Address</span>
-                  <button 
-                    type="button" 
-                    onClick={async () => {
-                      try {
-                        const res = await fetch('https://api.ipify.org?format=json');
-                        const data = await res.json();
-                        setIpAddress(data.ip);
-                      } catch(e) {
-                        setIpAddress('auto');
-                      }
-                    }}
-                    style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}
-                  >
-                    Auto-Detect My IP
-                  </button>
-                </label>
-                <input type="text" value={ipAddress} onChange={(e) => setIpAddress(e.target.value)} placeholder="e.g. 192.168.1.1 (or click Auto-Detect)" />
-              </div>
-              <div className={styles.formGroup}>
-                <label>SSID (Optional)</label>
-                <input type="text" value={ssid} onChange={(e) => setSsid(e.target.value)} placeholder="e.g. SHOHOJ-OFFICE" />
-              </div>
-              <div className={styles.formGroup}>
-                <label>BSSID / Router MAC (Optional)</label>
-                <input type="text" value={bssid} onChange={(e) => setBssid(e.target.value)} placeholder="e.g. 3C:84:6A:11:22:33" />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.checkboxLabel}>
-                  <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                  Active (Allow check-ins from this network)
-                </label>
-              </div>
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={handleCloseModal}>Cancel</button>
-                <button type="submit" className={styles.saveBtn} disabled={saving}>
-                  {saving ? "Saving..." : "Save Network"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Rule Modal */}
-      {isRuleModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className={styles.modalOverlay} onClick={() => setIsRuleModalOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{editingRule ? "Edit Rule" : "Add Rule"}</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-              <div className={styles.formGroup}>
-                <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>Type</label>
-                <select 
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  className="input"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
-                >
-                  <option value="LATE">LATE</option>
-                  <option value="EARLY_LEAVE">EARLY LEAVE</option>
-                  <option value="ABSENT">ABSENT</option>
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className={styles.formGroup}>
-                  <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>From (Mins)</label>
-                  <input 
-                    type="number" 
-                    value={formData.fromMinutes}
-                    onChange={(e) => setFormData({...formData, fromMinutes: parseInt(e.target.value)})}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>To (Mins)</label>
-                  <input 
-                    type="number" 
-                    value={formData.toMinutes}
-                    onChange={(e) => setFormData({...formData, toMinutes: parseInt(e.target.value)})}
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
-                  />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>Amount (৳)</label>
-                <input 
-                  type="number" 
-                  value={formData.amount}
-                  onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
-                />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', color: 'var(--text-main)' }}>
-                <input 
-                  type="checkbox" 
-                  checked={formData.active}
-                  onChange={(e) => setFormData({...formData, active: e.target.checked})}
-                  style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
-                />
-                Active
-              </label>
-              <div className={styles.modalActions} style={{ marginTop: '16px' }}>
-                <button onClick={() => setIsRuleModalOpen(false)} className={styles.cancelBtn}>
-                  Cancel
-                </button>
-                <button onClick={saveRule} className={styles.saveBtn}>
-                  Save Rule
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* Modals */}
+      <NetworkModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveNetwork}
+        editingNetwork={editingNetwork}
+        name={name} setName={setName}
+        ssid={ssid} setSsid={setSsid}
+        bssid={bssid} setBssid={setBssid}
+        ipAddress={ipAddress} setIpAddress={setIpAddress}
+        isActive={isActive} setIsActive={setIsActive}
+        error={error} saving={saving}
+      />
+      <PunishmentRuleModal
+        isOpen={isRuleModalOpen}
+        onClose={() => setIsRuleModalOpen(false)}
+        onSave={saveRule}
+        editingRule={editingRule}
+        formData={formData}
+        setFormData={setFormData}
+      />
     </PageContainer>
   );
 }

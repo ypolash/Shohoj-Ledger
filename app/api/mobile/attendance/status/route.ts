@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
+    const session = await getSession();
+    if (!session || !session.user) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
 
@@ -11,6 +17,10 @@ export async function GET(req: Request) {
         { success: false, message: "employeeId is required" },
         { status: 400 }
       );
+    }
+
+    if (session.user.loginType === "EMPLOYEE" && session.user.employeeId !== employeeId) {
+      return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
     const serverTime = new Date();

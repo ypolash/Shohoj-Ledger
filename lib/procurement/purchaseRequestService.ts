@@ -9,12 +9,12 @@ import { Decimal } from "@prisma/client/runtime/library";
 export const purchaseRequestService = {
 
   generateRequestNumber: async (companyId: string) => {
-    const count = await prisma.purchaseRequest.count({ where: { companyId } });
+    const count = await prisma.purchaseRequisition.count({ where: { companyId } });
     return `PR-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`;
   },
 
   validateRequest: async (companyId: string, requestId: string) => {
-    const request = await prisma.purchaseRequest.findFirst({
+    const request = await prisma.purchaseRequisition.findFirst({
       where: { id: requestId, companyId },
       include: { lines: true }
     });
@@ -38,7 +38,7 @@ export const purchaseRequestService = {
   }) => {
     const requestNumber = await purchaseRequestService.generateRequestNumber(data.companyId);
 
-    return prisma.purchaseRequest.create({
+    return prisma.purchaseRequisition.create({
       data: {
         companyId: data.companyId,
         requestNumber,
@@ -67,7 +67,7 @@ export const purchaseRequestService = {
       throw new Error("Purchase Request cannot be approved in its current state.");
     }
 
-    return prisma.purchaseRequest.update({
+    return prisma.purchaseRequisition.update({
       where: { id },
       data: { status: "APPROVED", approvedById }
     });
@@ -80,7 +80,7 @@ export const purchaseRequestService = {
     }
 
     // Capture who rejected it (store in remarks or audit trail)
-    return prisma.purchaseRequest.update({
+    return prisma.purchaseRequisition.update({
       where: { id },
       data: { status: "REJECTED", remarks: `${request.remarks || ''}\n[Rejected by ${rejectedById}]` }
     });
@@ -128,14 +128,14 @@ export const purchaseRequestService = {
       throw new Error("Cannot cancel a converted or already cancelled request.");
     }
 
-    return prisma.purchaseRequest.update({
+    return prisma.purchaseRequisition.update({
       where: { id },
       data: { status: "CANCELLED" }
     });
   },
 
   getRequestHistory: async (companyId: string, warehouseId?: string) => {
-    return prisma.purchaseRequest.findMany({
+    return prisma.purchaseRequisition.findMany({
       where: {
         companyId,
         ...(warehouseId ? { warehouseId } : {})

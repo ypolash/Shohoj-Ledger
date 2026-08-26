@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
 import { SupplierPaymentStatus, PaymentMethod } from "@prisma/client";
-import { postJournalEntry } from "@/lib/accounting/postingService";
+import { postingService } from "@/lib/accounting/postingService";
 
 /**
  * Enterprise Supplier Payment Engine (Version 1.4 Phase 8)
@@ -290,13 +290,18 @@ async function createPosting(companyId: string, payment: any, userId: string) {
     { accountCode: payment.paymentMethod === "CASH" ? "CASH-MAIN" : "BANK-MAIN", debit: 0, credit: Number(payment.amount) }
   ];
 
-  await postJournalEntry(companyId, {
-    date: new Date(payment.paymentDate),
-    reference: `Supplier Payment: ${payment.paymentNumber}`,
+  await postingService.post({
+    companyId: companyId,
+    journalId: "SYS-GEN",
+    entryDate: new Date(payment.paymentDate),
+    referenceType: "PROCUREMENT",
+    referenceId: payment.id,
     description: `Payment to Supplier ${payment.supplierId}`,
-    lines: entries,
-    sourceModule: "PROCUREMENT",
-    sourceId: payment.id,
+    lines: entries.map(e => ({
+      accountId: e.accountCode, // Note: This should ideally be mapped to a real accountId
+      debit: e.debit,
+      credit: e.credit,
+    })),
     createdById: userId
   });
 }

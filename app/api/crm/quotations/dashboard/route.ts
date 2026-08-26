@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCompanyId } from "@/lib/company/companyFilter";
 
 export async function GET(req: NextRequest) {
   try {

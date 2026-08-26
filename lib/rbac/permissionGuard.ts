@@ -22,6 +22,12 @@ export async function requirePermission(requiredAction: string) {
     return null; // Full Access everywhere
   }
 
+  if (requiredAction.startsWith("SYSTEM_")) {
+    // We will enforce that only platform SUPER_ADMIN can bypass system-level guards.
+    // Since SUPER_ADMIN already returned above, anyone else is forbidden.
+    return NextResponse.json({ error: `Forbidden: Requires SUPER_ADMIN` }, { status: 403 });
+  }
+
   // 2. Company Owner Bypass (Tenant Wide)
   if (role === "Owner" || platformRole === "CLIENT_ADMIN") {
     return null; // Full Access inside their own company

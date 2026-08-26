@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { calculateCustomerBalance } from "@/lib/crm/customerPaymentService";
 import { calculateAvailableCredit, calculateExposure } from "@/lib/crm/customerCreditService";
 

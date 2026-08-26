@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit/auditService";
 import { SupplierInvoiceStatus, ThreeWayMatchStatus } from "@prisma/client";
 import { performThreeWayMatch } from "./threeWayMatchService";
-import { postJournalEntry } from "@/lib/accounting/postingService";
+import { postingService } from "@/lib/accounting/postingService";
 
 /**
  * Enterprise Supplier Invoice Engine (Version 1.4 Phase 7)
@@ -185,13 +185,18 @@ async function createPosting(companyId: string, invoice: any, userId: string) {
   }
 
   // Pass to the core PostingService
-  await postJournalEntry(companyId, {
-    date: new Date(),
-    reference: `Supplier Invoice: ${invoice.invoiceNumber}`,
+  await postingService.post({
+    companyId: companyId,
+    journalId: "SYS-GEN", // Dummy journal ID since we don't have one here
+    entryDate: new Date(),
+    referenceType: "PROCUREMENT",
+    referenceId: invoice.id,
     description: `Accounts Payable recording for ${invoice.invoiceNumber}`,
-    lines: entries,
-    sourceModule: "PROCUREMENT",
-    sourceId: invoice.id,
+    lines: entries.map(e => ({
+      accountId: e.accountCode, // Note: This should ideally be mapped to a real accountId
+      debit: e.debit,
+      credit: e.credit,
+    })),
     createdById: userId
   });
 }

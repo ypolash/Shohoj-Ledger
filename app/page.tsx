@@ -64,6 +64,9 @@ export default function Home() {
 
       {/* Finance Details Section */}
       <div className={styles.detailSection}>
+        <div className={styles.detailImage}>
+          <img src="/finance-vector.jpg" alt="Finance and Accounting vector art" />
+        </div>
         <div className={styles.detailContent}>
           <h2 className={styles.detailTitle}>Finance & Accounting Details</h2>
           <p className={styles.detailDescription}>
@@ -75,13 +78,10 @@ export default function Home() {
             <li>✨ Smart invoicing with partial payment tracking</li>
           </ul>
         </div>
-        <div className={styles.detailImage}>
-          <img src="/finance-vector.jpg" alt="Finance and Accounting vector art" />
-        </div>
       </div>
 
       {/* HR Details Section */}
-      <div className={`${styles.detailSection} ${styles.detailSectionReverse}`}>
+      <div className={styles.detailSection}>
         <div className={styles.detailContent}>
           <h2 className={styles.detailTitle}>HR & Payroll Details</h2>
           <p className={styles.detailDescription}>

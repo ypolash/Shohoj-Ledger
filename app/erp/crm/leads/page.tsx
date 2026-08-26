@@ -17,7 +17,15 @@ import { LeadCard } from "./components/LeadCard";
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: '', status: '', priority: '' });
+  const [filters, setFilters] = useState({ 
+    search: '', 
+    status: '', 
+    priority: '', 
+    source: '', 
+    assignedToId: '', 
+    dateFrom: '', 
+    dateTo: '' 
+  });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -34,6 +42,10 @@ export default function LeadsPage() {
       if (filters.search) query.append("search", filters.search);
       if (filters.status) query.append("status", filters.status);
       if (filters.priority) query.append("priority", filters.priority);
+      if (filters.source) query.append("source", filters.source);
+      if (filters.assignedToId) query.append("assignedToId", filters.assignedToId);
+      if (filters.dateFrom) query.append("dateFrom", filters.dateFrom);
+      if (filters.dateTo) query.append("dateTo", filters.dateTo);
 
       const res = await fetch(`/api/crm/leads?${query.toString()}`);
       if (res.ok) {
@@ -84,10 +96,10 @@ export default function LeadsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <LeadSearch onSearch={(q) => setFilters(prev => ({ ...prev, search: q }))} />
-          <LeadToolbar onRefresh={fetchLeads} />
+          <LeadToolbar leads={leads} onRefresh={fetchLeads} />
         </div>
 
-        <LeadFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
+        <LeadFilters filters={filters} onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
 
         {loading ? (
           <LeadLoading />

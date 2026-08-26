@@ -104,7 +104,7 @@ export default function CustomerDetailPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '2px' }}>
-        {['overview', 'financials', 'related', 'timeline', 'notes & files'].map(tab => (
+        {['overview', 'orders', 'financials', 'related', 'timeline', 'notes & files'].map(tab => (
           <div 
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -138,6 +138,12 @@ export default function CustomerDetailPage() {
           </div>
         )}
 
+        {activeTab === 'orders' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <CustomerOrders customer={customer} />
+          </div>
+        )}
+
         {activeTab === 'financials' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <CustomerFinancialSummary customer={customer} />
@@ -148,7 +154,6 @@ export default function CustomerDetailPage() {
 
         {activeTab === 'related' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <CustomerOrders customer={customer} />
             <CustomerProjects />
           </div>
         )}

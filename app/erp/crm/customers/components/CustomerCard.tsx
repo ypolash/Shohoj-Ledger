@@ -50,6 +50,12 @@ export function CustomerCard({ customer, onDelete }: CustomerCardProps) {
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border-light)' }}>
         <button 
+          onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/new?customerId=${customer.id}`); }}
+          style={{ padding: '8px 14px', color: 'var(--success)', borderRadius: '6px', background: 'var(--success-glow)', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add_shopping_cart</span>
+          Order
+        </button>
+        <button 
           onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/customers/${customer.id}/edit`); }}
           style={{ padding: '8px 16px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
           Edit

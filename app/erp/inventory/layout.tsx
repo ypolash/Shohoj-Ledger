@@ -8,6 +8,7 @@ const navigation = [
   { name: 'Dashboard', href: '/erp/inventory', icon: 'dashboard', exact: true },
   { name: 'Products', href: '/erp/inventory/products', icon: 'inventory_2', exact: false },
   { name: 'Categories', href: '/erp/inventory/categories', icon: 'category', exact: false },
+  { name: 'Orders', href: '/erp/inventory/orders', icon: 'shopping_cart', exact: false },
   { name: 'Stock Control', href: '/erp/inventory/stock', icon: 'move_down', exact: false },
   { name: 'Settings', href: '/erp/inventory/settings', icon: 'settings', exact: false },
 ];

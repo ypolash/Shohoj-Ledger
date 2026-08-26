@@ -17,6 +17,9 @@ export async function GET(req: Request) {
     const status = url.searchParams.get("status");
     const priority = url.searchParams.get("priority");
     const assignedToId = url.searchParams.get("assignedToId");
+    const source = url.searchParams.get("source") || url.searchParams.get("leadSource");
+    const dateFrom = url.searchParams.get("dateFrom");
+    const dateTo = url.searchParams.get("dateTo");
 
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
@@ -26,15 +29,36 @@ export async function GET(req: Request) {
     if (status) where.status = status;
     if (priority) where.priority = priority;
     if (assignedToId) where.assignedToId = assignedToId;
+    if (source) {
+      where.OR = [
+        { leadSource: { contains: source, mode: 'insensitive' } },
+        { serviceType: { contains: source, mode: 'insensitive' } }
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
+      if (dateTo) where.createdAt.lte = new Date(new Date(dateTo).setHours(23, 59, 59, 999));
+    }
     
     if (search) {
-      where.OR = [
+      const searchFilter = [
         { companyName: { contains: search, mode: 'insensitive' } },
         { contactPerson: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
         { tags: { has: search } },
       ];
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: searchFilter }
+        ];
+        delete where.OR;
+      } else {
+        where.OR = searchFilter;
+      }
     }
 
     const leads = await prisma.lead.findMany({
@@ -42,7 +66,7 @@ export async function GET(req: Request) {
       orderBy: { updatedAt: 'desc' },
       include: {
         assignedTo: {
-          select: { firstName: true, lastName: true }
+          select: { id: true, firstName: true, lastName: true }
         }
       }
     });

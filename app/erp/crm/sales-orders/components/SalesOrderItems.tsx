@@ -4,28 +4,16 @@ import React from 'react';
 
 interface SalesOrderItemsProps {
   items: any[];
+  products?: any[];
   readOnly?: boolean;
   onItemsChange?: (items: any[]) => void;
-  products?: any[];
 }
 
-export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] }: SalesOrderItemsProps) {
+export function SalesOrderItems({ items, products = [], readOnly, onItemsChange }: SalesOrderItemsProps) {
   const handleItemChange = (index: number, field: string, value: any) => {
     if (readOnly || !onItemsChange) return;
     const newItems = [...items];
     newItems[index][field] = value;
-
-    // If description changed, check if it matches a product
-    if (field === 'description') {
-      const matchedProduct = products.find(p => p.name === value);
-      if (matchedProduct) {
-        newItems[index].productId = matchedProduct.id;
-        newItems[index].unitPrice = matchedProduct.sellingPrice || 0;
-      } else {
-        newItems[index].productId = ''; // clear if no exact match (custom text)
-      }
-    }
-
     // Calculate row total
     const qty = Number(newItems[index].quantity || 0);
     const price = Number(newItems[index].unitPrice || 0);
@@ -34,9 +22,39 @@ export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] 
     onItemsChange(newItems);
   };
 
+  const handleProductSelect = (index: number, productId: string) => {
+    if (readOnly || !onItemsChange) return;
+    const newItems = [...items];
+    const selectedProd = products.find(p => p.id === productId);
+    
+    if (selectedProd) {
+      const price = Number(selectedProd.sellingPrice || selectedProd.price || selectedProd.costPrice || 0);
+      const qty = Number(newItems[index].quantity || 1);
+      const discount = Number(newItems[index].discount || 0);
+      
+      newItems[index] = {
+        ...newItems[index],
+        productId: selectedProd.id,
+        description: selectedProd.name + (selectedProd.sku ? ` (${selectedProd.sku})` : ''),
+        unitPrice: price,
+        quantity: qty,
+        total: (qty * price) - discount
+      };
+    } else {
+      newItems[index] = {
+        ...newItems[index],
+        productId: '',
+        description: '',
+        unitPrice: 0,
+        total: 0
+      };
+    }
+    onItemsChange(newItems);
+  };
+
   const addItem = () => {
     if (readOnly || !onItemsChange) return;
-    onItemsChange([...items, { id: Date.now().toString(), description: '', productId: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }]);
+    onItemsChange([...items, { id: Date.now().toString(), productId: '', description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -53,15 +71,10 @@ export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] 
 
   return (
     <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
-      <datalist id="inventory-products">
-        {products.map(p => (
-          <option key={p.id} value={p.name} />
-        ))}
-      </datalist>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '12px 24px', fontWeight: 600 }}>Item & Description</th>
+            <th style={{ padding: '12px 24px', fontWeight: 600, minWidth: '260px' }}>Product (Inventory Item)</th>
             <th style={{ padding: '12px 24px', fontWeight: 600, width: '100px' }}>Quantity</th>
             <th style={{ padding: '12px 24px', fontWeight: 600, width: '150px' }}>Unit Price</th>
             <th style={{ padding: '12px 24px', fontWeight: 600, width: '120px' }}>Discount</th>
@@ -71,10 +84,27 @@ export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] 
         </thead>
         <tbody style={{ fontSize: '14px' }}>
           {items.map((item, index) => (
-            <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <tr key={item.id || index} style={{ borderBottom: '1px solid var(--border-light)' }}>
               <td style={{ padding: '12px 24px' }}>
-                {readOnly ? item.description : (
-                  <input list="inventory-products" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} style={inputStyle} placeholder="Type product name or custom description" />
+                {readOnly ? (
+                  <div>
+                    <span style={{ fontWeight: 600 }}>{item.description || item.product?.name || 'Selected Product'}</span>
+                    {item.productId && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {item.productId}</div>}
+                  </div>
+                ) : (
+                  <select 
+                    value={item.productId || ''} 
+                    onChange={(e) => handleProductSelect(index, e.target.value)} 
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    required
+                  >
+                    <option value="">Select Inventory Product...</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.sku ? `[${p.sku}]` : ''} - (BDT {Number(p.sellingPrice || p.price || 0).toLocaleString()})
+                      </option>
+                    ))}
+                  </select>
                 )}
               </td>
               <td style={{ padding: '12px 24px' }}>
@@ -97,7 +127,7 @@ export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] 
               </td>
               {!readOnly && (
                 <td style={{ padding: '12px 24px' }}>
-                  <button type="button" onClick={() => removeItem(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
+                  <button type="button" onClick={() => removeItem(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }} title="Remove Item">
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
                   </button>
                 </td>
@@ -109,7 +139,7 @@ export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] 
       {!readOnly && (
         <div style={{ padding: '16px 24px' }}>
           <button type="button" onClick={addItem} style={{ padding: '8px 16px', color: 'var(--primary)', background: 'var(--primary-glow)', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-            + Add Line Item
+            + Add Product Line
           </button>
         </div>
       )}

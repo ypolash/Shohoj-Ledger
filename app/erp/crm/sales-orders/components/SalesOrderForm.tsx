@@ -9,8 +9,8 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [references, setReferences] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [references, setReferences] = useState<any[]>([]);
   const [selectedReferenceId, setSelectedReferenceId] = useState('');
 
   const [formData, setFormData] = useState({
@@ -35,7 +35,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   })) : initialData.items;
 
   const [items, setItems] = useState<any[]>(defaultItems || [
-    { id: '1', description: '', productId: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
+    { id: '1', description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
   ]);
 
   const [taxRate, setTaxRate] = useState(15); 
@@ -54,6 +54,18 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
       }
     };
 
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/inventory/products?limit=100');
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.products || data.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     const fetchReferences = async () => {
       try {
         const res = await fetch('/api/crm/customer-references');
@@ -66,21 +78,9 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
       }
     };
 
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch('/api/inventory/products?take=100');
-        if (res.ok) {
-          const data = await res.json();
-          setProducts(data.data || []);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     fetchCustomers();
-    fetchReferences();
     fetchProducts();
+    fetchReferences();
   }, []);
 
   const handleReferenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

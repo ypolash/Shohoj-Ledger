@@ -69,28 +69,41 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
                 </span>
               </td>
               <td style={{ padding: '16px', textAlign: 'right' }}>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                   <button 
-                    title="Add Order"
                     onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/new?customerId=${customer.id}`); }}
-                    style={{ padding: '6px', color: 'var(--success)', borderRadius: '6px', background: 'var(--success-glow)', border: 'none', cursor: 'pointer' }}
+                    style={{ 
+                      padding: '6px 10px', 
+                      color: 'var(--success)', 
+                      borderRadius: '6px', 
+                      background: 'var(--success-glow)', 
+                      border: '1px solid var(--success-border, transparent)', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }}
+                    title="Create Sales Order for Customer"
                   >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>shopping_cart</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add_shopping_cart</span>
+                    Order
                   </button>
                   <button 
-                    title="Edit Customer"
                     onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/customers/${customer.id}/edit`); }}
                     style={{ padding: '6px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)', border: 'none', cursor: 'pointer' }}
+                    title="Edit Customer"
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                   </button>
                   <button 
-                    title="Delete Customer"
                     onClick={(e) => { 
                       e.stopPropagation(); 
                       if (onDelete) onDelete(customer.id); 
                     }}
                     style={{ padding: '6px', color: 'var(--danger)', borderRadius: '6px', background: 'var(--danger-glow)', border: 'none', cursor: 'pointer' }}
+                    title="Delete Customer"
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                   </button>

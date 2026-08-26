@@ -18,7 +18,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className={styles.hero}>
-        <div className={styles.badge}>Enterprise Edition v1.1</div>
+        <div className={styles.badge}>Enterprise Edition v2.0</div>
         <h1 className={styles.title}>
           Enterprise ERP, <br /> <span className={styles.gradientText}>Simplified.</span>
         </h1>

@@ -97,6 +97,24 @@ export default function Home() {
           <img src="/hr-vector.jpg" alt="HR and Payroll vector art" />
         </div>
       </div>
+
+      {/* CRM & Projects Details Section */}
+      <div className={styles.detailSection}>
+        <div className={styles.detailImage}>
+          <img src="/crm-projects-vector.jpg" alt="CRM and Projects vector art" />
+        </div>
+        <div className={styles.detailContent}>
+          <h2 className={styles.detailTitle}>CRM & Projects Details</h2>
+          <p className={styles.detailDescription}>
+            Take charge of your customer relationships and project deliveries in one place. Move leads through customized pipelines, track project milestones, and link project billing directly to your finance ledger.
+          </p>
+          <ul className={styles.detailList}>
+            <li>✨ Visual Kanban boards for lead tracking</li>
+            <li>✨ Project milestone and task management</li>
+            <li>✨ Direct integration with financial billing</li>
+          </ul>
+        </div>
+      </div>
       
       {/* Footer */}
       <footer className={styles.footer}>

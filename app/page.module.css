@@ -75,10 +75,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 6rem 2rem 4rem;
+  padding: 4rem 2rem;
   position: relative;
   overflow: hidden;
+  min-height: 100vh;
+  margin-top: -80px; /* Overlap navbar to make it truly full screen */
+  padding-top: calc(4rem + 80px); /* Add padding to account for navbar */
   background-image: linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.95)), url('/crm-bg.jpg');
   background-size: cover;
   background-position: center;

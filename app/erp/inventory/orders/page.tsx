@@ -366,40 +366,41 @@ export default function InventoryOrdersPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 1000,
           padding: '20px'
         }}>
-          <div className="glass-card" style={{
-            background: 'var(--surface-card)',
-            border: '1px solid var(--border-main)',
+          <div style={{
+            background: 'var(--surface-main, #111827)',
+            border: '1px solid var(--border-main, #1e293b)',
             borderRadius: '16px',
             width: '100%',
             maxWidth: '540px',
             padding: '28px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px'
+            gap: '20px',
+            color: 'var(--text-main, #f8fafc)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary)' }}>upload_file</span>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Import Local Orders</h3>
+                <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--primary, #3b82f6)' }}>upload_file</span>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--text-main, #f8fafc)' }}>Import Local Orders</h3>
               </div>
               <button 
                 onClick={() => { setImportModalOpen(false); setImportFile(null); setImportMessage(null); }}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted, #94a3b8)', cursor: 'pointer', display: 'flex', padding: '4px', borderRadius: '4px' }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>close</span>
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted, #94a3b8)', lineHeight: 1.5 }}>
               Upload your local order file (CSV or JSON format) to bulk-import product orders into the inventory system.
             </p>
 
@@ -408,12 +409,12 @@ export default function InventoryOrdersPage() {
               <div 
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  border: '2px dashed var(--border-main)',
+                  border: '2px dashed var(--border-main, #334155)',
                   borderRadius: '12px',
                   padding: '32px 20px',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  background: importFile ? 'var(--primary-glow)' : 'var(--bg-main)',
+                  background: importFile ? 'rgba(59, 130, 246, 0.1)' : 'var(--bg-main, #0b0f19)',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -424,13 +425,13 @@ export default function InventoryOrdersPage() {
                   accept=".csv,.json,.xlsx,.xls" 
                   style={{ display: 'none' }} 
                 />
-                <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--primary)', marginBottom: '8px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--primary, #3b82f6)', marginBottom: '8px' }}>
                   {importFile ? 'description' : 'cloud_upload'}
                 </span>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main, #f8fafc)' }}>
                   {importFile ? importFile.name : 'Click to select local order file'}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)', marginTop: '4px' }}>
                   {importFile ? `${(importFile.size / 1024).toFixed(1)} KB` : 'Supports CSV, JSON, or Excel'}
                 </div>
               </div>
@@ -469,10 +470,10 @@ export default function InventoryOrdersPage() {
                   onClick={() => { setImportModalOpen(false); setImportFile(null); setImportMessage(null); }}
                   style={{
                     padding: '9px 18px',
-                    background: 'var(--surface-hover)',
-                    border: '1px solid var(--border-main)',
+                    background: 'var(--surface-hover, #1e293b)',
+                    border: '1px solid var(--border-main, #334155)',
                     borderRadius: '8px',
-                    color: 'var(--text-main)',
+                    color: 'var(--text-main, #f8fafc)',
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer'
@@ -485,7 +486,7 @@ export default function InventoryOrdersPage() {
                   disabled={importing || !importFile}
                   style={{
                     padding: '9px 20px',
-                    background: 'var(--primary)',
+                    background: 'var(--primary, #3b82f6)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -495,7 +496,8 @@ export default function InventoryOrdersPage() {
                     opacity: importing || !importFile ? 0.6 : 1,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
                   }}
                 >
                   {importing ? (

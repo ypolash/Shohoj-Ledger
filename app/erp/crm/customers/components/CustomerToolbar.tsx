@@ -10,7 +10,7 @@ interface CustomerToolbarProps {
   customers?: any[];
 }
 
-export function CustomerToolbar({ onRefresh, onExport, onReference }: CustomerToolbarProps) {
+export function CustomerToolbar({ onRefresh, onExport, onReference, customers }: CustomerToolbarProps) {
   const [showRefModal, setShowRefModal] = useState(false);
   const [references, setReferences] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ export function CustomerToolbar({ onRefresh, onExport, onReference }: CustomerTo
       const headers = ['Name', 'Email', 'Phone', 'Status', 'Balance', 'Credit Limit'];
       const csvContent = [
         headers.join(','),
-        ...customers.map(c => [
+        ...customers.map((c: any) => [
           `"${c.name || ''}"`,
           `"${c.email || ''}"`,
           `"${c.phone || ''}"`,

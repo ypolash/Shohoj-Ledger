@@ -18,7 +18,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, active: 0, outstanding: 0, salesTotal: 0 });
-  const [filters, setFilters] = useState({ query: '', status: '', groupId: '' });
+  const [filters, setFilters] = useState({ query: '', status: '', groupId: '', hasCreditLimit: '', hasBalance: '' });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {

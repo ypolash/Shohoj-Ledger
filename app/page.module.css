@@ -449,15 +449,24 @@
   margin: 0 auto;
 }
 
-.footerBrand h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
+.footerBrand {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 450px;
 }
 
-.footerBrand p {
-  margin: 0;
+.footerDescription {
   color: #a0aec0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.copyright {
+  color: #4a5568;
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 /* Responsive */

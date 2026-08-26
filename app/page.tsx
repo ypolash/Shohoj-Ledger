@@ -120,8 +120,14 @@ export default function Home() {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
-            <h3>Shohoj Ledger</h3>
-            <p>© 2026 Shohoj. All rights reserved.</p>
+            <div className={styles.logo}>
+              <div className={styles.logoIcon}></div>
+              Shohoj Ledger
+            </div>
+            <p className={styles.footerDescription}>
+              The ultimate unified Enterprise ERP platform. Streamlining Finance, HR, Payroll, and Projects into one powerful, secure, and fast workspace for modern businesses.
+            </p>
+            <p className={styles.copyright}>© 2026 Shohoj. All rights reserved.</p>
           </div>
         </div>
       </footer>

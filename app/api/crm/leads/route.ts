@@ -37,9 +37,16 @@ export async function GET(req: Request) {
     }
 
     if (dateFrom || dateTo) {
-      where.createdAt = {};
-      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
-      if (dateTo) where.createdAt.lte = new Date(new Date(dateTo).setHours(23, 59, 59, 999));
+      const dateFilter: any = {};
+      if (dateFrom && !isNaN(new Date(dateFrom).getTime())) {
+        dateFilter.gte = new Date(dateFrom);
+      }
+      if (dateTo && !isNaN(new Date(dateTo).getTime())) {
+        dateFilter.lte = new Date(new Date(dateTo).setHours(23, 59, 59, 999));
+      }
+      if (Object.keys(dateFilter).length > 0) {
+        where.createdAt = dateFilter;
+      }
     }
     
     if (search) {

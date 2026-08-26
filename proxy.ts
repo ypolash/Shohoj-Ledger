@@ -20,6 +20,16 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+
+  if (pathname.startsWith('/super-admin')) {
+    const session = await getSession();
+    if (!session) {
+      response = NextResponse.redirect(new URL('/login', request.url));
+    } else if (session.user.platformRole !== 'SUPER_ADMIN') {
+      response = NextResponse.redirect(new URL('/erp', request.url));
+    }
+  }
+
   // 1. Enforce Security Headers (Enterprise Hardening)
   response.headers.set('X-DNS-Prefetch-Control', 'on');
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');

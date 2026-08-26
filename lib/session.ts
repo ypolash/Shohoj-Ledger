@@ -2,12 +2,16 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 const secretKey = process.env.JWT_SECRET;
-if (!secretKey && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET environment variable is missing in production!");
-}
 const key = new TextEncoder().encode(secretKey || "development_secret_only");
 
+function ensureSecretKey() {
+  if (!secretKey && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET environment variable is missing in production!");
+  }
+}
+
 export async function encrypt(payload: any) {
+  ensureSecretKey();
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -16,6 +20,7 @@ export async function encrypt(payload: any) {
 }
 
 export async function decrypt(input: string): Promise<any> {
+  ensureSecretKey();
   try {
     const { payload } = await jwtVerify(input, key, {
       algorithms: ["HS256"],

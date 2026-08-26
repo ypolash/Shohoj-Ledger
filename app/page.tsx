@@ -79,6 +79,24 @@ export default function Home() {
           <img src="/finance-vector.jpg" alt="Finance and Accounting vector art" />
         </div>
       </div>
+
+      {/* HR Details Section */}
+      <div className={`${styles.detailSection} ${styles.detailSectionReverse}`}>
+        <div className={styles.detailContent}>
+          <h2 className={styles.detailTitle}>HR & Payroll Details</h2>
+          <p className={styles.detailDescription}>
+            Streamline your workforce management with an integrated HR system. From automated attendance and lifecycle tracking to one-click payroll distribution, we help you focus on your people, not paperwork.
+          </p>
+          <ul className={styles.detailList}>
+            <li>✨ One-click automated payroll runs</li>
+            <li>✨ Interactive employee lifecycle tracking</li>
+            <li>✨ Built-in attendance and leave management</li>
+          </ul>
+        </div>
+        <div className={styles.detailImage}>
+          <img src="/hr-vector.jpg" alt="HR and Payroll vector art" />
+        </div>
+      </div>
       
       {/* Footer */}
       <footer className={styles.footer}>

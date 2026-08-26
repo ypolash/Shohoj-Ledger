@@ -381,6 +381,10 @@
   width: 100%;
 }
 
+.detailSectionReverse {
+  flex-direction: row-reverse;
+}
+
 .detailContent {
   flex: 1;
 }
@@ -488,7 +492,7 @@
     grid-template-columns: 1fr;
   }
   
-  .detailSection {
+  .detailSection, .detailSectionReverse {
     flex-direction: column;
     padding: 4rem 1.5rem;
     gap: 2rem;

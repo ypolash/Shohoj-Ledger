@@ -71,12 +71,21 @@ export function CustomerTable({ customers, onDelete }: CustomerTableProps) {
               <td style={{ padding: '16px', textAlign: 'right' }}>
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                   <button 
+                    title="Add Order"
+                    onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/new?customerId=${customer.id}`); }}
+                    style={{ padding: '6px', color: 'var(--success)', borderRadius: '6px', background: 'var(--success-glow)', border: 'none', cursor: 'pointer' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>shopping_cart</span>
+                  </button>
+                  <button 
+                    title="Edit Customer"
                     onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/customers/${customer.id}/edit`); }}
                     style={{ padding: '6px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)', border: 'none', cursor: 'pointer' }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                   </button>
                   <button 
+                    title="Delete Customer"
                     onClick={(e) => { 
                       e.stopPropagation(); 
                       if (onDelete) onDelete(customer.id); 

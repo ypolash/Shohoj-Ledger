@@ -10,6 +10,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [references, setReferences] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [selectedReferenceId, setSelectedReferenceId] = useState('');
 
   const [formData, setFormData] = useState({
@@ -34,7 +35,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
   })) : initialData.items;
 
   const [items, setItems] = useState<any[]>(defaultItems || [
-    { id: '1', description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
+    { id: '1', description: '', productId: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
   ]);
 
   const [taxRate, setTaxRate] = useState(15); 
@@ -65,8 +66,21 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
       }
     };
 
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/inventory/products?take=100');
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchCustomers();
     fetchReferences();
+    fetchProducts();
   }, []);
 
   const handleReferenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -226,7 +240,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }) {
         {/* Line Items Section */}
         <div>
           <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>Line Items</h3>
-          <SalesOrderItems items={items} onItemsChange={setItems} />
+          <SalesOrderItems items={items} onItemsChange={setItems} products={products} />
         </div>
 
         {/* Totals Section */}

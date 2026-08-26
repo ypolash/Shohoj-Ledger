@@ -6,13 +6,26 @@ interface SalesOrderItemsProps {
   items: any[];
   readOnly?: boolean;
   onItemsChange?: (items: any[]) => void;
+  products?: any[];
 }
 
-export function SalesOrderItems({ items, readOnly, onItemsChange }: SalesOrderItemsProps) {
+export function SalesOrderItems({ items, readOnly, onItemsChange, products = [] }: SalesOrderItemsProps) {
   const handleItemChange = (index: number, field: string, value: any) => {
     if (readOnly || !onItemsChange) return;
     const newItems = [...items];
     newItems[index][field] = value;
+
+    // If description changed, check if it matches a product
+    if (field === 'description') {
+      const matchedProduct = products.find(p => p.name === value);
+      if (matchedProduct) {
+        newItems[index].productId = matchedProduct.id;
+        newItems[index].unitPrice = matchedProduct.sellingPrice || 0;
+      } else {
+        newItems[index].productId = ''; // clear if no exact match (custom text)
+      }
+    }
+
     // Calculate row total
     const qty = Number(newItems[index].quantity || 0);
     const price = Number(newItems[index].unitPrice || 0);
@@ -23,7 +36,7 @@ export function SalesOrderItems({ items, readOnly, onItemsChange }: SalesOrderIt
 
   const addItem = () => {
     if (readOnly || !onItemsChange) return;
-    onItemsChange([...items, { id: Date.now().toString(), description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }]);
+    onItemsChange([...items, { id: Date.now().toString(), description: '', productId: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -40,6 +53,11 @@ export function SalesOrderItems({ items, readOnly, onItemsChange }: SalesOrderIt
 
   return (
     <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
+      <datalist id="inventory-products">
+        {products.map(p => (
+          <option key={p.id} value={p.name} />
+        ))}
+      </datalist>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
           <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
@@ -56,7 +74,7 @@ export function SalesOrderItems({ items, readOnly, onItemsChange }: SalesOrderIt
             <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
               <td style={{ padding: '12px 24px' }}>
                 {readOnly ? item.description : (
-                  <input value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} style={inputStyle} placeholder="Item description" />
+                  <input list="inventory-products" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} style={inputStyle} placeholder="Type product name or custom description" />
                 )}
               </td>
               <td style={{ padding: '12px 24px' }}>

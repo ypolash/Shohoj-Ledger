@@ -61,6 +61,24 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Finance Details Section */}
+      <div className={styles.detailSection}>
+        <div className={styles.detailContent}>
+          <h2 className={styles.detailTitle}>Finance & Accounting Details</h2>
+          <p className={styles.detailDescription}>
+            Gain complete visibility into your organization's financial health. Our advanced accounting module supports multi-currency ledgers, automated reconciliation, and deep integrations with payroll and project billing.
+          </p>
+          <ul className={styles.detailList}>
+            <li>✨ Real-time general ledger updates</li>
+            <li>✨ Automated tax calculations and compliance reporting</li>
+            <li>✨ Smart invoicing with partial payment tracking</li>
+          </ul>
+        </div>
+        <div className={styles.detailImage}>
+          <img src="/finance-vector.jpg" alt="Finance and Accounting vector art" />
+        </div>
+      </div>
       
       {/* Footer */}
       <footer className={styles.footer}>

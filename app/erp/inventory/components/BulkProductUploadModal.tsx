@@ -27,7 +27,7 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Products Template");
-    XLSX.writeFile(wb, "Bulk_Product_Upload_Template.xlsx");
+    XLSX.writeFile(wb, "Bulk_Product_Upload_Template.csv");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,7 +120,7 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
         <div style={{ padding: '16px', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
           <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-main)' }}>Step 1: Download Template</h4>
           <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Start by downloading our standard Excel template. Fill in your product details carefully. <b>Product Code</b> and <b>Name</b> are required for every row.
+            Start by downloading our standard CSV template. Fill in your product details carefully. <b>Product Code</b> and <b>Name</b> are required for every row.
           </p>
           <button onClick={handleDownloadTemplate} className="btn btn-secondary" style={{ fontSize: '13px', padding: '6px 12px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', marginRight: '6px' }}>download</span>

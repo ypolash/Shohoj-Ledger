@@ -137,9 +137,6 @@ export default function StockControlPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Stock Control</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
-            Record stock movements and view current stock levels.
-          </p>
         </div>
         <button className="btn btn-primary hover-lift" onClick={() => openModal('IN')} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>

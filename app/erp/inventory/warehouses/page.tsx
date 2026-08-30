@@ -72,9 +72,6 @@ export default function WarehousesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Warehouses</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
-            {warehouses.length} warehouse{warehouses.length !== 1 ? 's' : ''} · {activeCount} active
-          </p>
         </div>
         <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>

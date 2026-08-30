@@ -1,124 +1,227 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { LeadStatus } from './LeadStatus';
 import { LeadPriority } from './LeadPriority';
 import { LeadOwner } from './LeadOwner';
-import { LeadProgress } from './LeadProgress';
+import { LeadTags } from './LeadTags';
 
 interface LeadTableProps {
   leads: any[];
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, newStatus: string) => void;
+  onLeadClick?: (id: string) => void;
 }
 
-export function LeadTable({ leads, onDelete, onStatusChange }: LeadTableProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const toggleExpand = (id: string) => {
-    setExpandedId(prev => prev === id ? null : id);
+export function LeadTable({ leads, onDelete, onStatusChange, onLeadClick }: LeadTableProps) {
+  
+  const handleRowClick = (e: React.MouseEvent, id: string) => {
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a')) {
+      return;
+    }
+    if (onLeadClick) onLeadClick(id);
   };
+
+  // Status color mapping for the glowing left edge
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'New': return 'var(--info)';
+      case 'Contacted': return 'var(--primary)';
+      case 'Qualified': return 'var(--accent)';
+      case 'Proposal': return 'var(--warning)';
+      case 'Won': return 'var(--success)';
+      case 'Lost': return 'var(--danger)';
+      default: return 'var(--gray-500)';
+    }
+  };
+
   return (
-    <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+    <div style={{ overflowX: 'auto', paddingBottom: '24px' }}>
+      <table style={{ 
+        width: '100%', 
+        borderCollapse: 'separate', 
+        borderSpacing: '0 12px', 
+        textAlign: 'left', 
+        whiteSpace: 'nowrap' 
+      }}>
         <thead>
           <tr style={{ 
-            background: 'var(--surface-hover)', 
-            color: 'var(--text-muted)', 
-            fontSize: '12px', 
+            color: 'var(--text-main)', 
+            fontSize: '11px', 
             textTransform: 'uppercase', 
-            letterSpacing: '0.05em',
-            borderBottom: '1px solid var(--border-main)'
+            letterSpacing: '0.1em',
           }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Lead Name</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Company</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Contact Info</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Status</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Priority</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Assigned To</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Updated</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+            <th style={{ padding: '0 6px 0 0', fontWeight: 600, border: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', boxSizing: 'border-box', background: 'color-mix(in srgb, var(--info) 10%, transparent)', border: '1px solid var(--info)', borderRadius: '12px', padding: '12px 16px', color: 'var(--info)' }}>
+                Lead Details
+              </div>
+            </th>
+            <th style={{ padding: '0 6px', fontWeight: 600, border: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', boxSizing: 'border-box', background: 'color-mix(in srgb, var(--primary) 10%, transparent)', border: '1px solid var(--primary)', borderRadius: '12px', padding: '12px 16px', color: 'var(--primary)' }}>
+                Contact & Comms
+              </div>
+            </th>
+            <th style={{ padding: '0 6px', fontWeight: 600, border: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', boxSizing: 'border-box', background: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid var(--accent)', borderRadius: '12px', padding: '12px 16px', color: 'var(--accent)' }}>
+                Pipeline Stage
+              </div>
+            </th>
+            <th style={{ padding: '0 6px', fontWeight: 600, border: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', boxSizing: 'border-box', background: 'color-mix(in srgb, var(--warning) 10%, transparent)', border: '1px solid var(--warning)', borderRadius: '12px', padding: '12px 16px', color: 'var(--warning)' }}>
+                Priority & Tags
+              </div>
+            </th>
+            <th style={{ padding: '0 6px', fontWeight: 600, border: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', boxSizing: 'border-box', background: 'color-mix(in srgb, var(--success) 10%, transparent)', border: '1px solid var(--success)', borderRadius: '12px', padding: '12px 16px', color: 'var(--success)' }}>
+                Owner
+              </div>
+            </th>
+            <th style={{ padding: '0 0 0 6px', fontWeight: 600, border: 'none', textAlign: 'right' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', boxSizing: 'border-box', background: 'var(--surface-hover)', border: '1px solid var(--text-muted)', borderRadius: '12px', padding: '12px 16px', color: 'var(--text-main)' }}>
+                Actions
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '14px' }}>
-          {leads.map((lead) => (
-            <React.Fragment key={lead.id}>
+          {leads.map((lead) => {
+            const statusColor = getStatusColor(lead.status);
+            
+            return (
               <tr 
-                onClick={() => toggleExpand(lead.id)}
+                key={lead.id}
+                onClick={(e) => handleRowClick(e, lead.id)}
                 style={{ 
-                  borderBottom: '1px solid var(--border-light)',
                   cursor: 'pointer',
-                  background: expandedId === lead.id ? 'var(--surface-hover)' : 'transparent',
-                  transition: 'background var(--transition-fast)'
+                  background: 'var(--bg-main)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative'
                 }}
+                className="unique-table-row"
               >
-              <td style={{ padding: '16px' }}>
-                <Link href={`/erp/crm/leads/${lead.id}`} style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                  {lead.companyName}
-                </Link>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{lead.serviceType}</div>
-              </td>
-              <td style={{ padding: '16px', color: 'var(--text-main)' }}>{lead.companyName}</td>
-              <td style={{ padding: '16px' }}>
-                <div style={{ fontWeight: 500, color: 'var(--text-main)' }}>{lead.contactPerson}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{lead.email || lead.phone}</div>
-              </td>
-              <td style={{ padding: '16px' }}>
-                <LeadStatus status={lead.status} />
-              </td>
-              <td style={{ padding: '16px' }}>
-                <LeadPriority priority={lead.priority} />
-              </td>
-              <td style={{ padding: '16px' }}>
-                <LeadOwner 
-                  ownerName={lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : null} 
-                />
-              </td>
-              <td style={{ padding: '16px', color: 'var(--text-muted)' }}>
-                {new Date(lead.updatedAt).toLocaleDateString()}
-              </td>
-              <td style={{ padding: '16px', textAlign: 'right' }}>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                  <Link href={`/erp/crm/leads/${lead.id}/edit`}>
-                    <button style={{ padding: '6px', color: 'var(--primary)', borderRadius: '6px', background: 'var(--primary-glow)' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-                    </button>
-                  </Link>
-                  <button 
-                    onClick={() => onDelete && onDelete(lead.id)}
-                    style={{ padding: '6px', color: 'var(--danger)', borderRadius: '6px', background: 'var(--danger-glow)' }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-                  </button>
-                </div>
-              </td>
-              </tr>
-              {expandedId === lead.id && (
-                <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-                  <td colSpan={8} style={{ padding: '0 24px 24px 24px' }}>
-                    <div style={{ padding: '16px', background: 'var(--surface-main)', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
-                      <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-main)', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Progress & Actions</span>
-                        <Link href={`/erp/crm/leads/${lead.id}`} style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 600 }}>
-                          View Full Details &rarr;
-                        </Link>
-                      </h4>
-                      <LeadProgress 
-                        leadId={lead.id} 
-                        currentStatus={lead.status} 
-                        onStatusChange={(newStatus) => {
-                          if (onStatusChange) onStatusChange(lead.id, newStatus);
-                        }} 
-                      />
+                <td style={{ 
+                  padding: '20px 24px', 
+                  borderRadius: '16px 0 0 16px',
+                  border: '1px solid var(--border-light)',
+                  borderRight: 'none',
+                  borderLeft: `4px solid ${statusColor}`,
+                  position: 'relative'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ 
+                      width: '48px', height: '48px', borderRadius: '14px', 
+                      background: `color-mix(in srgb, ${statusColor} 10%, transparent)`,
+                      color: statusColor, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '20px', fontWeight: 800, border: `1px solid color-mix(in srgb, ${statusColor} 20%, transparent)`
+                    }}>
+                      {lead.companyName ? lead.companyName.charAt(0).toUpperCase() : 'L'}
                     </div>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
+                    <div>
+                      <Link href={`/erp/crm/leads/${lead.id}`} style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '15px', letterSpacing: '0.02em', transition: 'color 0.2s' }} className="lead-name-link">
+                        {lead.companyName || 'Unknown Company'}
+                      </Link>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>
+                        {lead.serviceType || 'General Inquiry'}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                
+                <td style={{ padding: '20px 24px', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{lead.contactPerson || 'No Contact'}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>alternate_email</span>
+                    {lead.email || lead.phone || 'N/A'}
+                  </div>
+                </td>
+                
+                <td style={{ padding: '20px 24px', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                    <LeadStatus status={lead.status} />
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em' }}>
+                      UPDATED {new Date(lead.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
+                    </div>
+                  </div>
+                </td>
+                
+                <td style={{ padding: '20px 24px', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                    <LeadPriority priority={lead.priority} />
+                    {lead.tags && lead.tags.length > 0 && (
+                      <LeadTags tags={lead.tags.slice(0, 2)} />
+                    )}
+                  </div>
+                </td>
+                
+                <td style={{ padding: '20px 24px', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+                  <LeadOwner ownerName={lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : 'Unassigned'} />
+                </td>
+                
+                <td style={{ 
+                  padding: '20px 24px', textAlign: 'right',
+                  borderRadius: '0 16px 16px 0',
+                  border: '1px solid var(--border-light)', borderLeft: 'none'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', opacity: 0.6, transition: 'opacity 0.2s' }} className="row-actions">
+                    <Link href={`/erp/crm/leads/${lead.id}/edit`}>
+                      <button className="icon-btn-unique edit-btn" title="Edit Lead">
+                        <span className="material-symbols-outlined">edit_square</span>
+                      </button>
+                    </Link>
+                    <button className="icon-btn-unique delete-btn" title="Delete Lead" onClick={() => onDelete && onDelete(lead.id)}>
+                      <span className="material-symbols-outlined">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        .unique-table-row:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.15) !important;
+          z-index: 10;
+        }
+        .unique-table-row:hover .row-actions {
+          opacity: 1 !important;
+        }
+        .unique-table-row:hover .lead-name-link {
+          color: var(--primary) !important;
+        }
+        .icon-btn-unique {
+          padding: 10px;
+          border-radius: 12px;
+          border: 1px solid var(--border-main);
+          background: var(--bg-main);
+          color: var(--text-muted);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .icon-btn-unique span {
+          font-size: 18px;
+        }
+        .icon-btn-unique.edit-btn:hover {
+          color: var(--primary);
+          border-color: var(--primary);
+          background: var(--primary-glow);
+          transform: translateY(-2px);
+        }
+        .icon-btn-unique.delete-btn:hover {
+          color: var(--danger);
+          border-color: var(--danger);
+          background: var(--danger-glow);
+          transform: translateY(-2px);
+        }
+      `}} />
     </div>
   );
 }
+

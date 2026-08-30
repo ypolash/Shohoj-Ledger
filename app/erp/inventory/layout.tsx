@@ -10,6 +10,8 @@ const navigation = [
   { name: 'Categories', href: '/erp/inventory/categories', icon: 'category', exact: false },
   { name: 'Orders', href: '/erp/inventory/orders', icon: 'shopping_cart', exact: false },
   { name: 'Stock Control', href: '/erp/inventory/stock', icon: 'move_down', exact: false },
+  { name: 'Purchases', href: '/erp/inventory/purchases', icon: 'shopping_bag', exact: false },
+  { name: 'Payments', href: '/erp/inventory/payments', icon: 'payments', exact: false },
   { name: 'Settings', href: '/erp/inventory/settings', icon: 'settings', exact: false },
 ];
 
@@ -53,7 +55,7 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
           {/* Left Side Pill Box (Title) */}
           <div style={{ 
             justifySelf: 'start',
-            background: 'var(--text-main)', // Using text-main for high contrast (white in dark mode, dark in light mode, or explicitly white)
+            background: 'var(--text-main)', 
             color: 'var(--bg-main)', 
             padding: '8px 20px', 
             borderRadius: '50px',
@@ -63,8 +65,14 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
             fontWeight: 700,
             fontSize: '15px'
           }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>inventory</span>
-            Inventory
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              {dynamicNavigation.find(item => item.exact ? pathname === item.href : pathname.startsWith(item.href))?.icon || 'inventory'}
+            </span>
+            {(() => {
+              const active = dynamicNavigation.find(item => item.exact ? pathname === item.href : pathname.startsWith(item.href));
+              if (!active || active.name === 'Dashboard') return 'Inventory';
+              return active.name;
+            })()}
           </div>
           
           {/* Nav Links (Centered) */}

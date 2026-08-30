@@ -30,6 +30,7 @@ export default function RootLayout({
         <UIProvider>
           {children}
         </UIProvider>
+        <div id="drawer-root"></div>
       </body>
     </html>
   );

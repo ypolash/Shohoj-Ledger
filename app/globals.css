@@ -260,6 +260,40 @@ body {
   transition: background-color var(--transition-base), color var(--transition-base);
 }
 
+/* ==========================================================================
+   CUSTOM MINIMAL SCROLLBAR (Auto-hiding)
+   ========================================================================== */
+
+/* Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0); /* Transparent by default to auto-hide */
+  border-radius: 10px;
+}
+
+/* Reveal on container hover */
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4); 
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+
 /* Base interactive resets */
 button, input, select, textarea {
   font-family: inherit;

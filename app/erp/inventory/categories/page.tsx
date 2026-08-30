@@ -72,9 +72,6 @@ export default function CategoriesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Product Categories</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
-            {categories.length} categor{categories.length !== 1 ? 'ies' : 'y'} total
-          </p>
         </div>
         <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>

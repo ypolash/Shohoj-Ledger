@@ -113,7 +113,6 @@ export default function InventoryOrdersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <PageHeader 
           title="Inventory Orders" 
-          description="Manage and fulfill customer product orders directly from the inventory hub."
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>

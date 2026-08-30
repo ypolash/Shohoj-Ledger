@@ -49,7 +49,6 @@ export default function InventorySettingsPage() {
       
       <div>
         <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>Settings</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>Configure your inventory preferences and advanced modules.</p>
       </div>
 
       <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: '1fr' }}>

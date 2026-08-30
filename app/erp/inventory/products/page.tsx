@@ -132,9 +132,6 @@ export default function ProductsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Products</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
-            {total} product{total !== 1 ? 's' : ''} total
-          </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button className="btn btn-secondary hover-lift" onClick={() => setIsBulkUploadOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

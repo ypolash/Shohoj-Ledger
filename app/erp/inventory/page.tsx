@@ -59,9 +59,6 @@ export default function InventoryDashboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Inventory Dashboard</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
-            Track stock levels, monitor warehouses, and manage your inventory assets.
-          </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button onClick={fetchDashboard} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -83,7 +80,7 @@ export default function InventoryDashboardPage() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-4)' }}>
-        {kpiCards.map((kpi) => (
+        {kpiCards.filter(kpi => kpi.label !== 'Active Assets').map((kpi) => (
           <Link key={kpi.label} href={kpi.href || '#'} className={`glass-panel hover-lift glow-border-${kpi.glow}`} style={{ padding: '24px', borderRadius: '16px', textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '22px', color: kpi.color }}>{kpi.icon}</span>
@@ -96,48 +93,51 @@ export default function InventoryDashboardPage() {
         ))}
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity Table */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-
-        {/* Recent Activity */}
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 16px' }}>Recent Activity</h2>
-          {isLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[1,2,3,4,5].map(i => (
-                <div key={i} style={{ height: '48px', borderRadius: '10px', background: 'var(--surface-hover)', opacity: 0.5 }} />
-              ))}
-            </div>
-          ) : recentProducts.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>inventory_2</span>
-              No products created yet.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {recentProducts.map((product: any, idx: number) => (
-                <div key={idx} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  background: 'var(--surface-hover)',
-                  border: '1px solid var(--border-main)',
-                }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)', flexShrink: 0 }}>inventory_2</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      Created product: {product.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      SKU: {product.sku || 'N/A'} · {new Date(product.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-main)' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>Recent Products</h2>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+                  {['Product Name', 'SKU', 'Created At'].map(h => (
+                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
+                      {Array.from({ length: 3 }).map((_, j) => (
+                        <td key={j} style={{ padding: '14px 16px' }}>
+                          <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : recentProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>inventory_2</span>
+                      No products created yet.
+                    </td>
+                  </tr>
+                ) : (
+                  recentProducts.map((product: any, idx: number) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'} onMouseLeave={e => e.currentTarget.style.background = ''}>
+                      <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--text-main)' }}>{product.name}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{product.sku || 'N/A'}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{new Date(product.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

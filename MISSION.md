@@ -3,6 +3,8 @@
 ## Core Goal
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
+- **Version 5.0 — Sprint UI-Inventory (Inventory Purchases, Payments & Dashboard Polish):**
+  - **Completed**: Scaffolded the `Purchases` page (with New Purchase and Register Product buttons and data table) and `Payments` page (with Due/Paid tabs and a dynamic drawer for processing payments). Linked both pages to the primary inventory topbar navigation. Cleaned up the Inventory Dashboard by removing the 'Active Assets' KPI card and replacing the generic 'Recent Activity' feed with a structured 'Recent Products' table. Iterated across all Inventory tabs (Products, Categories, Orders, Stock Control, Settings, Warehouses) to remove redundant subtitle text, ensuring a much cleaner, modernized look.
 - **Version 2.2 — Sprint UI-Invoice (Invoice Print Design & Branding fixes):**
   - **Completed**: Redesigned the `/erp/crm/sales-orders/[id]/invoice` print view to match a modern mint-green and dark-gray template with a vertical 'INVOICE' banner. Fixed API queries to include `company: true` so the branding logo and address accurately populate on the invoice. Enforced strict `@media print` rules to hide `AppShell` sidebars and topbars during printing. Bumped application version to 2.2.0.
 - **Version 2.0 — Sprint Product-ERP & Orders (Product-Based Order Entry, Customer Quick Actions & Inventory Orders Hub):**

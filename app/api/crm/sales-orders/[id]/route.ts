@@ -14,6 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id: resolvedParams.id, companyId },
       include: {
         customer: true,
+        company: true,
         quotation: true,
         createdBy: { select: { id: true, name: true } },
         lines: {

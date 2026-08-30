@@ -335,6 +335,26 @@ export default function InventoryOrdersPage() {
                   <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                       <button
+                        onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/${order.id}/invoice`); }}
+                        style={{
+                          padding: '6px 12px',
+                          color: 'var(--text-main)',
+                          borderRadius: '6px',
+                          background: 'var(--surface-hover)',
+                          border: '1px solid var(--border-main)',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Generate Invoice"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>print</span>
+                        Invoice
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/${order.id}`); }}
                         style={{
                           padding: '6px 12px',

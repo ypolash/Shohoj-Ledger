@@ -154,6 +154,13 @@ export default function SalesOrderDetailPage() {
             </button>
           )}
           <button 
+            onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/invoice`)}
+            style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
+            Generate Invoice
+          </button>
+          <button 
             onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/edit`)}
             style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
           >

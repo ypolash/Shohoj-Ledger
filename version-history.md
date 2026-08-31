@@ -1,6 +1,6 @@
 # Version History
 
-## [2.4.0] - 2026-08-31
+## [2.4.1] - 2026-08-31
 ### Added
 - **Purchases Expense & Dual-Entry AP Ledger Engine**:
   - Automatically recognizes and records completed purchases as an Operating Expense (`PURCHASE_EXPENSE`).

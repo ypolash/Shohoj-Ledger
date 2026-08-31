@@ -162,7 +162,6 @@ export default function SignupPage() {
           <span className={styles.stepBadge} style={{ color: "#38bdf8", background: "rgba(56, 189, 248, 0.12)" }}>
             Step 1 of 4 · Identity
           </span>
-          <h2 style={{ color: "#ffffff" }}>Company Profile</h2>
           <p style={{ color: "#94a3b8" }}>Set up your organization brand identity and primary business model.</p>
         </div>
         <div className={styles.panelContent}>
@@ -184,7 +183,6 @@ export default function SignupPage() {
           <span className={styles.stepBadge} style={{ color: "#0284c7", background: "rgba(2, 132, 199, 0.12)" }}>
             Step 2 of 4 · Architecture
           </span>
-          <h2 style={{ color: "#0f172a" }}>Industry Preset & Modules</h2>
           <p style={{ color: "#475569" }}>Select a tailored organizational template and activate your required ERP modules.</p>
         </div>
         <div className={styles.panelContent}>
@@ -207,7 +205,6 @@ export default function SignupPage() {
           <span className={styles.stepBadge} style={{ color: "#ffffff", background: "rgba(255, 255, 255, 0.2)" }}>
             Step 3 of 4 · Security
           </span>
-          <h2 style={{ color: "#ffffff" }}>Administrator Account</h2>
           <p style={{ color: "rgba(255, 255, 255, 0.85)" }}>Set up your primary root administrator credentials and password security rules.</p>
         </div>
         <div className={styles.panelContent}>
@@ -230,7 +227,6 @@ export default function SignupPage() {
           <span className={styles.stepBadge} style={{ color: "#0f766e", background: "rgba(15, 118, 110, 0.12)" }}>
             Step 4 of 4 · Verification
           </span>
-          <h2 style={{ color: "#0f172a" }}>Review & Launch Workspace</h2>
           <p style={{ color: "#475569" }}>Review your environment configuration before provisioning your enterprise database.</p>
         </div>
         <div className={styles.panelContent}>

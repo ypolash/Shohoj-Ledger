@@ -76,6 +76,20 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
       return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
     }
 
+    // Mathematical Guard: Prevent overpayment beyond outstanding due balance
+    const existingPayments = await prisma.ledgerEntry.findMany({
+      where: { companyId, referenceId: po.id, voucherType: "SUPPLIER_PAYMENT" }
+    });
+    const totalPaid = existingPayments.reduce((sum, e) => sum + Number(e.debit || 0), 0);
+    const totalInvoiced = Number(po.totalAmount || po.subtotal || 0);
+    const remainingDue = Math.max(0, totalInvoiced - totalPaid);
+
+    if (payAmount > remainingDue) {
+      return NextResponse.json({
+        error: `Payment amount (৳${payAmount.toLocaleString()}) exceeds the outstanding balance (৳${remainingDue.toLocaleString()}).`
+      }, { status: 400 });
+    }
+
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
     const paymentNum = `SPAY-${Date.now().toString().slice(-6)}`;

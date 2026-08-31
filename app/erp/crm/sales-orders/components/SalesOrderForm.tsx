@@ -47,7 +47,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
     expectedDelivery: initialData.expectedDelivery
       ? new Date(initialData.expectedDelivery).toISOString().split("T")[0]
       : "",
-    status: initialData.status || "Confirmed",
+    status: initialData.status || "APPROVED",
     notes: initialData.remarks || initialData.notes || ""
   });
 

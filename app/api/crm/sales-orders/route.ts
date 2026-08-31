@@ -84,6 +84,46 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
+    // Auto-provision temporary customer if provided without customerId
+    if (!body.customerId && body.temporaryCustomer) {
+      const temp = body.temporaryCustomer;
+      let existingCust = null;
+      if (temp.email) {
+        existingCust = await prisma.customer.findFirst({ where: { companyId, email: temp.email } });
+      }
+      if (!existingCust && temp.phone) {
+        existingCust = await prisma.customer.findFirst({ where: { companyId, phone: temp.phone } });
+      }
+
+      if (existingCust) {
+        body.customerId = existingCust.id;
+      } else {
+        const tempCustomer = await prisma.customer.create({
+          data: {
+            companyId,
+            customerCode: `CUST-TEMP-${Date.now().toString().slice(-6)}`,
+            name: temp.name || "Guest Customer",
+            displayName: temp.name || "Guest Customer",
+            phone: temp.phone || null,
+            email: temp.email || null,
+            status: "ACTIVE",
+            createdById: userId,
+            addresses: temp.address
+              ? {
+                  create: {
+                    addressType: "SHIPPING",
+                    addressLine1: temp.address,
+                    city: "Dhaka",
+                    country: "Bangladesh"
+                  }
+                }
+              : undefined
+          }
+        });
+        body.customerId = tempCustomer.id;
+      }
+    }
+
     // TEMPORARY: Inject dummy product/warehouse for MVP if missing
     if (body.lines) {
       let defaultProduct = await prisma.product.findFirst({ where: { companyId } });

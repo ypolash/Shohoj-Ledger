@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
 
 /** Warehouse record from API */
 interface Warehouse {
@@ -14,12 +15,13 @@ interface Warehouse {
 }
 
 /**
- * ERP Inventory — Warehouses Page
- * Displays all warehouses in a card/table layout with manager info and transaction counts.
+ * ERP Inventory — Warehouses Page (Universal Table Redesign 2.0)
+ * Displays all warehouses in a unified table layout with manager info and transaction counts.
  * Supports creating new warehouses via a modal form.
  */
 export default function WarehousesPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ code: '', name: '', location: '', status: 'ACTIVE' });
@@ -63,15 +65,92 @@ export default function WarehousesPage() {
     finally { setSubmitting(false); }
   };
 
-  const activeCount = warehouses.filter(w => w.status === 'ACTIVE').length;
+  // Filter warehouses by search
+  const filteredWarehouses = warehouses.filter(w =>
+    w.name.toLowerCase().includes(search.toLowerCase()) ||
+    w.code.toLowerCase().includes(search.toLowerCase()) ||
+    (w.location && w.location.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const columns: InventoryColumn<Warehouse>[] = [
+    {
+      key: 'code',
+      header: 'Code',
+      width: '120px',
+      render: (w) => (
+        <span style={{ fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary, #38bdf8)', fontWeight: 600 }}>
+          {w.code}
+        </span>
+      )
+    },
+    {
+      key: 'name',
+      header: 'Warehouse Name',
+      render: (w) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary, #38bdf8)' }}>warehouse</span>
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>{w.name}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'location',
+      header: 'Location / Address',
+      render: (w) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--text-muted)' }}>location_on</span>
+          {w.location || '—'}
+        </div>
+      )
+    },
+    {
+      key: 'manager',
+      header: 'Manager / Lead',
+      render: (w) => w.manager ? (
+        <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>
+          {w.manager.firstName} {w.manager.lastName}
+        </span>
+      ) : <span style={{ color: 'var(--text-muted)' }}>— Unassigned</span>
+    },
+    {
+      key: 'transactions',
+      header: 'Stock Movements',
+      render: (w) => (
+        <span style={{ padding: '4px 10px', borderRadius: '20px', background: 'var(--surface-hover)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, border: '1px solid var(--border-main)' }}>
+          {w._count.stockTransactions} transactions
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (w) => (
+        <span
+          style={{
+            padding: '3px 10px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: w.status === 'ACTIVE' ? 'var(--success, #10b981)' : 'var(--text-muted)',
+            background: w.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover)'
+          }}
+        >
+          {w.status}
+        </span>
+      )
+    }
+  ];
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Warehouses</h1>
+          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Warehouses & Storage</h1>
         </div>
         <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
@@ -80,70 +159,29 @@ export default function WarehousesPage() {
       </div>
 
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success, #10b981)', border: '1px solid var(--success)', fontSize: '14px' }}>
           ✓ {successMsg}
         </div>
       )}
 
-      {/* Warehouse Cards */}
-      {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--spacing-4)' }}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-panel" style={{ borderRadius: '16px', padding: '24px', height: '140px', opacity: 0.6 }} />
-          ))}
-        </div>
-      ) : warehouses.length === 0 ? (
-        <div className="glass-panel" style={{ borderRadius: '16px', padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>warehouse</span>
-          No warehouses yet. Add your first location.
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--spacing-4)' }}>
-          {warehouses.map(w => (
-            <div key={w.id} className="glass-panel hover-lift" style={{ borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '22px', color: 'var(--primary)' }}>warehouse</span>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-main)' }}>{w.name}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 600, fontFamily: 'monospace' }}>{w.code}</div>
-                  </div>
-                </div>
-                <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, color: w.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)', background: w.status === 'ACTIVE' ? 'var(--success-subtle)' : 'var(--surface-hover)' }}>
-                  {w.status}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '4px', borderTop: '1px solid var(--border-main)' }}>
-                {w.location && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--text-muted)' }}>location_on</span>
-                    {w.location}
-                  </div>
-                )}
-                {w.manager && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--text-muted)' }}>person</span>
-                    {w.manager.firstName} {w.manager.lastName}
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--text-muted)' }}>swap_horiz</span>
-                  {w._count.stockTransactions} stock movements
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Universal Inventory Table */}
+      <InventoryDataTable
+        columns={columns}
+        data={filteredWarehouses}
+        isLoading={isLoading}
+        emptyIcon="warehouse"
+        emptyTitle="No warehouses found"
+        emptySubtitle="Add storage locations to manage multi-warehouse inventory."
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search warehouse by name, code, or location..."
+      />
 
       {/* Add Warehouse Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', borderRadius: '20px', padding: '32px', margin: '16px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', borderRadius: '20px', padding: '32px', margin: '16px', border: '1px solid var(--border-main)', background: 'var(--surface-bg, #1e293b)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Add Warehouse</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -151,7 +189,7 @@ export default function WarehousesPage() {
               </button>
             </div>
 
-            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
+            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger, #ef4444)', fontSize: '14px' }}>⚠ {error}</div>}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
@@ -189,4 +227,4 @@ export default function WarehousesPage() {
 }
 
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' };
-const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input, rgba(15, 23, 42, 0.6))', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };

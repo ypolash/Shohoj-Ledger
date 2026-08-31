@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
 
+/**
+ * ERP Inventory — Orders Hub (Universal Table Redesign 2.0)
+ * Displays customer sales orders fulfilled through inventory and supports local imports.
+ */
 export default function InventoryOrdersPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +65,6 @@ export default function InventoryOrdersPage() {
     setImportMessage(null);
 
     try {
-      // Parse CSV/JSON locally or send to backend
       const text = await importFile.text();
       let importedCount = 0;
 
@@ -71,7 +73,6 @@ export default function InventoryOrdersPage() {
         const list = Array.isArray(parsed) ? parsed : [parsed];
         importedCount = list.length;
       } else {
-        // Simple CSV line counter for simulation/parsing
         const lines = text.split('\n').filter(l => l.trim().length > 0);
         importedCount = Math.max(0, lines.length - 1);
       }
@@ -100,63 +101,147 @@ export default function InventoryOrdersPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "sample_local_orders.csv");
+    link.setAttribute("download", "orders_import_template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-      
-      {/* Header with Top-Right Action Buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <PageHeader 
-          title="Inventory Orders" 
-        />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* Import Local Order Button */}
-          <button
-            onClick={() => setImportModalOpen(true)}
+  const columns: InventoryColumn<any>[] = [
+    {
+      key: 'salesOrderNumber',
+      header: 'Order Details',
+      render: (order) => (
+        <div>
+          <span style={{ fontWeight: 600, color: 'var(--primary, #38bdf8)', fontFamily: 'monospace', fontSize: '13px' }}>
+            {order.salesOrderNumber || order.orderNumber || order.id.slice(0, 8)}
+          </span>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            {new Date(order.orderDate || order.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'customer',
+      header: 'Customer',
+      render: (order) => (
+        <div>
+          <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>
+            {order.customer?.displayName || order.customer?.name || 'Walk-in Customer'}
+          </div>
+          {order.customer?.email && (
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{order.customer.email}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'items',
+      header: 'Line Items',
+      render: (order) => (
+        <span style={{ padding: '4px 10px', borderRadius: '20px', background: 'var(--surface-hover)', fontSize: '12px', fontWeight: 600, border: '1px solid var(--border-main)' }}>
+          {order.lines?.length || order.items?.length || 1} item(s)
+        </span>
+      )
+    },
+    {
+      key: 'grandTotal',
+      header: 'Total Amount',
+      render: (order) => (
+        <span style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '14px', color: 'var(--text-main)' }}>
+          {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency || 'BDT' }).format(Number(order.grandTotal || order.total || 0))}
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Fulfillment Status',
+      render: (order) => {
+        const isDelivered = order.status === 'Completed' || order.status === 'Delivered' || order.status === 'APPROVED';
+        return (
+          <span
             style={{
-              padding: '10px 16px',
-              background: 'var(--surface-card)',
-              color: 'var(--text-main)',
-              border: '1px solid var(--border-main)',
-              borderRadius: '8px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '11px',
               fontWeight: 600,
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)',
-              transition: 'all 0.2s ease'
+              color: isDelivered ? 'var(--success, #10b981)' : '#f59e0b',
+              background: isDelivered ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+              border: `1px solid ${isDelivered ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>upload_file</span>
-            Import Local Order
-          </button>
-
-          {/* Create Order Button on Top Right Side */}
+            {order.status || 'Confirmed'}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      render: (order) => (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <button
-            onClick={() => router.push('/erp/crm/sales-orders/new')}
+            onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/${order.id}/invoice`); }}
             style={{
-              padding: '10px 20px',
-              background: 'var(--primary)',
-              color: 'white',
-              border: 'none',
+              padding: '6px 12px',
+              color: 'var(--text-main)',
               borderRadius: '8px',
+              background: 'var(--surface-hover)',
+              border: '1px solid var(--border-main)',
+              cursor: 'pointer',
+              fontSize: '12px',
               fontWeight: 600,
-              fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(var(--primary-rgb, 59, 130, 246), 0.3)',
-              transition: 'all 0.2s ease'
+              gap: '4px'
             }}
+            title="Generate Invoice"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>print</span>
+            Invoice
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/${order.id}`); }}
+            style={{
+              padding: '6px 12px',
+              color: 'var(--primary, #38bdf8)',
+              borderRadius: '8px',
+              background: 'rgba(56, 189, 248, 0.12)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 600
+            }}
+          >
+            View
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
+      {/* Header & Actions */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Inventory Orders</h1>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setImportModalOpen(true)}
+            className="btn btn-secondary hover-lift"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>upload_file</span>
+            Import Local Order
+          </button>
+          <button
+            onClick={() => router.push('/erp/crm/sales-orders/new')}
+            className="btn btn-primary hover-lift"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
             Create Order
@@ -164,37 +249,26 @@ export default function InventoryOrdersPage() {
         </div>
       </div>
 
-      {/* Toolbar: Search, Filters & Refresh (No Stat Cards as requested) */}
-      <div className="glass-card" style={{ padding: '16px 20px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
-            <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '18px' }}>search</span>
-            <input 
-              type="text" 
-              placeholder="Search by Order # or Customer..." 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '9px 12px 9px 38px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-main)',
-                background: 'var(--bg-main)',
-                color: 'var(--text-main)',
-                fontSize: '13px',
-                outline: 'none'
-              }}
-            />
-          </div>
-
+      {/* Universal Inventory Table */}
+      <InventoryDataTable
+        columns={columns}
+        data={filteredOrders}
+        isLoading={loading}
+        emptyIcon="shopping_cart"
+        emptyTitle="No orders found"
+        emptySubtitle="Create a new sales order or import local orders to get started."
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search by Order # or Customer..."
+        filterSlot={
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
               padding: '9px 14px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               border: '1px solid var(--border-main)',
-              background: 'var(--bg-main)',
+              background: 'var(--surface-input, rgba(15, 23, 42, 0.6))',
               color: 'var(--text-main)',
               fontSize: '13px',
               outline: 'none',
@@ -208,174 +282,19 @@ export default function InventoryOrdersPage() {
             <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
           </select>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        }
+        actionsSlot={
           <button 
             onClick={fetchOrders}
-            style={{
-              padding: '9px 14px',
-              background: 'var(--surface-hover)',
-              border: '1px solid var(--border-main)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '13px'
-            }}
-            title="Refresh Orders"
+            className="btn btn-secondary"
+            style={{ padding: '8px 14px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>refresh</span>
             Refresh
           </button>
-        </div>
-      </div>
-
-      {/* Order List Table */}
-      <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
-        {loading ? (
-          <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '36px', animation: 'spin 1s linear infinite' }}>progress_activity</span>
-            <p style={{ marginTop: '12px', fontSize: '14px' }}>Loading inventory orders...</p>
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.5, marginBottom: '12px' }}>shopping_cart</span>
-            <h3 style={{ fontSize: '16px', color: 'var(--text-main)', margin: '0 0 6px 0' }}>No orders found</h3>
-            <p style={{ fontSize: '13px', margin: '0 0 20px 0' }}>Create a new sales order or import local orders to get started.</p>
-            <button 
-              onClick={() => router.push('/erp/crm/sales-orders/new')}
-              style={{
-                padding: '8px 16px',
-                background: 'var(--primary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              + Create First Order
-            </button>
-          </div>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <th style={{ padding: '16px 24px', fontWeight: 600 }}>Order Number</th>
-                <th style={{ padding: '16px 24px', fontWeight: 600 }}>Customer</th>
-                <th style={{ padding: '16px 24px', fontWeight: 600 }}>Items Count</th>
-                <th style={{ padding: '16px 24px', fontWeight: 600 }}>Order Date</th>
-                <th style={{ padding: '16px 24px', fontWeight: 600 }}>Total Amount</th>
-                <th style={{ padding: '16px 24px', fontWeight: 600 }}>Status</th>
-                <th style={{ padding: '16px 24px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody style={{ fontSize: '14px' }}>
-              {filteredOrders.map((order) => (
-                <tr 
-                  key={order.id} 
-                  onClick={() => router.push(`/erp/crm/sales-orders/${order.id}`)}
-                  style={{ borderBottom: '1px solid var(--border-light)', cursor: 'pointer' }}
-                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <td style={{ padding: '16px 24px' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                      {order.salesOrderNumber || order.orderNumber || order.id.slice(0, 8)}
-                    </span>
-                    {order.referenceNumber && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Ref: {order.referenceNumber}
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text-main)' }}>
-                      {order.customer?.displayName || order.customer?.name || 'Walk-in Customer'}
-                    </div>
-                    {order.customer?.email && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{order.customer.email}</div>
-                    )}
-                  </td>
-                  <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>
-                    <span style={{ 
-                      padding: '3px 8px', 
-                      borderRadius: '6px', 
-                      background: 'var(--surface-hover)', 
-                      fontSize: '12px', 
-                      fontWeight: 600 
-                    }}>
-                      {order.lines?.length || order.items?.length || 1} line item(s)
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                    {new Date(order.orderDate || order.createdAt).toLocaleDateString()}
-                  </td>
-                  <td style={{ padding: '16px 24px', fontWeight: 600 }}>
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency || 'BDT' }).format(Number(order.grandTotal || order.total || 0))}
-                  </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <span style={{
-                      padding: '4px 10px',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      background: order.status === 'Completed' || order.status === 'Delivered' || order.status === 'APPROVED' ? 'var(--success-glow)' : 'var(--warning-glow)',
-                      color: order.status === 'Completed' || order.status === 'Delivered' || order.status === 'APPROVED' ? 'var(--success)' : 'var(--warning)',
-                    }}>
-                      {order.status || 'Confirmed'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/${order.id}/invoice`); }}
-                        style={{
-                          padding: '6px 12px',
-                          color: 'var(--text-main)',
-                          borderRadius: '6px',
-                          background: 'var(--surface-hover)',
-                          border: '1px solid var(--border-main)',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        title="Generate Invoice"
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>print</span>
-                        Invoice
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); router.push(`/erp/crm/sales-orders/${order.id}`); }}
-                        style={{
-                          padding: '6px 12px',
-                          color: 'var(--primary)',
-                          borderRadius: '6px',
-                          background: 'var(--primary-glow)',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 600
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+        }
+        onRowClick={(order) => router.push(`/erp/crm/sales-orders/${order.id}`)}
+      />
 
       {/* Import Local Order Modal */}
       {importModalOpen && (
@@ -400,7 +319,7 @@ export default function InventoryOrdersPage() {
             width: '100%',
             maxWidth: '540px',
             padding: '28px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
             display: 'flex',
             flexDirection: 'column',
             gap: '20px',
@@ -424,7 +343,6 @@ export default function InventoryOrdersPage() {
             </p>
 
             <form onSubmit={handleImportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* File Drop / Select Area */}
               <div 
                 onClick={() => fileInputRef.current?.click()}
                 style={{
@@ -455,7 +373,6 @@ export default function InventoryOrdersPage() {
                 </div>
               </div>
 
-              {/* Sample Template Link */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Need an import format guide?</span>
                 <button 
@@ -467,66 +384,41 @@ export default function InventoryOrdersPage() {
                 </button>
               </div>
 
-              {/* Feedback messages */}
               {importMessage && (
                 <div style={{
                   padding: '10px 14px',
                   borderRadius: '8px',
                   fontSize: '13px',
                   fontWeight: 500,
-                  background: importMessage.type === 'success' ? 'var(--success-glow)' : 'var(--danger-glow)',
-                  color: importMessage.type === 'success' ? 'var(--success)' : 'var(--danger)',
-                  border: `1px solid ${importMessage.type === 'success' ? 'var(--success-border, transparent)' : 'var(--danger-border, transparent)'}`
+                  background: importMessage.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: importMessage.type === 'success' ? 'var(--success, #10b981)' : 'var(--danger, #ef4444)',
+                  border: `1px solid ${importMessage.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
                 }}>
                   {importMessage.text}
                 </div>
               )}
 
-              {/* Action Buttons */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
                 <button
                   type="button"
                   onClick={() => { setImportModalOpen(false); setImportFile(null); setImportMessage(null); }}
-                  style={{
-                    padding: '9px 18px',
-                    background: 'var(--surface-hover, #1e293b)',
-                    border: '1px solid var(--border-main, #334155)',
-                    borderRadius: '8px',
-                    color: 'var(--text-main, #f8fafc)',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className="btn btn-secondary"
+                  style={{ padding: '9px 18px', fontSize: '13px' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={importing || !importFile}
+                  className="btn btn-primary"
                   style={{
                     padding: '9px 20px',
-                    background: 'var(--primary, #3b82f6)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
                     fontSize: '13px',
-                    fontWeight: 600,
                     cursor: importing || !importFile ? 'not-allowed' : 'pointer',
                     opacity: importing || !importFile ? 0.6 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
                   }}
                 >
-                  {importing ? (
-                    <>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px', animation: 'spin 1s linear infinite' }}>progress_activity</span>
-                      Importing...
-                    </>
-                  ) : (
-                    'Upload & Import Orders'
-                  )}
+                  {importing ? 'Importing...' : 'Upload & Import Orders'}
                 </button>
               </div>
             </form>

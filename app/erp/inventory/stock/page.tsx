@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
 
 /** Product record (minimal, for dropdown) */
 interface Product {
@@ -9,6 +10,7 @@ interface Product {
   productCode: string;
   currentStock?: number;
   minStock?: number;
+  unit?: string;
 }
 
 /** Warehouse record (minimal, for dropdown) */
@@ -30,13 +32,14 @@ const TRANSACTION_TYPES = [
 ];
 
 /**
- * ERP Inventory — Stock Control Page
+ * ERP Inventory — Stock Control Page (Universal Table Redesign 2.0)
  * Provides a product stock summary table and a modal to record
  * stock transactions (IN, OUT, ADJUSTMENT, DAMAGE, RETURN, TRANSFER).
  */
 export default function StockControlPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -117,22 +120,89 @@ export default function StockControlPage() {
     finally { setSubmitting(false); }
   };
 
-  const selectedType = TRANSACTION_TYPES.find(t => t.value === form.type);
-  const isTransfer = form.type === 'TRANSFER';
-  const isAdjustment = form.type === 'ADJUSTMENT';
-
   /** Returns stock badge styling */
   const stockBadge = (p: Product) => {
     const stock = p.currentStock ?? 0;
     const min = p.minStock ?? 0;
-    if (stock <= 0) return { label: 'Out of Stock', color: 'var(--danger)', bg: 'var(--danger-subtle)' };
-    if (stock <= min) return { label: 'Low Stock', color: 'var(--warning)', bg: 'var(--warning-subtle)' };
-    return { label: 'OK', color: 'var(--success)', bg: 'var(--success-subtle)' };
+    if (stock <= 0) return { label: 'Out of Stock', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', dot: '#ef4444' };
+    if (stock <= min) return { label: 'Low Stock', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', dot: '#f59e0b' };
+    return { label: 'In Stock (OK)', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', dot: '#10b981' };
   };
+
+  // Filter products by search
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase()) || 
+    p.productCode.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const columns: InventoryColumn<Product>[] = [
+    {
+      key: 'productCode',
+      header: 'Code',
+      width: '120px',
+      render: (p) => (
+        <span style={{ fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary, #38bdf8)', fontWeight: 600 }}>
+          {p.productCode}
+        </span>
+      )
+    },
+    {
+      key: 'name',
+      header: 'Product Details',
+      render: (p) => (
+        <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>
+          {p.name}
+        </div>
+      )
+    },
+    {
+      key: 'currentStock',
+      header: 'Current Stock',
+      render: (p) => (
+        <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-main)', fontFamily: 'monospace' }}>
+          {p.currentStock ?? 0} {p.unit || 'pcs'}
+        </span>
+      )
+    },
+    {
+      key: 'minStock',
+      header: 'Min Threshold',
+      render: (p) => (
+        <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+          {p.minStock ?? 0} {p.unit || 'pcs'}
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Inventory Status',
+      render: (p) => {
+        const badge = stockBadge(p);
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: badge.color,
+              background: badge.bg,
+              border: `1px solid ${badge.color}30`
+            }}
+          >
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: badge.dot }} />
+            {badge.label}
+          </span>
+        );
+      }
+    }
+  ];
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -145,21 +215,23 @@ export default function StockControlPage() {
       </div>
 
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success, #10b981)', border: '1px solid var(--success)', fontSize: '14px' }}>
           ✓ {successMsg}
         </div>
       )}
 
-      {/* Transaction Type Legend */}
-      <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '14px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px' }}>TRANSACTION TYPES</div>
+      {/* Transaction Type Quick Legend */}
+      <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '14px', border: '1px solid var(--border-main)' }}>
+        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Quick Action Transaction Types
+        </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {TRANSACTION_TYPES.filter(t => showWarehouses || t.value !== 'TRANSFER').map(t => (
             <button 
               key={t.value}
               onClick={() => openModal(t.value)}
               className="hover-lift"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', cursor: 'pointer', outline: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '20px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', cursor: 'pointer', outline: 'none' }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '16px', color: t.color }}>{t.icon}</span>
               <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-main)' }}>{t.label}</span>
@@ -168,78 +240,35 @@ export default function StockControlPage() {
         </div>
       </div>
 
-      {/* Stock Summary Table */}
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-main)', fontWeight: 600, fontSize: '15px', color: 'var(--text-main)' }}>
-          Current Stock Levels
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-                {['Code', 'Product Name', 'Current Stock', 'Min Stock', 'Reorder Level', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} style={{ padding: '14px 16px' }}>
-                        <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>move_down</span>
-                    No products found. Add products first to track stock.
-                  </td>
-                </tr>
-              ) : products.map(p => {
-                const badge = stockBadge(p);
-                return (
-                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary)', fontWeight: 600 }}>{p.productCode}</td>
-                    <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--text-main)' }}>{p.name}</td>
-                    <td style={{ padding: '14px 16px', fontWeight: 700, fontSize: '16px', color: 'var(--text-main)' }}>{p.currentStock ?? 0}</td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{p.minStock ?? 0}</td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>—</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, color: badge.color, background: badge.bg }}>
-                        {badge.label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Universal Inventory Table */}
+      <InventoryDataTable
+        columns={columns}
+        data={filteredProducts}
+        isLoading={isLoading}
+        emptyIcon="move_down"
+        emptyTitle="No product stock records found"
+        emptySubtitle="Add products to your catalog to track real-time stock balances and adjustments."
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search products by code or title..."
+      />
 
       {/* Record Transaction Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '560px', borderRadius: '20px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', margin: '16px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '560px', borderRadius: '20px', padding: '32px', maxHeight: '90vh', overflowY: 'auto', margin: '16px', border: '1px solid var(--border-main)', background: 'var(--surface-bg, #1e293b)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Record Stock Transaction</h2>
-                <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Select a type and fill in the details below.</p>
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Select a transaction type and complete the entry details.</p>
               </div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
               </button>
             </div>
 
-            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
+            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger, #ef4444)', fontSize: '14px' }}>⚠ {error}</div>}
 
             {/* Type Selector */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', marginBottom: '20px' }}>
@@ -252,72 +281,56 @@ export default function StockControlPage() {
               ))}
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={labelStyle}>Product *</label>
                 <select value={form.productId} onChange={e => handleForm('productId', e.target.value)} required style={inputStyle}>
                   <option value="">— Select Product —</option>
-                  {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.productCode})</option>)}
+                  {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.productCode}) — Current: {p.currentStock ?? 0}</option>)}
                 </select>
               </div>
 
               {showWarehouses && (
                 <div>
-                  <label style={labelStyle}>{isTransfer ? 'Source Warehouse *' : 'Warehouse *'}</label>
-                  <select value={form.warehouseId} onChange={e => handleForm('warehouseId', e.target.value)} required style={inputStyle}>
+                  <label style={labelStyle}>Warehouse *</label>
+                  <select value={form.warehouseId} onChange={e => handleForm('warehouseId', e.target.value)} required={showWarehouses} style={inputStyle}>
                     <option value="">— Select Warehouse —</option>
                     {warehouses.map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
                   </select>
                 </div>
               )}
 
-              {showWarehouses && isTransfer && (
+              {form.type === 'TRANSFER' && showWarehouses && (
                 <div>
                   <label style={labelStyle}>Destination Warehouse *</label>
-                  <select value={form.toWarehouseId} onChange={e => handleForm('toWarehouseId', e.target.value)} style={inputStyle}>
-                    <option value="">— Select Destination —</option>
-                    {warehouses.filter(w => w.id !== form.warehouseId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
+                  <select value={form.toWarehouseId} onChange={e => handleForm('toWarehouseId', e.target.value)} required style={inputStyle}>
+                    <option value="">— Select Destination Warehouse —</option>
+                    {warehouses.filter(w => w.id !== form.warehouseId).map(w => (
+                      <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
+                    ))}
                   </select>
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <label style={labelStyle}>
-                    Quantity *
-                    {isAdjustment && <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> (negative to deduct)</span>}
-                  </label>
-                  <input type="number" value={form.quantity} onChange={e => handleForm('quantity', e.target.value)}
-                    placeholder={isAdjustment ? "e.g. -5 or +10" : "e.g. 50"} required
-                    style={inputStyle} step={isAdjustment ? "1" : "1"} />
+                  <label style={labelStyle}>Quantity *</label>
+                  <input type="number" min="0.01" step="any" value={form.quantity} onChange={e => handleForm('quantity', e.target.value)} placeholder="e.g. 50" required style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Reference</label>
-                  <input type="text" value={form.reference} onChange={e => handleForm('reference', e.target.value)} placeholder="e.g. PO-001, GRN-002" style={inputStyle} />
+                  <label style={labelStyle}>Reference # (optional)</label>
+                  <input type="text" value={form.reference} onChange={e => handleForm('reference', e.target.value)} placeholder="PO-001 / INV-123" style={inputStyle} />
                 </div>
               </div>
 
               <div>
-                <label style={labelStyle}>Notes</label>
-                <textarea value={form.notes} onChange={e => handleForm('notes', e.target.value)} placeholder="Optional notes for this transaction" rows={2}
-                  style={{ ...inputStyle, resize: 'vertical' }} />
+                <label style={labelStyle}>Notes / Reason (optional)</label>
+                <textarea value={form.notes} onChange={e => handleForm('notes', e.target.value)} placeholder="Reason for adjustment, damage description, etc." rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
               </div>
-
-              {/* Summary preview */}
-              {form.productId && (!showWarehouses || form.warehouseId) && form.quantity && selectedType && (
-                <div style={{ padding: '14px 16px', borderRadius: '12px', background: `${selectedType.color}15`, border: `1px solid ${selectedType.color}40`, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px', color: selectedType.color }}>{selectedType.icon}</span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-main)' }}>
-                    <strong>{selectedType.label}</strong> of <strong>{Math.abs(Number(form.quantity))}</strong> units
-                    {showWarehouses && form.warehouseId && ` in warehouse ${warehouses.find(w => w.id === form.warehouseId)?.name}`}
-                    {showWarehouses && isTransfer && form.toWarehouseId && ` → ${warehouses.find(w => w.id === form.toWarehouseId)?.name}`}
-                  </span>
-                </div>
-              )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting} style={{ minWidth: '150px' }}>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? 'Recording…' : 'Record Transaction'}
                 </button>
               </div>
@@ -330,4 +343,4 @@ export default function StockControlPage() {
 }
 
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' };
-const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input, rgba(15, 23, 42, 0.6))', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };

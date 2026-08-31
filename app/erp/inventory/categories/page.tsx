@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
 
 /** Category record from API */
 interface Category {
@@ -13,12 +14,13 @@ interface Category {
 }
 
 /**
- * ERP Inventory — Product Categories Page
+ * ERP Inventory — Product Categories Page (Universal Table Redesign 2.0)
  * Displays all categories with product counts, supports nested parent categories,
  * and allows creating new categories via a modal.
  */
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', parentId: '' });
@@ -62,12 +64,63 @@ export default function CategoriesPage() {
     finally { setSubmitting(false); }
   };
 
+  // Filter categories by search
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    (c.description && c.description.toLowerCase().includes(search.toLowerCase())) ||
+    (c.parent && c.parent.name.toLowerCase().includes(search.toLowerCase()))
+  );
+
   // Root-level categories (for parent dropdown — avoid infinite nesting)
   const rootCategories = categories.filter(c => !c.parentId);
 
+  const columns: InventoryColumn<Category>[] = [
+    {
+      key: 'name',
+      header: 'Category Details',
+      render: (cat) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary, #38bdf8)' }}>folder</span>
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>{cat.name}</div>
+            {cat.description && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{cat.description}</div>}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'parent',
+      header: 'Parent Category',
+      render: (cat) => cat.parent ? (
+        <span style={{ padding: '4px 10px', borderRadius: '20px', background: 'rgba(56, 189, 248, 0.15)', color: 'var(--primary, #38bdf8)', fontSize: '12px', fontWeight: 600 }}>
+          {cat.parent.name}
+        </span>
+      ) : <span style={{ color: 'var(--text-muted)' }}>— (Root)</span>
+    },
+    {
+      key: 'products',
+      header: 'Products Count',
+      render: (cat) => (
+        <span style={{ padding: '4px 12px', borderRadius: '20px', background: 'var(--surface-hover)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, border: '1px solid var(--border-main)' }}>
+          {cat._count.products} items
+        </span>
+      )
+    },
+    {
+      key: 'subcategories',
+      header: 'Sub-Categories',
+      render: (cat) => (
+        <span style={{ padding: '4px 12px', borderRadius: '20px', background: 'var(--surface-hover)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600, border: '1px solid var(--border-main)' }}>
+          {cat._count.children} sub
+        </span>
+      )
+    }
+  ];
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -80,83 +133,29 @@ export default function CategoriesPage() {
       </div>
 
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success, #10b981)', border: '1px solid var(--success)', fontSize: '14px' }}>
           ✓ {successMsg}
         </div>
       )}
 
-      {/* Table */}
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-              {['Category Name', 'Parent', 'Products', 'Sub-categories', ''].map(h => (
-                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <td key={j} style={{ padding: '14px 16px' }}>
-                      <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.6 }} />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : categories.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>category</span>
-                  No categories yet. Create your first one.
-                </td>
-              </tr>
-            ) : categories.map(cat => (
-              <tr key={cat.id} style={{ borderBottom: '1px solid var(--border-main)' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-main)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>folder</span>
-                    {cat.name}
-                  </div>
-                  {cat.description && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px', marginLeft: '28px' }}>{cat.description}</div>}
-                </td>
-                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
-                  {cat.parent ? (
-                    <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'var(--primary-subtle)', color: 'var(--primary)', fontSize: '12px', fontWeight: 500 }}>
-                      {cat.parent.name}
-                    </span>
-                  ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
-                </td>
-                <td style={{ padding: '14px 16px' }}>
-                  <span style={{ padding: '4px 12px', borderRadius: '20px', background: 'var(--surface-hover)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>
-                    {cat._count.products}
-                  </span>
-                </td>
-                <td style={{ padding: '14px 16px' }}>
-                  <span style={{ padding: '4px 12px', borderRadius: '20px', background: 'var(--surface-hover)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>
-                    {cat._count.children}
-                  </span>
-                </td>
-                <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Universal Inventory Table */}
+      <InventoryDataTable
+        columns={columns}
+        data={filteredCategories}
+        isLoading={isLoading}
+        emptyIcon="category"
+        emptyTitle="No categories yet"
+        emptySubtitle="Create your first product category to organize your inventory."
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search categories by name or description..."
+      />
 
       {/* Add Category Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', borderRadius: '20px', padding: '32px', margin: '16px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', borderRadius: '20px', padding: '32px', margin: '16px', border: '1px solid var(--border-main)', background: 'var(--surface-bg, #1e293b)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Add Category</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -164,7 +163,7 @@ export default function CategoriesPage() {
               </button>
             </div>
 
-            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
+            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger, #ef4444)', fontSize: '14px' }}>⚠ {error}</div>}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
@@ -197,4 +196,4 @@ export default function CategoriesPage() {
 }
 
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' };
-const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };
+const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input, rgba(15, 23, 42, 0.6))', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };

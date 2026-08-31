@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import ProductModal, { EMPTY_PRODUCT_FORM } from '../components/ProductModal';
+import ProductModal from '../components/ProductModal';
 import BulkProductUploadModal from '../components/BulkProductUploadModal';
+import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
 
 /** Product record from API */
 interface Product {
@@ -35,8 +36,8 @@ interface Category {
 }
 
 /**
- * ERP Inventory — Products Page
- * Displays a searchable, filterable product list and supports adding new products.
+ * ERP Inventory — Products Page (Universal Table Redesign 2.0)
+ * Displays a searchable, filterable product list and supports adding/editing products.
  */
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -118,16 +119,151 @@ export default function ProductsPage() {
 
   /** Returns a badge style based on current stock vs. min stock threshold */
   const stockBadge = (product: Product) => {
-    if (product.currentStock <= 0) return { label: 'Out of Stock', color: 'var(--danger)', bg: 'var(--danger-subtle)' };
-    if (product.currentStock <= product.minStock) return { label: 'Low Stock', color: 'var(--warning)', bg: 'var(--warning-subtle)' };
-    return { label: 'In Stock', color: 'var(--success)', bg: 'var(--success-subtle)' };
+    if (product.currentStock <= 0) return { label: 'Out of Stock', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', dot: '#ef4444' };
+    if (product.currentStock <= product.minStock) return { label: 'Low Stock', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', dot: '#f59e0b' };
+    return { label: 'In Stock', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', dot: '#10b981' };
   };
 
   const totalPages = Math.ceil(total / LIMIT);
 
+  const columns: InventoryColumn<Product>[] = [
+    {
+      key: 'image',
+      header: 'Item',
+      width: '60px',
+      render: (p) => (
+        <div style={{ width: '42px', height: '42px', borderRadius: '10px', overflow: 'hidden', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-main)' }}>
+          {p.imageUrl ? (
+            <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--text-muted)' }}>image</span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'productCode',
+      header: 'Code / SKU',
+      render: (p) => (
+        <div>
+          <span style={{ fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary, #38bdf8)', fontWeight: 600 }}>
+            {p.productCode}
+          </span>
+          {p.sku && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>SKU: {p.sku}</div>}
+        </div>
+      )
+    },
+    {
+      key: 'name',
+      header: 'Product Details',
+      render: (p) => (
+        <div>
+          <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>{p.name}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            {p.category?.name || 'Uncategorized'} {p.brand ? `· ${p.brand}` : ''}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'unit',
+      header: 'Unit',
+      render: (p) => <span style={{ color: 'var(--text-secondary)' }}>{p.unit || '—'}</span>
+    },
+    {
+      key: 'stock',
+      header: 'Current Stock',
+      render: (p) => {
+        const badge = stockBadge(p);
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: badge.color,
+              background: badge.bg,
+              border: `1px solid ${badge.color}30`
+            }}
+          >
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: badge.dot }} />
+            {p.currentStock} {p.unit || 'pcs'} · {badge.label}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'sellingPrice',
+      header: 'Sell Price',
+      render: (p) => (
+        <span style={{ color: 'var(--text-main)', fontWeight: 600, fontFamily: 'monospace', fontSize: '13px' }}>
+          ৳{Number(p.sellingPrice).toLocaleString()}
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (p) => (
+        <span
+          style={{
+            padding: '3px 10px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: p.status === 'ACTIVE' ? 'var(--success, #10b981)' : 'var(--text-muted)',
+            background: p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover)'
+          }}
+        >
+          {p.status}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      width: '60px',
+      render: (p) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (menuOpen?.id === p.id) {
+              setMenuOpen(null);
+            } else {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setMenuOpen({
+                id: p.id,
+                name: p.name,
+                top: rect.bottom,
+                right: window.innerWidth - rect.right
+              });
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-muted)',
+            padding: '6px',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
+        </button>
+      )
+    }
+  ];
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -146,136 +282,47 @@ export default function ProductsPage() {
       </div>
 
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>
+        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success, #10b981)', border: '1px solid var(--success)', fontSize: '14px' }}>
           ✓ {successMsg}
         </div>
       )}
 
-      {/* Filters */}
-      <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
-          <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
-          <input
-            type="text"
-            placeholder="Search by name, code, SKU, barcode..."
-            value={search}
-            onChange={e => handleSearch(e.target.value)}
-            style={{ width: '100%', paddingLeft: '38px', padding: '10px 12px 10px 38px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <select
-          value={categoryFilter}
-          onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
-          style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', minWidth: '180px' }}
-        >
-          <option value="">All Categories</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-      </div>
-
-      {/* Table */}
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-                {['Image', 'Code', 'Name', 'Category', 'Unit', 'Stock', 'Sell Price', 'Status', ''].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                    {Array.from({ length: 9 }).map((_, j) => (
-                      <td key={j} style={{ padding: '14px 16px' }}>
-                        <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>inventory_2</span>
-                    No products found. Add one to get started.
-                  </td>
-                </tr>
-              ) : products.map((p) => {
-                const badge = stockBadge(p);
-                return (
-                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.1s', cursor: 'pointer' }}
-                    onClick={() => router.push(`/erp/inventory/products/${encodeURIComponent(p.name.trim().replace(/ /g, '_'))}`)}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                    <td style={{ padding: '10px 16px', width: '50px' }}>
-                      {p.imageUrl ? (
-                        <img src={p.imageUrl} alt={p.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }} />
-                      ) : (
-                        <div style={{ width: '40px', height: '40px', background: 'var(--surface-hover)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--text-muted)' }}>image</span>
-                        </div>
-                      )}
-                    </td>
-                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary)', fontWeight: 600 }}>{p.productCode}</td>
-                    <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--text-main)' }}>
-                      <div>{p.name}</div>
-                      {p.sku && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>SKU: {p.sku}</div>}
-                    </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{p.category?.name || '—'}</td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{p.unit || '—'}</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, color: badge.color, background: badge.bg }}>
-                        {p.currentStock} · {badge.label}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--text-main)', fontWeight: 500 }}>৳{Number(p.sellingPrice).toLocaleString()}</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, color: p.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)', background: p.status === 'ACTIVE' ? 'var(--success-subtle)' : 'var(--surface-hover)' }}>
-                        {p.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          if (menuOpen?.id === p.id) {
-                            setMenuOpen(null);
-                          } else {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setMenuOpen({
-                              id: p.id,
-                              name: p.name,
-                              top: rect.bottom,
-                              right: window.innerWidth - rect.right
-                            });
-                          }
-                        }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: '1px solid var(--border-main)' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Showing {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} of {total}</span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button className="btn btn-secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: '6px 14px', fontSize: '13px' }}>← Prev</button>
-              <span style={{ padding: '6px 14px', fontSize: '13px', color: 'var(--text-main)', fontWeight: 600 }}>{page} / {totalPages}</span>
-              <button className="btn btn-secondary" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ padding: '6px 14px', fontSize: '13px' }}>Next →</button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Universal Inventory Table */}
+      <InventoryDataTable
+        columns={columns}
+        data={products}
+        isLoading={isLoading}
+        emptyIcon="inventory_2"
+        emptyTitle="No products found"
+        emptySubtitle="Try adjusting your search query or category filters to find products."
+        searchValue={search}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search by name, code, SKU, barcode..."
+        filterSlot={
+          <select
+            value={categoryFilter}
+            onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
+            style={{
+              padding: '9px 14px',
+              borderRadius: '10px',
+              border: '1px solid var(--border-main)',
+              background: 'var(--surface-input, rgba(15, 23, 42, 0.6))',
+              color: 'var(--text-main)',
+              fontSize: '13px',
+              outline: 'none'
+            }}
+          >
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        }
+        page={page}
+        totalPages={totalPages}
+        totalItems={total}
+        itemsPerPage={LIMIT}
+        onPageChange={setPage}
+        onRowClick={(p) => router.push(`/erp/inventory/products/${encodeURIComponent(p.name.trim().replace(/ /g, '_'))}`)}
+      />
 
       {/* Global Dropdown Menu */}
       {menuOpen && (
@@ -283,10 +330,10 @@ export default function ProductsPage() {
           position: 'fixed',
           right: `${menuOpen.right}px`,
           top: `${menuOpen.top + 4}px`,
-          background: 'var(--surface-bg)',
+          background: 'var(--surface-bg, #1e293b)',
           border: '1px solid var(--border-main)',
           borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
           padding: '4px',
           zIndex: 9999,
           minWidth: '140px',
@@ -310,8 +357,8 @@ export default function ProductsPage() {
           >
             Edit Product
           </button>
-          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger)', borderRadius: '4px' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-subtle)'}
+          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger, #ef4444)', borderRadius: '4px' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => handleDelete(menuOpen.id)}
           >

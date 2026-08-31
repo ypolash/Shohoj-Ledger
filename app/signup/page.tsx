@@ -155,9 +155,13 @@ export default function SignupPage() {
 
       {/* Panel 1 */}
       <div className={`${styles.accordionPanel} ${styles.bg1} ${currentStep === 1 ? styles.active : ""}`}>
-        <div className={styles.unexpandedIndicator}>
-          <div className={styles.circleNumber}>1</div>
-        </div>
+        {currentStep > 1 ? (
+          <div className={styles.completedText}>COMPLETE</div>
+        ) : (
+          <div className={styles.unexpandedIndicator}>
+            <div className={styles.circleNumber}>1</div>
+          </div>
+        )}
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
             <div className={styles.panelTitleStatic}>
@@ -177,9 +181,13 @@ export default function SignupPage() {
 
       {/* Panel 2 */}
       <div className={`${styles.accordionPanel} ${styles.bg2} ${currentStep === 2 ? styles.active : ""}`}>
-        <div className={styles.unexpandedIndicator}>
-          <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>2</div>
-        </div>
+        {currentStep > 2 ? (
+          <div className={styles.completedText} style={{ color: "rgba(15, 23, 42, 0.25)" }}>COMPLETE</div>
+        ) : (
+          <div className={styles.unexpandedIndicator}>
+            <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>2</div>
+          </div>
+        )}
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "680px" }}>
             <div className={styles.panelTitleStatic}>
@@ -200,9 +208,13 @@ export default function SignupPage() {
 
       {/* Panel 3 */}
       <div className={`${styles.accordionPanel} ${styles.bg3} ${currentStep === 3 ? styles.active : ""}`}>
-        <div className={styles.unexpandedIndicator}>
-          <div className={styles.circleNumber}>3</div>
-        </div>
+        {currentStep > 3 ? (
+          <div className={styles.completedText} style={{ color: "rgba(255, 255, 255, 0.4)" }}>COMPLETE</div>
+        ) : (
+          <div className={styles.unexpandedIndicator}>
+            <div className={styles.circleNumber}>3</div>
+          </div>
+        )}
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
             <div className={styles.panelTitleStatic}>
@@ -223,9 +235,13 @@ export default function SignupPage() {
 
       {/* Panel 4 */}
       <div className={`${styles.accordionPanel} ${styles.bg4} ${currentStep === 4 ? styles.active : ""}`}>
-        <div className={styles.unexpandedIndicator}>
-          <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>4</div>
-        </div>
+        {currentStep > 4 ? (
+          <div className={styles.completedText} style={{ color: "rgba(15, 23, 42, 0.25)" }}>COMPLETE</div>
+        ) : (
+          <div className={styles.unexpandedIndicator}>
+            <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>4</div>
+          </div>
+        )}
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "640px" }}>
             <div className={styles.panelTitleStatic}>

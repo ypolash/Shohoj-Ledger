@@ -156,7 +156,7 @@ export default function SignupPage() {
       {/* Panel 1 */}
       <div className={`${styles.accordionPanel} ${styles.bg1} ${currentStep === 1 ? styles.active : ""}`}>
         {currentStep > 1 ? (
-          <div className={styles.completedText}>COMPLETE</div>
+          <div className={styles.completedText} style={{ color: "rgba(56, 189, 248, 0.4)" }}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
             <div className={styles.circleNumber}>1</div>
@@ -182,7 +182,7 @@ export default function SignupPage() {
       {/* Panel 2 */}
       <div className={`${styles.accordionPanel} ${styles.bg2} ${currentStep === 2 ? styles.active : ""}`}>
         {currentStep > 2 ? (
-          <div className={styles.completedText}>COMPLETE</div>
+          <div className={styles.completedText} style={{ color: "rgba(110, 231, 183, 0.4)" }}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
             <div className={styles.circleNumber}>2</div>
@@ -209,7 +209,7 @@ export default function SignupPage() {
       {/* Panel 3 */}
       <div className={`${styles.accordionPanel} ${styles.bg3} ${currentStep === 3 ? styles.active : ""}`}>
         {currentStep > 3 ? (
-          <div className={styles.completedText}>COMPLETE</div>
+          <div className={styles.completedText} style={{ color: "rgba(253, 164, 175, 0.4)" }}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
             <div className={styles.circleNumber}>3</div>
@@ -236,7 +236,7 @@ export default function SignupPage() {
       {/* Panel 4 */}
       <div className={`${styles.accordionPanel} ${styles.bg4} ${currentStep === 4 ? styles.active : ""}`}>
         {currentStep > 4 ? (
-          <div className={styles.completedText}>COMPLETE</div>
+          <div className={styles.completedText} style={{ color: "rgba(147, 197, 253, 0.4)" }}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
             <div className={styles.circleNumber}>4</div>

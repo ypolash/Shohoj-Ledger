@@ -8,52 +8,47 @@
   display: flex;
 }
 
-.leftPane {
-  width: 40vw;
+.accordionPanel {
   height: 100vh;
-  transition: background-color 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 10vw;
+  transition: width 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   position: relative;
-  z-index: 10;
-  box-shadow: 10px 0 50px rgba(0,0,0,0.4);
+  cursor: default;
+}
+
+.accordionPanel.active {
+  width: 70vw;
+}
+
+.panelContent {
+  width: 70vw; /* Fixed width to prevent squishing during animation */
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 24px 32px 24px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.accordionPanel.active .panelContent {
+  opacity: 1;
+  transition-delay: 0.3s;
+  pointer-events: auto;
 }
 
 .bg1 { background-color: #211f35; }
 .bg2 { background-color: #bce0fd; }
 .bg3 { background-color: #f04938; }
 .bg4 { background-color: #b5eff2; }
-
-.rightPane {
-  width: 60vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-  background-color: #0f172a;
-}
-
-.sliderTrack {
-  width: 240vw;
-  height: 100vh;
-  display: flex;
-  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
-
-/* 4 Distinct Panels */
-.panel {
-  width: 60vw;
-  height: 100vh;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 24px 32px 24px;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
 
 /* Success Card Modal */
 .successOverlay {

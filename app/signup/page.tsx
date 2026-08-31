@@ -145,76 +145,71 @@ export default function SignupPage() {
 
   return (
     <main className={styles.viewport}>
-      {/* Left fixed color pane */}
-      <div className={`${styles.leftPane} ${styles[`bg${currentStep}`]}`}>
-        {/* The color changes dynamically based on currentStep */}
+      {/* 4-Color Strip Indicator */}
+      <ColorStepIndicator
+        currentStep={currentStep}
+        onSelectStep={(step) => {
+          if (step < currentStep) {
+            setCurrentStep(step);
+          }
+        }}
+      />
+
+      {/* Floating Error Alert */}
+      {apiError && (
+        <div className={styles.errorBanner}>
+          <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>error</span>
+          <span>{apiError}</span>
+        </div>
+      )}
+
+      {/* Panel 1 */}
+      <div className={`${styles.accordionPanel} ${styles.bg1} ${currentStep === 1 ? styles.active : ""}`}>
+        <div className={styles.panelContent}>
+          <Step1CompanyProfile
+            formData={formData}
+            errors={fieldErrors}
+            updateForm={updateForm}
+            onNext={handleNext}
+          />
+        </div>
       </div>
 
-      <div className={styles.rightPane}>
-        {/* 4-Color Strip Indicator */}
-        <ColorStepIndicator
-          currentStep={currentStep}
-          onSelectStep={(step) => {
-            if (step < currentStep) {
-              setCurrentStep(step);
-            }
-          }}
-        />
+      {/* Panel 2 */}
+      <div className={`${styles.accordionPanel} ${styles.bg2} ${currentStep === 2 ? styles.active : ""}`}>
+        <div className={styles.panelContent}>
+          <Step2IndustryModules
+            formData={formData}
+            errors={fieldErrors}
+            updateForm={updateForm}
+            onBack={handleBack}
+            onNext={handleNext}
+          />
+        </div>
+      </div>
 
-        {/* Floating Error Alert */}
-        {apiError && (
-          <div className={styles.errorBanner}>
-            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>error</span>
-            <span>{apiError}</span>
-          </div>
-        )}
+      {/* Panel 3 */}
+      <div className={`${styles.accordionPanel} ${styles.bg3} ${currentStep === 3 ? styles.active : ""}`}>
+        <div className={styles.panelContent}>
+          <Step3AdminSecurity
+            formData={formData}
+            errors={fieldErrors}
+            updateForm={updateForm}
+            onBack={handleBack}
+            onNext={handleNext}
+          />
+        </div>
+      </div>
 
-        {/* 4-Panel Horizontal Sliding Track */}
-        <div
-          className={styles.sliderTrack}
-          style={{ transform: `translateX(-${(currentStep - 1) * 60}vw)` }}
-        >
-          {/* Panel 1 */}
-          <section className={styles.panel}>
-            <Step1CompanyProfile
-              formData={formData}
-              errors={fieldErrors}
-              updateForm={updateForm}
-              onNext={handleNext}
-            />
-          </section>
-
-          {/* Panel 2 */}
-          <section className={styles.panel}>
-            <Step2IndustryModules
-              formData={formData}
-              errors={fieldErrors}
-              updateForm={updateForm}
-              onBack={handleBack}
-              onNext={handleNext}
-            />
-          </section>
-
-          {/* Panel 3 */}
-          <section className={styles.panel}>
-            <Step3AdminSecurity
-              formData={formData}
-              errors={fieldErrors}
-              updateForm={updateForm}
-              onBack={handleBack}
-              onNext={handleNext}
-            />
-          </section>
-
-          {/* Panel 4 */}
-          <section className={styles.panel}>
-            <Step4ReviewLaunch
-              formData={formData}
-              isLoading={isLoading}
-              onBack={handleBack}
-              onSubmit={handleSubmit}
-            />
-          </section>
+      {/* Panel 4 */}
+      <div className={`${styles.accordionPanel} ${styles.bg4} ${currentStep === 4 ? styles.active : ""}`}>
+        <div className={styles.panelContent}>
+          <Step4ReviewLaunch
+            formData={formData}
+            isLoading={isLoading}
+            onBack={handleBack}
+            onSubmit={handleSubmit}
+          />
         </div>
       </div>
 

@@ -61,29 +61,6 @@ export function Step2IndustryModules({ formData, errors, updateForm, onBack, onN
         color: "#0f172a"
       }}
     >
-      <div>
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "#0369a1",
-            background: "rgba(3, 105, 161, 0.12)",
-            padding: "4px 10px",
-            borderRadius: "20px"
-          }}
-        >
-          Step 2 of 4 · Architecture
-        </span>
-        <h2 style={{ fontSize: "26px", fontWeight: 700, margin: "12px 0 6px 0", color: "#0f172a" }}>
-          Industry Preset & Modules
-        </h2>
-        <p style={{ margin: 0, fontSize: "14px", color: "#475569" }}>
-          Select a tailored organizational template and activate your required ERP modules.
-        </p>
-      </div>
-
       {/* Industry Presets Grid */}
       <div>
         <label style={labelLight}>Industry Template Preset</label>

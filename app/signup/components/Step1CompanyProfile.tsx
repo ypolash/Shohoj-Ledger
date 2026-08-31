@@ -50,29 +50,6 @@ export function Step1CompanyProfile({ formData, errors, updateForm, onNext }: St
         color: "#ffffff"
       }}
     >
-      <div>
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "#38bdf8",
-            background: "rgba(56, 189, 248, 0.12)",
-            padding: "4px 10px",
-            borderRadius: "20px"
-          }}
-        >
-          Step 1 of 4 · Identity
-        </span>
-        <h2 style={{ fontSize: "26px", fontWeight: 700, margin: "12px 0 6px 0", color: "#ffffff" }}>
-          Company Profile
-        </h2>
-        <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8" }}>
-          Set up your organization brand identity and primary business model.
-        </p>
-      </div>
-
       {/* Logo Picker */}
       <div>
         <label style={labelDark}>Company Logo (Optional)</label>

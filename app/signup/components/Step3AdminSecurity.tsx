@@ -43,29 +43,6 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
         color: "#ffffff"
       }}
     >
-      <div>
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "#ffffff",
-            background: "rgba(255, 255, 255, 0.2)",
-            padding: "4px 10px",
-            borderRadius: "20px"
-          }}
-        >
-          Step 3 of 4 · Security
-        </span>
-        <h2 style={{ fontSize: "26px", fontWeight: 700, margin: "12px 0 6px 0", color: "#ffffff" }}>
-          Administrator Account
-        </h2>
-        <p style={{ margin: 0, fontSize: "14px", color: "rgba(255, 255, 255, 0.85)" }}>
-          Set up your primary root administrator credentials and password security rules.
-        </p>
-      </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={labelRed}>Admin Full Name *</label>

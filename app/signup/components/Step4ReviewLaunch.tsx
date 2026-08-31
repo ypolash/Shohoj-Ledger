@@ -58,29 +58,6 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
         color: "#0f172a"
       }}
     >
-      <div>
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "#0f766e",
-            background: "rgba(15, 118, 110, 0.12)",
-            padding: "4px 10px",
-            borderRadius: "20px"
-          }}
-        >
-          Step 4 of 4 · Verification
-        </span>
-        <h2 style={{ fontSize: "26px", fontWeight: 700, margin: "12px 0 6px 0", color: "#0f172a" }}>
-          Review & Launch Workspace
-        </h2>
-        <p style={{ margin: 0, fontSize: "14px", color: "#475569" }}>
-          Review your environment configuration before provisioning your enterprise database.
-        </p>
-      </div>
-
       {/* Review Card */}
       <div
         style={{

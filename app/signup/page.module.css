@@ -37,12 +37,88 @@
   pointer-events: none;
   overflow-y: auto;
   box-sizing: border-box;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.panelContent::-webkit-scrollbar {
+  display: none;
 }
 
 .accordionPanel.active .panelContent {
   opacity: 1;
   transition-delay: 0.3s;
   pointer-events: auto;
+}
+
+.unexpandedIndicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.accordionPanel.active .unexpandedIndicator {
+  opacity: 0;
+}
+
+.circleNumber {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+}
+
+.panelTitle {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 400px; /* Ensure text doesn't wrap awkwardly during transition */
+  text-align: left;
+}
+
+.accordionPanel.active .panelTitle {
+  opacity: 1;
+  transition-delay: 0.3s;
+  pointer-events: auto;
+}
+
+.stepBadge {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 20px;
+  width: fit-content;
+}
+
+.panelTitle h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 4px 0 0 0;
+}
+
+.panelTitle p {
+  margin: 0;
+  font-size: 14px;
 }
 
 .bg1 { background-color: #211f35; }

@@ -1,16 +1,16 @@
-# Graph Report - Shohoj Ledger  (2026-08-31)
+# Graph Report - Shohoj Ledger  (2026-08-25)
 
 ## Corpus Check
-- 1098 files · ~545,756 words
+- 1075 files · ~400,527 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4673 nodes · 7089 edges · 525 communities (368 shown, 157 thin omitted)
+- 4595 nodes · 6933 edges · 514 communities (360 shown, 154 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7d69a675`
+- Built from commit: `5744c35d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -475,17 +475,12 @@
 - test_lucide.mjs
 - route.ts
 - route.ts
-- CustomerContacts.tsx
-- LeadStats.tsx
-- repository
-- jose
-- react-dom
 
 ## God Nodes (most connected - your core abstractions)
-1. `getCompanyId()` - 324 edges
-2. `requirePermission()` - 244 edges
-3. `getSession()` - 206 edges
-4. `logAudit()` - 149 edges
+1. `getCompanyId()` - 317 edges
+2. `requirePermission()` - 241 edges
+3. `getSession()` - 197 edges
+4. `logAudit()` - 148 edges
 5. `PageContainer()` - 108 edges
 6. `PageHeader()` - 108 edges
 7. `withCompany()` - 85 edges
@@ -495,28 +490,28 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `GET()` --calls--> `getCompanyId()`  [EXTRACTED]
-  app/api/crm/customer-payments/route.ts → lib/company/companyFilter.ts
-- `PUT()` --calls--> `getCompanyId()`  [EXTRACTED]
-  app/api/crm/customers/[id]/addresses/[addressId]/route.ts → lib/company/companyFilter.ts
-- `DELETE()` --calls--> `getCompanyId()`  [EXTRACTED]
-  app/api/crm/customers/[id]/addresses/[addressId]/route.ts → lib/company/companyFilter.ts
-- `GET()` --calls--> `getCompanyId()`  [EXTRACTED]
   app/api/crm/customers/[id]/addresses/route.ts → lib/company/companyFilter.ts
+- `DELETE()` --calls--> `getCompanyId()`  [EXTRACTED]
+  app/api/crm/opportunities/pipelines/[id]/route.ts → lib/company/companyFilter.ts
 - `GET()` --calls--> `getCompanyId()`  [EXTRACTED]
-  app/api/crm/customers/[id]/contacts/route.ts → lib/company/companyFilter.ts
+  app/api/crm/opportunities/pipelines/route.ts → lib/company/companyFilter.ts
+- `GET()` --calls--> `getCompanyId()`  [EXTRACTED]
+  app/api/crm/sales-orders/[id]/deliveries/route.ts → lib/company/companyFilter.ts
+- `GET()` --calls--> `withCompany()`  [EXTRACTED]
+  app/api/members/[id]/route.ts → lib/company/companyFilter.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (525 total, 157 thin omitted)
+## Communities (514 total, 154 thin omitted)
 
 ### Community 0 - "API Routes & Prisma"
-Cohesion: 0.04
-Nodes (93): GET(), PATCH(), POST(), DELETE(), PATCH(), GET(), POST(), GET() (+85 more)
+Cohesion: 0.05
+Nodes (85): GET(), PATCH(), DELETE(), PATCH(), GET(), POST(), GET(), DELETE() (+77 more)
 
 ### Community 1 - "NPM Package Config"
-Cohesion: 0.10
-Nodes (21): autoprefixer, eslint, eslint-config-next, devDependencies, autoprefixer, eslint, eslint-config-next, postcss (+13 more)
+Cohesion: 0.05
+Nodes (41): autoprefixer, eslint, eslint-config-next, author, bugs, url, description, devDependencies (+33 more)
 
 ### Community 2 - "TypeScript Compiler Options"
 Cohesion: 0.07
@@ -524,23 +519,23 @@ Nodes (29): ./*, dom, dom.iterable, esnext, .next/dev/types/**/*.ts, next-env.d.
 
 ### Community 3 - "Dev Dependencies"
 Cohesion: 0.03
-Nodes (4): PageContainer(), PageContainerProps, PageHeader(), PageHeaderProps
+Nodes (5): Network, PageContainer(), PageContainerProps, PageHeader(), PageHeaderProps
 
 ### Community 4 - "Frontend Dependencies"
-Cohesion: 0.09
-Nodes (23): bcryptjs, better-auth, chart.js, jspdf, jspdf-autotable, lucide-react, next, dependencies (+15 more)
+Cohesion: 0.08
+Nodes (25): bcryptjs, better-auth, chart.js, jose, jspdf-autotable, lucide-react, next, dependencies (+17 more)
 
 ### Community 5 - "Next.js TS Config"
 Cohesion: 0.03
-Nodes (79): GET(), GET(), GET(), GET(), DELETE(), getRefModel(), PUT(), GET() (+71 more)
+Nodes (82): GET(), GET(), GET(), GET(), POST(), GET(), GET(), POST() (+74 more)
 
 ### Community 6 - "Settlements & Calculations"
-Cohesion: 0.11
-Nodes (20): DELETE(), GET(), PATCH(), DELETE(), GET(), PATCH(), PATCH(), DELETE() (+12 more)
+Cohesion: 0.14
+Nodes (17): DELETE(), GET(), PATCH(), DELETE(), GET(), PATCH(), PATCH(), DELETE() (+9 more)
 
 ### Community 7 - "Income API"
-Cohesion: 0.04
-Nodes (67): POST(), GET(), POST(), POST(), GET(), POST(), DELETE(), PATCH() (+59 more)
+Cohesion: 0.03
+Nodes (74): POST(), POST(), POST(), GET(), POST(), POST(), GET(), POST() (+66 more)
 
 ### Community 8 - "Advances API"
 Cohesion: 0.03
@@ -548,27 +543,27 @@ Nodes (21): GET(), GET(), PATCH(), balanceSheetService, chartOfAccountService, f
 
 ### Community 10 - "Advances Page"
 Cohesion: 0.06
-Nodes (33): LeadActivity(), LeadActivityProps, LeadCard(), LeadCardProps, LeadEmptyState(), LeadFilters(), LeadFiltersProps, LeadHistory() (+25 more)
+Nodes (32): LeadActivity(), LeadActivityProps, LeadCard(), LeadCardProps, LeadEmptyState(), LeadFilters(), LeadFiltersProps, LeadHistory() (+24 more)
 
 ### Community 11 - "Income Page"
 Cohesion: 0.07
-Nodes (29): POST(), POST(), GET(), GET(), PUT(), GET(), POST(), resolveEmployee() (+21 more)
+Nodes (30): POST(), POST(), GET(), GET(), PUT(), GET(), POST(), resolveEmployee() (+22 more)
 
 ### Community 12 - "Loans Page"
 Cohesion: 0.07
 Nodes (20): ActivityFeed(), ActivityTimeline(), CalendarView(), ConversionChart(), CRMReportCards(), CRMReportCardsProps, KPI, DateRangePicker() (+12 more)
 
 ### Community 13 - "Root Layout"
-Cohesion: 0.11
-Nodes (14): CustomerSelectionSection(), CustomerSelectionSectionProps, inputStyle, labelStyle, ProductQuickSearch(), ProductQuickSearchProps, inputStyle, labelStyle (+6 more)
+Cohesion: 0.24
+Nodes (3): DefaultPermissions, DefaultRoleMappings, PermissionCache
 
 ### Community 14 - "Expenses Page"
-Cohesion: 0.08
-Nodes (26): assignPermissionsAction(), assignUserRoleAction(), createRoleAction(), deactivateUserAction(), deleteRoleAction(), getAuditLogs(), getCompanyId(), loadAdminData() (+18 more)
+Cohesion: 0.11
+Nodes (23): assignPermissionsAction(), assignUserRoleAction(), createRoleAction(), deactivateUserAction(), deleteRoleAction(), getAuditLogs(), getCompanyId(), loadAdminData() (+15 more)
 
 ### Community 15 - "Funds Page"
-Cohesion: 0.12
-Nodes (17): GET(), POST(), createProfile(), evaluateRisk(), placeOnHold(), recordExposure(), recordRelease(), releaseHold() (+9 more)
+Cohesion: 0.13
+Nodes (15): createProfile(), evaluateRisk(), placeOnHold(), recordExposure(), recordRelease(), releaseHold(), updateCreditLimit(), cancelPayment() (+7 more)
 
 ### Community 16 - "Members Page"
 Cohesion: 0.05
@@ -579,8 +574,8 @@ Cohesion: 0.05
 Nodes (36): Attendance, Business Rules, Business Rules, Business Rules, Business Rules, Business Rules, Business Rules, Business Rules (+28 more)
 
 ### Community 18 - "Projects Page"
-Cohesion: 0.09
-Nodes (18): CustomerActivities(), CustomerActivitiesProps, CustomerAddresses(), CustomerAddressesProps, CustomerFiles(), CustomerFilesProps, CustomerFinancialSummary(), CustomerFinancialSummaryProps (+10 more)
+Cohesion: 0.08
+Nodes (21): CustomerActivities(), CustomerActivitiesProps, CustomerAddresses(), CustomerAddressesProps, CustomerContacts(), CustomerContactsProps, CustomerFiles(), CustomerFilesProps (+13 more)
 
 ### Community 19 - "Reserves Page"
 Cohesion: 0.11
@@ -595,8 +590,8 @@ Cohesion: 0.11
 Nodes (17): OpportunityActivities(), OpportunityCard(), OpportunityCardProps, OpportunityHistory(), OpportunityKanban(), OpportunityKanbanProps, OpportunityNotes(), OpportunityOwner() (+9 more)
 
 ### Community 23 - "App Home Page"
-Cohesion: 0.18
-Nodes (9): CustomerDetailPage(), QuotationDetailPage(), SalesOrderDetailPage(), ProductDetailsPage(), InventorySettingsPage(), SuperAdminLayout(), SuperAdminLayoutProps, SuperAdminSidebar() (+1 more)
+Cohesion: 0.12
+Nodes (18): QuotationDetailPage(), SalesOrderDetailPage(), ProductDetailsPage(), InventorySettingsPage(), DashboardLayout(), Home(), AppShell(), AppShellProps (+10 more)
 
 ### Community 28 - "getEssEmployeeId"
 Cohesion: 0.15
@@ -623,8 +618,8 @@ Cohesion: 0.07
 Nodes (25): AI Agent Rules, API Rules, Before You Start, Branch Strategy, Code Style, Commit Convention, Database Rules, Development Workflow (+17 more)
 
 ### Community 34 - "salesOrderService.ts"
-Cohesion: 0.19
-Nodes (19): DELETE(), GET(), PUT(), calculateTotals(), convertQuotation(), createSalesOrder(), deleteSalesOrder(), generateSalesOrderNumber() (+11 more)
+Cohesion: 0.18
+Nodes (19): DELETE(), GET(), PUT(), approveSalesOrder(), calculateTotals(), cancelSalesOrder(), closeSalesOrder(), convertQuotation() (+11 more)
 
 ### Community 35 - "page.tsx"
 Cohesion: 0.22
@@ -671,8 +666,8 @@ Cohesion: 0.14
 Nodes (11): getConversionRates(), getCustomerDashboard(), getCustomerGrowth(), getCustomerOutstanding(), getCustomerRetention(), getExecutiveDashboard(), getRevenuePipeline(), getSalesDashboard() (+3 more)
 
 ### Community 46 - "page.tsx"
-Cohesion: 0.08
-Nodes (17): QuotationAttachments(), QuotationForm(), QuotationHistory(), QuotationItems(), QuotationItemsProps, QuotationNotes(), QuotationTerms(), QuotationTermsProps (+9 more)
+Cohesion: 0.07
+Nodes (18): QuotationAttachments(), QuotationForm(), QuotationHistory(), QuotationItems(), QuotationItemsProps, QuotationNotes(), QuotationTerms(), QuotationTermsProps (+10 more)
 
 ### Community 47 - "Shohoj Ledger - Enterprise Design System (UI-0)"
 Cohesion: 0.10
@@ -683,8 +678,8 @@ Cohesion: 0.23
 Nodes (16): buildDateWhere(), getExecutiveDashboard(), getGRNDashboard(), getInvoiceDashboard(), getLeadTimeAnalysis(), getOpenPurchaseOrders(), getOutstandingSupplierBalance(), getPaymentDashboard() (+8 more)
 
 ### Community 49 - "opportunityService.ts"
-Cohesion: 0.23
-Nodes (16): GET(), GET(), POST(), PUT(), addActivity(), archiveOpportunity(), createOpportunity(), generateOpportunityNumber() (+8 more)
+Cohesion: 0.27
+Nodes (14): GET(), PUT(), addActivity(), archiveOpportunity(), createOpportunity(), generateOpportunityNumber(), getOpportunityDashboard(), markLost() (+6 more)
 
 ### Community 50 - "page.tsx"
 Cohesion: 0.13
@@ -703,8 +698,8 @@ Cohesion: 0.11
 Nodes (17): 1. CRM Module, 2. Finance Module, 3. Inventory Module, 4. HR & Payroll Module, 5. Generic Standards for All Pages, Application Page Map & Inventory, Customer Detail Page (`/dashboard/crm/customers/[id]`), Customers List Page (`/dashboard/crm/customers`) (+9 more)
 
 ### Community 54 - "ReportWrapper.tsx"
-Cohesion: 0.21
-Nodes (12): PurchasesPage(), FinanceReportsHub(), is, ls, REPORT_TYPES, ReportHeader(), ReportHeaderProps, ReportWrapper() (+4 more)
+Cohesion: 0.18
+Nodes (13): FinanceReportsHub(), is, ls, REPORT_TYPES, ReportHeader(), ReportHeaderProps, ReportWrapper(), ReportWrapperProps (+5 more)
 
 ### Community 55 - "AI-RULES.md"
 Cohesion: 0.12
@@ -739,8 +734,8 @@ Cohesion: 0.13
 Nodes (14): 1. Architecture Overview, 2. Hire-to-Retire Workflow, 3.1 Organization & Employee (Core HR), 3.2 Talent Acquisition (Recruitment), 3.3 Time & Attendance, 3.4 Financial HR (Payroll, Loans, Advances), 3.5 Talent Management, 3. Module Boundaries (+6 more)
 
 ### Community 64 - "Topbar.tsx"
-Cohesion: 0.18
-Nodes (9): BulkProductUploadModal(), BulkProductUploadModalProps, DialogProps, DialogVariant, Modal(), ModalProps, ModalSize, xlsx (+1 more)
+Cohesion: 0.24
+Nodes (6): BulkProductUploadModalProps, DialogProps, DialogVariant, Modal(), ModalProps, ModalSize
 
 ### Community 65 - "Version 1.2 Foundation Implementation"
 Cohesion: 0.14
@@ -771,8 +766,8 @@ Cohesion: 0.15
 Nodes (12): 1. Enterprise Inventory System, 2. Enterprise Accounting, 3. CRM 2.0, 4. HR & Payroll 2.0, 5. AI Assistant, 6. Mobile Platform 2.0, 7. SaaS Platform, 8. Integrations (+4 more)
 
 ### Community 72 - "postingService.ts"
-Cohesion: 0.11
-Nodes (20): ClosedPeriodException, DuplicatePostingException, InactiveAccountException, PostingException, PostingRequest, PostingRequestLine, postingService, ValidationException (+12 more)
+Cohesion: 0.21
+Nodes (10): ClosedPeriodException, DuplicatePostingException, InactiveAccountException, PostingException, PostingRequest, PostingRequestLine, postingService, ValidationException (+2 more)
 
 ### Community 73 - "customerReturnService.ts"
 Cohesion: 0.22
@@ -787,12 +782,12 @@ Cohesion: 0.47
 Nodes (5): DELETE(), GET(), PUT(), deleteQuotation(), getQuotationHistory()
 
 ### Community 76 - "supplierPaymentService.ts"
-Cohesion: 0.15
-Nodes (12): author, bugs, url, description, directories, lib, homepage, keywords (+4 more)
+Cohesion: 0.23
+Nodes (10): allocatePayment(), calculateOutstanding(), cancelPayment(), createPayment(), createPosting(), generatePaymentNumber(), postPayment(), removeAllocation() (+2 more)
 
 ### Community 77 - "ProductModal.tsx"
-Cohesion: 0.25
-Nodes (3): Category, EMPTY_PRODUCT_FORM, ProductModalProps
+Cohesion: 0.18
+Nodes (5): Category, EMPTY_PRODUCT_FORM, ProductModalProps, Category, Product
 
 ### Community 78 - "PROJECT CONTEXT"
 Cohesion: 0.17
@@ -1063,12 +1058,12 @@ Cohesion: 0.31
 Nodes (9): approveRequisition(), cancelRequisition(), convertToRFQ(), createRequisition(), generateRequisitionNumber(), rejectRequisition(), submitRequisition(), updateRequisition() (+1 more)
 
 ### Community 149 - "UIContext.tsx"
-Cohesion: 0.22
-Nodes (7): inter, metadata, viewport, Theme, UIContext, UIContextType, UIProvider()
+Cohesion: 0.33
+Nodes (4): inter, metadata, viewport, UIProvider()
 
 ### Community 150 - "route.ts"
-Cohesion: 0.22
-Nodes (3): NetworkModalProps, PunishmentRuleModalProps, Network
+Cohesion: 0.70
+Nodes (3): POST(), getDistanceInMeters(), isWithinOfficeRadius()
 
 ### Community 151 - "page.tsx"
 Cohesion: 0.25
@@ -1279,12 +1274,12 @@ Cohesion: 0.39
 Nodes (6): cancelRFQ(), closeRFQ(), createRFQ(), generateRFQNumber(), issueRFQ(), validateRFQ()
 
 ### Community 203 - "actions.ts"
-Cohesion: 0.11
-Nodes (19): EducationTabProps, ExperienceTabProps, EmployeeProfileFormData, TabProps, saveDocumentMetadata(), saveNote(), updateExtendedProfile(), verifyAccess() (+11 more)
+Cohesion: 0.71
+Nodes (5): saveDocumentMetadata(), saveNote(), updateExtendedProfile(), verifyAccess(), EmployeeProfileClient()
 
 ### Community 204 - "page.tsx"
-Cohesion: 0.29
-Nodes (5): inputStyle, labelStyle, Product, TRANSACTION_TYPES, Warehouse
+Cohesion: 0.33
+Nodes (6): inputStyle, labelStyle, Product, StockControlPage(), TRANSACTION_TYPES, Warehouse
 
 ### Community 205 - "route.ts"
 Cohesion: 0.39
@@ -1295,8 +1290,8 @@ Cohesion: 0.29
 Nodes (5): is, ls, statusColors, Supplier, SupplierCategory
 
 ### Community 208 - "actions.ts"
-Cohesion: 0.24
-Nodes (7): DashboardLayout(), AppShell(), AppShellProps, Topbar(), Dropdown(), DropdownItemProps, DropdownProps
+Cohesion: 0.50
+Nodes (3): Dropdown(), DropdownItemProps, DropdownProps
 
 ### Community 209 - "Enterprise Architecture Review"
 Cohesion: 0.29
@@ -1587,20 +1582,20 @@ Cohesion: 0.33
 Nodes (4): API_DIR, fs, models, path
 
 ### Community 296 - "[1.1.0] - 2026-07-23"
-Cohesion: 0.12
-Nodes (16): [1.1.0] - 2026-07-23, [2.0.0] - 2026-08-26, [2.1.0] - 2026-08-27, [2.2.0] - 2026-08-28, [2.3.0] - 2026-08-30, [2.4.0] - 2026-08-31, Added, Added (+8 more)
+Cohesion: 0.33
+Nodes (5): [1.1.0] - 2026-07-23, Added, Fixed, Security, Version History
 
 ### Community 298 - "page.tsx"
 Cohesion: 0.40
 Nodes (3): Designation, is, ls
 
 ### Community 299 - "page.tsx"
-Cohesion: 0.13
-Nodes (11): Category, inputStyle, labelStyle, InventoryColumn, InventoryDataTable(), InventoryDataTableProps, Category, Product (+3 more)
+Cohesion: 0.40
+Nodes (3): Category, inputStyle, labelStyle
 
 ### Community 300 - "page.tsx"
-Cohesion: 0.32
-Nodes (5): DELETE(), PUT(), GET(), POST(), customerAddressService
+Cohesion: 0.40
+Nodes (3): inputStyle, labelStyle, Warehouse
 
 ### Community 301 - "page.tsx"
 Cohesion: 0.40
@@ -1611,8 +1606,8 @@ Cohesion: 0.40
 Nodes (3): Employee, is, ls
 
 ### Community 303 - "Drawer.tsx"
-Cohesion: 0.29
-Nodes (6): PurchaseDetailDrawer(), PurchaseDetailDrawerProps, Drawer(), DrawerPosition, DrawerProps, DrawerSize
+Cohesion: 0.40
+Nodes (3): DrawerPosition, DrawerProps, DrawerSize
 
 ### Community 304 - "Legacy Company Backfill Strategy"
 Cohesion: 0.40
@@ -1700,11 +1695,7 @@ Nodes (3): businessModels, fs, schema
 
 ### Community 367 - "route.ts"
 Cohesion: 0.29
-Nodes (5): inputStyle, labelStyle, NewPurchaseModalProps, PurchaseLineItem, smallInputStyle
-
-### Community 386 - "page.tsx"
-Cohesion: 0.83
-Nodes (3): INDUSTRY_TEMPLATES, MODULES, SignupPage()
+Nodes (5): EditMemberPage(), Member, MemberProfilePage(), react, react
 
 ### Community 401 - "Android Application"
 Cohesion: 0.67
@@ -1730,37 +1721,33 @@ Nodes (3): Finance, Future, Modules
 Cohesion: 0.67
 Nodes (3): Future, Payroll, Supports
 
-### Community 408 - "fix-incomes.ts"
-Cohesion: 0.40
-Nodes (3): Home(), Sidebar(), SidebarProps
-
 ### Community 412 - "isWithinOfficeRadius"
-Cohesion: 0.40
-Nodes (5): scripts, build, dev, start, test
+Cohesion: 0.71
+Nodes (5): saveDocumentMetadata(), saveNote(), updateExtendedProfile(), verifyAccess(), EmployeeProfileClient()
 
-### Community 516 - "repository"
+### Community 513 - "route.ts"
 Cohesion: 0.67
-Nodes (3): repository, type, url
+Nodes (3): BulkProductUploadModal(), xlsx, xlsx
 
 ## Knowledge Gaps
-- **1747 isolated node(s):** `CORS_HEADERS`, `CORS_HEADERS`, `Advance`, `User`, `Network` (+1742 more)
+- **1718 isolated node(s):** `CORS_HEADERS`, `CORS_HEADERS`, `Advance`, `User`, `Network` (+1713 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **157 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **154 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getSession()` connect `Income API` to `API Routes & Prisma`, `route.ts`, `page.tsx`, `Next.js TS Config`, `Settlements & Calculations`, `Advances API`, `Income Page`, `Expenses Page`, `Funds Page`, `Settlement Page`, `getEssEmployeeId`, `actions.ts`, `salesOrderService.ts`, `SubscriptionTier`, `page.tsx`, `opportunityService.ts`, `auditService.ts`, `quotationService.ts`, `deliveryOrderService.ts`, `leadService.ts`, `actions.ts`, `route.ts`, `actions.ts`, `actions.ts`, `actions.ts`, `route.ts`, `route.ts`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `PageContainer()` connect `Dev Dependencies` to `page.tsx`, `page.tsx`, `Advances Page`, `page.tsx`, `Loans Page`, `Root Layout`, `page.tsx`, `page.tsx`, `Expenses Page`, `Projects Page`, `page.tsx`, `Dashboard Layout`, `route.ts`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `PageHeader()` connect `Dev Dependencies` to `page.tsx`, `page.tsx`, `Advances Page`, `page.tsx`, `Loans Page`, `Root Layout`, `page.tsx`, `page.tsx`, `Expenses Page`, `Projects Page`, `page.tsx`, `Dashboard Layout`, `route.ts`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Why does `getSession()` connect `Income API` to `API Routes & Prisma`, `route.ts`, `page.tsx`, `Next.js TS Config`, `Settlements & Calculations`, `Advances API`, `Income Page`, `Expenses Page`, `Settlement Page`, `App Home Page`, `getEssEmployeeId`, `isWithinOfficeRadius`, `actions.ts`, `salesOrderService.ts`, `SubscriptionTier`, `opportunityService.ts`, `auditService.ts`, `quotationService.ts`, `deliveryOrderService.ts`, `leadService.ts`, `actions.ts`, `route.ts`, `actions.ts`, `actions.ts`, `route.ts`, `route.ts`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `PageContainer()` connect `Dev Dependencies` to `page.tsx`, `page.tsx`, `Advances Page`, `page.tsx`, `Loans Page`, `page.tsx`, `page.tsx`, `Expenses Page`, `Projects Page`, `page.tsx`, `Dashboard Layout`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `PageHeader()` connect `Dev Dependencies` to `page.tsx`, `page.tsx`, `Advances Page`, `page.tsx`, `Loans Page`, `page.tsx`, `page.tsx`, `Expenses Page`, `Projects Page`, `page.tsx`, `Dashboard Layout`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **What connects `CORS_HEADERS`, `CORS_HEADERS`, `Advance` to the rest of the system?**
-  _1747 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1718 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `API Routes & Prisma` be split into smaller, more focused modules?**
-  _Cohesion score 0.04447821681864235 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.047163362952836636 - nodes in this community are weakly interconnected._
 - **Should `NPM Package Config` be split into smaller, more focused modules?**
-  _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `TypeScript Compiler Options` be split into smaller, more focused modules?**
   _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._

@@ -512,16 +512,5 @@
   "510": "test_browser.mjs",
   "511": "test-params.js",
   "512": "route.ts",
-  "513": "route.ts",
-  "514": "CustomerContacts.tsx",
-  "515": "LeadStats.tsx",
-  "516": "repository",
-  "517": "page.tsx",
-  "518": "jose",
-  "519": "react-dom",
-  "520": "migrate_proxy.py",
-  "521": "scratch.py",
-  "522": "scratch2.py",
-  "523": "scratch3.py",
-  "524": "scratch_mission.py"
+  "513": "route.ts"
 }

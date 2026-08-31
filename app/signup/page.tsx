@@ -165,7 +165,7 @@ export default function SignupPage() {
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
             <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#38bdf8", background: "rgba(56, 189, 248, 0.12)" }}>
+              <span className={styles.stepBadge} style={{ color: "#e2e8f0", background: "rgba(255, 255, 255, 0.15)" }}>
                 Step 1 of 4 · Identity
               </span>
             </div>
@@ -182,16 +182,16 @@ export default function SignupPage() {
       {/* Panel 2 */}
       <div className={`${styles.accordionPanel} ${styles.bg2} ${currentStep === 2 ? styles.active : ""}`}>
         {currentStep > 2 ? (
-          <div className={styles.completedText} style={{ color: "rgba(15, 23, 42, 0.25)" }}>COMPLETE</div>
+          <div className={styles.completedText}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
-            <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>2</div>
+            <div className={styles.circleNumber}>2</div>
           </div>
         )}
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "680px" }}>
             <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#0284c7", background: "rgba(2, 132, 199, 0.12)" }}>
+              <span className={styles.stepBadge} style={{ color: "#6ee7b7", background: "rgba(110, 231, 183, 0.15)" }}>
                 Step 2 of 4 · Architecture
               </span>
             </div>
@@ -209,7 +209,7 @@ export default function SignupPage() {
       {/* Panel 3 */}
       <div className={`${styles.accordionPanel} ${styles.bg3} ${currentStep === 3 ? styles.active : ""}`}>
         {currentStep > 3 ? (
-          <div className={styles.completedText} style={{ color: "rgba(255, 255, 255, 0.4)" }}>COMPLETE</div>
+          <div className={styles.completedText}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
             <div className={styles.circleNumber}>3</div>
@@ -218,7 +218,7 @@ export default function SignupPage() {
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
             <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#ffffff", background: "rgba(255, 255, 255, 0.2)" }}>
+              <span className={styles.stepBadge} style={{ color: "#fda4af", background: "rgba(253, 164, 175, 0.15)" }}>
                 Step 3 of 4 · Security
               </span>
             </div>
@@ -236,16 +236,16 @@ export default function SignupPage() {
       {/* Panel 4 */}
       <div className={`${styles.accordionPanel} ${styles.bg4} ${currentStep === 4 ? styles.active : ""}`}>
         {currentStep > 4 ? (
-          <div className={styles.completedText} style={{ color: "rgba(15, 23, 42, 0.25)" }}>COMPLETE</div>
+          <div className={styles.completedText}>COMPLETE</div>
         ) : (
           <div className={styles.unexpandedIndicator}>
-            <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>4</div>
+            <div className={styles.circleNumber}>4</div>
           </div>
         )}
         <div className={styles.panelContent}>
           <div className={styles.formWrapper} style={{ maxWidth: "640px" }}>
             <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#0f766e", background: "rgba(15, 118, 110, 0.12)" }}>
+              <span className={styles.stepBadge} style={{ color: "#93c5fd", background: "rgba(147, 197, 253, 0.15)" }}>
                 Step 4 of 4 · Verification
               </span>
             </div>

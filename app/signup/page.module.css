@@ -141,10 +141,10 @@
   font-size: 14px;
 }
 
-.bg1 { background-color: #211f35; }
-.bg2 { background-color: #bce0fd; }
-.bg3 { background-color: #f04938; }
-.bg4 { background-color: #b5eff2; }
+.bg1 { background-color: #09090b; }
+.bg2 { background-color: #022c22; }
+.bg3 { background-color: #4c0519; }
+.bg4 { background-color: #172554; }
 
 /* Success Card Modal */
 .successOverlay {

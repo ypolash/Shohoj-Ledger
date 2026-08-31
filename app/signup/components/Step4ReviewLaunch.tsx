@@ -44,41 +44,41 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
   return (
     <div
       style={{
-        background: "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(20px)",
-        border: "1.5px solid rgba(15, 23, 42, 0.15)",
+        background: "rgba(255, 255, 255, 0.04)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(255, 255, 255, 0.12)",
         borderRadius: "24px",
         padding: "40px",
         width: "100%",
         maxWidth: "640px",
-        boxShadow: "0 25px 60px rgba(15, 23, 42, 0.25)",
+        boxShadow: "0 25px 60px rgba(0, 0, 0, 0.6)",
         display: "flex",
         flexDirection: "column",
         gap: "24px",
-        color: "#0f172a"
+        color: "#ffffff"
       }}
     >
       {/* Review Card */}
       <div
         style={{
-          background: "rgba(241, 245, 249, 0.8)",
+          background: "rgba(0, 0, 0, 0.25)",
           borderRadius: "16px",
           padding: "20px",
-          border: "1px solid rgba(15, 23, 42, 0.1)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
           display: "flex",
           flexDirection: "column",
           gap: "16px"
         }}
       >
         {/* Brand Banner */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", borderBottom: "1px solid rgba(15, 23, 42, 0.1)", paddingBottom: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", paddingBottom: "14px" }}>
           <div
             style={{
               width: "56px",
               height: "56px",
               borderRadius: "12px",
-              background: "#ffffff",
-              border: "1px solid rgba(15, 23, 42, 0.12)",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -89,14 +89,14 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
             {formData.logoUrl ? (
               <img src={formData.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "#0f766e" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "#3b82f6" }}>
                 domain
               </span>
             )}
           </div>
           <div>
-            <div style={{ fontSize: "18px", fontWeight: 700, color: "#0f172a" }}>{formData.companyName}</div>
-            <div style={{ fontSize: "13px", color: "#64748b" }}>
+            <div style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff" }}>{formData.companyName}</div>
+            <div style={{ fontSize: "13px", color: "#94a3b8" }}>
               {formData.businessType} Based · {formData.companyEmail}
             </div>
           </div>
@@ -124,11 +124,11 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
                 style={{
                   padding: "4px 10px",
                   borderRadius: "20px",
-                  background: "rgba(15, 118, 110, 0.12)",
-                  color: "#0f766e",
+                  background: "rgba(59, 130, 246, 0.15)",
+                  color: "#93c5fd",
                   fontSize: "12px",
                   fontWeight: 700,
-                  border: "1px solid rgba(15, 118, 110, 0.25)"
+                  border: "1px solid rgba(59, 130, 246, 0.3)"
                 }}
               >
                 {MODULE_LABELS[mId] || mId}
@@ -141,10 +141,10 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "rgba(16, 185, 129, 0.12)",
-            border: "1px solid rgba(16, 185, 129, 0.3)",
+            background: "rgba(59, 130, 246, 0.12)",
+            border: "1px solid rgba(59, 130, 246, 0.25)",
             fontSize: "12px",
-            color: "#065f46",
+            color: "#bfdbfe",
             display: "flex",
             alignItems: "center",
             gap: "8px",
@@ -157,20 +157,21 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
       </div>
 
       {/* Navigation Footer */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid rgba(15, 23, 42, 0.1)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
         <button
           type="button"
           onClick={onBack}
           disabled={isLoading}
           style={{
-            background: "transparent",
-            color: "#475569",
-            border: "1px solid rgba(15, 23, 42, 0.2)",
+            background: "rgba(255, 255, 255, 0.05)",
+            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
             padding: "11px 22px",
             borderRadius: "12px",
             fontSize: "14px",
             fontWeight: 600,
-            cursor: isLoading ? "not-allowed" : "pointer"
+            cursor: isLoading ? "not-allowed" : "pointer",
+            transition: "all 0.2s ease"
           }}
         >
           Back
@@ -180,7 +181,7 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
           onClick={onSubmit}
           disabled={isLoading}
           style={{
-            background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
+            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
             color: "#ffffff",
             border: "none",
             padding: "13px 32px",
@@ -191,8 +192,9 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            boxShadow: "0 10px 25px -5px rgba(15, 118, 110, 0.5)",
-            opacity: isLoading ? 0.7 : 1
+            boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.5)",
+            opacity: isLoading ? 0.7 : 1,
+            transition: "all 0.2s ease"
           }}
         >
           {isLoading ? "Provisioning..." : "Launch Enterprise Workspace"}
@@ -207,13 +209,13 @@ const reviewLabel: React.CSSProperties = {
   fontSize: "11px",
   fontWeight: 700,
   textTransform: "uppercase",
-  color: "#64748b",
+  color: "#cbd5e1",
   letterSpacing: "0.05em"
 };
 
 const reviewValue: React.CSSProperties = {
   fontSize: "13px",
   fontWeight: 600,
-  color: "#0f172a",
+  color: "#ffffff",
   marginTop: "2px"
 };

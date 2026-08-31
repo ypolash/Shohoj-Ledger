@@ -158,18 +158,20 @@ export default function SignupPage() {
         <div className={styles.unexpandedIndicator}>
           <div className={styles.circleNumber}>1</div>
         </div>
-        <div className={styles.panelTitle}>
-          <span className={styles.stepBadge} style={{ color: "#38bdf8", background: "rgba(56, 189, 248, 0.12)" }}>
-            Step 1 of 4 · Identity
-          </span>
-        </div>
         <div className={styles.panelContent}>
-          <Step1CompanyProfile
-            formData={formData}
-            errors={fieldErrors}
-            updateForm={updateForm}
-            onNext={handleNext}
-          />
+          <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
+            <div className={styles.panelTitleStatic}>
+              <span className={styles.stepBadge} style={{ color: "#38bdf8", background: "rgba(56, 189, 248, 0.12)" }}>
+                Step 1 of 4 · Identity
+              </span>
+            </div>
+            <Step1CompanyProfile
+              formData={formData}
+              errors={fieldErrors}
+              updateForm={updateForm}
+              onNext={handleNext}
+            />
+          </div>
         </div>
       </div>
 
@@ -178,19 +180,21 @@ export default function SignupPage() {
         <div className={styles.unexpandedIndicator}>
           <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>2</div>
         </div>
-        <div className={styles.panelTitle}>
-          <span className={styles.stepBadge} style={{ color: "#0284c7", background: "rgba(2, 132, 199, 0.12)" }}>
-            Step 2 of 4 · Architecture
-          </span>
-        </div>
         <div className={styles.panelContent}>
-          <Step2IndustryModules
-            formData={formData}
-            errors={fieldErrors}
-            updateForm={updateForm}
-            onBack={handleBack}
-            onNext={handleNext}
-          />
+          <div className={styles.formWrapper} style={{ maxWidth: "680px" }}>
+            <div className={styles.panelTitleStatic}>
+              <span className={styles.stepBadge} style={{ color: "#0284c7", background: "rgba(2, 132, 199, 0.12)" }}>
+                Step 2 of 4 · Architecture
+              </span>
+            </div>
+            <Step2IndustryModules
+              formData={formData}
+              errors={fieldErrors}
+              updateForm={updateForm}
+              onBack={handleBack}
+              onNext={handleNext}
+            />
+          </div>
         </div>
       </div>
 
@@ -199,19 +203,21 @@ export default function SignupPage() {
         <div className={styles.unexpandedIndicator}>
           <div className={styles.circleNumber}>3</div>
         </div>
-        <div className={styles.panelTitle}>
-          <span className={styles.stepBadge} style={{ color: "#ffffff", background: "rgba(255, 255, 255, 0.2)" }}>
-            Step 3 of 4 · Security
-          </span>
-        </div>
         <div className={styles.panelContent}>
-          <Step3AdminSecurity
-            formData={formData}
-            errors={fieldErrors}
-            updateForm={updateForm}
-            onBack={handleBack}
-            onNext={handleNext}
-          />
+          <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
+            <div className={styles.panelTitleStatic}>
+              <span className={styles.stepBadge} style={{ color: "#ffffff", background: "rgba(255, 255, 255, 0.2)" }}>
+                Step 3 of 4 · Security
+              </span>
+            </div>
+            <Step3AdminSecurity
+              formData={formData}
+              errors={fieldErrors}
+              updateForm={updateForm}
+              onBack={handleBack}
+              onNext={handleNext}
+            />
+          </div>
         </div>
       </div>
 
@@ -220,18 +226,20 @@ export default function SignupPage() {
         <div className={styles.unexpandedIndicator}>
           <div className={styles.circleNumber} style={{ color: "#0f172a", borderColor: "rgba(15, 23, 42, 0.2)" }}>4</div>
         </div>
-        <div className={styles.panelTitle}>
-          <span className={styles.stepBadge} style={{ color: "#0f766e", background: "rgba(15, 118, 110, 0.12)" }}>
-            Step 4 of 4 · Verification
-          </span>
-        </div>
         <div className={styles.panelContent}>
-          <Step4ReviewLaunch
-            formData={formData}
-            isLoading={isLoading}
-            onBack={handleBack}
-            onSubmit={handleSubmit}
-          />
+          <div className={styles.formWrapper} style={{ maxWidth: "640px" }}>
+            <div className={styles.panelTitleStatic}>
+              <span className={styles.stepBadge} style={{ color: "#0f766e", background: "rgba(15, 118, 110, 0.12)" }}>
+                Step 4 of 4 · Verification
+              </span>
+            </div>
+            <Step4ReviewLaunch
+              formData={formData}
+              isLoading={isLoading}
+              onBack={handleBack}
+              onSubmit={handleSubmit}
+            />
+          </div>
         </div>
       </div>
 

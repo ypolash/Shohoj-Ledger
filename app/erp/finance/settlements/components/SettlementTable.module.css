@@ -1,0 +1,234 @@
+/* Settlements Table Scoped Styles */
+
+.tableContainer {
+  background: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.thead {
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--border-main);
+}
+
+.th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.775rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.thSortable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.thSortable:hover {
+  color: var(--text-main);
+}
+
+.sortIconWrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.tr {
+  border-bottom: 1px solid var(--border-main);
+  transition: background-color 0.15s ease;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.trSelected {
+  background-color: var(--primary-glow) !important;
+}
+
+.td {
+  padding: 14px 16px;
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+/* Density Variants */
+.compact .th {
+  padding: 8px 12px;
+  font-size: 0.725rem;
+}
+
+.compact .td {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+}
+
+/* Period Badge */
+.periodBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.825rem;
+  background: var(--primary-glow);
+  color: var(--primary);
+  border: 1px solid var(--border-main);
+}
+
+/* Financial values */
+.profitPositive {
+  font-weight: 800;
+  color: var(--success, #10b981);
+}
+
+.profitNegative {
+  font-weight: 800;
+  color: var(--danger, #ef4444);
+}
+
+.distributionPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 280px;
+}
+
+.shareholderPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.725rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  color: var(--text-muted);
+}
+
+.shareholderPill strong {
+  color: var(--text-main);
+}
+
+/* Actions */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  position: relative;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-main);
+  color: var(--text-main);
+}
+
+.paginationBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--surface-hover);
+  border-top: 1px solid var(--border-main);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pageSizeSelector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.825rem;
+  color: var(--text-muted);
+}
+
+.pageSelect {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pageBtnActive {
+  background: var(--primary) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

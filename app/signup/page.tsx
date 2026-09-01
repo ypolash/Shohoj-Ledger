@@ -121,7 +121,8 @@ export default function SignupPage() {
           selectedModules: formData.selectedModules,
           ownerName: formData.ownerName,
           ownerEmail: formData.ownerEmail,
-          ownerPasswordRaw: formData.ownerPassword
+          ownerPasswordRaw: formData.ownerPassword,
+          logoUrl: formData.logoUrl || null
         })
       });
 

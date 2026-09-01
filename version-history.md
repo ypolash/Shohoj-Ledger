@@ -1,5 +1,18 @@
 # Version History
 
+## [2.5.0] - 2026-09-02
+### Added
+- **Full Finance Suite & Customer Directory Enterprise Redesign**:
+  - **Income & Receivables Management 2.0**: Executive KPI summary cards (Total Invoiced, Cash Collected, Receivables Due, Average Transaction) with click-to-filter, collection progress gauges, `#INC-...` reference badges, slide-out voucher quick preview drawer (`<IncomeQuickDrawer>`), and live receipt preview creation form (`<IncomeForm>`).
+  - **Expenses & Outlays Management 2.0**: Executive KPI summary cards (Total Expenses Paid, Bank Transfers, Cash Disbursements, Avg Expense Ticket), sortable enterprise table, `#EXP-...` reference badges, slide-out voucher drawer (`<ExpenseQuickDrawer>`), and real-time expense creation form with receipt preview (`<ExpenseForm>`).
+  - **Staff Advances Module 2.0**: KPI metrics (Total Advances, Beneficiary Staff, Active Slips), employee avatar table, slide-out advance voucher drawer (`<AdvanceQuickDrawer>`), and issue/edit advance modal.
+  - **Period Settlements & Equity Distribution 2.0**: P&L reconciliation engine with KPI summary (Net Profits, Audited Revenue, Costs), period table with shareholder split indicators, slide-out settlement drawer (`<SettlementQuickDrawer>`), dynamic live P&L calculation modal with shareholder percentage validation, and default equity configuration modal.
+  - **Customer Management 2.0**: Avatar initials, credit utilization bars, sortable headers, bulk checkbox selection with floating action bar, Customer Reference Discount manager modal, and fast slide-out preview drawer (`<CustomerQuickDrawer>`).
+- **Layout & Density Stabilization**:
+  - Fixed-width (`126px`) centered density toggle buttons across all toolbars, eliminating layout shifts when toggling between Comfortable and Compact table densities.
+  - Clean `PageContainer` and `PageHeader` standardizations removing duplicate manual breadcrumb trails across all detail and creation routes.
+  - Isolated debounced search triggers with `useRef` to eliminate table re-render blinking loops.
+
 ## [2.4.1] - 2026-08-31
 ### Added
 - **Purchases Expense & Dual-Entry AP Ledger Engine**:

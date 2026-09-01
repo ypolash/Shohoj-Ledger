@@ -11,6 +11,7 @@ export interface CompanySignupPayload {
   ownerName: string;
   ownerEmail: string;
   ownerPasswordRaw: string;
+  logoUrl?: string | null;
 }
 
 /**
@@ -24,7 +25,8 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
     selectedModules,
     ownerName,
     ownerEmail,
-    ownerPasswordRaw
+    ownerPasswordRaw,
+    logoUrl
   } = payload;
 
   return await prisma.$transaction(async (tx) => {
@@ -56,7 +58,8 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
           data: {
             name: companyName,
             businessType: businessType,
-            status: "ACTIVE"
+            status: "ACTIVE",
+            logoUrl: logoUrl || null
           }
         });
         

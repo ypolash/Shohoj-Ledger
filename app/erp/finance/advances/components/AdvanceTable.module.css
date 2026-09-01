@@ -1,0 +1,355 @@
+/* Advance Table Scoped Styles */
+
+.tableContainer {
+  background: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.thead {
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--border-main);
+}
+
+.th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.775rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.thSortable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.thSortable:hover {
+  color: var(--text-main);
+}
+
+.sortIconWrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.tr {
+  border-bottom: 1px solid var(--border-main);
+  transition: background-color 0.15s ease;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.trSelected {
+  background-color: var(--primary-glow) !important;
+}
+
+.td {
+  padding: 14px 16px;
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+/* Density Variants */
+.compact .th {
+  padding: 8px 12px;
+  font-size: 0.725rem;
+}
+
+.compact .td {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+}
+
+/* Checkbox Column */
+.checkboxCell {
+  width: 44px;
+  padding-left: 18px;
+  padding-right: 8px;
+  text-align: center;
+}
+
+.customCheckbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--border-main);
+  border-radius: 4px;
+  background: var(--surface-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.customCheckbox:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.customCheckbox:checked::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 2px;
+}
+
+.customCheckbox:indeterminate {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.customCheckbox:indeterminate::after {
+  content: '';
+  width: 8px;
+  height: 2px;
+  background-color: white;
+  position: absolute;
+  top: 6px;
+}
+
+/* Employee Identity */
+.employeeIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employeeAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.employeeDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.employeeName {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.employeeSub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Date Display */
+.dateDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dateMain {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.85rem;
+}
+
+.dateSub {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+/* Financial Breakdown */
+.financialBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 140px;
+}
+
+.amountMain {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--warning, #f59e0b);
+}
+
+.amountMeta {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.statusActive {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.statusActive .statusDot {
+  background-color: #f59e0b;
+}
+
+.statusSettled {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.statusSettled .statusDot {
+  background-color: #10b981;
+}
+
+/* Actions */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  position: relative;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-main);
+  color: var(--text-main);
+}
+
+.paginationBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--surface-hover);
+  border-top: 1px solid var(--border-main);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pageSizeSelector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.825rem;
+  color: var(--text-muted);
+}
+
+.pageSelect {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pageBtnActive {
+  background: var(--primary) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

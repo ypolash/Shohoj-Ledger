@@ -1,24 +1,232 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { 
+  Download, 
+  RefreshCw, 
+  Plus, 
+  LayoutList, 
+  LayoutGrid, 
+  Sliders
+} from 'lucide-react';
 
-export function IncomeToolbar({ onRecordIncome }: { onRecordIncome?: () => void }) {
+interface IncomeToolbarProps {
+  onRefresh?: () => void;
+  onExport?: () => void;
+  incomes?: any[];
+  viewMode?: 'table' | 'grid';
+  onViewModeChange?: (mode: 'table' | 'grid') => void;
+  density?: 'comfortable' | 'compact';
+  onDensityChange?: (density: 'comfortable' | 'compact') => void;
+}
+
+export function IncomeToolbar({ 
+  onRefresh, 
+  onExport, 
+  incomes = [],
+  viewMode = 'table',
+  onViewModeChange,
+  density = 'comfortable',
+  onDensityChange
+}: IncomeToolbarProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleExport = () => {
+    if (onExport) {
+      onExport();
+    } else {
+      if (!incomes || incomes.length === 0) {
+        alert("No income records to export.");
+        return;
+      }
+      
+      const headers = ['Reference', 'Date', 'Payer / Source', 'Category', 'Total Amount', 'Received Amount', 'Balance Due', 'Status', 'Description'];
+      const csvContent = [
+        headers.join(','),
+        ...incomes.map((inc: any) => [
+          `"INC-${inc.id.slice(0, 8).toUpperCase()}"`,
+          `"${new Date(inc.createdAt).toLocaleDateString()}"`,
+          `"${inc.source || ''}"`,
+          `"${inc.category || ''}"`,
+          `"${inc.amount || 0}"`,
+          `"${inc.received || 0}"`,
+          `"${Math.max(0, Number(inc.amount || 0) - Number(inc.received || 0))}"`,
+          `"${inc.paymentStatus || 'UNPAID'}"`,
+          `"${(inc.description || '').replace(/"/g, '""')}"`
+        ].join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `income_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleRefreshClick = () => {
+    setIsRefreshing(true);
+    if (onRefresh) onRefresh();
+    setTimeout(() => setIsRefreshing(false), 600);
+  };
+
+  const actionBtnStyle: React.CSSProperties = {
+    padding: '9px 14px',
+    background: 'var(--surface-main)',
+    border: '1px solid var(--border-main)',
+    borderRadius: '8px',
+    color: 'var(--text-main)',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    cursor: 'pointer',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+    transition: 'all 0.15s ease'
+  };
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'flex-start', 
+      flexWrap: 'wrap', 
+      gap: '16px', 
+      marginBottom: '24px' 
+    }}>
       <div>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 8px 0' }}>Income & Receivables</h1>
-        <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>Manage direct and indirect income</p>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>
+          Income & Receivables
+        </h1>
+        <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>
+          Record, track, and manage all customer revenues, direct income, and receivables.
+        </p>
       </div>
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover-bg-surface-hover">
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-          Export
+
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        
+        {/* View Mode Switcher */}
+        {onViewModeChange && (
+          <div style={{
+            display: 'inline-flex',
+            background: 'var(--surface-hover)',
+            borderRadius: '8px',
+            padding: '3px',
+            border: '1px solid var(--border-main)'
+          }}>
+            <button
+              onClick={() => onViewModeChange('table')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: viewMode === 'table' ? 'var(--surface-main)' : 'transparent',
+                border: 'none',
+                color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-muted)',
+                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer'
+              }}
+              title="Table View"
+            >
+              <LayoutList size={16} />
+            </button>
+            <button
+              onClick={() => onViewModeChange('grid')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: viewMode === 'grid' ? 'var(--surface-main)' : 'transparent',
+                border: 'none',
+                color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)',
+                boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer'
+              }}
+              title="Grid View"
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Density Switcher with Fixed Width to prevent layout shifting */}
+        {viewMode === 'table' && onDensityChange && (
+          <button
+            onClick={() => onDensityChange(density === 'comfortable' ? 'compact' : 'comfortable')}
+            style={{
+              ...actionBtnStyle,
+              width: '126px',
+              justifyContent: 'center'
+            }}
+            title={`Toggle Table Density (Currently: ${density})`}
+          >
+            <Sliders size={15} color="var(--text-muted)" />
+            <span style={{ fontSize: '0.8rem' }}>{density === 'comfortable' ? 'Comfortable' : 'Compact'}</span>
+          </button>
+        )}
+
+        {/* Export Button */}
+        <button 
+          onClick={handleExport}
+          style={actionBtnStyle}
+          title="Export CSV list"
+        >
+          <Download size={16} />
+          <span>Export</span>
         </button>
-        <button onClick={onRecordIncome} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', border: 'none', background: 'var(--primary)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} className="hover-bg-primary-hover shadow-sm">
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-          Record Income
+
+        {/* Refresh Button */}
+        <button 
+          onClick={handleRefreshClick}
+          title="Refresh List"
+          style={{
+            ...actionBtnStyle,
+            padding: '9px 12px'
+          }}
+        >
+          <RefreshCw 
+            size={16} 
+            style={{ 
+              animation: isRefreshing ? 'spin 0.6s linear infinite' : 'none' 
+            }} 
+          />
         </button>
+
+        {/* Primary CTA: Record Income */}
+        <Link href="/erp/finance/income/create" style={{ textDecoration: 'none' }}>
+          <button style={{
+            padding: '9px 18px',
+            background: 'var(--primary)',
+            border: '1px solid var(--primary-700, #1d4ed8)',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px var(--primary-glow)',
+            transition: 'all 0.15s ease'
+          }}>
+            <Plus size={18} />
+            <span>Record Income</span>
+          </button>
+        </Link>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}} />
     </div>
   );
 }

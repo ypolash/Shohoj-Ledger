@@ -1,0 +1,545 @@
+/* Expense Table Scoped Styles */
+
+.tableContainer {
+  background: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.thead {
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--border-main);
+}
+
+.th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.775rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.thSortable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.thSortable:hover {
+  color: var(--text-main);
+}
+
+.sortIconWrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.tr {
+  border-bottom: 1px solid var(--border-main);
+  transition: background-color 0.15s ease;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.trSelected {
+  background-color: var(--primary-glow) !important;
+}
+
+.td {
+  padding: 14px 16px;
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+/* Density Variants */
+.compact .th {
+  padding: 8px 12px;
+  font-size: 0.725rem;
+}
+
+.compact .td {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+}
+
+/* Checkbox Column */
+.checkboxCell {
+  width: 44px;
+  padding-left: 18px;
+  padding-right: 8px;
+  text-align: center;
+}
+
+.customCheckbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--border-main);
+  border-radius: 4px;
+  background: var(--surface-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.customCheckbox:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.customCheckbox:checked::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 2px;
+}
+
+.customCheckbox:indeterminate {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.customCheckbox:indeterminate::after {
+  content: '';
+  width: 8px;
+  height: 2px;
+  background-color: white;
+  position: absolute;
+  top: 6px;
+}
+
+/* Reference Badge */
+.referenceBadge {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--danger, #ef4444);
+  background: var(--danger-glow, rgba(239, 68, 68, 0.1));
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s ease;
+}
+
+.referenceBadge:hover {
+  opacity: 0.85;
+}
+
+/* Date Display */
+.dateDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dateMain {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.85rem;
+}
+
+.dateSub {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+/* Category Badge */
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+}
+
+/* Payee / Description */
+.payeeIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.payeeAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: white;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.payeeDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 220px;
+}
+
+.payeeName {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.payeeMemo {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Financial Breakdown */
+.financialBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 140px;
+}
+
+.amountExpense {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--danger, #ef4444);
+}
+
+.paymentMethodChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+/* Status Badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.statusPaid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.statusPaid .statusDot {
+  background-color: #10b981;
+}
+
+.statusPending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.statusPending .statusDot {
+  background-color: #f59e0b;
+}
+
+.statusRejected {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.statusRejected .statusDot {
+  background-color: #ef4444;
+}
+
+/* Action Icons */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  position: relative;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-main);
+  color: var(--text-main);
+}
+
+.menuWrapper {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 170px;
+  z-index: 50;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.menuItem:hover {
+  background: var(--surface-hover);
+}
+
+.menuItemDanger {
+  color: var(--danger, #ef4444);
+}
+
+.menuItemDanger:hover {
+  background: var(--danger-glow, rgba(239, 68, 68, 0.1));
+}
+
+.menuDivider {
+  height: 1px;
+  background: var(--border-main);
+  margin: 4px 0;
+}
+
+/* Pagination Bar */
+.paginationBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--surface-hover);
+  border-top: 1px solid var(--border-main);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pageSizeSelector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.825rem;
+  color: var(--text-muted);
+}
+
+.pageSelect {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pageBtnActive {
+  background: var(--primary) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Bulk Floating Action Bar */
+.bulkActionBar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-main);
+  border: 1px solid var(--border-main);
+  padding: 10px 18px;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 900;
+  animation: slideUpFloat 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bulkCount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.bulkBadge {
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.775rem;
+  font-weight: 700;
+}
+
+.bulkActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulkBtn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-hover);
+  color: var(--text-main);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.bulkBtn:hover {
+  background: var(--surface-main);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.bulkBtnDanger {
+  color: var(--danger, #ef4444);
+}
+
+.bulkBtnDanger:hover {
+  background: var(--danger-glow, rgba(239, 68, 68, 0.1));
+  border-color: var(--danger, #ef4444);
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpFloat {
+  from { opacity: 0; transform: translate(-50%, 16px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}

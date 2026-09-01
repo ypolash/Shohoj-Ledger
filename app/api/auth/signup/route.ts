@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       ownerName: payload.ownerName?.trim() || "Company Owner",
       businessType: payload.businessType || "Product + Service",
       selectedModules: payload.selectedModules || [],
+      logoUrl: payload.logoUrl || null,
     });
 
     // Automatically log the new owner in by generating their session

@@ -1,10 +1,11 @@
 import React from 'react';
-import Link from 'next/link';
 import { ExpenseSummary } from '../components/ExpenseSummary';
 import { MarkPaidButton } from '../components/MarkPaidButton';
 import { prisma } from '@/lib/prisma';
 import { notFound, redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader/PageHeader';
 
 export default async function ExpenseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,20 +27,17 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 600, marginBottom: '24px' }}>
-        <Link href="/erp/finance" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Finance</Link>
-        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--border-main)' }}>chevron_right</span>
-        <Link href="/erp/finance/expenses" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Expenses</Link>
-        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--border-main)' }}>chevron_right</span>
-        <span style={{ color: 'var(--text-main)' }}>EXP-{expense.id.split('-')[0].toUpperCase()}</span>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title={`Expense Voucher #EXP-${expense.id.slice(0, 8).toUpperCase()}`}
+        description="Detailed expense breakdown, payment channel, and approval status."
+      />
 
       <ExpenseSummary expense={serializedExpense} />
       
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
         <MarkPaidButton expenseId={expense.id} initialStatus={expense.approvalStatus} />
       </div>
-    </div>
+    </PageContainer>
   );
 }

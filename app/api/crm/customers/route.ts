@@ -59,15 +59,20 @@ export async function POST(request: Request) {
     // Transform UI data to Prisma Customer model
     const customerData: any = {
       name: data.customerName,
+      displayName: data.displayName || undefined,
       customerCode: data.customerCode || undefined,
       email: data.email || undefined,
       phone: data.phone || undefined,
+      mobile: data.mobile || undefined,
+      website: data.website || undefined,
       customerGroupId: data.groupId || undefined,
       creditLimit: data.creditLimit ? parseFloat(data.creditLimit) : 0,
       currency: data.currency || "BDT",
       priceLevel: data.paymentTerms || undefined,
       taxNumber: data.tinNo || data.binNo || undefined,
       tradeLicense: data.registrationNo || undefined,
+      notes: data.notes || undefined,
+      tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
       contacts: {
         create: {
           name: data.primaryContactPerson || data.customerName,

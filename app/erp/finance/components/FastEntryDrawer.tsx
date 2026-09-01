@@ -1,6 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { 
+  X, 
+  ArrowDownLeft, 
+  ArrowUpRight, 
+  Wallet, 
+  Banknote, 
+  Building2, 
+  Smartphone, 
+  Save, 
+  DollarSign, 
+  FileText 
+} from "lucide-react";
 
 type FastEntryProps = {
   isOpen: boolean;
@@ -9,28 +21,34 @@ type FastEntryProps = {
   onSuccess: () => void;
 };
 
+const DEFAULT_INCOME_CATS = ["Sales Revenue", "Consulting", "Development", "Service Income", "Maintenance", "Support", "Other Income"];
+const DEFAULT_EXPENSE_CATS = ["Office Supplies", "Rent", "Utilities", "Salary", "Marketing", "Travel", "Maintenance"];
+
 export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryProps) {
   const [loading, setLoading] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
   
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "BANK">("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<"Bank Transfer" | "Cash on Hand" | "Mobile Banking">("Bank Transfer");
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
+  const [categories, setCategories] = useState<string[]>(type === 'INCOME' ? DEFAULT_INCOME_CATS : DEFAULT_EXPENSE_CATS);
 
   useEffect(() => {
     if (isOpen) {
+      setCategories(type === 'INCOME' ? DEFAULT_INCOME_CATS : DEFAULT_EXPENSE_CATS);
+      setCategory(type === 'INCOME' ? "Sales Revenue" : "Office Supplies");
       setTimeout(() => {
         amountInputRef.current?.focus();
       }, 100);
     }
-  }, [isOpen]);
+  }, [isOpen, type]);
 
   const reset = () => {
     setAmount("");
-    setCategory("");
-    setPaymentMethod("CASH");
+    setCategory(type === 'INCOME' ? "Sales Revenue" : "Office Supplies");
+    setPaymentMethod("Bank Transfer");
     setNote("");
     setError(false);
   };
@@ -52,14 +70,15 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
           amount: Number(amount),
           received: Number(amount),
           category: category,
-          source: "Fast Entry", // Default source
-          description: note
+          source: paymentMethod,
+          description: note,
+          shareable: true
         };
       } else {
         payload = {
           amount: Number(amount),
           category: category,
-          paymentMethod: paymentMethod,
+          paymentMethod: paymentMethod === 'Cash on Hand' ? 'CASH' : 'BANK',
           description: note
         };
       }
@@ -90,24 +109,76 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
 
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/40 z-[1040] backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full w-full md:w-[450px] bg-white dark:bg-slate-900 z-[1050] shadow-2xl flex flex-col transform transition-transform duration-200">
-        <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-            <span className={`material-symbols-outlined ${type === 'INCOME' ? 'text-emerald-600' : 'text-red-600'}`}>
-              {type === 'INCOME' ? 'arrow_downward' : 'arrow_upward'}
-            </span>
-            Record {type === 'INCOME' ? 'Income' : 'Expense'}
-          </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-            <span className="material-symbols-outlined">close</span>
+      <div 
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.45)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 1040,
+          animation: 'fadeIn 0.2s ease'
+        }} 
+        onClick={onClose} 
+      />
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          height: '100%',
+          width: '100%',
+          maxWidth: '460px',
+          background: 'var(--surface-main)',
+          borderLeft: '1px solid var(--border-main)',
+          zIndex: 1050,
+          boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          animation: 'drawerSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+      >
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid var(--border-main)',
+          background: 'var(--surface-hover)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              background: type === 'INCOME' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: type === 'INCOME' ? '#10b981' : '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {type === 'INCOME' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                Fast {type === 'INCOME' ? 'Income' : 'Expense'} Entry
+              </h2>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Quick record to ledger</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose} 
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+          >
+            <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="p-6 flex-1 flex flex-col gap-5 overflow-y-auto">
+        <form onSubmit={onSubmit} style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px', overflowY: 'auto' }}>
           
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (BDT) <span className="text-red-500">*</span></label>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Amount (BDT) *
+            </label>
             <input 
               type="number"
               ref={amountInputRef}
@@ -115,74 +186,162 @@ export function FastEntryDrawer({ isOpen, onClose, type, onSuccess }: FastEntryP
               onChange={(e) => setAmount(e.target.value)}
               required
               min="1"
-              className="w-full text-2xl px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono"
+              step="0.01"
+              style={{
+                width: '100%',
+                fontSize: '1.4rem',
+                fontWeight: 800,
+                padding: '12px 16px',
+                border: '1px solid var(--border-main)',
+                borderRadius: '10px',
+                background: 'var(--surface-hover)',
+                color: type === 'INCOME' ? 'var(--success, #10b981)' : 'var(--danger, #ef4444)',
+                outline: 'none',
+                fontFamily: 'monospace'
+              }}
               placeholder="0.00"
             />
-            {error && (!amount || Number(amount) <= 0) && <span className="text-xs text-red-500 mt-1">Valid amount required</span>}
+            {error && (!amount || Number(amount) <= 0) && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '4px', display: 'block' }}>Valid amount required</span>}
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Category <span className="text-red-500">*</span></label>
-            <select 
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 outline-none focus:border-blue-500"
-            >
-              <option value="">Select Category...</option>
-              {type === 'INCOME' ? (
-                <>
-                  <option value="1">Sales</option>
-                  <option value="2">Services</option>
-                  <option value="3">Investments</option>
-                </>
-              ) : (
-                <>
-                  <option value="4">Office Supplies</option>
-                  <option value="5">Rent</option>
-                  <option value="6">Utilities</option>
-                  <option value="7">Salary</option>
-                </>
-              )}
-            </select>
-            {error && !category && <span className="text-xs text-red-500 mt-1">Category required</span>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Paid Via</label>
-            <div className="flex gap-4">
-              <label className="flex-1 flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20 has-[:checked]:border-blue-500 transition-colors">
-                <input type="radio" value="CASH" checked={paymentMethod === 'CASH'} onChange={() => setPaymentMethod('CASH')} className="sr-only" />
-                <span className="material-symbols-outlined text-[18px]">payments</span> Cash
-              </label>
-              <label className="flex-1 flex items-center justify-center gap-2 p-3 border border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20 has-[:checked]:border-blue-500 transition-colors">
-                <input type="radio" value="BANK" checked={paymentMethod === 'BANK'} onChange={() => setPaymentMethod('BANK')} className="sr-only" />
-                <span className="material-symbols-outlined text-[18px]">account_balance</span> Bank
-              </label>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Category *
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+              {categories.map((cat) => (
+                <button
+                  type="button"
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: category === cat ? 'var(--primary)' : 'var(--surface-hover)',
+                    color: category === cat ? 'white' : 'var(--text-main)',
+                    border: category === cat ? '1px solid var(--primary)' : '1px solid var(--border-main)'
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Note (Optional)</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Channel / Account
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {[
+                { id: "Bank Transfer", label: "Bank", icon: Building2 },
+                { id: "Cash on Hand", label: "Cash", icon: Banknote },
+                { id: "Mobile Banking", label: "bKash", icon: Smartphone }
+              ].map(m => (
+                <button
+                  type="button"
+                  key={m.id}
+                  onClick={() => setPaymentMethod(m.id as any)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '10px 8px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: paymentMethod === m.id ? 'var(--primary-glow)' : 'var(--surface-hover)',
+                    color: paymentMethod === m.id ? 'var(--primary)' : 'var(--text-main)',
+                    border: paymentMethod === m.id ? '1px solid var(--primary)' : '1px solid var(--border-main)'
+                  }}
+                >
+                  <m.icon size={16} />
+                  <span>{m.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Note / Memo (Optional)
+            </label>
             <input 
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 outline-none focus:border-blue-500"
-              placeholder="e.g. Printer paper"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                border: '1px solid var(--border-main)',
+                borderRadius: '8px',
+                background: 'var(--surface-main)',
+                color: 'var(--text-main)',
+                fontSize: '0.85rem',
+                outline: 'none'
+              }}
+              placeholder="e.g. Consulting fee from client"
             />
           </div>
 
-          <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800 flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+          <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-main)', display: 'flex', gap: '10px' }}>
+            <button 
+              type="button" 
+              onClick={onClose} 
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: 'var(--surface-hover)',
+                border: '1px solid var(--border-main)',
+                color: 'var(--text-main)',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+            >
               Cancel
             </button>
-            <button type="submit" disabled={loading} className={`flex-1 py-3 rounded-lg font-semibold text-white transition-colors flex justify-center items-center gap-2 ${type === 'INCOME' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'} ${loading ? 'opacity-70' : ''}`}>
-              {loading ? 'Saving...' : 'Save'}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              style={{
+                flex: 1,
+                padding: '10px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                color: 'white',
+                background: type === 'INCOME' ? 'var(--success, #10b981)' : 'var(--primary)',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                fontSize: '0.85rem'
+              }}
+            >
+              <Save size={16} />
+              <span>{loading ? 'Saving...' : 'Save Entry'}</span>
             </button>
           </div>
         </form>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes drawerSlideIn {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}} />
     </>
   );
 }

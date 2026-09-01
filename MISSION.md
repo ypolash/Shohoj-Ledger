@@ -3,6 +3,12 @@
 ## Core Goal
 To build a scalable, secure, and intuitive Enterprise Resource Planning (ERP) application focused on accounting, finance, inventory, and HR management (Shohoj Ledger).
 
+- **Version 2.5 — Full Finance Suite 2.0 & Customer Management Redesign (LIVE ON PRODUCTION):**
+  - **Completed**:
+    1. **Finance Suite Enterprise Redesign**: Redesigned **Income & Receivables** (`/erp/finance/income`), **Expenses & Outlays** (`/erp/finance/expenses`), **Staff Advances** (`/erp/finance/advances`), and **Period Settlements** (`/erp/finance/settlements`) with KPI financial summary cards, sortable tables, glowing status indicators, and slide-out quick preview drawers (`<IncomeQuickDrawer>`, `<ExpenseQuickDrawer>`, `<AdvanceQuickDrawer>`, `<SettlementQuickDrawer>`).
+    2. **Receipt Creation Forms & Modals**: Built live receipt voucher preview panels in `<IncomeForm>` and `<ExpenseForm>`, dynamic P&L settlement audit modal with 100% shareholder allocation validation, and staff advance issue/edit modal.
+    3. **Customer Management 2.0**: Redesigned customer directory (`/erp/crm/customers`) with avatar initials, credit utilization gauges, sortable columns, floating bulk actions, and Customer Reference discount manager.
+    4. **Layout & Density Stability**: Enforced fixed-width (`126px`) centered density toggle buttons across all toolbars to eliminate layout shifts, removed duplicate manual breadcrumbs across sub-pages, and isolated debounced search triggers with `useRef` to eliminate table re-render blinking loops.
 - **Version 2.4 — Universal Inventory 2.0, Sales Order Redesign, Expense Recognition & Onboarding 2.0 (LIVE ON PRODUCTION):**
   - **Completed**: 
     1. **Inventory Purchases & Expense Accounting**: All inventory purchases are automatically recognized as Operating Expenses (`PURCHASE_EXPENSE`) and posted directly to the general ledger (Debit: `PURCHASE_EXPENSE`, Credit: `ACCOUNTS_PAYABLE`). Created `/api/inventory/purchases/[id]/payments` endpoint and interactive settlement drawers to disburse payments from Cash/Bank assets and reduce AP liabilities. Added mathematical overpayment protection.

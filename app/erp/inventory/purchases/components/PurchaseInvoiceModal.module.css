@@ -1,0 +1,572 @@
+/* PurchaseInvoiceModal.module.css */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  padding: 24px 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 900px;
+  max-height: 94vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  background: var(--surface-main, #1e293b);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 22px 24px 22px;
+  box-sizing: border-box;
+}
+
+/* Custom Scrollbar */
+.modalCard::-webkit-scrollbar {
+  width: 8px;
+}
+.modalCard::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+.modalCard::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+.modalCard::-webkit-scrollbar-thumb:hover {
+  background: var(--primary, #3b82f6);
+}
+
+/* Top Toolbar */
+.modalToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  padding-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.titleText {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+}
+
+.poCode {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  font-family: monospace;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.themeSelector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--surface-hover, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
+  border-radius: 10px;
+}
+
+.themeLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 700;
+  padding-right: 2px;
+}
+
+.themeDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.themeDot:hover {
+  transform: scale(1.15);
+}
+
+.themeDotActive {
+  border-color: #ffffff;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.btnPrint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 10px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.btnPrint:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btnClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted, #94a3b8);
+  padding: 6px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btnClose:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   Realistic Paper Invoice Sheet
+   ========================================================================== */
+.invoiceSheet {
+  width: 100%;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 32px 36px;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Accent themes */
+.themeBlue {
+  --inv-accent: #2563eb;
+  --inv-accent-light: #eff6ff;
+  --inv-accent-dark: #1e40af;
+  --inv-badge-border: #bfdbfe;
+}
+
+.themeEmerald {
+  --inv-accent: #059669;
+  --inv-accent-light: #ecfdf5;
+  --inv-accent-dark: #065f46;
+  --inv-badge-border: #a7f3d0;
+}
+
+.themeIndigo {
+  --inv-accent: #6366f1;
+  --inv-accent-light: #eef2ff;
+  --inv-accent-dark: #4338ca;
+  --inv-badge-border: #c7d2fe;
+}
+
+.themeAmber {
+  --inv-accent: #d97706;
+  --inv-accent-light: #fffbeb;
+  --inv-accent-dark: #92400e;
+  --inv-badge-border: #fde68a;
+}
+
+.themeSlate {
+  --inv-accent: #334155;
+  --inv-accent-light: #f1f5f9;
+  --inv-accent-dark: #0f172a;
+  --inv-badge-border: #cbd5e1;
+}
+
+.invoiceSheet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--inv-accent, #2563eb);
+}
+
+/* Document Header */
+.docHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.docCompanyLogoArea {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.docLogoIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--inv-accent, #2563eb);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.docCompanyName {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.docCompanyMeta {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.docTypeArea {
+  text-align: right;
+}
+
+.docTypeTitle {
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: var(--inv-accent, #2563eb);
+  text-transform: uppercase;
+}
+
+.docPoNumber {
+  font-family: monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  margin-top: 2px;
+}
+
+.docStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 6px;
+  background: var(--inv-accent-light, #eff6ff);
+  color: var(--inv-accent, #2563eb);
+  border: 1px solid var(--inv-badge-border, #bfdbfe);
+}
+
+/* Specs & Vendor Info */
+.docInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.docInfoBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+}
+
+.docInfoBoxTitle {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--inv-accent, #2563eb);
+  margin-bottom: 6px;
+}
+
+.docVendorName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.docMetaRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  color: #64748b;
+}
+
+.docMetaRow strong {
+  color: #1e293b;
+}
+
+/* Table */
+.docTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.docTable th {
+  background: var(--inv-accent-light, #eff6ff);
+  color: var(--inv-accent-dark, #1e40af);
+  font-weight: 800;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 9px 12px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.docTable td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.docTable tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.textRight {
+  text-align: right;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+.docItemTitle {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.docItemCode {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+/* Bottom Grid */
+.docBottomGrid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.inWordsBox {
+  background: #f8fafc;
+  border-left: 3px solid var(--inv-accent, #2563eb);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.inWordsLabel {
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  color: var(--inv-accent, #2563eb);
+  margin-bottom: 2px;
+}
+
+.inWordsText {
+  font-style: italic;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.docTotalsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.docTotalsTable td {
+  padding: 4px 0;
+  color: #475569;
+}
+
+.docGrandTotalRow td {
+  border-top: 2px solid #0f172a;
+  border-bottom: 2px solid #0f172a;
+  padding: 8px 0;
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+/* Signatures */
+.docSignatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+}
+
+.signBlock {
+  text-align: center;
+  width: 150px;
+}
+
+.signLine {
+  border-bottom: 1px solid #94a3b8;
+  height: 28px;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  color: #334155;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.signLabel {
+  font-size: 0.675rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.signSub {
+  font-size: 0.625rem;
+  color: #94a3b8;
+}
+
+.docFooterNote {
+  text-align: center;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  margin-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+}
+
+/* ==========================================================================
+   PRINT ONLY STYLES (Clean White Paper Invoice, No Dark Modal Wrappers)
+   ========================================================================== */
+@media print {
+  :global(body), :global(html) {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app navigation and sidebar */
+  :global(aside),
+  :global(header),
+  :global(nav),
+  :global(.no-print),
+  .modalToolbar {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Remove modal overlay backdrop */
+  .modalOverlay {
+    position: static !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    z-index: auto !important;
+  }
+
+  /* Strip modal card borders & shadows */
+  .modalCard {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Make paper sheet fill full printable area cleanly */
+  .invoiceSheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 10mm 15mm !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+}

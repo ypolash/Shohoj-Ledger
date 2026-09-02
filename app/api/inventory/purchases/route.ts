@@ -4,9 +4,12 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 /**
  * GET /api/inventory/purchases
- * Retrieves purchase orders for the active tenant.
+ * Retrieves all purchase orders for the active company tenant.
  */
 export async function GET(req: Request) {
   try {
@@ -16,16 +19,39 @@ export async function GET(req: Request) {
     const rbacGuard = await requirePermission("VIEW_PRODUCTS");
     if (rbacGuard) return rbacGuard;
 
-    const referer = req.headers.get("referer") || "";
-    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
-
     const purchases = await prisma.purchaseOrder.findMany({
-      where: { companyId, systemSource },
+      where: { companyId },
       include: {
-        supplier: { select: { id: true, name: true, phone: true, email: true } },
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            address: true,
+            contactPerson: true,
+            supplierCode: true
+          }
+        },
         lines: {
           include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                productCode: true,
+                sku: true,
+                unit: true
+              }
+            },
             goodsReceiptLines: true
+          }
+        },
+        company: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true
           }
         }
       },
@@ -33,7 +59,10 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ purchases });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "COMPANY_REQUIRED" || error.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "Unauthorized or company required" }, { status: 401 });
+    }
     console.error("GET Purchases Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -41,8 +70,7 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/inventory/purchases
- * Creates a new purchase order, records it as an Operating Expense (PURCHASE_EXPENSE),
- * and creates corresponding dual-entry LedgerEntry records.
+ * Creates a new purchase order with subtotal, discount, shipping, and recognized operating expense.
  */
 export async function POST(req: Request) {
   try {
@@ -54,7 +82,18 @@ export async function POST(req: Request) {
     if (rbacGuard) return rbacGuard;
 
     const body = await req.json();
-    const { supplierId, poNumber, expectedDate, supplierRef, items, notes, status } = body;
+    const {
+      supplierId,
+      poNumber,
+      expectedDate,
+      supplierRef,
+      items,
+      notes,
+      status,
+      discountAmount,
+      shippingAmount,
+      paymentTerms
+    } = body;
 
     if (!supplierId || !poNumber || !items || !items.length) {
       return NextResponse.json({ error: "Supplier, PO Number, and at least one item are required" }, { status: 400 });
@@ -63,10 +102,14 @@ export async function POST(req: Request) {
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const totalAmount = items.reduce(
+    const calculatedSubtotal = items.reduce(
       (sum: number, item: any) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0),
       0
     );
+
+    const discount = Number(discountAmount || 0);
+    const shipping = Number(shippingAmount || 0);
+    const finalTotal = Math.max(0, calculatedSubtotal - discount + shipping);
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create PurchaseOrder
@@ -76,8 +119,11 @@ export async function POST(req: Request) {
           supplierId,
           purchaseOrderNumber: poNumber,
           expectedDeliveryDate: expectedDate ? new Date(expectedDate) : null,
-          totalAmount,
-          subtotal: totalAmount,
+          subtotal: calculatedSubtotal,
+          discountAmount: discount,
+          shippingAmount: shipping,
+          totalAmount: finalTotal,
+          paymentTerms: paymentTerms || null,
           remarks: notes || (supplierRef ? `Ref: ${supplierRef}` : null),
           status: status || "APPROVED",
           systemSource,
@@ -87,12 +133,16 @@ export async function POST(req: Request) {
               productId: item.productId || null,
               quantity: Number(item.quantity),
               unitPrice: Number(item.unitPrice),
-              lineTotal: Number(item.quantity) * Number(item.unitPrice),
+              lineTotal: Number(item.lineTotal || (Number(item.quantity) * Number(item.unitPrice))),
               remarks: item.remarks || item.productName || null
             }))
           }
         },
-        include: { lines: true, supplier: true }
+        include: {
+          lines: { include: { product: true } },
+          supplier: true,
+          company: true
+        }
       });
 
       // 2. Count Purchase as an Operating Expense (PURCHASE_EXPENSE)
@@ -100,10 +150,10 @@ export async function POST(req: Request) {
         data: {
           companyId,
           category: "PURCHASE_EXPENSE",
-          amount: totalAmount,
+          amount: finalTotal,
           paymentMethod: "CREDIT",
           approvalStatus: "APPROVED",
-          description: `Purchase Order: ${poNumber} (${po.supplier?.name || "Supplier"})`,
+          description: `Purchase Order: ${poNumber} (${po.supplier?.name || "Supplier"})${discount > 0 ? ` (Discount: ৳${discount})` : ""}`,
           systemSource
         }
       });
@@ -117,7 +167,7 @@ export async function POST(req: Request) {
           voucherType: "PURCHASE",
           module: "INVENTORY",
           accountType: "EXPENSE",
-          debit: totalAmount,
+          debit: finalTotal,
           credit: 0,
           status: "COMPLETED",
           description: `Purchase Order Expense: ${poNumber}`,
@@ -138,7 +188,7 @@ export async function POST(req: Request) {
           module: "INVENTORY",
           accountType: "LIABILITY",
           debit: 0,
-          credit: totalAmount,
+          credit: finalTotal,
           status: "COMPLETED",
           description: `Accounts Payable Liability: ${poNumber} - ${po.supplier?.name || "Supplier"}`,
           referenceId: po.id,

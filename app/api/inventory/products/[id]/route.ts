@@ -44,7 +44,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     });
     const currentStock = stockAgg._sum.quantity || 0;
 
-    return NextResponse.json({ product: { ...product, currentStock } });
+    const openingTx = await prisma.stockTransaction.findFirst({
+      where: { productId: product.id, type: "OPENING" }
+    });
+    const openingStock = openingTx ? openingTx.quantity : 0;
+
+    return NextResponse.json({ product: { ...product, currentStock, openingStock } });
   } catch (error) {
     console.error("GET Product Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -136,6 +141,62 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
           customFields: customFields || {}
         }
       });
+
+      if (body.openingStock !== undefined) {
+        const targetOpeningStock = Number(body.openingStock) || 0;
+        
+        // Find existing OPENING stock transaction for this product
+        const existingOpeningTx = await tx.stockTransaction.findFirst({
+          where: {
+            productId: existingProduct.id,
+            type: "OPENING"
+          }
+        });
+
+        if (existingOpeningTx) {
+          if (targetOpeningStock > 0) {
+            await tx.stockTransaction.update({
+              where: { id: existingOpeningTx.id },
+              data: { quantity: targetOpeningStock }
+            });
+          } else {
+            await tx.stockTransaction.delete({
+              where: { id: existingOpeningTx.id }
+            });
+          }
+        } else if (targetOpeningStock > 0) {
+          let targetWarehouse = await tx.warehouse.findFirst({
+            where: { companyId, isDefault: true }
+          });
+          if (!targetWarehouse) {
+            targetWarehouse = await tx.warehouse.findFirst({
+              where: { companyId }
+            });
+          }
+          if (!targetWarehouse) {
+            targetWarehouse = await tx.warehouse.create({
+              data: {
+                companyId,
+                name: "Main Warehouse",
+                code: "WH-MAIN",
+                isDefault: true,
+                systemSource
+              }
+            });
+          }
+          await tx.stockTransaction.create({
+            data: {
+              companyId,
+              warehouseId: targetWarehouse.id,
+              productId: existingProduct.id,
+              type: "OPENING",
+              quantity: targetOpeningStock,
+              reference: "Initial Opening Stock",
+              performedById: session.user.id
+            }
+          });
+        }
+      }
 
       await tx.inventoryAudit.create({
         data: {

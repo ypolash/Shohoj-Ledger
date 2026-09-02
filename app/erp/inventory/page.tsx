@@ -1,26 +1,41 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ProductModal from './components/ProductModal';
+import styles from './components/InventoryDashboard.module.css';
+import { 
+  Boxes, 
+  Warehouse, 
+  AlertTriangle, 
+  AlertOctagon, 
+  BadgeDollarSign, 
+  Plus, 
+  RefreshCw, 
+  ArrowUpRight, 
+  ArrowRight, 
+  Package, 
+  CheckCircle2, 
+  Tag
+} from 'lucide-react';
 
-/**
- * ERP Inventory Dashboard Page
- * Fetches KPI data from /api/inventory/dashboard and displays key metrics,
- * stock alerts, and recent activity feed.
- */
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+  'linear-gradient(135deg, #10b981, #047857)',
+  'linear-gradient(135deg, #f59e0b, #d97706)',
+  'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+  'linear-gradient(135deg, #ec4899, #be185d)',
+  'linear-gradient(135deg, #06b6d4, #0e7490)'
+];
+
 export default function InventoryDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
-
-  /** Fetches the inventory dashboard data from the API */
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/inventory/dashboard');
@@ -29,13 +44,22 @@ export default function InventoryDashboardPage() {
         setData(json);
       }
     } catch (e) {
-      console.error('Inventory dashboard error:', e);
+      console.error('Inventory dashboard fetch error:', e);
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  const handleRefreshClick = () => {
+    setIsRefreshing(true);
+    fetchDashboard();
+    setTimeout(() => setIsRefreshing(false), 600);
   };
 
-  /** Formats a number as a currency string in BDT */
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(val || 0);
 
@@ -43,101 +67,253 @@ export default function InventoryDashboardPage() {
   const recentProducts: any[] = data?.recentProducts || [];
 
   const kpiCards = [
-    { label: 'Total Products', value: kpis.totalProducts ?? '—', icon: 'inventory_2', color: 'var(--primary)', glow: 'primary', href: '/erp/inventory/products' },
-    { label: 'Warehouses', value: kpis.totalWarehouses ?? '—', icon: 'warehouse', color: 'var(--accent)', glow: 'accent', href: '/erp/inventory/warehouses' },
-    { label: 'Active Assets', value: kpis.totalAssets ?? '—', icon: 'precision_manufacturing', color: 'var(--text-main)', glow: 'accent', href: '/erp/inventory/assets' },
-    { label: 'Low Stock Items', value: kpis.lowStockCount ?? '—', icon: 'warning', color: 'var(--warning)', glow: 'warning', href: '/erp/inventory/stock' },
-    { label: 'Out of Stock', value: kpis.outOfStockCount ?? '—', icon: 'block', color: 'var(--danger)', glow: 'danger', href: '/erp/inventory/stock' },
-    { label: 'Inventory Value', value: isLoading ? '—' : formatCurrency(kpis.inventoryValue), icon: 'payments', color: 'var(--success)', glow: 'success', href: '/erp/inventory/reports' },
+    {
+      label: 'Total Products',
+      value: kpis.totalProducts ?? 0,
+      badge: 'Active Catalog',
+      icon: <Boxes size={22} />,
+      color: 'var(--primary)',
+      gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+      href: '/erp/inventory/products'
+    },
+    {
+      label: 'Warehouses',
+      value: kpis.totalWarehouses ?? 0,
+      badge: 'Storage Sites',
+      icon: <Warehouse size={22} />,
+      color: '#8b5cf6',
+      gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+      href: '/erp/inventory/warehouses'
+    },
+    {
+      label: 'Low Stock Alert',
+      value: kpis.lowStockCount ?? 0,
+      badge: (kpis.lowStockCount || 0) > 0 ? 'Requires Reorder' : 'Optimal',
+      icon: <AlertTriangle size={22} />,
+      color: '#f59e0b',
+      gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      href: '/erp/inventory/stock'
+    },
+    {
+      label: 'Out of Stock',
+      value: kpis.outOfStockCount ?? 0,
+      badge: (kpis.outOfStockCount || 0) > 0 ? 'Action Needed' : 'Zero Stockouts',
+      icon: <AlertOctagon size={22} />,
+      color: '#ef4444',
+      gradient: 'linear-gradient(135deg, #ef4444, #dc2626)',
+      href: '/erp/inventory/stock'
+    },
+    {
+      label: 'Inventory Asset Value',
+      value: isLoading ? '—' : formatCurrency(kpis.inventoryValue),
+      badge: 'Capital Assets',
+      icon: <BadgeDollarSign size={22} />,
+      color: '#10b981',
+      gradient: 'linear-gradient(135deg, #10b981, #047857)',
+      href: '/erp/inventory/reports'
+    }
   ];
 
+  const getAvatarInitials = (name: string, id: string) => {
+    const initials = (name || 'PR')
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+    
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash << 5) - hash + id.charCodeAt(i);
+      hash |= 0;
+    }
+    const gradient = AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
+    return { initials, gradient };
+  };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Inventory Dashboard</h1>
+    <div className={styles.dashboardContainer}>
+      
+      {/* Top Header & Actions */}
+      <div className={styles.headerWrapper}>
+        <div className={styles.titleGroup}>
+          <h1>Inventory Hub & Asset Overview</h1>
+          <p>Real-time stock valuation, catalog health, and supplier procurement metrics.</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={fetchDashboard} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
-            Refresh
+
+        <div className={styles.actionGroup}>
+          <button 
+            onClick={handleRefreshClick}
+            className={styles.btnSecondary}
+            title="Refresh Inventory Dashboard"
+          >
+            <RefreshCw 
+              size={16} 
+              style={{ 
+                animation: isRefreshing ? 'spin 0.6s linear infinite' : 'none' 
+              }} 
+            />
+            <span>Refresh</span>
           </button>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-            Create Product
+
+          <button 
+            onClick={() => setShowModal(true)}
+            className={styles.btnPrimary}
+          >
+            <Plus size={18} />
+            <span>Create Product</span>
           </button>
         </div>
       </div>
 
+      {/* Success Notification */}
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>
-          ✓ {successMsg}
+        <div className={styles.successBanner}>
+          <CheckCircle2 size={18} />
+          <span>{successMsg}</span>
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-4)' }}>
-        {kpiCards.filter(kpi => kpi.label !== 'Active Assets').map((kpi) => (
-          <Link key={kpi.label} href={kpi.href || '#'} className={`glass-panel hover-lift glow-border-${kpi.glow}`} style={{ padding: '24px', borderRadius: '16px', textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px', color: kpi.color }}>{kpi.icon}</span>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>{kpi.label}</span>
+      {/* KPI Cards Grid */}
+      <div className={styles.kpiGrid}>
+        {kpiCards.map((kpi) => (
+          <Link 
+            key={kpi.label}
+            href={kpi.href}
+            className={styles.kpiCard}
+            style={{ ['--card-glow-color' as any]: kpi.color }}
+          >
+            <div className={styles.kpiCardHeader}>
+              <div className={styles.kpiIconWrapper} style={{ background: kpi.gradient }}>
+                {kpi.icon}
+              </div>
+              <span className={styles.kpiBadge} style={{ color: kpi.color, borderColor: `${kpi.color}40`, background: `${kpi.color}15` }}>
+                {kpi.badge}
+              </span>
             </div>
-            <div style={{ fontSize: '30px', fontWeight: 700, color: kpi.color, letterSpacing: '-0.5px' }}>
-              {isLoading ? <span style={{ opacity: 0.4 }}>···</span> : kpi.value}
+
+            <div className={styles.kpiContent}>
+              <span className={styles.kpiLabel}>{kpi.label}</span>
+              <span className={styles.kpiValue} style={{ color: kpi.color }}>
+                {isLoading ? <span style={{ opacity: 0.4 }}>···</span> : kpi.value}
+              </span>
+            </div>
+
+            <div className={styles.kpiFooter}>
+              <span>View details</span>
+              <span className={styles.kpiLinkText}>
+                Explore <ArrowRight size={13} />
+              </span>
             </div>
           </Link>
         ))}
       </div>
 
-      {/* Recent Activity Table */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-        <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-main)' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: 0 }}>Recent Products</h2>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-              <thead>
-                <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-                  {['Product Name', 'SKU', 'Created At'].map(h => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                      {Array.from({ length: 3 }).map((_, j) => (
-                        <td key={j} style={{ padding: '14px 16px' }}>
-                          <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : recentProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>inventory_2</span>
-                      No products created yet.
-                    </td>
+      {/* Main Table: Recent Products */}
+      <div className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <h2 className={styles.panelTitle}>
+            <Package size={18} color="var(--primary)" />
+            Recent Catalog Additions
+          </h2>
+          <Link href="/erp/inventory/products" className={styles.panelViewAll}>
+            <span>View All Products</span>
+            <ArrowUpRight size={15} />
+          </Link>
+        </div>
+
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead className={styles.thead}>
+              <tr>
+                <th className={styles.th}>Product & SKU</th>
+                <th className={styles.th}>Category</th>
+                <th className={styles.th}>Selling Price</th>
+                <th className={styles.th}>Added On</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i} className={styles.tr}>
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <td key={j} className={styles.td}>
+                        <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
+                      </td>
+                    ))}
                   </tr>
-                ) : (
-                  recentProducts.map((product: any, idx: number) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'} onMouseLeave={e => e.currentTarget.style.background = ''}>
-                      <td style={{ padding: '14px 16px', fontWeight: 500, color: 'var(--text-main)' }}>{product.name}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{product.sku || 'N/A'}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{new Date(product.createdAt).toLocaleDateString()}</td>
+                ))
+              ) : recentProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>
+                    <div className={styles.emptyState}>
+                      <div className={styles.emptyIconWrapper}>
+                        <Boxes size={32} />
+                      </div>
+                      <h3 className={styles.emptyTitle}>No Products Registered Yet</h3>
+                      <p className={styles.emptyDesc}>
+                        Build your inventory catalog to start tracking multi-warehouse stock, purchase orders, and sales delivery.
+                      </p>
+                      <button
+                        onClick={() => setShowModal(true)}
+                        className={styles.btnPrimary}
+                      >
+                        <Plus size={16} />
+                        <span>Register First Product</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                recentProducts.map((product) => {
+                  const { initials, gradient } = getAvatarInitials(product.name, product.id);
+                  const sellingPrice = Number(product.sellingPrice || 0);
+                  const categoryName = product.category?.name || 'General';
+
+                  return (
+                    <tr key={product.id} className={styles.tr}>
+                      {/* Product & SKU */}
+                      <td className={styles.td}>
+                        <div className={styles.productIdentity}>
+                          <div className={styles.productAvatar} style={{ background: gradient }}>
+                            {initials}
+                          </div>
+                          <div className={styles.productDetails}>
+                            <span className={styles.productName}>{product.name}</span>
+                            <span className={styles.productSku}>
+                              {product.sku ? `SKU: ${product.sku}` : `Code: ${product.productCode || 'N/A'}`}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category */}
+                      <td className={styles.td}>
+                        <span className={styles.categoryBadge}>
+                          <Tag size={12} />
+                          {categoryName}
+                        </span>
+                      </td>
+
+                      {/* Selling Price */}
+                      <td className={styles.td}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                          {formatCurrency(sellingPrice)}
+                        </span>
+                      </td>
+
+                      {/* Created At */}
+                      <td className={styles.td}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {new Date(product.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -151,6 +327,13 @@ export default function InventoryDashboardPage() {
           fetchDashboard();
         }}
       />
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}} />
     </div>
   );
 }

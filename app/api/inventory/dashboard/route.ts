@@ -42,7 +42,8 @@ export async function GET(req: Request) {
       prisma.product.findMany({ 
         where: { companyId, systemSource }, 
         take: 10, 
-        orderBy: { createdAt: 'desc' } 
+        orderBy: { createdAt: 'desc' },
+        include: { category: { select: { name: true } } }
       })
     ]);
 

@@ -49,16 +49,17 @@ export async function GET(req: Request) {
     // Calculate current stock dynamically
     const formattedProducts = products.map(p => {
       let currentStock = 0;
+      let openingStock = 0;
       p.stockTransactions.forEach(t => {
-        // IN, OPENING, RETURN add stock. OUT, DAMAGE, TRANSFER (from) deduct.
-        // We assume quantity is signed properly or we adjust based on type.
-        // Actually, we said "Positive for IN, Negative for OUT/DAMAGE, etc." in schema comments.
-        // So we can just sum it up.
+        if (t.type === "OPENING") {
+          openingStock += t.quantity;
+        }
         currentStock += t.quantity;
       });
       return {
         ...p,
         currentStock,
+        openingStock,
         stockTransactions: undefined // Hide heavy transactions from list view
       };
     });
@@ -155,19 +156,29 @@ export async function POST(req: Request) {
             where: { companyId }
           });
         }
-        if (targetWarehouse) {
-          await tx.stockTransaction.create({
+        if (!targetWarehouse) {
+          targetWarehouse = await tx.warehouse.create({
             data: {
               companyId,
-              warehouseId: targetWarehouse.id,
-              productId: p.id,
-              type: "OPENING",
-              quantity: Number(body.openingStock),
-              reference: "Initial Opening Stock",
-              performedById: session.user.id
+              name: "Main Warehouse",
+              code: "WH-MAIN",
+              isDefault: true,
+              systemSource
             }
           });
         }
+
+        await tx.stockTransaction.create({
+          data: {
+            companyId,
+            warehouseId: targetWarehouse.id,
+            productId: p.id,
+            type: "OPENING",
+            quantity: Number(body.openingStock),
+            reference: "Initial Opening Stock",
+            performedById: session.user.id
+          }
+        });
       }
 
       await tx.inventoryAudit.create({

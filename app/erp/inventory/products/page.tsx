@@ -1,10 +1,29 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
+import { 
+  Package, 
+  Plus, 
+  Upload, 
+  Download, 
+  RefreshCw, 
+  Search, 
+  X, 
+  Eye, 
+  Edit3, 
+  Trash2, 
+  Copy, 
+  Check, 
+  MoreVertical, 
+  ExternalLink,
+  CheckCircle2
+} from 'lucide-react';
+
 import ProductModal from '../components/ProductModal';
 import BulkProductUploadModal from '../components/BulkProductUploadModal';
-import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
+import styles from './ProductsPage.module.css';
 
 /** Product record from API */
 interface Product {
@@ -27,6 +46,7 @@ interface Product {
   notes?: string | null;
   imageUrl?: string | null;
   category?: { name: string };
+  createdAt?: string;
 }
 
 /** Category record from API */
@@ -35,79 +55,110 @@ interface Category {
   name: string;
 }
 
-/**
- * ERP Inventory — Products Page (Universal Table Redesign 2.0)
- * Displays a searchable, filterable product list and supports adding/editing products.
- */
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+  'linear-gradient(135deg, #10b981, #047857)',
+  'linear-gradient(135deg, #f59e0b, #d97706)',
+  'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+  'linear-gradient(135deg, #ec4899, #be185d)',
+  'linear-gradient(135deg, #06b6d4, #0e7490)',
+  'linear-gradient(135deg, #6366f1, #4338ca)'
+];
+
 export default function ProductsPage() {
+  const router = useRouter();
+
+  // Data states
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [menuOpen, setMenuOpen] = useState<{ id: string, name: string, top: number, right: number } | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const router = useRouter();
-  const LIMIT = 20;
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchProducts(); }, [page, search, categoryFilter]);
+  // Filter & Search states
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'INACTIVE'>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'stock_desc' | 'stock_asc' | 'price_desc' | 'price_asc' | 'newest'>('newest');
+  
+  // Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [copiedSku, setCopiedSku] = useState<string | null>(null);
+
+  // Modals
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<{ id: string; name: string; top: number; right: number } | null>(null);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Initial loads
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, []);
+
+  // Global click listener for closing kebab menu
   useEffect(() => {
     const handleClick = () => setMenuOpen(null);
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
-  /** Loads categories for the filter dropdown and create form */
+  /** Fetch Categories */
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/inventory/categories');
-      if (res.ok) { const d = await res.json(); setCategories(d.categories || []); }
-    } catch (e) { console.error(e); }
+      if (res.ok) {
+        const d = await res.json();
+        setCategories(d.categories || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch categories:', e);
+    }
   };
 
-  /** Loads paginated, filtered products from the API */
+  /** Fetch Products */
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
-      if (search) params.set('search', search);
-      if (categoryFilter) params.set('categoryId', categoryFilter);
-      const res = await fetch(`/api/inventory/products?${params}`);
+      const res = await fetch('/api/inventory/products?limit=250');
       if (res.ok) {
         const d = await res.json();
         setProducts(d.products || []);
-        setTotal(d.pagination?.total || 0);
       }
-    } catch (e) { console.error(e); }
-    finally { setIsLoading(false); }
-  }, [page, search, categoryFilter]);
+    } catch (e) {
+      console.error('Failed to fetch products:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  /** Handles search input with page reset */
-  const handleSearch = (v: string) => { setSearch(v); setPage(1); };
-
-  const handleEditClick = (pId: string) => {
-    const p = products.find(prod => prod.id === pId);
-    if (!p) return;
-    setEditingId(p.id);
-    setShowModal(true);
-    setMenuOpen(null);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchProducts();
+    fetchCategories();
+    setTimeout(() => setIsRefreshing(false), 600);
   };
 
-  const handleDelete = async (pId: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  /** Copy SKU to clipboard */
+  const handleCopySku = (sku: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(sku);
+    setCopiedSku(sku);
+    setTimeout(() => setCopiedSku(null), 2000);
+  };
+
+  /** Delete single product */
+  const handleDelete = async (pId: string, name?: string) => {
+    if (!confirm(`Are you sure you want to delete "${name || 'this product'}"?`)) return;
     setMenuOpen(null);
     try {
       const res = await fetch(`/api/inventory/products/${pId}`, { method: 'DELETE' });
       if (res.ok) {
         setSuccessMsg("Product deleted successfully.");
         setTimeout(() => setSuccessMsg(''), 4000);
-        fetchProducts();
+        setProducts(prev => prev.filter(p => p.id !== pId));
+        setSelectedIds(prev => prev.filter(id => id !== pId));
       } else {
         const d = await res.json();
         alert(d.error || "Failed to delete product");
@@ -117,230 +168,655 @@ export default function ProductsPage() {
     }
   };
 
-  /** Returns a badge style based on current stock vs. min stock threshold */
-  const stockBadge = (product: Product) => {
-    if (product.currentStock <= 0) return { label: 'Out of Stock', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', dot: '#ef4444' };
-    if (product.currentStock <= product.minStock) return { label: 'Low Stock', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', dot: '#f59e0b' };
-    return { label: 'In Stock', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', dot: '#10b981' };
+  /** Bulk Delete selected products */
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected products?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => fetch(`/api/inventory/products/${id}`, { method: 'DELETE' })));
+      setSuccessMsg(`Successfully deleted ${selectedIds.length} products.`);
+      setTimeout(() => setSuccessMsg(''), 4000);
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (e) {
+      alert("Failed to delete some products.");
+    }
   };
 
-  const totalPages = Math.ceil(total / LIMIT);
+  /** Export to Excel */
+  const handleExportExcel = (itemsToExport = products) => {
+    const data = itemsToExport.map(p => ({
+      "Product Code": p.productCode,
+      "Name": p.name,
+      "SKU": p.sku || "",
+      "Barcode": p.barcode || "",
+      "Category": p.category?.name || "Uncategorized",
+      "Brand": p.brand || "",
+      "Unit": p.unit || "pcs",
+      "Current Stock": p.currentStock,
+      "Min Stock": p.minStock,
+      "Purchase Price (৳)": p.purchasePrice,
+      "Selling Price (৳)": p.sellingPrice,
+      "Status": p.status,
+    }));
 
-  const columns: InventoryColumn<Product>[] = [
-    {
-      key: 'image',
-      header: 'Item',
-      width: '60px',
-      render: (p) => (
-        <div style={{ width: '42px', height: '42px', borderRadius: '10px', overflow: 'hidden', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-main)' }}>
-          {p.imageUrl ? (
-            <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--text-muted)' }}>image</span>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'productCode',
-      header: 'Code / SKU',
-      render: (p) => (
-        <div>
-          <span style={{ fontFamily: 'monospace', fontSize: '13px', color: 'var(--primary, #38bdf8)', fontWeight: 600 }}>
-            {p.productCode}
-          </span>
-          {p.sku && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>SKU: {p.sku}</div>}
-        </div>
-      )
-    },
-    {
-      key: 'name',
-      header: 'Product Details',
-      render: (p) => (
-        <div>
-          <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>{p.name}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-            {p.category?.name || 'Uncategorized'} {p.brand ? `· ${p.brand}` : ''}
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'unit',
-      header: 'Unit',
-      render: (p) => <span style={{ color: 'var(--text-secondary)' }}>{p.unit || '—'}</span>
-    },
-    {
-      key: 'stock',
-      header: 'Current Stock',
-      render: (p) => {
-        const badge = stockBadge(p);
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: badge.color,
-              background: badge.bg,
-              border: `1px solid ${badge.color}30`
-            }}
-          >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: badge.dot }} />
-            {p.currentStock} {p.unit || 'pcs'} · {badge.label}
-          </span>
-        );
-      }
-    },
-    {
-      key: 'sellingPrice',
-      header: 'Sell Price',
-      render: (p) => (
-        <span style={{ color: 'var(--text-main)', fontWeight: 600, fontFamily: 'monospace', fontSize: '13px' }}>
-          ৳{Number(p.sellingPrice).toLocaleString()}
-        </span>
-      )
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (p) => (
-        <span
-          style={{
-            padding: '3px 10px',
-            borderRadius: '20px',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: p.status === 'ACTIVE' ? 'var(--success, #10b981)' : 'var(--text-muted)',
-            background: p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover)'
-          }}
-        >
-          {p.status}
-        </span>
-      )
-    },
-    {
-      key: 'actions',
-      header: '',
-      align: 'right',
-      width: '60px',
-      render: (p) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (menuOpen?.id === p.id) {
-              setMenuOpen(null);
-            } else {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setMenuOpen({
-                id: p.id,
-                name: p.name,
-                top: rect.bottom,
-                right: window.innerWidth - rect.right
-              });
-            }
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--text-muted)',
-            padding: '6px',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
-        </button>
-      )
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products Catalog");
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Shohoj_Inventory_Products_${today}.xlsx`);
+  };
+
+  /** Deterministic gradient avatar based on name */
+  const getAvatarGradient = (name: string, id: string) => {
+    let hash = 0;
+    const str = name + id;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-  ];
+    return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
+  };
+
+  /** Deterministic initials */
+  const getInitials = (name: string) => {
+    return (name || 'PR')
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
+
+  /** Stock badge helper */
+  const getStockBadge = (p: Product) => {
+    if (p.currentStock <= 0) {
+      return {
+        label: 'Out of Stock',
+        color: 'var(--danger, #ef4444)',
+        bg: 'rgba(239, 68, 68, 0.12)',
+        border: 'rgba(239, 68, 68, 0.25)',
+        dot: '#ef4444',
+        pulse: true
+      };
+    }
+    if (p.currentStock <= (p.minStock || 0)) {
+      return {
+        label: 'Low Stock',
+        color: 'var(--warning, #f59e0b)',
+        bg: 'rgba(245, 158, 11, 0.12)',
+        border: 'rgba(245, 158, 11, 0.25)',
+        dot: '#f59e0b',
+        pulse: false
+      };
+    }
+    return {
+      label: 'In Stock',
+      color: 'var(--success, #10b981)',
+      bg: 'rgba(16, 185, 129, 0.12)',
+      border: 'rgba(16, 185, 129, 0.25)',
+      dot: '#10b981',
+      pulse: false
+    };
+  };
+
+  // Counts for status tabs
+  const statusCounts = useMemo(() => {
+    let inStock = 0;
+    let lowStock = 0;
+    let outOfStock = 0;
+    let inactive = 0;
+
+    products.forEach(p => {
+      const stock = p.currentStock || 0;
+      if (p.status === 'INACTIVE') inactive++;
+      if (stock <= 0) {
+        outOfStock++;
+      } else if (stock <= (p.minStock || 0)) {
+        lowStock++;
+      } else {
+        inStock++;
+      }
+    });
+
+    return {
+      all: products.length,
+      inStock,
+      lowStock,
+      outOfStock,
+      inactive
+    };
+  }, [products]);
+
+  // Filtered & Sorted Products
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter(p => {
+        // Search filter
+        if (search.trim()) {
+          const q = search.toLowerCase();
+          const matchName = p.name?.toLowerCase().includes(q);
+          const matchCode = p.productCode?.toLowerCase().includes(q);
+          const matchSku = p.sku?.toLowerCase().includes(q);
+          const matchBarcode = p.barcode?.toLowerCase().includes(q);
+          const matchBrand = p.brand?.toLowerCase().includes(q);
+          if (!matchName && !matchCode && !matchSku && !matchBarcode && !matchBrand) return false;
+        }
+
+        // Category filter
+        if (categoryFilter && p.categoryId !== categoryFilter) {
+          return false;
+        }
+
+        // Status tab filter
+        if (statusFilter === 'IN_STOCK' && (p.currentStock <= (p.minStock || 0) || p.currentStock <= 0)) return false;
+        if (statusFilter === 'LOW_STOCK' && (p.currentStock <= 0 || p.currentStock > (p.minStock || 0))) return false;
+        if (statusFilter === 'OUT_OF_STOCK' && p.currentStock > 0) return false;
+        if (statusFilter === 'INACTIVE' && p.status !== 'INACTIVE') return false;
+
+        return true;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'name_asc':
+            return a.name.localeCompare(b.name);
+          case 'name_desc':
+            return b.name.localeCompare(a.name);
+          case 'stock_desc':
+            return b.currentStock - a.currentStock;
+          case 'stock_asc':
+            return a.currentStock - b.currentStock;
+          case 'price_desc':
+            return b.sellingPrice - a.sellingPrice;
+          case 'price_asc':
+            return a.sellingPrice - b.sellingPrice;
+          case 'newest':
+          default:
+            return 0;
+        }
+      });
+  }, [products, search, categoryFilter, statusFilter, sortBy]);
+
+  // Selection toggle
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredProducts.map(p => p.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Products</h1>
+    <div className={styles.pageContainer}>
+      {/* Header Section */}
+      <div className={styles.headerWrapper}>
+        <div className={styles.titleGroup}>
+          <h1>
+            Products
+            <span className={styles.titleBadge}>
+              {products.length} {products.length === 1 ? 'Product' : 'Products'}
+            </span>
+          </h1>
+          <p>Search, manage stock levels, view SKUs, and update product pricing.</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn btn-secondary hover-lift" onClick={() => setIsBulkUploadOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>upload</span>
+
+        <div className={styles.actionGroup}>
+          <button 
+            className={styles.refreshBtn} 
+            onClick={handleRefresh} 
+            title="Refresh catalog data"
+          >
+            <RefreshCw size={16} className={isRefreshing ? styles.spinAnimation : ''} />
+          </button>
+
+          <button 
+            className={styles.btnSecondary} 
+            onClick={() => handleExportExcel(filteredProducts)}
+            title="Export current view to Excel"
+          >
+            <Download size={15} />
+            Export Excel
+          </button>
+
+          <button 
+            className={styles.btnSecondary} 
+            onClick={() => setIsBulkUploadOpen(true)}
+          >
+            <Upload size={15} />
             Bulk Upload
           </button>
-          <button className="btn btn-primary hover-lift" onClick={() => { setEditingId(null); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
+
+          <button 
+            className={styles.btnPrimary} 
+            onClick={() => { setEditingId(null); setShowModal(true); }}
+          >
+            <Plus size={16} />
             Add Product
           </button>
         </div>
       </div>
 
+      {/* Success Banner */}
       {successMsg && (
-        <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success, #10b981)', border: '1px solid var(--success)', fontSize: '14px' }}>
-          ✓ {successMsg}
+        <div style={{
+          padding: '12px 18px',
+          borderRadius: '10px',
+          background: 'rgba(16, 185, 129, 0.12)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          color: 'var(--success, #10b981)',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          <CheckCircle2 size={18} />
+          {successMsg}
         </div>
       )}
 
-      {/* Universal Inventory Table */}
-      <InventoryDataTable
-        columns={columns}
-        data={products}
-        isLoading={isLoading}
-        emptyIcon="inventory_2"
-        emptyTitle="No products found"
-        emptySubtitle="Try adjusting your search query or category filters to find products."
-        searchValue={search}
-        onSearchChange={handleSearch}
-        searchPlaceholder="Search by name, code, SKU, barcode..."
-        filterSlot={
-          <select
-            value={categoryFilter}
-            onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
-            style={{
-              padding: '9px 14px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-main)',
-              background: 'var(--surface-input, rgba(15, 23, 42, 0.6))',
-              color: 'var(--text-main)',
-              fontSize: '13px',
-              outline: 'none'
+      {/* Toolbar & Filters (Status Tabs, Search, Category, Sort) */}
+      <div className={styles.toolbarContainer}>
+        {/* Status Tabs */}
+        <div className={styles.toolbarTopRow}>
+          <div className={styles.statusTabs}>
+            <button 
+              className={`${styles.statusTab} ${statusFilter === 'ALL' ? styles.statusTabActive : ''}`}
+              onClick={() => setStatusFilter('ALL')}
+            >
+              All Products
+              <span className={styles.statusTabCount}>{statusCounts.all}</span>
+            </button>
+
+            <button 
+              className={`${styles.statusTab} ${statusFilter === 'IN_STOCK' ? styles.statusTabActive : ''}`}
+              onClick={() => setStatusFilter('IN_STOCK')}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />
+              In Stock
+              <span className={styles.statusTabCount}>{statusCounts.inStock}</span>
+            </button>
+
+            <button 
+              className={`${styles.statusTab} ${statusFilter === 'LOW_STOCK' ? styles.statusTabActive : ''}`}
+              onClick={() => setStatusFilter('LOW_STOCK')}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--warning)' }} />
+              Low Stock
+              <span className={styles.statusTabCount}>{statusCounts.lowStock}</span>
+            </button>
+
+            <button 
+              className={`${styles.statusTab} ${statusFilter === 'OUT_OF_STOCK' ? styles.statusTabActive : ''}`}
+              onClick={() => setStatusFilter('OUT_OF_STOCK')}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger)' }} />
+              Out of Stock
+              <span className={styles.statusTabCount}>{statusCounts.outOfStock}</span>
+            </button>
+
+            {statusCounts.inactive > 0 && (
+              <button 
+                className={`${styles.statusTab} ${statusFilter === 'INACTIVE' ? styles.statusTabActive : ''}`}
+                onClick={() => setStatusFilter('INACTIVE')}
+              >
+                Inactive
+                <span className={styles.statusTabCount}>{statusCounts.inactive}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Search, Category Filter, and Sort */}
+        <div className={styles.toolbarBottomRow}>
+          <div className={styles.searchWrapper}>
+            <Search size={16} className={styles.searchIcon} />
+            <input 
+              type="text"
+              placeholder="Search by name, code, SKU, barcode, brand..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={styles.searchInput}
+            />
+            {search && (
+              <button 
+                className={styles.searchClearBtn}
+                onClick={() => setSearch('')}
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className={styles.filterControls}>
+            {/* Category Dropdown */}
+            <select 
+              value={categoryFilter} 
+              onChange={e => setCategoryFilter(e.target.value)}
+              className={styles.selectInput}
+            >
+              <option value="">All Categories ({categories.length})</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+
+            {/* Sort Dropdown */}
+            <select 
+              value={sortBy} 
+              onChange={e => setSortBy(e.target.value as any)}
+              className={styles.selectInput}
+            >
+              <option value="newest">Sort: Default / Newest</option>
+              <option value="name_asc">Name: A to Z</option>
+              <option value="name_desc">Name: Z to A</option>
+              <option value="stock_desc">Stock: High to Low</option>
+              <option value="stock_asc">Stock: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="price_asc">Price: Low to High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table Panel */}
+      <div className={styles.tablePanel}>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th} style={{ width: '40px', textAlign: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredProducts.length}
+                    onChange={toggleSelectAll}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </th>
+                <th className={styles.th} style={{ width: '60px' }}>Item</th>
+                <th className={styles.th}>Product Details</th>
+                <th className={styles.th}>Code / SKU</th>
+                <th className={styles.th}>Unit</th>
+                <th className={styles.th}>Current Stock</th>
+                <th className={styles.th}>Sell Price</th>
+                <th className={styles.th}>Status</th>
+                <th className={styles.th} style={{ textAlign: 'right', paddingRight: '20px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className={styles.tr}>
+                    <td colSpan={9} style={{ padding: '16px 20px' }}>
+                      <div style={{ height: '18px', borderRadius: '6px', background: 'var(--surface-hover)', animation: 'pulse 1.5s infinite ease-in-out' }} />
+                    </td>
+                  </tr>
+                ))
+              ) : filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={9}>
+                    <div className={styles.emptyState}>
+                      <div className={styles.emptyIcon}>
+                        <Package size={28} />
+                      </div>
+                      <h3 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        No products found
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--text-muted)', maxWidth: '320px' }}>
+                        No products match your current search or category filter.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map(p => {
+                  const isSelected = selectedIds.includes(p.id);
+                  const badge = getStockBadge(p);
+                  const margin = p.sellingPrice && p.purchasePrice 
+                    ? Math.round(((p.sellingPrice - p.purchasePrice) / p.sellingPrice) * 100) 
+                    : null;
+
+                  return (
+                    <tr 
+                      key={p.id} 
+                      className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`}
+                      onClick={() => router.push(`/erp/inventory/products/${encodeURIComponent(p.name.trim().replace(/ /g, '_'))}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {/* Checkbox */}
+                      <td className={styles.td} style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          onChange={(e) => toggleSelectOne(p.id, e as any)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
+
+                      {/* Thumbnail / Avatar */}
+                      <td className={styles.td}>
+                        <div className={styles.productAvatar}>
+                          {p.imageUrl ? (
+                            <img src={p.imageUrl} alt={p.name} />
+                          ) : (
+                            <div 
+                              className={styles.productAvatarFallback} 
+                              style={{ background: getAvatarGradient(p.name, p.id) }}
+                            >
+                              {getInitials(p.name)}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Product Info */}
+                      <td className={styles.td}>
+                        <div className={styles.productInfo}>
+                          <span className={styles.productNameLink}>
+                            {p.name}
+                          </span>
+                          <div className={styles.productMeta}>
+                            <span className={styles.categoryTag}>
+                              {p.category?.name || 'Uncategorized'}
+                            </span>
+                            {p.brand && <span>· {p.brand}</span>}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Code & SKU */}
+                      <td className={styles.td}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>
+                            {p.productCode}
+                          </span>
+                          {p.sku ? (
+                            <span 
+                              className={styles.skuChip} 
+                              onClick={(e) => handleCopySku(p.sku!, e)}
+                              title="Click to copy SKU"
+                            >
+                              {copiedSku === p.sku ? <Check size={11} color="var(--success)" /> : <Copy size={11} />}
+                              {p.sku}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>—</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Unit */}
+                      <td className={styles.td}>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                          {p.unit || 'pcs'}
+                        </span>
+                      </td>
+
+                      {/* Current Stock */}
+                      <td className={styles.td}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <span 
+                            className={styles.stockPill}
+                            style={{
+                              color: badge.color,
+                              background: badge.bg,
+                              border: `1px solid ${badge.border}`
+                            }}
+                          >
+                            <span 
+                              className={`${styles.stockDot} ${badge.pulse ? styles.stockDotPulse : ''}`} 
+                              style={{ background: badge.dot }} 
+                            />
+                            {p.currentStock} {p.unit || 'pcs'} · {badge.label}
+                          </span>
+                          {p.minStock > 0 && (
+                            <span style={{ fontSize: '0.685rem', color: 'var(--text-muted)' }}>
+                              Min: {p.minStock} {p.unit || 'pcs'}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Sell Price & Margin */}
+                      <td className={styles.td}>
+                        <div className={styles.priceCell}>
+                          <span className={styles.sellPrice}>
+                            ৳{Number(p.sellingPrice).toLocaleString()}
+                          </span>
+                          {margin !== null && margin > 0 && (
+                            <span className={styles.marginTag}>
+                              +{margin}% margin
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className={styles.td}>
+                        <span 
+                          style={{
+                            padding: '3px 9px',
+                            borderRadius: '20px',
+                            fontSize: '0.725rem',
+                            fontWeight: 700,
+                            color: p.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)',
+                            background: p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover)',
+                            border: `1px solid ${p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.25)' : 'var(--border-main)'}`
+                          }}
+                        >
+                          {p.status}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className={styles.td} onClick={e => e.stopPropagation()}>
+                        <div className={styles.actionBtns}>
+                          <button 
+                            className={styles.iconBtn} 
+                            onClick={() => router.push(`/erp/inventory/products/${encodeURIComponent(p.name.trim().replace(/ /g, '_'))}`)}
+                            title="View Full Details"
+                          >
+                            <Eye size={15} />
+                          </button>
+                          <button 
+                            className={styles.iconBtn} 
+                            onClick={() => {
+                              setEditingId(p.id);
+                              setShowModal(true);
+                            }}
+                            title="Edit product"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button 
+                            className={styles.iconBtn} 
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setMenuOpen({
+                                id: p.id,
+                                name: p.name,
+                                top: rect.bottom,
+                                right: window.innerWidth - rect.right
+                              });
+                            }}
+                            title="More options"
+                          >
+                            <MoreVertical size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Floating Bulk Selection Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkCount}>
+            {selectedIds.length} {selectedIds.length === 1 ? 'item' : 'items'} selected
+          </span>
+
+          <button 
+            className={styles.btnSecondary} 
+            onClick={() => {
+              const selectedItems = products.filter(p => selectedIds.includes(p.id));
+              handleExportExcel(selectedItems);
             }}
           >
-            <option value="">All Categories</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        }
-        page={page}
-        totalPages={totalPages}
-        totalItems={total}
-        itemsPerPage={LIMIT}
-        onPageChange={setPage}
-        onRowClick={(p) => router.push(`/erp/inventory/products/${encodeURIComponent(p.name.trim().replace(/ /g, '_'))}`)}
-      />
+            <Download size={14} />
+            Export Selected
+          </button>
 
-      {/* Global Dropdown Menu */}
+          <button 
+            className={styles.btnSecondary} 
+            style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+            onClick={handleBulkDelete}
+          >
+            <Trash2 size={14} />
+            Delete Selected
+          </button>
+
+          <button 
+            onClick={() => setSelectedIds([])}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Deselect All
+          </button>
+        </div>
+      )}
+
+      {/* Kebab Dropdown Menu */}
       {menuOpen && (
         <div style={{
           position: 'fixed',
           right: `${menuOpen.right}px`,
           top: `${menuOpen.top + 4}px`,
-          background: 'var(--surface-bg, #1e293b)',
+          background: 'var(--surface-main)',
           border: '1px solid var(--border-main)',
-          borderRadius: '8px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-          padding: '4px',
+          borderRadius: '10px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          padding: '6px',
           zIndex: 9999,
-          minWidth: '140px',
+          minWidth: '160px',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          gap: '2px',
+          animation: 'fadeIn 0.15s ease'
         }}>
-          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
+          <button 
+            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--text-main)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => {
@@ -348,26 +824,38 @@ export default function ProductsPage() {
               router.push(`/erp/inventory/products/${encodeURIComponent(menuOpen.name.trim().replace(/ /g, '_'))}`);
             }}
           >
-            View Details
+            <ExternalLink size={14} />
+            Full Details Page
           </button>
-          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-main)', borderRadius: '4px' }}
+
+          <button 
+            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--text-main)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onClick={() => handleEditClick(menuOpen.id)}
+            onClick={() => {
+              const id = menuOpen.id;
+              setMenuOpen(null);
+              setEditingId(id);
+              setShowModal(true);
+            }}
           >
+            <Edit3 size={14} />
             Edit Product
           </button>
-          <button style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--danger, #ef4444)', borderRadius: '4px' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
+
+          <button 
+            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--danger)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onClick={() => handleDelete(menuOpen.id)}
+            onClick={() => handleDelete(menuOpen.id, menuOpen.name)}
           >
-            Delete
+            <Trash2 size={14} />
+            Delete Product
           </button>
         </div>
       )}
 
-      {/* Add Product Modal */}
+      {/* Add / Edit Product Modal */}
       <ProductModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -380,6 +868,7 @@ export default function ProductsPage() {
         initialData={editingId ? products.find(p => p.id === editingId) : null}
       />
 
+      {/* Bulk Product Upload Modal */}
       <BulkProductUploadModal 
         isOpen={isBulkUploadOpen}
         onClose={() => setIsBulkUploadOpen(false)}

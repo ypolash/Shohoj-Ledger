@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   ArrowLeft, 
   ShoppingCart, 
@@ -29,14 +29,18 @@ interface OrderLineItem {
   total: number;
 }
 
-export default function NewInventoryOrderPage() {
+function NewInventoryOrderContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromParam = searchParams ? (searchParams.get('from') || searchParams.get('returnUrl')) : null;
+  const returnUrl = fromParam || '/erp/inventory/orders';
+  const isFromOrdersHub = fromParam === '/erp/orders' || fromParam?.startsWith('/erp/orders');
   const [customers, setCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
 
-  // Form State
-  const [customerMode, setCustomerMode] = useState<'existing' | 'walkin'>('existing');
+  // Form State - Default to temporary / walk-in customer
+  const [customerMode, setCustomerMode] = useState<'existing' | 'walkin'>('walkin');
   const [customerId, setCustomerId] = useState('');
   const [walkinName, setWalkinName] = useState('');
   const [walkinPhone, setWalkinPhone] = useState('');
@@ -179,7 +183,7 @@ export default function NewInventoryOrderPage() {
         return;
       }
 
-      router.push('/erp/inventory/orders');
+      router.push(returnUrl);
     } catch (e) {
       setError('Network error saving order');
     } finally {
@@ -192,11 +196,11 @@ export default function NewInventoryOrderPage() {
       {/* Top Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button 
-          onClick={() => router.push('/erp/inventory/orders')}
+          onClick={() => router.push(returnUrl)}
           className={styles.btnSecondary}
         >
           <ArrowLeft size={16} />
-          <span>Back to Inventory Orders</span>
+          <span>{isFromOrdersHub ? 'Back to Orders' : 'Back to Inventory Orders'}</span>
         </button>
       </div>
 
@@ -207,7 +211,7 @@ export default function NewInventoryOrderPage() {
           </div>
           <div>
             <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              Create Inventory Order
+              {isFromOrdersHub ? 'Create Order' : 'Create Inventory Order'}
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Record a new customer order with live inventory deduction and fulfillment tracking.
@@ -222,55 +226,40 @@ export default function NewInventoryOrderPage() {
         )}
 
         {/* Customer Information Card */}
-        <div style={{ background: 'var(--surface-hover)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-main)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>
+        <div className={styles.customerSectionCard}>
+          <div className={styles.customerSectionHeader}>
+            <div className={styles.customerSectionTitle}>
               <User size={18} color="var(--primary)" />
               <span>Customer Information</span>
             </div>
 
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div className={styles.modeTabs}>
               <button
                 type="button"
-                className={`${styles.statusTab} ${customerMode === 'existing' ? styles.statusTabActive : ''}`}
+                className={`${styles.modeTab} ${customerMode === 'walkin' ? styles.modeTabActive : ''}`}
+                onClick={() => setCustomerMode('walkin')}
+              >
+                Temporary / Walk-in Customer
+              </button>
+              <button
+                type="button"
+                className={`${styles.modeTab} ${customerMode === 'existing' ? styles.modeTabActive : ''}`}
                 onClick={() => setCustomerMode('existing')}
               >
                 Existing Account
               </button>
-              <button
-                type="button"
-                className={`${styles.statusTab} ${customerMode === 'walkin' ? styles.statusTabActive : ''}`}
-                onClick={() => setCustomerMode('walkin')}
-              >
-                Walk-in / Temporary
-              </button>
             </div>
           </div>
 
-          {customerMode === 'existing' ? (
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Select Customer *</label>
-              <select 
-                value={customerId}
-                onChange={e => setCustomerId(e.target.value)}
-                required={customerMode === 'existing'}
-                className={styles.formSelect}
-              >
-                <option value="">— Search & Select Customer —</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.displayName || c.name} {c.phone ? `(${c.phone})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
+          {customerMode === 'walkin' ? (
             <div className={styles.formGrid}>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Full Name *</label>
+                <label className={styles.formLabel}>
+                  Customer Name <span style={{ color: '#ef4444' }}>*</span>
+                </label>
                 <input 
                   type="text" 
-                  placeholder="Customer Name"
+                  placeholder="e.g. Walk-in Customer / Buyer Name"
                   value={walkinName}
                   onChange={e => setWalkinName(e.target.value)}
                   required={customerMode === 'walkin'}
@@ -289,16 +278,35 @@ export default function NewInventoryOrderPage() {
                 />
               </div>
 
-              <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+              <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
                 <label className={styles.formLabel}>Delivery Address</label>
                 <input 
                   type="text" 
-                  placeholder="Delivery address..."
+                  placeholder="Enter delivery or shipping address..."
                   value={walkinAddress}
                   onChange={e => setWalkinAddress(e.target.value)}
                   className={styles.formInput}
                 />
               </div>
+            </div>
+          ) : (
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Select Customer Account <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <select 
+                value={customerId}
+                onChange={e => setCustomerId(e.target.value)}
+                required={customerMode === 'existing'}
+                className={styles.formSelect}
+              >
+                <option value="">— Search & Select Customer Account —</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.displayName || c.name} {c.phone ? `(${c.phone})` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
         </div>
@@ -476,7 +484,7 @@ export default function NewInventoryOrderPage() {
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
           <button 
             type="button" 
-            onClick={() => router.push('/erp/inventory/orders')}
+            onClick={() => router.push(returnUrl)}
             className={styles.btnSecondary}
           >
             Cancel
@@ -491,5 +499,13 @@ export default function NewInventoryOrderPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function NewInventoryOrderPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading Order Form...</div>}>
+      <NewInventoryOrderContent />
+    </Suspense>
   );
 }

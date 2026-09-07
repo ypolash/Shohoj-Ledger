@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 
@@ -17,7 +17,7 @@ export default function QuotationsPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ query: '', status: '', dateRange: '' });
 
-  const fetchQuotations = async () => {
+  const fetchQuotations = useCallback(async () => {
     setLoading(true);
     try {
       const qParams = new URLSearchParams();
@@ -27,19 +27,26 @@ export default function QuotationsPage() {
       const res = await fetch(`/api/crm/quotations?${qParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setQuotations(data.quotations || []);
+        setQuotations(data.data || data.quotations || []);
       }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.query, filters.status]);
 
   useEffect(() => {
     fetchQuotations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+  }, [fetchQuotations]);
+
+  const handleSearch = useCallback((q: string) => {
+    setFilters(prev => (prev.query === q ? prev : { ...prev, query: q }));
+  }, []);
+
+  const handleFilterChange = useCallback((newFilter: { status?: string; dateRange?: string }) => {
+    setFilters(prev => ({ ...prev, ...newFilter }));
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this quotation?")) return;
@@ -60,11 +67,11 @@ export default function QuotationsPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <QuotationSearch onSearch={(q) => setFilters(prev => ({ ...prev, query: q }))} />
+          <QuotationSearch onSearch={handleSearch} />
           <QuotationToolbar onRefresh={fetchQuotations} />
         </div>
 
-        <QuotationFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
+        <QuotationFilters onFilterChange={handleFilterChange} />
 
         {loading ? (
           <QuotationLoading />

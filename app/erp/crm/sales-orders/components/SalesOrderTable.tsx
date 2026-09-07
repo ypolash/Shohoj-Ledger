@@ -35,11 +35,11 @@ export function SalesOrderTable({ orders, onDelete }: SalesOrderTableProps) {
             >
               <td style={{ padding: '16px 24px' }}>
                 <Link href={`/erp/crm/sales-orders/${order.id}`} style={{ fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
-                  {order.orderNo || order.id.substring(0, 8)}
+                  {order.salesOrderNumber || order.orderNo || order.id.substring(0, 8)}
                 </Link>
               </td>
               <td style={{ padding: '16px 24px', color: 'var(--text-main)', fontWeight: 500 }}>
-                {order.customer?.customerName || '-'}
+                {order.customer?.name || order.customer?.customerName || '-'}
               </td>
               <td style={{ padding: '16px 24px', color: 'var(--text-muted)' }}>
                 {new Date(order.orderDate || order.createdAt).toLocaleDateString()}

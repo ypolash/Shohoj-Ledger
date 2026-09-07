@@ -15,7 +15,8 @@ import {
   Folder, 
   BarChart2, 
   Settings,
-  Megaphone
+  Megaphone,
+  ShoppingCart
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,6 +35,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/erp' },
     { name: 'CRM', icon: Users, href: '/erp/crm' },
+    { name: 'Orders', icon: ShoppingCart, href: '/erp/orders' },
     { name: 'Finance', icon: DollarSign, href: '/erp/finance' },
     { name: 'Inventory', icon: Box, href: '/erp/inventory' },
     { name: 'HR', icon: Briefcase, href: '/erp/hr' },
@@ -45,6 +47,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     const type = businessType.toUpperCase();
     if (item.name === 'Inventory' && type === 'SERVICE') return false;
     if (item.name === 'Projects' && type === 'PRODUCT') return false;
+    if (item.name === 'Orders' && type === 'SERVICE') return false;
     return true;
   });
 
@@ -54,6 +57,9 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
 
   const isActive = (path: string) => {
     if (path === '/erp' && pathname === '/erp') return true;
+    if (path === '/erp/orders') {
+      return pathname.startsWith('/erp/orders');
+    }
     if (path !== '/erp' && pathname.startsWith(path)) return true;
     return false;
   };

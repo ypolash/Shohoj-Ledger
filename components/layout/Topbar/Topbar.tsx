@@ -66,7 +66,7 @@ export function Topbar() {
 
     if (isUuid) {
       const prevPath = index > 0 ? paths[index - 1] : '';
-      if (prevPath === 'sales-orders') {
+      if (prevPath === 'sales-orders' || prevPath === 'orders') {
         name = `Order #${path.substring(0, 8)}`;
       } else if (prevPath === 'quotations') {
         name = `Quotation #${path.substring(0, 8)}`;

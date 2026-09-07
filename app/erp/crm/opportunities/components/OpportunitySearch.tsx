@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface OpportunitySearchProps {
   onSearch: (query: string) => void;
@@ -8,13 +8,16 @@ interface OpportunitySearchProps {
 
 export function OpportunitySearch({ onSearch }: OpportunitySearchProps) {
   const [term, setTerm] = useState("");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      onSearch(term);
-    }, 300); // 300ms debounce
-    return () => clearTimeout(delay);
-  }, [term, onSearch]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTerm(val);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onSearch(val);
+    }, 300);
+  };
 
   return (
     <div style={{ position: 'relative', flex: '1 1 250px', maxWidth: '400px' }}>
@@ -32,7 +35,7 @@ export function OpportunitySearch({ onSearch }: OpportunitySearchProps) {
         type="text"
         placeholder="Search opportunities..."
         value={term}
-        onChange={(e) => setTerm(e.target.value)}
+        onChange={handleChange}
         style={{
           width: '100%',
           padding: '10px 12px 10px 40px',

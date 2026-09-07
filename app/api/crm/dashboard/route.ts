@@ -11,12 +11,22 @@ export async function GET() {
     const rbacGuard = await requirePermission("VIEW_LEADS");
     if (rbacGuard) return rbacGuard;
 
-    const leads = await prisma.lead.findMany({
-      where: { companyId },
-      include: {
-        assignedTo: { select: { firstName: true, lastName: true } }
-      }
-    });
+    const [leads, salesOrders] = await Promise.all([
+      prisma.lead.findMany({
+        where: { companyId },
+        include: {
+          assignedTo: { select: { firstName: true, lastName: true } }
+        }
+      }),
+      prisma.salesOrder.findMany({
+        where: { companyId },
+        include: {
+          customer: { select: { id: true, name: true } },
+          lines: { select: { id: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
 
     let totalLeads = leads.length;
     let newLeads = 0;
@@ -65,6 +75,33 @@ export async function GET() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
 
+    // Sales Order Metrics for Product CRM
+    let totalOrders = salesOrders.length;
+    let pendingOrders = 0;
+    let deliveredOrders = 0;
+    let ordersRevenue = 0;
+
+    salesOrders.forEach(o => {
+      const amt = Number(o.totalAmount || 0);
+      ordersRevenue += amt;
+      const s = (o.status || '').toUpperCase();
+      if (s.includes('DELIVER') || s.includes('COMPLET')) {
+        deliveredOrders++;
+      } else if (!s.includes('CANCEL')) {
+        pendingOrders++;
+      }
+    });
+
+    const recentOrders = salesOrders.slice(0, 5).map(o => ({
+      id: o.id,
+      salesOrderNumber: o.salesOrderNumber || o.id.substring(0, 8),
+      customerName: o.customer?.name || 'Customer',
+      orderDate: o.orderDate,
+      totalAmount: Number(o.totalAmount || 0),
+      status: o.status,
+      itemsCount: o.lines.length
+    }));
+
     return NextResponse.json({
       metrics: {
         totalLeads,
@@ -74,8 +111,13 @@ export async function GET() {
         lostLeads,
         conversionRate,
         wonValue,
-        pipelineValue
+        pipelineValue,
+        totalOrders,
+        pendingOrders,
+        deliveredOrders,
+        ordersRevenue,
       },
+      recentOrders,
       charts: {
         monthlyLeads,
         topSalesPersons

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { validateCustomer } from './lib/crm/customerService';
+import { validateCustomer } from '@/lib/crm/customerService';
 const prisma = new PrismaClient();
 
 async function test() {

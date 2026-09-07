@@ -1,4 +1,4 @@
-import { prisma } from './lib/prisma';
+import { prisma } from '@/lib/prisma';
 async function main() {
   const order = await prisma.salesOrder.findUnique({
     where: { salesOrderNumber: `SO-20260819-0001` }

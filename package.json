@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:start": "node scripts/db.js start",
     "db:stop": "node scripts/db.js stop",
-    "db:seed": "node seed_modules.js && npx tsx seed-admin.ts",
+    "db:seed": "node scripts/seed/seed_modules.js && npx tsx scripts/seed/seed-admin.ts",
     "dev": "node scripts/db.js start && next dev",
     "build": "npx prisma generate && next build",
     "start": "next start"

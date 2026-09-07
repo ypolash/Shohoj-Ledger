@@ -1,4 +1,4 @@
-import { prisma } from './lib/prisma';
+import { prisma } from '@/lib/prisma';
 async function main() {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   console.log("Current dateStr:", dateStr);

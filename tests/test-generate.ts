@@ -1,5 +1,5 @@
-import { prisma } from './lib/prisma';
-import { generateSalesOrderNumber } from './lib/crm/salesOrderService';
+import { prisma } from '@/lib/prisma';
+import { generateSalesOrderNumber } from '@/lib/crm/salesOrderService';
 
 async function main() {
   const company = await prisma.company.findFirst();

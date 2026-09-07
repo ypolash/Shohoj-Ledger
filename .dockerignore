@@ -5,3 +5,10 @@ node_modules
 .env*.local
 *.log
 *.tsbuildinfo
+.agents
+docs
+.vscode
+.idea
+*.png
+*.jpg
+*.jpeg

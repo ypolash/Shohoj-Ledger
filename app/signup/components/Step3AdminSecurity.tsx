@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 interface Step3Props {
   formData: {
@@ -20,11 +21,19 @@ interface Step3Props {
  * Step 3: Admin Account & Security (Theme 3: Vibrant Coral Red #f04938)
  */
 export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNext }: Step3Props) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Live Password Checklist
   const hasLength = formData.ownerPassword.length >= 8;
   const hasUpper = /[A-Z]/.test(formData.ownerPassword);
   const hasLower = /[a-z]/.test(formData.ownerPassword);
   const hasNumber = /\d/.test(formData.ownerPassword);
+
+  // Live Password Match Check
+  const hasConfirmText = formData.confirmPassword.length > 0;
+  const passwordsMatch = hasConfirmText && formData.ownerPassword === formData.confirmPassword;
+  const passwordsMismatch = hasConfirmText && formData.ownerPassword !== formData.confirmPassword;
 
   return (
     <div
@@ -70,26 +79,82 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
 
         <div>
           <label style={labelRed}>Password *</label>
-          <input
-            type="password"
-            value={formData.ownerPassword}
-            onChange={(e) => updateForm("ownerPassword", e.target.value)}
-            placeholder="••••••••"
-            style={{ ...inputRed, borderColor: errors.ownerPassword ? "#fef08a" : "rgba(255,255,255,0.25)" }}
-          />
+          <div style={{ position: "relative", width: "100%" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              value={formData.ownerPassword}
+              onChange={(e) => updateForm("ownerPassword", e.target.value)}
+              placeholder="••••••••"
+              style={{
+                ...inputRed,
+                paddingRight: "42px",
+                borderColor: errors.ownerPassword ? "#fef08a" : "rgba(255,255,255,0.25)"
+              }}
+            />
+            <button
+              type="button"
+              id="toggle-owner-password"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+              style={eyeBtnStyle}
+            >
+              {showPassword ? (
+                <EyeOff size={18} color="rgba(255,255,255,0.8)" />
+              ) : (
+                <Eye size={18} color="rgba(255,255,255,0.8)" />
+              )}
+            </button>
+          </div>
           {errors.ownerPassword && <span style={errorTextRed}>{errors.ownerPassword}</span>}
         </div>
 
         <div>
           <label style={labelRed}>Confirm Password *</label>
-          <input
-            type="password"
-            value={formData.confirmPassword}
-            onChange={(e) => updateForm("confirmPassword", e.target.value)}
-            placeholder="••••••••"
-            style={{ ...inputRed, borderColor: errors.confirmPassword ? "#fef08a" : "rgba(255,255,255,0.25)" }}
-          />
-          {errors.confirmPassword && <span style={errorTextRed}>{errors.confirmPassword}</span>}
+          <div style={{ position: "relative", width: "100%" }}>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              value={formData.confirmPassword}
+              onChange={(e) => updateForm("confirmPassword", e.target.value)}
+              placeholder="••••••••"
+              style={{
+                ...inputRed,
+                paddingRight: "42px",
+                borderColor: passwordsMismatch
+                  ? "#f87171"
+                  : passwordsMatch
+                  ? "#4ade80"
+                  : errors.confirmPassword
+                  ? "#fef08a"
+                  : "rgba(255,255,255,0.25)"
+              }}
+            />
+            <button
+              type="button"
+              id="toggle-confirm-password"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              title={showConfirmPassword ? "Hide password" : "Show password"}
+              style={eyeBtnStyle}
+            >
+              {showConfirmPassword ? (
+                <EyeOff size={18} color="rgba(255,255,255,0.8)" />
+              ) : (
+                <Eye size={18} color="rgba(255,255,255,0.8)" />
+              )}
+            </button>
+          </div>
+          {passwordsMismatch ? (
+            <span style={{ ...errorTextRed, color: "#fca5a5" }}>
+              Passwords do not match
+            </span>
+          ) : passwordsMatch ? (
+            <span style={{ display: "block", fontSize: "12px", color: "#86efac", marginTop: "4px", fontWeight: 600 }}>
+              ✓ Passwords match
+            </span>
+          ) : errors.confirmPassword ? (
+            <span style={errorTextRed}>{errors.confirmPassword}</span>
+          ) : null}
         </div>
       </div>
 
@@ -221,3 +286,20 @@ const errorTextRed: React.CSSProperties = {
   marginTop: "4px",
   fontWeight: 600
 };
+
+const eyeBtnStyle: React.CSSProperties = {
+  position: "absolute",
+  right: "12px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  background: "transparent",
+  border: "none",
+  padding: "4px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: "6px",
+  outline: "none"
+};
+

@@ -1,0 +1,1303 @@
+/* ==========================================================================
+   PROJECT WORKSPACE COMMAND CENTER STYLES
+   Executive Glassmorphic Workspace for Projects & Milestones
+   ========================================================================== */
+
+.workspaceWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 40px;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Hero Navigation & Command Header
+   -------------------------------------------------------------------------- */
+.heroHeader {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px 28px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroHeader::after {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.navRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  transform: translateX(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.headerActionGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Status Dropdown Pill */
+.statusSelectWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.statusSelect {
+  padding: 8px 32px 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+.statusSelect:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+}
+
+.statusSelectChevron {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: #94a3b8;
+  font-size: 18px;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editBtn:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Title & Meta Row */
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tagRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.codePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.priorityPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.priorityLow {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.priorityMedium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.priorityHigh {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.priorityUrgent {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
+.projectTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metaItem strong {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Executive 4-KPI Metric Cards
+   -------------------------------------------------------------------------- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpiCard {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kpiCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.6);
+}
+
+.kpiTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiIconBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpiBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.kpiMainValue {
+  font-size: 26px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.kpiFooter {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Segmented Tabs Navigation
+   -------------------------------------------------------------------------- */
+.tabsContainer {
+  display: flex;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px;
+  border-radius: 14px;
+  width: fit-content;
+  overflow-x: auto;
+}
+
+.tabItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tabItem:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.activeTab {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(124, 58, 237, 0.15) 100%) !important;
+  color: #f8fafc !important;
+  border-color: rgba(168, 85, 247, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.25);
+}
+
+.tabCountBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Overview Layout Grid
+   -------------------------------------------------------------------------- */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contentCard {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.descriptionBox {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.descriptionEmpty {
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Details Definition Grid */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.detailValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+/* Timeline schedule box */
+.timelineBox {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.timelineBarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Team List Roster */
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.memberItem:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.memberProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarBadge {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.2) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memberName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.memberRole {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   Kanban Board Styles
+   -------------------------------------------------------------------------- */
+.kanbanBoard {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  overflow-x: auto;
+  min-height: 520px;
+  padding-bottom: 12px;
+}
+
+@media (max-width: 1200px) {
+  .kanbanBoard {
+    display: flex;
+  }
+  .kanbanCol {
+    min-width: 280px;
+  }
+}
+
+.kanbanCol {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kanbanColHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.colTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.colTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.colBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 100px;
+}
+
+.taskCard {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: grab;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.taskCard:hover {
+  transform: translateY(-2px);
+  border-color: #a855f7;
+  box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.6);
+}
+
+.taskTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.4;
+}
+
+.taskMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.taskHours {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.addTaskBtn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.addTaskBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Audit & Activity Timeline Styles
+   -------------------------------------------------------------------------- */
+.timelineFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  max-width: 840px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.timelineTrack {
+  position: absolute;
+  left: 20px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.timelineItem {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.timelineNode {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+}
+
+.timelineContent {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timelineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timelineType {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.timelineTime {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.timelineDesc {
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+/* --------------------------------------------------------------------------
+   Solid Opaque Modals for Workspace (No Transparency)
+   -------------------------------------------------------------------------- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 600px;
+  background-color: #0b1120 !important;
+  background: #0b1120 !important;
+  background: linear-gradient(180deg, #162032 0%, #0b1120 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.98);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.inputField {
+  width: 100%;
+  padding: 11px 14px;
+  background-color: #1a2436 !important;
+  background: #1a2436 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inputField:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+  background: #1e293b !important;
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.4);
+  transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6);
+}
+
+.stakeholderCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stakeholderTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.actualCostInput {
+  width: 110px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #a855f7;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+}
+
+.timelineValue {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   LIGHT THEME OVERRIDES FOR WORKSPACE
+   ========================================================================== */
+:global(html.light) .heroHeader,
+:global(html:not(.dark)) .heroHeader {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+:global(html.light) .backBtn,
+:global(html:not(.dark)) .backBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+:global(html.light) .backBtn:hover,
+:global(html:not(.dark)) .backBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+:global(html.light) .statusSelect,
+:global(html:not(.dark)) .statusSelect {
+  background-color: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+}
+:global(html.light) .statusSelect option,
+:global(html:not(.dark)) .statusSelect option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+:global(html.light) .projectTitle,
+:global(html:not(.dark)) .projectTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .metaItem strong,
+:global(html:not(.dark)) .metaItem strong {
+  color: #0f172a;
+}
+
+:global(html.light) .kpiCard,
+:global(html:not(.dark)) .kpiCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.04);
+}
+:global(html.light) .kpiCard:hover,
+:global(html:not(.dark)) .kpiCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+:global(html.light) .kpiMainValue,
+:global(html:not(.dark)) .kpiMainValue {
+  color: #0f172a;
+}
+
+:global(html.light) .kpiLabel,
+:global(html:not(.dark)) .kpiLabel {
+  color: #64748b;
+}
+
+:global(html.light) .kpiFooter,
+:global(html:not(.dark)) .kpiFooter {
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+}
+
+:global(html.light) .progressBar,
+:global(html:not(.dark)) .progressBar {
+  background: #e2e8f0;
+}
+
+:global(html.light) .tabsContainer,
+:global(html:not(.dark)) .tabsContainer {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .tabItem,
+:global(html:not(.dark)) .tabItem {
+  color: #64748b;
+}
+:global(html.light) .tabItem:hover,
+:global(html:not(.dark)) .tabItem:hover {
+  color: #0f172a;
+  background: #e2e8f0;
+}
+
+:global(html.light) .activeTab,
+:global(html:not(.dark)) .activeTab {
+  background: #ffffff !important;
+  color: #7c3aed !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+:global(html.light) .tabCountBadge,
+:global(html:not(.dark)) .tabCountBadge {
+  background: #e2e8f0;
+  color: inherit;
+}
+
+:global(html.light) .contentCard,
+:global(html:not(.dark)) .contentCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.04);
+}
+
+:global(html.light) .cardHeader,
+:global(html:not(.dark)) .cardHeader {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+:global(html.light) .cardTitle,
+:global(html:not(.dark)) .cardTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .descriptionBox,
+:global(html:not(.dark)) .descriptionBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+:global(html.light) .detailValue,
+:global(html:not(.dark)) .detailValue {
+  color: #0f172a;
+}
+
+:global(html.light) .timelineBox,
+:global(html:not(.dark)) .timelineBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .timelineBarHeader,
+:global(html:not(.dark)) .timelineBarHeader {
+  color: #475569;
+}
+
+:global(html.light) .timelineValue,
+:global(html:not(.dark)) .timelineValue {
+  color: #0f172a;
+}
+
+:global(html.light) .stakeholderCard,
+:global(html:not(.dark)) .stakeholderCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .stakeholderTitle,
+:global(html:not(.dark)) .stakeholderTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .memberItem,
+:global(html:not(.dark)) .memberItem {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+:global(html.light) .memberItem:hover,
+:global(html:not(.dark)) .memberItem:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+:global(html.light) .memberName,
+:global(html:not(.dark)) .memberName {
+  color: #0f172a;
+}
+
+:global(html.light) .kanbanCol,
+:global(html:not(.dark)) .kanbanCol {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .kanbanColHeader,
+:global(html:not(.dark)) .kanbanColHeader {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:global(html.light) .colTitle,
+:global(html:not(.dark)) .colTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .colBadge,
+:global(html:not(.dark)) .colBadge {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+:global(html.light) .taskCard,
+:global(html:not(.dark)) .taskCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+:global(html.light) .taskCard:hover,
+:global(html:not(.dark)) .taskCard:hover {
+  border-color: #a855f7;
+  box-shadow: 0 8px 18px -4px rgba(168, 85, 247, 0.15);
+}
+
+:global(html.light) .taskTitle,
+:global(html:not(.dark)) .taskTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .taskMeta,
+:global(html:not(.dark)) .taskMeta {
+  color: #64748b;
+}
+
+:global(html.light) .addTaskBtn,
+:global(html:not(.dark)) .addTaskBtn {
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  background: #ffffff;
+}
+:global(html.light) .addTaskBtn:hover,
+:global(html:not(.dark)) .addTaskBtn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+:global(html.light) .timelineTrack,
+:global(html:not(.dark)) .timelineTrack {
+  background: #e2e8f0;
+}
+
+:global(html.light) .timelineContent,
+:global(html:not(.dark)) .timelineContent {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+:global(html.light) .timelineType,
+:global(html:not(.dark)) .timelineType {
+  color: #0f172a;
+}
+
+:global(html.light) .timelineDesc,
+:global(html:not(.dark)) .timelineDesc {
+  color: #334155;
+}
+
+:global(html.light) .actualCostInput,
+:global(html:not(.dark)) .actualCostInput {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+/* Modals in Light Theme */
+:global(html.light) .modalContent,
+:global(html:not(.dark)) .modalContent {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25) !important;
+}
+
+:global(html.light) .modalTitle,
+:global(html:not(.dark)) .modalTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .modalContent label,
+:global(html:not(.dark)) .modalContent label {
+  color: #334155 !important;
+}
+
+:global(html.light) .modalHeader,
+:global(html:not(.dark)) .modalHeader {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+:global(html.light) .closeBtn,
+:global(html:not(.dark)) .closeBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+:global(html.light) .closeBtn:hover,
+:global(html:not(.dark)) .closeBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+:global(html.light) .inputField,
+:global(html:not(.dark)) .inputField {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+:global(html.light) .inputField:focus,
+:global(html:not(.dark)) .inputField:focus {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+:global(html.light) .inputField option,
+:global(html:not(.dark)) .inputField option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.timelineChangeBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+:global(html.light) .timelineChangeBox,
+:global(html:not(.dark)) .timelineChangeBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.modalFieldLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+:global(html.light) .modalFieldLabel,
+:global(html:not(.dark)) .modalFieldLabel {
+  color: #334155;
+}
+
+.modalCancelBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+:global(html.light) .modalCancelBtn,
+:global(html:not(.dark)) .modalCancelBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+:global(html.light) .modalCancelBtn:hover,
+:global(html:not(.dark)) .modalCancelBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}

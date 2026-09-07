@@ -82,8 +82,17 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       }
     };
 
-    trackChange("status", body.status, existingProject.status, "PROJECT_STATUS");
-    trackChange("managerId", body.managerId, existingProject.managerId, "PROJECT_UPDATED");
+    let cleanManagerId: string | null | undefined = undefined;
+    if (body.managerId !== undefined) {
+      const trimmed = typeof body.managerId === "string" ? body.managerId.trim() : null;
+      if (trimmed) {
+        const emp = await prisma.employee.findFirst({ where: { id: trimmed, companyId } });
+        cleanManagerId = emp ? emp.id : null;
+      } else {
+        cleanManagerId = null;
+      }
+      trackChange("managerId", cleanManagerId, existingProject.managerId, "PROJECT_UPDATED");
+    }
 
     const fieldsToTrack = ["name", "description", "category", "priority", "clientName", "leadId", "estimatedBudget", "actualCost", "progress"];
     fieldsToTrack.forEach(f => {
@@ -107,11 +116,16 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return NextResponse.json({ message: "No changes detected", project: existingProject });
     }
 
-    activitiesToLog.forEach(a => {
-      a.companyId = companyId;
-      a.projectId = projectId;
-      a.performedById = session.user.id;
-    });
+    const performingUser = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (performingUser) {
+      activitiesToLog.forEach(a => {
+        a.companyId = companyId;
+        a.projectId = projectId;
+        a.performedById = session.user.id;
+      });
+    } else {
+      activitiesToLog.length = 0;
+    }
 
     const updatedProject = await prisma.$transaction(async (tx) => {
       const p = await tx.project.update({

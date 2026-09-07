@@ -129,11 +129,18 @@ export async function GET() {
       ...recentExpenses.map(e => ({ id: e.id, type: 'EXPENSE', category: e.category, amount: Number(e.amount), date: e.createdAt, subtitle: e.paymentMethod }))
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
-    const inventoryValue = inventoryValuationLayers.reduce((sum, layer) => {
-      return sum + (Number(layer.remainingQuantity) * Number(layer.unitCost));
-    }, 0);
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, email: true, role: true }
+    });
 
     return NextResponse.json({
+      currentUser: {
+        id: dbUser?.id || session.user.id,
+        name: dbUser?.name || session.user.name || "User",
+        email: dbUser?.email || session.user.email || "",
+        role: dbUser?.role || session.user.role || "Owner"
+      },
       businessType: companyInfo?.businessType || 'Product + Service',
       reserveBalance,
       totalIncome,

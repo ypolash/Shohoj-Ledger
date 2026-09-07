@@ -1,0 +1,1130 @@
+/* ==========================================================================
+   MARKETING AUTOMATION & GOOGLE ADS COMMAND CENTER STYLES
+   Executive Glassmorphism (Dark) + Crisp Slate & Pure White (Light)
+   ========================================================================== */
+
+.marketingWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  padding-bottom: 48px;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   Hero Navigation & Command Header
+   -------------------------------------------------------------------------- */
+.heroHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroHeader::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(234, 67, 53, 0.12) 0%, rgba(66, 133, 244, 0.12) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.headerTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.headerMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pulseDot {
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #3b82f6;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.headerCategory {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.headerTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerSub {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* Google Ads API Button (Positioned beside New Campaign button) */
+.googleAdsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(234, 67, 53, 0.15) 0%, rgba(66, 133, 244, 0.15) 50%, rgba(52, 168, 83, 0.15) 100%);
+  border: 1px solid rgba(66, 133, 244, 0.4);
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(66, 133, 244, 0.25);
+}
+
+.googleAdsBtn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(66, 133, 244, 0.7);
+  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.45);
+  background: linear-gradient(135deg, rgba(234, 67, 53, 0.25) 0%, rgba(66, 133, 244, 0.25) 50%, rgba(52, 168, 83, 0.25) 100%);
+}
+
+.gadsIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.liveApiDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+}
+
+.createBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(124, 58, 237, 0.6);
+}
+
+.syncBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30, 41, 59, 0.8);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.syncBtn:hover {
+  background: rgba(30, 41, 59, 1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   Executive 6-KPI Metric Cards
+   -------------------------------------------------------------------------- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1400px) {
+  .kpiGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .kpiGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpiCard {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.3);
+}
+
+.kpiCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5);
+}
+
+.kpiGlowPurple:hover {
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+.kpiGlowBlue:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.kpiGlowGreen:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.kpiGlowAmber:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.kpiGlowRed:hover {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.kpiTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpiIconBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.kpiBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.kpiValueGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.kpiMainValue {
+  font-size: 24px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.kpiFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   Channel Share & Performance Overview Section
+   -------------------------------------------------------------------------- */
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .analyticsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panelBox {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+.panelTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.channelList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.channelRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.channelMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.channelName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.channelValue {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.channelBarWrapper {
+  width: 100%;
+  height: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.channelBarFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Campaigns Directory Section
+   -------------------------------------------------------------------------- */
+.directoryCard {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+.directoryControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 14px;
+  border-radius: 12px;
+  flex: 1;
+  max-width: 380px;
+}
+
+.searchBox input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f8fafc;
+  font-size: 13px;
+  width: 100%;
+}
+
+.filterTabs {
+  display: flex;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.filterTab {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filterTab:hover {
+  color: #f8fafc;
+}
+
+.filterTabActive {
+  background: rgba(124, 58, 237, 0.25) !important;
+  color: #c084fc !important;
+  font-weight: 700;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.campaignTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.tableHeaderRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tableRow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.tableRow:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.campaignNameText {
+  font-weight: 700;
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.channelPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.channelGoogleAds {
+  background: rgba(66, 133, 244, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(66, 133, 244, 0.35);
+}
+
+.channelMeta {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.channelEmail {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.channelSEO {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.channelOther {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.statusActive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.statusPaused {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.statusCompleted {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   SOLID OPAQUE MODALS (No Transparency Bugs)
+   -------------------------------------------------------------------------- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 680px;
+  background-color: #0b1120 !important;
+  background: #0b1120 !important;
+  background: linear-gradient(180deg, #162032 0%, #0b1120 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.98);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleUp {
+  from { opacity: 0; transform: scale(0.95) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modalHeaderTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modalIconBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.25) 0%, rgba(52, 168, 83, 0.15) 100%);
+  border: 1px solid rgba(66, 133, 244, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #60a5fa;
+  box-shadow: 0 0 20px rgba(66, 133, 244, 0.25);
+  flex-shrink: 0;
+}
+
+.modalTitleText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modalMainTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.modalSubTitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Modal Inner Segmented Tabs */
+.modalTabs {
+  display: flex;
+  background: rgba(15, 23, 42, 0.8);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 6px;
+}
+
+.modalTab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalTab:hover {
+  color: #f8fafc;
+}
+
+.modalTabActive {
+  background: rgba(66, 133, 244, 0.25) !important;
+  color: #60a5fa !important;
+  font-weight: 700;
+  border: 1px solid rgba(66, 133, 244, 0.4);
+}
+
+/* Google Ads Performance Cards inside modal */
+.gadsMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .gadsMetricsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gadsMetricCard {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gadsMetricLabel {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.gadsMetricVal {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+/* Google Ads Live Campaigns Roster in Modal */
+.gadsCampaignCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.gadsCampaignCard:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(66, 133, 244, 0.4);
+}
+
+/* Form Controls */
+.fieldLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.fieldInput, .fieldSelect, .fieldTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #1a2436 !important;
+  background: #1a2436 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.fieldInput:focus, .fieldSelect:focus, .fieldTextarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  background-color: #1e293b !important;
+}
+
+.fieldSelect option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cancelBtn {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.5);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: rgba(30, 41, 59, 0.9);
+  color: #f8fafc;
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+}
+
+.syncAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(52, 168, 83, 0.5);
+  background: linear-gradient(135deg, rgba(52, 168, 83, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
+  color: #34d399;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.syncAllBtn:hover {
+  background: linear-gradient(135deg, rgba(52, 168, 83, 0.35) 0%, rgba(16, 185, 129, 0.35) 100%);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   LIGHT THEME OVERRIDES FOR MARKETING MODULE
+   ========================================================================== */
+:global(html.light) .heroHeader,
+:global(html:not(.dark)) .heroHeader {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+:global(html.light) .headerTitle,
+:global(html:not(.dark)) .headerTitle {
+  color: #0f172a;
+}
+
+:global(html.light) .headerSub,
+:global(html:not(.dark)) .headerSub {
+  color: #64748b;
+}
+
+:global(html.light) .googleAdsBtn,
+:global(html:not(.dark)) .googleAdsBtn {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+:global(html.light) .googleAdsBtn:hover,
+:global(html:not(.dark)) .googleAdsBtn:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+:global(html.light) .syncBtn,
+:global(html:not(.dark)) .syncBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+:global(html.light) .syncBtn:hover,
+:global(html:not(.dark)) .syncBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(html.light) .kpiCard,
+:global(html:not(.dark)) .kpiCard,
+:global(html.light) .panelBox,
+:global(html:not(.dark)) .panelBox,
+:global(html.light) .directoryCard,
+:global(html:not(.dark)) .directoryCard {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.04) !important;
+}
+
+:global(html.light) .kpiCard:hover,
+:global(html:not(.dark)) .kpiCard:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08) !important;
+}
+
+:global(html.light) .kpiMainValue,
+:global(html:not(.dark)) .kpiMainValue,
+:global(html.light) .panelTitle,
+:global(html:not(.dark)) .panelTitle,
+:global(html.light) .channelName,
+:global(html:not(.dark)) .channelName,
+:global(html.light) .campaignNameText,
+:global(html:not(.dark)) .campaignNameText {
+  color: #0f172a !important;
+}
+
+:global(html.light) .kpiLabel,
+:global(html:not(.dark)) .kpiLabel,
+:global(html.light) .kpiFooter,
+:global(html:not(.dark)) .kpiFooter,
+:global(html.light) .channelValue,
+:global(html:not(.dark)) .channelValue {
+  color: #64748b !important;
+}
+
+:global(html.light) .channelBarWrapper,
+:global(html:not(.dark)) .channelBarWrapper {
+  background: #e2e8f0;
+}
+
+:global(html.light) .searchBox,
+:global(html:not(.dark)) .searchBox {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:global(html.light) .searchBox input,
+:global(html:not(.dark)) .searchBox input {
+  color: #0f172a !important;
+}
+
+:global(html.light) .filterTabs,
+:global(html:not(.dark)) .filterTabs {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .filterTab,
+:global(html:not(.dark)) .filterTab {
+  color: #64748b;
+}
+:global(html.light) .filterTab:hover,
+:global(html:not(.dark)) .filterTab:hover {
+  color: #0f172a;
+}
+:global(html.light) .filterTabActive,
+:global(html:not(.dark)) .filterTabActive {
+  background: #ffffff !important;
+  color: #7c3aed !important;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+:global(html.light) .tableHeaderRow,
+:global(html:not(.dark)) .tableHeaderRow {
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+:global(html.light) .tableRow,
+:global(html:not(.dark)) .tableRow {
+  border-bottom: 1px solid #f1f5f9;
+}
+:global(html.light) .tableRow:hover,
+:global(html:not(.dark)) .tableRow:hover {
+  background: #f8fafc;
+}
+
+/* Modals in Light Theme */
+:global(html.light) .modalContent,
+:global(html:not(.dark)) .modalContent {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25) !important;
+}
+
+:global(html.light) .modalMainTitle,
+:global(html:not(.dark)) .modalMainTitle,
+:global(html.light) .gadsMetricVal,
+:global(html:not(.dark)) .gadsMetricVal {
+  color: #0f172a !important;
+}
+
+:global(html.light) .modalSubTitle,
+:global(html:not(.dark)) .modalSubTitle,
+:global(html.light) .gadsMetricLabel,
+:global(html:not(.dark)) .gadsMetricLabel {
+  color: #64748b !important;
+}
+
+:global(html.light) .modalHeader,
+:global(html:not(.dark)) .modalHeader,
+:global(html.light) .modalFooter,
+:global(html:not(.dark)) .modalFooter {
+  border-bottom-color: #f1f5f9;
+  border-top-color: #f1f5f9;
+}
+
+:global(html.light) .modalTabs,
+:global(html:not(.dark)) .modalTabs {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .modalTab,
+:global(html:not(.dark)) .modalTab {
+  color: #64748b;
+}
+:global(html.light) .modalTabActive,
+:global(html:not(.dark)) .modalTabActive {
+  background: #ffffff !important;
+  color: #2563eb !important;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+:global(html.light) .gadsMetricCard,
+:global(html:not(.dark)) .gadsMetricCard,
+:global(html.light) .gadsCampaignCard,
+:global(html:not(.dark)) .gadsCampaignCard {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:global(html.light) .fieldLabel,
+:global(html:not(.dark)) .fieldLabel {
+  color: #334155;
+}
+
+:global(html.light) .fieldInput,
+:global(html:not(.dark)) .fieldInput,
+:global(html.light) .fieldSelect,
+:global(html:not(.dark)) .fieldSelect,
+:global(html.light) .fieldTextarea,
+:global(html:not(.dark)) .fieldTextarea {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+:global(html.light) .fieldInput:focus,
+:global(html:not(.dark)) .fieldInput:focus,
+:global(html.light) .fieldSelect:focus,
+:global(html:not(.dark)) .fieldSelect:focus,
+:global(html.light) .fieldTextarea:focus,
+:global(html:not(.dark)) .fieldTextarea:focus {
+  border-color: #2563eb;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+:global(html.light) .fieldSelect option,
+:global(html:not(.dark)) .fieldSelect option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+:global(html.light) .cancelBtn,
+:global(html:not(.dark)) .cancelBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+:global(html.light) .cancelBtn:hover,
+:global(html:not(.dark)) .cancelBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}

@@ -15,6 +15,7 @@ const navigationGroups = [
   {
     group: 'Access Management',
     items: [
+      { name: 'Enterprise Command Center', href: '/erp/settings/command-center', icon: 'shield_person', exact: false },
       { name: 'Users', href: '/erp/settings/users', icon: 'group', exact: false },
       { name: 'Roles', href: '/erp/settings/roles', icon: 'badge', exact: false },
       { name: 'Permissions', href: '/erp/settings/permissions', icon: 'vpn_key', exact: false },

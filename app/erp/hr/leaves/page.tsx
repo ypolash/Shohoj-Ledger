@@ -1,225 +1,1073 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import styles from './leaves.module.css';
 
 interface LeaveRequest {
-  id: string; type: string; startDate: string; endDate: string;
-  reason: string; status: string; createdAt: string;
+  id: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: string;
+  createdAt: string;
   employeeId: string;
-  employee?: { firstName: string; lastName: string; designation: string };
+  employee?: {
+    firstName: string;
+    lastName: string;
+    designation?: string;
+  };
 }
 
-interface Employee { id: string; firstName: string; lastName: string; employeeId: string; }
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  employeeId?: string;
+  designation?: string;
+}
 
-const LEAVE_TYPES = ['CASUAL', 'SICK', 'UNPAID', 'ANNUAL', 'MATERNITY', 'PATERNITY'];
+const LEAVE_TYPES = ['CASUAL', 'SICK', 'ANNUAL', 'UNPAID', 'MATERNITY', 'PATERNITY'];
 
-const statusColors: Record<string, { color: string; bg: string }> = {
-  PENDING:  { color: 'var(--warning)', bg: 'var(--warning-subtle)' },
-  APPROVED: { color: 'var(--success)', bg: 'var(--success-subtle)' },
-  REJECTED: { color: 'var(--danger)',  bg: 'var(--danger-subtle)' },
-  CANCELLED:{ color: 'var(--text-muted)', bg: 'var(--surface-hover)' },
+const EMPTY_FORM = {
+  employeeId: '',
+  type: 'CASUAL',
+  startDate: new Date().toISOString().slice(0, 10),
+  endDate: new Date().toISOString().slice(0, 10),
+  reason: '',
 };
 
 /**
- * ERP HR — Leaves Page
- * Displays leave requests with status filtering, Approve/Reject actions,
- * and Submit Leave modal connected to /api/leaves.
+ * Helper: Calculate duration between two dates inclusive
+ */
+function getDurationDays(startStr: string, endStr: string): number {
+  if (!startStr || !endStr) return 0;
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return diffDays > 0 ? diffDays : 1;
+}
+
+/**
+ * Helper: Format date nicely
+ */
+function formatDate(dStr: string): string {
+  if (!dStr) return '—';
+  const d = new Date(dStr);
+  if (isNaN(d.getTime())) return dStr;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/**
+ * ERP HR — Redesigned Leaves & Absence Hub
+ * Real-time time-off management with live metrics, multi-dimensional search & filtering,
+ * dual table/card views, inline approve/reject workflows, and full CSV roster export.
  */
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
+  const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState('Just now');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Modal State
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ employeeId: '', type: 'CASUAL', startDate: '', endDate: '', reason: '' });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  useEffect(() => { loadAll(); }, []);
+  // Map employee IDs to rich employee records
+  const employeeMap = useMemo(() => {
+    const map = new Map<string, Employee>();
+    employees.forEach(emp => map.set(emp.id, emp));
+    return map;
+  }, [employees]);
 
-  const loadAll = async () => {
-    setIsLoading(true);
+  // Load leaves and employees data
+  const loadData = useCallback(async (isManual = false) => {
+    if (isManual) setIsSyncing(true);
+    else setIsLoading(true);
+
     try {
-      const [lRes, eRes] = await Promise.all([fetch('/api/leaves'), fetch('/api/employees')]);
-      if (lRes.ok) setLeaves(await lRes.json());
-      if (eRes.ok) setEmployees(await eRes.json());
-    } catch (e) { console.error(e); }
-    finally { setIsLoading(false); }
-  };
+      const [lRes, eRes] = await Promise.all([
+        fetch('/api/leaves', { cache: 'no-store' }),
+        fetch('/api/employees', { cache: 'no-store' }),
+      ]);
 
-  const handleForm = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+      if (lRes.ok) {
+        const lData = await lRes.json();
+        setLeaves(Array.isArray(lData) ? lData : []);
+      }
+      if (eRes.ok) {
+        const eData = await eRes.json();
+        setEmployees(Array.isArray(eData) ? eData : []);
+      }
+      setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.error('Failed to load leave telemetry:', err);
+    } finally {
+      setIsLoading(false);
+      setIsSyncing(false);
+    }
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setSubmitting(true); setError('');
-    try {
-      const res = await fetch('/api/leaves', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const d = await res.json();
-      if (!res.ok) { setError(d.error || 'Failed'); return; }
-      setSuccessMsg('Leave submitted!'); setShowModal(false);
-      setForm({ employeeId: '', type: 'CASUAL', startDate: '', endDate: '', reason: '' });
-      loadAll(); setTimeout(() => setSuccessMsg(''), 3000);
-    } catch { setError('Network error'); }
-    finally { setSubmitting(false); }
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  /** Approves or rejects a leave request */
+  // Handle Approve / Reject Actions
   const handleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     setActionLoading(id);
     try {
-      await fetch('/api/leaves', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/leaves', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),
       });
-      loadAll();
-    } catch (e) { console.error(e); }
-    finally { setActionLoading(null); }
+      if (res.ok) {
+        setSuccessMsg(`Leave request has been marked ${status.toLowerCase()} successfully.`);
+        setTimeout(() => setSuccessMsg(''), 4000);
+        await loadData(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to update leave status');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while updating leave status');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const filtered = statusFilter ? leaves.filter(l => l.status === statusFilter) : leaves;
+  // Submit Leave Request
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.employeeId) {
+      setError('Please select an employee.');
+      return;
+    }
+    if (!form.startDate || !form.endDate) {
+      setError('Please provide valid start and end dates.');
+      return;
+    }
+    if (new Date(form.endDate) < new Date(form.startDate)) {
+      setError('End date cannot precede the start date.');
+      return;
+    }
 
-  const statusCounts = {
-    PENDING:  leaves.filter(l => l.status === 'PENDING').length,
-    APPROVED: leaves.filter(l => l.status === 'APPROVED').length,
-    REJECTED: leaves.filter(l => l.status === 'REJECTED').length,
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/leaves', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to submit leave request.');
+        return;
+      }
+
+      setSuccessMsg('Leave request submitted successfully.');
+      setShowModal(false);
+      setForm(EMPTY_FORM);
+      await loadData(false);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch {
+      setError('Network communication failure. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // Derived filtered requests
+  const filteredLeaves = useMemo(() => {
+    return leaves.filter(l => {
+      const emp = employeeMap.get(l.employeeId) || l.employee;
+      const fullName = emp ? `${emp.firstName} ${emp.lastName}`.toLowerCase() : '';
+      const designation = (emp as any)?.designation?.toLowerCase() || '';
+      const empCode = (emp as any)?.employeeId?.toLowerCase() || '';
+      const reason = (l.reason || '').toLowerCase();
+      const type = (l.type || '').toLowerCase();
+
+      // Search matching
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matches =
+          fullName.includes(q) ||
+          designation.includes(q) ||
+          empCode.includes(q) ||
+          reason.includes(q) ||
+          type.includes(q);
+        if (!matches) return false;
+      }
+
+      // Status filter
+      if (statusFilter !== 'ALL' && l.status !== statusFilter) {
+        return false;
+      }
+
+      // Type filter
+      if (typeFilter !== 'ALL' && l.type !== typeFilter) {
+        return false;
+      }
+
+      // Employee filter
+      if (employeeFilter !== 'ALL' && l.employeeId !== employeeFilter) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [leaves, employeeMap, search, statusFilter, typeFilter, employeeFilter]);
+
+  // Counts & KPI metrics
+  const totalCount = leaves.length;
+  const pendingCount = leaves.filter(l => l.status === 'PENDING').length;
+  const approvedCount = leaves.filter(l => l.status === 'APPROVED').length;
+  const rejectedCount = leaves.filter(l => l.status === 'REJECTED').length;
+
+  const totalProcessed = approvedCount + rejectedCount;
+  const approvalRate = totalProcessed > 0 ? Math.round((approvedCount / totalProcessed) * 100) : 100;
+
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    statusFilter !== 'ALL' ||
+    typeFilter !== 'ALL' ||
+    employeeFilter !== 'ALL'
+  );
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setStatusFilter('ALL');
+    setTypeFilter('ALL');
+    setEmployeeFilter('ALL');
+  };
+
+  // Export CSV
+  const handleExportCSV = () => {
+    if (filteredLeaves.length === 0) return;
+    const headers = [
+      'Employee Name',
+      'Employee ID',
+      'Designation',
+      'Leave Type',
+      'Start Date',
+      'End Date',
+      'Duration Days',
+      'Applied Date',
+      'Status',
+      'Reason',
+    ];
+
+    const rows = filteredLeaves.map(l => {
+      const emp = employeeMap.get(l.employeeId) || l.employee;
+      const empName = emp ? `${emp.firstName} ${emp.lastName}` : l.employeeId;
+      const empId = (emp as any)?.employeeId || '';
+      const designation = emp?.designation || '';
+      const duration = getDurationDays(l.startDate, l.endDate);
+
+      return [
+        empName,
+        empId,
+        designation,
+        l.type,
+        new Date(l.startDate).toLocaleDateString(),
+        new Date(l.endDate).toLocaleDateString(),
+        duration,
+        new Date(l.createdAt).toLocaleDateString(),
+        l.status,
+        l.reason || '',
+      ];
+    });
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `leaves_roster_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Helper: Return CSS class for leave type badge
+  const getTypeBadgeClass = (type: string) => {
+    switch (type.toUpperCase()) {
+      case 'CASUAL':
+        return styles.typeCasual;
+      case 'SICK':
+        return styles.typeSick;
+      case 'ANNUAL':
+        return styles.typeAnnual;
+      case 'UNPAID':
+        return styles.typeUnpaid;
+      case 'MATERNITY':
+        return styles.typeMaternity;
+      case 'PATERNITY':
+        return styles.typePaternity;
+      default:
+        return styles.typeDefault;
+    }
+  };
+
+  // Helper: Return CSS class for status pill
+  const getStatusChipClass = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return styles.statusApproved;
+      case 'PENDING':
+        return styles.statusPending;
+      case 'REJECTED':
+        return styles.statusRejected;
+      case 'CANCELLED':
+        return styles.statusCancelled;
+      default:
+        return styles.statusCancelled;
+    }
+  };
+
+  // Helper: Get type icon
+  const getTypeIcon = (type: string) => {
+    switch (type.toUpperCase()) {
+      case 'SICK':
+        return 'healing';
+      case 'ANNUAL':
+        return 'beach_access';
+      case 'CASUAL':
+        return 'schedule';
+      case 'MATERNITY':
+      case 'PATERNITY':
+        return 'child_care';
+      case 'UNPAID':
+        return 'money_off';
+      default:
+        return 'event_note';
+    }
+  };
+
+  // Duration in form
+  const modalDuration = getDurationDays(form.startDate, form.endDate);
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Leave Requests</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>{leaves.length} total · {statusCounts.PENDING} pending</p>
+    <div className={styles.container}>
+      {/* 1. Executive Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <div className={styles.liveBadgeRow}>
+            <div className={styles.livePulseDot} />
+            <span className={styles.liveBadgeText}>Leave Telemetry • Time-Off & PTO Hub</span>
+          </div>
+          <h1 className={styles.pageTitle}>
+            Leave Requests & Absence Management
+            <span className={styles.titleBadge}>{totalCount} Applications</span>
+          </h1>
+          <p className={styles.pageSubtitle}>
+            Review employee leave requests, track absence intervals, execute instant approvals or rejections, and monitor operational workforce availability.
+          </p>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>Submit Leave
-        </button>
-      </div>
 
-      {successMsg && <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>✓ {successMsg}</div>}
+        <div className={styles.headerActions}>
+          <button
+            onClick={handleExportCSV}
+            className={styles.secondaryBtn}
+            disabled={leaves.length === 0}
+            title="Download CSV"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+            Export CSV
+          </button>
 
-      {/* Status filter pills */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {[{ label: 'All', value: '' }, { label: `Pending (${statusCounts.PENDING})`, value: 'PENDING' }, { label: `Approved (${statusCounts.APPROVED})`, value: 'APPROVED' }, { label: `Rejected (${statusCounts.REJECTED})`, value: 'REJECTED' }]
-          .map(opt => (
-            <button key={opt.value} onClick={() => setStatusFilter(opt.value)}
-              style={{ padding: '8px 16px', borderRadius: '20px', border: `2px solid ${statusFilter === opt.value ? 'var(--primary)' : 'var(--border-main)'}`, background: statusFilter === opt.value ? 'var(--primary-subtle)' : 'transparent', color: statusFilter === opt.value ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.15s' }}>
-              {opt.label}
-            </button>
-          ))}
-      </div>
+          <button
+            onClick={() => loadData(true)}
+            className={styles.secondaryBtn}
+            disabled={isSyncing}
+            title="Refresh Leave Records"
+          >
+            <span
+              className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
+              style={{ fontSize: '18px' }}
+            >
+              refresh
+            </span>
+            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+          </button>
 
-      {/* Table */}
-      <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-              {['Employee', 'Type', 'Dates', 'Reason', 'Applied', 'Status', 'Actions'].map(h => (
-                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
+          <button
+            onClick={() => {
+              setForm(EMPTY_FORM);
+              setError('');
+              setShowModal(true);
+            }}
+            className={styles.primaryBtn}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+            Submit Leave Request
+          </button>
+        </div>
+      </header>
+
+      {/* Success Alert Banner */}
+      {successMsg && (
+        <div className={`${styles.alertBox} ${styles.alertSuccess}`}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {/* 2. KPI Telemetry Cards */}
+      <section className={styles.kpiGrid}>
+        {/* Total Applications */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiTopRow}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#4f46e5' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>event_note</span>
+            </div>
+            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>history</span>
+              All-Time
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Total Applications</span>
+            <span className={styles.kpiValue}>{totalCount}</span>
+          </div>
+          <div className={styles.kpiFooter}>
+            <span>Recorded in system</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{employees.length} Staff</span>
+          </div>
+        </div>
+
+        {/* Pending Approvals */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiTopRow}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#d97706' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>pending_actions</span>
+            </div>
+            <span className={`${styles.kpiTrendBadge} ${pendingCount > 0 ? styles.trendWarning : styles.trendPositive}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
+                {pendingCount > 0 ? 'priority_high' : 'check'}
+              </span>
+              {pendingCount > 0 ? 'Action Required' : 'All Clear'}
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Pending Approvals</span>
+            <span className={styles.kpiValue} style={{ color: pendingCount > 0 ? '#d97706' : undefined }}>
+              {pendingCount}
+            </span>
+          </div>
+          <div className={styles.kpiFooter}>
+            <span>Awaiting executive review</span>
+            <span style={{ fontWeight: 700, color: pendingCount > 0 ? '#d97706' : '#10b981' }}>
+              {pendingCount > 0 ? `${pendingCount} Urgent` : '0 Pending'}
+            </span>
+          </div>
+        </div>
+
+        {/* Approved Leaves */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiTopRow}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>verified</span>
+            </div>
+            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>trending_up</span>
+              {approvalRate}% Ratio
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Approved Leaves</span>
+            <span className={styles.kpiValue}>{approvedCount}</span>
+          </div>
+          <div className={styles.kpiFooter}>
+            <span>Authorized time-off</span>
+            <span style={{ fontWeight: 600, color: '#059669' }}>Active & Past</span>
+          </div>
+        </div>
+
+        {/* Rejected / Exceptions */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiTopRow}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>cancel</span>
+            </div>
+            <span className={`${styles.kpiTrendBadge} ${rejectedCount > 0 ? styles.trendDanger : styles.trendNeutral}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>block</span>
+              {rejectedCount} Denied
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Rejected Requests</span>
+            <span className={styles.kpiValue}>{rejectedCount}</span>
+          </div>
+          <div className={styles.kpiFooter}>
+            <span>Declined applications</span>
+            <span style={{ fontWeight: 600 }}>Archived</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Controls & Filter Bar */}
+      <section className={styles.controlsCard}>
+        <div className={styles.controlsTopRow}>
+          {/* Search Box */}
+          <div className={styles.searchWrapper}>
+            <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
+            <input
+              type="text"
+              placeholder="Search by employee name, ID, leave type, or reason..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={styles.searchInput}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className={styles.clearSearchBtn} title="Clear search">
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+              </button>
+            )}
+          </div>
+
+          <div className={styles.filtersGroup}>
+            {/* Leave Type Dropdown */}
+            <select
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              className={styles.selectDropdown}
+            >
+              <option value="ALL">All Leave Types</option>
+              {LEAVE_TYPES.map(t => (
+                <option key={t} value={t}>{t} Leave</option>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                {Array.from({ length: 7 }).map((_, j) => (
-                  <td key={j} style={{ padding: '14px 16px' }}><div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} /></td>
-                ))}
-              </tr>
-            )) : filtered.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '48px', opacity: 0.4, display: 'block', marginBottom: '8px' }}>event_busy</span>
-                No leave requests found.
-              </td></tr>
-            ) : filtered.map(l => {
-              const sc = statusColors[l.status] || { color: 'var(--text-muted)', bg: 'var(--surface-hover)' };
-              const isPending = l.status === 'PENDING';
-              return (
-                <tr key={l.id} style={{ borderBottom: '1px solid var(--border-main)' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                  <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-main)' }}>
-                    {l.employee ? `${l.employee.firstName} ${l.employee.lastName}` : l.employeeId}
-                    {l.employee?.designation && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{l.employee.designation}</div>}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, color: 'var(--primary)', background: 'var(--primary-subtle)' }}>{l.type}</span>
-                  </td>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontSize: '13px', whiteSpace: 'nowrap' }}>
-                    {new Date(l.startDate).toLocaleDateString()} → {new Date(l.endDate).toLocaleDateString()}
-                  </td>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-secondary)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.reason}</td>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '13px' }}>{new Date(l.createdAt).toLocaleDateString()}</td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, color: sc.color, background: sc.bg }}>{l.status}</span>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    {isPending ? (
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button onClick={() => handleAction(l.id, 'APPROVED')} disabled={actionLoading === l.id}
-                          style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: 'var(--success-subtle)', color: 'var(--success)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                          ✓ Approve
-                        </button>
-                        <button onClick={() => handleAction(l.id, 'REJECTED')} disabled={actionLoading === l.id}
-                          style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                          ✗ Reject
-                        </button>
-                      </div>
-                    ) : <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+            </select>
 
+            {/* Employee Dropdown */}
+            <select
+              value={employeeFilter}
+              onChange={e => setEmployeeFilter(e.target.value)}
+              className={styles.selectDropdown}
+            >
+              <option value="ALL">All Personnel</option>
+              {employees.map(emp => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName} {emp.employeeId ? `(${emp.employeeId})` : ''}
+                </option>
+              ))}
+            </select>
+
+            {/* Reset Filters */}
+            {hasActiveFilters && (
+              <button onClick={handleResetFilters} className={styles.resetBtn} title="Clear all filters">
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>filter_alt_off</span>
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.controlsBottomRow}>
+          {/* Status Tabs */}
+          <div className={styles.statusTabsList}>
+            <button
+              onClick={() => setStatusFilter('ALL')}
+              className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
+            >
+              All Requests
+              <span style={{ opacity: 0.7 }}>({totalCount})</span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('PENDING')}
+              className={`${styles.statusTabBtn} ${statusFilter === 'PENDING' ? styles.statusTabBtnActive : ''}`}
+            >
+              Pending
+              <span style={{ opacity: 0.7 }}>({pendingCount})</span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('APPROVED')}
+              className={`${styles.statusTabBtn} ${statusFilter === 'APPROVED' ? styles.statusTabBtnActive : ''}`}
+            >
+              Approved
+              <span style={{ opacity: 0.7 }}>({approvedCount})</span>
+            </button>
+
+            <button
+              onClick={() => setStatusFilter('REJECTED')}
+              className={`${styles.statusTabBtn} ${statusFilter === 'REJECTED' ? styles.statusTabBtnActive : ''}`}
+            >
+              Rejected
+              <span style={{ opacity: 0.7 }}>({rejectedCount})</span>
+            </button>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className={styles.viewToggleGroup}>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
+              title="Table View"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>table_rows</span>
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
+              title="Card Grid View"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>grid_view</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Main Leave Requests Display */}
+      {isLoading ? (
+        <div className={styles.tableCard}>
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className={styles.skeleton} style={{ height: '48px', width: '100%' }} />
+            ))}
+          </div>
+        </div>
+      ) : filteredLeaves.length === 0 ? (
+        <div className={styles.emptyStateBox}>
+          <div className={styles.emptyStateIcon}>
+            <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>event_busy</span>
+          </div>
+          <h3 className={styles.emptyStateTitle}>No Leave Requests Found</h3>
+          <p className={styles.emptyStateDesc}>
+            {hasActiveFilters
+              ? 'No requests match your current search and filter criteria. Try adjusting or clearing your filters.'
+              : 'There are currently no leave requests recorded in the system. Use the button below to submit one.'}
+          </p>
+          {hasActiveFilters ? (
+            <button onClick={handleResetFilters} className={styles.secondaryBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>filter_alt_off</span>
+              Clear Filters
+            </button>
+          ) : (
+            <button onClick={() => setShowModal(true)} className={styles.primaryBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+              Submit First Leave
+            </button>
+          )}
+        </div>
+      ) : viewMode === 'table' ? (
+        /* TABLE VIEW */
+        <div className={styles.tableCard}>
+          <table className={styles.dataTable}>
+            <thead>
+              <tr className={styles.tableHeaderRow}>
+                <th className={styles.tableHeaderCell}>Employee</th>
+                <th className={styles.tableHeaderCell}>Leave Type</th>
+                <th className={styles.tableHeaderCell}>Date Range & Duration</th>
+                <th className={styles.tableHeaderCell}>Reason / Context</th>
+                <th className={styles.tableHeaderCell}>Applied Date</th>
+                <th className={styles.tableHeaderCell}>Status</th>
+                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredLeaves.map(l => {
+                const emp = employeeMap.get(l.employeeId) || l.employee;
+                const firstName = emp?.firstName || 'Unknown';
+                const lastName = emp?.lastName || '';
+                const empCode = (emp as any)?.employeeId || l.employeeId.slice(0, 8);
+                const designation = emp?.designation || 'Staff Member';
+                const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'EM';
+                const duration = getDurationDays(l.startDate, l.endDate);
+                const isPending = l.status === 'PENDING';
+                const isApproved = l.status === 'APPROVED';
+                const isRejected = l.status === 'REJECTED';
+                const isActionBusy = actionLoading === l.id;
+
+                return (
+                  <tr key={l.id} className={styles.tableRow}>
+                    {/* Employee Profile */}
+                    <td className={styles.tableCell}>
+                      <div className={styles.employeeProfileGroup}>
+                        <div className={styles.empAvatar}>{initials}</div>
+                        <div className={styles.empDetailsGroup}>
+                          <span className={styles.empName}>{firstName} {lastName}</span>
+                          <span className={styles.empDesignation}>{designation}</span>
+                          <span className={styles.empIdBadge}>#{empCode}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Leave Type */}
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.leaveTypeChip} ${getTypeBadgeClass(l.type)}`}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                          {getTypeIcon(l.type)}
+                        </span>
+                        {l.type}
+                      </span>
+                    </td>
+
+                    {/* Date Range & Duration */}
+                    <td className={styles.tableCell}>
+                      <div className={styles.dateRangeBox}>
+                        <span className={styles.dateRangeText}>
+                          {formatDate(l.startDate)} → {formatDate(l.endDate)}
+                        </span>
+                        <span className={styles.durationBadge}>
+                          {duration} {duration === 1 ? 'Day' : 'Days'}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Reason */}
+                    <td className={styles.tableCell}>
+                      <span className={styles.reasonText} title={l.reason}>
+                        {l.reason || '—'}
+                      </span>
+                    </td>
+
+                    {/* Applied Date */}
+                    <td className={styles.tableCell}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {formatDate(l.createdAt)}
+                      </span>
+                    </td>
+
+                    {/* Status Pill */}
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.statusChip} ${getStatusChipClass(l.status)}`}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                          {isApproved ? 'check_circle' : isPending ? 'schedule' : 'cancel'}
+                        </span>
+                        {l.status}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                      <div className={styles.actionBtnGroup} style={{ justifyContent: 'flex-end' }}>
+                        {isPending ? (
+                          <>
+                            <button
+                              onClick={() => handleAction(l.id, 'APPROVED')}
+                              disabled={isActionBusy}
+                              className={styles.approveBtn}
+                              title="Approve Leave Request"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>check</span>
+                              {isActionBusy ? '...' : 'Approve'}
+                            </button>
+                            <button
+                              onClick={() => handleAction(l.id, 'REJECTED')}
+                              disabled={isActionBusy}
+                              className={styles.rejectBtn}
+                              title="Reject Leave Request"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>close</span>
+                              {isActionBusy ? '...' : 'Reject'}
+                            </button>
+                          </>
+                        ) : isApproved ? (
+                          <button
+                            onClick={() => handleAction(l.id, 'REJECTED')}
+                            disabled={isActionBusy}
+                            className={styles.rejectBtn}
+                            title="Revoke / Reject"
+                            style={{ opacity: 0.8 }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>undo</span>
+                            Revoke
+                          </button>
+                        ) : isRejected ? (
+                          <button
+                            onClick={() => handleAction(l.id, 'APPROVED')}
+                            disabled={isActionBusy}
+                            className={styles.approveBtn}
+                            title="Re-approve"
+                            style={{ opacity: 0.8 }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>check</span>
+                            Re-approve
+                          </button>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* CARD GRID VIEW */
+        <div className={styles.cardGrid}>
+          {filteredLeaves.map(l => {
+            const emp = employeeMap.get(l.employeeId) || l.employee;
+            const firstName = emp?.firstName || 'Unknown';
+            const lastName = emp?.lastName || '';
+            const empCode = (emp as any)?.employeeId || l.employeeId.slice(0, 8);
+            const designation = emp?.designation || 'Staff Member';
+            const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'EM';
+            const duration = getDurationDays(l.startDate, l.endDate);
+            const isPending = l.status === 'PENDING';
+            const isApproved = l.status === 'APPROVED';
+            const isRejected = l.status === 'REJECTED';
+            const isActionBusy = actionLoading === l.id;
+
+            return (
+              <div key={l.id} className={styles.leaveCard}>
+                {/* Top Profile & Status */}
+                <div className={styles.cardTopRow}>
+                  <div className={styles.employeeProfileGroup}>
+                    <div className={styles.empAvatar}>{initials}</div>
+                    <div className={styles.empDetailsGroup}>
+                      <span className={styles.empName}>{firstName} {lastName}</span>
+                      <span className={styles.empDesignation}>{designation}</span>
+                      <span className={styles.empIdBadge}>#{empCode}</span>
+                    </div>
+                  </div>
+
+                  <span className={`${styles.statusChip} ${getStatusChipClass(l.status)}`}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                      {isApproved ? 'check_circle' : isPending ? 'schedule' : 'cancel'}
+                    </span>
+                    {l.status}
+                  </span>
+                </div>
+
+                {/* Type & Days Summary */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <span className={`${styles.leaveTypeChip} ${getTypeBadgeClass(l.type)}`}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                      {getTypeIcon(l.type)}
+                    </span>
+                    {l.type} Leave
+                  </span>
+                  <span className={styles.durationBadge} style={{ fontSize: '12px', padding: '3px 8px' }}>
+                    {duration} {duration === 1 ? 'Day' : 'Days'} Duration
+                  </span>
+                </div>
+
+                {/* Date Range Banner */}
+                <div className={styles.cardDateRangeBanner}>
+                  <div className={styles.cardDateRangeDates}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#6366f1' }}>
+                      date_range
+                    </span>
+                    <span>{formatDate(l.startDate)}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>→</span>
+                    <span>{formatDate(l.endDate)}</span>
+                  </div>
+                </div>
+
+                {/* Reason Quote */}
+                <div className={styles.cardReasonBox}>
+                  &ldquo;{l.reason || 'No specific justification recorded'}&rdquo;
+                </div>
+
+                {/* Card Footer & Quick Decisions */}
+                <div className={styles.cardFooter}>
+                  <span>Applied {formatDate(l.createdAt)}</span>
+
+                  <div className={styles.actionBtnGroup}>
+                    {isPending ? (
+                      <>
+                        <button
+                          onClick={() => handleAction(l.id, 'APPROVED')}
+                          disabled={isActionBusy}
+                          className={styles.approveBtn}
+                          title="Approve Request"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>check</span>
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleAction(l.id, 'REJECTED')}
+                          disabled={isActionBusy}
+                          className={styles.rejectBtn}
+                          title="Reject Request"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>close</span>
+                          Reject
+                        </button>
+                      </>
+                    ) : isApproved ? (
+                      <button
+                        onClick={() => handleAction(l.id, 'REJECTED')}
+                        disabled={isActionBusy}
+                        className={styles.rejectBtn}
+                        style={{ opacity: 0.8 }}
+                      >
+                        Revoke
+                      </button>
+                    ) : isRejected ? (
+                      <button
+                        onClick={() => handleAction(l.id, 'APPROVED')}
+                        disabled={isActionBusy}
+                        className={styles.approveBtn}
+                        style={{ opacity: 0.8 }}
+                      >
+                        Re-approve
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 5. Submit Leave Request Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
-          onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', borderRadius: '20px', padding: '32px', margin: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--text-main)' }}>Submit Leave Request</h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>close</span>
+        <div
+          className={styles.modalBackdrop}
+          onClick={e => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+        >
+          <div className={styles.modalBox}>
+            <div className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className={styles.kpiIconBox} style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#4f46e5' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add_task</span>
+                </div>
+                <h2 className={styles.modalTitle}>Submit Leave Request</h2>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className={styles.modalCloseBtn}
+                title="Close modal"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
               </button>
             </div>
-            {error && <div style={{ marginBottom: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--danger-subtle)', color: 'var(--danger)', fontSize: '14px' }}>⚠ {error}</div>}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={ls}>Employee *</label>
-                <select value={form.employeeId} onChange={e => handleForm('employeeId', e.target.value)} required style={is}>
+
+            {error && (
+              <div className={`${styles.alertBox} ${styles.alertDanger}`}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className={styles.formGrid}>
+              {/* Employee Selection */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Personnel / Employee *</label>
+                <select
+                  value={form.employeeId}
+                  onChange={e => setForm(f => ({ ...f, employeeId: e.target.value }))}
+                  required
+                  className={styles.formInput}
+                >
                   <option value="">— Select Employee —</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.firstName} {e.lastName} ({e.employeeId})</option>)}
+                  {employees.map(e => (
+                    <option key={e.id} value={e.id}>
+                      {e.firstName} {e.lastName} {e.employeeId ? `(#${e.employeeId})` : ''} {e.designation ? `· ${e.designation}` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div>
-                <label style={ls}>Leave Type *</label>
-                <select value={form.type} onChange={e => handleForm('type', e.target.value)} style={is}>
-                  {LEAVE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+
+              {/* Leave Type */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Leave Category *</label>
+                <select
+                  value={form.type}
+                  onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+                  required
+                  className={styles.formInput}
+                >
+                  {LEAVE_TYPES.map(t => (
+                    <option key={t} value={t}>
+                      {t} Leave
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Date Ranges */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={ls}>Start Date *</label>
-                  <input type="date" value={form.startDate} onChange={e => handleForm('startDate', e.target.value)} required style={is} />
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Start Date *</label>
+                  <input
+                    type="date"
+                    value={form.startDate}
+                    onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                    required
+                    className={styles.formInput}
+                  />
                 </div>
-                <div>
-                  <label style={ls}>End Date *</label>
-                  <input type="date" value={form.endDate} onChange={e => handleForm('endDate', e.target.value)} required style={is} />
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>End Date *</label>
+                  <input
+                    type="date"
+                    value={form.endDate}
+                    onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                    required
+                    className={styles.formInput}
+                  />
                 </div>
               </div>
-              <div>
-                <label style={ls}>Reason *</label>
-                <textarea value={form.reason} onChange={e => handleForm('reason', e.target.value)} placeholder="Reason for leave..." required rows={3} style={{ ...is, resize: 'vertical' }} />
+
+              {/* Calculated Duration Display */}
+              {form.startDate && form.endDate && (
+                <div className={styles.durationPreviewTag}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule</span>
+                  <span>Calculated Time-Off: <strong>{modalDuration} {modalDuration === 1 ? 'day' : 'days'}</strong></span>
+                </div>
+              )}
+
+              {/* Reason */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Justification / Reason *</label>
+                <textarea
+                  value={form.reason}
+                  onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
+                  placeholder="Explain the reason for requesting time-off..."
+                  required
+                  rows={3}
+                  className={styles.formTextarea}
+                />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit Leave'}</button>
+
+              {/* Modal Actions */}
+              <div className={styles.modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className={styles.secondaryBtn}
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={styles.primaryBtn}
+                  disabled={submitting}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                    {submitting ? 'hourglass_empty' : 'send'}
+                  </span>
+                  {submitting ? 'Submitting...' : 'Submit Request'}
+                </button>
               </div>
             </form>
           </div>
@@ -228,5 +1076,3 @@ export default function LeavesPage() {
     </div>
   );
 }
-const ls: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' };
-const is: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box' };

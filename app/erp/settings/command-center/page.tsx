@@ -28,12 +28,17 @@ export default function EnterpriseCommandCenterPage() {
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Edit roles modal state
+  const [editRoleTargetUser, setEditRoleTargetUser] = useState<UserItem | null>(null);
+  const [editRolesVal, setEditRolesVal] = useState<string[]>([]);
+  const [editRoleLoading, setEditRoleLoading] = useState(false);
+
   // New user form state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState("Accountant");
+  const [newUserRoles, setNewUserRoles] = useState<string[]>(["Accountant"]);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
@@ -107,10 +112,10 @@ export default function EnterpriseCommandCenterPage() {
         name: newUserName,
         email: newUserEmail,
         password: newUserPassword,
-        role: newUserRole
+        role: newUserRoles.join(',')
       });
 
-      setCreateSuccess(`User created successfully! They can now log in at /login with role: ${newUserRole}.`);
+      setCreateSuccess(`User created successfully! They can now log in at /login with role: ${newUserRoles.join(', ')}.`);
       setNewUserName("");
       setNewUserEmail("");
       setNewUserPassword("");
@@ -146,11 +151,33 @@ export default function EnterpriseCommandCenterPage() {
     }
   };
 
+  const handleSaveRoles = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editRoleTargetUser) return;
+    
+    if (editRolesVal.length === 0) {
+      alert("Please select at least one role.");
+      return;
+    }
+
+    setEditRoleLoading(true);
+    const newRolesString = editRolesVal.join(',');
+    try {
+      await assignUserRoleAction(editRoleTargetUser.id, newRolesString);
+      setUsers(prev => prev.map(u => u.id === editRoleTargetUser.id ? { ...u, role: newRolesString } : u));
+      setEditRoleTargetUser(null);
+    } catch (e) {
+      alert('Failed to update roles');
+    } finally {
+      setEditRoleLoading(false);
+    }
+  };
+
   const filteredUsers = users.filter(u => {
     const matchesSearch =
       (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === 'ALL' || u.role.toLowerCase() === roleFilter.toLowerCase();
+    const matchesRole = roleFilter === 'ALL' || (u.role && u.role.toLowerCase().split(',').map((r: string) => r.trim()).includes(roleFilter.toLowerCase()));
     return matchesSearch && matchesRole;
   });
 
@@ -165,8 +192,8 @@ export default function EnterpriseCommandCenterPage() {
           flexWrap: 'wrap',
           gap: '16px',
           padding: '24px 28px',
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'var(--surface-main)',
+          border: '1px solid var(--border-main)',
           borderRadius: '20px',
           backdropFilter: 'blur(20px)'
         }}
@@ -189,11 +216,11 @@ export default function EnterpriseCommandCenterPage() {
                 shield_person
               </span>
             </div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#f8fafc' }}>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>
               Enterprise Command Center
             </h1>
           </div>
-          <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', maxWidth: '700px' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '700px' }}>
             Configure and provision role-based user accounts with email and password credentials. 
             Team members will log in at <code>/login</code> and automatically land in their tailored role dashboard.
           </p>
@@ -228,18 +255,18 @@ export default function EnterpriseCommandCenterPage() {
         <div
           style={{
             padding: '18px 20px',
-            background: 'rgba(15, 23, 42, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'var(--surface-main)',
+            border: '1px solid var(--border-main)',
             borderRadius: '16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px'
           }}
         >
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Total User Accounts
           </span>
-          <span style={{ fontSize: '24px', fontWeight: 700, color: '#f8fafc' }}>
+          <span style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>
             {users.length}
           </span>
           <span style={{ fontSize: '11px', color: '#60a5fa' }}>All authentication records</span>
@@ -248,41 +275,41 @@ export default function EnterpriseCommandCenterPage() {
         <div
           style={{
             padding: '18px 20px',
-            background: 'rgba(15, 23, 42, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'var(--surface-main)',
+            border: '1px solid var(--border-main)',
             borderRadius: '16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px'
           }}
         >
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Roles Configured
           </span>
           <span style={{ fontSize: '24px', fontWeight: 700, color: '#34d399' }}>
             7 Roles
           </span>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>Owner, CEO, Accountant, HR, Sales, Inv, PM</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Owner, CEO, Accountant, HR, Sales, Inv, PM</span>
         </div>
 
         <div
           style={{
             padding: '18px 20px',
-            background: 'rgba(15, 23, 42, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'var(--surface-main)',
+            border: '1px solid var(--border-main)',
             borderRadius: '16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px'
           }}
         >
-          <span style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Authentication Protocol
           </span>
           <span style={{ fontSize: '20px', fontWeight: 700, color: '#fbbf24' }}>
             BCrypt + JWT Session
           </span>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>Direct login via Email & Password</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Direct login via Email & Password</span>
         </div>
       </div>
 
@@ -295,13 +322,13 @@ export default function EnterpriseCommandCenterPage() {
           flexWrap: 'wrap',
           gap: '12px',
           padding: '16px 20px',
-          background: 'rgba(15, 23, 42, 0.65)',
-          border: '1px solid rgba(255, 255, 255, 0.07)',
+          background: 'var(--surface-main)',
+          border: '1px solid var(--border-main)',
           borderRadius: '16px'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
-          <span className="material-symbols-outlined" style={{ color: '#64748b', fontSize: '20px' }}>
+          <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '20px' }}>
             search
           </span>
           <input
@@ -313,7 +340,7 @@ export default function EnterpriseCommandCenterPage() {
               width: '100%',
               background: 'transparent',
               border: 'none',
-              color: '#f8fafc',
+              color: 'var(--text-main)',
               fontSize: '13px',
               outline: 'none'
             }}
@@ -321,14 +348,14 @@ export default function EnterpriseCommandCenterPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: '#94a3b8' }}>Filter Role:</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Filter Role:</span>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             style={{
-              background: 'rgba(30, 41, 59, 0.8)',
-              color: '#f8fafc',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: 'var(--surface-hover)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--border-main)',
               borderRadius: '8px',
               padding: '6px 12px',
               fontSize: '12px',
@@ -346,8 +373,8 @@ export default function EnterpriseCommandCenterPage() {
       {/* Users & Roles Table */}
       <div
         style={{
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.75) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'var(--surface-main)',
+          border: '1px solid var(--border-main)',
           borderRadius: '20px',
           overflow: 'hidden'
         }}
@@ -357,8 +384,8 @@ export default function EnterpriseCommandCenterPage() {
             <thead>
               <tr
                 style={{
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                  color: '#94a3b8',
+                  borderBottom: '1px solid var(--border-main)',
+                  color: 'var(--text-secondary)',
                   fontSize: '12px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em'
@@ -374,18 +401,18 @@ export default function EnterpriseCommandCenterPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                     Loading user records...
                   </td>
                 </tr>
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((u) => {
-                  const isOwner = u.role.toLowerCase() === 'owner';
+                  const isOwner = (u.role || '').toLowerCase().split(',').map((r: string) => r.trim()).includes('owner');
                   return (
                     <tr
                       key={u.id}
                       style={{
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                        borderBottom: '1px solid var(--border-main)',
                         transition: 'background 0.15s ease'
                       }}
                     >
@@ -410,8 +437,8 @@ export default function EnterpriseCommandCenterPage() {
                             {u.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: '#f8fafc' }}>{u.name}</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{u.name}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                               User ID: {u.id.substring(0, 8)}...
                             </div>
                           </div>
@@ -419,38 +446,35 @@ export default function EnterpriseCommandCenterPage() {
                       </td>
 
                       {/* Email */}
-                      <td style={{ padding: '14px 20px', color: '#cbd5e1' }}>
+                      <td style={{ padding: '14px 20px', color: 'var(--text-muted)' }}>
                         <code>{u.email}</code>
                       </td>
 
-                      {/* Role Dropdown */}
+                      {/* Role Badges */}
                       <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <select
-                            value={u.role}
-                            disabled={actionLoading === u.id}
-                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                            style={{
-                              padding: '6px 10px',
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              background: 'rgba(15, 23, 42, 0.8)',
-                              color: isOwner ? '#fbbf24' : '#60a5fa',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {AVAILABLE_ROLES.map((r) => (
-                              <option key={r.name} value={r.name}>
-                                {r.name}
-                              </option>
-                            ))}
-                            <option value="inactive">Inactive</option>
-                          </select>
-                          {actionLoading === u.id && (
-                            <span style={{ fontSize: '11px', color: '#60a5fa' }}>Saving...</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          {u.role === 'inactive' ? (
+                            <span style={{ fontSize: '11px', color: '#f87171' }}>Inactive</span>
+                          ) : (
+                            (u.role || 'Member').split(',').map((r: string) => (
+                              <span key={r} style={{
+                                padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                                background: 'var(--surface-hover)', color: r.trim().toLowerCase() === 'owner' ? '#fbbf24' : '#60a5fa', border: '1px solid var(--border-main)'
+                              }}>
+                                {r.trim()}
+                              </span>
+                            ))
                           )}
+                          <button
+                            onClick={() => {
+                              setEditRoleTargetUser(u);
+                              setEditRolesVal(u.role === 'inactive' ? [] : (u.role || '').split(',').map((r: string)=>r.trim()));
+                            }}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                            title="Edit Roles"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                          </button>
                         </div>
                       </td>
 
@@ -483,9 +507,9 @@ export default function EnterpriseCommandCenterPage() {
                             style={{
                               padding: '5px 10px',
                               borderRadius: '6px',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              background: 'rgba(30, 41, 59, 0.8)',
-                              color: '#94a3b8',
+                              border: '1px solid var(--border-main)',
+                              background: 'var(--surface-hover)',
+                              color: 'var(--text-secondary)',
                               fontSize: '11px',
                               fontWeight: 500,
                               cursor: 'pointer'
@@ -518,7 +542,7 @@ export default function EnterpriseCommandCenterPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                     No users matching criteria found.
                   </td>
                 </tr>
@@ -532,8 +556,8 @@ export default function EnterpriseCommandCenterPage() {
       <div
         style={{
           padding: '24px',
-          background: 'rgba(15, 23, 42, 0.65)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'var(--surface-main)',
+          border: '1px solid var(--border-main)',
           borderRadius: '20px',
           display: 'flex',
           flexDirection: 'column',
@@ -544,11 +568,11 @@ export default function EnterpriseCommandCenterPage() {
           <span className="material-symbols-outlined" style={{ color: '#60a5fa', fontSize: '20px' }}>
             schema
           </span>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
             Role-Based Workspace Matrix
           </h3>
         </div>
-        <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
           When team members log in, the Enterprise Dashboard automatically adapts to their assigned role persona:
         </p>
 
@@ -558,8 +582,8 @@ export default function EnterpriseCommandCenterPage() {
               key={r.name}
               style={{
                 padding: '12px 14px',
-                background: 'rgba(30, 41, 59, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: 'var(--surface-hover)',
+                border: '1px solid var(--border-main)',
                 borderRadius: '12px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -567,7 +591,7 @@ export default function EnterpriseCommandCenterPage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>
                   {r.name}
                 </span>
                 <span
@@ -583,7 +607,7 @@ export default function EnterpriseCommandCenterPage() {
                   Active Workspace
                 </span>
               </div>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>{r.desc}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{r.desc}</span>
             </div>
           ))}
         </div>
@@ -608,8 +632,8 @@ export default function EnterpriseCommandCenterPage() {
             style={{
               width: '100%',
               maxWidth: '520px',
-              background: '#0f172a',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'var(--surface-main)',
+              border: '1px solid var(--border-main)',
               borderRadius: '20px',
               padding: '28px',
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
@@ -635,7 +659,7 @@ export default function EnterpriseCommandCenterPage() {
                     person_add
                   </span>
                 </div>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#f8fafc' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
                   Provision User with Role
                 </h3>
               </div>
@@ -644,7 +668,7 @@ export default function EnterpriseCommandCenterPage() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontSize: '20px'
                 }}
@@ -653,7 +677,7 @@ export default function EnterpriseCommandCenterPage() {
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
               Create an account with email & password. The user will be able to log in at <code>/login</code> and immediately perform their role.
             </p>
 
@@ -689,7 +713,7 @@ export default function EnterpriseCommandCenterPage() {
 
             <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
                   Full Name
                 </label>
                 <input
@@ -701,10 +725,10 @@ export default function EnterpriseCommandCenterPage() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'var(--surface-main)',
+                    border: '1px solid var(--border-main)',
                     borderRadius: '10px',
-                    color: '#f8fafc',
+                    color: 'var(--text-main)',
                     fontSize: '13px',
                     outline: 'none',
                     boxSizing: 'border-box'
@@ -713,7 +737,7 @@ export default function EnterpriseCommandCenterPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
                   Email Address
                 </label>
                 <input
@@ -725,10 +749,10 @@ export default function EnterpriseCommandCenterPage() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'var(--surface-main)',
+                    border: '1px solid var(--border-main)',
                     borderRadius: '10px',
-                    color: '#f8fafc',
+                    color: 'var(--text-main)',
                     fontSize: '13px',
                     outline: 'none',
                     boxSizing: 'border-box'
@@ -737,7 +761,7 @@ export default function EnterpriseCommandCenterPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
                   Login Password
                 </label>
                 <input
@@ -749,10 +773,10 @@ export default function EnterpriseCommandCenterPage() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'var(--surface-main)',
+                    border: '1px solid var(--border-main)',
                     borderRadius: '10px',
-                    color: '#f8fafc',
+                    color: 'var(--text-main)',
                     fontSize: '13px',
                     outline: 'none',
                     boxSizing: 'border-box'
@@ -761,30 +785,28 @@ export default function EnterpriseCommandCenterPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-                  Assigned Role Persona
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  Assigned Role Personas
                 </label>
-                <select
-                  value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'rgba(30, 41, 59, 0.9)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '10px',
-                    color: '#f8fafc',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  {AVAILABLE_ROLES.map((r) => (
-                    <option key={r.name} value={r.name}>
-                      {r.name} — {r.desc}
-                    </option>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto', background: 'var(--surface-main)', padding: '10px', borderRadius: '10px', border: '1px solid var(--border-main)' }}>
+                  {AVAILABLE_ROLES.map(r => (
+                    <label key={r.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={newUserRoles.includes(r.name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewUserRoles(prev => [...prev, r.name]);
+                          } else {
+                            setNewUserRoles(prev => prev.filter(role => role !== r.name));
+                          }
+                        }}
+                      />
+                      <span style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 600 }}>{r.name}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>— {r.desc}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
@@ -794,9 +816,9 @@ export default function EnterpriseCommandCenterPage() {
                   style={{
                     padding: '10px 16px',
                     borderRadius: '10px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: '1px solid var(--border-main)',
                     background: 'transparent',
-                    color: '#94a3b8',
+                    color: 'var(--text-secondary)',
                     fontSize: '13px',
                     cursor: 'pointer'
                   }}
@@ -849,8 +871,8 @@ export default function EnterpriseCommandCenterPage() {
             style={{
               width: '100%',
               maxWidth: '440px',
-              background: '#0f172a',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'var(--surface-main)',
+              border: '1px solid var(--border-main)',
               borderRadius: '20px',
               padding: '28px',
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
@@ -860,7 +882,7 @@ export default function EnterpriseCommandCenterPage() {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#f8fafc' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
                 Reset Password
               </h3>
               <button
@@ -868,7 +890,7 @@ export default function EnterpriseCommandCenterPage() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   fontSize: '18px'
                 }}
@@ -877,7 +899,7 @@ export default function EnterpriseCommandCenterPage() {
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
               Set a new login password for <strong>{resetTargetUser.name}</strong> (<code>{resetTargetUser.email}</code>).
             </p>
 
@@ -898,7 +920,7 @@ export default function EnterpriseCommandCenterPage() {
 
             <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
                   New Password
                 </label>
                 <input
@@ -910,10 +932,10 @@ export default function EnterpriseCommandCenterPage() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    background: 'rgba(30, 41, 59, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'var(--surface-main)',
+                    border: '1px solid var(--border-main)',
                     borderRadius: '10px',
-                    color: '#f8fafc',
+                    color: 'var(--text-main)',
                     fontSize: '13px',
                     outline: 'none',
                     boxSizing: 'border-box'
@@ -928,9 +950,9 @@ export default function EnterpriseCommandCenterPage() {
                   style={{
                     padding: '8px 14px',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: '1px solid var(--border-main)',
                     background: 'transparent',
-                    color: '#94a3b8',
+                    color: 'var(--text-secondary)',
                     fontSize: '13px',
                     cursor: 'pointer'
                   }}
@@ -962,3 +984,4 @@ export default function EnterpriseCommandCenterPage() {
     </div>
   );
 }
+

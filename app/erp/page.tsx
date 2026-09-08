@@ -81,7 +81,7 @@ export default function DashboardIndex() {
   // Role assigned to the currently authenticated user
   const role = data?.currentUser?.role || "Owner";
   const userName = data?.currentUser?.name || "Executive";
-  const isPrivileged = ["Owner", "CEO", "Admin", "Super Admin"].includes(role);
+  const isPrivileged = ["Owner", "CEO", "Admin", "Super Admin"].some(r => (role || '').split(',').map((x: string) => x.trim()).includes(r));
 
   if (loading && !data) {
     return (

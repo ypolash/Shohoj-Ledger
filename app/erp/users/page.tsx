@@ -95,7 +95,7 @@ export default function UsersPage() {
   // Filtered
   const filteredUsers = users.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchRole = filterRole === "ALL" || u.role === filterRole;
+    const matchRole = filterRole === "ALL" || (u.role && u.role.split(',').map((r: string) => r.trim()).includes(filterRole));
     const isActive = u.role !== "inactive";
     const matchStatus = filterStatus === "ALL" || (filterStatus === "ACTIVE" ? isActive : !isActive);
     return matchSearch && matchRole && matchStatus;
@@ -168,7 +168,15 @@ export default function UsersPage() {
                       <tr key={user.id}>
                         <td style={{ fontWeight: 500 }}>{user.name}</td>
                         <td style={{ color: 'var(--text-muted)' }}>{user.email}</td>
-                        <td>{user.role}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {(user.role || '').split(',').map((r: string) => (
+                              <span key={r} style={{ padding: '2px 6px', background: 'var(--surface-hover)', borderRadius: '4px', fontSize: '12px' }}>
+                                {r.trim()}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
                         <td style={{ textAlign: 'center' }}>
                           <span className={`${styles.badge} ${isActive ? styles['badge-paid'] : styles['badge-unpaid']}`}>
                             {isActive ? "ACTIVE" : "INACTIVE"}

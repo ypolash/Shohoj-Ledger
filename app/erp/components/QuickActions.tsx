@@ -148,7 +148,8 @@ export function QuickActions({ role }: QuickActionsProps) {
     }
   ];
 
-  const visibleActions = allActions.filter(a => a.roles.includes(role));
+  const userRoles = (role || '').split(',').map((r: string) => r.trim());
+  const visibleActions = allActions.filter((a: any) => a.roles.some((r: string) => userRoles.includes(r)));
 
   if (visibleActions.length === 0) return null;
 

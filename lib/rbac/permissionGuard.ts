@@ -29,7 +29,7 @@ export async function requirePermission(requiredAction: string) {
   }
 
   // 2. Company Owner Bypass (Tenant Wide)
-  if (role === "Owner" || platformRole === "CLIENT_ADMIN") {
+  if ((role || "").split(',').map((r: string) => r.trim()).includes("Owner") || platformRole === "CLIENT_ADMIN") {
     return null; // Full Access inside their own company
   }
 

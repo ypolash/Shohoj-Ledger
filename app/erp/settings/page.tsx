@@ -38,6 +38,7 @@ export default function SystemSettingsDashboard() {
       items: [
         { id: 'company', title: 'Company Profile', desc: 'Manage legal name, address, tax IDs, and fiscal year.', icon: 'business', color: 'var(--primary)' },
         { id: 'branding', title: 'Branding & UI', desc: 'Configure logos, colors, and interface preferences.', icon: 'palette', color: 'var(--accent)' },
+        { id: 'onboarding', title: 'Employee Data Collection', desc: 'Toggle between Basic (7 fields) and Professional (Enterprise Dossier) modes.', icon: 'how_to_reg', color: '#10b981' },
       ]
     },
     {

@@ -50,16 +50,18 @@ export default function EmployeesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>('Just now');
+  const [onboardingMode, setOnboardingMode] = useState<'BASIC' | 'PROFESSIONAL'>('PROFESSIONAL');
 
   const loadAll = useCallback(async (isManual = false) => {
     if (isManual) setIsSyncing(true);
     else setIsLoading(true);
 
     try {
-      const [empRes, deptRes, desigRes] = await Promise.all([
+      const [empRes, deptRes, desigRes, onboardingRes] = await Promise.all([
         fetch('/api/employees').catch(() => null),
         fetch('/api/departments').catch(() => null),
         fetch('/api/designations').catch(() => null),
+        fetch('/api/settings/onboarding').catch(() => null),
       ]);
 
       if (empRes && empRes.ok) {
@@ -73,6 +75,12 @@ export default function EmployeesPage() {
       if (desigRes && desigRes.ok) {
         const desigData = await desigRes.json();
         setDesignations(Array.isArray(desigData) ? desigData : []);
+      }
+      if (onboardingRes && onboardingRes.ok) {
+        const onboardingData = await onboardingRes.json();
+        if (onboardingData?.mode) {
+          setOnboardingMode(onboardingData.mode);
+        }
       }
 
       const now = new Date();
@@ -88,6 +96,21 @@ export default function EmployeesPage() {
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  // Instant Switcher for Onboarding Mode
+  const handleToggleOnboardingMode = async () => {
+    const newMode = onboardingMode === 'BASIC' ? 'PROFESSIONAL' : 'BASIC';
+    setOnboardingMode(newMode);
+    try {
+      await fetch('/api/settings/onboarding', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: newMode })
+      });
+    } catch (e) {
+      console.error('Failed to sync onboarding mode', e);
+    }
+  };
 
   // Format currency helper
   const formatCurrency = (val: number | string) => {
@@ -205,8 +228,9 @@ export default function EmployeesPage() {
             <div className={styles.livePulseDot} />
             <span className={styles.liveBadgeText}>Live Directory • Master Roster</span>
           </div>
+
           <h1 className={styles.pageTitle}>
-            Employee Directory & Workforce
+            Employee Directory &amp; Workforce
             <span className={styles.titleBadge}>{totalCount} Registered</span>
           </h1>
           <p className={styles.pageSubtitle}>
@@ -240,14 +264,130 @@ export default function EmployeesPage() {
             <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
-          <Link href="/erp/hr/employees/new" className={styles.primaryBtn}>
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-            Add Employee
+          <Link
+            href="/erp/hr/employees/new"
+            className={styles.primaryBtn}
+            style={{
+              background: onboardingMode === 'BASIC'
+                ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                : undefined,
+              boxShadow: onboardingMode === 'BASIC'
+                ? '0 4px 14px rgba(245, 158, 11, 0.35)'
+                : undefined
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+              {onboardingMode === 'BASIC' ? 'bolt' : 'person_add'}
+            </span>
+            <span>Add Employee ({onboardingMode === 'BASIC' ? 'Basic' : 'Pro'})</span>
           </Link>
         </div>
       </header>
 
-      {/* 2. Workforce KPI Metric Cards */}
+      {/* 2. Active Data Intake System Indicator & Settings Router */}
+      <Link
+        href="/erp/settings/onboarding"
+        style={{ textDecoration: 'none' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '14px',
+            padding: '16px 24px',
+            borderRadius: '18px',
+            background: onboardingMode === 'BASIC'
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)'
+              : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%)',
+            border: onboardingMode === 'BASIC'
+              ? '1.5px solid rgba(245, 158, 11, 0.3)'
+              : '1.5px solid rgba(37, 99, 235, 0.3)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          className="hover-lift"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '14px',
+                background: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(37, 99, 235, 0.18)',
+                color: onboardingMode === 'BASIC' ? '#f59e0b' : 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>
+                {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
+              </span>
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                  Select your active data intake system:
+                </span>
+                
+                {/* Active Indicator Badge */}
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    background: onboardingMode === 'BASIC' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                    color: '#ffffff',
+                    boxShadow: onboardingMode === 'BASIC' ? '0 2px 10px rgba(245, 158, 11, 0.4)' : '0 2px 10px rgba(37, 99, 235, 0.4)',
+                    letterSpacing: '0.01em'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                    {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
+                  </span>
+                  <span>{onboardingMode === 'BASIC' ? 'Basic Mode (7 Fields Active)' : 'Professional Mode (Enterprise Dossier Active)'}</span>
+                </span>
+              </div>
+
+              <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                {onboardingMode === 'BASIC'
+                  ? 'Collecting 7 minimal fields: Full Name, Phone, Email, Address, Salary, Join Date, Staff PIN. Click to switch or configure in Settings.'
+                  : 'Collecting complete enterprise records: Personal, Demographics, Education, Experience, Banking, Nominees. Click to switch or configure in Settings.'}
+              </p>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              borderRadius: '12px',
+              background: 'var(--surface-card)',
+              border: '1px solid var(--border-main)',
+              color: onboardingMode === 'BASIC' ? '#d97706' : 'var(--primary)',
+              fontSize: '13px',
+              fontWeight: 700,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+            }}
+          >
+            <span>Configure in Settings</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
+          </div>
+        </div>
+      </Link>
+
+      {/* 3. Workforce KPI Metric Cards */}
       <section className={styles.kpiGrid}>
         {/* Total Workforce */}
         <div className={styles.kpiCard}>

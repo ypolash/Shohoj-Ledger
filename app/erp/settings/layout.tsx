@@ -9,6 +9,7 @@ const navigationGroups = [
     items: [
       { name: 'Settings Hub', href: '/erp/settings', icon: 'settings', exact: true },
       { name: 'Company Profile', href: '/erp/settings/company', icon: 'business', exact: false },
+      { name: 'Onboarding Mode', href: '/erp/settings/onboarding', icon: 'how_to_reg', exact: false },
       { name: 'Branding', href: '/erp/settings/branding', icon: 'palette', exact: false },
     ]
   },

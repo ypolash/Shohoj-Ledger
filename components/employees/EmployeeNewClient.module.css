@@ -1,0 +1,762 @@
+/* ==========================================================================
+   NEW EMPLOYEE / MEMBER ONBOARDING - ENTERPRISE DESIGN SYSTEM
+   ========================================================================== */
+
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Top Bar Header
+   -------------------------------------------------------------------------- */
+.headerCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 20px;
+  padding: 20px 28px;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.headerCard::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-card, #ffffff);
+  color: var(--text-main, #0f172a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background: var(--surface-hover, #f8fafc);
+  border-color: var(--primary, #2563eb);
+  color: var(--primary, #2563eb);
+  transform: translateX(-2px);
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pageTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.statusTag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary, #2563eb);
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cancelBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-card, #ffffff);
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: var(--surface-hover, #f8fafc);
+  color: var(--danger, #ef4444);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Master Two-Column Grid Layout
+   -------------------------------------------------------------------------- */
+.mainLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .mainLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Section Navigation Pills
+   -------------------------------------------------------------------------- */
+.sectionTabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.sectionTabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sectionTabBtn:hover {
+  background: var(--surface-hover, #f8fafc);
+  color: var(--text-main, #0f172a);
+}
+
+.sectionTabBtnActive {
+  background: var(--primary, #2563eb) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   Form Cards & Sections
+   -------------------------------------------------------------------------- */
+.formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  padding-bottom: 16px;
+}
+
+.cardIconBox {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  margin: 0;
+}
+
+.cardSubtitle {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Grids & Form Controls
+   -------------------------------------------------------------------------- */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.requiredAsterisk {
+  color: var(--danger, #ef4444);
+  margin-left: 2px;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted, #94a3b8);
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.inputWithIcon {
+  padding-left: 38px !important;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-input, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: var(--text-main, #0f172a);
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.input:focus {
+  border-color: var(--primary, #2563eb);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.inputHelper {
+  font-size: 11px;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* --------------------------------------------------------------------------
+   Dynamic Repeater Cards (Education & Experience)
+   -------------------------------------------------------------------------- */
+.repeaterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  padding-bottom: 12px;
+}
+
+.repeaterTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.addSmallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary, #2563eb);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addSmallBtn:hover {
+  background: var(--primary, #2563eb);
+  color: #ffffff;
+}
+
+.repeaterItemCard {
+  background: var(--surface-hover, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.removeRepeaterBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.removeRepeaterBtn:hover {
+  color: var(--danger, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   Sticky Live Employee Preview Card (Right Column)
+   -------------------------------------------------------------------------- */
+.previewSticky {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.idBadgeCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 24px;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.idBadgeTopBanner {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  padding: 24px 20px 48px 20px;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.companyWatermark {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chipWatermark {
+  width: 32px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d4af37 0%, #f6e05e 50%, #b7791f 100%);
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.idBadgeAvatarWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: -38px;
+  position: relative;
+  z-index: 2;
+}
+
+.idAvatarCircle {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 4px solid var(--surface-card, #ffffff);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.idBadgeBody {
+  padding: 12px 20px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.idBadgeName {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+  margin: 0;
+}
+
+.idBadgeRole {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary, #2563eb);
+  margin: 0;
+}
+
+.idBadgeEmpCode {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface-hover, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: var(--text-muted, #64748b);
+}
+
+.idBadgeMetaGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-main, #e2e8f0);
+  padding-top: 14px;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+}
+
+.metaLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted, #94a3b8);
+}
+
+.metaValue {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-main, #0f172a);
+  word-break: break-all;
+}
+
+.compensationBox {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(30, 64, 175, 0.02) 100%);
+  border: 1px dashed rgba(37, 99, 235, 0.3);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.compensationLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+
+.compensationAmount {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--success, #10b981);
+}
+
+/* --------------------------------------------------------------------------
+   Onboarding Progress Meter
+   -------------------------------------------------------------------------- */
+.progressCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 6px;
+  background: var(--surface-hover, #f1f5f9);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #10b981);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Floating Bottom Action Bar
+   -------------------------------------------------------------------------- */
+.bottomActionBar {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 20px;
+  padding: 16px 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.bottomLeftHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-muted, #64748b);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Onboarding Mode Switcher Banner
+   -------------------------------------------------------------------------- */
+.modeSwitcherCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 18px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.modeSwitcherLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modeSwitcherGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-hover, #f8fafc);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--border-main, #e2e8f0);
+}
+
+.modeToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  transition: all 0.2s ease;
+}
+
+.modeToggleBtn:hover {
+  color: var(--text-main, #0f172a);
+}
+
+.modeToggleBtnBasicActive {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
+}
+
+.modeToggleBtnProActive {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+}
+
+.badgeBasicPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badgeProPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary, #2563eb);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}

@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: string;
+  exact?: boolean;
+}
+
+const navigation: NavItem[] = [
   { name: 'Dashboard',    href: '/erp/hr',              icon: 'dashboard',    exact: true },
   { name: 'Employees',    href: '/erp/hr/employees',    icon: 'badge',        exact: false },
   { name: 'Members',      href: '/erp/hr/members',      icon: 'groups',       exact: false },
@@ -12,14 +19,24 @@ const navigation = [
   { name: 'Attendance',   href: '/erp/hr/attendance',   icon: 'fact_check',   exact: false },
   { name: 'Leaves',       href: '/erp/hr/leaves',       icon: 'event_busy',   exact: false },
   { name: 'Fines',        href: '/erp/hr/fines',        icon: 'money_off',    exact: false },
+  { name: 'Settings',     href: '/erp/hr/settings',     icon: 'settings',     exact: false },
 ];
 
 /**
  * ERP HR & Payroll Module Layout
- * Provides consistent left-sidebar navigation using the enterprise design system.
+ * Provides consistent top-bar navigation using the enterprise design system.
  */
 export default function HRLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
+
+  const isItemActive = (item: NavItem) => {
+    if (item.exact) {
+      return pathname === item.href;
+    }
+    return pathname.startsWith(item.href);
+  };
+
+  const currentActiveItem = navigation.find(isItemActive);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -29,47 +46,68 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
         <header style={{
           background: 'var(--surface-card)',
           borderRadius: '50px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
           border: '1px solid var(--border-main)',
-          padding: '8px 24px 8px 8px',
+          padding: '4px 12px 4px 4px',
           display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
+          gridTemplateColumns: 'auto 1fr',
           alignItems: 'center',
+          gap: '8px',
         }}>
-          {/* Left Side Pill Box (Title) */}
+          {/* Left Side Pill Box (Title / Section) */}
           <div style={{ 
-            justifySelf: 'start',
+            flexShrink: 0,
             background: 'var(--text-main)', 
             color: 'var(--bg-main)', 
-            padding: '8px 20px', 
+            padding: '6px 14px', 
             borderRadius: '50px',
             display: 'flex', 
             alignItems: 'center', 
-            gap: '8px',
+            gap: '6px',
             fontWeight: 700,
-            fontSize: '15px'
+            fontSize: '13px',
+            whiteSpace: 'nowrap',
           }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>groups</span>
-            HR & Payroll
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>groups</span>
+            <span>HR &amp; Payroll</span>
           </div>
           
           {/* Nav Links (Centered) */}
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '24px', justifyContent: 'center' }}>
+          <nav style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            justifyContent: 'center',
+            flexWrap: 'nowrap',
+            width: '100%',
+          }}>
             {navigation.map((item) => {
-              const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+              const isActive = isItemActive(item);
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   style={{
-                    fontSize: '14px',
+                    fontSize: '12.5px',
                     fontWeight: isActive ? 600 : 500,
                     color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
                     textDecoration: 'none',
-                    transition: 'color 0.2s ease',
+                    transition: 'all 0.15s ease',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    padding: '5px 10px',
+                    borderRadius: '16px',
+                    background: isActive ? 'var(--primary-glow, rgba(59, 130, 246, 0.12))' : 'transparent',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
                   }}
                 >
-                  {item.name}
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                    {item.icon}
+                  </span>
+                  <span>{item.name}</span>
                 </Link>
               );
             })}

@@ -16,7 +16,8 @@ data class LeaveApplyRequest(
     @SerializedName("type") val type: String,
     @SerializedName("startDate") val startDate: String,
     @SerializedName("endDate") val endDate: String,
-    @SerializedName("reason") val reason: String
+    @SerializedName("reason") val reason: String,
+    @SerializedName("employeeId") val employeeId: String? = null
 )
 
 data class LeaveListResponse(

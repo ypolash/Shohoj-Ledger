@@ -35,7 +35,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const userId = employee.userId as string;
 
     const existing = await prisma.notification.findFirst({
-      where: { id, companyId: employee.companyId, userId }
+      where: { id, companyId: employee.companyId || undefined, userId }
     });
 
     if (!existing) {
@@ -50,7 +50,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     if (status === "READ" && existing.status === "UNREAD") {
       await prisma.notificationAudit.create({
         data: {
-          companyId: employee.companyId,
+          companyId: employee.companyId || "",
           action: "READ",
           entityType: "NOTIFICATION",
           entityId: id,

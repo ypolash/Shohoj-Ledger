@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const secretKey = process.env.JWT_SECRET;
 const key = new TextEncoder().encode(secretKey || "development_secret_only");
@@ -10,12 +10,12 @@ function ensureSecretKey() {
   }
 }
 
-export async function encrypt(payload: any) {
+export async function encrypt(payload: any, expiresIn: string = "30d") {
   ensureSecretKey();
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("24h")
+    .setExpirationTime(expiresIn)
     .sign(key);
 }
 
@@ -31,24 +31,44 @@ export async function decrypt(input: string): Promise<any> {
   }
 }
 
-export async function createSession(user: any) {
-  // Create the session
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const session = await encrypt({ user, expires });
+export async function createSession(user: any, days: number = 30) {
+  // Create the session (default 30 days for mobile compatibility)
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  const session = await encrypt({ user, expires }, `${days}d`);
 
   // Save the session in a cookie
-  (await cookies()).set("session", session, {
-    expires,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  try {
+    (await cookies()).set("session", session, {
+      expires,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+  } catch (e) {
+    // cookies() might not be mutable in some execution contexts
+  }
+
+  return session;
 }
 
 export async function getSession() {
   try {
-    const session = (await cookies()).get("session")?.value;
+    let session = (await cookies()).get("session")?.value;
+
+    // If no cookie, attempt to read Authorization: Bearer <token>
+    if (!session) {
+      try {
+        const headerList = await headers();
+        const authHeader = headerList.get("authorization") || headerList.get("Authorization");
+        if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+          session = authHeader.slice(7).trim();
+        }
+      } catch (hErr) {
+        // Headers might not be available in all contexts
+      }
+    }
+
     if (!session) return null;
     return await decrypt(session);
   } catch (e) {

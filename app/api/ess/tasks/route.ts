@@ -1,32 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
 
 /**
- * Resolves the current employee's record from session.
+ * OPTIONS /api/ess/tasks
  */
-async function resolveEmployee(session: any) {
-  const { id, loginType, companyId } = session.user;
-  if (loginType === "EMPLOYEE") {
-    return prisma.employee.findFirst({ where: { id, companyId } });
-  }
-  return prisma.employee.findFirst({ where: { userId: id, companyId } });
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
 }
 
 /**
  * GET /api/ess/tasks
  * Returns tasks assigned to the authenticated employee.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const employee = await resolveEmployee(session);
+    const employee = await resolveEssEmployee(request);
     if (!employee) {
-      return NextResponse.json({ error: "Employee record not found." }, { status: 404 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: ESS_CORS_HEADERS });
     }
 
     const tasks = await prisma.task.findMany({

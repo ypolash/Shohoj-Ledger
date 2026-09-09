@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 class ApiClient(private val context: Context) {
 
-    private val sessionManager = SessionManager(context)
+    val sessionManager = SessionManager(context)
     val cookieJar = SessionCookieJar(context)
 
     private var currentBaseUrl: String = sessionManager.baseUrl
@@ -25,6 +25,17 @@ class ApiClient(private val context: Context) {
         // Pass authorization token if available
         sessionManager.token?.let { token ->
             requestBuilder.header("Authorization", "Bearer $token")
+        }
+
+        // Pass employee identification headers for robust server auth
+        sessionManager.employeeId?.let { empId ->
+            requestBuilder.header("x-employee-id", empId)
+        }
+        sessionManager.getEmployee()?.let { emp ->
+            requestBuilder.header("x-employee-db-id", emp.id)
+            if (sessionManager.employeeId == null) {
+                requestBuilder.header("x-employee-id", emp.employeeId)
+            }
         }
 
         requestBuilder.header("Accept", "application/json")

@@ -42,7 +42,7 @@ class ShohojStaffApp : Application() {
 
         authRepository = AuthRepository(apiClient, sessionManager)
         attendanceRepository = AttendanceRepository(apiClient, sessionManager)
-        leaveRepository = LeaveRepository(apiClient)
+        leaveRepository = LeaveRepository(apiClient, sessionManager)
         payrollRepository = PayrollRepository(apiClient)
         taskRepository = TaskRepository(apiClient, sessionManager)
         announcementRepository = AnnouncementRepository(apiClient)

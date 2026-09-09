@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
 import { calculateAttendanceStatus } from "@/lib/attendance";
+import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
 
 /**
- * Resolves the current employee's ID and companyId from session.
- * Supports both EMPLOYEE and ADMIN logins with linked employee records.
+ * OPTIONS /api/ess/attendance
  */
-async function resolveEmployee(session: any) {
-  const { id, loginType, companyId } = session.user;
-  if (loginType === "EMPLOYEE") {
-    return prisma.employee.findFirst({ where: { id, companyId } });
-  }
-  return prisma.employee.findFirst({ where: { userId: id, companyId } });
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
 }
 
 /**
@@ -22,14 +17,9 @@ async function resolveEmployee(session: any) {
  */
 export async function GET(request: Request) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const employee = await resolveEmployee(session);
+    const employee = await resolveEssEmployee(request);
     if (!employee) {
-      return NextResponse.json({ error: "Employee record not found." }, { status: 404 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: ESS_CORS_HEADERS });
     }
 
     const { searchParams } = new URL(request.url);
@@ -82,17 +72,11 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const employee = await resolveEmployee(session);
+    const body = await request.json().catch(() => ({}));
+    const employee = await resolveEssEmployee(request, body);
     if (!employee) {
-      return NextResponse.json({ error: "Employee record not found." }, { status: 404 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: ESS_CORS_HEADERS });
     }
-
-    const body = await request.json();
     const { action, location, latitude, longitude, ssid, bssid } = body;
 
     if (!action || !["CLOCK_IN", "CLOCK_OUT"].includes(action)) {

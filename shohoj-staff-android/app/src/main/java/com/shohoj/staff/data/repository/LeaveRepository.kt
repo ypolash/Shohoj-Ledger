@@ -1,6 +1,7 @@
 package com.shohoj.staff.data.repository
 
 import com.shohoj.staff.data.api.ApiClient
+import com.shohoj.staff.data.local.SessionManager
 import com.shohoj.staff.data.model.LeaveApplyRequest
 import com.shohoj.staff.data.model.LeaveBalance
 import com.shohoj.staff.data.model.LeaveItem
@@ -8,11 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class LeaveRepository(
-    private val apiClient: ApiClient
+    private val apiClient: ApiClient,
+    private val sessionManager: SessionManager? = null
 ) {
     suspend fun getLeaves(): Result<List<LeaveItem>> = withContext(Dispatchers.IO) {
         try {
-            val response = apiClient.getService().getLeaves()
+            val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
+            val response = apiClient.getService().getLeaves(empId)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.leaves)
             } else {
@@ -31,19 +34,32 @@ class LeaveRepository(
         reason: String
     ): Result<LeaveItem> = withContext(Dispatchers.IO) {
         try {
+            val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
             val request = LeaveApplyRequest(
                 type = type,
                 startDate = startDate,
                 endDate = endDate,
-                reason = reason
+                reason = reason,
+                employeeId = empId
             )
+
+            // 1. Try standard ESS endpoint
             val response = apiClient.getService().applyLeave(request)
             if (response.isSuccessful && response.body()?.leave != null) {
-                Result.success(response.body()!!.leave!!)
-            } else {
-                val err = response.body()?.error ?: response.errorBody()?.string() ?: "Failed to submit leave"
-                Result.failure(Exception(err))
+                return@withContext Result.success(response.body()!!.leave!!)
             }
+
+            // 2. Try mobile dedicated leave endpoint as fallback
+            val mobileResponse = apiClient.getService().applyLeaveMobile(request)
+            if (mobileResponse.isSuccessful && mobileResponse.body()?.leave != null) {
+                return@withContext Result.success(mobileResponse.body()!!.leave!!)
+            }
+
+            val err = response.body()?.error
+                ?: mobileResponse.body()?.error
+                ?: response.errorBody()?.string()
+                ?: "Failed to submit leave"
+            Result.failure(Exception(err))
         } catch (e: Exception) {
             Result.failure(e)
         }

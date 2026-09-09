@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { createSession } from "@/lib/session";
+import { getCompanyContext } from "@/lib/auth/getCompanyContext";
 
 /** CORS headers required for Android / mobile HTTP clients */
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-employee-id, x-employee-db-id",
 };
 
 /**
@@ -20,25 +22,32 @@ export async function OPTIONS() {
 /**
  * POST /api/mobile/login
  * Mobile login endpoint used by the Android (Shohoj Staff) app.
- * Accepts employeeId (e.g. "EMP-1001") and password.
+ * Accepts employeeId (e.g. "EMP-1001" or email) and password.
  */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { employeeId, password } = body;
+    const rawIdentifier = (body.employeeId || body.email)?.trim();
+    const { password } = body;
 
-    if (!employeeId || !password) {
+    if (!rawIdentifier || !password) {
       return NextResponse.json(
         { success: false, message: "Employee ID and password are required" },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { employeeId: rawIdentifier },
+          { email: rawIdentifier.toLowerCase() },
+          { id: rawIdentifier },
+        ],
+      },
     });
 
-    console.log("[Mobile Login] employeeId received:", employeeId);
+    console.log("[Mobile Login] rawIdentifier received:", rawIdentifier);
     console.log("[Mobile Login] Employee found:", !!employee);
 
     let passwordMatch = false;
@@ -54,17 +63,34 @@ export async function POST(req: Request) {
     console.log("[Mobile Login] Password match:", passwordMatch);
 
     if (employee && passwordMatch) {
-      return NextResponse.json(
+      // 1. Resolve company context
+      const context = await getCompanyContext(employee.id, "EMPLOYEE");
+
+      // 2. Prepare user payload for session
+      const userPayload = {
+        id: employee.id,
+        employeeId: employee.employeeId,
+        email: employee.email,
+        name: `${employee.firstName} ${employee.lastName}`.trim(),
+        loginType: "EMPLOYEE",
+        role: context.dbRoleName || "Employee",
+        ...context,
+      };
+
+      // 3. Create session & generate JWT
+      const sessionToken = await createSession(userPayload, 30);
+
+      const res = NextResponse.json(
         {
           success: true,
-          token: "demo-token-123", // Added for Android compatibility
-          userId: employee.id,    // Added for Android compatibility
-          name: `${employee.firstName} ${employee.lastName}`, // Added for Android compatibility
-          email: employee.email,   // Added for Android compatibility
+          token: sessionToken,
+          userId: employee.id,
+          name: `${employee.firstName} ${employee.lastName}`.trim(),
+          email: employee.email,
           employee: {
             id: employee.id,
             employeeId: employee.employeeId,
-            name: `${employee.firstName} ${employee.lastName}`,
+            name: `${employee.firstName} ${employee.lastName}`.trim(),
             email: employee.email,
             phone: employee.phone ?? null,
             designation: employee.designation || "Employee",
@@ -72,9 +98,21 @@ export async function POST(req: Request) {
             status: employee.status,
             companyId: employee.companyId ?? null,
           },
+          user: userPayload,
         },
         { headers: CORS_HEADERS }
       );
+
+      // Set cookie directly on response for Android SessionCookieJar
+      res.cookies.set("session", sessionToken, {
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+
+      return res;
     }
 
     return NextResponse.json(

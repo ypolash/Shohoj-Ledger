@@ -1,49 +1,39 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
+
+/**
+ * OPTIONS /api/ess/profile
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
+}
 
 /**
  * GET /api/ess/profile
  * Returns the authenticated employee's own profile.
  * Used exclusively by the Staff App mobile portal.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const rawEmployee = await resolveEssEmployee(request);
+    if (!rawEmployee) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: ESS_CORS_HEADERS });
     }
 
-    const { id, loginType, companyId } = session.user;
-
-    // Resolve employee record
-    let employee;
-    if (loginType === "EMPLOYEE") {
-      // Logged in directly as employee
-      employee = await prisma.employee.findFirst({
-        where: { id, companyId },
-        include: {
-          departmentRef: { select: { name: true } },
-          designationRef: { select: { name: true } },
-          reportingManager: { select: { firstName: true, lastName: true } },
-        },
-      });
-    } else {
-      // ADMIN logged in — find linked employee record via userId
-      employee = await prisma.employee.findFirst({
-        where: { userId: id, companyId },
-        include: {
-          departmentRef: { select: { name: true } },
-          designationRef: { select: { name: true } },
-          reportingManager: { select: { firstName: true, lastName: true } },
-        },
-      });
-    }
+    const employee = await prisma.employee.findFirst({
+      where: { id: rawEmployee.id },
+      include: {
+        departmentRef: { select: { name: true } },
+        designationRef: { select: { name: true } },
+        reportingManager: { select: { firstName: true, lastName: true } },
+      },
+    });
 
     if (!employee) {
       return NextResponse.json(
         { error: "No employee record linked to this account." },
-        { status: 404 }
+        { status: 404, headers: ESS_CORS_HEADERS }
       );
     }
 

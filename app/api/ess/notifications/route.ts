@@ -35,13 +35,13 @@ export async function GET(request: Request) {
     const userId = employee.userId as string;
 
     const notifications = await prisma.notification.findMany({
-      where: { companyId: employee.companyId, userId },
+      where: { companyId: employee.companyId || undefined, userId },
       orderBy: { createdAt: "desc" },
       take: limit,
     });
 
     const unreadCount = await prisma.notification.count({
-      where: { companyId: employee.companyId, userId, status: "UNREAD" }
+      where: { companyId: employee.companyId || undefined, userId, status: "UNREAD" }
     });
 
     return NextResponse.json({ notifications, unreadCount });

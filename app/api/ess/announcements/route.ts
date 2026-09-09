@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/session";
+import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
+
+/**
+ * OPTIONS /api/ess/announcements
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
+}
 
 /**
  * GET /api/ess/announcements
- * Returns company-wide announcements (mocked via company info for now).
- * In V2, this can be wired to a dedicated Announcement model.
+ * Returns company-wide announcements.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const employee = await resolveEssEmployee(request);
+    if (!employee) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: ESS_CORS_HEADERS });
     }
 
-    const { companyId } = session.user;
+    const { companyId } = employee;
 
     // Currently using a placeholder since there's no Announcement model yet.
     // When a proper Announcement model is added, replace this with:

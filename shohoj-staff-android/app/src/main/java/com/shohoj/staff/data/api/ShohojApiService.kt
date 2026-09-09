@@ -58,10 +58,17 @@ interface ShohojApiService {
     // --- Leave Management ---
 
     @GET("api/ess/leave")
-    suspend fun getLeaves(): Response<LeaveListResponse>
+    suspend fun getLeaves(
+        @Query("employeeId") employeeId: String? = null
+    ): Response<LeaveListResponse>
 
     @POST("api/ess/leave")
     suspend fun applyLeave(
+        @Body request: LeaveApplyRequest
+    ): Response<LeaveApplyResponse>
+
+    @POST("api/mobile/leave")
+    suspend fun applyLeaveMobile(
         @Body request: LeaveApplyRequest
     ): Response<LeaveApplyResponse>
 

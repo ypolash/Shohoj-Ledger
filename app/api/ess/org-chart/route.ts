@@ -29,7 +29,7 @@ export async function GET() {
       return NextResponse.json({ error: "Employee record not found." }, { status: 404 });
     }
 
-    const companyId = employee.companyId;
+    const companyId = employee.companyId || undefined;
 
     const [departments, employees] = await Promise.all([
       prisma.department.findMany({

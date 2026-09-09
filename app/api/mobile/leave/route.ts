@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
 
 /**
- * OPTIONS /api/ess/leave
+ * OPTIONS /api/mobile/leave
  * CORS preflight for mobile HTTP clients.
  */
 export async function OPTIONS() {
@@ -11,14 +11,13 @@ export async function OPTIONS() {
 }
 
 /**
- * GET /api/ess/leave
- * Returns the authenticated employee's own leave requests.
+ * GET /api/mobile/leave
+ * Returns leave requests for the employee.
  */
 export async function GET(request: Request) {
   try {
     const employee = await resolveEssEmployee(request);
     if (!employee) {
-      console.warn("[ESS] Leave GET: Unauthorized request");
       return NextResponse.json(
         { error: "Unauthorized. Please log in to view leave records." },
         { status: 401, headers: ESS_CORS_HEADERS }
@@ -30,9 +29,9 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ leaves }, { headers: ESS_CORS_HEADERS });
+    return NextResponse.json({ success: true, leaves }, { headers: ESS_CORS_HEADERS });
   } catch (error) {
-    console.error("[ESS] Leave fetch error:", error);
+    console.error("[Mobile Leave] fetch error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500, headers: ESS_CORS_HEADERS }
@@ -41,9 +40,8 @@ export async function GET(request: Request) {
 }
 
 /**
- * POST /api/ess/leave
- * Apply for leave as the authenticated employee.
- * Body: { type, startDate, endDate, reason, employeeId? }
+ * POST /api/mobile/leave
+ * Apply for leave from mobile staff app.
  */
 export async function POST(request: Request) {
   try {
@@ -56,7 +54,6 @@ export async function POST(request: Request) {
 
     const employee = await resolveEssEmployee(request, body);
     if (!employee) {
-      console.warn("[ESS] Leave POST: Unauthorized attempt to apply leave");
       return NextResponse.json(
         { error: "Unauthorized. Please log in to apply for leave." },
         { status: 401, headers: ESS_CORS_HEADERS }
@@ -81,19 +78,16 @@ export async function POST(request: Request) {
         endDate: new Date(endDate),
         reason,
         status: "PENDING",
-        systemSource: employee.systemSource || "LEGACY",
+        systemSource: employee.systemSource || "MOBILE",
       },
     });
 
-    console.log(`[ESS] Leave application created for employee ${employee.employeeId || employee.id} (ID: ${leave.id})`);
-
     return NextResponse.json({ success: true, leave }, { status: 201, headers: ESS_CORS_HEADERS });
   } catch (error) {
-    console.error("[ESS] Leave apply error:", error);
+    console.error("[Mobile Leave] apply error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500, headers: ESS_CORS_HEADERS }
     );
   }
 }
-

@@ -68,7 +68,9 @@ export async function POST(req: Request) {
     const checkInTime = existingAttendance.checkInTime;
     const totalWorkingMinutes = Math.floor((serverTime.getTime() - checkInTime.getTime()) / 60000);
 
-    await prisma.attendance.update({
+    const systemSource = employee.systemSource || existingAttendance.systemSource || "ERP";
+
+    const updatedAttendance = await prisma.attendance.update({
       where: { id: existingAttendance.id },
       data: {
         checkOutTime: serverTime,
@@ -78,13 +80,30 @@ export async function POST(req: Request) {
         wifiSsid,
         wifiBssid,
         totalWorkingMinutes,
+        systemSource,
+        companyId: employee.companyId || existingAttendance.companyId,
       },
     });
+
+    const checkInTimeIso = updatedAttendance.checkInTime ? updatedAttendance.checkInTime.toISOString() : null;
+    const checkOutTimeIso = updatedAttendance.checkOutTime ? updatedAttendance.checkOutTime.toISOString() : serverTime.toISOString();
 
     return NextResponse.json({
       success: true,
       message: "Check-out successful",
       serverTime: serverTime.toISOString(),
+      record: {
+        id: updatedAttendance.id,
+        employeeId: employee.employeeId,
+        date: updatedAttendance.date.toISOString(),
+        checkInTime: checkInTimeIso,
+        checkOutTime: checkOutTimeIso,
+        status: updatedAttendance.status,
+        totalWorkingMinutes,
+        lateMinutes: updatedAttendance.lateMinutes,
+        isLate: updatedAttendance.isLate,
+        isCheckedIn: false,
+      },
     });
 
   } catch (error) {

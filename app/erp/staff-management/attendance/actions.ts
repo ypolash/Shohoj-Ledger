@@ -29,7 +29,7 @@ export async function fetchAttendance(dateStr?: string) {
   return await prisma.attendance.findMany({
     where: {
       companyId,
-      systemSource: "ERP",
+      systemSource: { in: ["ERP", "LEGACY", "APP"] },
       date: {
         gte: startOfDay,
         lte: endOfDay
@@ -58,7 +58,7 @@ export async function attendanceHistory(employeeId: string, limit: number = 30) 
   return await prisma.attendance.findMany({
     where: {
       companyId,
-      systemSource: "ERP",
+      systemSource: { in: ["ERP", "LEGACY", "APP"] },
       employeeId
     },
     orderBy: { date: "desc" },
@@ -77,7 +77,7 @@ export async function attendanceSummary(employeeId?: string, monthOffset: number
 
   const whereClause: any = {
     companyId,
-    systemSource: "ERP",
+    systemSource: { in: ["ERP", "LEGACY", "APP"] },
     date: {
       gte: startOfMonth,
       lte: endOfMonth
@@ -111,9 +111,9 @@ export async function attendanceStatistics() {
   endOfDay.setUTCHours(23,59,59,999);
 
   const [totalEmployees, todayRecords] = await Promise.all([
-    prisma.employee.count({ where: { companyId, systemSource: "ERP", status: "ACTIVE" } }),
+    prisma.employee.count({ where: { companyId, status: "ACTIVE" } }),
     prisma.attendance.findMany({
-      where: { companyId, systemSource: "ERP", date: { gte: today, lte: endOfDay } }
+      where: { companyId, systemSource: { in: ["ERP", "LEGACY", "APP"] }, date: { gte: today, lte: endOfDay } }
     })
   ]);
 

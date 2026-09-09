@@ -108,8 +108,11 @@ export async function POST(request: Request) {
     let lateMinutes = calc.lateMinutes;
     let isLate = calc.isLate;
 
+    const systemSource = employee.systemSource || "ERP";
+
+    let record;
     if (existingAttendance) {
-      await prisma.attendance.update({
+      record = await prisma.attendance.update({
         where: { id: existingAttendance.id },
         data: {
           checkInTime: serverTime,
@@ -121,10 +124,11 @@ export async function POST(request: Request) {
           status,
           isLate,
           lateMinutes,
+          systemSource,
         },
       });
     } else {
-      await prisma.attendance.create({
+      record = await prisma.attendance.create({
         data: {
           employeeId: employee.id,
           date: today,
@@ -137,17 +141,31 @@ export async function POST(request: Request) {
           status,
           isLate,
           lateMinutes,
-          companyId: employee.companyId
+          companyId: employee.companyId,
+          systemSource,
         },
       });
     }
+
+    const checkInTimeIso = record.checkInTime ? record.checkInTime.toISOString() : serverTime.toISOString();
 
     return NextResponse.json({
       success: true,
       message: "Check-in successful",
       serverTime: serverTime.toISOString(),
       status,
-      lateMinutes
+      lateMinutes,
+      record: {
+        id: record.id,
+        employeeId: employee.employeeId,
+        date: record.date ? record.date.toISOString() : today.toISOString(),
+        checkInTime: checkInTimeIso,
+        checkOutTime: record.checkOutTime ? record.checkOutTime.toISOString() : null,
+        status,
+        lateMinutes,
+        isLate,
+        isCheckedIn: true,
+      },
     });
 
   } catch (error) {

@@ -4,11 +4,6 @@ import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
-    const session = await getSession();
-    if (!session || !session.user) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
 
@@ -19,13 +14,11 @@ export async function GET(req: Request) {
       );
     }
 
-    if (session.user.loginType === "EMPLOYEE" && session.user.employeeId !== employeeId) {
+    // If browser session exists, enforce employee ownership
+    const session = await getSession();
+    if (session?.user && session.user.loginType === "EMPLOYEE" && session.user.employeeId && session.user.employeeId !== employeeId) {
       return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
-
-    const serverTime = new Date();
-    const dateStr = serverTime.toISOString().split("T")[0];
-    const today = new Date(dateStr);
 
     const employee = await prisma.employee.findUnique({
       where: { employeeId },
@@ -38,13 +31,40 @@ export async function GET(req: Request) {
       );
     }
 
-    const isFriday = today.getDay() === 5;
+    const serverTime = new Date();
+    const dhakaTimeString = serverTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+    const currentDhakaTime = new Date(dhakaTimeString);
+
+    const dateStr = currentDhakaTime.getFullYear() + "-" +
+                    String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
+                    String(currentDhakaTime.getDate()).padStart(2, '0');
+    const today = new Date(dateStr);
+    const utcDateStr = serverTime.toISOString().split("T")[0];
+    const utcToday = new Date(utcDateStr);
+
+    const isFriday = currentDhakaTime.getDay() === 5;
+
+    // Look for today's attendance matching either Dhaka date, UTC date, or today's timestamp range
+    const startOfServerDay = new Date(serverTime);
+    startOfServerDay.setHours(0, 0, 0, 0);
+    const endOfServerDay = new Date(serverTime);
+    endOfServerDay.setHours(23, 59, 59, 999);
 
     const attendance = await prisma.attendance.findFirst({
       where: {
         employeeId: employee.id,
-        date: today,
+        OR: [
+          { date: today },
+          { date: utcToday },
+          {
+            checkInTime: {
+              gte: startOfServerDay,
+              lte: endOfServerDay,
+            },
+          },
+        ],
       },
+      orderBy: { createdAt: "desc" },
     });
 
     let currentStatus = attendance?.status;
@@ -52,11 +72,25 @@ export async function GET(req: Request) {
       currentStatus = isFriday ? "WEEKLY_OFF" : "PENDING";
     }
 
+    const checkInTimeIso = attendance?.checkInTime ? attendance.checkInTime.toISOString() : null;
+    const checkOutTimeIso = attendance?.checkOutTime ? attendance.checkOutTime.toISOString() : null;
+
     return NextResponse.json({
       success: true,
-      checkInTime: attendance?.checkInTime || null,
-      checkOutTime: attendance?.checkOutTime || null,
+      checkInTime: checkInTimeIso,
+      checkOutTime: checkOutTimeIso,
       status: currentStatus,
+      record: attendance ? {
+        id: attendance.id,
+        employeeId: employee.employeeId,
+        date: attendance.date.toISOString(),
+        checkInTime: checkInTimeIso,
+        checkOutTime: checkOutTimeIso,
+        status: currentStatus,
+        lateMinutes: attendance.lateMinutes,
+        isLate: attendance.isLate,
+        isCheckedIn: !!attendance.checkInTime && !attendance.checkOutTime,
+      } : null,
     });
 
   } catch (error) {
@@ -67,3 +101,4 @@ export async function GET(req: Request) {
     );
   }
 }
+

@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Shohoj Staff</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="sign_in_subtext">Sign in to your employee portal</string>
+    <string name="employee_id_hint">Employee ID (e.g. EMP-1001)</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Sign In</string>
+    <string name="clock_in">Clock In</string>
+    <string name="clock_out">Clock Out</string>
+    <string name="attendance">Attendance</string>
+    <string name="leave">Leave</string>
+    <string name="payroll">Payroll</string>
+    <string name="tasks">Tasks</string>
+    <string name="announcements">Notices</string>
+    <string name="profile">Profile</string>
+</resources>

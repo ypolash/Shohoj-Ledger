@@ -22,20 +22,22 @@ export async function GET(request: Request) {
   try {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+    const companyFilter = await withCompany();
 
-    if (employeeId) {
-      const attendances = await prisma.attendance.findMany({
-        where: { ...(await withCompany()), systemSource, employeeId },
-        orderBy: { date: 'desc' }
-      });
-      return NextResponse.json(attendances);
-    } else {
-      const attendances = await prisma.attendance.findMany({
-        where: { ...(await withCompany()), systemSource },
-        orderBy: { date: 'desc' }
-      });
-      return NextResponse.json(attendances);
-    }
+    // Include company attendances across ERP, mobile app, and legacy sources
+    const whereClause: any = {
+      OR: [
+        { ...companyFilter, systemSource: { in: [systemSource, "ERP", "LEGACY", "APP"] } },
+        { employee: companyFilter, systemSource: { in: [systemSource, "ERP", "LEGACY", "APP"] } }
+      ],
+      ...(employeeId ? { employeeId } : {})
+    };
+
+    const attendances = await prisma.attendance.findMany({
+      where: whereClause,
+      orderBy: { date: 'desc' }
+    });
+    return NextResponse.json(attendances);
   } catch (error) {
     console.error('Failed to fetch attendance:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

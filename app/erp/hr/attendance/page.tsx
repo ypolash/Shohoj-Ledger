@@ -51,6 +51,14 @@ const EMPTY_NETWORK_FORM = {
   isActive: true,
 };
 
+const formatDisplayTime = (val?: string | null) => {
+  if (!val || val === '—') return '—';
+  if (/^\d{1,2}:\d{2}(\s?[AP]M)?$/i.test(val.trim())) return val;
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return val;
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 /**
  * ERP HR — Redesigned Attendance & Daily Shift Telemetry Hub
  * Enterprise attendance tracking with live operational metrics, multi-dimensional filters,
@@ -197,10 +205,16 @@ export default function AttendancePage() {
   }, [employees]);
 
   // Derived metrics
-  const todayStr = new Date().toISOString().slice(0, 10);
   const todayRecords = useMemo(() => {
-    return records.filter(r => r.date && r.date.slice(0, 10) === todayStr);
-  }, [records, todayStr]);
+    const today = new Date();
+    const todayLocalStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayUtcStr = today.toISOString().slice(0, 10);
+    return records.filter(r => {
+      if (!r.date && !r.checkInTime) return false;
+      const dStr = (r.date || r.checkInTime || '').slice(0, 10);
+      return dStr === todayLocalStr || dStr === todayUtcStr;
+    });
+  }, [records]);
 
   const presentCount = records.filter(r => r.status === 'PRESENT').length;
   const lateCount = records.filter(r => r.status === 'LATE' || (r.lateMinutes && r.lateMinutes > 0)).length;
@@ -271,8 +285,8 @@ export default function AttendancePage() {
         emp?.employeeId || '',
         r.date ? new Date(r.date).toLocaleDateString() : '',
         r.status,
-        r.checkIn || r.checkInTime || '',
-        r.checkOut || r.checkOutTime || '',
+        formatDisplayTime(r.checkIn || r.checkInTime),
+        formatDisplayTime(r.checkOut || r.checkOutTime),
         r.lateMinutes || 0,
       ];
     });
@@ -749,14 +763,14 @@ export default function AttendancePage() {
                       <td className={styles.tableCell}>
                         <span className={styles.timeBadge}>
                           <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
-                          {checkIn}
+                          {formatDisplayTime(checkIn)}
                         </span>
                       </td>
 
                       <td className={styles.tableCell}>
                         <span className={styles.timeBadge}>
                           <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
-                          {checkOut}
+                          {formatDisplayTime(checkOut)}
                         </span>
                       </td>
 

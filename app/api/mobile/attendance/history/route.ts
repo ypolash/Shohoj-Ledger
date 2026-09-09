@@ -4,11 +4,6 @@ import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
   try {
-    const session = await getSession();
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
 
@@ -19,7 +14,9 @@ export async function GET(req: Request) {
       );
     }
 
-    if (session.user.loginType === "EMPLOYEE" && session.user.employeeId !== employeeId) {
+    // If browser session exists, enforce employee ownership
+    const session = await getSession();
+    if (session?.user && session.user.loginType === "EMPLOYEE" && session.user.employeeId && session.user.employeeId !== employeeId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -36,7 +33,7 @@ export async function GET(req: Request) {
 
     const attendances = await prisma.attendance.findMany({
       where: { employeeId: employee.id },
-      orderBy: { checkInTime: "desc" },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       take: 30,
     });
 
@@ -50,12 +47,14 @@ export async function GET(req: Request) {
       return {
         id: record.id,
         employeeId: employee.employeeId,
-        checkInTime: record.checkInTime,
-        checkOutTime: record.checkOutTime,
+        date: record.date ? record.date.toISOString() : null,
+        checkInTime: record.checkInTime ? record.checkInTime.toISOString() : null,
+        checkOutTime: record.checkOutTime ? record.checkOutTime.toISOString() : null,
+        status: record.status,
         totalWorkingMinutes,
-        isLate: record.isLate || record.status === "LATE" || record.lateMinutes > 0,
-        lateMinutes: record.lateMinutes,
-        createdAt: record.createdAt,
+        isLate: record.isLate || record.status === "LATE" || (record.lateMinutes || 0) > 0,
+        lateMinutes: record.lateMinutes || 0,
+        createdAt: record.createdAt ? record.createdAt.toISOString() : null,
       };
     });
 
@@ -68,3 +67,4 @@ export async function GET(req: Request) {
     );
   }
 }
+

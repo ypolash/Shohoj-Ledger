@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { createEmployee } from "@/app/erp/staff-management/employees/actions";
 
 export default function EmployeeNewClient({ isMember = false }: { isMember?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname() || '';
   
   const [departments, setDepartments] = useState<any[]>([]);
   const [designations, setDesignations] = useState<any[]>([]);
@@ -73,9 +74,17 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
       
       alert(isMember ? "Member created successfully!" : "Employee created successfully!");
       if (isMember) {
-        router.push('/dashboard/staff-management/members');
+        if (pathname.includes('/staff-management')) {
+          router.push('/erp/staff-management/employees');
+        } else {
+          router.push('/erp/hr/members');
+        }
       } else {
-        router.push('/dashboard/staff-management/employees');
+        if (pathname.includes('/staff-management')) {
+          router.push('/erp/staff-management/employees');
+        } else {
+          router.push('/erp/hr/employees');
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to create profile.");

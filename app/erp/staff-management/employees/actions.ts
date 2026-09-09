@@ -128,6 +128,7 @@ export async function createEmployee(data: any) {
     });
 
     revalidatePath("/erp/staff-management/employees");
+    revalidatePath("/erp/hr/employees");
     return JSON.parse(JSON.stringify(employee));
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -177,6 +178,7 @@ export async function updateEmployee(id: string, data: any) {
     }
 
     revalidatePath("/erp/staff-management/employees");
+    revalidatePath("/erp/hr/employees");
     return { success: true };
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -207,5 +209,6 @@ export async function deleteEmployee(id: string) {
   }
 
   revalidatePath("/erp/staff-management/employees");
+  revalidatePath("/erp/hr/employees");
   return { success: true };
 }

@@ -73,7 +73,7 @@ export default function EmployeesPageClient() {
   };
 
   const openAddModal = () => {
-    router.push('/dashboard/staff-management/employees/new');
+    router.push('/erp/staff-management/employees/new');
   };
 
   const openEditModal = (emp: any) => {

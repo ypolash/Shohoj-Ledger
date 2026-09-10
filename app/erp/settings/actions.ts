@@ -90,6 +90,28 @@ export async function updateSettings(data: any) {
     }
   });
 
+  // Synchronize AttendanceConfig so HR Attendance engine remains in lockstep
+  const config = await prisma.attendanceConfig.findFirst({ where: { companyId } });
+  if (config) {
+    await prisma.attendanceConfig.update({
+      where: { id: config.id },
+      data: {
+        shiftStart: data.shiftStartTime || config.shiftStart,
+        shiftEnd: data.shiftEndTime || config.shiftEnd,
+        gracePeriod: parseInt(data.gracePeriodMinutes) || config.gracePeriod,
+      }
+    });
+  } else {
+    await prisma.attendanceConfig.create({
+      data: {
+        companyId,
+        shiftStart: data.shiftStartTime || "09:30",
+        shiftEnd: data.shiftEndTime || "18:00",
+        gracePeriod: parseInt(data.gracePeriodMinutes) || 15,
+      }
+    });
+  }
+
   revalidatePath("/erp/settings");
   return { success: true };
 }

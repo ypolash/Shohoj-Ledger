@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calculateAttendanceStatus } from "@/lib/attendance";
+import { calculateAttendanceStatus, calculateEarlyLeaveStatus } from "@/lib/attendance";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
 
 /**
@@ -151,9 +151,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Already clocked out today." }, { status: 400 });
     }
 
+    const earlyCalc = await calculateEarlyLeaveStatus(
+      employee.companyId || todayRecord.companyId || "",
+      employee.id,
+      now
+    );
+    const totalWorkingMinutes = Math.floor((now.getTime() - todayRecord.checkInTime.getTime()) / 60000);
+
     const record = await prisma.attendance.update({
       where: { id: todayRecord.id },
-      data: { checkOutTime: now, checkOutLocation: locationString },
+      data: {
+        checkOutTime: now,
+        checkOutLocation: locationString,
+        earlyLeaveMinutes: earlyCalc.earlyLeaveMinutes,
+        totalWorkingMinutes: totalWorkingMinutes > 0 ? totalWorkingMinutes : 0,
+      },
     });
 
     return NextResponse.json({ success: true, record, message: "Clocked out successfully." });

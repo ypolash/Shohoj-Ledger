@@ -53,12 +53,46 @@ const EMPTY_NETWORK_FORM = {
   isActive: true,
 };
 
-const formatDisplayTime = (val?: string | null) => {
+const formatDisplayTime = (val?: string | null, tz: string = 'Asia/Dhaka') => {
   if (!val || val === '—') return '—';
-  if (/^\d{1,2}:\d{2}(\s?[AP]M)?$/i.test(val.trim())) return val;
+  const trimmed = val.trim();
+  if (/^\d{1,2}:\d{2}(\s?[AP]M)?$/i.test(trimmed)) {
+    const match = trimmed.match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
+    if (match) {
+      let h = parseInt(match[1], 10);
+      const m = match[2];
+      const mer = match[3]?.toUpperCase();
+      if (!mer) {
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+      }
+    }
+    return trimmed;
+  }
   const d = new Date(val);
   if (isNaN(d.getTime())) return val;
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  try {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz });
+  } catch {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
+};
+
+const formatDisplayDate = (val?: string | null, tz: string = 'Asia/Dhaka') => {
+  if (!val) return '—';
+  if (/^\d{4}-\d{2}-\d{2}/.test(val)) {
+    const dateOnly = val.slice(0, 10);
+    const [y, m, d] = dateOnly.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  const dateObj = new Date(val);
+  if (isNaN(dateObj.getTime())) return val;
+  try {
+    return dateObj.toLocaleDateString('en-GB', { timeZone: tz });
+  } catch {
+    return dateObj.toLocaleDateString('en-GB');
+  }
 };
 
 /**
@@ -76,6 +110,12 @@ export default function AttendancePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
+  const [officeTiming, setOfficeTiming] = useState({
+    shiftStart: '09:30',
+    shiftEnd: '18:00',
+    gracePeriod: 15,
+    timezone: 'Asia/Dhaka',
+  });
 
   // Network Geofencing state
   const [networks, setNetworks] = useState<AllowedNetwork[]>([]);
@@ -114,9 +154,10 @@ export default function AttendancePage() {
     else setIsLoading(true);
 
     try {
-      const [attRes, empRes] = await Promise.all([
+      const [attRes, empRes, hrRes] = await Promise.all([
         fetch(filterEmpId ? `/api/attendance?employeeId=${filterEmpId}` : '/api/attendance').catch(() => null),
         fetch('/api/employees').catch(() => null),
+        fetch('/api/hr/settings').catch(() => null),
       ]);
 
       if (attRes && attRes.ok) {
@@ -126,6 +167,16 @@ export default function AttendancePage() {
       if (empRes && empRes.ok) {
         const empData = await empRes.json();
         setEmployees(Array.isArray(empData) ? empData : []);
+      }
+      if (hrRes && hrRes.ok) {
+        const hrData = await hrRes.json();
+        const tz = hrData.companySetting?.timezone;
+        setOfficeTiming({
+          shiftStart: hrData.attendanceConfig?.shiftStart || hrData.companySetting?.shiftStartTime || '09:30',
+          shiftEnd: hrData.attendanceConfig?.shiftEnd || hrData.companySetting?.shiftEndTime || '18:00',
+          gracePeriod: hrData.attendanceConfig?.gracePeriod ?? hrData.companySetting?.gracePeriodMinutes ?? 15,
+          timezone: (!tz || tz === 'UTC' || tz === 'UTC / GMT') ? 'Asia/Dhaka' : tz,
+        });
       }
 
       if (isManual) {
@@ -307,10 +358,10 @@ export default function AttendancePage() {
       return [
         emp ? `${emp.firstName} ${emp.lastName}` : 'Staff',
         emp?.employeeId || '',
-        r.date ? new Date(r.date).toLocaleDateString() : '',
+        r.date ? formatDisplayDate(r.date, officeTiming.timezone) : '',
         r.status,
-        formatDisplayTime(r.checkIn || r.checkInTime),
-        formatDisplayTime(r.checkOut || r.checkOutTime),
+        formatDisplayTime(r.checkIn || r.checkInTime, officeTiming.timezone),
+        formatDisplayTime(r.checkOut || r.checkOutTime, officeTiming.timezone),
         r.lateMinutes || 0,
         r.earlyLeaveMinutes || 0,
       ];
@@ -359,6 +410,16 @@ export default function AttendancePage() {
           <p className={styles.pageSubtitle}>
             Monitor daily clock-in compliance, track late arrivals, log working hours, and manage shift schedules.
           </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+            <span style={{ fontSize: '12px', background: 'var(--surface-sunken)', border: '1px solid var(--border-main)', padding: '4px 10px', borderRadius: '20px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', color: 'var(--primary)' }}>schedule</span>
+              Office Shift: <strong style={{ color: 'var(--text-main)' }}>{officeTiming.shiftStart} - {officeTiming.shiftEnd}</strong> (+{officeTiming.gracePeriod}m grace)
+            </span>
+            <span style={{ fontSize: '12px', background: 'var(--surface-sunken)', border: '1px solid var(--border-main)', padding: '4px 10px', borderRadius: '20px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#059669' }}>public</span>
+              Timezone: <strong style={{ color: 'var(--text-main)' }}>{officeTiming.timezone} (GMT+6)</strong>
+            </span>
+          </div>
         </div>
 
         <div className={styles.headerActions}>
@@ -797,21 +858,21 @@ export default function AttendancePage() {
                       <td className={styles.tableCell}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', fontWeight: 500 }}>
                           <span className="material-symbols-outlined" style={{ fontSize: '15px', color: 'var(--text-muted)' }}>calendar_today</span>
-                          <span>{r.date ? new Date(r.date).toLocaleDateString() : '—'}</span>
+                          <span>{formatDisplayDate(r.date, officeTiming.timezone)}</span>
                         </div>
                       </td>
 
                       <td className={styles.tableCell}>
                         <span className={styles.timeBadge}>
                           <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
-                          {formatDisplayTime(checkIn)}
+                          {formatDisplayTime(checkIn, officeTiming.timezone)}
                         </span>
                       </td>
 
                       <td className={styles.tableCell}>
                         <span className={styles.timeBadge}>
                           <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
-                          {formatDisplayTime(checkOut)}
+                          {formatDisplayTime(checkOut, officeTiming.timezone)}
                         </span>
                       </td>
 
@@ -931,7 +992,10 @@ export default function AttendancePage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Check In Time</label>
+                  <label className={styles.formLabel}>
+                    Check In Time
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px', fontWeight: 400 }}>(Office: {officeTiming.shiftStart})</span>
+                  </label>
                   <input
                     type="time"
                     value={form.checkIn}
@@ -953,7 +1017,10 @@ export default function AttendancePage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Late Minutes</label>
+                  <label className={styles.formLabel}>
+                    Late Minutes
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px', fontWeight: 400 }}>(Auto-calculated if 0)</span>
+                  </label>
                   <input
                     type="number"
                     min="0"

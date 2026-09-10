@@ -48,6 +48,17 @@ export async function PUT(request: Request) {
         }
       });
     }
+
+    // Keep CompanySetting in sync if it exists
+    await prisma.companySetting.updateMany({
+      where: { companyId },
+      data: {
+        ...(body.shiftStart ? { shiftStartTime: body.shiftStart } : {}),
+        ...(body.shiftEnd ? { shiftEndTime: body.shiftEnd } : {}),
+        ...(body.gracePeriod !== undefined ? { gracePeriodMinutes: Number(body.gracePeriod) || 0 } : {}),
+      }
+    });
+
     return NextResponse.json(config);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { isWithinOfficeRadius } from '@/lib/gps';
 
 import { requireModule } from "@/lib/modules/moduleGuard";
-import { calculateAttendanceStatus, calculateEarlyLeaveStatus } from "@/lib/attendance";
+import { calculateAttendanceStatus, calculateEarlyLeaveStatus, parseDateTimeInTimezone } from "@/lib/attendance";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
@@ -81,22 +81,17 @@ export async function POST(request: Request) {
       }
     }
 
-    function parseDateTime(dateStr: string, timeOrDateStr?: string | null): Date | null {
-      if (!timeOrDateStr) return null;
-      const trimmed = timeOrDateStr.trim();
-      // If time only like "09:30" or "09:30:00"
-      if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) {
-        const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr.slice(0, 10);
-        const timePart = trimmed.length === 5 ? `${trimmed}:00` : trimmed;
-        const d = new Date(`${datePart}T${timePart}`);
-        return isNaN(d.getTime()) ? null : d;
-      }
-      const d = new Date(trimmed);
-      return isNaN(d.getTime()) ? null : d;
+    const compSetting = await prisma.companySetting.findUnique({
+      where: { companyId: companyIdForGuard },
+      select: { timezone: true }
+    });
+    let timezone = compSetting?.timezone || "Asia/Dhaka";
+    if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
+      timezone = "Asia/Dhaka";
     }
 
-    const checkInDate = parseDateTime(data.date, data.checkIn);
-    const checkOutDate = parseDateTime(data.date, data.checkOut);
+    const checkInDate = parseDateTimeInTimezone(data.date, data.checkIn, timezone);
+    const checkOutDate = parseDateTimeInTimezone(data.date, data.checkOut, timezone);
 
     let finalLateMinutes = data.lateMinutes !== undefined && data.lateMinutes !== "" ? Number(data.lateMinutes) : 0;
     let finalStatus = status;

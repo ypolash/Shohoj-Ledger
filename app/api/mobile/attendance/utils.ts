@@ -14,9 +14,17 @@ export async function getAttendanceConfig() {
   return config;
 }
 
-export async function calculatePunishment(type: string, minutes: number): Promise<number> {
+export async function calculatePunishment(type: string, minutes: number, companyId?: string): Promise<number> {
+  const where: any = { type, active: true };
+  if (companyId) {
+    where.OR = [
+      { companyId },
+      { companyId: null }
+    ];
+  }
   const rules = await prisma.punishmentSetting.findMany({
-    where: { type, active: true }
+    where,
+    orderBy: { fromMinutes: 'asc' }
   });
   
   for (const rule of rules) {

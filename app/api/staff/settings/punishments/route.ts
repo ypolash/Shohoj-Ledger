@@ -9,12 +9,18 @@ export async function GET(request: Request) {
   if (rbacGuard) return rbacGuard;
 
   try {
+    const companyId = await getCompanyId();
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     
-    let whereClause = {};
+    let whereClause: any = {
+      OR: [
+        { companyId },
+        { companyId: null }
+      ]
+    };
     if (type) {
-      whereClause = { type };
+      whereClause.type = type;
     }
     
     const settings = await prisma.punishmentSetting.findMany({
@@ -32,21 +38,35 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
-  if (rbacGuard) return rbacGuard;
+  if (rbacGuard) {
+    const attGuard = await requirePermission("ATTENDANCE_MANAGE");
+    if (attGuard) return rbacGuard;
+  }
 
   try {
+    const companyId = await getCompanyId();
+    if (!companyId) {
+      return NextResponse.json({ error: "Unauthorized: Company context required" }, { status: 401 });
+    }
+
     const body = await request.json();
+    if (!body.type) {
+      return NextResponse.json({ error: "Violation category is required" }, { status: 400 });
+    }
+
     const newSetting = await prisma.punishmentSetting.create({
       data: {
+        companyId,
         type: body.type,
-        fromMinutes: Number(body.fromMinutes),
-        toMinutes: Number(body.toMinutes),
-        amount: Number(body.amount),
-        active: body.active ?? true
+        fromMinutes: Number(body.fromMinutes) || 0,
+        toMinutes: Number(body.toMinutes) || 0,
+        amount: Number(body.amount) || 0,
+        active: body.active !== undefined ? Boolean(body.active) : true
       }
     });
     return NextResponse.json(newSetting);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Failed to create punishment slab:", error);
+    return NextResponse.json({ error: error.message || "Failed to create punishment slab" }, { status: 500 });
   }
 }

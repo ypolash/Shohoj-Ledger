@@ -62,12 +62,26 @@ export async function GET() {
 
     // 4. Punishment Rules (Late / Absent Penalties)
     const punishmentSettings = await prisma.punishmentSetting.findMany({
-      where: { companyId },
+      where: {
+        OR: [
+          { companyId },
+          { companyId: null }
+        ]
+      },
       orderBy: [
         { type: "asc" },
         { fromMinutes: "asc" }
       ]
     });
+
+    // Auto-attach any unassigned slabs to the current company
+    const unassigned = punishmentSettings.filter(p => !p.companyId);
+    if (unassigned.length > 0) {
+      await prisma.punishmentSetting.updateMany({
+        where: { id: { in: unassigned.map(p => p.id) } },
+        data: { companyId }
+      });
+    }
 
     // 5. Allowed Office Networks (Wi-Fi SSID / BSSID / IP)
     const allowedNetworks = await prisma.allowedNetwork.findMany({

@@ -149,6 +149,8 @@ export default function HRSettingsPage() {
   });
 
   const [showRuleModal, setShowRuleModal] = useState<boolean>(false);
+  const [isSavingRule, setIsSavingRule] = useState<boolean>(false);
+  const [ruleError, setRuleError] = useState<string>("");
   const [ruleForm, setRuleForm] = useState({
     type: "LATE",
     fromMinutes: 16,
@@ -415,8 +417,29 @@ export default function HRSettingsPage() {
   };
 
   // --- PUNISHMENT SLAB HANDLERS ---
+  const handleOpenRuleModal = () => {
+    setRuleForm({
+      type: "LATE",
+      fromMinutes: 16,
+      toMinutes: 30,
+      amount: 100,
+      active: true
+    });
+    setRuleError("");
+    setShowRuleModal(true);
+  };
+
   const handleSaveRule = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSavingRule(true);
+    setRuleError("");
+
+    if (ruleForm.fromMinutes > ruleForm.toMinutes) {
+      setRuleError("From Delay (Minutes) cannot be greater than To Delay (Minutes).");
+      setIsSavingRule(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/staff/settings/punishments", {
         method: "POST",
@@ -426,37 +449,64 @@ export default function HRSettingsPage() {
       const json = await res.json();
       if (res.ok) {
         setShowRuleModal(false);
-        fetchSettings();
-        setSaveSuccess("Punishment slab registered.");
+        const created = json.data || json;
+        if (created && created.id) {
+          setPunishmentRules(prev => {
+            const filtered = prev.filter(r => r.id !== created.id);
+            return [...filtered, created].sort((a, b) => (Number(a.fromMinutes) || 0) - (Number(b.fromMinutes) || 0));
+          });
+        }
+        await fetchSettings();
+        setSaveSuccess("Penalty deduction slab registered successfully.");
         setTimeout(() => setSaveSuccess(""), 4000);
       } else {
-        alert(json.error || "Failed to save rule");
+        setRuleError(json.error || "Failed to save penalty rule");
       }
-    } catch {
-      alert("Error saving punishment rule");
+    } catch (err: any) {
+      setRuleError("Error saving penalty rule: " + (err.message || "Network error"));
+    } finally {
+      setIsSavingRule(false);
     }
   };
 
   const handleDeleteRule = async (id: string) => {
     if (!confirm("Are you sure you want to delete this penalty slab?")) return;
     try {
+      setPunishmentRules(prev => prev.filter(r => r.id !== id));
       const res = await fetch(`/api/staff/settings/punishments/${id}`, { method: "DELETE" });
-      if (res.ok) fetchSettings();
+      if (res.ok) {
+        setSaveSuccess("Penalty slab deleted.");
+        setTimeout(() => setSaveSuccess(""), 3000);
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        alert(json.error || "Failed to delete rule");
+        fetchSettings();
+      }
     } catch {
       alert("Error deleting rule");
+      fetchSettings();
     }
   };
 
   const handleToggleRuleActive = async (rule: PunishmentSetting) => {
     try {
-      await fetch(`/api/staff/settings/punishments/${rule.id}`, {
+      setPunishmentRules(prev => prev.map(r => r.id === rule.id ? { ...r, active: !r.active } : r));
+      const res = await fetch(`/api/staff/settings/punishments/${rule.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !rule.active })
       });
-      fetchSettings();
+      if (res.ok) {
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        alert(json.error || "Failed to update rule status");
+        fetchSettings();
+      }
     } catch {
       alert("Error updating rule");
+      fetchSettings();
     }
   };
 
@@ -1121,7 +1171,7 @@ export default function HRSettingsPage() {
                 </div>
               </div>
 
-              <button onClick={() => setShowRuleModal(true)} className={styles.primaryBtn}>
+              <button onClick={handleOpenRuleModal} className={styles.primaryBtn}>
                 <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>add</span>
                 Add Penalty Slab
               </button>
@@ -1692,6 +1742,20 @@ export default function HRSettingsPage() {
 
             <form onSubmit={handleSaveRule}>
               <div className={styles.modalBody}>
+                {ruleError && (
+                  <div style={{
+                    padding: "10px 14px",
+                    background: "rgba(239, 68, 68, 0.15)",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    borderRadius: "8px",
+                    color: "#f87171",
+                    fontSize: "13px",
+                    marginBottom: "14px"
+                  }}>
+                    {ruleError}
+                  </div>
+                )}
+
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Violation Type</label>
                   <select
@@ -1747,11 +1811,11 @@ export default function HRSettingsPage() {
               </div>
 
               <div className={styles.modalFooter}>
-                <button type="button" onClick={() => setShowRuleModal(false)} className={styles.secondaryBtn}>
+                <button type="button" onClick={() => setShowRuleModal(false)} className={styles.secondaryBtn} disabled={isSavingRule}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.primaryBtn}>
-                  Save Penalty Rule
+                <button type="submit" className={styles.primaryBtn} disabled={isSavingRule}>
+                  {isSavingRule ? "Saving..." : "Save Penalty Rule"}
                 </button>
               </div>
             </form>

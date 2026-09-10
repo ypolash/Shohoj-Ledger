@@ -37,6 +37,40 @@ export async function GET(request: Request) {
       where: whereClause,
       orderBy: { date: 'desc' }
     });
+
+    // Auto-heal legacy or uncalculated attendance records on-the-fly
+    for (const att of attendances) {
+      if (att.checkInTime && att.status !== "ABSENT" && att.status !== "HALF_DAY" && att.status !== "OFF_DAY_WORK") {
+        const effectiveCompanyId = att.companyId || companyIdForGuard || "";
+        const calc = await calculateAttendanceStatus(effectiveCompanyId, att.employeeId, att.checkInTime);
+        const checkInChanged = !!calc.normalizedCheckInTime && calc.normalizedCheckInTime.getTime() !== att.checkInTime.getTime();
+
+        if (
+          calc.lateMinutes !== att.lateMinutes ||
+          calc.status !== att.status ||
+          calc.isLate !== att.isLate ||
+          checkInChanged
+        ) {
+          att.status = calc.status;
+          att.isLate = calc.isLate;
+          att.lateMinutes = calc.lateMinutes;
+          if (calc.normalizedCheckInTime) {
+            att.checkInTime = calc.normalizedCheckInTime;
+          }
+
+          prisma.attendance.update({
+            where: { id: att.id },
+            data: {
+              status: calc.status,
+              isLate: calc.isLate,
+              lateMinutes: calc.lateMinutes,
+              ...(calc.normalizedCheckInTime ? { checkInTime: calc.normalizedCheckInTime } : {}),
+            }
+          }).catch(err => console.error("Auto-heal attendance error for id:", att.id, err));
+        }
+      }
+    }
+
     return NextResponse.json(attendances);
   } catch (error) {
     console.error('Failed to fetch attendance:', error);

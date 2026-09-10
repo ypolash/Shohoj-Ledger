@@ -894,7 +894,7 @@ export default function AttendancePage() {
                             </span>
                             {checkOut !== '—' && (
                               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                Left at {formatDisplayTime(checkOut)}
+                                Left at {formatDisplayTime(checkOut, officeTiming.timezone)}
                               </span>
                             )}
                           </div>

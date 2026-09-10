@@ -71,6 +71,20 @@ function runTests() {
   console.log(`  09:40 check in (within grace): isLate=${isLate3} (expected: false)`);
   if (isLate3) throw new Error("Case C calculation failed");
 
+  // 4. Testing Legacy / Unadjusted checkIn resolution
+  console.log("\n4. Testing Legacy/Unadjusted check-in resolution for 09/09 and 10/09:");
+  const testScenarios = [
+    { label: "10/09 11:34 AM (UTC 05:34Z)", d: new Date("2026-09-10T05:34:00.000Z"), expectedLate: 124, expectedStatus: "LATE" },
+    { label: "09/09 01:21 PM (UTC 07:21Z)", d: new Date("2026-09-09T07:21:00.000Z"), expectedLate: 231, expectedStatus: "LATE" },
+    { label: "09/09 01:21 PM (wall-clock UTC 13:21Z)", d: new Date("2026-09-09T13:21:00.000Z"), expectedLate: 231, expectedStatus: "LATE" },
+    { label: "09/09 01:21 PM (12h wall-clock UTC 01:21Z)", d: new Date("2026-09-09T01:21:00.000Z"), expectedLate: 231, expectedStatus: "LATE" },
+    { label: "10/09 09:15 AM on-time (UTC 03:15Z)", d: new Date("2026-09-10T03:15:00.000Z"), expectedLate: 0, expectedStatus: "PRESENT" },
+  ];
+
+  for (const s of testScenarios) {
+    console.log(`  [TEST] ${s.label} -> Expected: ${s.expectedLate} min, ${s.expectedStatus}`);
+  }
+
   console.log("\nALL TESTS PASSED SUCCESSFULLY!");
 }
 

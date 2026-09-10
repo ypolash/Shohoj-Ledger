@@ -4,6 +4,7 @@ export interface AttendanceCalculationResult {
   isLate: boolean;
   lateMinutes: number;
   status: string;
+  normalizedCheckInTime?: Date;
 }
 
 /**
@@ -197,6 +198,9 @@ export async function calculateAttendanceStatus(
     timeZone: timezone,
     hourCycle: "h23",
     hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "numeric",
     minute: "numeric",
     weekday: "short",
@@ -210,14 +214,56 @@ export async function calculateAttendanceStatus(
 
   let checkInHour = parseInt(partMap.hour, 10) || 0;
   if (checkInHour === 24) checkInHour = 0;
-  const checkInMin = parseInt(partMap.minute, 10) || 0;
+  let checkInMin = parseInt(partMap.minute, 10) || 0;
   const weekday = partMap.weekday; // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
 
   // 6. Parse Shift Start Minutes
   const shiftStartMinutes = parseTimeToMinutes(shiftStartStr);
-  let checkInMinutes = checkInHour * 60 + checkInMin;
-
   const startHour = Math.floor(shiftStartMinutes / 60);
+
+  const utcHour = checkInTime.getUTCHours();
+  const utcMin = checkInTime.getUTCMinutes();
+
+  let normalizedCheckInTime: Date | undefined = undefined;
+
+  // Intelligently resolve legacy or unadjusted timestamps for daytime shifts (e.g. starting 07:00 - 12:00)
+  if (!isNightShift && startHour >= 7 && startHour <= 12) {
+    let corrected = false;
+    let targetHour = checkInHour;
+    let targetMin = checkInMin;
+
+    // Case 1: Raw 24h wall-clock was saved directly as UTC (e.g. 13:21:00.000Z), turning local Dhaka time into 19:21 (after office hours)
+    if (utcHour >= 12 && utcHour <= 20 && checkInHour >= 18) {
+      targetHour = utcHour;
+      targetMin = utcMin;
+      corrected = true;
+    }
+    // Case 2: 12h clock was entered without PM (e.g. 01:21 instead of 13:21).
+    // In local time, 1..6 AM is outside office hours. For a daytime shift, 1..6 is 1 PM to 6 PM (13..18)
+    else if (checkInHour >= 1 && checkInHour <= 6) {
+      targetHour = checkInHour + 12;
+      corrected = true;
+    }
+    // Case 3: 12h clock 01:xx was saved as UTC on UTC server, which in Dhaka (+6) turned into 07:xx AM
+    // For a shift starting at 09:30, 01:xx UTC (07:xx AM) was intended as 01:xx PM (13:xx Dhaka)
+    else if (utcHour >= 1 && utcHour <= 6 && checkInHour === utcHour + 6 && checkInHour < startHour) {
+      targetHour = utcHour + 12;
+      corrected = true;
+    }
+
+    if (corrected) {
+      checkInHour = targetHour;
+      checkInMin = targetMin;
+      const dateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
+      const timeStr = `${String(checkInHour).padStart(2, '0')}:${String(checkInMin).padStart(2, '0')}`;
+      const reParsed = parseDateTimeInTimezone(dateStr, timeStr, timezone);
+      if (reParsed) {
+        normalizedCheckInTime = reParsed;
+      }
+    }
+  }
+
+  let checkInMinutes = checkInHour * 60 + checkInMin;
 
   // Handle night shifts spanning past midnight (e.g. starting at 22:00 and checkIn is 00:30)
   if (isNightShift && startHour >= 18 && checkInHour < 12) {
@@ -249,7 +295,7 @@ export async function calculateAttendanceStatus(
     isLate = false;
   }
 
-  return { isLate, lateMinutes, status };
+  return { isLate, lateMinutes, status, normalizedCheckInTime };
 }
 
 /**
@@ -261,7 +307,7 @@ export async function calculateEarlyLeaveStatus(
   companyId: string,
   employeeId: string,
   checkOutTime: Date
-): Promise<{ earlyLeaveMinutes: number; isEarlyLeave: boolean }> {
+): Promise<{ earlyLeaveMinutes: number; isEarlyLeave: boolean; normalizedCheckOutTime?: Date }> {
   // 1. Resolve Employee with WorkShift & Company Relations
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
@@ -323,6 +369,9 @@ export async function calculateEarlyLeaveStatus(
     timeZone: timezone,
     hourCycle: "h23",
     hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "numeric",
     minute: "numeric",
   });
@@ -335,12 +384,44 @@ export async function calculateEarlyLeaveStatus(
 
   let checkOutHour = parseInt(partMap.hour, 10) || 0;
   if (checkOutHour === 24) checkOutHour = 0;
-  const checkOutMin = parseInt(partMap.minute, 10) || 0;
+  let checkOutMin = parseInt(partMap.minute, 10) || 0;
 
   // 5. Parse Shift End Minutes
   let shiftEndMinutes = parseTimeToMinutes(shiftEndStr);
-  let checkOutMinutes = checkOutHour * 60 + checkOutMin;
   const endHour = Math.floor(shiftEndMinutes / 60);
+
+  const utcHour = checkOutTime.getUTCHours();
+  const utcMin = checkOutTime.getUTCMinutes();
+  let normalizedCheckOutTime: Date | undefined = undefined;
+
+  // Resolve 12h or unadjusted timestamps for check-out
+  if (!isNightShift && endHour >= 14 && endHour <= 22) {
+    let corrected = false;
+    let targetHour = checkOutHour;
+    let targetMin = checkOutMin;
+
+    if (checkOutHour >= 1 && checkOutHour <= 9) {
+      targetHour = checkOutHour + 12;
+      corrected = true;
+    } else if (utcHour >= 12 && utcHour <= 22 && checkOutHour >= 21) {
+      targetHour = utcHour;
+      targetMin = utcMin;
+      corrected = true;
+    }
+
+    if (corrected) {
+      checkOutHour = targetHour;
+      checkOutMin = targetMin;
+      const dateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
+      const timeStr = `${String(checkOutHour).padStart(2, '0')}:${String(checkOutMin).padStart(2, '0')}`;
+      const reParsed = parseDateTimeInTimezone(dateStr, timeStr, timezone);
+      if (reParsed) {
+        normalizedCheckOutTime = reParsed;
+      }
+    }
+  }
+
+  let checkOutMinutes = checkOutHour * 60 + checkOutMin;
 
   // Handle night shift rollover
   if (isNightShift) {
@@ -359,22 +440,23 @@ export async function calculateEarlyLeaveStatus(
 
   return {
     earlyLeaveMinutes,
-    isEarlyLeave: earlyLeaveMinutes > 0
+    isEarlyLeave: earlyLeaveMinutes > 0,
+    normalizedCheckOutTime
   };
 }
 
 /**
  * Recalculates late status and late/early leave minutes for existing attendance records
- * that may have been recorded with 0 minutes due to UTC server offset.
+ * that may have been recorded with 0 minutes due to UTC server offset or legacy entry formats.
  * Handles company ID linking via employee even when attendance.companyId is null.
  */
 export async function recalculateRecentAttendance(companyId?: string) {
-  const sixtyDaysAgo = new Date();
-  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
   const where: any = {
     checkInTime: { not: null },
-    date: { gte: sixtyDaysAgo }
+    date: { gte: ninetyDaysAgo }
   };
   if (companyId) {
     where.OR = [
@@ -416,16 +498,23 @@ export async function recalculateRecentAttendance(companyId?: string) {
 
     const calc = await calculateAttendanceStatus(effectiveCompanyId, rec.employeeId, rec.checkInTime);
     let earlyLeaveMinutes = rec.earlyLeaveMinutes || 0;
+    let normalizedCheckOut: Date | undefined = undefined;
     if (rec.checkOutTime) {
       const earlyCalc = await calculateEarlyLeaveStatus(effectiveCompanyId, rec.employeeId, rec.checkOutTime);
       earlyLeaveMinutes = earlyCalc.earlyLeaveMinutes;
+      normalizedCheckOut = earlyCalc.normalizedCheckOutTime;
     }
+
+    const checkInChanged = !!calc.normalizedCheckInTime && calc.normalizedCheckInTime.getTime() !== rec.checkInTime.getTime();
+    const checkOutChanged = !!normalizedCheckOut && !!rec.checkOutTime && normalizedCheckOut.getTime() !== rec.checkOutTime.getTime();
 
     if (
       calc.lateMinutes !== rec.lateMinutes ||
       calc.status !== rec.status ||
       calc.isLate !== rec.isLate ||
       earlyLeaveMinutes !== rec.earlyLeaveMinutes ||
+      checkInChanged ||
+      checkOutChanged ||
       (!rec.companyId && effectiveCompanyId)
     ) {
       await prisma.attendance.update({
@@ -435,6 +524,8 @@ export async function recalculateRecentAttendance(companyId?: string) {
           isLate: calc.isLate,
           lateMinutes: calc.lateMinutes,
           earlyLeaveMinutes,
+          ...(checkInChanged ? { checkInTime: calc.normalizedCheckInTime } : {}),
+          ...(checkOutChanged ? { checkOutTime: normalizedCheckOut } : {}),
           ...(rec.companyId ? {} : (effectiveCompanyId ? { companyId: effectiveCompanyId } : {})),
         }
       });

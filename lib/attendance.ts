@@ -111,8 +111,99 @@ export async function calculateAttendanceStatus(
 }
 
 /**
- * Recalculates late status and late minutes for existing attendance records
- * that may have been recorded with 0 late minutes due to UTC server offset.
+ * Calculates whether a check-out is before the designated shift end,
+ * and the number of early leave minutes.
+ * Evaluates in the company's designated timezone (default Asia/Dhaka).
+ */
+export async function calculateEarlyLeaveStatus(
+  companyId: string,
+  employeeId: string,
+  checkOutTime: Date
+): Promise<{ earlyLeaveMinutes: number; isEarlyLeave: boolean }> {
+  // 1. Resolve Company Timezone
+  let timezone = "Asia/Dhaka";
+  if (companyId) {
+    const compSetting = await prisma.companySetting.findUnique({
+      where: { companyId },
+      select: { timezone: true }
+    });
+    if (compSetting?.timezone) {
+      timezone = compSetting.timezone;
+    }
+  }
+
+  // 2. Resolve Employee & Work Shift
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    include: { workShift: true }
+  });
+
+  let shiftEndStr = "18:00";
+  let isNightShift = false;
+
+  const config = await prisma.attendanceConfig.findFirst({
+    where: companyId ? { companyId } : undefined
+  });
+
+  if (config) {
+    shiftEndStr = config.shiftEnd || "18:00";
+  }
+
+  if (employee?.workShift) {
+    shiftEndStr = employee.workShift.endTime || shiftEndStr;
+    isNightShift = !!employee.workShift.nightShift;
+  }
+
+  // 3. Extract check-out components in local timezone
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hourCycle: "h23",
+    hour12: false,
+    hour: "numeric",
+    minute: "numeric",
+  });
+
+  const parts = formatter.formatToParts(checkOutTime);
+  const partMap: Record<string, string> = {};
+  for (const p of parts) {
+    partMap[p.type] = p.value;
+  }
+
+  const checkOutHour = parseInt(partMap.hour, 10) || 0;
+  const checkOutMin = parseInt(partMap.minute, 10) || 0;
+
+  // 4. Parse Shift End
+  const [eHourRaw, eMinRaw] = shiftEndStr.split(':');
+  const endHour = parseInt(eHourRaw, 10) || 0;
+  const endMin = parseInt(eMinRaw, 10) || 0;
+
+  let shiftEndMinutes = endHour * 60 + endMin;
+  let checkOutMinutes = checkOutHour * 60 + checkOutMin;
+
+  // Handle night shift rollover
+  if (isNightShift) {
+    if (endHour < 12 && checkOutHour >= 12) {
+      shiftEndMinutes += 24 * 60;
+    } else if (endHour < 12 && checkOutHour < 12) {
+      shiftEndMinutes += 24 * 60;
+      checkOutMinutes += 24 * 60;
+    }
+  }
+
+  let earlyLeaveMinutes = 0;
+  if (checkOutMinutes < shiftEndMinutes) {
+    earlyLeaveMinutes = shiftEndMinutes - checkOutMinutes;
+  }
+
+  return {
+    earlyLeaveMinutes,
+    isEarlyLeave: earlyLeaveMinutes > 0
+  };
+}
+
+/**
+ * Recalculates late status and late/early leave minutes for existing attendance records
+ * that may have been recorded with 0 minutes due to UTC server offset.
  */
 export async function recalculateRecentAttendance(companyId?: string) {
   const where: any = {
@@ -132,8 +223,10 @@ export async function recalculateRecentAttendance(companyId?: string) {
       companyId: true,
       employeeId: true,
       checkInTime: true,
+      checkOutTime: true,
       status: true,
       lateMinutes: true,
+      earlyLeaveMinutes: true,
       isLate: true,
     }
   });
@@ -148,13 +241,25 @@ export async function recalculateRecentAttendance(companyId?: string) {
     }
 
     const calc = await calculateAttendanceStatus(rec.companyId || "", rec.employeeId, rec.checkInTime);
-    if (calc.lateMinutes !== rec.lateMinutes || calc.status !== rec.status || calc.isLate !== rec.isLate) {
+    let earlyLeaveMinutes = rec.earlyLeaveMinutes || 0;
+    if (rec.checkOutTime) {
+      const earlyCalc = await calculateEarlyLeaveStatus(rec.companyId || "", rec.employeeId, rec.checkOutTime);
+      earlyLeaveMinutes = earlyCalc.earlyLeaveMinutes;
+    }
+
+    if (
+      calc.lateMinutes !== rec.lateMinutes ||
+      calc.status !== rec.status ||
+      calc.isLate !== rec.isLate ||
+      earlyLeaveMinutes !== rec.earlyLeaveMinutes
+    ) {
       await prisma.attendance.update({
         where: { id: rec.id },
         data: {
           status: calc.status,
           isLate: calc.isLate,
           lateMinutes: calc.lateMinutes,
+          earlyLeaveMinutes,
         }
       });
       updatedCount++;

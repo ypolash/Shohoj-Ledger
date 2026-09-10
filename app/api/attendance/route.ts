@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { isWithinOfficeRadius } from '@/lib/gps';
 
 import { requireModule } from "@/lib/modules/moduleGuard";
-import { calculateAttendanceStatus } from "@/lib/attendance";
+import { calculateAttendanceStatus, calculateEarlyLeaveStatus } from "@/lib/attendance";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     const checkInDate = parseDateTime(data.date, data.checkIn);
     const checkOutDate = parseDateTime(data.date, data.checkOut);
 
-    let finalLateMinutes = data.lateMinutes || 0;
+    let finalLateMinutes = data.lateMinutes !== undefined && data.lateMinutes !== "" ? Number(data.lateMinutes) : 0;
     let finalStatus = status;
     let isLate = false;
 
@@ -116,6 +116,12 @@ export async function POST(request: Request) {
       }
     }
 
+    let finalEarlyLeaveMinutes = data.earlyLeaveMinutes !== undefined && data.earlyLeaveMinutes !== "" ? Number(data.earlyLeaveMinutes) : 0;
+    if (finalEarlyLeaveMinutes === 0 && checkOutDate) {
+      const earlyCalc = await calculateEarlyLeaveStatus(companyIdForGuard, data.employeeId, checkOutDate);
+      finalEarlyLeaveMinutes = earlyCalc.earlyLeaveMinutes;
+    }
+
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
@@ -131,6 +137,7 @@ export async function POST(request: Request) {
         status: finalStatus,
         isLate,
         lateMinutes: finalLateMinutes,
+        earlyLeaveMinutes: finalEarlyLeaveMinutes,
         systemSource
       }
     });

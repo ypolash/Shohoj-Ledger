@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateAttendanceRequest, getAttendanceConfig } from "../utils";
+import { calculateEarlyLeaveStatus } from "@/lib/attendance";
 
 export async function POST(req: Request) {
   try {
@@ -68,6 +69,12 @@ export async function POST(req: Request) {
     const checkInTime = existingAttendance.checkInTime;
     const totalWorkingMinutes = Math.floor((serverTime.getTime() - checkInTime.getTime()) / 60000);
 
+    const earlyCalc = await calculateEarlyLeaveStatus(
+      employee.companyId || existingAttendance.companyId || "",
+      employee.id,
+      serverTime
+    );
+
     const systemSource = employee.systemSource || existingAttendance.systemSource || "ERP";
 
     const updatedAttendance = await prisma.attendance.update({
@@ -80,6 +87,7 @@ export async function POST(req: Request) {
         wifiSsid,
         wifiBssid,
         totalWorkingMinutes,
+        earlyLeaveMinutes: earlyCalc.earlyLeaveMinutes,
         systemSource,
         companyId: employee.companyId || existingAttendance.companyId,
       },
@@ -101,6 +109,7 @@ export async function POST(req: Request) {
         status: updatedAttendance.status,
         totalWorkingMinutes,
         lateMinutes: updatedAttendance.lateMinutes,
+        earlyLeaveMinutes: updatedAttendance.earlyLeaveMinutes,
         isLate: updatedAttendance.isLate,
         isCheckedIn: false,
       },

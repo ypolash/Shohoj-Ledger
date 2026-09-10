@@ -10,6 +10,7 @@ interface AttendanceRecord {
   status: string;
   isLate?: boolean;
   lateMinutes?: number;
+  earlyLeaveMinutes?: number;
   checkInTime?: string;
   checkOutTime?: string;
   checkIn?: string;
@@ -41,6 +42,7 @@ const EMPTY_FORM = {
   checkIn: '',
   checkOut: '',
   lateMinutes: '0',
+  earlyLeaveMinutes: '0',
 };
 
 const EMPTY_NETWORK_FORM = {
@@ -255,6 +257,7 @@ export default function AttendancePage() {
           checkIn: form.checkIn || undefined,
           checkOut: form.checkOut || undefined,
           lateMinutes: Number(form.lateMinutes) || 0,
+          earlyLeaveMinutes: Number(form.earlyLeaveMinutes) || 0,
         }),
       });
       const d = await res.json();
@@ -282,7 +285,7 @@ export default function AttendancePage() {
       const res = await fetch('/api/attendance/recalculate', { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSuccessMsg(data.message || `Attendance late durations recalculated! ${data.updatedCount ?? 0} record(s) updated.`);
+        setSuccessMsg(data.message || `Attendance late and early leave durations recalculated! ${data.updatedCount ?? 0} record(s) updated.`);
         await loadData(false);
         setTimeout(() => setSuccessMsg(''), 5000);
       } else {
@@ -298,7 +301,7 @@ export default function AttendancePage() {
   // CSV Export
   const handleExportCSV = () => {
     if (records.length === 0) return;
-    const headers = ['Employee Name', 'Employee ID', 'Date', 'Status', 'Check In', 'Check Out', 'Late (Minutes)'];
+    const headers = ['Employee Name', 'Employee ID', 'Date', 'Status', 'Check In', 'Check Out', 'Late (Minutes)', 'Early Leave (Minutes)'];
     const rows = filteredRecords.map(r => {
       const emp = empMap[r.employeeId];
       return [
@@ -309,6 +312,7 @@ export default function AttendancePage() {
         formatDisplayTime(r.checkIn || r.checkInTime),
         formatDisplayTime(r.checkOut || r.checkOutTime),
         r.lateMinutes || 0,
+        r.earlyLeaveMinutes || 0,
       ];
     });
 
@@ -761,6 +765,7 @@ export default function AttendancePage() {
                   <th className={styles.tableHeaderCell}>Check In</th>
                   <th className={styles.tableHeaderCell}>Check Out</th>
                   <th className={styles.tableHeaderCell}>Late Duration</th>
+                  <th className={styles.tableHeaderCell}>Early Leave Time</th>
                   <th className={styles.tableHeaderCell}>Status</th>
                 </tr>
               </thead>
@@ -815,6 +820,23 @@ export default function AttendancePage() {
                           <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
                             +{r.lateMinutes} min late
                           </span>
+                        ) : (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min</span>
+                        )}
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        {r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '6px', width: 'fit-content' }}>
+                              -{r.earlyLeaveMinutes} min early
+                            </span>
+                            {checkOut !== '—' && (
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Left at {formatDisplayTime(checkOut)}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min</span>
                         )}
@@ -929,16 +951,30 @@ export default function AttendancePage() {
                 </div>
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Late Minutes</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.lateMinutes}
-                  onChange={e => handleForm('lateMinutes', e.target.value)}
-                  placeholder="0"
-                  className={styles.formInput}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Late Minutes</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.lateMinutes}
+                    onChange={e => handleForm('lateMinutes', e.target.value)}
+                    placeholder="0"
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Early Leave Minutes</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.earlyLeaveMinutes}
+                    onChange={e => handleForm('earlyLeaveMinutes', e.target.value)}
+                    placeholder="0"
+                    className={styles.formInput}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>

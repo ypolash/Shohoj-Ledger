@@ -22,6 +22,7 @@ type Attendance = {
   checkInTime: string | null;
   checkOutTime: string | null;
   status: string;
+  earlyLeaveMinutes?: number | null;
 };
 
 export default function AttendanceDirectoryPage() {
@@ -244,6 +245,11 @@ export default function AttendanceDirectoryPage() {
                           <span className={`${styles.badge} ${getStatusBadgeClass(todayStatus)}`}>
                             {todayStatus.replace(/_/g, ' ')}
                           </span>
+                          {att?.earlyLeaveMinutes && att.earlyLeaveMinutes > 0 ? (
+                            <div style={{ fontSize: '11px', color: '#ea580c', fontWeight: 600, marginTop: '2px' }}>
+                              -{att.earlyLeaveMinutes}m early
+                            </div>
+                          ) : null}
                         </td>
                         <td onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

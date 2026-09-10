@@ -155,6 +155,7 @@ export async function POST(request: Request) {
       serverTime: serverTime.toISOString(),
       status,
       lateMinutes,
+      isLate,
       record: {
         id: record.id,
         employeeId: employee.employeeId,

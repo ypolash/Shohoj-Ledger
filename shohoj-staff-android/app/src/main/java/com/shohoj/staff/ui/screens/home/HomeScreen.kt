@@ -158,13 +158,24 @@ fun HomeScreen(
                                 color = Slate50
                             )
                         )
-                        StatusBadge(
-                            status = when {
-                                isCheckedOut -> "COMPLETED"
-                                isCheckedIn -> "CLOCKED IN"
-                                else -> "NOT CLOCKED IN"
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if ((today?.lateMinutes ?: 0) > 0) {
+                                Text(
+                                    text = "+${today?.lateMinutes}m late",
+                                    color = Amber500,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
-                        )
+                            StatusBadge(
+                                status = when {
+                                    today?.isLate == true || (today?.lateMinutes ?: 0) > 0 -> "LATE"
+                                    isCheckedOut -> "COMPLETED"
+                                    isCheckedIn -> "CLOCKED IN"
+                                    else -> "NOT CLOCKED IN"
+                                }
+                            )
+                        }
                     }
 
                     // Times Row

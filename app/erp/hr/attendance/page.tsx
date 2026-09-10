@@ -72,6 +72,7 @@ export default function AttendancePage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
 
   // Network Geofencing state
@@ -274,6 +275,26 @@ export default function AttendancePage() {
     }
   };
 
+  const handleRecalculateLate = async () => {
+    setIsRecalculating(true);
+    setError('');
+    try {
+      const res = await fetch('/api/attendance/recalculate', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMsg(data.message || `Attendance late durations recalculated! ${data.updatedCount ?? 0} record(s) updated.`);
+        await loadData(false);
+        setTimeout(() => setSuccessMsg(''), 5000);
+      } else {
+        setError(data.error || 'Failed to recalculate attendance');
+      }
+    } catch {
+      setError('Network communication error while recalculating');
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
   // CSV Export
   const handleExportCSV = () => {
     if (records.length === 0) return;
@@ -360,6 +381,21 @@ export default function AttendancePage() {
               refresh
             </span>
             <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+          </button>
+
+          <button
+            onClick={handleRecalculateLate}
+            className={styles.secondaryBtn}
+            disabled={isRecalculating}
+            title="Recalculate Late Durations for past 60 days"
+          >
+            <span
+              className={`material-symbols-outlined ${isRecalculating ? styles.spinning : ''}`}
+              style={{ fontSize: '18px', color: '#f59e0b' }}
+            >
+              schedule
+            </span>
+            <span>{isRecalculating ? 'Calculating...' : 'Recalculate Late'}</span>
           </button>
 
           <button

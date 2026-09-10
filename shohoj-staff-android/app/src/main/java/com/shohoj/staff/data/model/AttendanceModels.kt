@@ -68,5 +68,9 @@ data class MobileAttendanceStatusResponse(
     @SerializedName("checkInTime") val checkInTime: String? = null,
     @SerializedName("checkOutTime") val checkOutTime: String? = null,
     @SerializedName("status") val status: String? = null,
+    @SerializedName("lateMinutes") val lateMinutes: Int? = null,
+    @SerializedName("isLate") val isLate: Boolean? = null,
+    @SerializedName("record") val record: AttendanceRecord? = null,
     @SerializedName("message") val message: String? = null
 )
+

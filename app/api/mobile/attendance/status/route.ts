@@ -80,6 +80,8 @@ export async function GET(req: Request) {
       checkInTime: checkInTimeIso,
       checkOutTime: checkOutTimeIso,
       status: currentStatus,
+      lateMinutes: attendance?.lateMinutes || 0,
+      isLate: attendance?.isLate || false,
       record: attendance ? {
         id: attendance.id,
         employeeId: employee.employeeId,
@@ -87,8 +89,8 @@ export async function GET(req: Request) {
         checkInTime: checkInTimeIso,
         checkOutTime: checkOutTimeIso,
         status: currentStatus,
-        lateMinutes: attendance.lateMinutes,
-        isLate: attendance.isLate,
+        lateMinutes: attendance.lateMinutes || 0,
+        isLate: attendance.isLate || false,
         isCheckedIn: !!attendance.checkInTime && !attendance.checkOutTime,
       } : null,
     });

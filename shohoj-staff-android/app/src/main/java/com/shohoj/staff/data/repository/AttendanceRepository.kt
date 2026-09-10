@@ -27,12 +27,16 @@ class AttendanceRepository(
             val records = if (historyRes.isSuccessful) historyRes.body() ?: emptyList() else emptyList()
             val statusBody = if (statusRes.isSuccessful) statusRes.body() else null
 
-            val todayRecord = if (statusBody != null && (statusBody.checkInTime != null || statusBody.status != null)) {
+            val todayRecord = if (statusBody?.record != null) {
+                statusBody.record
+            } else if (statusBody != null && (statusBody.checkInTime != null || statusBody.status != null)) {
                 AttendanceRecord(
                     employeeId = empId,
                     checkInTime = statusBody.checkInTime,
                     checkOutTime = statusBody.checkOutTime,
                     status = statusBody.status,
+                    lateMinutes = statusBody.lateMinutes ?: 0,
+                    isLate = statusBody.isLate ?: (statusBody.status == "LATE" || (statusBody.lateMinutes ?: 0) > 0),
                     isCheckedIn = statusBody.checkInTime != null && statusBody.checkOutTime == null
                 )
             } else records.firstOrNull()

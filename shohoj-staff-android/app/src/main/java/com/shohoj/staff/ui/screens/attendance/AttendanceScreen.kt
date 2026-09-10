@@ -74,13 +74,24 @@ fun AttendanceScreen(
                                 text = "Punch In / Out",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
                             )
-                            StatusBadge(
-                                status = when {
-                                    isCheckedOut -> "CLOCKED OUT"
-                                    isCheckedIn -> "CLOCKED IN"
-                                    else -> "NOT CLOCKED IN"
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                if ((today?.lateMinutes ?: 0) > 0) {
+                                    Text(
+                                        text = "+${today?.lateMinutes}m late",
+                                        color = Amber500,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
-                            )
+                                StatusBadge(
+                                    status = when {
+                                        today?.isLate == true || (today?.lateMinutes ?: 0) > 0 -> "LATE"
+                                        isCheckedOut -> "CLOCKED OUT"
+                                        isCheckedIn -> "CLOCKED IN"
+                                        else -> "NOT CLOCKED IN"
+                                    }
+                                )
+                            }
                         }
 
                         // GPS & Wi-Fi environment info
@@ -276,7 +287,17 @@ fun AttendanceScreen(
                                         color = Slate50
                                     )
                                 )
-                                StatusBadge(status = record.effectiveStatus)
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    if ((record.lateMinutes ?: 0) > 0) {
+                                        Text(
+                                            text = "+${record.lateMinutes}m late",
+                                            color = Amber500,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    StatusBadge(status = record.effectiveStatus)
+                                }
                             }
 
                             Row(

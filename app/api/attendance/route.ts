@@ -81,12 +81,29 @@ export async function POST(request: Request) {
       }
     }
 
+    function parseDateTime(dateStr: string, timeOrDateStr?: string | null): Date | null {
+      if (!timeOrDateStr) return null;
+      const trimmed = timeOrDateStr.trim();
+      // If time only like "09:30" or "09:30:00"
+      if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+        const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr.slice(0, 10);
+        const timePart = trimmed.length === 5 ? `${trimmed}:00` : trimmed;
+        const d = new Date(`${datePart}T${timePart}`);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      const d = new Date(trimmed);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    const checkInDate = parseDateTime(data.date, data.checkIn);
+    const checkOutDate = parseDateTime(data.date, data.checkOut);
+
     let finalLateMinutes = data.lateMinutes || 0;
     let finalStatus = status;
     let isLate = false;
 
-    if (finalLateMinutes === 0 && data.checkIn) {
-      const calc = await calculateAttendanceStatus(companyIdForGuard, data.employeeId, new Date(data.checkIn));
+    if (finalLateMinutes === 0 && checkInDate) {
+      const calc = await calculateAttendanceStatus(companyIdForGuard, data.employeeId, checkInDate);
       finalLateMinutes = calc.lateMinutes;
       isLate = calc.isLate;
       if (!data.status || data.status === 'PRESENT') {
@@ -107,9 +124,9 @@ export async function POST(request: Request) {
         companyId: companyIdForGuard,
         employeeId: data.employeeId,
         date: new Date(data.date),
-        checkInTime: data.checkIn ? new Date(data.checkIn) : null,
+        checkInTime: checkInDate,
         checkInLocation: data.checkInLocation || null,
-        checkOutTime: data.checkOut ? new Date(data.checkOut) : null,
+        checkOutTime: checkOutDate,
         checkOutLocation: data.checkOutLocation || null,
         status: finalStatus,
         isLate,

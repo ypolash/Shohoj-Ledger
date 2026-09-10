@@ -37,6 +37,30 @@ export async function PATCH(
       data: { status },
     });
 
+    // If this task is tied to a CRM lead, log activity on the lead timeline
+    try {
+      const checklist = updatedTask.checklist as any;
+      let leadId = checklist?.leadId;
+      if (!leadId && updatedTask.description) {
+        const match = updatedTask.description.match(/\[CRM-LEAD:([^\]]+)\]/);
+        if (match) leadId = match[1];
+      }
+
+      if (leadId) {
+        await prisma.leadActivity.create({
+          data: {
+            companyId: updatedTask.companyId,
+            leadId,
+            type: "TASK_STATUS_UPDATE",
+            description: `Staff updated assigned task status to "${status}" via Mobile App`,
+            newValue: status,
+          }
+        });
+      }
+    } catch (actErr) {
+      console.error("Failed to log mobile task update to lead activity:", actErr);
+    }
+
     return NextResponse.json(updatedTask);
   } catch (error: any) {
     console.error("Error updating task status:", error);

@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 export default function CreateLeadPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
@@ -20,8 +21,19 @@ export default function CreateLeadPage() {
     industry: '',
     website: '',
     address: '',
-    notes: ''
+    notes: '',
+    assignedToId: '',
+    expectedClosingDate: ''
   });
+
+  React.useEffect(() => {
+    fetch('/api/employees')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setEmployees(data);
+      })
+      .catch(err => console.error("Error loading employees:", err));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -168,6 +180,30 @@ export default function CreateLeadPage() {
                 <option value="High">High</option>
                 <option value="Urgent">Urgent</option>
               </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Assign Staff Member (Creates Task)</label>
+              <select name="assignedToId" value={formData.assignedToId} onChange={handleChange} style={inputStyle}>
+                <option value="">-- Unassigned --</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName || ''} ({emp.employeeId || emp.designation || 'Staff'})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Target Close / Due Date</label>
+              <input 
+                name="expectedClosingDate" 
+                type="date" 
+                value={formData.expectedClosingDate} 
+                onChange={handleChange} 
+                style={inputStyle} 
+              />
             </div>
           </div>
 

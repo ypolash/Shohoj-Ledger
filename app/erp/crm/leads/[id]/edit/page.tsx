@@ -22,10 +22,20 @@ export default function EditLeadPage() {
     status: '',
     industry: '',
     website: '',
-    address: ''
+    address: '',
+    assignedToId: '',
+    expectedClosingDate: ''
   });
+  const [employees, setEmployees] = useState<any[]>([]);
 
   useEffect(() => {
+    fetch('/api/employees')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setEmployees(data);
+      })
+      .catch(err => console.error("Error loading employees:", err));
+
     const fetchLead = async () => {
       try {
         const res = await fetch(`/api/crm/leads/${params.id}`);
@@ -44,7 +54,9 @@ export default function EditLeadPage() {
             status: lead.status || '',
             industry: lead.industry || '',
             website: lead.website || '',
-            address: lead.address || ''
+            address: lead.address || '',
+            assignedToId: lead.assignedToId || '',
+            expectedClosingDate: lead.expectedClosingDate ? new Date(lead.expectedClosingDate).toISOString().slice(0, 10) : ''
           });
         }
       } catch (err) {
@@ -168,6 +180,30 @@ export default function EditLeadPage() {
                 <option value="High">High</option>
                 <option value="Urgent">Urgent</option>
               </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Assign Staff Member (Creates/Syncs Task)</label>
+              <select name="assignedToId" value={formData.assignedToId} onChange={handleChange} style={inputStyle}>
+                <option value="">-- Unassigned --</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName || ''} ({emp.employeeId || emp.designation || 'Staff'})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Target Close / Due Date</label>
+              <input 
+                name="expectedClosingDate" 
+                type="date" 
+                value={formData.expectedClosingDate} 
+                onChange={handleChange} 
+                style={inputStyle} 
+              />
             </div>
           </div>
 

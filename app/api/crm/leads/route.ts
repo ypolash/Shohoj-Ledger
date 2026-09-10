@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { syncLeadTask } from "@/lib/crm/leadTaskSync";
 
 export async function GET(req: Request) {
   try {
@@ -174,6 +175,10 @@ export async function POST(req: Request) {
 
       return lead;
     });
+
+    if (assignedToId) {
+      await syncLeadTask({ leadId: newLead.id, companyId });
+    }
 
     return NextResponse.json({ lead: newLead });
   } catch (error) {

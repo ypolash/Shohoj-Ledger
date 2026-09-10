@@ -9,6 +9,14 @@ interface LeadFiltersProps {
 
 export function LeadFilters({ filters = {}, onFilterChange }: LeadFiltersProps) {
   const [showMore, setShowMore] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    fetch('/api/employees')
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setEmployees(data); })
+      .catch(err => console.error("Error loading employees for filter:", err));
+  }, []);
 
   const handleChange = (key: string, value: string) => {
     if (onFilterChange) {
@@ -167,6 +175,24 @@ export function LeadFilters({ filters = {}, onFilterChange }: LeadFiltersProps) 
           paddingTop: '12px',
           borderTop: '1px solid var(--border-light)'
         }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+              Assigned Staff
+            </label>
+            <select
+              value={filters.assignedToId || ''}
+              onChange={(e) => handleChange('assignedToId', e.target.value)}
+              style={{ ...selectStyle, width: '100%' }}
+            >
+              <option value="">All Staff</option>
+              {employees.map(emp => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName || ''} ({emp.employeeId || 'Staff'})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
               Created From

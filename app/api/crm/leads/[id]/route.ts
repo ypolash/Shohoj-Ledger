@@ -4,6 +4,9 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { syncLeadTask, deleteLeadTask } from "@/lib/crm/leadTaskSync";
+
+export const PUT = PATCH;
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -131,6 +134,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return lead;
     });
 
+    // Synchronize task with lead state (assignment, details, priority, due date)
+    await syncLeadTask({ leadId, companyId });
+
     return NextResponse.json({ lead: updatedLead });
   } catch (error) {
     console.error("PATCH Lead Error:", error);
@@ -159,6 +165,9 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
       where: { id: params.id, companyId, systemSource }
     });
     if (!existing) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
+    // Clean up any linked task
+    await deleteLeadTask(params.id, companyId);
 
     await prisma.lead.delete({
       where: { id: params.id }

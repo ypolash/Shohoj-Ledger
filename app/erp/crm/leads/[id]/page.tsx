@@ -26,6 +26,39 @@ export default function LeadDetailPage() {
   const [quickNote, setQuickNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [assigningLoading, setAssigningLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/employees')
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setEmployees(data); })
+      .catch(err => console.error("Failed to load employees:", err));
+  }, []);
+
+  const handleAssign = async (employeeId: string) => {
+    setAssigningLoading(true);
+    try {
+      const res = await fetch(`/api/crm/leads/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedToId: employeeId || null })
+      });
+      if (res.ok) {
+        setIsAssigning(false);
+        fetchLead();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to update assignment");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating assignment");
+    } finally {
+      setAssigningLoading(false);
+    }
+  };
 
   const fetchLead = async () => {
     try {
@@ -442,30 +475,82 @@ export default function LeadDetailPage() {
             boxShadow: 'var(--shadow-sm)'
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>
-            Assigned Owner
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              Assigned Staff (Task Sync)
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAssigning(!isAssigning)}
               style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '50%',
-                background: 'var(--primary-glow)',
+                background: 'transparent',
+                border: 'none',
                 color: 'var(--primary)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '0 4px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: 700
+                gap: '2px'
               }}
             >
-              {lead.assignedTo?.firstName ? lead.assignedTo.firstName[0] : 'U'}
-            </div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
-              {lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName || ''}` : 'Unassigned'}
-            </span>
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                {isAssigning ? 'close' : 'edit'}
+              </span>
+              {isAssigning ? 'Cancel' : (lead.assignedTo ? 'Change' : 'Assign')}
+            </button>
           </div>
+
+          {isAssigning ? (
+            <div style={{ marginTop: '8px' }}>
+              <select
+                disabled={assigningLoading}
+                defaultValue={lead.assignedToId || ''}
+                onChange={(e) => handleAssign(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--primary)',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="">-- Unassigned --</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName || ''} ({emp.employeeId || emp.designation || 'Staff'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '50%',
+                  background: 'var(--primary-glow)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 700
+                }}
+              >
+                {lead.assignedTo?.firstName ? lead.assignedTo.firstName[0] : 'U'}
+              </div>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
+                {lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName || ''}` : 'Unassigned'}
+              </span>
+            </div>
+          )}
         </div>
 
         <div

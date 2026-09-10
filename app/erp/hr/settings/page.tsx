@@ -160,6 +160,9 @@ export default function HRSettingsPage() {
   });
 
   const [showLeaveModal, setShowLeaveModal] = useState<boolean>(false);
+  const [editingLeaveId, setEditingLeaveId] = useState<string | null>(null);
+  const [isSavingLeave, setIsSavingLeave] = useState<boolean>(false);
+  const [leaveError, setLeaveError] = useState<string>("");
   const [leaveForm, setLeaveForm] = useState({
     name: "",
     description: "",
@@ -511,28 +514,100 @@ export default function HRSettingsPage() {
   };
 
   // --- LEAVE TYPE HANDLERS ---
+  const handleOpenAddLeaveModal = () => {
+    setEditingLeaveId(null);
+    setLeaveError("");
+    setLeaveForm({
+      name: "",
+      description: "",
+      isPaid: true,
+      accrualRate: 12,
+      maxBalance: 12,
+      carryForward: false,
+      carryForwardLimit: 0
+    });
+    setShowLeaveModal(true);
+  };
+
+  const handleOpenEditLeaveModal = (type: LeaveType) => {
+    setEditingLeaveId(type.id);
+    setLeaveError("");
+    const policy = type.leavePolicies?.[0];
+    setLeaveForm({
+      name: type.name,
+      description: type.description || "",
+      isPaid: type.isPaid,
+      accrualRate: policy ? Number(policy.accrualRate) : 12,
+      maxBalance: policy?.maxBalance ? Number(policy.maxBalance) : 12,
+      carryForward: Boolean(policy?.carryForward),
+      carryForwardLimit: policy?.carryForwardLimit ? Number(policy.carryForwardLimit) : 0
+    });
+    setShowLeaveModal(true);
+  };
+
   const handleSaveLeaveType = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leaveForm.name.trim()) return;
+    if (!leaveForm.name.trim()) {
+      setLeaveError("Category Name is required.");
+      return;
+    }
+    setIsSavingLeave(true);
+    setLeaveError("");
 
     try {
-      const res = await fetch("/api/hr/settings/leaves", {
-        method: "POST",
+      const isEditing = !!editingLeaveId;
+      const url = isEditing ? `/api/hr/settings/leaves/${editingLeaveId}` : "/api/hr/settings/leaves";
+      const method = isEditing ? "PUT" : "POST";
+      const payload = isEditing ? { id: editingLeaveId, ...leaveForm } : leaveForm;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(leaveForm)
+        body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (json.success) {
         setShowLeaveModal(false);
-        setLeaveForm({ name: "", description: "", isPaid: true, accrualRate: 12, maxBalance: 12, carryForward: false, carryForwardLimit: 0 });
-        fetchSettings();
-        setSaveSuccess("New leave entitlement added.");
+        const updated = json.data;
+        if (updated && updated.id) {
+          setLeaveTypes(prev => {
+            if (isEditing) {
+              return prev.map(t => t.id === updated.id ? updated : t);
+            }
+            return [...prev, updated];
+          });
+        }
+        await fetchSettings();
+        setSaveSuccess(isEditing ? "Leave category updated successfully." : "New leave entitlement added.");
+        setEditingLeaveId(null);
         setTimeout(() => setSaveSuccess(""), 4000);
       } else {
-        alert(json.error || "Failed to save leave type");
+        setLeaveError(json.error || "Failed to save leave type");
+      }
+    } catch (err: any) {
+      setLeaveError("Error saving leave type: " + (err.message || "Network error"));
+    } finally {
+      setIsSavingLeave(false);
+    }
+  };
+
+  const handleDeleteLeaveType = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete leave category "${name}"?`)) return;
+    try {
+      setLeaveTypes(prev => prev.filter(t => t.id !== id));
+      const res = await fetch(`/api/hr/settings/leaves/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        setSaveSuccess(`Leave category "${name}" deleted.`);
+        setTimeout(() => setSaveSuccess(""), 3000);
+        fetchSettings();
+      } else {
+        alert(json.error || "Failed to delete leave type");
+        fetchSettings();
       }
     } catch {
-      alert("Error saving leave type");
+      alert("Error deleting leave type");
+      fetchSettings();
     }
   };
 
@@ -1254,7 +1329,7 @@ export default function HRSettingsPage() {
               </div>
             </div>
 
-            <button onClick={() => setShowLeaveModal(true)} className={styles.primaryBtn}>
+            <button onClick={handleOpenAddLeaveModal} className={styles.primaryBtn}>
               <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>add</span>
               Add Leave Type
             </button>
@@ -1270,12 +1345,13 @@ export default function HRSettingsPage() {
                   <th className={styles.th}>Max Balance</th>
                   <th className={styles.th}>Carry Forward</th>
                   <th className={styles.th}>Approval Chain</th>
+                  <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {leaveTypes.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className={styles.td} style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
+                    <td colSpan={7} className={styles.td} style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
                       No leave types configured.
                     </td>
                   </tr>
@@ -1314,6 +1390,24 @@ export default function HRSettingsPage() {
                         </td>
                         <td className={styles.td}>
                           <span>{policy?.approvalLevels || 1} Level (Manager &rarr; HR)</span>
+                        </td>
+                        <td className={styles.td} style={{ textAlign: "right" }}>
+                          <div className={styles.actionBtnGroup} style={{ justifyContent: "flex-end" }}>
+                            <button
+                              onClick={() => handleOpenEditLeaveModal(type)}
+                              className={styles.iconBtn}
+                              title="Edit leave type & quota"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLeaveType(type.id, type.name)}
+                              className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                              title="Delete leave type"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1828,7 +1922,7 @@ export default function HRSettingsPage() {
         <div className={styles.modalBackdrop} onClick={() => setShowLeaveModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Leave Type & Quota</h3>
+              <h3 className={styles.modalTitle}>{editingLeaveId ? "Edit Leave Type & Quota" : "Add Leave Type & Quota"}</h3>
               <button
                 type="button"
                 onClick={() => setShowLeaveModal(false)}
@@ -1841,6 +1935,20 @@ export default function HRSettingsPage() {
 
             <form onSubmit={handleSaveLeaveType}>
               <div className={styles.modalBody}>
+                {leaveError && (
+                  <div style={{
+                    padding: "10px 14px",
+                    background: "rgba(239, 68, 68, 0.15)",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    borderRadius: "8px",
+                    color: "#f87171",
+                    fontSize: "13px",
+                    marginBottom: "14px"
+                  }}>
+                    {leaveError}
+                  </div>
+                )}
+
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Category Name *</label>
                   <input
@@ -1927,11 +2035,11 @@ export default function HRSettingsPage() {
               </div>
 
               <div className={styles.modalFooter}>
-                <button type="button" onClick={() => setShowLeaveModal(false)} className={styles.secondaryBtn}>
+                <button type="button" onClick={() => setShowLeaveModal(false)} className={styles.secondaryBtn} disabled={isSavingLeave}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.primaryBtn}>
-                  Add Leave Type
+                <button type="submit" className={styles.primaryBtn} disabled={isSavingLeave}>
+                  {isSavingLeave ? "Saving..." : (editingLeaveId ? "Update Leave Type" : "Add Leave Type")}
                 </button>
               </div>
             </form>

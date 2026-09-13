@@ -1,0 +1,123 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Outer Glow / Halo -->
+    <path
+        android:pathData="M48,16 C65.6,16 80,30.4 80,48 C80,65.6 65.6,80 48,80 C30.4,80 16,65.6 16,48 C16,30.4 30.4,16 48,16 Z"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.25">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="16"
+                android:startY="16"
+                android:endX="80"
+                android:endY="80"
+                android:startColor="#10B981"
+                android:endColor="#06B6D4" />
+        </aapt:attr>
+    </path>
+
+    <!-- Squircle Shield Container with Gradient Border -->
+    <path
+        android:pathData="M30,16 L66,16 C75.9,16 84,24.1 84,34 L84,62 C84,71.9 75.9,80 66,80 L30,80 C20.1,80 12,71.9 12,62 L12,34 C12,24.1 20.1,16 30,16 Z"
+        android:fillColor="#0B0F19"
+        android:strokeWidth="2">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="12"
+                android:startY="16"
+                android:endX="84"
+                android:endY="80"
+                android:startColor="#34D399"
+                android:endColor="#06B6D4" />
+        </aapt:attr>
+    </path>
+
+    <!-- Upper "S" Flowing Arc (Emerald Gradient) -->
+    <path
+        android:pathData="M65,30 C60.5,25.5 54,23.5 46.5,23.5 C34,23.5 24,31.5 24,41 C24,49.5 31.5,54 43,55.5 L45,56"
+        android:strokeWidth="4"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="24"
+                android:startY="23.5"
+                android:endX="65"
+                android:endY="56"
+                android:startColor="#34D399"
+                android:endColor="#10B981" />
+        </aapt:attr>
+    </path>
+
+    <!-- Lower "S" Flowing Arc (Cyan Gradient) -->
+    <path
+        android:pathData="M51,41.5 L53,42 C64.5,43.5 72,48 72,56.5 C72,66 62,74 49.5,74 C42,74 35.5,72 31,67.5"
+        android:strokeWidth="4"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="31"
+                android:startY="41.5"
+                android:endX="72"
+                android:endY="74"
+                android:startColor="#10B981"
+                android:endColor="#22D3EE" />
+        </aapt:attr>
+    </path>
+
+    <!-- Center Staff Identity Card: Clip Tab -->
+    <path
+        android:pathData="M44.5,36 L51.5,36 C52.3,36 53,36.7 53,37.5 L53,39.5 L43,39.5 L43,37.5 C43,36.7 43.7,36 44.5,36 Z"
+        android:fillColor="#34D399" />
+
+    <!-- Center Staff Identity Card: Body -->
+    <path
+        android:pathData="M34,39.5 L62,39.5 C63.9,39.5 65.5,41.1 65.5,43 L65.5,58 C65.5,59.9 63.9,61.5 62,61.5 L34,61.5 C32.1,61.5 30.5,59.9 30.5,58 L30.5,43 C30.5,41.1 32.1,39.5 34,39.5 Z"
+        android:fillColor="#1E293B"
+        android:strokeColor="#22D3EE"
+        android:strokeWidth="1.5" />
+
+    <!-- Staff Avatar: Head -->
+    <path
+        android:pathData="M41,45 C42.7,45 44,46.3 44,48 C44,49.7 42.7,51 41,51 C39.3,51 38,49.7 38,48 C38,46.3 39.3,45 41,45 Z"
+        android:fillColor="#34D399" />
+
+    <!-- Staff Avatar: Shoulders -->
+    <path
+        android:pathData="M36,56.5 C36,53.8 38.2,52.5 41,52.5 C43.8,52.5 46,53.8 46,56.5 Z"
+        android:fillColor="#34D399" />
+
+    <!-- Staff Badge Info Lines -->
+    <path
+        android:pathData="M49,46.5 L59,46.5"
+        android:strokeColor="#22D3EE"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M49,51 L56,51"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M49,55.5 L58,55.5"
+        android:strokeColor="#64748B"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round" />
+
+    <!-- Agility Wing Accent -->
+    <path
+        android:pathData="M65.5,38 C69.5,32 74,28.5 78.5,27.5 C76,32 73.5,36.5 69,40 Z"
+        android:fillColor="#22D3EE" />
+    <path
+        android:pathData="M62.5,44 C67,40.5 71.5,38 75.5,37 C72.5,41.5 69,44 65,46 Z"
+        android:fillColor="#06B6D4" />
+
+</vector>

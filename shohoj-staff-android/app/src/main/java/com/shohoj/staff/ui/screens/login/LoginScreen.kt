@@ -65,43 +65,9 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Brand Header Icon
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                listOf(Emerald400, Emerald600)
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Business,
-                        contentDescription = null,
-                        tint = Slate950,
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Shohoj Staff",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Slate50
-                    )
-                )
-
-                Text(
-                    text = "Employee Self Service Portal",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Slate400,
-                        fontSize = 14.sp
-                    )
+                // Brand Header with Theme-Matched Logo
+                com.shohoj.staff.ui.components.ShohojStaffBrandHeader(
+                    logoSize = 84.dp
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))

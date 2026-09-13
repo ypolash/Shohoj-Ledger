@@ -36,22 +36,10 @@ fun ShohojTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(
-                            brush = Brush.linearGradient(listOf(Emerald500, Cyan500)),
-                            shape = MaterialTheme.shapes.small
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Business,
-                        contentDescription = "Logo",
-                        tint = Slate950,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                ShohojStaffLogo(
+                    size = 36.dp,
+                    showGlow = false
+                )
                 Column {
                     Text(
                         text = title,

@@ -52,8 +52,8 @@ class LeadsViewModel(private val repository: AdminRepository) : ViewModel() {
                 onSuccess = { response ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        leads = response.leads,
-                        counts = response.counts,
+                        leads = response.safeLeads,
+                        counts = response.safeCounts,
                         errorMessage = null
                     )
                 },

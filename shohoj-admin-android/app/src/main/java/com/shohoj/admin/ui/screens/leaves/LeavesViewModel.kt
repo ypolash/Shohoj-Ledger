@@ -52,8 +52,8 @@ class LeavesViewModel(private val repository: AdminRepository) : ViewModel() {
                 onSuccess = { response ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        leaves = response.leaves,
-                        counts = response.counts,
+                        leaves = response.safeLeaves,
+                        counts = response.safeCounts,
                         errorMessage = null
                     )
                 },

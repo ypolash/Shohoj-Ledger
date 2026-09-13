@@ -17,12 +17,13 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 
     companion object {
         // Bottom Navigation Bar items
-        val bottomNavItems = listOf(
-            Dashboard,
-            Employees,
-            Attendance,
-            Projects,
-            Finance
-        )
+        val bottomNavItems: List<Screen>
+            get() = listOf(
+                Dashboard,
+                Employees,
+                Attendance,
+                Projects,
+                Finance
+            )
     }
 }

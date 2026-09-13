@@ -129,29 +129,60 @@ export async function toggleModuleAction(moduleId: string, isActive: boolean) {
 }
 
 export async function deactivateUserAction(userId: string) {
-  const companyId = await getCompanyId();
-  
-  // A crude "deactivate" logic could be dropping companyId or changing role. 
-  // Let's set role = 'inactive' for the sake of the requirement
-  await prisma.user.update({
-    where: { id: userId, companyId },
-    data: { role: 'inactive' }
-  });
+  try {
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, error: "Unauthorized" };
 
-  revalidatePath("/erp/settings");
-  return { success: true };
+    const user = await prisma.user.findFirst({
+      where: { id: userId, companyId }
+    });
+    if (!user) return { success: false, error: "User not found or unauthorized" };
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: 'inactive' }
+    });
+
+    revalidatePath("/erp/settings");
+    revalidatePath("/erp/settings/command-center");
+    return { success: true };
+  } catch (err: any) {
+    console.error("deactivateUserAction error:", err);
+    return { success: false, error: err.message || "Failed to deactivate user" };
+  }
 }
 
 export async function assignUserRoleAction(userId: string, roleName: string) {
-  const companyId = await getCompanyId();
-  
-  await prisma.user.update({
-    where: { id: userId, companyId },
-    data: { role: roleName }
-  });
+  try {
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, error: "Unauthorized" };
 
-  revalidatePath("/erp/settings");
-  return { success: true };
+    const user = await prisma.user.findFirst({
+      where: { id: userId, companyId }
+    });
+    if (!user) return { success: false, error: "User not found or unauthorized" };
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: roleName }
+    });
+
+    try {
+      await prisma.member.updateMany({
+        where: { email: user.email, companyId },
+        data: { role: roleName }
+      });
+    } catch {
+      // Non-critical
+    }
+
+    revalidatePath("/erp/settings");
+    revalidatePath("/erp/settings/command-center");
+    return { success: true };
+  } catch (err: any) {
+    console.error("assignUserRoleAction error:", err);
+    return { success: false, error: err.message || "Failed to update roles" };
+  }
 }
 
 export async function createRoleAction(name: string) {
@@ -206,96 +237,170 @@ export async function createUserWithRoleAction(formData: {
   password: string;
   role: string;
 }) {
-  const companyId = await getCompanyId();
-  const email = formData.email.trim().toLowerCase();
-  const name = formData.name.trim();
-  const password = formData.password.trim();
-  const role = formData.role || "Member";
-
-  if (!email || !password || !name) {
-    throw new Error("Name, email, and password are required.");
-  }
-
-  // Check duplicate email
-  const existingUser = await prisma.user.findFirst({
-    where: { email }
-  });
-  if (existingUser) {
-    throw new Error("A user with this email address already exists.");
-  }
-
-  // Create user
-  const newUser = await prisma.user.create({
-    data: {
-      name,
-      email,
-      role,
-      companyId,
-      platformRole: "USER"
-    }
-  });
-
-  // Hash password and create Account
-  const hashedPassword = await bcrypt.hash(password, 10);
-  await prisma.account.create({
-    data: {
-      userId: newUser.id,
-      accountId: email,
-      providerId: "credentials",
-      password: hashedPassword
-    }
-  });
-
-  // Create company Member record
   try {
-    await prisma.member.create({
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, error: "Unauthorized: Active company session required." };
+
+    const email = formData.email.trim().toLowerCase();
+    const name = formData.name.trim();
+    const password = formData.password.trim();
+    const role = formData.role || "Member";
+
+    if (!email || !password || !name) {
+      return { success: false, error: "Name, email, and password are required." };
+    }
+
+    // Check duplicate email
+    const existingUser = await prisma.user.findFirst({
+      where: { email }
+    });
+
+    if (existingUser) {
+      // If user belongs to the current company, update their role and credentials
+      if (existingUser.companyId === companyId || !existingUser.companyId) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name,
+            role,
+            companyId
+          }
+        });
+
+        // Upsert Account credentials
+        const existingAccount = await prisma.account.findFirst({
+          where: { userId: existingUser.id }
+        });
+        if (existingAccount) {
+          await prisma.account.update({
+            where: { id: existingAccount.id },
+            data: { password: hashedPassword }
+          });
+        } else {
+          await prisma.account.create({
+            data: {
+              userId: existingUser.id,
+              accountId: email,
+              providerId: "credentials",
+              password: hashedPassword
+            }
+          });
+        }
+
+        // Update Member record
+        try {
+          await prisma.member.updateMany({
+            where: { email, companyId },
+            data: { role, name, status: "ACTIVE" }
+          });
+        } catch {
+          // ignore
+        }
+
+        revalidatePath("/erp/settings/command-center");
+        revalidatePath("/erp/settings/users");
+        return { 
+          success: true, 
+          message: `User already existed in company. Roles updated successfully to: ${role}.`,
+          user: existingUser 
+        };
+      } else {
+        return { 
+          success: false, 
+          error: "A user with this email address is already registered to another organization." 
+        };
+      }
+    }
+
+    // Create user
+    const newUser = await prisma.user.create({
       data: {
-        companyId,
         name,
         email,
         role,
-        status: "ACTIVE"
+        companyId,
+        platformRole: "USER"
       }
     });
-  } catch (err) {
-    console.warn("Member creation note:", err);
-  }
 
-  revalidatePath("/erp/settings/command-center");
-  revalidatePath("/erp/settings/users");
-  return { success: true, user: newUser };
-}
-
-export async function resetUserPasswordAction(userId: string, newPassword: string) {
-  const companyId = await getCompanyId();
-  const user = await prisma.user.findFirst({
-    where: { id: userId, companyId }
-  });
-  if (!user) throw new Error("User not found or unauthorized");
-
-  const hashedPassword = await bcrypt.hash(newPassword.trim(), 10);
-
-  const existingAccount = await prisma.account.findFirst({
-    where: { userId: user.id }
-  });
-
-  if (existingAccount) {
-    await prisma.account.update({
-      where: { id: existingAccount.id },
-      data: { password: hashedPassword }
-    });
-  } else {
+    // Hash password and create Account
+    const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.account.create({
       data: {
-        userId: user.id,
-        accountId: user.email,
+        userId: newUser.id,
+        accountId: email,
         providerId: "credentials",
         password: hashedPassword
       }
     });
-  }
 
-  revalidatePath("/erp/settings/command-center");
-  revalidatePath("/erp/settings/users");
-  return { success: true };
+    // Create company Member record
+    try {
+      await prisma.member.create({
+        data: {
+          companyId,
+          name,
+          email,
+          role,
+          status: "ACTIVE"
+        }
+      });
+    } catch (err) {
+      console.warn("Member creation note:", err);
+    }
+
+    revalidatePath("/erp/settings/command-center");
+    revalidatePath("/erp/settings/users");
+    return { 
+      success: true, 
+      message: `User created successfully! Assigned roles: ${role}.`,
+      user: newUser 
+    };
+  } catch (err: any) {
+    console.error("createUserWithRoleAction error:", err);
+    return { success: false, error: err.message || "Failed to provision user account." };
+  }
+}
+
+export async function resetUserPasswordAction(userId: string, newPassword: string) {
+  try {
+    const companyId = await getCompanyId();
+    if (!companyId) return { success: false, error: "Unauthorized" };
+
+    const user = await prisma.user.findFirst({
+      where: { id: userId, companyId }
+    });
+    if (!user) return { success: false, error: "User not found or unauthorized" };
+
+    const hashedPassword = await bcrypt.hash(newPassword.trim(), 10);
+
+    const existingAccount = await prisma.account.findFirst({
+      where: { userId: user.id }
+    });
+
+    if (existingAccount) {
+      await prisma.account.update({
+        where: { id: existingAccount.id },
+        data: { password: hashedPassword }
+      });
+    } else {
+      await prisma.account.create({
+        data: {
+          userId: user.id,
+          accountId: user.email,
+          providerId: "credentials",
+          password: hashedPassword
+        }
+      });
+    }
+
+    revalidatePath("/erp/settings/command-center");
+    revalidatePath("/erp/settings/users");
+    return { success: true };
+  } catch (err: any) {
+    console.error("resetUserPasswordAction error:", err);
+    return { success: false, error: err.message || "Failed to reset password" };
+  }
 }

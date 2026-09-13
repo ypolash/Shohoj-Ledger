@@ -36,87 +36,19 @@ fun EmployeesScreen(
     val state by viewModel.uiState.collectAsState()
     val currencyFormat = remember { NumberFormat.getNumberInstance(Locale.US) }
 
-    // Detail Bottom Sheet
-    if (state.selectedEmployee != null) {
-        val emp = state.selectedEmployee!!
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.selectEmployee(null) },
-            containerColor = Slate900,
-            dragHandle = { BottomSheetDefaults.DragHandle(color = Slate600) }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-            ) {
-                // Header with Avatar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(Indigo500.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = emp.name.take(2).uppercase(),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Indigo500
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = emp.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Slate50
-                        )
-                        Text(
-                            text = "${emp.employeeId} • ${emp.designation}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Slate400
-                        )
-                    }
-                    StatusBadge(status = emp.status)
-                }
+    var searchQuery by remember { mutableStateOf(state.searchQuery) }
+    var isDropdownOpen by remember { mutableStateOf(false) }
 
-                Spacer(modifier = Modifier.height(24.dp))
-                HorizontalDivider(color = Slate800)
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Detail Rows
-                DetailItemRow(icon = Icons.Default.Business, label = "Department", value = emp.department)
-                DetailItemRow(icon = Icons.Default.Email, label = "Email", value = emp.email)
-                DetailItemRow(icon = Icons.Default.Phone, label = "Phone", value = emp.phone ?: "Not Provided")
-                DetailItemRow(
-                    icon = Icons.Default.Payments,
-                    label = "Basic Salary",
-                    value = "৳ ${currencyFormat.format(emp.basicSalary)}"
-                )
-                DetailItemRow(
-                    icon = Icons.Default.CalendarMonth,
-                    label = "Joining Date",
-                    value = emp.joiningDate?.take(10) ?: "Not Set"
-                )
-                DetailItemRow(
-                    icon = Icons.Default.SupervisorAccount,
-                    label = "Reporting Manager",
-                    value = emp.reportingManager ?: "None"
-                )
-
-                if (!emp.emergencyContact.isNullOrBlank() || !emp.emergencyPhone.isNullOrBlank()) {
-                    DetailItemRow(
-                        icon = Icons.Default.ContactEmergency,
-                        label = "Emergency Contact",
-                        value = "${emp.emergencyContact ?: ""} (${emp.emergencyPhone ?: ""})"
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
+    // Filter matching employees for instant mini-detail dropdown
+    val matchingEmployees = remember(searchQuery, state.employees) {
+        if (searchQuery.isBlank()) {
+            emptyList()
+        } else {
+            state.employees.filter { emp ->
+                emp.name.contains(searchQuery, ignoreCase = true) ||
+                emp.employeeId.contains(searchQuery, ignoreCase = true) ||
+                emp.designation.contains(searchQuery, ignoreCase = true) ||
+                emp.department.contains(searchQuery, ignoreCase = true)
             }
         }
     }
@@ -125,7 +57,7 @@ fun EmployeesScreen(
         topBar = {
             ExecutiveTopBar(
                 title = "Employees Directory",
-                subtitle = "${state.employees.size} Registered Staff",
+                subtitle = "Staff Search & Inspection",
                 onSettingsClick = { onNavigate(Screen.Settings.route) }
             )
         },
@@ -143,130 +75,328 @@ fun EmployeesScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Search Bar
+            // 1. Search Bar (Only searchbar shown by default)
             SearchBarField(
-                query = state.searchQuery,
-                onQueryChange = { viewModel.onSearchChange(it) },
-                placeholder = "Search by name, ID, or designation..."
+                query = searchQuery,
+                onQueryChange = { newQuery ->
+                    searchQuery = newQuery
+                    viewModel.onSearchChange(newQuery)
+                    isDropdownOpen = newQuery.isNotBlank()
+                },
+                placeholder = "Type employee name or ID..."
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Filter Chips
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val filters = listOf("ALL", "ACTIVE", "INACTIVE")
-                items(filters) { status ->
-                    val isSelected = state.selectedStatus == status
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onStatusFilterChange(status) },
-                        label = {
-                            Text(
-                                text = status,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) Slate50 else Slate400
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Indigo500,
-                            containerColor = Slate900
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) Indigo500 else Slate800,
-                            selectedBorderColor = Indigo500,
-                            enabled = true,
-                            selected = isSelected
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Content
-            if (state.isLoading) {
-                LoadingState()
-            } else if (state.employees.isEmpty()) {
-                EmptyState(
-                    message = if (state.searchQuery.isNotEmpty()) "No employees matching \"${state.searchQuery}\"" else "No employees found in company.",
-                    icon = Icons.Default.PersonOff
-                )
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+            // 2. Dropdown Menu with Mini Details (shown when user types)
+            if (isDropdownOpen && searchQuery.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, CardBorder, RoundedCornerShape(16.dp)),
+                    colors = CardDefaults.cardColors(containerColor = CardBackground)
                 ) {
-                    items(state.employees) { emp ->
-                        Card(
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-                                .clickable { viewModel.selectEmployee(emp) },
-                            colors = CardDefaults.cardColors(containerColor = CardBackground)
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Text(
+                                text = "Search Results (${matchingEmployees.size})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Slate400,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Click to view full details",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Indigo400,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        HorizontalDivider(color = Slate800, modifier = Modifier.padding(vertical = 4.dp))
+
+                        if (state.isLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = Indigo500,
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        } else if (matchingEmployees.isEmpty()) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(Indigo500.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = emp.name.take(2).uppercase(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Indigo500
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = emp.name,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = Slate100
-                                        )
-                                        StatusBadge(status = emp.status)
-                                    }
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = "${emp.employeeId} • ${emp.designation}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Slate400
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = emp.department,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Violet400
-                                    )
-                                }
-
                                 Icon(
-                                    imageVector = Icons.Default.ChevronRight,
-                                    contentDescription = "View",
-                                    tint = Slate500
+                                    imageVector = Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    tint = Slate500,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "No staff matching \"$searchQuery\"",
+                                    color = Slate400,
+                                    fontSize = 13.sp
                                 )
                             }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.heightIn(max = 280.dp)
+                            ) {
+                                items(matchingEmployees) { emp ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.selectEmployee(emp)
+                                                isDropdownOpen = false
+                                            }
+                                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .clip(CircleShape)
+                                                .background(Indigo500.copy(alpha = 0.18f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = emp.name.take(2).uppercase(),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Indigo400
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(12.dp))
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = emp.name,
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = Slate100
+                                                )
+                                                StatusBadge(status = emp.status)
+                                            }
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "${emp.employeeId} • ${emp.designation}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Slate400
+                                            )
+                                            Text(
+                                                text = emp.department,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Violet400
+                                            )
+                                        }
+
+                                        Icon(
+                                            imageVector = Icons.Default.ChevronRight,
+                                            contentDescription = "View",
+                                            tint = Slate500,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
+                    }
+                }
+            }
+
+            // 3. Full Details Section (Shown after clicking an employee from the dropdown)
+            if (state.selectedEmployee != null && !isDropdownOpen) {
+                val emp = state.selectedEmployee!!
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
+                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    ) {
+                        // Header Profile Banner
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(54.dp)
+                                    .clip(CircleShape)
+                                    .background(Indigo500.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = emp.name.take(2).uppercase(),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Indigo400
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = emp.name,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Slate50
+                                )
+                                Text(
+                                    text = "${emp.employeeId} • ${emp.designation}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Slate300
+                                )
+                            }
+                            StatusBadge(status = emp.status)
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = Slate800)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Dossier Section Header & Clear Button
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Employee Full Details",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Slate400,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            TextButton(
+                                onClick = {
+                                    viewModel.selectEmployee(null)
+                                    searchQuery = ""
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    tint = Indigo400,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Search Another", color = Indigo400, fontSize = 12.sp)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Full Details Rows
+                        DetailItemRow(icon = Icons.Default.Business, label = "Department", value = emp.department)
+                        DetailItemRow(icon = Icons.Default.Email, label = "Email", value = emp.email)
+                        DetailItemRow(icon = Icons.Default.Phone, label = "Phone", value = emp.phone ?: "Not Provided")
+                        DetailItemRow(
+                            icon = Icons.Default.Payments,
+                            label = "Basic Salary",
+                            value = "৳ ${currencyFormat.format(emp.basicSalary)}"
+                        )
+                        DetailItemRow(
+                            icon = Icons.Default.CalendarMonth,
+                            label = "Joining Date",
+                            value = emp.joiningDate?.take(10) ?: "Not Set"
+                        )
+                        DetailItemRow(
+                            icon = Icons.Default.SupervisorAccount,
+                            label = "Reporting Manager",
+                            value = emp.reportingManager ?: "None"
+                        )
+
+                        if (!emp.emergencyContact.isNullOrBlank() || !emp.emergencyPhone.isNullOrBlank()) {
+                            DetailItemRow(
+                                icon = Icons.Default.ContactEmergency,
+                                label = "Emergency Contact",
+                                value = "${emp.emergencyContact ?: ""} (${emp.emergencyPhone ?: ""})"
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 4. Initial Welcoming State (When no employee is selected & search is empty)
+            if (state.selectedEmployee == null && (!isDropdownOpen || searchQuery.isBlank())) {
+                Spacer(modifier = Modifier.height(48.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(Indigo500.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonSearch,
+                            contentDescription = null,
+                            tint = Indigo400,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Staff Directory Lookup",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Slate200
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Type an employee name in the search bar above to see instant mini details and inspect their full dossier.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Slate400,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Slate900)
+                            .border(1.dp, Slate800, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Directory Active • ${state.employees.size} Registered Staff",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Slate400
+                        )
                     }
                 }
             }

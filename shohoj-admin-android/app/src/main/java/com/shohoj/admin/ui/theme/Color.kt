@@ -3,6 +3,7 @@ package com.shohoj.admin.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Primary Executive Accent - Indigo & Violet
+val Indigo400 = Color(0xFF818CF8)
 val Indigo500 = Color(0xFF6366F1)
 val Indigo600 = Color(0xFF4F46E5)
 val Indigo700 = Color(0xFF4338CA)

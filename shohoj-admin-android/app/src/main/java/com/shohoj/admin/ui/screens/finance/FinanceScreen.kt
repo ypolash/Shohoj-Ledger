@@ -106,9 +106,9 @@ fun FinanceScreen(
                 )
             } else {
                 val data = state.reportData ?: return@Scaffold
-                val pl = data.profitAndLoss
-                val bs = data.balanceSheet
-                val cf = data.cashFlow
+                val pl = data.safeProfitAndLoss
+                val bs = data.safeBalanceSheet
+                val cf = data.safeCashFlow
 
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(16.dp),

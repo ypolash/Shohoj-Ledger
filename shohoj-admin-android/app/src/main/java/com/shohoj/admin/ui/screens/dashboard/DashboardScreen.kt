@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shohoj.admin.ui.components.*
@@ -61,8 +62,11 @@ fun DashboardScreen(
             )
         } else {
             val data = state.dashboardData ?: return@Scaffold
-            val att = data.attendanceStats
-            val fin = data.financialSummary
+            val att = data.safeAttendanceStats
+            val fin = data.safeFinancialSummary
+            val projectStats = data.safeProjectStats
+            val leadStats = data.safeLeadStats
+            val recentPunches = data.safeRecentPunches
 
             LazyColumn(
                 modifier = Modifier
@@ -279,8 +283,8 @@ fun DashboardScreen(
                     ) {
                         ExecutiveMetricCard(
                             title = "Active Projects",
-                            value = "${data.projectStats.active}",
-                            subtitle = "${data.projectStats.total} Total Projects",
+                            value = "${projectStats.active}",
+                            subtitle = "${projectStats.total} Total Projects",
                             icon = Icons.Default.Work,
                             accentColor = Sky400,
                             modifier = Modifier.weight(1f),
@@ -288,8 +292,8 @@ fun DashboardScreen(
                         )
                         ExecutiveMetricCard(
                             title = "CRM Leads",
-                            value = "${data.leadStats.total}",
-                            subtitle = "${data.leadStats.wonLeads} Deals Won",
+                            value = "${leadStats.total}",
+                            subtitle = "${leadStats.wonLeads} Deals Won",
                             icon = Icons.Default.TrendingUp,
                             accentColor = Violet500,
                             modifier = Modifier.weight(1f),
@@ -322,47 +326,89 @@ fun DashboardScreen(
                     }
                 }
 
-                // QUICK ACTION NAVIGATION GRID
+                // QUICK ACTION NAVIGATION GRID (6 MODULES)
                 item {
-                    Text(
-                        text = "Quick Navigation",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Slate200
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Executive Quick Navigation",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Slate100
+                        )
+                        Text(
+                            text = "6 Modules",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Slate400
+                        )
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        QuickNavButton(
+                        QuickNavCard(
                             title = "Staff",
+                            subtitle = "Directory",
                             icon = Icons.Default.People,
                             color = Indigo500,
                             modifier = Modifier.weight(1f)
                         ) { onNavigate(Screen.Employees.route) }
-                        QuickNavButton(
+
+                        QuickNavCard(
+                            title = "Attendance",
+                            subtitle = "Live Punches",
+                            icon = Icons.Default.AccessTime,
+                            color = Emerald400,
+                            modifier = Modifier.weight(1f)
+                        ) { onNavigate(Screen.Attendance.route) }
+
+                        QuickNavCard(
+                            title = "Finance",
+                            subtitle = "P&L Ledger",
+                            icon = Icons.Default.AccountBalance,
+                            color = Violet400,
+                            modifier = Modifier.weight(1f)
+                        ) { onNavigate(Screen.Finance.route) }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        QuickNavCard(
                             title = "Projects",
+                            subtitle = "Workspaces",
                             icon = Icons.Default.Work,
                             color = Sky400,
                             modifier = Modifier.weight(1f)
                         ) { onNavigate(Screen.Projects.route) }
-                        QuickNavButton(
+
+                        QuickNavCard(
                             title = "Leads",
+                            subtitle = "Pipeline",
                             icon = Icons.Default.TrendingUp,
-                            color = Violet500,
+                            color = Amber400,
                             modifier = Modifier.weight(1f)
                         ) { onNavigate(Screen.Leads.route) }
-                        QuickNavButton(
+
+                        QuickNavCard(
                             title = "Leaves",
+                            subtitle = "Approvals",
                             icon = Icons.Default.DateRange,
-                            color = Amber500,
+                            color = Rose400,
                             modifier = Modifier.weight(1f)
                         ) { onNavigate(Screen.Leaves.route) }
                     }
                 }
 
                 // RECENT ATTENDANCE PUNCHES
-                if (data.recentPunches.isNotEmpty()) {
+                if (recentPunches.isNotEmpty()) {
                     item {
                         Text(
                             text = "Recent Attendance Activity",
@@ -370,7 +416,7 @@ fun DashboardScreen(
                             color = Slate200
                         )
                     }
-                    items(data.recentPunches) { punch ->
+                    items(recentPunches) { punch ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -394,7 +440,7 @@ fun DashboardScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = punch.employeeName.take(2).uppercase(),
+                                            text = (punch.employeeName.takeIf { it.isNotBlank() }?.take(2) ?: "EM").uppercase(),
                                             style = MaterialTheme.typography.labelMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = Slate200
@@ -457,8 +503,9 @@ private fun AttendanceStatPill(
 }
 
 @Composable
-private fun QuickNavButton(
+private fun QuickNavCard(
     title: String,
+    subtitle: String,
     icon: ImageVector,
     color: Color,
     modifier: Modifier = Modifier,
@@ -466,26 +513,49 @@ private fun QuickNavButton(
 ) {
     Card(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Slate900)
+        colors = CardDefaults.cardColors(containerColor = CardBackground)
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp, horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(38.dp)
                     .clip(CircleShape)
-                    .background(color.copy(alpha = 0.15f)),
+                    .background(color.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icon, contentDescription = title, tint = color, modifier = Modifier.size(18.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = color,
+                    modifier = Modifier.size(20.dp)
+                )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(text = title, style = MaterialTheme.typography.labelSmall, color = Slate300)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Slate100,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = Slate400,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

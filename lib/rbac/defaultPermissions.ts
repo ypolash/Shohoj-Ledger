@@ -8,12 +8,20 @@ export const DefaultPermissions = [
   { action: "EMPLOYEE_CREATE", moduleKey: "HR" },
   { action: "EMPLOYEE_EDIT", moduleKey: "HR" },
   { action: "EMPLOYEE_DELETE", moduleKey: "HR" },
+  { action: "EMPLOYEE_MANAGE", moduleKey: "HR" },
+  { action: "MANAGE_EMPLOYEES", moduleKey: "HR" },
 
   { action: "ATTENDANCE_VIEW", moduleKey: "ATTENDANCE" },
   { action: "ATTENDANCE_MANAGE", moduleKey: "ATTENDANCE" },
 
   { action: "PAYROLL_VIEW", moduleKey: "PAYROLL" },
   { action: "PAYROLL_MANAGE", moduleKey: "PAYROLL" },
+  { action: "PAYROLL_APPROVE", moduleKey: "PAYROLL" },
+  { action: "PAYROLL_PAY", moduleKey: "PAYROLL" },
+  { action: "PAYROLL_LOCK", moduleKey: "PAYROLL" },
+  { action: "PAYROLL_ARCHIVE", moduleKey: "PAYROLL" },
+  { action: "PAYROLL_GENERATE", moduleKey: "PAYROLL" },
+  { action: "PAYROLL_VIEW_PAYSLIP", moduleKey: "PAYROLL" },
 
   { action: "CRM_VIEW", moduleKey: "CRM" },
   { action: "CRM_MANAGE", moduleKey: "CRM" },
@@ -28,6 +36,13 @@ export const DefaultPermissions = [
 
   { action: "PROJECT_VIEW", moduleKey: "PROJECTS" },
   { action: "PROJECT_MANAGE", moduleKey: "PROJECTS" },
+  { action: "VIEW_PROJECTS", moduleKey: "PROJECTS" },
+  { action: "CREATE_PROJECTS", moduleKey: "PROJECTS" },
+  { action: "EDIT_PROJECTS", moduleKey: "PROJECTS" },
+  { action: "DELETE_PROJECTS", moduleKey: "PROJECTS" },
+  { action: "MANAGE_TASKS", moduleKey: "PROJECTS" },
+  { action: "VIEW_DASHBOARD", moduleKey: "PROJECTS" },
+  { action: "VIEW_FINANCIAL_REPORTS", moduleKey: "ACCOUNTING" },
 
   { action: "FINANCE_VIEW", moduleKey: "ACCOUNTING" },
   { action: "FINANCE_MANAGE", moduleKey: "ACCOUNTING" },

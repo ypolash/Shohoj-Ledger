@@ -109,12 +109,14 @@ export async function GET() {
           id: companyId,
           name: company?.name || "Company",
           businessType: company?.businessType || "General",
-          logoUrl: company?.logoUrl || null,
+          logoUrl: company?.logoUrl && company.logoUrl.length < 1000 ? company.logoUrl : null,
         },
         user: {
-          name: user.name,
-          role: user.role,
-          email: user.email,
+          id: user.id || "",
+          name: user.name || "Admin",
+          role: user.role || "Administrator",
+          email: user.email || "",
+          platformRole: user.platformRole || null,
         },
         attendanceStats: {
           totalActiveEmployees,
@@ -142,11 +144,13 @@ export async function GET() {
         pendingLeavesCount: leaveRequestsToday,
         recentPunches: todayAttendances.slice(0, 5).map((att) => ({
           id: att.id,
-          employeeName: `${att.employee.firstName} ${att.employee.lastName}`.trim(),
-          employeeId: att.employee.employeeId,
-          designation: att.employee.designation,
+          employeeName: att.employee
+            ? `${att.employee.firstName || ""} ${att.employee.lastName || ""}`.trim()
+            : "Employee",
+          employeeId: att.employee?.employeeId || "N/A",
+          designation: att.employee?.designation || "Staff",
           status: att.status,
-          isLate: att.isLate,
+          isLate: att.isLate || false,
           lateMinutes: att.lateMinutes || 0,
           checkInTime: att.checkInTime ? att.checkInTime.toISOString() : null,
           checkOutTime: att.checkOutTime ? att.checkOutTime.toISOString() : null,

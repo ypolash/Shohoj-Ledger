@@ -11,8 +11,12 @@ export async function getCompanyContext(userId: string, loginType: string) {
     let businessType = null;
     if (user?.companyId) {
        if (user.role) {
+         const roleNames = user.role.split(',').map((r: string) => r.trim()).filter(Boolean);
          const dbRole = await prisma.role.findFirst({
-           where: { companyId: user.companyId, name: user.role }
+           where: { 
+             companyId: user.companyId, 
+             name: { in: roleNames } 
+           }
          });
          if (dbRole) {
            roleId = dbRole.id;

@@ -237,28 +237,51 @@ fun SearchBarField(
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text(placeholder, color = Slate500, fontSize = 14.sp) },
+        placeholder = {
+            Text(
+                text = placeholder,
+                color = Slate500,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
         leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = "Search", tint = Slate400)
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = if (query.isNotEmpty()) Indigo400 else Slate400,
+                modifier = Modifier.size(20.dp)
+            )
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = Slate400)
+                IconButton(
+                    onClick = { onQueryChange("") },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear search",
+                        tint = Slate400,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         },
         singleLine = true,
+        shape = RoundedCornerShape(14.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)),
+            .heightIn(min = 52.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Slate900,
             unfocusedContainerColor = Slate900,
             focusedBorderColor = Indigo500,
             unfocusedBorderColor = Slate800,
             focusedTextColor = Slate50,
-            unfocusedTextColor = Slate100
+            unfocusedTextColor = Slate100,
+            cursorColor = Indigo500
         )
     )
 }

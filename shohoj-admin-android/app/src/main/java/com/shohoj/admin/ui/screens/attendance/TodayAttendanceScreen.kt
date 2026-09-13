@@ -34,7 +34,7 @@ fun TodayAttendanceScreen(
         topBar = {
             ExecutiveTopBar(
                 title = "Today's Attendance",
-                subtitle = state.attendanceData?.let { "${it.stats.presentToday} / ${it.stats.totalActiveEmployees} Present" } ?: "Live Attendance",
+                subtitle = state.attendanceData?.let { "${it.safeStats.presentToday} / ${it.safeStats.totalActiveEmployees} Present" } ?: "Live Attendance",
                 onSettingsClick = { onNavigate(Screen.Settings.route) }
             )
         },
@@ -63,7 +63,8 @@ fun TodayAttendanceScreen(
                 )
             } else {
                 val data = state.attendanceData ?: return@Scaffold
-                val stats = data.stats
+                val stats = data.safeStats
+                val roster = data.safeRoster
 
                 // KPI Banner Card
                 Card(
@@ -154,7 +155,7 @@ fun TodayAttendanceScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Roster List
-                if (data.roster.isEmpty()) {
+                if (roster.isEmpty()) {
                     EmptyState(
                         message = "No attendance records found for selected filter.",
                         icon = Icons.Default.EventBusy
@@ -164,7 +165,7 @@ fun TodayAttendanceScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        items(data.roster) { item ->
+                        items(roster) { item ->
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()

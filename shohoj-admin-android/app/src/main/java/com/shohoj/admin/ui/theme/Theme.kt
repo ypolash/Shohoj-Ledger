@@ -1,6 +1,8 @@
 package com.shohoj.admin.ui.theme
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -32,6 +34,15 @@ private val DarkColorScheme = darkColorScheme(
     onError = Slate50
 )
 
+private fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
 @Composable
 fun ShohojAdminTheme(
     content: @Composable () -> Unit
@@ -40,9 +51,13 @@ fun ShohojAdminTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = Slate950.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            val activity = view.context.findActivity()
+            activity?.window?.let { window ->
+                window.statusBarColor = Slate950.toArgb()
+                window.navigationBarColor = Slate950.toArgb()
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+            }
         }
     }
 

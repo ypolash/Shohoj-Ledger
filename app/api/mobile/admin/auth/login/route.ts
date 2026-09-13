@@ -128,7 +128,7 @@ export async function POST(req: Request) {
           id: company?.id || companyId,
           name: company?.name || "My Company",
           businessType: company?.businessType || "Business",
-          logoUrl: company?.logoUrl || null,
+          logoUrl: company?.logoUrl && company.logoUrl.length < 1000 ? company.logoUrl : null,
         },
       },
       { headers: CORS_HEADERS }

@@ -33,7 +33,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getDashboard()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load executive dashboard"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }
@@ -46,7 +51,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getEmployees(search, status)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.employees)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body.safeEmployees)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load employees"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }
@@ -59,7 +69,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getAttendanceRoster(date, status)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load attendance roster"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }
@@ -77,7 +92,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getProjects(search, projectCode, companyName, status)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.projects)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body.safeProjects)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load projects"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }
@@ -94,7 +114,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getLeads(search, status, priority)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load leads"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }
@@ -107,7 +132,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getFinancialReport(period)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load financial report"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }
@@ -120,7 +150,12 @@ class AdminRepository(private val apiClient: ApiClient) {
         return try {
             val response = api.getLeaves(status, search)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception(body.error ?: "Failed to load leave requests"))
+                }
             } else {
                 Result.failure(Exception(parseErrorMessage(response.code(), response.errorBody()?.string())))
             }

@@ -115,7 +115,12 @@ export default function EnterpriseCommandCenterPage() {
         role: newUserRoles.join(',')
       });
 
-      setCreateSuccess(`User created successfully! They can now log in at /login with role: ${newUserRoles.join(', ')}.`);
+      if (!res.success) {
+        setCreateError(res.error || "Failed to provision user account.");
+        return;
+      }
+
+      setCreateSuccess(res.message || `User provisioned successfully with role: ${newUserRoles.join(', ')}.`);
       setNewUserName("");
       setNewUserEmail("");
       setNewUserPassword("");
@@ -123,7 +128,7 @@ export default function EnterpriseCommandCenterPage() {
       setTimeout(() => {
         setShowCreateModal(false);
         setCreateSuccess("");
-      }, 2000);
+      }, 2500);
     } catch (err: any) {
       setCreateError(err.message || "Failed to create user account.");
     } finally {
@@ -137,7 +142,11 @@ export default function EnterpriseCommandCenterPage() {
 
     setResetLoading(true);
     try {
-      await resetUserPasswordAction(resetTargetUser.id, newPasswordVal);
+      const res = await resetUserPasswordAction(resetTargetUser.id, newPasswordVal);
+      if (res && !res.success) {
+        alert(res.error || "Failed to reset password.");
+        return;
+      }
       setResetSuccess("Password successfully updated. The user can now log in with their new password.");
       setTimeout(() => {
         setResetTargetUser(null);
@@ -163,11 +172,15 @@ export default function EnterpriseCommandCenterPage() {
     setEditRoleLoading(true);
     const newRolesString = editRolesVal.join(',');
     try {
-      await assignUserRoleAction(editRoleTargetUser.id, newRolesString);
+      const res = await assignUserRoleAction(editRoleTargetUser.id, newRolesString);
+      if (res && !res.success) {
+        alert(res.error || 'Failed to update roles');
+        return;
+      }
       setUsers(prev => prev.map(u => u.id === editRoleTargetUser.id ? { ...u, role: newRolesString } : u));
       setEditRoleTargetUser(null);
-    } catch (e) {
-      alert('Failed to update roles');
+    } catch (e: any) {
+      alert(e.message || 'Failed to update roles');
     } finally {
       setEditRoleLoading(false);
     }

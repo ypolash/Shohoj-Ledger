@@ -6,15 +6,15 @@ export interface OrderItem {
   id: string;
   productId: string;
   description: string;
-  quantity: number;
-  unitPrice: number;
-  discount: number;
+  quantity: number | string;
+  unitPrice: number | string;
+  discount: number | string;
   total: number;
 }
 
 interface SalesOrderItemsTableProps {
   items: OrderItem[];
-  onItemChange: (index: number, field: "quantity" | "unitPrice" | "discount", val: number) => void;
+  onItemChange: (index: number, field: "quantity" | "unitPrice" | "discount", val: number | string) => void;
   onRemoveItem: (index: number) => void;
 }
 
@@ -84,7 +84,7 @@ export function SalesOrderItemsTable({
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => onItemChange(index, "quantity", Number(e.target.value))}
+                      onChange={(e) => onItemChange(index, "quantity", e.target.value === "" ? "" : Number(e.target.value))}
                       style={smallInputStyle}
                       required
                     />
@@ -95,7 +95,7 @@ export function SalesOrderItemsTable({
                       min="0"
                       step="any"
                       value={item.unitPrice}
-                      onChange={(e) => onItemChange(index, "unitPrice", Number(e.target.value))}
+                      onChange={(e) => onItemChange(index, "unitPrice", e.target.value === "" ? "" : Number(e.target.value))}
                       style={{ ...smallInputStyle, fontFamily: "monospace" }}
                       required
                     />
@@ -105,7 +105,7 @@ export function SalesOrderItemsTable({
                       type="number"
                       min="0"
                       value={item.discount}
-                      onChange={(e) => onItemChange(index, "discount", Number(e.target.value))}
+                      onChange={(e) => onItemChange(index, "discount", e.target.value === "" ? "" : Number(e.target.value))}
                       style={smallInputStyle}
                     />
                   </td>

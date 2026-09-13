@@ -33,10 +33,10 @@ export default function SettlementsPage() {
   const [modalError, setModalError] = useState<string | null>(null);
 
   // Shareholder percentages
-  const [ceoPercent, setCeoPercent] = useState(100);
-  const [devPercent, setDevPercent] = useState(0);
-  const [advisorPercent, setAdvisorPercent] = useState(0);
-  const [companyPercent, setCompanyPercent] = useState(0);
+  const [ceoPercent, setCeoPercent] = useState<number | string>(100);
+  const [devPercent, setDevPercent] = useState<number | string>(0);
+  const [advisorPercent, setAdvisorPercent] = useState<number | string>(0);
+  const [companyPercent, setCompanyPercent] = useState<number | string>(0);
 
   // UI preferences
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -126,7 +126,7 @@ export default function SettlementsPage() {
     }
   }, [isModalOpen, fetchPreview]);
 
-  const totalPercent = ceoPercent + devPercent + advisorPercent + companyPercent;
+  const totalPercent = Number(ceoPercent || 0) + Number(devPercent || 0) + Number(advisorPercent || 0) + Number(companyPercent || 0);
 
   const handleSaveDefaults = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,10 +135,10 @@ export default function SettlementsPage() {
       return;
     }
     localStorage.setItem('settlement_defaults', JSON.stringify({
-      ceoPercent,
-      devPercent,
-      advisorPercent,
-      companyPercent
+      ceoPercent: Number(ceoPercent || 0),
+      devPercent: Number(devPercent || 0),
+      advisorPercent: Number(advisorPercent || 0),
+      companyPercent: Number(companyPercent || 0)
     }));
     setIsShareholderModalOpen(false);
   };
@@ -157,10 +157,10 @@ export default function SettlementsPage() {
       const payload = {
         month: parseInt(month),
         year: parseInt(year),
-        ceoPercent,
-        devPercent,
-        advisorPercent,
-        companyPercent
+        ceoPercent: Number(ceoPercent || 0),
+        devPercent: Number(devPercent || 0),
+        advisorPercent: Number(advisorPercent || 0),
+        companyPercent: Number(companyPercent || 0)
       };
 
       const res = await fetch('/api/settlements', {
@@ -531,7 +531,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={ceoPercent}
-                      onChange={(e) => setCeoPercent(Number(e.target.value))}
+                      onChange={(e) => setCeoPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.85rem' }}
                     />
                   </div>
@@ -543,7 +543,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={devPercent}
-                      onChange={(e) => setDevPercent(Number(e.target.value))}
+                      onChange={(e) => setDevPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.85rem' }}
                     />
                   </div>
@@ -555,7 +555,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={advisorPercent}
-                      onChange={(e) => setAdvisorPercent(Number(e.target.value))}
+                      onChange={(e) => setAdvisorPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.85rem' }}
                     />
                   </div>
@@ -567,7 +567,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={companyPercent}
-                      onChange={(e) => setCompanyPercent(Number(e.target.value))}
+                      onChange={(e) => setCompanyPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.85rem' }}
                     />
                   </div>
@@ -682,7 +682,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={ceoPercent}
-                      onChange={(e) => setCeoPercent(Number(e.target.value))}
+                      onChange={(e) => setCeoPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.9rem' }}
                     />
                   </div>
@@ -694,7 +694,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={devPercent}
-                      onChange={(e) => setDevPercent(Number(e.target.value))}
+                      onChange={(e) => setDevPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.9rem' }}
                     />
                   </div>
@@ -706,7 +706,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={advisorPercent}
-                      onChange={(e) => setAdvisorPercent(Number(e.target.value))}
+                      onChange={(e) => setAdvisorPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.9rem' }}
                     />
                   </div>
@@ -718,7 +718,7 @@ export default function SettlementsPage() {
                       min="0"
                       max="100"
                       value={companyPercent}
-                      onChange={(e) => setCompanyPercent(Number(e.target.value))}
+                      onChange={(e) => setCompanyPercent(e.target.value === '' ? '' : Number(e.target.value))}
                       style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)', fontSize: '0.9rem' }}
                     />
                   </div>

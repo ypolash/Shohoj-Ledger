@@ -12,7 +12,7 @@ export default function BillingPage() {
   // Form State
   const [showModal, setShowModal] = useState(false);
   const [companyId, setCompanyId] = useState('');
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState<number | string>(0);
   const [dueDate, setDueDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,7 +80,7 @@ export default function BillingPage() {
       const res = await fetch('/api/system/billing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyId, amount, dueDate })
+        body: JSON.stringify({ companyId, amount: Number(amount) || 0, dueDate })
       });
       if (!res.ok) throw new Error('Failed to create invoice');
       setShowModal(false);
@@ -195,7 +195,7 @@ export default function BillingPage() {
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Amount ($)</label>
-                <input required type="number" step="0.01" value={amount} onChange={e => setAmount(parseFloat(e.target.value))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: '#fff' }} />
+                <input required type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value === '' ? '' : parseFloat(e.target.value))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: '#fff' }} />
               </div>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Due Date</label>

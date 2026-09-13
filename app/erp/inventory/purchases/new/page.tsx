@@ -27,10 +27,10 @@ interface PurchaseLineItem {
   productName: string;
   productCode: string;
   unit: string;
-  quantity: number;
-  unitPrice: number;
-  taxRate: number;
-  discount: number;
+  quantity: number | string;
+  unitPrice: number | string;
+  taxRate: number | string;
+  discount: number | string;
   lineTotal: number;
   remarks?: string;
 }
@@ -99,8 +99,8 @@ export default function DedicatedNewPurchasePage() {
   const [termsAndConditions, setTermsAndConditions] = useState(
     "1. Goods must be delivered in sound packaging.\n2. Invoice subject to inventory quality verification.\n3. Payment disbursed as per approved payment terms."
   );
-  const [overallDiscount, setOverallDiscount] = useState<number>(0);
-  const [shippingFee, setShippingFee] = useState<number>(0);
+  const [overallDiscount, setOverallDiscount] = useState<number | string>(0);
+  const [shippingFee, setShippingFee] = useState<number | string>(0);
 
   // Line items state
   const [items, setItems] = useState<PurchaseLineItem[]>([
@@ -180,9 +180,9 @@ export default function DedicatedNewPurchasePage() {
     const updated = [...items];
     if (selected) {
       const price = Number(selected.purchasePrice || selected.costPrice || selected.sellingPrice || 0);
-      const qty = updated[index].quantity || 1;
-      const taxRate = updated[index].taxRate || 0;
-      const discount = updated[index].discount || 0;
+      const qty = Number(updated[index].quantity) || 1;
+      const taxRate = Number(updated[index].taxRate) || 0;
+      const discount = Number(updated[index].discount) || 0;
       const subtotal = qty * price;
       const taxAmount = (subtotal * taxRate) / 100;
       const total = subtotal + taxAmount - discount;
@@ -214,7 +214,7 @@ export default function DedicatedNewPurchasePage() {
   const handleItemFieldChange = (
     index: number,
     field: "quantity" | "unitPrice" | "taxRate" | "discount",
-    value: number
+    value: number | string
   ) => {
     const updated = [...items];
     updated[index][field] = value;
@@ -838,7 +838,7 @@ export default function DedicatedNewPurchasePage() {
                             type="number"
                             min="1"
                             value={item.quantity}
-                            onChange={(e) => handleItemFieldChange(idx, "quantity", Number(e.target.value))}
+                            onChange={(e) => handleItemFieldChange(idx, "quantity", e.target.value === "" ? "" : Number(e.target.value))}
                             className={styles.tableInput}
                             style={{ textAlign: "center", fontWeight: 700, paddingRight: item.unit ? "36px" : "10px" }}
                             required
@@ -880,7 +880,7 @@ export default function DedicatedNewPurchasePage() {
                             step="any"
                             min="0"
                             value={item.unitPrice}
-                            onChange={(e) => handleItemFieldChange(idx, "unitPrice", Number(e.target.value))}
+                            onChange={(e) => handleItemFieldChange(idx, "unitPrice", e.target.value === "" ? "" : Number(e.target.value))}
                             className={styles.tableInput}
                             style={{ fontFamily: "monospace", fontWeight: 700, paddingLeft: "24px" }}
                             required
@@ -970,7 +970,7 @@ export default function DedicatedNewPurchasePage() {
                     type="number"
                     min="0"
                     value={overallDiscount}
-                    onChange={(e) => setOverallDiscount(Number(e.target.value))}
+                    onChange={(e) => setOverallDiscount(e.target.value === "" ? "" : Number(e.target.value))}
                     className={styles.formInput}
                     style={{ padding: "6px 10px" }}
                   />
@@ -981,7 +981,7 @@ export default function DedicatedNewPurchasePage() {
                     type="number"
                     min="0"
                     value={shippingFee}
-                    onChange={(e) => setShippingFee(Number(e.target.value))}
+                    onChange={(e) => setShippingFee(e.target.value === "" ? "" : Number(e.target.value))}
                     className={styles.formInput}
                     style={{ padding: "6px 10px" }}
                   />
@@ -1234,19 +1234,19 @@ export default function DedicatedNewPurchasePage() {
                           ৳{subtotalAmount.toLocaleString()}
                         </td>
                       </tr>
-                      {overallDiscount > 0 && (
+                      {Number(overallDiscount) > 0 && (
                         <tr>
                           <td style={{ color: "#ef4444" }}>Discount:</td>
                           <td className={styles.textRight} style={{ fontFamily: "monospace", color: "#ef4444" }}>
-                            -৳{overallDiscount.toLocaleString()}
+                            -৳{Number(overallDiscount).toLocaleString()}
                           </td>
                         </tr>
                       )}
-                      {shippingFee > 0 && (
+                      {Number(shippingFee) > 0 && (
                         <tr>
                           <td>Freight & Shipping:</td>
                           <td className={styles.textRight} style={{ fontFamily: "monospace" }}>
-                            +৳{shippingFee.toLocaleString()}
+                            +৳{Number(shippingFee).toLocaleString()}
                           </td>
                         </tr>
                       )}

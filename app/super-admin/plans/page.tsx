@@ -64,7 +64,7 @@ export default function PlansPage() {
       const res = await fetch('/api/system/plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, price, billingCycle, maxUsers })
+        body: JSON.stringify({ name, price: Number(price) || 0, billingCycle, maxUsers: Number(maxUsers) || 0 })
       });
       if (!res.ok) throw new Error('Failed to create plan');
       setShowModal(false);
@@ -175,7 +175,7 @@ export default function PlansPage() {
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Price ($)</label>
-                <input required type="number" step="0.01" value={price} onChange={e => setPrice(parseFloat(e.target.value))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: '#fff' }} />
+                <input required type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value === '' ? ('' as any) : parseFloat(e.target.value))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: '#fff' }} />
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Billing Cycle</label>
@@ -186,7 +186,7 @@ export default function PlansPage() {
               </div>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Max Users</label>
-                <input required type="number" value={maxUsers} onChange={e => setMaxUsers(parseInt(e.target.value))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: '#fff' }} />
+                <input required type="number" value={maxUsers} onChange={e => setMaxUsers(e.target.value === '' ? ('' as any) : parseInt(e.target.value, 10))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: '#fff' }} />
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

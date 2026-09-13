@@ -24,8 +24,8 @@ interface OrderLineItem {
   sku?: string;
   unit?: string;
   availableStock: number;
-  quantity: number;
-  unitPrice: number;
+  quantity: number | string;
+  unitPrice: number | string;
   total: number;
 }
 
@@ -93,8 +93,10 @@ function NewInventoryOrderContent() {
     const existingIndex = items.findIndex(i => i.productId === prod.id);
     if (existingIndex > -1) {
       const updated = [...items];
-      updated[existingIndex].quantity += 1;
-      updated[existingIndex].total = updated[existingIndex].quantity * updated[existingIndex].unitPrice;
+      const newQty = (Number(updated[existingIndex].quantity) || 0) + 1;
+      const unitPrice = Number(updated[existingIndex].unitPrice) || 0;
+      updated[existingIndex].quantity = newQty;
+      updated[existingIndex].total = newQty * unitPrice;
       setItems(updated);
       setSelectedProductToAdd('');
       return;
@@ -116,11 +118,11 @@ function NewInventoryOrderContent() {
     setSelectedProductToAdd('');
   };
 
-  const handleUpdateItem = (id: string, field: 'quantity' | 'unitPrice', val: number) => {
+  const handleUpdateItem = (id: string, field: 'quantity' | 'unitPrice', val: number | string) => {
     setItems(prev => prev.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: val };
-      updated.total = (updated.quantity || 0) * (updated.unitPrice || 0);
+      updated.total = Number(updated.quantity || 0) * Number(updated.unitPrice || 0);
       return updated;
     }));
   };
@@ -164,8 +166,8 @@ function NewInventoryOrderContent() {
       remarks: notes || undefined,
       lines: items.map(i => ({
         productId: i.productId,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
+        quantity: Number(i.quantity) || 1,
+        unitPrice: Number(i.unitPrice) || 0,
         remarks: i.productName
       }))
     };
@@ -406,7 +408,7 @@ function NewInventoryOrderContent() {
                           type="number"
                           min="1"
                           value={item.quantity}
-                          onChange={e => handleUpdateItem(item.id, 'quantity', Number(e.target.value))}
+                          onChange={e => handleUpdateItem(item.id, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
                           className={styles.formInput}
                           style={{ padding: '6px 10px', fontSize: '0.85rem' }}
                         />
@@ -417,7 +419,7 @@ function NewInventoryOrderContent() {
                           step="any"
                           min="0"
                           value={item.unitPrice}
-                          onChange={e => handleUpdateItem(item.id, 'unitPrice', Number(e.target.value))}
+                          onChange={e => handleUpdateItem(item.id, 'unitPrice', e.target.value === '' ? '' : Number(e.target.value))}
                           className={styles.formInput}
                           style={{ padding: '6px 10px', fontSize: '0.85rem', fontFamily: 'monospace' }}
                         />

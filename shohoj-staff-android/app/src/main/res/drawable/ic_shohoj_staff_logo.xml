@@ -2,122 +2,101 @@
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="96dp"
     android:height="96dp"
-    android:viewportWidth="96"
-    android:viewportHeight="96">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
 
-    <!-- Outer Glow / Halo -->
+    <!-- Subtle Ambient Glow Ring (Refined 1.2dp Stroke) -->
     <path
-        android:pathData="M48,16 C65.6,16 80,30.4 80,48 C80,65.6 65.6,80 48,80 C30.4,80 16,65.6 16,48 C16,30.4 30.4,16 48,16 Z"
-        android:strokeWidth="2.5"
-        android:strokeAlpha="0.25">
+        android:pathData="M54,31 C66.7,31 77,41.3 77,54 C77,66.7 66.7,77 54,77 C41.3,77 31,66.7 31,54 C31,41.3 41.3,31 54,31 Z"
+        android:strokeWidth="1.2"
+        android:strokeAlpha="0.22">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
-                android:startX="16"
-                android:startY="16"
-                android:endX="80"
-                android:endY="80"
+                android:startX="31"
+                android:startY="31"
+                android:endX="77"
+                android:endY="77"
                 android:startColor="#10B981"
                 android:endColor="#06B6D4" />
         </aapt:attr>
     </path>
 
-    <!-- Squircle Shield Container with Gradient Border -->
+    <!-- Upper "S" Flowing Arc (Emerald Gradient, 2.5dp stroke) -->
     <path
-        android:pathData="M30,16 L66,16 C75.9,16 84,24.1 84,34 L84,62 C84,71.9 75.9,80 66,80 L30,80 C20.1,80 12,71.9 12,62 L12,34 C12,24.1 20.1,16 30,16 Z"
-        android:fillColor="#0B0F19"
-        android:strokeWidth="2">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="12"
-                android:startY="16"
-                android:endX="84"
-                android:endY="80"
-                android:startColor="#34D399"
-                android:endColor="#06B6D4" />
-        </aapt:attr>
-    </path>
-
-    <!-- Upper "S" Flowing Arc (Emerald Gradient) -->
-    <path
-        android:pathData="M65,30 C60.5,25.5 54,23.5 46.5,23.5 C34,23.5 24,31.5 24,41 C24,49.5 31.5,54 43,55.5 L45,56"
-        android:strokeWidth="4"
+        android:pathData="M67,37 C63.5,33.5 59,32.5 54,32.5 C43.5,32.5 35.5,39.5 35.5,47.5 C35.5,52 38.5,54.8 45,56 L48,56.5"
+        android:strokeWidth="2.5"
         android:strokeLineCap="round">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
-                android:startX="24"
-                android:startY="23.5"
-                android:endX="65"
-                android:endY="56"
+                android:startX="35.5"
+                android:startY="32.5"
+                android:endX="67"
+                android:endY="56.5"
                 android:startColor="#34D399"
                 android:endColor="#10B981" />
         </aapt:attr>
     </path>
 
-    <!-- Lower "S" Flowing Arc (Cyan Gradient) -->
+    <!-- Lower "S" Flowing Arc (Cyan Gradient, 2.5dp stroke) -->
     <path
-        android:pathData="M51,41.5 L53,42 C64.5,43.5 72,48 72,56.5 C72,66 62,74 49.5,74 C42,74 35.5,72 31,67.5"
-        android:strokeWidth="4"
+        android:pathData="M52,47.5 L55,48 C63,49.2 68.5,52.5 68.5,58.5 C68.5,65.5 61.5,71.5 53,71.5 C48,71.5 43.5,69.8 40,66.5"
+        android:strokeWidth="2.5"
         android:strokeLineCap="round">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
-                android:startX="31"
-                android:startY="41.5"
-                android:endX="72"
-                android:endY="74"
+                android:startX="40"
+                android:startY="47.5"
+                android:endX="68.5"
+                android:endY="71.5"
                 android:startColor="#10B981"
+                android:endColor="#22D3EE" />
+        </aapt:attr>
+    </path>
+
+    <!-- Center Staff Identity Card: Body -->
+    <path
+        android:pathData="M46.5,40 L61.5,40 C63.4,40 65,41.6 65,43.5 L65,63.5 C65,65.4 63.4,67 61.5,67 L46.5,67 C44.6,67 43,65.4 43,63.5 L43,43.5 C43,41.6 44.6,40 46.5,40 Z"
+        android:fillColor="#0F172A"
+        android:strokeWidth="1.2">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="43"
+                android:startY="40"
+                android:endX="65"
+                android:endY="67"
+                android:startColor="#34D399"
                 android:endColor="#22D3EE" />
         </aapt:attr>
     </path>
 
     <!-- Center Staff Identity Card: Clip Tab -->
     <path
-        android:pathData="M44.5,36 L51.5,36 C52.3,36 53,36.7 53,37.5 L53,39.5 L43,39.5 L43,37.5 C43,36.7 43.7,36 44.5,36 Z"
+        android:pathData="M52.5,37 L55.5,37 C56.1,37 56.5,37.4 56.5,38 L56.5,40 L51.5,40 L51.5,38 C51.5,37.4 51.9,37 52.5,37 Z"
         android:fillColor="#34D399" />
-
-    <!-- Center Staff Identity Card: Body -->
-    <path
-        android:pathData="M34,39.5 L62,39.5 C63.9,39.5 65.5,41.1 65.5,43 L65.5,58 C65.5,59.9 63.9,61.5 62,61.5 L34,61.5 C32.1,61.5 30.5,59.9 30.5,58 L30.5,43 C30.5,41.1 32.1,39.5 34,39.5 Z"
-        android:fillColor="#1E293B"
-        android:strokeColor="#22D3EE"
-        android:strokeWidth="1.5" />
 
     <!-- Staff Avatar: Head -->
     <path
-        android:pathData="M41,45 C42.7,45 44,46.3 44,48 C44,49.7 42.7,51 41,51 C39.3,51 38,49.7 38,48 C38,46.3 39.3,45 41,45 Z"
+        android:pathData="M54,44.7 C55.55,44.7 56.8,45.95 56.8,47.5 C56.8,49.05 55.55,50.3 54,50.3 C52.45,50.3 51.2,49.05 51.2,47.5 C51.2,45.95 52.45,44.7 54,44.7 Z"
         android:fillColor="#34D399" />
 
     <!-- Staff Avatar: Shoulders -->
     <path
-        android:pathData="M36,56.5 C36,53.8 38.2,52.5 41,52.5 C43.8,52.5 46,53.8 46,56.5 Z"
+        android:pathData="M48.5,56.5 C48.5,53.8 50.8,52.2 54,52.2 C57.2,52.2 59.5,53.8 59.5,56.5 Z"
         android:fillColor="#34D399" />
 
-    <!-- Staff Badge Info Lines -->
+    <!-- Staff Smart Verification Pill -->
     <path
-        android:pathData="M49,46.5 L59,46.5"
-        android:strokeColor="#22D3EE"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round" />
-    <path
-        android:pathData="M49,51 L56,51"
-        android:strokeColor="#94A3B8"
-        android:strokeWidth="1.4"
-        android:strokeLineCap="round" />
-    <path
-        android:pathData="M49,55.5 L58,55.5"
-        android:strokeColor="#64748B"
-        android:strokeWidth="1.2"
-        android:strokeLineCap="round" />
-
-    <!-- Agility Wing Accent -->
-    <path
-        android:pathData="M65.5,38 C69.5,32 74,28.5 78.5,27.5 C76,32 73.5,36.5 69,40 Z"
+        android:pathData="M49.8,60.7 L58.2,60.7 C58.6,60.7 59,61.1 59,61.5 C59,61.9 58.6,62.3 58.2,62.3 L49.8,62.3 C49.4,62.3 49,61.9 49,61.5 C49,61.1 49.4,60.7 49.8,60.7 Z"
         android:fillColor="#22D3EE" />
+
+    <!-- Dynamic Agility Accent (Top Right) -->
     <path
-        android:pathData="M62.5,44 C67,40.5 71.5,38 75.5,37 C72.5,41.5 69,44 65,46 Z"
-        android:fillColor="#06B6D4" />
+        android:pathData="M66.5,41 C68.8,38 71.5,36 74,35.5 C72.5,38.5 70.5,41 68,43 Z"
+        android:fillColor="#22D3EE"
+        android:fillAlpha="0.85" />
 
 </vector>

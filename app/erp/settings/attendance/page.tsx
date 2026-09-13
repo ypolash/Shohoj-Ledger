@@ -122,17 +122,23 @@ export default function AttendanceSettings() {
 
   const saveRule = async () => {
     try {
+      const payload = {
+        ...formData,
+        fromMinutes: Number(formData.fromMinutes) || 0,
+        toMinutes: Number(formData.toMinutes) || 0,
+        amount: Number(formData.amount) || 0
+      };
       if (editingRule) {
         await fetch(`/api/staff/settings/punishments/${editingRule.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(payload)
         });
       } else {
         await fetch("/api/staff/settings/punishments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(payload)
         });
       }
       setIsRuleModalOpen(false);
@@ -312,7 +318,7 @@ export default function AttendanceSettings() {
                 <input 
                   type="number" 
                   value={config.gracePeriod}
-                  onChange={(e) => handleConfigChange('gracePeriod', parseInt(e.target.value))}
+                  onChange={(e) => handleConfigChange('gracePeriod', e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)}
                   className="input"
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)' }}
                 />

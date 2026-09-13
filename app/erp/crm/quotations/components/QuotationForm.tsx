@@ -33,14 +33,14 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
     { id: '1', description: '', quantity: 1, unitPrice: 0, discount: 0, total: 0 }
   ]);
 
-  const [taxRate, setTaxRate] = useState(15); // e.g. 15% VAT
-  const [globalDiscount, setGlobalDiscount] = useState(Number(initialData.discountAmount) || 0);
+  const [taxRate, setTaxRate] = useState<number | string>(15); // e.g. 15% VAT
+  const [globalDiscount, setGlobalDiscount] = useState<number | string>(Number(initialData.discountAmount) || 0);
 
   const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
   const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount || 0), 0);
-  const totalDiscount = itemDiscounts + globalDiscount;
+  const totalDiscount = itemDiscounts + Number(globalDiscount || 0);
   const taxableAmount = Math.max(0, subtotal - totalDiscount);
-  const totalTax = (taxableAmount * taxRate) / 100;
+  const totalTax = (taxableAmount * Number(taxRate || 0)) / 100;
   const grandTotal = taxableAmount + totalTax;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -65,14 +65,14 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
           status: formData.status,
           notes: formData.notes,
           terms: formData.terms,
-          discountAmount: globalDiscount,
-          taxRate: taxRate,
+          discountAmount: Number(globalDiscount || 0),
+          taxRate: Number(taxRate || 0),
           lines: items.map(item => ({
             productId: item.productId || 'dummy',
             warehouseId: item.warehouseId || 'dummy',
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            discountAmount: item.discount,
+            quantity: Number(item.quantity || 1),
+            unitPrice: Number(item.unitPrice || 0),
+            discountAmount: Number(item.discount || 0),
             description: item.description
           }))
         })
@@ -162,11 +162,11 @@ export function QuotationForm({ initialData = {} as any, isEdit = false }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '200px' }}>
             <div>
               <label style={labelStyle}>Global Discount (Amount)</label>
-              <input type="number" value={globalDiscount} onChange={e => setGlobalDiscount(Number(e.target.value))} style={inputStyle} min="0" />
+              <input type="number" value={globalDiscount} onChange={e => setGlobalDiscount(e.target.value === '' ? '' : Number(e.target.value))} style={inputStyle} min="0" />
             </div>
             <div>
               <label style={labelStyle}>Tax Rate (%)</label>
-              <input type="number" value={taxRate} onChange={e => setTaxRate(Number(e.target.value))} style={inputStyle} min="0" max="100" />
+              <input type="number" value={taxRate} onChange={e => setTaxRate(e.target.value === '' ? '' : Number(e.target.value))} style={inputStyle} min="0" max="100" />
             </div>
           </div>
           

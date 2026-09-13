@@ -39,8 +39,8 @@ export default function PunishmentRuleModal({
               <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>From (Mins)</label>
               <input 
                 type="number" 
-                value={formData.fromMinutes}
-                onChange={(e) => setFormData({...formData, fromMinutes: parseInt(e.target.value)})}
+                value={formData.fromMinutes ?? ''}
+                onChange={(e) => setFormData({...formData, fromMinutes: e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0})}
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
               />
             </div>
@@ -48,8 +48,8 @@ export default function PunishmentRuleModal({
               <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>To (Mins)</label>
               <input 
                 type="number" 
-                value={formData.toMinutes}
-                onChange={(e) => setFormData({...formData, toMinutes: parseInt(e.target.value)})}
+                value={formData.toMinutes ?? ''}
+                onChange={(e) => setFormData({...formData, toMinutes: e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0})}
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
               />
             </div>
@@ -58,8 +58,8 @@ export default function PunishmentRuleModal({
             <label className="label" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>Amount (৳)</label>
             <input 
               type="number" 
-              value={formData.amount}
-              onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
+              value={formData.amount ?? ''}
+              onChange={(e) => setFormData({...formData, amount: e.target.value === '' ? '' : parseFloat(e.target.value) || 0})}
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '14px' }}
             />
           </div>

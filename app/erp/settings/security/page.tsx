@@ -38,7 +38,10 @@ export default function SecurityPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateSettings(settings);
+      await updateSettings({
+        ...settings,
+        gracePeriodMinutes: Number(settings.gracePeriodMinutes) || 0
+      });
       alert("Settings saved successfully!");
     } catch (err: any) {
       alert(err.message || "Failed to save settings");
@@ -128,7 +131,7 @@ export default function SecurityPage() {
               <input 
                 type="number" 
                 value={settings.gracePeriodMinutes}
-                onChange={(e) => handleChange('gracePeriodMinutes', parseInt(e.target.value))}
+                onChange={(e) => handleChange('gracePeriodMinutes', e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)}
                 min="0"
                 max="120"
                 style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-main)', color: 'var(--text-main)' }}

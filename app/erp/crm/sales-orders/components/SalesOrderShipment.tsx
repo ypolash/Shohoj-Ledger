@@ -70,9 +70,9 @@ export function SalesOrderShipment({ order, onRefresh }: { order?: any; onRefres
     }
   }, [order?.id]);
 
-  const handleQtyChange = (index: number, val: number) => {
+  const handleQtyChange = (index: number, val: number | string) => {
     const updated = [...shipmentLines];
-    updated[index].shipQty = Math.max(0, val);
+    updated[index].shipQty = val === '' ? ('' as any) : Math.max(0, Number(val));
     setShipmentLines(updated);
   };
 
@@ -82,11 +82,11 @@ export function SalesOrderShipment({ order, onRefresh }: { order?: any; onRefres
 
     // Filter lines that have shipQty > 0
     const linesToShip = shipmentLines
-      .filter((l) => l.shipQty > 0)
+      .filter((l) => Number(l.shipQty) > 0)
       .map((l) => ({
         salesOrderLineId: l.salesOrderLineId,
         productId: l.productId,
-        quantity: l.shipQty,
+        quantity: Number(l.shipQty),
         remarks: l.itemName
       }));
 
@@ -256,7 +256,7 @@ export function SalesOrderShipment({ order, onRefresh }: { order?: any; onRefres
                                 min="0" 
                                 max={line.orderedQty} 
                                 value={line.shipQty} 
-                                onChange={(e) => handleQtyChange(idx, parseInt(e.target.value) || 0)}
+                                onChange={(e) => handleQtyChange(idx, e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)}
                                 style={{ width: '64px', padding: '6px', textAlign: 'center', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', borderRadius: '6px', color: 'var(--text-main)', fontWeight: 600 }}
                               />
                             </td>

@@ -7,7 +7,7 @@ interface AttendanceConfig {
   id?: string;
   shiftStart: string;
   shiftEnd: string;
-  gracePeriod: number;
+  gracePeriod: number | string;
   fridayOff: boolean;
   enablePunishmentDeduction: boolean;
 }
@@ -108,16 +108,16 @@ export default function HRSettingsPage() {
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
 
   // Telemetry & Extra Policies
-  const [halfDayHours, setHalfDayHours] = useState<number>(4);
-  const [fullDayHours, setFullDayHours] = useState<number>(8);
+  const [halfDayHours, setHalfDayHours] = useState<number | string>(4);
+  const [fullDayHours, setFullDayHours] = useState<number | string>(8);
   const [autoCheckoutTime, setAutoCheckoutTime] = useState<string>("23:59");
-  const [overtimeThresholdMins, setOvertimeThresholdMins] = useState<number>(30);
-  const [geofenceRadius, setGeofenceRadius] = useState<number>(100);
+  const [overtimeThresholdMins, setOvertimeThresholdMins] = useState<number | string>(30);
+  const [geofenceRadius, setGeofenceRadius] = useState<number | string>(100);
   const [enforceWifi, setEnforceWifi] = useState<boolean>(true);
-  const [payrollCutoffDay, setPayrollCutoffDay] = useState<number>(25);
-  const [salaryDisbursalDay, setSalaryDisbursalDay] = useState<number>(1);
-  const [probationMonths, setProbationMonths] = useState<number>(3);
-  const [noticePeriodDays, setNoticePeriodDays] = useState<number>(30);
+  const [payrollCutoffDay, setPayrollCutoffDay] = useState<number | string>(25);
+  const [salaryDisbursalDay, setSalaryDisbursalDay] = useState<number | string>(1);
+  const [probationMonths, setProbationMonths] = useState<number | string>(3);
+  const [noticePeriodDays, setNoticePeriodDays] = useState<number | string>(30);
   const [onboardingMode, setOnboardingMode] = useState<"BASIC" | "PROFESSIONAL">("PROFESSIONAL");
 
   // Status & Feedback States
@@ -128,7 +128,15 @@ export default function HRSettingsPage() {
 
   // Modals
   const [showShiftModal, setShowShiftModal] = useState<boolean>(false);
-  const [shiftForm, setShiftForm] = useState({
+  const [shiftForm, setShiftForm] = useState<{
+    name: string;
+    startTime: string;
+    endTime: string;
+    gracePeriod: number | string;
+    breakTime: number | string;
+    nightShift: boolean;
+    isActive: boolean;
+  }>({
     name: "",
     startTime: "09:00",
     endTime: "18:00",
@@ -151,7 +159,13 @@ export default function HRSettingsPage() {
   const [showRuleModal, setShowRuleModal] = useState<boolean>(false);
   const [isSavingRule, setIsSavingRule] = useState<boolean>(false);
   const [ruleError, setRuleError] = useState<string>("");
-  const [ruleForm, setRuleForm] = useState({
+  const [ruleForm, setRuleForm] = useState<{
+    type: string;
+    fromMinutes: number | string;
+    toMinutes: number | string;
+    amount: number | string;
+    active: boolean;
+  }>({
     type: "LATE",
     fromMinutes: 16,
     toMinutes: 30,
@@ -163,7 +177,15 @@ export default function HRSettingsPage() {
   const [editingLeaveId, setEditingLeaveId] = useState<string | null>(null);
   const [isSavingLeave, setIsSavingLeave] = useState<boolean>(false);
   const [leaveError, setLeaveError] = useState<string>("");
-  const [leaveForm, setLeaveForm] = useState({
+  const [leaveForm, setLeaveForm] = useState<{
+    name: string;
+    description: string;
+    isPaid: boolean;
+    accrualRate: number | string;
+    maxBalance: number | string;
+    carryForward: boolean;
+    carryForwardLimit: number | string;
+  }>({
     name: "",
     description: "",
     isPaid: true,
@@ -245,7 +267,7 @@ export default function HRSettingsPage() {
       const payload = {
         shiftStart: attendanceConfig.shiftStart,
         shiftEnd: attendanceConfig.shiftEnd,
-        gracePeriod: attendanceConfig.gracePeriod,
+        gracePeriod: Number(attendanceConfig.gracePeriod) || 0,
         fridayOff: attendanceConfig.fridayOff,
         enablePunishmentDeduction: attendanceConfig.enablePunishmentDeduction,
         currency: companySetting.currency,
@@ -308,18 +330,23 @@ export default function HRSettingsPage() {
     if (!shiftForm.name.trim()) return;
 
     try {
+      const shiftPayload = {
+        ...shiftForm,
+        gracePeriod: Number(shiftForm.gracePeriod) || 0,
+        breakTime: Number(shiftForm.breakTime) || 0
+      };
       let res;
       if (editingShiftId) {
         res = await fetch(`/api/hr/shifts/${editingShiftId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(shiftForm)
+          body: JSON.stringify(shiftPayload)
         });
       } else {
         res = await fetch("/api/hr/shifts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(shiftForm)
+          body: JSON.stringify(shiftPayload)
         });
       }
 
@@ -437,7 +464,23 @@ export default function HRSettingsPage() {
     setIsSavingRule(true);
     setRuleError("");
 
-    if (ruleForm.fromMinutes > ruleForm.toMinutes) {
+    const fromMins = Number(ruleForm.fromMinutes);
+    const toMins = Number(ruleForm.toMinutes);
+    const amountVal = Number(ruleForm.amount);
+
+    if (ruleForm.fromMinutes === "" || isNaN(fromMins) || fromMins < 1) {
+      setRuleError("From Delay (Minutes) must be at least 1 minute.");
+      setIsSavingRule(false);
+      return;
+    }
+
+    if (ruleForm.toMinutes === "" || isNaN(toMins) || toMins < 1) {
+      setRuleError("To Delay (Minutes) must be at least 1 minute.");
+      setIsSavingRule(false);
+      return;
+    }
+
+    if (fromMins > toMins) {
       setRuleError("From Delay (Minutes) cannot be greater than To Delay (Minutes).");
       setIsSavingRule(false);
       return;
@@ -447,7 +490,12 @@ export default function HRSettingsPage() {
       const res = await fetch("/api/staff/settings/punishments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ruleForm)
+        body: JSON.stringify({
+          ...ruleForm,
+          fromMinutes: fromMins,
+          toMinutes: toMins,
+          amount: isNaN(amountVal) ? 0 : amountVal
+        })
       });
       const json = await res.json();
       if (res.ok) {
@@ -555,10 +603,17 @@ export default function HRSettingsPage() {
     setLeaveError("");
 
     try {
-      const isEditing = !!editingLeaveId;
+      const isEditing = Boolean(editingLeaveId);
       const url = isEditing ? `/api/hr/settings/leaves/${editingLeaveId}` : "/api/hr/settings/leaves";
       const method = isEditing ? "PUT" : "POST";
-      const payload = isEditing ? { id: editingLeaveId, ...leaveForm } : leaveForm;
+
+      const sanitizedLeaveForm = {
+        ...leaveForm,
+        accrualRate: Number(leaveForm.accrualRate) || 0,
+        maxBalance: Number(leaveForm.maxBalance) || 0,
+        carryForwardLimit: Number(leaveForm.carryForwardLimit) || 0
+      };
+      const payload = isEditing ? { id: editingLeaveId, ...sanitizedLeaveForm } : sanitizedLeaveForm;
 
       const res = await fetch(url, {
         method,
@@ -825,7 +880,7 @@ export default function HRSettingsPage() {
                   max="120"
                   className={styles.input}
                   value={attendanceConfig.gracePeriod}
-                  onChange={(e) => setAttendanceConfig({ ...attendanceConfig, gracePeriod: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setAttendanceConfig({ ...attendanceConfig, gracePeriod: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                 />
                 <span className={styles.inputHelper}>Arrivals within grace period are marked On-Time</span>
               </div>
@@ -840,7 +895,7 @@ export default function HRSettingsPage() {
                   max="12"
                   className={styles.input}
                   value={halfDayHours}
-                  onChange={(e) => setHalfDayHours(parseInt(e.target.value) || 4)}
+                  onChange={(e) => setHalfDayHours(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
                 />
                 <span className={styles.inputHelper}>Under this threshold marked as Absent</span>
               </div>
@@ -853,7 +908,7 @@ export default function HRSettingsPage() {
                   max="16"
                   className={styles.input}
                   value={fullDayHours}
-                  onChange={(e) => setFullDayHours(parseInt(e.target.value) || 8)}
+                  onChange={(e) => setFullDayHours(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
                 />
                 <span className={styles.inputHelper}>Standard expected logged operational hours</span>
               </div>
@@ -1088,7 +1143,7 @@ export default function HRSettingsPage() {
                   max="1000"
                   className={styles.input}
                   value={geofenceRadius}
-                  onChange={(e) => setGeofenceRadius(parseInt(e.target.value) || 100)}
+                  onChange={(e) => setGeofenceRadius(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
                 />
                 <span className={styles.inputHelper}>Maximum physical distance from office coordinates allowed for mobile punch</span>
               </div>
@@ -1101,7 +1156,7 @@ export default function HRSettingsPage() {
                   max="180"
                   className={styles.input}
                   value={overtimeThresholdMins}
-                  onChange={(e) => setOvertimeThresholdMins(parseInt(e.target.value) || 30)}
+                  onChange={(e) => setOvertimeThresholdMins(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
                 />
                 <span className={styles.inputHelper}>Minutes worked past shift end before overtime tracking starts</span>
               </div>
@@ -1478,7 +1533,7 @@ export default function HRSettingsPage() {
                 max="31"
                 className={styles.input}
                 value={payrollCutoffDay}
-                onChange={(e) => setPayrollCutoffDay(parseInt(e.target.value) || 25)}
+                onChange={(e) => setPayrollCutoffDay(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
               />
               <span className={styles.inputHelper}>Day of the month attendance is locked for salary computation</span>
             </div>
@@ -1491,7 +1546,7 @@ export default function HRSettingsPage() {
                 max="31"
                 className={styles.input}
                 value={salaryDisbursalDay}
-                onChange={(e) => setSalaryDisbursalDay(parseInt(e.target.value) || 1)}
+                onChange={(e) => setSalaryDisbursalDay(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
               />
               <span className={styles.inputHelper}>Target date for bank disbursements of previous month payroll</span>
             </div>
@@ -1504,7 +1559,7 @@ export default function HRSettingsPage() {
                 max="180"
                 className={styles.input}
                 value={noticePeriodDays}
-                onChange={(e) => setNoticePeriodDays(parseInt(e.target.value) || 30)}
+                onChange={(e) => setNoticePeriodDays(e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0)}
               />
               <span className={styles.inputHelper}>Standard contractual resignation notice requirement</span>
             </div>
@@ -1686,7 +1741,7 @@ export default function HRSettingsPage() {
                       max="120"
                       className={styles.input}
                       value={shiftForm.gracePeriod}
-                      onChange={(e) => setShiftForm({ ...shiftForm, gracePeriod: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setShiftForm({ ...shiftForm, gracePeriod: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
                   </div>
                   <div className={styles.fieldGroup}>
@@ -1697,7 +1752,7 @@ export default function HRSettingsPage() {
                       max="240"
                       className={styles.input}
                       value={shiftForm.breakTime}
-                      onChange={(e) => setShiftForm({ ...shiftForm, breakTime: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setShiftForm({ ...shiftForm, breakTime: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
                   </div>
                 </div>
@@ -1871,9 +1926,10 @@ export default function HRSettingsPage() {
                       type="number"
                       required
                       min="1"
+                      placeholder="e.g. 15"
                       className={styles.input}
                       value={ruleForm.fromMinutes}
-                      onChange={(e) => setRuleForm({ ...ruleForm, fromMinutes: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setRuleForm({ ...ruleForm, fromMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
                   </div>
                   <div className={styles.fieldGroup}>
@@ -1882,9 +1938,10 @@ export default function HRSettingsPage() {
                       type="number"
                       required
                       min="1"
+                      placeholder="e.g. 30"
                       className={styles.input}
                       value={ruleForm.toMinutes}
-                      onChange={(e) => setRuleForm({ ...ruleForm, toMinutes: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setRuleForm({ ...ruleForm, toMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
                   </div>
                 </div>
@@ -1898,7 +1955,7 @@ export default function HRSettingsPage() {
                     placeholder="e.g. 100"
                     className={styles.input}
                     value={ruleForm.amount}
-                    onChange={(e) => setRuleForm({ ...ruleForm, amount: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setRuleForm({ ...ruleForm, amount: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                   />
                   <span className={styles.inputHelper}>Monetary fine deducted from monthly salary</span>
                 </div>
@@ -1981,7 +2038,7 @@ export default function HRSettingsPage() {
                       min="0"
                       className={styles.input}
                       value={leaveForm.accrualRate}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, accrualRate: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, accrualRate: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
                   </div>
                   <div className={styles.fieldGroup}>
@@ -1992,7 +2049,7 @@ export default function HRSettingsPage() {
                       min="0"
                       className={styles.input}
                       value={leaveForm.maxBalance}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, maxBalance: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, maxBalance: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
                   </div>
                 </div>
@@ -2027,7 +2084,7 @@ export default function HRSettingsPage() {
                         max="30"
                         className={styles.input}
                         value={leaveForm.carryForwardLimit}
-                        onChange={(e) => setLeaveForm({ ...leaveForm, carryForwardLimit: parseInt(e.target.value) || 0 })}
+                        onChange={(e) => setLeaveForm({ ...leaveForm, carryForwardLimit: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                       />
                     </div>
                   )}

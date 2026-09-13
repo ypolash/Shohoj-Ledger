@@ -64,8 +64,8 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
     : [];
 
   const [items, setItems] = useState<OrderItem[]>(defaultItems);
-  const [taxRate, setTaxRate] = useState(15);
-  const [globalDiscount, setGlobalDiscount] = useState(Number(initialData.discountAmount) || 0);
+  const [taxRate, setTaxRate] = useState<number | string>(15);
+  const [globalDiscount, setGlobalDiscount] = useState<number | string>(Number(initialData.discountAmount) || 0);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -154,9 +154,9 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
     }
   };
 
-  const handleItemChange = (index: number, field: "quantity" | "unitPrice" | "discount", val: number) => {
+  const handleItemChange = (index: number, field: "quantity" | "unitPrice" | "discount", val: number | string) => {
     const updated = [...items];
-    updated[index][field] = val;
+    (updated[index] as any)[field] = val;
     const qty = Number(updated[index].quantity || 0);
     const price = Number(updated[index].unitPrice || 0);
     const disc = Number(updated[index].discount || 0);
@@ -171,9 +171,9 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
   // Calculation Engine
   const subtotal = items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0);
   const itemDiscounts = items.reduce((sum, item) => sum + Number(item.discount || 0), 0);
-  const totalDiscount = itemDiscounts + globalDiscount;
+  const totalDiscount = itemDiscounts + Number(globalDiscount || 0);
   const taxableAmount = Math.max(0, subtotal - totalDiscount);
-  const totalTax = (taxableAmount * taxRate) / 100;
+  const totalTax = (taxableAmount * Number(taxRate || 0)) / 100;
   const grandTotal = taxableAmount + totalTax;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,8 +217,8 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
         requestedDeliveryDate: formData.expectedDelivery || undefined,
         status: formData.status,
         notes: formData.notes,
-        discountAmount: globalDiscount,
-        taxRate: taxRate,
+        discountAmount: Number(globalDiscount || 0),
+        taxRate: Number(taxRate || 0),
         lines: items.map((item) => ({
           productId: item.productId,
           quantity: Number(item.quantity),
@@ -378,7 +378,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
                   type="number"
                   min="0"
                   value={globalDiscount}
-                  onChange={(e) => setGlobalDiscount(Number(e.target.value))}
+                  onChange={(e) => setGlobalDiscount(e.target.value === "" ? "" : Number(e.target.value))}
                   style={inputStyle}
                 />
               </div>
@@ -389,7 +389,7 @@ export function SalesOrderForm({ initialData = {} as any, isEdit = false }: Sale
                   min="0"
                   max="100"
                   value={taxRate}
-                  onChange={(e) => setTaxRate(Number(e.target.value))}
+                  onChange={(e) => setTaxRate(e.target.value === "" ? "" : Number(e.target.value))}
                   style={inputStyle}
                 />
               </div>

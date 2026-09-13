@@ -93,9 +93,9 @@ export default function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurc
     setItems(updated);
   };
 
-  const handleLineChange = (index: number, field: "quantity" | "unitPrice", val: number) => {
+  const handleLineChange = (index: number, field: "quantity" | "unitPrice", val: number | string) => {
     const updated = [...items];
-    updated[index][field] = val;
+    (updated[index] as any)[field] = val;
     updated[index].lineTotal = Number(updated[index].quantity || 0) * Number(updated[index].unitPrice || 0);
     setItems(updated);
   };
@@ -123,7 +123,13 @@ export default function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurc
       return;
     }
 
-    const validItems = items.filter((i) => i.productId && i.quantity > 0);
+    const validItems = items
+      .filter((i) => i.productId && Number(i.quantity) > 0)
+      .map((i) => ({
+        ...i,
+        quantity: Number(i.quantity),
+        unitPrice: Number(i.unitPrice || 0)
+      }));
     if (validItems.length === 0) {
       setError("Please add at least one product with quantity greater than 0.");
       return;
@@ -336,7 +342,7 @@ export default function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurc
                           type="number"
                           min="1"
                           value={item.quantity}
-                          onChange={(e) => handleLineChange(index, "quantity", Number(e.target.value))}
+                          onChange={(e) => handleLineChange(index, "quantity", e.target.value === "" ? "" : Number(e.target.value))}
                           style={smallInputStyle}
                           required
                         />
@@ -347,7 +353,7 @@ export default function NewPurchaseModal({ isOpen, onClose, onSuccess }: NewPurc
                           min="0"
                           step="any"
                           value={item.unitPrice}
-                          onChange={(e) => handleLineChange(index, "unitPrice", Number(e.target.value))}
+                          onChange={(e) => handleLineChange(index, "unitPrice", e.target.value === "" ? "" : Number(e.target.value))}
                           style={smallInputStyle}
                           required
                         />

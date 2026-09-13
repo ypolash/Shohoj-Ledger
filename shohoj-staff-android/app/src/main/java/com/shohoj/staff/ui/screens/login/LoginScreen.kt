@@ -67,7 +67,7 @@ fun LoginScreen(
             ) {
                 // Brand Header with Theme-Matched Logo
                 com.shohoj.staff.ui.components.ShohojStaffBrandHeader(
-                    logoSize = 84.dp
+                    logoSize = 64.dp
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))

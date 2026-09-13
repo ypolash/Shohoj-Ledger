@@ -32,19 +32,19 @@ import com.shohoj.staff.ui.theme.*
 @Composable
 fun ShohojStaffLogo(
     modifier: Modifier = Modifier,
-    size: Dp = 48.dp,
+    size: Dp = 44.dp,
     showGlow: Boolean = true,
     onClick: (() -> Unit)? = null
 ) {
-    val cornerRadius = size * 0.28f
+    val cornerRadius = size * 0.24f
     val shape = RoundedCornerShape(cornerRadius)
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.5f,
+        initialValue = 0.18f,
+        targetValue = 0.38f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = FastOutSlowInEasing),
+            animation = tween(2400, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "glowAlpha"
@@ -56,7 +56,7 @@ fun ShohojStaffLogo(
             .then(
                 if (showGlow) {
                     Modifier.shadow(
-                        elevation = size * 0.2f,
+                        elevation = size * 0.12f,
                         shape = shape,
                         ambientColor = Emerald500.copy(alpha = glowAlpha),
                         spotColor = Cyan400.copy(alpha = glowAlpha)
@@ -73,11 +73,11 @@ fun ShohojStaffLogo(
                 )
             )
             .border(
-                width = 1.5.dp,
+                width = 1.2.dp,
                 brush = Brush.linearGradient(
                     listOf(
-                        Emerald400.copy(alpha = 0.8f),
-                        Cyan400.copy(alpha = 0.8f)
+                        Emerald400.copy(alpha = 0.75f),
+                        Cyan400.copy(alpha = 0.75f)
                     )
                 ),
                 shape = shape
@@ -88,9 +88,7 @@ fun ShohojStaffLogo(
         Image(
             painter = painterResource(id = R.drawable.ic_shohoj_staff_logo),
             contentDescription = "Shohoj Staff Logo",
-            modifier = Modifier
-                .fillMaxSize(0.85f)
-                .padding(size * 0.04f)
+            modifier = Modifier.fillMaxSize(0.76f)
         )
     }
 }
@@ -101,7 +99,7 @@ fun ShohojStaffLogo(
 @Composable
 fun ShohojStaffBrandHeader(
     modifier: Modifier = Modifier,
-    logoSize: Dp = 80.dp,
+    logoSize: Dp = 64.dp,
     title: String = "Shohoj Staff",
     subtitle: String = "Employee Self Service Portal"
 ) {
@@ -111,14 +109,15 @@ fun ShohojStaffBrandHeader(
     ) {
         ShohojStaffLogo(size = logoSize, showGlow = true)
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Text(
             text = title,
             style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Slate50
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Slate50,
+                letterSpacing = 0.3.sp
             )
         )
 
@@ -128,7 +127,7 @@ fun ShohojStaffBrandHeader(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = Slate400,
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
         )
     }

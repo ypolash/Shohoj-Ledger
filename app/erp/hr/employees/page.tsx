@@ -117,7 +117,7 @@ export default function EmployeesPage() {
   };
 
   // Format currency helper
-  const formatCurrency = (val: number | string) => {
+  const formatCurrency = (val?: number | string | null) => {
     return new Intl.NumberFormat('en-BD', {
       style: 'currency',
       currency: 'BDT',
@@ -776,7 +776,7 @@ export default function EmployeesPage() {
                           </span>
                           {Number(emp.basicSalary) > 0 && (
                             <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
-                              {formatCurrency(emp.basicSalary)} / proj
+                              {formatCurrency(emp.basicSalary || 0)} / proj
                             </span>
                           )}
                         </div>
@@ -914,7 +914,7 @@ export default function EmployeesPage() {
                     {emp.employmentType === 'Project-Based' ? (
                       <div style={{ fontWeight: 700, color: '#8b5cf6', fontSize: '12.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>folder_special</span>
-                        {Number(emp.basicSalary) > 0 ? `${formatCurrency(emp.basicSalary)}/proj` : 'Per Project'}
+                        {Number(emp.basicSalary) > 0 ? `${formatCurrency(emp.basicSalary || 0)}/proj` : 'Per Project'}
                       </div>
                     ) : (
                       <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '13px' }}>

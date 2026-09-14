@@ -13,7 +13,7 @@
     "db:seed": "node scripts/seed/seed_modules.js && npx tsx scripts/seed/seed-admin.ts",
     "dev": "node scripts/db.js start && next dev",
     "build": "npx prisma generate && next build",
-    "start": "next start"
+    "start": "npx prisma db push --skip-generate && next start"
   },
   "repository": {
     "type": "git",

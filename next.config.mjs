@@ -8,6 +8,18 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/downloads/shohoj-staff-v1.5.1.apk',
+        destination: '/downloads/shohoj-staff-v1.5.apk',
+      },
+      {
+        source: '/downloads/shohoj-staff-latest.apk',
+        destination: '/downloads/shohoj-staff-v1.5.apk',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

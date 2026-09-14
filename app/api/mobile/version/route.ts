@@ -15,21 +15,21 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 15,
-      versionName: '1.5.0',
+      versionCode: 16,
+      versionName: '1.5.1',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5 Available',
+      title: 'Shohoj Staff v1.5.1 Available',
       releaseNotes: [
-        '✨ New Community Chat & Direct Messaging',
-        '⚡ Faster attendance punch & geofencing verification',
-        '📎 Media & document attachment sharing',
-        '🛡️ Real-time background sync & bug fixes',
-        '🎨 Streamlined dark mode UI polish'
+        '💬 Community channels with last message preview',
+        '🔴 Unread message count badges',
+        '👥 Employee @mention & #task tagging system',
+        '🔔 Incoming message & mention sound chimes',
+        '⚡ Performance and background sync improvements'
       ],
       downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.apk`,
-      fileSize: '18.1 MB',
+      fileSize: '18.2 MB',
       isForceUpdate: false,
-      publishedAt: '2026-09-14T00:00:00Z'
+      publishedAt: '2026-09-15T00:00:00Z'
     });
   }
 

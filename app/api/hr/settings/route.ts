@@ -62,26 +62,12 @@ export async function GET() {
 
     // 4. Punishment Rules (Late / Absent Penalties)
     const punishmentSettings = await prisma.punishmentSetting.findMany({
-      where: {
-        OR: [
-          { companyId },
-          { companyId: null }
-        ]
-      },
+      where: { companyId },
       orderBy: [
         { type: "asc" },
         { fromMinutes: "asc" }
       ]
     });
-
-    // Auto-attach any unassigned slabs to the current company
-    const unassigned = punishmentSettings.filter(p => !p.companyId);
-    if (unassigned.length > 0) {
-      await prisma.punishmentSetting.updateMany({
-        where: { id: { in: unassigned.map(p => p.id) } },
-        data: { companyId }
-      });
-    }
 
     // 5. Allowed Office Networks (Wi-Fi SSID / BSSID / IP)
     const allowedNetworks = await prisma.allowedNetwork.findMany({
@@ -89,48 +75,12 @@ export async function GET() {
       orderBy: { createdAt: "desc" }
     });
 
-    // 6. Leave Types & Policies
-    let leaveTypes = await prisma.leaveType.findMany({
+    // 6. Leave Types & Policies (Blank for new companies until configured)
+    const leaveTypes = await prisma.leaveType.findMany({
       where: { companyId },
       include: { leavePolicies: true },
       orderBy: { createdAt: "asc" }
     });
-
-    // If no leave types exist yet, auto-provision standard business types
-    if (leaveTypes.length === 0) {
-      const standardTypes = [
-        { name: "Casual Leave", description: "Standard personal/casual leave", isPaid: true, rate: 10, max: 10 },
-        { name: "Sick Leave", description: "Medical and health emergencies", isPaid: true, rate: 14, max: 14 },
-        { name: "Annual Leave", description: "Earned yearly vacation leave", isPaid: true, rate: 15, max: 15 },
-        { name: "Unpaid Leave", description: "Loss of Pay (LOP) approved leave", isPaid: false, rate: 0, max: 30 },
-      ];
-
-      for (const t of standardTypes) {
-        try {
-          const created = await prisma.leaveType.create({
-            data: {
-              companyId,
-              name: t.name,
-              description: t.description,
-              isPaid: t.isPaid,
-              leavePolicies: {
-                create: {
-                  accrualRate: t.rate,
-                  maxBalance: t.max,
-                  carryForward: t.name === "Annual Leave",
-                  carryForwardLimit: t.name === "Annual Leave" ? 5 : null,
-                  approvalLevels: 1
-                }
-              }
-            },
-            include: { leavePolicies: true }
-          });
-          leaveTypes.push(created);
-        } catch {
-          // Ignore unique collision if another process created it concurrently
-        }
-      }
-    }
 
     // 7. Onboarding Data Collection Mode (BASIC vs PROFESSIONAL)
     const modeSetting = await prisma.systemSetting.findUnique({
@@ -192,8 +142,8 @@ export async function PUT(request: Request) {
         }
       });
     } else {
-      attendanceConfig = await prisma.attendanceConfig.update({
-        where: { id: attendanceConfig.id },
+      await prisma.attendanceConfig.updateMany({
+        where: { companyId },
         data: {
           shiftStart,
           shiftEnd,
@@ -202,6 +152,7 @@ export async function PUT(request: Request) {
           enablePunishmentDeduction: Boolean(enablePunishmentDeduction)
         }
       });
+      attendanceConfig = await prisma.attendanceConfig.findFirst({ where: { companyId } });
     }
 
     // 2. Synchronize CompanySetting

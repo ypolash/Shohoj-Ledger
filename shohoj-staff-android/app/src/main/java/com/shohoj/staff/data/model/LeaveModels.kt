@@ -20,8 +20,26 @@ data class LeaveApplyRequest(
     @SerializedName("employeeId") val employeeId: String? = null
 )
 
+data class LeaveCategoryBalance(
+    @SerializedName("id") val id: String = "",
+    @SerializedName("name") val name: String = "",
+    @SerializedName("isPaid") val isPaid: Boolean = true,
+    @SerializedName("total") val total: Int = 0,
+    @SerializedName("used") val used: Int = 0,
+    @SerializedName("remaining") val remaining: Int = 0
+)
+
+data class LeaveTypeItem(
+    @SerializedName("id") val id: String = "",
+    @SerializedName("name") val name: String = "",
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("isPaid") val isPaid: Boolean = true
+)
+
 data class LeaveListResponse(
     @SerializedName("leaves") val leaves: List<LeaveItem> = emptyList(),
+    @SerializedName("balances") val balances: List<LeaveCategoryBalance> = emptyList(),
+    @SerializedName("leaveTypes") val leaveTypes: List<LeaveTypeItem> = emptyList(),
     @SerializedName("error") val error: String? = null
 )
 

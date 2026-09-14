@@ -3,6 +3,8 @@ package com.shohoj.staff.ui.screens.leave
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -69,31 +71,56 @@ fun LeaveScreen(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    LeaveBalanceCard(
-                        title = "Casual",
-                        used = uiState.balance.casualUsed,
-                        total = uiState.balance.casualTotal,
-                        tint = Emerald400,
-                        modifier = Modifier.weight(1f)
-                    )
-                    LeaveBalanceCard(
-                        title = "Sick",
-                        used = uiState.balance.sickUsed,
-                        total = uiState.balance.sickTotal,
-                        tint = Cyan400,
-                        modifier = Modifier.weight(1f)
-                    )
-                    LeaveBalanceCard(
-                        title = "Annual",
-                        used = uiState.balance.annualUsed,
-                        total = uiState.balance.annualTotal,
-                        tint = Amber400,
-                        modifier = Modifier.weight(1f)
-                    )
+
+                if (uiState.balances.isNotEmpty()) {
+                    val balanceColors = listOf(Emerald400, Cyan400, Amber400, Indigo500, Purple500, Rose400)
+                    if (uiState.balances.size <= 3) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            uiState.balances.forEachIndexed { index, b ->
+                                LeaveBalanceCard(
+                                    title = b.name,
+                                    used = b.used,
+                                    total = b.total,
+                                    tint = balanceColors[index % balanceColors.size],
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            uiState.balances.forEachIndexed { index, b ->
+                                LeaveBalanceCard(
+                                    title = b.name,
+                                    used = b.used,
+                                    total = b.total,
+                                    tint = balanceColors[index % balanceColors.size],
+                                    modifier = Modifier.width(130.dp)
+                                )
+                            }
+                        }
+                    }
+                } else if (!uiState.isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(CardBackground, RoundedCornerShape(12.dp))
+                            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "No leave quotas or policies configured for your organization.",
+                            color = Slate400,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
 
@@ -206,23 +233,37 @@ fun LeaveScreen(
 
                     // Leave Type Chips
                     Text(text = "Leave Type", style = MaterialTheme.typography.bodyMedium.copy(color = Slate400))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("CASUAL", "SICK", "ANNUAL", "UNPAID").forEach { type ->
-                            val isSelected = uiState.applyType == type
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { viewModel.onTypeChange(type) },
-                                label = { Text(type, fontSize = 12.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Emerald500,
-                                    selectedLabelColor = Slate950,
-                                    containerColor = Slate800,
-                                    labelColor = Slate300
+                    val availableTypes = if (uiState.leaveTypes.isNotEmpty()) {
+                        uiState.leaveTypes.map { it.name }
+                    } else if (uiState.balances.isNotEmpty()) {
+                        uiState.balances.map { it.name }
+                    } else {
+                        emptyList()
+                    }
+
+                    if (availableTypes.isEmpty()) {
+                        Text("No leave types configured. Please contact HR.", color = Slate400, fontSize = 12.sp)
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            availableTypes.forEach { type ->
+                                val isSelected = uiState.applyType.equals(type, ignoreCase = true)
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { viewModel.onTypeChange(type) },
+                                    label = { Text(type, fontSize = 12.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Emerald500,
+                                        selectedLabelColor = Slate950,
+                                        containerColor = Slate800,
+                                        labelColor = Slate300
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
 

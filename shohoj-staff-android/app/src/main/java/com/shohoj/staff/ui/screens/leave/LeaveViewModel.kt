@@ -13,10 +13,15 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+import com.shohoj.staff.data.model.LeaveCategoryBalance
+import com.shohoj.staff.data.model.LeaveTypeItem
+
 data class LeaveUiState(
     val isLoading: Boolean = false,
     val leaves: List<LeaveItem> = emptyList(),
     val balance: LeaveBalance = LeaveBalance(),
+    val balances: List<LeaveCategoryBalance> = emptyList(),
+    val leaveTypes: List<LeaveTypeItem> = emptyList(),
     val showApplySheet: Boolean = false,
     val isSubmitting: Boolean = false,
     val applyType: String = "CASUAL",
@@ -44,15 +49,30 @@ class LeaveViewModel(application: Application) : AndroidViewModel(application) {
     fun loadLeaves() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val result = leaveRepo.getLeaves()
+            val result = leaveRepo.getLeaveData()
 
             result.fold(
-                onSuccess = { list ->
-                    val balance = leaveRepo.calculateBalance(list)
+                onSuccess = { response ->
+                    val leavesList = response.leaves
+                    val balance = leaveRepo.calculateBalance(leavesList)
+                    val dynamicBalances = response.balances
+                    val dynamicTypes = response.leaveTypes
+
+                    val defaultType = if (dynamicTypes.isNotEmpty()) {
+                        dynamicTypes.first().name
+                    } else if (dynamicBalances.isNotEmpty()) {
+                        dynamicBalances.first().name
+                    } else {
+                        _uiState.value.applyType
+                    }
+
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        leaves = list,
-                        balance = balance
+                        leaves = leavesList,
+                        balance = balance,
+                        balances = dynamicBalances,
+                        leaveTypes = dynamicTypes,
+                        applyType = defaultType
                     )
                 },
                 onFailure = { ex ->

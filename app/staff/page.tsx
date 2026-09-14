@@ -15,6 +15,7 @@ export default function StaffPortalPage() {
   const [activeTab, setActiveTab] = useState('ATTENDANCE');
 
   // New Leave Form
+  const [availableLeaveTypes, setAvailableLeaveTypes] = useState<any[]>([]);
   const [leaveType, setLeaveType] = useState('CASUAL');
   const [leaveStart, setLeaveStart] = useState('');
   const [leaveEnd, setLeaveEnd] = useState('');
@@ -44,7 +45,24 @@ export default function StaffPortalPage() {
 
     // Fetch Leaves
     const leaveRes = await fetch(`/api/leaves?employeeId=${empId}`);
-    if (leaveRes.ok) setLeaves(await leaveRes.json());
+    if (leaveRes.ok) {
+      const lData = await leaveRes.json();
+      setLeaves(Array.isArray(lData) ? lData : (lData.leaves || []));
+      if (lData.leaveTypes && lData.leaveTypes.length > 0) {
+        setAvailableLeaveTypes(lData.leaveTypes);
+        setLeaveType(lData.leaveTypes[0].name);
+      }
+    }
+    fetch('/api/ess/leave')
+      .then(res => res.json())
+      .then(d => {
+        const types = d.leaveTypes?.length > 0 ? d.leaveTypes : (d.balances || []);
+        if (types.length > 0) {
+          setAvailableLeaveTypes(types);
+          setLeaveType(types[0].name);
+        }
+      })
+      .catch(() => {});
 
     // Fetch Payroll
     const payRes = await fetch('/api/payroll');
@@ -175,9 +193,17 @@ export default function StaffPortalPage() {
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Leave Type</label>
                     <select className="input" value={leaveType} onChange={e => setLeaveType(e.target.value)}>
-                      <option value="CASUAL">Casual</option>
-                      <option value="SICK">Sick</option>
-                      <option value="UNPAID">Unpaid</option>
+                      {availableLeaveTypes.length > 0 ? (
+                        availableLeaveTypes.map(lt => (
+                          <option key={lt.id || lt.name} value={lt.name}>{lt.name}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="CASUAL">Casual</option>
+                          <option value="SICK">Sick</option>
+                          <option value="UNPAID">Unpaid</option>
+                        </>
+                      )}
                     </select>
                   </div>
                   <div>

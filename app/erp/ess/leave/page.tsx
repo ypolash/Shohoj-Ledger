@@ -6,10 +6,11 @@ import { fetchMyLeaveRequests, applyMyLeave, cancelMyLeave } from './actions';
 
 export default function EssLeavePage() {
   const [leaves, setLeaves] = useState<any[]>([]);
+  const [availableLeaveTypes, setAvailableLeaveTypes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Apply Leave form state
-  const [type, setType] = useState('CASUAL');
+  const [type, setType] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
@@ -23,6 +24,15 @@ export default function EssLeavePage() {
     try {
       const data = await fetchMyLeaveRequests();
       setLeaves(data);
+      const res = await fetch("/api/ess/leave");
+      if (res.ok) {
+        const json = await res.json();
+        const types = json.leaveTypes?.length > 0 ? json.leaveTypes : (json.balances || []);
+        setAvailableLeaveTypes(types);
+        if (types.length > 0) {
+          setType(prev => prev || types[0].name);
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -32,6 +42,10 @@ export default function EssLeavePage() {
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!type) {
+      alert("No leave type selected or configured.");
+      return;
+    }
     setIsApplying(true);
     try {
       await applyMyLeave({ type, startDate, endDate, reason });
@@ -73,9 +87,13 @@ export default function EssLeavePage() {
             <div className={styles.filterGroup}>
               <label className="label">Leave Type</label>
               <select className="input" value={type} onChange={e => setType(e.target.value)} required>
-                <option value="CASUAL">Casual Leave</option>
-                <option value="SICK">Sick Leave</option>
-                <option value="UNPAID">Unpaid Leave</option>
+                {availableLeaveTypes.length > 0 ? (
+                  availableLeaveTypes.map(lt => (
+                    <option key={lt.id || lt.name} value={lt.name}>{lt.name}</option>
+                  ))
+                ) : (
+                  <option value="" disabled>No leave types configured</option>
+                )}
               </select>
             </div>
             <div className={styles.filterGroup}>

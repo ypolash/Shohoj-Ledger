@@ -12,12 +12,12 @@ class LeaveRepository(
     private val apiClient: ApiClient,
     private val sessionManager: SessionManager? = null
 ) {
-    suspend fun getLeaves(): Result<List<LeaveItem>> = withContext(Dispatchers.IO) {
+    suspend fun getLeaveData(): Result<LeaveListResponse> = withContext(Dispatchers.IO) {
         try {
             val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
             val response = apiClient.getService().getLeaves(empId)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.leaves)
+                Result.success(response.body()!!)
             } else {
                 val err = response.errorBody()?.string() ?: "Failed to load leaves (${response.code()})"
                 Result.failure(Exception(err))
@@ -25,6 +25,10 @@ class LeaveRepository(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun getLeaves(): Result<List<LeaveItem>> = withContext(Dispatchers.IO) {
+        getLeaveData().map { it.leaves }
     }
 
     suspend fun applyLeave(

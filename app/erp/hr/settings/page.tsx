@@ -297,6 +297,41 @@ export default function HRSettingsPage() {
     }
   };
 
+  // Instant toggle for Automated Payroll Deductions
+  const handleTogglePayrollDeductions = async (newVal: boolean) => {
+    setAttendanceConfig(prev => ({ ...prev, enablePunishmentDeduction: newVal }));
+    try {
+      const payload = {
+        shiftStart: attendanceConfig.shiftStart,
+        shiftEnd: attendanceConfig.shiftEnd,
+        gracePeriod: Number(attendanceConfig.gracePeriod) || 0,
+        fridayOff: attendanceConfig.fridayOff,
+        enablePunishmentDeduction: newVal,
+        currency: companySetting.currency,
+        timezone: companySetting.timezone,
+        workingDays: companySetting.workingDays,
+        weeklyHolidays: companySetting.weeklyHolidays,
+        onboardingMode
+      };
+      const res = await fetch("/api/hr/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSaveSuccess(`Automated Payroll Deductions ${newVal ? "enabled" : "disabled"} successfully.`);
+        setTimeout(() => setSaveSuccess(""), 3500);
+      } else {
+        setAttendanceConfig(prev => ({ ...prev, enablePunishmentDeduction: !newVal }));
+        alert(json.error || "Failed to update automated deductions setting.");
+      }
+    } catch {
+      setAttendanceConfig(prev => ({ ...prev, enablePunishmentDeduction: !newVal }));
+      alert("Network error while updating deduction setting.");
+    }
+  };
+
   // --- WORK SHIFTS HANDLERS ---
   const handleOpenShiftModal = (shift?: WorkShift) => {
     if (shift) {
@@ -464,24 +499,33 @@ export default function HRSettingsPage() {
     setIsSavingRule(true);
     setRuleError("");
 
-    const fromMins = Number(ruleForm.fromMinutes);
-    const toMins = Number(ruleForm.toMinutes);
+    const isAbsent = ruleForm.type === "ABSENT";
+    const fromMins = isAbsent ? 0 : Number(ruleForm.fromMinutes);
+    const toMins = isAbsent ? 0 : Number(ruleForm.toMinutes);
     const amountVal = Number(ruleForm.amount);
 
-    if (ruleForm.fromMinutes === "" || isNaN(fromMins) || fromMins < 1) {
-      setRuleError("From Delay (Minutes) must be at least 1 minute.");
-      setIsSavingRule(false);
-      return;
+    if (!isAbsent) {
+      if (ruleForm.fromMinutes === "" || isNaN(fromMins) || fromMins < 1) {
+        setRuleError("From Delay (Minutes) must be at least 1 minute.");
+        setIsSavingRule(false);
+        return;
+      }
+
+      if (ruleForm.toMinutes === "" || isNaN(toMins) || toMins < 1) {
+        setRuleError("To Delay (Minutes) must be at least 1 minute.");
+        setIsSavingRule(false);
+        return;
+      }
+
+      if (fromMins > toMins) {
+        setRuleError("From Delay (Minutes) cannot be greater than To Delay (Minutes).");
+        setIsSavingRule(false);
+        return;
+      }
     }
 
-    if (ruleForm.toMinutes === "" || isNaN(toMins) || toMins < 1) {
-      setRuleError("To Delay (Minutes) must be at least 1 minute.");
-      setIsSavingRule(false);
-      return;
-    }
-
-    if (fromMins > toMins) {
-      setRuleError("From Delay (Minutes) cannot be greater than To Delay (Minutes).");
+    if (ruleForm.amount === "" || isNaN(amountVal) || amountVal < 0) {
+      setRuleError("Please provide a valid deduction amount (0 or higher).");
       setIsSavingRule(false);
       return;
     }
@@ -1268,7 +1312,7 @@ export default function HRSettingsPage() {
 
             <div
               className={styles.toggleRow}
-              onClick={() => setAttendanceConfig({ ...attendanceConfig, enablePunishmentDeduction: !attendanceConfig.enablePunishmentDeduction })}
+              onClick={() => handleTogglePayrollDeductions(!attendanceConfig.enablePunishmentDeduction)}
             >
               <div className={styles.toggleInfo}>
                 <span className={styles.toggleTitle}>Enable Automated Payroll Deductions</span>
@@ -1280,7 +1324,7 @@ export default function HRSettingsPage() {
                 <input
                   type="checkbox"
                   checked={attendanceConfig.enablePunishmentDeduction}
-                  onChange={(e) => setAttendanceConfig({ ...attendanceConfig, enablePunishmentDeduction: e.target.checked })}
+                  onChange={(e) => handleTogglePayrollDeductions(e.target.checked)}
                 />
                 <span className={styles.slider} />
               </label>
@@ -1312,7 +1356,7 @@ export default function HRSettingsPage() {
                 <thead>
                   <tr>
                     <th className={styles.th}>Violation Category</th>
-                    <th className={styles.th}>Delay Range</th>
+                    <th className={styles.th}>Delay Range / Occurrence</th>
                     <th className={styles.th} style={{ textAlign: "right" }}>Fine Amount (৳)</th>
                     <th className={styles.th}>Status</th>
                     <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
@@ -1332,7 +1376,17 @@ export default function HRSettingsPage() {
                           <span style={{ fontWeight: 600 }}>{rule.type.replace("_", " ")}</span>
                         </td>
                         <td className={styles.td}>
-                          {rule.fromMinutes} to {rule.toMinutes} minutes delay
+                          {rule.type === "ABSENT" ? (
+                            <span className={styles.badge} style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+                              Full Day Absence (Per Day)
+                            </span>
+                          ) : rule.type === "HALF_DAY" ? (
+                            <span className={styles.badge} style={{ background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.2)" }}>
+                              Half Day (Per Day)
+                            </span>
+                          ) : (
+                            <span>{rule.fromMinutes} to {rule.toMinutes} minutes delay</span>
+                          )}
                         </td>
                         <td className={styles.td} style={{ textAlign: "right", fontWeight: 700, color: "var(--danger, #ef4444)" }}>
                           ৳{Number(rule.amount).toLocaleString()}
@@ -1919,35 +1973,52 @@ export default function HRSettingsPage() {
                   </select>
                 </div>
 
-                <div className={styles.grid2}>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>From Delay (Minutes)</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      placeholder="e.g. 15"
-                      className={styles.input}
-                      value={ruleForm.fromMinutes}
-                      onChange={(e) => setRuleForm({ ...ruleForm, fromMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
-                    />
+                {ruleForm.type === "ABSENT" ? (
+                  <div style={{
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    background: "rgba(239, 68, 68, 0.08)",
+                    border: "1px solid rgba(239, 68, 68, 0.2)",
+                    color: "var(--danger, #ef4444)",
+                    fontSize: "12px",
+                    lineHeight: "1.5",
+                    marginBottom: "14px"
+                  }}>
+                    <strong>Full-Day Absence (AWOL):</strong> Unexcused absence is measured per unauthorized day off, not in minutes of delay. The fine amount below will be deducted per unapproved absent day.
                   </div>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>To Delay (Minutes)</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      placeholder="e.g. 30"
-                      className={styles.input}
-                      value={ruleForm.toMinutes}
-                      onChange={(e) => setRuleForm({ ...ruleForm, toMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
-                    />
+                ) : (
+                  <div className={styles.grid2}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>From Delay (Minutes)</label>
+                      <input
+                        type="number"
+                        required
+                        min="1"
+                        placeholder="e.g. 15"
+                        className={styles.input}
+                        value={ruleForm.fromMinutes}
+                        onChange={(e) => setRuleForm({ ...ruleForm, fromMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                      />
+                    </div>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.label}>To Delay (Minutes)</label>
+                      <input
+                        type="number"
+                        required
+                        min="1"
+                        placeholder="e.g. 30"
+                        className={styles.input}
+                        value={ruleForm.toMinutes}
+                        onChange={(e) => setRuleForm({ ...ruleForm, toMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Deduction Amount (৳) *</label>
+                  <label className={styles.label}>
+                    {ruleForm.type === "ABSENT" ? "Fine / Deduction Amount per Day (৳) *" : "Deduction Amount (৳) *"}
+                  </label>
                   <input
                     type="number"
                     required
@@ -1957,7 +2028,9 @@ export default function HRSettingsPage() {
                     value={ruleForm.amount}
                     onChange={(e) => setRuleForm({ ...ruleForm, amount: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                   />
-                  <span className={styles.inputHelper}>Monetary fine deducted from monthly salary</span>
+                  <span className={styles.inputHelper}>
+                    {ruleForm.type === "ABSENT" ? "Monetary fine deducted per full-day unexcused absence" : "Monetary fine deducted from monthly salary"}
+                  </span>
                 </div>
               </div>
 

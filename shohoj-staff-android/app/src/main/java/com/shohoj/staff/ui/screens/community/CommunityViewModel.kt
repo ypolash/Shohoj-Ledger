@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.shohoj.staff.ShohojStaffApp
 import com.shohoj.staff.data.model.*
+import com.shohoj.staff.util.SoundNotificationHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ data class CommunityUiState(
     val messages: List<CommunityMessage> = emptyList(),
     val staffDirectory: List<DirectoryPerson> = emptyList(),
     val memberDirectory: List<DirectoryPerson> = emptyList(),
+    val tasks: List<TaskItem> = emptyList(),
     val replyingTo: CommunityMessage? = null,
     val isSending: Boolean = false,
     val isUploading: Boolean = false,
@@ -51,6 +53,16 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         loadChannels()
         loadMembers()
+        loadTasks()
+    }
+
+    fun loadTasks() {
+        viewModelScope.launch {
+            val result = app.taskRepository.getTasks()
+            result.onSuccess { taskList ->
+                _uiState.value = _uiState.value.copy(tasks = taskList)
+            }
+        }
     }
 
     fun loadChannels(selectChannelId: String? = null) {
@@ -77,6 +89,32 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun loadChannelsSilently() {
+        viewModelScope.launch {
+            val result = repo.getChannels()
+            result.onSuccess { freshChannels ->
+                val prevTotal = _uiState.value.channels.sumOf { it.unreadCount }
+                val newTotal = freshChannels.sumOf { it.unreadCount }
+                if (newTotal > prevTotal) {
+                    SoundNotificationHelper.playNotificationSound(app, isMention = false)
+                }
+                _uiState.value = _uiState.value.copy(channels = freshChannels)
+            }
+        }
+    }
+
+    fun markChannelAsRead(channelId: String) {
+        // Optimistically zero out unread in UI state
+        _uiState.value = _uiState.value.copy(
+            channels = _uiState.value.channels.map { ch ->
+                if (ch.id == channelId) ch.copy(unreadCount = 0, hasUnread = false) else ch
+            }
+        )
+        viewModelScope.launch {
+            repo.markChannelRead(channelId)
+        }
+    }
+
     fun loadMembers() {
         viewModelScope.launch {
             val result = repo.getMembers()
@@ -97,6 +135,7 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
             messages = emptyList(),
             replyingTo = null
         )
+        markChannelAsRead(channel.id)
         loadMessages(channel.id)
     }
 
@@ -120,16 +159,47 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
 
     /**
      * Start background polling when chat screen is in foreground.
-     * Polls every 4 seconds. Automatically cancels previous job.
+     * Polls every 3.5 seconds. Automatically cancels previous job.
      */
     fun startPolling(channelId: String) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
             while (isActive) {
-                delay(4000)
+                delay(3500)
                 val result = repo.getMessages(channelId)
                 result.onSuccess { fresh ->
-                    if (fresh != _uiState.value.messages) {
+                    val oldMessages = _uiState.value.messages
+                    if (fresh != oldMessages) {
+                        val oldIds = oldMessages.map { it.id }.toSet()
+                        val myId = _uiState.value.currentUserId
+                        val myName = _uiState.value.currentUserName.trim().lowercase()
+                        val newIncoming = fresh.filter { it.id !in oldIds && it.senderId != myId }
+
+                        if (newIncoming.isNotEmpty()) {
+                            val hasMention = newIncoming.any { msg ->
+                                val text = msg.content.lowercase()
+                                text.contains("@$myName") ||
+                                    (myName.isNotBlank() && text.contains("@${myName.split(" ").first()}"))
+                            }
+
+                            SoundNotificationHelper.playNotificationSound(app, isMention = hasMention)
+
+                            if (hasMention) {
+                                val latestMention = newIncoming.last { msg ->
+                                    val text = msg.content.lowercase()
+                                    text.contains("@$myName") ||
+                                        (myName.isNotBlank() && text.contains("@${myName.split(" ").first()}"))
+                                }
+                                val channelTitle = _uiState.value.activeChannel?.name ?: "Chat"
+                                SoundNotificationHelper.showNotification(
+                                    app,
+                                    "Mentioned by ${latestMention.senderName} in #$channelTitle",
+                                    latestMention.content,
+                                    isMention = true
+                                )
+                            }
+                        }
+
                         _uiState.value = _uiState.value.copy(messages = fresh)
                     }
                 }

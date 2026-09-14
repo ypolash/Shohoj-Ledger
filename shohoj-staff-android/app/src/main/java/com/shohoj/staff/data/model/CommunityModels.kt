@@ -11,6 +11,12 @@ data class ChannelMember(
     @SerializedName("userAvatar") val userAvatar: String? = null
 )
 
+data class CommunityLastMessage(
+    @SerializedName("content") val content: String? = null,
+    @SerializedName("senderName") val senderName: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
 data class CommunityChannel(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
@@ -20,8 +26,14 @@ data class CommunityChannel(
     @SerializedName("isPrivate") val isPrivate: Boolean = false,
     @SerializedName("memberCount") val memberCount: Int = 0,
     @SerializedName("messageCount") val messageCount: Int = 0,
+    @SerializedName("unreadCount") val unreadCount: Int = 0,
     @SerializedName("hasUnread") val hasUnread: Boolean = false,
+    @SerializedName("lastMessage") val lastMessage: CommunityLastMessage? = null,
     @SerializedName("dmParticipant") val dmParticipant: ChannelMember? = null
+)
+
+data class MarkChannelReadRequest(
+    @SerializedName("action") val action: String = "markRead"
 )
 
 data class ChannelListResponse(

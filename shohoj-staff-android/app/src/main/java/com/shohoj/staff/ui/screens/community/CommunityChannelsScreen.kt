@@ -29,6 +29,8 @@ import com.shohoj.staff.ui.components.ShohojBottomBar
 import com.shohoj.staff.ui.components.ShohojTopBar
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,14 @@ fun CommunityChannelsScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showNewDmSheet by remember { mutableStateOf(false) }
     var showCreateChannelDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadChannels()
+        while (isActive) {
+            delay(5000)
+            viewModel.loadChannelsSilently()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -443,22 +453,51 @@ fun ChannelListItem(
 
                 Spacer(modifier = Modifier.height(3.dp))
 
+                val lastMsg = channel.lastMessage
+                val subtitleText = when {
+                    lastMsg != null && !lastMsg.content.isNullOrBlank() -> {
+                        val sender = lastMsg.senderName ?: "Someone"
+                        val preview = lastMsg.content.replace("\n", " ")
+                        if (isDm) preview else "$sender: $preview"
+                    }
+                    !channel.topic.isNullOrBlank() && channel.topic.trim().lowercase() != "none" -> {
+                        channel.topic
+                    }
+                    isDm -> "Direct Message"
+                    else -> "No messages yet • Tap to start"
+                }
+
                 Text(
-                    text = channel.topic ?: if (isDm) "Direct Message" else "Tap to join discussion",
-                    style = MaterialTheme.typography.bodySmall.copy(color = Slate400),
+                    text = subtitleText,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = if (channel.unreadCount > 0 || channel.hasUnread) Slate200 else Slate400,
+                        fontWeight = if (channel.unreadCount > 0 || channel.hasUnread) FontWeight.Medium else FontWeight.Normal
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Unread dot or arrow
-            if (channel.hasUnread) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(Emerald500)
-                )
+            // Unread badge count or arrow
+            val unreadCount = channel.unreadCount
+            val showUnread = unreadCount > 0 || channel.hasUnread
+
+            if (showUnread) {
+                val badgeText = if (unreadCount > 99) "99+" else if (unreadCount > 0) unreadCount.toString() else "•"
+                Surface(
+                    color = Emerald500,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = badgeText,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Slate950,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                    )
+                }
             } else {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,

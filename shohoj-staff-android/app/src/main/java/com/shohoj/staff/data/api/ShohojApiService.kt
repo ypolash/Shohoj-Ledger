@@ -118,6 +118,12 @@ interface ShohojApiService {
         @Body request: CreateChannelRequest
     ): Response<ChannelDetailResponse>
 
+    @PATCH("api/community/channels/{id}")
+    suspend fun markChannelRead(
+        @Path("id") channelId: String,
+        @Body request: MarkChannelReadRequest = MarkChannelReadRequest()
+    ): Response<SimpleActionResponse>
+
     @GET("api/community/members")
     suspend fun getCommunityMembers(): Response<CommunityDirectoryResponse>
 

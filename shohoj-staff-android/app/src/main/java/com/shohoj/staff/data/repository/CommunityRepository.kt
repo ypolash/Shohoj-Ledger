@@ -49,6 +49,15 @@ class CommunityRepository(
         }
     }
 
+    suspend fun markChannelRead(channelId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiClient.getService().markChannelRead(channelId)
+            Result.success(response.isSuccessful)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getMembers(): Result<CommunityDirectoryResponse> = withContext(Dispatchers.IO) {
         try {
             val response = apiClient.getService().getCommunityMembers()

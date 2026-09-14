@@ -205,14 +205,56 @@ export function CommunityChat() {
     }
   };
 
+  const playWebAudioChime = (isMention = false) => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(isMention ? 880 : 587.33, now);
+      gain1.gain.setValueAtTime(0.12, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + (isMention ? 0.35 : 0.2));
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(isMention ? 1174.66 : 880, now + 0.12);
+      gain2.gain.setValueAtTime(0.15, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.45);
+    } catch (e) {
+      // Audio chime quiet fallback
+    }
+  };
+
   const syncLatestMessages = async (channelId: string) => {
     try {
       const res = await fetch(`/api/community/messages?channelId=${channelId}`);
       if (res.ok) {
         const data = await res.json();
         setMessages((prev) => {
-          const fresh = data.messages || [];
+          const fresh: CommunityMessage[] = data.messages || [];
           if (JSON.stringify(prev) !== JSON.stringify(fresh)) {
+            const prevIds = new Set(prev.map((m) => m.id));
+            const newIncoming = fresh.filter((m) => !prevIds.has(m.id) && m.senderId !== currentUser?.id);
+            if (newIncoming.length > 0) {
+              const myName = currentUser?.name?.toLowerCase() || "";
+              const hasMention = newIncoming.some(
+                (m) => myName && m.content.toLowerCase().includes(`@${myName}`)
+              );
+              playWebAudioChime(hasMention);
+            }
             return fresh;
           }
           return prev;
@@ -559,9 +601,20 @@ export function CommunityChat() {
                 >
                   <div className={styles.channelItemLeft}>
                     <Megaphone size={16} className={`${styles.channelIcon} text-amber-500`} />
-                    <span>{c.name}</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{c.name}</span>
+                      {c.lastMessage?.content ? (
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                          {c.lastMessage.senderName}: {c.lastMessage.content}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                  {c.hasUnread && <span className={styles.unreadBadge}>•</span>}
+                  {(c.hasUnread || (c as any).unreadCount > 0) && (
+                    <span className={styles.unreadBadge}>
+                      {(c as any).unreadCount > 99 ? "99+" : (c as any).unreadCount > 0 ? (c as any).unreadCount : "•"}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -595,9 +648,22 @@ export function CommunityChat() {
                   ) : (
                     <Hash size={15} className={`${styles.channelIcon} text-blue-500 dark:text-blue-400`} />
                   )}
-                  <span>{c.name}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate">{c.name}</span>
+                    {c.lastMessage?.content ? (
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                        {c.lastMessage.senderName}: {c.lastMessage.content}
+                      </span>
+                    ) : c.topic && c.topic.trim().toLowerCase() !== "none" ? (
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{c.topic}</span>
+                    ) : null}
+                  </div>
                 </div>
-                {c.hasUnread && <span className={styles.unreadBadge}>•</span>}
+                {(c.hasUnread || (c as any).unreadCount > 0) && (
+                  <span className={styles.unreadBadge}>
+                    {(c as any).unreadCount > 99 ? "99+" : (c as any).unreadCount > 0 ? (c as any).unreadCount : "•"}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -632,9 +698,20 @@ export function CommunityChat() {
                     >
                       {getInitials(c.name)}
                     </div>
-                    <span>{c.name}</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{c.name}</span>
+                      {c.lastMessage?.content ? (
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                          {c.lastMessage.content}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                  {c.hasUnread && <span className={styles.unreadBadge}>•</span>}
+                  {(c.hasUnread || (c as any).unreadCount > 0) && (
+                    <span className={styles.unreadBadge}>
+                      {(c as any).unreadCount > 99 ? "99+" : (c as any).unreadCount > 0 ? (c as any).unreadCount : "•"}
+                    </span>
+                  )}
                 </div>
               ))
             )}
@@ -868,6 +945,11 @@ export function CommunityChat() {
                             minute: "2-digit",
                           })}
                         </span>
+                        {currentUser?.name && msg.content.toLowerCase().includes(`@${currentUser.name.toLowerCase()}`) && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-100 dark:bg-sky-950/60 px-1.5 py-0.5 rounded-full border border-sky-300 dark:border-sky-700">
+                            @ Mentioned you
+                          </span>
+                        )}
                         {msg.isPinned && (
                           <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded">
                             <Pin size={10} /> Pinned
@@ -887,7 +969,32 @@ export function CommunityChat() {
                       )}
 
                       {/* Text */}
-                      {msg.content && <div className={styles.messageText}>{msg.content}</div>}
+                      {msg.content && (
+                        <div className={styles.messageText}>
+                          {msg.content.split(/(@[a-zA-Z0-9_.\-]+(?:\s[a-zA-Z0-9_.\-]+)?|#\[Task:[^\]]+\]|#\w+)/g).map((part, pIdx) => {
+                            if (part.startsWith("@")) {
+                              return (
+                                <span
+                                  key={pIdx}
+                                  className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 font-semibold text-[13px]"
+                                >
+                                  {part}
+                                </span>
+                              );
+                            } else if (part.startsWith("#")) {
+                              return (
+                                <span
+                                  key={pIdx}
+                                  className="inline-flex items-center px-1.5 py-0.5 mx-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 font-semibold text-[13px]"
+                                >
+                                  {part}
+                                </span>
+                              );
+                            }
+                            return <span key={pIdx}>{part}</span>;
+                          })}
+                        </div>
+                      )}
 
                       {/* Attachments */}
                       {msg.attachments && msg.attachments.length > 0 && (

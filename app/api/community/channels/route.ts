@@ -124,43 +124,63 @@ export async function GET() {
       ],
     });
 
-    // Format channels with unread indicator and DM display names
-    const formattedChannels = (channels || []).map((ch: any) => {
-      let displayName = ch.name;
-      let dmParticipant = null;
+    // Format channels with unread count indicator and DM display names
+    const formattedChannels = await Promise.all(
+      (channels || []).map(async (ch: any) => {
+        let displayName = ch.name;
+        let dmParticipant = null;
 
-      if (ch.type === "DIRECT_MESSAGE") {
-        const otherMember = ch.members?.find((m: any) => m.userId !== userId);
-        if (otherMember) {
-          displayName = otherMember.userName;
-          dmParticipant = otherMember;
-        } else {
-          displayName = "Direct Chat (You)";
+        if (ch.type === "DIRECT_MESSAGE") {
+          const otherMember = ch.members?.find((m: any) => m.userId !== userId);
+          if (otherMember) {
+            displayName = otherMember.userName;
+            dmParticipant = otherMember;
+          } else {
+            displayName = "Direct Chat (You)";
+          }
         }
-      }
 
-      const userMembership = ch.members?.find((m: any) => m.userId === userId);
-      const lastRead = userMembership?.lastReadAt ? new Date(userMembership.lastReadAt).getTime() : 0;
-      const lastMsg = ch.messages?.[0];
-      const hasUnread = lastMsg ? new Date(lastMsg.createdAt).getTime() > lastRead : false;
+        const userMembership = ch.members?.find((m: any) => m.userId === userId);
+        const lastReadAt = userMembership?.lastReadAt;
+        const lastMsg = ch.messages?.[0];
 
-      return {
-        id: ch.id,
-        name: displayName,
-        rawName: ch.name,
-        topic: ch.topic,
-        type: ch.type,
-        isPrivate: ch.isPrivate,
-        createdAt: ch.createdAt,
-        updatedAt: ch.updatedAt,
-        memberCount: ch._count?.members || 0,
-        messageCount: ch._count?.messages || 0,
-        lastMessage: lastMsg || null,
-        hasUnread,
-        dmParticipant,
-        members: ch.members || [],
-      };
-    });
+        let unreadCount = 0;
+        if (lastReadAt) {
+          unreadCount = await db.communityMessage.count({
+            where: {
+              channelId: ch.id,
+              senderId: { not: userId },
+              createdAt: { gt: lastReadAt },
+            },
+          });
+        } else {
+          unreadCount = await db.communityMessage.count({
+            where: {
+              channelId: ch.id,
+              senderId: { not: userId },
+            },
+          });
+        }
+
+        return {
+          id: ch.id,
+          name: displayName,
+          rawName: ch.name,
+          topic: ch.topic,
+          type: ch.type,
+          isPrivate: ch.isPrivate,
+          createdAt: ch.createdAt,
+          updatedAt: ch.updatedAt,
+          memberCount: ch._count?.members || 0,
+          messageCount: ch._count?.messages || 0,
+          lastMessage: lastMsg || null,
+          unreadCount,
+          hasUnread: unreadCount > 0,
+          dmParticipant,
+          members: ch.members || [],
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,

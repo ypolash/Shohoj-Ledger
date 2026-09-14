@@ -1433,6 +1433,7 @@ model Company {
   chartOfAccounts          ChartOfAccount[]
   clients                  Client[]
   commissionPolicies       CommissionPolicy[]
+  communityChannels        CommunityChannel[]
   modules                  CompanyModule[]
   settings                 CompanySetting?
   costCenters              CostCenter[]
@@ -5348,3 +5349,91 @@ model MarketingCampaign {
   @@index([companyId])
 }
 
+// -------------------------------------------------------------
+// COMMUNITY & COLLABORATION HUB
+// -------------------------------------------------------------
+
+model CommunityChannel {
+  id            String                   @id @default(uuid())
+  name          String
+  topic         String?
+  type          String                   @default("CHANNEL") // "CHANNEL" | "DIRECT_MESSAGE" | "ANNOUNCEMENT"
+  isPrivate     Boolean                  @default(false)
+  companyId     String
+  company       Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdById   String
+  createdByName String
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  members       CommunityChannelMember[]
+  messages      CommunityMessage[]
+
+  @@index([companyId])
+}
+
+model CommunityChannelMember {
+  id         String           @id @default(uuid())
+  channelId  String
+  channel    CommunityChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId     String
+  userName   String
+  userRole   String
+  userAvatar String?
+  lastReadAt DateTime         @default(now())
+  joinedAt   DateTime         @default(now())
+
+  @@unique([channelId, userId])
+  @@index([userId])
+  @@index([channelId])
+}
+
+model CommunityMessage {
+  id           String                @id @default(uuid())
+  channelId    String
+  channel      CommunityChannel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  senderId     String
+  senderName   String
+  senderRole   String
+  senderType   String                @default("MEMBER") // "ADMIN" | "STAFF" | "MEMBER"
+  senderAvatar String?
+  content      String
+  isPinned     Boolean               @default(false)
+  replyToId    String?
+  replyTo      CommunityMessage?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      CommunityMessage[]    @relation("MessageReplies")
+  attachments  CommunityAttachment[]
+  reactions    CommunityReaction[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([channelId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model CommunityAttachment {
+  id        String           @id @default(uuid())
+  messageId String
+  message   CommunityMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime         @default(now())
+
+  @@index([messageId])
+}
+
+model CommunityReaction {
+  id        String           @id @default(uuid())
+  messageId String
+  message   CommunityMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  userName  String
+  emoji     String
+  createdAt DateTime         @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}

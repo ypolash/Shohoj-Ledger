@@ -16,7 +16,8 @@ import {
   BarChart2, 
   Settings,
   Megaphone,
-  ShoppingCart
+  ShoppingCart,
+  MessageSquare
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,6 +35,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
 
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/erp' },
+    { name: 'Community', icon: MessageSquare, href: '/erp/community' },
     { name: 'CRM', icon: Users, href: '/erp/crm' },
     { name: 'Orders', icon: ShoppingCart, href: '/erp/orders' },
     { name: 'Finance', icon: DollarSign, href: '/erp/finance' },

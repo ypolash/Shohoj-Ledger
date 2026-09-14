@@ -130,24 +130,26 @@ class AppUpdateRepository(
         return 0
     }
 
-    fun downloadAndInstallApk(downloadUrl: String, fileName: String = "shohoj-staff-v1.5.apk") {
+    fun downloadAndInstallApk(downloadUrl: String, fileName: String = "shohoj-staff-v1.5.1.apk") {
         val fullUrl = resolveUrl(downloadUrl)
 
         // Trigger system DownloadManager with status bar notification
         try {
             val uri = Uri.parse(fullUrl)
+            val segment = uri.lastPathSegment
+            val effectiveFileName = if (!segment.isNullOrBlank() && segment.endsWith(".apk")) segment else fileName
             val request = DownloadManager.Request(uri).apply {
-                setTitle("Shohoj Staff v1.5")
+                setTitle("Shohoj Staff Update")
                 setDescription("Downloading Shohoj Staff application update...")
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, effectiveFileName)
                 setMimeType("application/vnd.android.package-archive")
                 setAllowedOverMetered(true)
                 setAllowedOverRoaming(true)
             }
             val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
             dm?.enqueue(request)
-            Toast.makeText(context, "Downloading Shohoj Staff v1.5...", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Downloading Shohoj Staff update...", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             // Fallback gracefully
         }

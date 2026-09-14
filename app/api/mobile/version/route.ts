@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         '🔔 Incoming message & mention sound chimes',
         '⚡ Performance and background sync improvements'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.1.apk`,
       fileSize: '18.2 MB',
       isForceUpdate: false,
       publishedAt: '2026-09-15T00:00:00Z'

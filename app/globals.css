@@ -72,6 +72,8 @@
   --surface-main: #ffffff;
   --surface-hover: var(--gray-50);
   --surface-glass: rgba(255, 255, 255, 0.85);
+  --surface-card: #ffffff;
+  --surface-bg: var(--gray-50);
   
   /* Text & Borders */
   --text-main: var(--gray-900);
@@ -159,6 +161,8 @@
   --surface-main: #0f172a; 
   --surface-hover: #1e293b;
   --surface-glass: rgba(15, 23, 42, 0.85);
+  --surface-card: #0f172a;
+  --surface-bg: #020617;
   
   /* Text & Borders */
   --text-main: var(--gray-50);
@@ -188,6 +192,8 @@
     --surface-main: #0f172a; 
     --surface-hover: #1e293b;
     --surface-glass: rgba(15, 23, 42, 0.85);
+    --surface-card: #0f172a;
+    --surface-bg: #020617;
     
     /* Text & Borders */
     --text-main: var(--gray-50);

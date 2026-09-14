@@ -874,172 +874,113 @@ export default function HRDashboardPage() {
       {/* 5. Employee Salary Breakdown Modal */}
       {showSalaryModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.65)',
-            backdropFilter: 'blur(5px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}
+          className={styles.modalOverlay}
           onClick={() => setShowSalaryModal(false)}
         >
           <div
-            style={{
-              background: 'var(--surface-card)',
-              borderRadius: '24px',
-              border: '1px solid var(--border-main)',
-              maxWidth: '740px',
-              width: '100%',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.3)',
-              overflow: 'hidden'
-            }}
+            className={styles.modalCard}
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{
-              padding: '22px 28px',
-              borderBottom: '1px solid var(--border-main)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'var(--surface-bg)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '14px',
-                  background: 'rgba(6, 182, 212, 0.14)',
-                  color: '#06b6d4',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>account_balance_wallet</span>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderLeft}>
+                <div className={styles.modalHeaderIcon}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
+                    account_balance_wallet
+                  </span>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                  <h3 className={styles.modalHeaderTitle}>
                     Employee Base Salary Roster
                   </h3>
-                  <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-                    Standard contracted compensation for active team members
+                  <p className={styles.modalHeaderSubtitle}>
+                    Contracted monthly base compensation for active team members
                   </p>
                 </div>
               </div>
 
               <button
                 type="button"
+                className={styles.modalCloseButton}
                 onClick={() => setShowSalaryModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--text-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '6px',
-                  borderRadius: '8px'
-                }}
                 title="Close"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>close</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
               </button>
             </div>
 
-            {/* Quick KPI Banner inside modal */}
-            <div style={{
-              padding: '16px 28px',
-              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%)',
-              borderBottom: '1px solid var(--border-main)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px'
-            }}>
-              <div>
-                <span style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-                  Total Monthly Salary Liability
-                </span>
-                <div style={{ fontSize: '22px', fontWeight: 800, color: '#06b6d4', marginTop: '2px' }}>
+            {/* Quick KPI Summary Grid */}
+            <div className={styles.modalStatsGrid}>
+              <div className={styles.modalStatCard}>
+                <span className={styles.modalStatLabel}>Total Monthly Liability</span>
+                <div className={styles.modalStatValue} style={{ color: '#0891b2' }}>
                   {formatCurrency(totalMonthlyPayroll)}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '24px' }}>
-                <div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Salaried Staff</span>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>{salariedEmployees.length}</div>
+              <div className={styles.modalStatCard}>
+                <span className={styles.modalStatLabel}>Salaried Personnel</span>
+                <div className={styles.modalStatValue}>
+                  {salariedEmployees.length} Staff
                 </div>
-                <div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Avg Salary</span>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
-                    {formatCurrency(avgSalary)}
-                  </div>
+              </div>
+
+              <div className={styles.modalStatCard}>
+                <span className={styles.modalStatLabel}>Avg Base Salary</span>
+                <div className={styles.modalStatValue}>
+                  {formatCurrency(avgSalary)}
                 </div>
               </div>
             </div>
 
             {/* Search Filter Input */}
-            <div style={{ padding: '12px 28px', borderBottom: '1px solid var(--border-main)', background: 'var(--surface-card)' }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', fontSize: '18px', color: 'var(--text-muted)' }}>
+            <div className={styles.modalSearchRow}>
+              <div className={styles.modalSearchInputBox}>
+                <span className={`material-symbols-outlined ${styles.modalSearchIcon}`}>
                   search
                 </span>
                 <input
                   type="text"
-                  placeholder="Search staff by name, ID, or designation..."
+                  placeholder="Search staff by name, ID, department, or designation..."
                   value={salarySearch}
                   onChange={e => setSalarySearch(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px 9px 38px',
-                    borderRadius: '10px',
-                    border: '1px solid var(--border-main)',
-                    background: 'var(--surface-bg)',
-                    color: 'var(--text-main)',
-                    fontSize: '13px',
-                    outline: 'none'
-                  }}
+                  autoFocus
                 />
                 {salarySearch && (
                   <button
                     type="button"
+                    className={styles.modalSearchClearBtn}
                     onClick={() => setSalarySearch('')}
-                    style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                    title="Clear search"
                   >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Employee List / Table */}
-            <div style={{ overflowY: 'auto', flex: 1, padding: '0 28px' }}>
+            <div className={styles.modalTableArea}>
               {filteredSalaryList.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '36px', opacity: 0.5, display: 'block', marginBottom: '8px' }}>
+                <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-muted, #64748b)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '40px', opacity: 0.4, display: 'block', marginBottom: '10px' }}>
                     person_search
                   </span>
-                  No matching employees found.
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main, #0f172a)' }}>
+                    No matching employees found
+                  </div>
+                  <p style={{ fontSize: '12.5px', marginTop: '4px' }}>
+                    Try searching with another keyword or clear the search query.
+                  </p>
                 </div>
               ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <table className={styles.modalRosterTable}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-main)' }}>
-                      <th style={{ padding: '12px 8px', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Employee</th>
-                      <th style={{ padding: '12px 8px', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Department</th>
-                      <th style={{ padding: '12px 8px', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Payment Type</th>
-                      <th style={{ padding: '12px 8px', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'right' }}>Base Salary Amount</th>
+                    <tr>
+                      <th style={{ width: '40%' }}>Employee</th>
+                      <th style={{ width: '22%' }}>Department</th>
+                      <th style={{ width: '18%' }}>Payment Type</th>
+                      <th style={{ width: '20%', textAlign: 'right' }}>Base Salary</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1048,40 +989,49 @@ export default function HRDashboardPage() {
                       const isProject = emp.employmentType === 'Project-Based';
 
                       return (
-                        <tr key={emp.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                          <td style={{ padding: '12px 8px' }}>
+                        <tr key={emp.id} className={styles.modalRosterTableRow}>
+                          <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <div style={{
-                                width: '34px',
-                                height: '34px',
+                                width: '36px',
+                                height: '36px',
                                 borderRadius: '10px',
-                                background: isProject ? 'rgba(139, 92, 246, 0.15)' : 'rgba(37, 99, 235, 0.12)',
-                                color: isProject ? '#8b5cf6' : 'var(--primary)',
+                                background: isProject ? 'rgba(139, 92, 246, 0.12)' : 'rgba(37, 99, 235, 0.1)',
+                                color: isProject ? '#7c3aed' : '#2563eb',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontWeight: 700,
-                                fontSize: '12px',
+                                fontSize: '12.5px',
                                 flexShrink: 0
                               }}>
                                 {initials}
                               </div>
                               <div>
-                                <div style={{ fontWeight: 600, fontSize: '13.5px', color: 'var(--text-main)' }}>
+                                <div style={{ fontWeight: 600, fontSize: '13.5px', color: 'var(--text-main, #0f172a)' }}>
                                   {emp.firstName} {emp.lastName}
                                 </div>
-                                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                                <div style={{ fontSize: '11.5px', color: 'var(--text-muted, #64748b)' }}>
                                   {emp.designation || 'Staff'} {emp.employeeId ? `· ${emp.employeeId}` : ''}
                                 </div>
                               </div>
                             </div>
                           </td>
 
-                          <td style={{ padding: '12px 8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                            {emp.department || 'General'}
+                          <td>
+                            <span style={{
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: 'var(--text-secondary, #475569)',
+                              background: 'var(--surface-hover, #f1f5f9)',
+                              padding: '3px 8px',
+                              borderRadius: '6px'
+                            }}>
+                              {emp.department || 'General'}
+                            </span>
                           </td>
 
-                          <td style={{ padding: '12px 8px' }}>
+                          <td>
                             {isProject ? (
                               <span style={{
                                 display: 'inline-flex',
@@ -1090,9 +1040,9 @@ export default function HRDashboardPage() {
                                 padding: '3px 8px',
                                 borderRadius: '6px',
                                 fontSize: '11px',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 background: 'rgba(139, 92, 246, 0.12)',
-                                color: '#8b5cf6',
+                                color: '#7c3aed',
                                 border: '1px solid rgba(139, 92, 246, 0.25)'
                               }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>folder_special</span>
@@ -1108,7 +1058,7 @@ export default function HRDashboardPage() {
                                 fontSize: '11px',
                                 fontWeight: 600,
                                 background: 'rgba(16, 185, 129, 0.1)',
-                                color: '#10b981',
+                                color: '#059669',
                                 border: '1px solid rgba(16, 185, 129, 0.25)'
                               }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>payments</span>
@@ -1117,22 +1067,22 @@ export default function HRDashboardPage() {
                             )}
                           </td>
 
-                          <td style={{ padding: '12px 8px', textAlign: 'right' }}>
+                          <td style={{ textAlign: 'right' }}>
                             {isProject ? (
                               <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                <span style={{ fontWeight: 700, fontSize: '14px', color: '#8b5cf6' }}>
+                                <span style={{ fontWeight: 700, fontSize: '14px', color: '#7c3aed' }}>
                                   {Number(emp.basicSalary) > 0 ? formatCurrency(emp.basicSalary) : 'Per Project'}
                                 </span>
                                 {Number(emp.basicSalary) > 0 && (
-                                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>rate / project</span>
+                                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted, #64748b)' }}>rate / project</span>
                                 )}
                               </div>
                             ) : (
                               <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                <span style={{ fontWeight: 700, fontSize: '14.5px', color: '#06b6d4' }}>
+                                <span style={{ fontWeight: 700, fontSize: '14.5px', color: '#0891b2' }}>
                                   {formatCurrency(emp.basicSalary || 0)}
                                 </span>
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>per month</span>
+                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted, #64748b)' }}>per month</span>
                               </div>
                             )}
                           </td>
@@ -1145,43 +1095,21 @@ export default function HRDashboardPage() {
             </div>
 
             {/* Modal Footer */}
-            <div style={{
-              padding: '16px 28px',
-              borderTop: '1px solid var(--border-main)',
-              background: 'var(--surface-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
+            <div className={styles.modalFooter}>
               <Link
                 href="/erp/hr/employees"
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: 'var(--primary)',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
+                className={styles.secondaryBtn}
+                style={{ fontSize: '12.5px', padding: '8px 14px' }}
               >
                 <span>View Full Employee Directory</span>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_forward</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>arrow_forward</span>
               </Link>
 
               <button
                 type="button"
+                className={styles.primaryBtn}
                 onClick={() => setShowSalaryModal(false)}
-                style={{
-                  padding: '8px 18px',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-main)',
-                  background: 'var(--surface-card)',
-                  color: 'var(--text-main)',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                style={{ padding: '8px 22px', fontSize: '13px' }}
               >
                 Close
               </button>

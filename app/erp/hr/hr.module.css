@@ -952,3 +952,241 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* --------------------------------------------------------------------------
+   Salary Breakdown Modal
+   -------------------------------------------------------------------------- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+  animation: modalOverlayFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 20px;
+  max-width: 760px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  animation: modalContentScale 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalContentScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-card, #ffffff);
+}
+
+.modalHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modalHeaderIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(6, 182, 212, 0.12);
+  color: #0891b2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modalHeaderTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.015em;
+}
+
+.modalHeaderSubtitle {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--text-muted, #64748b);
+}
+
+.modalCloseButton {
+  background: var(--surface-hover, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  cursor: pointer;
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.modalCloseButton:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.modalStatsGrid {
+  padding: 16px 24px;
+  background: var(--surface-hover, #f8fafc);
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.modalStatCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modalStatLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+}
+
+.modalStatValue {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+}
+
+.modalSearchRow {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-card, #ffffff);
+}
+
+.modalSearchInputBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.modalSearchInputBox input {
+  width: 100%;
+  padding: 9px 36px 9px 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-hover, #f8fafc);
+  color: var(--text-main, #0f172a);
+  font-size: 13.5px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.modalSearchInputBox input:focus {
+  background: var(--surface-card, #ffffff);
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.modalSearchIcon {
+  position: absolute;
+  left: 12px;
+  font-size: 18px;
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+}
+
+.modalSearchClearBtn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.modalTableArea {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 24px;
+  background: var(--surface-card, #ffffff);
+}
+
+.modalRosterTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.modalRosterTable th {
+  padding: 12px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-card, #ffffff);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.modalRosterTable td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  vertical-align: middle;
+}
+
+.modalRosterTableRow:hover td {
+  background: var(--surface-hover, #f8fafc);
+}
+
+.modalFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-hover, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

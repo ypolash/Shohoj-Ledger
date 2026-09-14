@@ -78,7 +78,7 @@ export function QuickActions({ role }: QuickActionsProps) {
       sub: 'Employee Records',
       icon: 'badge',
       roles: ['HR'],
-      href: '/erp/hr',
+      href: '/erp/hr/employees',
       color: '#38bdf8',
       bgColor: 'rgba(14, 165, 233, 0.15)',
       borderColor: 'rgba(14, 165, 233, 0.3)'

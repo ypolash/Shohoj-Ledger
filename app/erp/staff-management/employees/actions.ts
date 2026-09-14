@@ -190,23 +190,43 @@ export async function updateEmployee(id: string, data: any) {
 
 export async function deleteEmployee(id: string) {
   const { companyId } = await verifyAccess("DELETE_EMPLOYEE");
-  // The system probably shouldn't fully delete employees due to financial ledger integrity.
-  // Instead, it sets status to TERMINATED.
   
   const existing = await prisma.employee.findFirst({ where: { id, companyId } });
   if (!existing) throw new Error("Employee not found.");
 
-  await prisma.employee.update({
-    where: { id },
-    data: { status: "TERMINATED" }
-  });
+  await prisma.$transaction(async (tx) => {
+    // 1. Unassign managed projects
+    await tx.project.updateMany({
+      where: { managerId: existing.id },
+      data: { managerId: null }
+    });
 
-  if (existing.userId) {
-     await prisma.user.update({
-       where: { id: existing.userId },
-       data: { role: "inactive" }
-     });
-  }
+    // 2. Clear attendance-related entries
+    await tx.attendanceAdjustment.deleteMany({ where: { employeeId: existing.id } });
+    await tx.attendanceOvertime.deleteMany({ where: { employeeId: existing.id } });
+    await tx.attendanceRoster.deleteMany({ where: { employeeId: existing.id } });
+    await tx.attendanceHolidayAssignment.deleteMany({ where: { employeeId: existing.id } });
+    await tx.attendance.deleteMany({ where: { employeeId: existing.id } });
+
+    // 3. Clear profile, lifecycle, and documents
+    await tx.employeeFine.deleteMany({ where: { employeeId: existing.id } });
+    await tx.employeeSalary.deleteMany({ where: { employeeId: existing.id } });
+    await tx.employeeLifecycle.deleteMany({ where: { employeeId: existing.id } });
+    await tx.employeeExperience.deleteMany({ where: { employeeId: existing.id } });
+    await tx.employeeEducation.deleteMany({ where: { employeeId: existing.id } });
+    await tx.employeeDocument.deleteMany({ where: { employeeId: existing.id } });
+    await tx.employeeProfile.deleteMany({ where: { employeeId: existing.id } });
+
+    // 4. Delete the employee record
+    await tx.employee.delete({
+      where: { id: existing.id }
+    });
+
+    // 5. Cleanup user login if exists
+    if (existing.userId) {
+      await tx.user.delete({ where: { id: existing.userId } }).catch(() => {});
+    }
+  });
 
   revalidatePath("/erp/staff-management/employees");
   revalidatePath("/erp/hr/employees");

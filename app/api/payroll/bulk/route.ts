@@ -38,17 +38,35 @@ export async function POST(request: Request) {
 
     let targetEmployeeIds: string[] = [];
 
+    const nonProjectBasedCondition = {
+      OR: [
+        { employmentType: null },
+        { employmentType: { not: 'Project-Based' } }
+      ]
+    };
+
     if (employeeIds && Array.isArray(employeeIds) && employeeIds.length > 0) {
       targetEmployeeIds = employeeIds;
     } else if (departmentId) {
       const employeesInDept = await prisma.employee.findMany({
-        where: { ...companyFilter, departmentId, status: 'ACTIVE', systemSource },
+        where: {
+          ...companyFilter,
+          departmentId,
+          status: 'ACTIVE',
+          systemSource,
+          ...nonProjectBasedCondition
+        },
         select: { id: true }
       });
       targetEmployeeIds = employeesInDept.map(e => e.id);
     } else {
       const allActiveEmployees = await prisma.employee.findMany({
-        where: { ...companyFilter, status: 'ACTIVE', systemSource },
+        where: {
+          ...companyFilter,
+          status: 'ACTIVE',
+          systemSource,
+          ...nonProjectBasedCondition
+        },
         select: { id: true }
       });
       targetEmployeeIds = allActiveEmployees.map(e => e.id);

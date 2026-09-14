@@ -11,7 +11,6 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  { name: 'Dashboard',    href: '/erp/hr',              icon: 'dashboard',    exact: true },
   { name: 'Employees',    href: '/erp/hr/employees',    icon: 'badge',        exact: false },
   { name: 'Members',      href: '/erp/hr/members',      icon: 'groups',       exact: false },
   { name: 'Departments',  href: '/erp/hr/departments',  icon: 'corporate_fare',exact: false },

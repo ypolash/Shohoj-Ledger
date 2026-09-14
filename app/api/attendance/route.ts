@@ -177,3 +177,54 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create attendance' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  if (!companyIdForGuard) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(request.url);
+    let id = searchParams.get('id');
+    if (!id) {
+      try {
+        const body = await request.json();
+        id = body?.id;
+      } catch {}
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'Attendance record ID is required' }, { status: 400 });
+    }
+
+    // Verify record ownership
+    const existing = await prisma.attendance.findFirst({
+      where: {
+        id,
+        OR: [
+          { companyId: companyIdForGuard },
+          { employee: { companyId: companyIdForGuard } }
+        ]
+      }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Attendance record not found or unauthorized' }, { status: 404 });
+    }
+
+    // Clear dependent adjustments/overtimes before deleting attendance
+    await prisma.$transaction(async (tx) => {
+      await tx.attendanceAdjustment.deleteMany({ where: { attendanceId: id } });
+      await tx.attendanceOvertime.deleteMany({ where: { attendanceId: id } });
+      await tx.attendance.delete({ where: { id } });
+    });
+
+    return NextResponse.json({ success: true, message: 'Attendance record deleted successfully' });
+  } catch (error: any) {
+    console.error('Failed to delete attendance:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete attendance' }, { status: 500 });
+  }
+}
+

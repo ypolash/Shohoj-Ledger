@@ -133,6 +133,29 @@ export default function AttendancePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [attendanceToDelete, setAttendanceToDelete] = useState<AttendanceRecord | null>(null);
+  const [deletingAttendanceId, setDeletingAttendanceId] = useState<string | null>(null);
+
+  const handleConfirmDeleteAttendance = async () => {
+    if (!attendanceToDelete) return;
+    setDeletingAttendanceId(attendanceToDelete.id);
+    try {
+      const res = await fetch(`/api/attendance?id=${attendanceToDelete.id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setRecords(prev => prev.filter(a => a.id !== attendanceToDelete.id));
+        setAttendanceToDelete(null);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Failed to delete attendance record');
+      }
+    } catch (err: any) {
+      alert('Network error deleting attendance: ' + err.message);
+    } finally {
+      setDeletingAttendanceId(null);
+    }
+  };
 
   const loadNetworks = useCallback(async () => {
     setIsLoadingNetworks(true);
@@ -828,6 +851,7 @@ export default function AttendancePage() {
                   <th className={styles.tableHeaderCell}>Late Duration</th>
                   <th className={styles.tableHeaderCell}>Early Leave Time</th>
                   <th className={styles.tableHeaderCell}>Status</th>
+                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -907,6 +931,31 @@ export default function AttendancePage() {
                         <span className={`${styles.statusChip} ${getStatusClass(r.status)}`}>
                           {r.status}
                         </span>
+                      </td>
+
+                      <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceToDelete(r)}
+                          disabled={deletingAttendanceId === r.id}
+                          title="Delete attendance record"
+                          style={{
+                            padding: '6px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            background: 'rgba(239, 68, 68, 0.08)',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                            {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
+                          </span>
+                        </button>
                       </td>
                     </tr>
                   );
@@ -1262,6 +1311,108 @@ export default function AttendancePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Attendance Record Delete Confirmation Modal */}
+      {attendanceToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setAttendanceToDelete(null)}
+        >
+          <div
+            style={{
+              background: 'var(--surface-card)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-main)',
+              maxWidth: '440px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: '#ef4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>delete_forever</span>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Delete Attendance Record
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  This action permanently removes the log entry.
+                </p>
+              </div>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete the attendance record for <strong>{empMap[attendanceToDelete.employeeId]?.firstName || 'Staff'}</strong> on <strong>{formatDisplayDate(attendanceToDelete.date, officeTiming.timezone)}</strong>?
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setAttendanceToDelete(null)}
+                disabled={deletingAttendanceId === attendanceToDelete.id}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-main)',
+                  background: 'var(--surface-bg)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteAttendance}
+                disabled={deletingAttendanceId === attendanceToDelete.id}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {deletingAttendanceId === attendanceToDelete.id ? 'Deleting...' : 'Delete Entry'}
+              </button>
+            </div>
           </div>
         </div>
       )}

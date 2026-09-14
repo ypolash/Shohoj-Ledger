@@ -15,6 +15,7 @@ interface Employee {
   designation?: string;
   department?: string;
   basicSalary?: number | string;
+  employmentType?: string;
   status?: string;
   joinDate?: string;
   departmentRef?: { name: string };
@@ -45,12 +46,15 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('ALL');
   const [selectedDesig, setSelectedDesig] = useState('ALL');
+  const [compensationFilter, setCompensationFilter] = useState<'ALL' | 'SALARY' | 'PROJECT'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED'>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>('Just now');
   const [onboardingMode, setOnboardingMode] = useState<'BASIC' | 'PROFESSIONAL'>('PROFESSIONAL');
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadAll = useCallback(async (isManual = false) => {
     if (isManual) setIsSyncing(true);
@@ -121,17 +125,43 @@ export default function EmployeesPage() {
     }).format(Number(val) || 0);
   };
 
+  // Handle delete employee confirmed
+  const handleConfirmDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+    setDeletingId(employeeToDelete.id);
+    try {
+      const res = await fetch(`/api/employees/${employeeToDelete.id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setEmployees(prev => prev.filter(e => e.id !== employeeToDelete.id));
+        setEmployeeToDelete(null);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Failed to delete employee');
+      }
+    } catch (err: any) {
+      alert('Network error deleting employee: ' + err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   // Derived KPI calculations
   const totalCount = employees.length;
   const activeCount = employees.filter(e => (e.status || 'ACTIVE') === 'ACTIVE').length;
   const onLeaveCount = employees.filter(e => e.status === 'ON_LEAVE').length;
   const terminatedCount = employees.filter(e => e.status === 'TERMINATED').length;
+  const projectBasedCount = employees.filter(e => e.employmentType === 'Project-Based').length;
+  const salariedCount = totalCount - projectBasedCount;
 
   const totalMonthlyPayroll = useMemo(() => {
-    return employees.reduce((sum, emp) => sum + (Number(emp.basicSalary) || 0), 0);
+    return employees
+      .filter(emp => emp.employmentType !== 'Project-Based')
+      .reduce((sum, emp) => sum + (Number(emp.basicSalary) || 0), 0);
   }, [employees]);
 
-  const avgSalary = totalCount > 0 ? Math.round(totalMonthlyPayroll / totalCount) : 0;
+  const avgSalary = salariedCount > 0 ? Math.round(totalMonthlyPayroll / salariedCount) : 0;
 
   // Department coverage
   const representedDepts = useMemo(() => {
@@ -156,13 +186,20 @@ export default function EmployeesPage() {
       const desigName = emp.designationRef?.name || emp.designation || '';
       const matchesDesig = selectedDesig === 'ALL' || desigName === selectedDesig;
 
+      // Compensation filter
+      const isProject = emp.employmentType === 'Project-Based';
+      const matchesComp =
+        compensationFilter === 'ALL' ||
+        (compensationFilter === 'PROJECT' && isProject) ||
+        (compensationFilter === 'SALARY' && !isProject);
+
       // Status filter
       const empStatus = emp.status || 'ACTIVE';
       const matchesStatus = statusFilter === 'ALL' || empStatus === statusFilter;
 
-      return matchesSearch && matchesDept && matchesDesig && matchesStatus;
+      return matchesSearch && matchesDept && matchesDesig && matchesComp && matchesStatus;
     });
-  }, [employees, search, selectedDept, selectedDesig, statusFilter]);
+  }, [employees, search, selectedDept, selectedDesig, compensationFilter, statusFilter]);
 
   // CSV Export
   const handleExportCSV = () => {
@@ -470,7 +507,7 @@ export default function EmployeesPage() {
               <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>account_balance_wallet</span>
             </div>
             <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Monthly
+              Fixed Monthly
             </span>
           </div>
           <div className={styles.kpiBody}>
@@ -484,8 +521,8 @@ export default function EmployeesPage() {
             </div>
           </div>
           <div className={styles.kpiFooter}>
-            <span>Avg Salary: {formatCurrency(avgSalary)}</span>
-            <Link href="/erp/hr/payroll" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+            <span>{salariedCount} Salaried · {projectBasedCount} Project</span>
+            <Link href="/erp/payroll" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
               Payroll →
             </Link>
           </div>
@@ -540,6 +577,17 @@ export default function EmployeesPage() {
                   {d.name}
                 </option>
               ))}
+            </select>
+
+            {/* Compensation Type Filter */}
+            <select
+              value={compensationFilter}
+              onChange={e => setCompensationFilter(e.target.value as any)}
+              className={styles.selectDropdown}
+            >
+              <option value="ALL">All Payment Types</option>
+              <option value="SALARY">Monthly Salaried Only</option>
+              <option value="PROJECT">Project-Based Only</option>
             </select>
           </div>
         </div>
@@ -708,9 +756,35 @@ export default function EmployeesPage() {
                     </td>
 
                     <td className={styles.tableCell}>
-                      <span className={styles.salaryText}>
-                        {formatCurrency(emp.basicSalary || 0)}
-                      </span>
+                      {emp.employmentType === 'Project-Based' ? (
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            background: 'rgba(139, 92, 246, 0.12)',
+                            color: '#8b5cf6',
+                            border: '1px solid rgba(139, 92, 246, 0.25)',
+                            width: 'fit-content'
+                          }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>folder_special</span>
+                            Project-Based
+                          </span>
+                          {Number(emp.basicSalary) > 0 && (
+                            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                              {formatCurrency(emp.basicSalary)} / proj
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className={styles.salaryText}>
+                          {formatCurrency(emp.basicSalary || 0)}
+                        </span>
+                      )}
                     </td>
 
                     <td className={styles.tableCell}>
@@ -725,13 +799,51 @@ export default function EmployeesPage() {
                       </span>
                     </td>
 
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: '18px', color: 'var(--text-muted)' }}
-                      >
-                        chevron_right
-                      </span>
+                    <td className={styles.tableCell} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                        <Link
+                          href={`/erp/hr/employees/${emp.id}`}
+                          title="Edit Profile"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '5px 10px',
+                            borderRadius: '8px',
+                            background: 'rgba(37, 99, 235, 0.08)',
+                            color: 'var(--primary)',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            border: '1px solid rgba(37, 99, 235, 0.2)'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
+                          Edit
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => setEmployeeToDelete(emp)}
+                          title="Delete Employee"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '5px 10px',
+                            borderRadius: '8px',
+                            background: 'rgba(239, 68, 68, 0.08)',
+                            color: '#ef4444',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -796,20 +908,181 @@ export default function EmployeesPage() {
 
                 <div className={styles.cardFooter}>
                   <div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Salary</div>
-                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '13px' }}>
-                      {formatCurrency(emp.basicSalary || 0)}
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                      {emp.employmentType === 'Project-Based' ? 'Project Rate' : 'Salary'}
                     </div>
+                    {emp.employmentType === 'Project-Based' ? (
+                      <div style={{ fontWeight: 700, color: '#8b5cf6', fontSize: '12.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>folder_special</span>
+                        {Number(emp.basicSalary) > 0 ? `${formatCurrency(emp.basicSalary)}/proj` : 'Per Project'}
+                      </div>
+                    ) : (
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '13px' }}>
+                        {formatCurrency(emp.basicSalary || 0)}
+                      </div>
+                    )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--primary)', fontWeight: 600, fontSize: '12px' }}>
-                    <span>Profile</span>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_forward</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                    <Link
+                      href={`/erp/hr/employees/${emp.id}`}
+                      style={{
+                        padding: '5px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(37, 99, 235, 0.08)',
+                        color: 'var(--primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        border: '1px solid rgba(37, 99, 235, 0.2)'
+                      }}
+                      title="Edit Profile"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
+                      Edit
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => setEmployeeToDelete(emp)}
+                      style={{
+                        padding: '5px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}
+                      title="Delete Employee"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {employeeToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setEmployeeToDelete(null)}
+        >
+          <div
+            style={{
+              background: 'var(--surface-card)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-main)',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: '#ef4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>warning</span>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Confirm Staff Deletion
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong>{employeeToDelete.firstName} {employeeToDelete.lastName}</strong> ({employeeToDelete.employeeId || employeeToDelete.email})? All associated records will be permanently removed.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setEmployeeToDelete(null)}
+                disabled={deletingId === employeeToDelete.id}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-main)',
+                  background: 'var(--surface-bg)',
+                  color: 'var(--text-main)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteEmployee}
+                disabled={deletingId === employeeToDelete.id}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {deletingId === employeeToDelete.id ? (
+                  <>
+                    <span className={`material-symbols-outlined ${styles.spinning}`} style={{ fontSize: '16px' }}>progress_activity</span>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                    Delete Employee
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

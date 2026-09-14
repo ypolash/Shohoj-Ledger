@@ -81,3 +81,66 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const rbacGuard = await requirePermission("EMPLOYEE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  try {
+    const { id } = await context.params;
+    const companyId = await getCompanyId();
+    if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const decodedId = decodeURIComponent(id);
+    const existingEmp = await prisma.employee.findFirst({
+      where: {
+        id: decodedId,
+        companyId
+      }
+    });
+
+    if (!existingEmp) {
+      return NextResponse.json({ error: "Employee not found or unauthorized" }, { status: 404 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Unassign managed projects
+      await tx.project.updateMany({
+        where: { managerId: existingEmp.id },
+        data: { managerId: null }
+      });
+
+      // 2. Clear attendance-related entries
+      await tx.attendanceAdjustment.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.attendanceOvertime.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.attendanceRoster.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.attendanceHolidayAssignment.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.attendance.deleteMany({ where: { employeeId: existingEmp.id } });
+
+      // 3. Clear profile, lifecycle, and documents
+      await tx.employeeFine.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.employeeSalary.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.employeeLifecycle.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.employeeExperience.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.employeeEducation.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.employeeDocument.deleteMany({ where: { employeeId: existingEmp.id } });
+      await tx.employeeProfile.deleteMany({ where: { employeeId: existingEmp.id } });
+
+      // 4. Delete the employee record
+      await tx.employee.delete({
+        where: { id: existingEmp.id }
+      });
+
+      // 5. Cleanup user login if exists
+      if (existingEmp.userId) {
+        await tx.user.delete({ where: { id: existingEmp.userId } }).catch(() => {});
+      }
+    });
+
+    return NextResponse.json({ success: true, message: "Employee deleted successfully" });
+  } catch (error: any) {
+    console.error("Error deleting employee:", error);
+    return NextResponse.json({ error: error.message || "Failed to delete employee" }, { status: 500 });
+  }
+}
+

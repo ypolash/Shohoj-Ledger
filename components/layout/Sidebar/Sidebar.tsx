@@ -38,7 +38,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     { name: 'Orders', icon: ShoppingCart, href: '/erp/orders' },
     { name: 'Finance', icon: DollarSign, href: '/erp/finance' },
     { name: 'Inventory', icon: Box, href: '/erp/inventory' },
-    { name: 'HR', icon: Briefcase, href: '/erp/hr' },
+    { name: 'HR', icon: Briefcase, href: '/erp/hr/employees' },
     { name: 'Payroll', icon: CreditCard, href: '/erp/payroll' },
     { name: 'Projects', icon: Folder, href: '/erp/projects' },
     { name: 'Marketing', icon: Megaphone, href: '/erp/marketing' },
@@ -60,6 +60,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     if (path === '/erp/orders') {
       return pathname.startsWith('/erp/orders');
     }
+    if (path === '/erp/hr/employees' && pathname.startsWith('/erp/hr')) return true;
     if (path !== '/erp' && pathname.startsWith(path)) return true;
     return false;
   };

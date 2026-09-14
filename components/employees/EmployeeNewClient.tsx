@@ -218,6 +218,7 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
 
   // Calculate live completion progress
   const completionPercentage = useMemo(() => {
+    const isProjectBased = formData.employmentType === 'Project-Based';
     if (collectionMode === 'BASIC') {
       const basicTracked = [
         formData.firstName,
@@ -225,7 +226,7 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
         formData.email,
         formData.phone,
         formData.profile.currentAddress,
-        formData.basicSalary,
+        isProjectBased ? true : formData.basicSalary,
         formData.joinDate,
         formData.password
       ];
@@ -238,7 +239,7 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
       formData.lastName,
       formData.email,
       formData.password,
-      formData.basicSalary,
+      isProjectBased ? true : formData.basicSalary,
       formData.phone,
       formData.departmentId || formData.department,
       formData.designationId || formData.designation,
@@ -533,26 +534,87 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
                 <span className={styles.inputHelper}>Current physical dwelling address of the staff member</span>
               </div>
 
-              {/* 4. Compensation & Join Date */}
+              {/* 4. Compensation Model & Details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className={styles.label}>Compensation Model <span className={styles.requiredAsterisk}>*</span></label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, employmentType: 'Full-Time' })}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      border: formData.employmentType !== 'Project-Based' ? '2px solid var(--primary)' : '1px solid var(--border-main)',
+                      background: formData.employmentType !== 'Project-Based' ? 'rgba(37, 99, 235, 0.08)' : 'var(--surface-card)',
+                      color: formData.employmentType !== 'Project-Based' ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontSize: '13px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payments</span>
+                    Monthly Salary (Fixed)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, employmentType: 'Project-Based' })}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      border: formData.employmentType === 'Project-Based' ? '2px solid #8b5cf6' : '1px solid var(--border-main)',
+                      background: formData.employmentType === 'Project-Based' ? 'rgba(139, 92, 246, 0.12)' : 'var(--surface-card)',
+                      color: formData.employmentType === 'Project-Based' ? '#8b5cf6' : 'var(--text-secondary)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontSize: '13px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>folder_special</span>
+                    Project-Based (Per Project)
+                  </button>
+                </div>
+              </div>
+
               <div className={styles.grid2}>
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>
-                    Monthly Salary (BDT ৳) <span className={styles.requiredAsterisk}>*</span>
+                    {formData.employmentType === 'Project-Based' ? (
+                      <>Standard Rate per Project (BDT ৳) <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>(Optional)</span></>
+                    ) : (
+                      <>Monthly Salary (BDT ৳) <span className={styles.requiredAsterisk}>*</span></>
+                    )}
                   </label>
                   <div className={styles.inputWrapper}>
-                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>payments</span>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>
+                      {formData.employmentType === 'Project-Based' ? 'receipt_long' : 'payments'}
+                    </span>
                     <input
                       type="number"
-                      required
+                      required={formData.employmentType !== 'Project-Based'}
                       min="0"
                       step="100"
-                      placeholder="e.g. 35000"
+                      placeholder={formData.employmentType === 'Project-Based' ? 'e.g. 25000 (or leave 0 for flexible)' : 'e.g. 35000'}
                       className={`${styles.input} ${styles.inputWithIcon}`}
                       value={formData.basicSalary}
                       onChange={e => setFormData({ ...formData, basicSalary: e.target.value })}
                     />
                   </div>
-                  <span className={styles.inputHelper}>Baseline monthly compensation for payroll calculation</span>
+                  <span className={styles.inputHelper}>
+                    {formData.employmentType === 'Project-Based'
+                      ? 'Compensated per completed project/milestone via project system. No fixed monthly salary liability.'
+                      : 'Baseline monthly compensation for automated recurring payroll runs.'}
+                  </span>
                 </div>
 
                 <div className={styles.fieldGroup}>
@@ -569,7 +631,7 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
                       onChange={e => setFormData({ ...formData, joinDate: e.target.value })}
                     />
                   </div>
-                  <span className={styles.inputHelper}>First official date of active employment</span>
+                  <span className={styles.inputHelper}>First official date of active employment / collaboration</span>
                 </div>
               </div>
 
@@ -894,14 +956,20 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
 
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>
-                    Basic Salary (BDT ৳) <span className={styles.requiredAsterisk}>*</span>
+                    {formData.employmentType === 'Project-Based' ? (
+                      <>Standard Rate per Project (BDT ৳) <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(Optional)</span></>
+                    ) : (
+                      <>Basic Salary (BDT ৳) <span className={styles.requiredAsterisk}>*</span></>
+                    )}
                   </label>
                   <div className={styles.inputWrapper}>
-                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>payments</span>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>
+                      {formData.employmentType === 'Project-Based' ? 'receipt_long' : 'payments'}
+                    </span>
                     <input
                       type="number"
-                      required
-                      placeholder="e.g. 45000"
+                      required={formData.employmentType !== 'Project-Based'}
+                      placeholder={formData.employmentType === 'Project-Based' ? 'e.g. 25000' : 'e.g. 45000'}
                       className={`${styles.input} ${styles.inputWithIcon}`}
                       value={formData.basicSalary}
                       onChange={e => setFormData({ ...formData, basicSalary: e.target.value })}
@@ -931,10 +999,11 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
                     value={formData.employmentType}
                     onChange={e => setFormData({ ...formData, employmentType: e.target.value })}
                   >
-                    <option value="Full-Time">Full-Time</option>
+                    <option value="Full-Time">Full-Time (Salaried)</option>
                     <option value="Part-Time">Part-Time</option>
                     <option value="Contract">Contract</option>
                     <option value="Internship">Internship</option>
+                    <option value="Project-Based">Project-Based (Per Project)</option>
                   </select>
                 </div>
 
@@ -1571,9 +1640,14 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
               </div>
 
               <div className={styles.compensationBox}>
-                <span className={styles.compensationLabel}>Monthly Compensation</span>
+                <span className={styles.compensationLabel}>
+                  {formData.employmentType === 'Project-Based' ? 'Project Compensation' : 'Monthly Compensation'}
+                </span>
                 <span className={styles.compensationAmount}>
                   ৳{formData.basicSalary ? Number(formData.basicSalary).toLocaleString() : '0'}
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '4px' }}>
+                    {formData.employmentType === 'Project-Based' ? '/ Project' : '/ month'}
+                  </span>
                 </span>
               </div>
 

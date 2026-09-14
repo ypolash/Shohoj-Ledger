@@ -12,6 +12,8 @@ interface Employee {
   lastName: string;
   email?: string;
   designation?: string;
+  employmentType?: string;
+  basicSalary?: number | string;
 }
 
 const TASK_STAGES = ["To Do", "In Progress", "Review", "Testing", "Completed"];
@@ -920,11 +922,49 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       <div className={styles.avatarBadge} style={{ width: '44px', height: '44px', fontSize: '15px' }}>
                         {m.firstName?.[0] || 'M'}{m.lastName?.[0] || ''}
                       </div>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div className={styles.memberName} style={{ fontSize: '15px' }}>{m.firstName} {m.lastName}</div>
                         <div className={styles.memberRole}>{m.designation || 'Project Collaborator'}</div>
+                        
+                        {/* Compensation Type Badge */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                          {m.employmentType === 'Project-Based' ? (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              background: 'rgba(139, 92, 246, 0.15)',
+                              color: '#c084fc',
+                              border: '1px solid rgba(139, 92, 246, 0.3)'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>folder_special</span>
+                              Project-Based {Number(m.basicSalary) > 0 ? `(৳${Number(m.basicSalary).toLocaleString()} fee)` : ''}
+                            </span>
+                          ) : (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              background: 'rgba(59, 130, 246, 0.1)',
+                              color: '#60a5fa',
+                              border: '1px solid rgba(59, 130, 246, 0.25)'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>payments</span>
+                              Monthly Staff
+                            </span>
+                          )}
+                        </div>
+
                         {m.email && (
-                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{m.email}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>{m.email}</div>
                         )}
                       </div>
                     </div>

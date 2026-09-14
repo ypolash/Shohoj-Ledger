@@ -19,7 +19,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       include: {
         manager: { select: { id: true, firstName: true, lastName: true } },
         lead: { select: { id: true, companyName: true, contactPerson: true } },
-        teamMembers: { select: { id: true, firstName: true, lastName: true, email: true, designation: true } },
+        teamMembers: { select: { id: true, firstName: true, lastName: true, email: true, designation: true, employmentType: true, basicSalary: true } },
         tasks: {
           include: {
             employee: { select: { firstName: true, lastName: true } }

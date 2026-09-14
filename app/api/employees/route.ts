@@ -39,8 +39,12 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    if (!data.firstName || !data.lastName || !data.email || !data.designation || !data.basicSalary || !data.password) {
+    const isProjectBased = data.employmentType === 'Project-Based';
+    if (!data.firstName || !data.lastName || !data.email || !data.designation || !data.password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+    if (!isProjectBased && (data.basicSalary === undefined || data.basicSalary === null || data.basicSalary === '')) {
+      return NextResponse.json({ error: 'Basic salary is required for salaried employees' }, { status: 400 });
     }
 
     const companyId = await getCompanyId();
@@ -79,7 +83,9 @@ export async function POST(request: Request) {
         designation: data.designation,
         department: data.department || null,
         joinDate: data.joinDate ? new Date(data.joinDate) : new Date(),
-        basicSalary: data.basicSalary,
+        basicSalary: Number(data.basicSalary) || 0,
+        employmentType: data.employmentType || (isProjectBased ? 'Project-Based' : 'Full-Time'),
+        employmentStatus: data.employmentStatus || 'Probation',
         companyId, // SECURITY HOTFIX: Tenant enforcement
         ...(data.departmentId && { departmentId: data.departmentId }),
         ...(data.designationId && { designationId: data.designationId }),

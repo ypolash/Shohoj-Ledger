@@ -1,7 +1,9 @@
 package com.shohoj.staff.ui.screens.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -16,10 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shohoj.staff.ui.components.AppUpdateDialog
 import com.shohoj.staff.ui.components.ShohojBottomBar
 import com.shohoj.staff.ui.components.ShohojTopBar
 import com.shohoj.staff.ui.navigation.Screen
@@ -32,6 +36,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.isLoggedOut) {
@@ -180,7 +185,65 @@ fun ProfileScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     ProfileInfoRow(icon = Icons.Default.Cloud, label = "API Server", value = uiState.serverUrl)
                     Divider(color = Slate700, thickness = 0.5.dp)
-                    ProfileInfoRow(icon = Icons.Default.Info, label = "App Version", value = "v1.0.0 (Native Android Compose)")
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Slate400,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "App Version",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = Slate400, fontSize = 13.sp)
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "v${uiState.appVersionName}",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Slate100
+                                )
+                            )
+
+                            if (uiState.isCheckingUpdate) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Emerald400
+                                )
+                            } else {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Emerald500.copy(alpha = 0.15f),
+                                    border = BorderStroke(1.dp, Emerald500.copy(alpha = 0.4f)),
+                                    modifier = Modifier.clickable { viewModel.checkForUpdate() }
+                                ) {
+                                    Text(
+                                        text = "Check",
+                                        color = Emerald400,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -228,6 +291,28 @@ fun ProfileScreen(
                     }
                 }
             )
+        }
+
+        // In-App Update Dialog
+        uiState.updateDialogInfo?.let { info ->
+            AppUpdateDialog(
+                updateInfo = info,
+                currentVersionName = uiState.appVersionName,
+                onDownload = { url ->
+                    viewModel.downloadUpdate(url)
+                },
+                onDismiss = {
+                    viewModel.dismissUpdateDialog()
+                }
+            )
+        }
+
+        // Update Notification Toast
+        uiState.updateMessage?.let { msg ->
+            LaunchedEffect(msg) {
+                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                viewModel.dismissUpdateMessage()
+            }
         }
     }
 }

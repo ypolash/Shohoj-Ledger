@@ -107,4 +107,57 @@ interface ShohojApiService {
     suspend fun getMobileProfile(
         @Query("employeeId") employeeId: String
     ): Response<DetailedEmployeeProfile>
+
+    // --- Community & Chat ---
+
+    @GET("api/community/channels")
+    suspend fun getCommunityChannels(): Response<ChannelListResponse>
+
+    @POST("api/community/channels")
+    suspend fun createCommunityChannel(
+        @Body request: CreateChannelRequest
+    ): Response<ChannelDetailResponse>
+
+    @GET("api/community/members")
+    suspend fun getCommunityMembers(): Response<CommunityDirectoryResponse>
+
+    @GET("api/community/messages")
+    suspend fun getCommunityMessages(
+        @Query("channelId") channelId: String,
+        @Query("since") since: String? = null
+    ): Response<MessageListResponse>
+
+    @POST("api/community/messages")
+    suspend fun sendCommunityMessage(
+        @Body request: SendMessageRequest
+    ): Response<SendMessageResponse>
+
+    @POST("api/community/direct-messages")
+    suspend fun createOrGetDirectMessage(
+        @Body request: CreateDirectMessageRequest
+    ): Response<ChannelDetailResponse>
+
+    @POST("api/community/messages/{id}/reactions")
+    suspend fun toggleMessageReaction(
+        @Path("id") messageId: String,
+        @Body request: ReactionRequest
+    ): Response<SimpleActionResponse>
+
+    @POST("api/community/messages/{id}/pin")
+    suspend fun toggleMessagePin(
+        @Path("id") messageId: String
+    ): Response<SimpleActionResponse>
+
+    @Multipart
+    @POST("api/community/upload")
+    suspend fun uploadCommunityAttachment(
+        @Part file: okhttp3.MultipartBody.Part
+    ): Response<CommunityUploadResponse>
+
+    // --- App Updates ---
+
+    @GET("api/mobile/version")
+    suspend fun getAppVersion(
+        @Query("app") app: String = "staff"
+    ): Response<AppUpdateInfo>
 }

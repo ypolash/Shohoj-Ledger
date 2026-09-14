@@ -17,8 +17,8 @@ sealed class BottomNavItem(
 ) {
     object Home : BottomNavItem("home", "Home", Icons.Default.Home)
     object Attendance : BottomNavItem("attendance", "Attendance", Icons.Default.Fingerprint)
+    object Community : BottomNavItem("community", "Community", Icons.Default.Forum)
     object Tasks : BottomNavItem("tasks", "Tasks", Icons.Default.CheckCircle)
-    object Leave : BottomNavItem("leave", "Leave", Icons.Default.CalendarToday)
     object Profile : BottomNavItem("profile", "Profile", Icons.Default.Person)
 }
 
@@ -30,8 +30,8 @@ fun ShohojBottomBar(
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Attendance,
+        BottomNavItem.Community,
         BottomNavItem.Tasks,
-        BottomNavItem.Leave,
         BottomNavItem.Profile
     )
 

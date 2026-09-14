@@ -299,6 +299,13 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickActionTile(
+                        title = "Community",
+                        icon = Icons.Default.Forum,
+                        tint = Emerald400,
+                        onClick = { onNavigate(Screen.Community.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
                         title = "Tasks",
                         icon = Icons.Default.Checklist,
                         tint = Indigo500,
@@ -310,13 +317,6 @@ fun HomeScreen(
                         icon = Icons.Default.Campaign,
                         tint = Purple500,
                         onClick = { onNavigate(Screen.Announcements.route) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuickActionTile(
-                        title = "Profile",
-                        icon = Icons.Default.Person,
-                        tint = Slate300,
-                        onClick = { onNavigate(Screen.Profile.route) },
                         modifier = Modifier.weight(1f)
                     )
                 }

@@ -4,17 +4,13 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.shohoj.staff.ShohojStaffApp
-import com.shohoj.staff.data.model.LeaveBalance
-import com.shohoj.staff.data.model.LeaveItem
+import com.shohoj.staff.data.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
-import com.shohoj.staff.data.model.LeaveCategoryBalance
-import com.shohoj.staff.data.model.LeaveTypeItem
 
 data class LeaveUiState(
     val isLoading: Boolean = false,
@@ -52,7 +48,7 @@ class LeaveViewModel(application: Application) : AndroidViewModel(application) {
             val result = leaveRepo.getLeaveData()
 
             result.fold(
-                onSuccess = { response ->
+                onSuccess = { response: LeaveListResponse ->
                     val leavesList = response.leaves
                     val balance = leaveRepo.calculateBalance(leavesList)
                     val dynamicBalances = response.balances

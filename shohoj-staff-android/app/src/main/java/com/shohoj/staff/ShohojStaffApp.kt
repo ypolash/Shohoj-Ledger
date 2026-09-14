@@ -34,6 +34,12 @@ class ShohojStaffApp : Application() {
     lateinit var profileRepository: ProfileRepository
         private set
 
+    lateinit var communityRepository: CommunityRepository
+        private set
+
+    lateinit var appUpdateRepository: AppUpdateRepository
+        private set
+
     override fun onCreate() {
         super.onCreate()
 
@@ -47,5 +53,7 @@ class ShohojStaffApp : Application() {
         taskRepository = TaskRepository(apiClient, sessionManager)
         announcementRepository = AnnouncementRepository(apiClient)
         profileRepository = ProfileRepository(apiClient, sessionManager)
+        communityRepository = CommunityRepository(apiClient)
+        appUpdateRepository = AppUpdateRepository(apiClient, sessionManager, this)
     }
 }

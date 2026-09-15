@@ -15,17 +15,17 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 17,
-      versionName: '1.5.2',
+      versionCode: 18,
+      versionName: '1.5.3',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5.2 Available',
+      title: 'Shohoj Staff v1.5.3 Available',
       releaseNotes: [
-        '💬 Staff & Owner identity resolution with proper names & badges',
-        '👥 @mention autocomplete filtering self mentions',
-        '🔔 Native mobile status bar notifications with vibration & chime',
+        '💬 Excluded self and "Me" from community mention autocomplete',
+        '👤 Fixed chat bubble alignment and styling for current user',
+        '👥 Deduplicated directory and resolved accurate designations',
         '⚡ Performance and background sync improvements'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.2.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.3.apk`,
       fileSize: '18.2 MB',
       isForceUpdate: false,
       publishedAt: '2026-09-15T00:00:00Z'

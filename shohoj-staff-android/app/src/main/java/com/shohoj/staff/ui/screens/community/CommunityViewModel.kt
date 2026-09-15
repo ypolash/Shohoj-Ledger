@@ -31,6 +31,7 @@ data class CommunityUiState(
     val uploadProgressName: String? = null,
     val currentUserId: String = "",
     val currentUserName: String = "",
+    val currentUserEmail: String = "",
     val error: String? = null
 )
 
@@ -43,7 +44,8 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(
         CommunityUiState(
             currentUserId = sessionManager.getEmployee()?.id ?: sessionManager.employeeId ?: "",
-            currentUserName = sessionManager.getEmployee()?.displayName ?: "Me"
+            currentUserName = sessionManager.getEmployee()?.displayName ?: "Me",
+            currentUserEmail = sessionManager.getEmployee()?.email ?: ""
         )
     )
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
@@ -134,7 +136,8 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     staffDirectory = dir.staff,
                     memberDirectory = dir.members,
                     currentUserId = dir.currentUser?.id ?: _uiState.value.currentUserId,
-                    currentUserName = dir.currentUser?.name ?: _uiState.value.currentUserName
+                    currentUserName = dir.currentUser?.name ?: _uiState.value.currentUserName,
+                    currentUserEmail = dir.currentUser?.email ?: _uiState.value.currentUserEmail
                 )
             }
         }
@@ -374,6 +377,8 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun getEmployeeId(): String? = sessionManager.employeeId ?: sessionManager.getEmployee()?.employeeId
+    fun getEmployeeDbId(): String? = sessionManager.getEmployee()?.id
+    fun getSessionEmail(): String? = sessionManager.getEmployee()?.email
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)

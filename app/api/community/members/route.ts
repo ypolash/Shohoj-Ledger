@@ -94,7 +94,10 @@ export async function GET() {
       });
     }
 
-    // 3. Fetch Members
+    // 3. Fetch Members (exclude any records that belong to company leadership/staff)
+    const adminEmails = new Set(adminList.map((a) => a.email?.toLowerCase()).filter(Boolean));
+    const adminNames = new Set(adminList.map((a) => a.name?.toLowerCase()).filter(Boolean));
+
     const members = await prisma.member.findMany({
       where: { companyId, status: "ACTIVE" },
       select: {
@@ -108,14 +111,24 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    const memberList = members.map((m) => ({
-      id: m.id,
-      name: m.name || m.phone || "Member",
-      role: m.role || "Member",
-      type: "MEMBER" as const,
-      email: m.email,
-      phone: m.phone,
-    }));
+    const memberList = members
+      .filter((m) => {
+        const mRoleLower = (m.role || "").toLowerCase();
+        if (mRoleLower.includes("owner") || mRoleLower.includes("admin")) return false;
+        const emailLower = m.email?.toLowerCase() || "";
+        if (emailLower && (adminEmails.has(emailLower) || employeeEmails.has(emailLower))) return false;
+        const nameLower = (m.name || "").trim().toLowerCase();
+        if (nameLower && (adminNames.has(nameLower) || nameLower === "me")) return false;
+        return true;
+      })
+      .map((m) => ({
+        id: m.id,
+        name: m.name || m.phone || "Member",
+        role: m.role || "Member",
+        type: "MEMBER" as const,
+        email: m.email,
+        phone: m.phone,
+      }));
 
     const currentType =
       session.user.loginType === "EMPLOYEE"

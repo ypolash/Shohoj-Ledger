@@ -71,20 +71,45 @@ fun CommunityChatScreen(
     val isTaskQuery = lastWord.startsWith("#")
     val taskQuery = if (isTaskQuery) lastWord.removePrefix("#").lowercase() else ""
 
-    val matchingMembers = remember(mentionQuery, uiState.staffDirectory, uiState.memberDirectory, isMentionQuery, uiState.currentUserId, uiState.currentUserName) {
+    val matchingMembers = remember(
+        mentionQuery,
+        uiState.staffDirectory,
+        uiState.memberDirectory,
+        isMentionQuery,
+        uiState.currentUserId,
+        uiState.currentUserName,
+        uiState.currentUserEmail
+    ) {
         if (!isMentionQuery) emptyList<DirectoryPerson>()
         else {
+            val myId = uiState.currentUserId.trim()
+            val myEmpId = viewModel.getEmployeeId()?.trim() ?: ""
+            val myDbId = viewModel.getEmployeeDbId()?.trim() ?: ""
+            val myName = uiState.currentUserName.trim()
+            val myEmail = uiState.currentUserEmail.trim().lowercase()
+            val sessionEmail = viewModel.getSessionEmail()?.trim()?.lowercase() ?: ""
+
             val all = (uiState.staffDirectory + uiState.memberDirectory)
                 .distinctBy { it.id }
                 .filter { person ->
-                    val isSelf = person.id == uiState.currentUserId ||
-                                 (uiState.currentUserName.isNotBlank() && uiState.currentUserName != "Me" && person.name.equals(uiState.currentUserName, ignoreCase = true))
+                    val pId = person.id.trim()
+                    val pName = person.name.trim()
+                    val pEmail = (person.email ?: "").trim().lowercase()
+
+                    val isSelf = (myId.isNotBlank() && pId == myId) ||
+                                 (myEmpId.isNotBlank() && pId == myEmpId) ||
+                                 (myDbId.isNotBlank() && pId == myDbId) ||
+                                 (myEmail.isNotBlank() && pEmail.isNotBlank() && pEmail == myEmail) ||
+                                 (sessionEmail.isNotBlank() && pEmail.isNotBlank() && pEmail == sessionEmail) ||
+                                 (myName.isNotBlank() && pName.equals(myName, ignoreCase = true)) ||
+                                 pName.equals("Me", ignoreCase = true)
                     !isSelf
                 }
             if (mentionQuery.isBlank()) all.take(5)
             else all.filter {
                 it.name.lowercase().contains(mentionQuery) ||
-                it.role.lowercase().contains(mentionQuery)
+                it.role.lowercase().contains(mentionQuery) ||
+                (it.department != null && it.department.lowercase().contains(mentionQuery))
             }.take(5)
         }
     }
@@ -290,10 +315,17 @@ fun CommunityChatScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(uiState.messages, key = { it.id }) { message ->
-                            val empId = viewModel.getEmployeeId()
-                            val isMe = message.senderId == uiState.currentUserId ||
-                                       (empId != null && empId.isNotBlank() && message.senderId == empId) ||
-                                       (uiState.currentUserName.isNotBlank() && uiState.currentUserName != "Me" && uiState.currentUserName != "Anonymous" && message.senderName.equals(uiState.currentUserName, ignoreCase = true))
+                            val myId = uiState.currentUserId.trim()
+                            val empId = viewModel.getEmployeeId()?.trim() ?: ""
+                            val empDbId = viewModel.getEmployeeDbId()?.trim() ?: ""
+                            val myName = uiState.currentUserName.trim()
+                            val sName = message.senderName.trim()
+
+                            val isMe = (myId.isNotBlank() && message.senderId == myId) ||
+                                       (empId.isNotBlank() && message.senderId == empId) ||
+                                       (empDbId.isNotBlank() && message.senderId == empDbId) ||
+                                       (myName.isNotBlank() && myName != "Anonymous" && sName.equals(myName, ignoreCase = true)) ||
+                                       (sName.equals("Me", ignoreCase = true) && (myName.isEmpty() || myName.equals("Me", ignoreCase = true)))
 
                             MessageBubble(
                                 message = message,

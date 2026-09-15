@@ -1301,3 +1301,291 @@
   background: #e2e8f0;
   color: #0f172a;
 }
+
+/* ==========================================================================
+   PROJECT FINANCIALS & PAYMENT CARD STYLES
+   ========================================================================== */
+
+.paymentCard {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 18px;
+  padding: 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.paymentCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+:global(html.light) .paymentCard,
+:global(html:not(.dark)) .paymentCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.paymentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paymentHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.paymentIconBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(html.light) .paymentIconBox,
+:global(html:not(.dark)) .paymentIconBox {
+  background: #f3e8ff;
+  border-color: #d8b4fe;
+  color: #7e22ce;
+}
+
+.addPaymentBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+  transition: all 0.2s ease;
+}
+
+.addPaymentBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(147, 51, 234, 0.45);
+}
+
+.financialGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .financialGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.financialItem {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+:global(html.light) .financialItem,
+:global(html:not(.dark)) .financialItem {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.financialLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+:global(html.light) .financialLabel,
+:global(html:not(.dark)) .financialLabel {
+  color: #64748b;
+}
+
+.financialValue {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+:global(html.light) .financialValue,
+:global(html:not(.dark)) .financialValue {
+  color: #0f172a;
+}
+
+.staffSection {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+:global(html.light) .staffSection,
+:global(html:not(.dark)) .staffSection {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.staffHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+:global(html.light) .staffHeader,
+:global(html:not(.dark)) .staffHeader {
+  color: #334155;
+}
+
+.staffRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  gap: 10px;
+  font-size: 12px;
+}
+
+:global(html.light) .staffRow,
+:global(html:not(.dark)) .staffRow {
+  background: #ffffff;
+  border-color: #f1f5f9;
+}
+
+.dueBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.profitBanner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:global(html.light) .profitBanner,
+:global(html:not(.dark)) .profitBanner {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.paymentHistoryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+:global(html.light) .paymentHistoryItem,
+:global(html:not(.dark)) .paymentHistoryItem {
+  border-bottom-color: #e2e8f0;
+}
+
+.previewBox {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+:global(html.light) .previewBox,
+:global(html:not(.dark)) .previewBox {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+
+.multiEmployeeList {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.multiEmployeeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+}
+
+.multiEmployeeItemActive {
+  border-color: rgba(168, 85, 247, 0.5);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+:global(html.light) .multiEmployeeItem,
+:global(html:not(.dark)) .multiEmployeeItem {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+:global(html.light) .multiEmployeeItemActive,
+:global(html:not(.dark)) .multiEmployeeItemActive {
+  background: #faf5ff;
+  border-color: #c084fc;
+}
+

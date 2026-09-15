@@ -14,12 +14,22 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const rbacGuard = await requirePermission("VIEW_PROJECTS");
     if (rbacGuard) return rbacGuard;
 
-    const project = await prisma.project.findFirst({
+    const project = await (prisma.project as any).findFirst({
       where: { id: params.id, companyId },
       include: {
         manager: { select: { id: true, firstName: true, lastName: true } },
         lead: { select: { id: true, companyName: true, contactPerson: true } },
         teamMembers: { select: { id: true, firstName: true, lastName: true, email: true, designation: true, employmentType: true, basicSalary: true } },
+        projectEmployees: {
+          include: {
+            employee: {
+              select: { id: true, firstName: true, lastName: true, email: true, designation: true, employmentType: true, basicSalary: true }
+            }
+          }
+        },
+        payments: {
+          orderBy: { createdAt: 'desc' }
+        },
         tasks: {
           include: {
             employee: { select: { firstName: true, lastName: true } }

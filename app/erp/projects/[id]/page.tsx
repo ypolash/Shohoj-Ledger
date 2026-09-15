@@ -44,7 +44,23 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [isAddPaymentModalOpen, setIsAddPaymentModalOpen] = useState(false);
   const [targetStageForNewTask, setTargetStageForNewTask] = useState<string>("To Do");
+
+  // Payment Form State
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: '',
+    paymentMethod: 'Bank Transfer',
+    notes: '',
+    date: new Date().toISOString().split('T')[0]
+  });
+
+  // Multi-Employee Assignment State
+  const [selectedMemberConfigs, setSelectedMemberConfigs] = useState<Record<string, { selected: boolean; isProjectBased: boolean; rate: string }>>({});
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberFilter, setMemberFilter] = useState<'ALL' | 'PROJECT_BASED' | 'SALARIED'>('ALL');
+  const [isSubmittingMembers, setIsSubmittingMembers] = useState(false);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -69,7 +85,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     dueDate: ''
   });
 
-  const [selectedMemberId, setSelectedMemberId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -125,6 +140,25 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     fetchProject();
     fetchEmployees();
   }, [fetchProject, fetchEmployees]);
+
+  useEffect(() => {
+    if (isAddMemberModalOpen && employees.length > 0 && project) {
+      const configs: Record<string, { selected: boolean; isProjectBased: boolean; rate: string }> = {};
+      employees.forEach(emp => {
+        const existingPE = (project.projectEmployees || []).find((pe: any) => pe.employeeId === emp.id);
+        const isInTeam = existingPE || (project.teamMembers || []).some((m: any) => m.id === emp.id);
+        const isProjectBased = existingPE ? existingPE.isProjectBased : (emp.employmentType === 'Project-Based');
+        const rate = existingPE ? String(existingPE.rate) : (isProjectBased ? String(emp.basicSalary || 0) : '0');
+
+        configs[emp.id] = {
+          selected: !!isInTeam,
+          isProjectBased,
+          rate
+        };
+      });
+      setSelectedMemberConfigs(configs);
+    }
+  }, [isAddMemberModalOpen, employees, project]);
 
   const formatCurrency = (val: string | number) => {
     return new Intl.NumberFormat('en-US', {
@@ -237,45 +271,93 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     }
   };
 
-  const handleAddTeamMember = async () => {
-    if (!selectedMemberId) return;
-    const existingIds = (project.teamMembers || []).map((m: any) => m.id);
-    if (existingIds.includes(selectedMemberId)) {
-      showToast("Member is already in project");
+  const handleSaveMultiMembers = async () => {
+    const selectedList = Object.entries(selectedMemberConfigs)
+      .filter(([_, cfg]) => cfg.selected)
+      .map(([empId, cfg]) => ({
+        employeeId: empId,
+        isProjectBased: cfg.isProjectBased,
+        rate: parseFloat(cfg.rate) || 0
+      }));
+
+    if (selectedList.length === 0) {
+      showToast("Please select at least one employee to assign");
       return;
     }
-    const updatedIds = [...existingIds, selectedMemberId];
+
+    setIsSubmittingMembers(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/projects/${projectId}/team`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamMemberIds: updatedIds })
+        body: JSON.stringify({ members: selectedList })
       });
+      const data = await res.json();
       if (res.ok) {
+        showToast(data.message || "Collaborators assigned");
         setIsAddMemberModalOpen(false);
-        setSelectedMemberId('');
-        showToast("Team member added");
         fetchProject();
+      } else {
+        showToast(data.error || "Failed to assign collaborators");
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      showToast("Network error assigning collaborators");
+    } finally {
+      setIsSubmittingMembers(false);
     }
   };
 
   const handleRemoveTeamMember = async (memberId: string) => {
-    const updatedIds = (project.teamMembers || []).filter((m: any) => m.id !== memberId).map((m: any) => m.id);
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/projects/${projectId}/team`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamMemberIds: updatedIds })
+        body: JSON.stringify({ employeeId: memberId })
       });
       if (res.ok) {
-        showToast("Team member removed");
+        showToast("Member removed from project");
         fetchProject();
+      } else {
+        showToast("Failed to remove member");
       }
     } catch (e) {
       console.error(e);
+      showToast("Network error removing member");
+    }
+  };
+
+  const handleSavePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(paymentForm.amount);
+    if (isNaN(amt) || amt <= 0) {
+      showToast("Please enter a valid payment amount");
+      return;
+    }
+    setIsSubmittingPayment(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || "Payment processed successfully");
+        setIsAddPaymentModalOpen(false);
+        setPaymentForm({
+          amount: '',
+          paymentMethod: 'Bank Transfer',
+          notes: '',
+          date: new Date().toISOString().split('T')[0]
+        });
+        fetchProject();
+      } else {
+        showToast(data.error || "Failed to record payment");
+      }
+    } catch (err) {
+      showToast("Network error saving payment");
+    } finally {
+      setIsSubmittingPayment(false);
     }
   };
 
@@ -356,6 +438,21 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const completedTasks = tasks.filter((t: any) => t.status === 'Completed').length;
   const totalTasks = tasks.length;
   const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : project.progress || 0;
+
+  // Project Financials & Payout Computations
+  const payments = project.payments || [];
+  const projectEmployees = project.projectEmployees || [];
+  const totalReceived = payments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const clientDue = Math.max(0, budget - totalReceived);
+
+  // Project-based employees
+  const projectBasedStaff = projectEmployees.filter((pe: any) => pe.isProjectBased);
+  const totalStaffRate = projectBasedStaff.reduce((sum: number, pe: any) => sum + Number(pe.rate || 0), 0);
+  const totalStaffPaid = projectBasedStaff.reduce((sum: number, pe: any) => sum + Number(pe.paidAmount || 0), 0);
+  const totalStaffDue = Math.max(0, totalStaffRate - totalStaffPaid);
+
+  // Profit
+  const totalProfit = payments.reduce((sum: number, p: any) => sum + Number(p.profit || 0), 0);
 
   return (
     <PageContainer>
@@ -729,8 +826,184 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               </div>
             </div>
 
-            {/* Right Column: Key Leadership & Collaborators */}
+            {/* Right Column: Key Leadership & Financials */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* 1. Project Financials & Settlement Card (Directly opposite Scope & Narrative Summary) */}
+              <div className={styles.paymentCard}>
+                <div className={styles.paymentHeader}>
+                  <div className={styles.paymentHeaderLeft}>
+                    <div className={styles.paymentIconBox}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>account_balance_wallet</span>
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        Financials & Settlement
+                      </h3>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>Live client collections, staff payouts & profit split</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsAddPaymentModalOpen(true)}
+                    className={styles.addPaymentBtn}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_circle</span>
+                    Add Payment
+                  </button>
+                </div>
+
+                {/* 3-Col KPI Grid */}
+                <div className={styles.financialGrid}>
+                  <div className={styles.financialItem}>
+                    <span className={styles.financialLabel}>Project Budget</span>
+                    <span className={styles.financialValue}>{formatCurrency(budget)}</span>
+                    <span style={{ fontSize: '10px', color: '#64748b' }}>Target Contract</span>
+                  </div>
+
+                  <div className={styles.financialItem}>
+                    <span className={styles.financialLabel}>Total Received</span>
+                    <span className={styles.financialValue} style={{ color: '#34d399' }}>
+                      {formatCurrency(totalReceived)}
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>
+                      {budget > 0 ? `${Math.round((totalReceived / budget) * 100)}% Collected` : 'Received'}
+                    </span>
+                  </div>
+
+                  <div className={styles.financialItem}>
+                    <span className={styles.financialLabel}>Client Due</span>
+                    <span className={styles.financialValue} style={{ color: clientDue > 0 ? '#f87171' : '#34d399' }}>
+                      {formatCurrency(clientDue)}
+                    </span>
+                    <span className={styles.dueBadge} style={{
+                      background: clientDue === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: clientDue === 0 ? '#34d399' : '#f87171',
+                      alignSelf: 'flex-start',
+                      marginTop: '2px'
+                    }}>
+                      {clientDue === 0 ? 'Settled' : 'Payment Due'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Staff Auto-Payout & Due Section */}
+                <div className={styles.staffSection}>
+                  <div className={styles.staffHeader}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>group_work</span>
+                      Project-Based Staff Allocation ({projectBasedStaff.length})
+                    </span>
+                    <span className={styles.dueBadge} style={{
+                      background: totalStaffDue === 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                      color: totalStaffDue === 0 ? '#34d399' : '#fbbf24',
+                      border: totalStaffDue === 0 ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)'
+                    }}>
+                      {totalStaffDue === 0 ? 'All Staff Paid' : `Staff Due: ${formatCurrency(totalStaffDue)}`}
+                    </span>
+                  </div>
+
+                  {projectBasedStaff.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {projectBasedStaff.map((pe: any) => {
+                        const fee = Number(pe.rate || 0);
+                        const paid = Number(pe.paidAmount || 0);
+                        const due = Math.max(0, fee - paid);
+                        const emp = pe.employee || {};
+                        return (
+                          <div key={pe.id} className={styles.staffRow}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className={styles.avatarBadge} style={{ width: '28px', height: '28px', fontSize: '11px' }}>
+                                {emp.firstName?.[0] || 'E'}{emp.lastName?.[0] || ''}
+                              </div>
+                              <div>
+                                <span style={{ fontWeight: 600, color: '#f8fafc', display: 'block' }}>
+                                  {emp.firstName} {emp.lastName}
+                                </span>
+                                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                  {emp.designation || 'Staff'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div>
+                                <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>
+                                  Fee: <strong>{formatCurrency(fee)}</strong>
+                                </span>
+                                <span style={{ display: 'block', fontSize: '10px', color: paid > 0 ? '#34d399' : '#64748b' }}>
+                                  Paid: {formatCurrency(paid)}
+                                </span>
+                              </div>
+                              <span className={styles.dueBadge} style={{
+                                background: due === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                color: due === 0 ? '#34d399' : '#f87171'
+                              }}>
+                                {due === 0 ? 'Paid' : `Due ${formatCurrency(due)}`}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', padding: '6px 0' }}>
+                      No project-based employees assigned. Assign staff with contract rates to enable automatic payout splitting.
+                    </div>
+                  )}
+                </div>
+
+                {/* Profit & Settlement Banner */}
+                <div className={styles.profitBanner}>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>
+                      Accounting & Ledger Result
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#cbd5e1' }}>
+                      Staff Due Cutting (Expenses): <strong style={{ color: '#f87171' }}>-{formatCurrency(totalStaffPaid)}</strong>
+                    </span>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#10b981', textTransform: 'uppercase', fontWeight: 700 }}>
+                      Saved to Income (Profit)
+                    </span>
+                    <strong style={{ fontSize: '18px', color: '#34d399', fontWeight: 800 }}>
+                      +{formatCurrency(totalProfit)}
+                    </strong>
+                  </div>
+                </div>
+
+                {/* Recent Payments Breakdown */}
+                {payments.length > 0 && (
+                  <div>
+                    <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      Payment History ({payments.length})
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {payments.slice(0, 3).map((p: any) => (
+                        <div key={p.id} className={styles.paymentHistoryItem}>
+                          <div>
+                            <strong style={{ color: '#f8fafc' }}>+{formatCurrency(Number(p.amount))}</strong>
+                            <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
+                              via {p.paymentMethod}
+                            </span>
+                            {p.notes && <span style={{ fontSize: '10px', color: '#64748b', display: 'block' }}>{p.notes}</span>}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>
+                              {new Date(p.createdAt).toLocaleDateString()}
+                            </span>
+                            <span style={{ fontSize: '10px', color: '#34d399' }}>
+                              Staff: {formatCurrency(Number(p.paidToStaff))} • Profit: {formatCurrency(Number(p.profit))}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Leadership & Stakeholder Card */}
               <div className={styles.contentCard}>
                 <div className={styles.cardHeader}>
@@ -1310,14 +1583,155 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         )}
 
         {/* ====================================================================
-            MODAL: ASSIGN TEAM MEMBER (SOLID OPAQUE)
+            MODAL: ADD PROJECT PAYMENT (AUTO-PAYOUT & PROFIT)
+            ==================================================================== */}
+        {isAddPaymentModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsAddPaymentModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#34d399' }}>payments</span>
+                  Record Client Payment
+                </h3>
+                <button onClick={() => setIsAddPaymentModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSavePayment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '11px',
+                  color: '#94a3b8'
+                }}>
+                  <span>Budget: <strong style={{ color: '#f8fafc' }}>{formatCurrency(budget)}</strong></span>
+                  <span>Received: <strong style={{ color: '#34d399' }}>{formatCurrency(totalReceived)}</strong></span>
+                  <span>Current Due: <strong style={{ color: '#f87171' }}>{formatCurrency(clientDue)}</strong></span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                    Received Payment Amount (BDT) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="e.g. 50000"
+                    value={paymentForm.amount}
+                    onChange={(e) => setPaymentForm(f => ({ ...f, amount: e.target.value }))}
+                    className={styles.inputField}
+                    style={{ fontSize: '16px', fontWeight: 700 }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                      Payment Method
+                    </label>
+                    <select
+                      value={paymentForm.paymentMethod}
+                      onChange={(e) => setPaymentForm(f => ({ ...f, paymentMethod: e.target.value }))}
+                      className={styles.inputField}
+                    >
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Cash">Cash</option>
+                      <option value="bKash / Mobile Banking">bKash / Mobile Banking</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Online Gateway">Online Gateway</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                      Payment Date
+                    </label>
+                    <input
+                      type="date"
+                      value={paymentForm.date}
+                      onChange={(e) => setPaymentForm(f => ({ ...f, date: e.target.value }))}
+                      className={styles.inputField}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                    Reference / Notes
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Milestone 1 deposit from client"
+                    value={paymentForm.notes}
+                    onChange={(e) => setPaymentForm(f => ({ ...f, notes: e.target.value }))}
+                    className={styles.inputField}
+                  />
+                </div>
+
+                {/* Live Distribution Preview */}
+                {Number(paymentForm.amount) > 0 && (
+                  <div className={styles.previewBox}>
+                    <span style={{ fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', fontSize: '11px' }}>
+                      Automated Settlement Preview:
+                    </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Auto-Payout to Staff Dues:</span>
+                      <strong style={{ color: '#f87171' }}>
+                        {formatCurrency(Math.min(Number(paymentForm.amount), totalStaffDue))} (Logged to Expenses)
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Net Profit Retained:</span>
+                      <strong style={{ color: '#34d399' }}>
+                        {formatCurrency(Math.max(0, Number(paymentForm.amount) - totalStaffDue))} (Logged to Incomes)
+                      </strong>
+                    </div>
+                    {Number(paymentForm.amount) < totalStaffDue && (
+                      <div style={{ fontSize: '11px', color: '#fbbf24', marginTop: '4px' }}>
+                        ⚠ Payment is less than total staff dues ({formatCurrency(totalStaffDue)}). Unpaid dues will remain tracked as pending.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddPaymentModalOpen(false)}
+                    className={styles.backBtn}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingPayment}
+                    className={styles.submitBtn}
+                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)' }}
+                  >
+                    {isSubmittingPayment ? 'Processing...' : 'Save & Distribute Payment'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: ASSIGN MULTIPLE COLLABORATORS (WITH PROJECT-BASED RATES)
             ==================================================================== */}
         {isAddMemberModalOpen && (
           <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsAddMemberModalOpen(false); }}>
-            <div className={styles.modalContent} style={{ maxWidth: '460px' }}>
+            <div className={styles.modalContent} style={{ maxWidth: '580px' }}>
               <div className={styles.modalHeader}>
-                <h3 className={styles.modalTitle}>
-                  Assign Collaborator to Project
+                <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#c084fc' }}>group_add</span>
+                  Assign Collaborators to Project
                 </h3>
                 <button onClick={() => setIsAddMemberModalOpen(false)} className={styles.closeBtn}>
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
@@ -1325,40 +1739,194 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                    Select Team Member from Directory
-                  </label>
-                  <select
-                    value={selectedMemberId}
-                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                {/* Search & Filter Bar */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="Search employees by name or designation..."
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
                     className={styles.inputField}
-                  >
-                    <option value="">Choose Employee...</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.firstName} {emp.lastName} ({emp.designation || 'Staff'})
-                      </option>
+                    style={{ flex: 1 }}
+                  />
+
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {(['ALL', 'PROJECT_BASED', 'SALARIED'] as const).map(f => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setMemberFilter(f)}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          border: memberFilter === f ? '1px solid #c084fc' : '1px solid rgba(255,255,255,0.1)',
+                          background: memberFilter === f ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
+                          color: memberFilter === f ? '#c084fc' : '#94a3b8',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {f === 'ALL' ? 'All' : f === 'PROJECT_BASED' ? 'Project' : 'Salaried'}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddMemberModalOpen(false)}
-                    className={styles.backBtn}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!selectedMemberId}
-                    onClick={handleAddTeamMember}
-                    className={styles.submitBtn}
-                  >
-                    Assign Member
-                  </button>
+                {/* Multi-Select Employee List */}
+                <div className={styles.multiEmployeeList}>
+                  {employees
+                    .filter(emp => {
+                      const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
+                      const desig = (emp.designation || '').toLowerCase();
+                      const matchesSearch = fullName.includes(memberSearch.toLowerCase()) || desig.includes(memberSearch.toLowerCase());
+                      const isProj = emp.employmentType === 'Project-Based';
+                      if (memberFilter === 'PROJECT_BASED') return matchesSearch && isProj;
+                      if (memberFilter === 'SALARIED') return matchesSearch && !isProj;
+                      return matchesSearch;
+                    })
+                    .map(emp => {
+                      const cfg = selectedMemberConfigs[emp.id] || {
+                        selected: false,
+                        isProjectBased: emp.employmentType === 'Project-Based',
+                        rate: emp.employmentType === 'Project-Based' ? String(emp.basicSalary || 0) : '0'
+                      };
+
+                      return (
+                        <div
+                          key={emp.id}
+                          className={`${styles.multiEmployeeItem} ${cfg.selected ? styles.multiEmployeeItemActive : ''}`}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flex: 1 }}>
+                              <input
+                                type="checkbox"
+                                checked={cfg.selected}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setSelectedMemberConfigs(prev => ({
+                                    ...prev,
+                                    [emp.id]: {
+                                      ...cfg,
+                                      selected: checked
+                                    }
+                                  }));
+                                }}
+                                style={{ width: '16px', height: '16px', accentColor: '#a855f7', cursor: 'pointer' }}
+                              />
+                              <div className={styles.avatarBadge} style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+                                {emp.firstName[0]}{emp.lastName[0]}
+                              </div>
+                              <div>
+                                <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '13px', display: 'block' }}>
+                                  {emp.firstName} {emp.lastName}
+                                </span>
+                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                  {emp.designation || 'Staff'} {emp.email ? `• ${emp.email}` : ''}
+                                </span>
+                              </div>
+                            </label>
+
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              background: cfg.isProjectBased ? 'rgba(168, 85, 247, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                              color: cfg.isProjectBased ? '#c084fc' : '#60a5fa',
+                              border: cfg.isProjectBased ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)'
+                            }}>
+                              {cfg.isProjectBased ? 'Project-Based' : 'Salaried'}
+                            </span>
+                          </div>
+
+                          {/* If selected and Project-Based, allow setting project rate */}
+                          {cfg.selected && (
+                            <div style={{
+                              marginTop: '6px',
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              background: 'rgba(0,0,0,0.2)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '10px',
+                              fontSize: '12px'
+                            }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={cfg.isProjectBased}
+                                  onChange={(e) => {
+                                    const isPB = e.target.checked;
+                                    setSelectedMemberConfigs(prev => ({
+                                      ...prev,
+                                      [emp.id]: {
+                                        ...cfg,
+                                        isProjectBased: isPB,
+                                        rate: isPB && Number(cfg.rate) === 0 ? String(emp.basicSalary || 0) : cfg.rate
+                                      }
+                                    }));
+                                  }}
+                                  style={{ accentColor: '#a855f7' }}
+                                />
+                                <span style={{ color: '#cbd5e1' }}>Project-Based Compensation</span>
+                              </label>
+
+                              {cfg.isProjectBased && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ color: '#94a3b8', fontSize: '11px' }}>Agreed Fee (BDT):</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={cfg.rate}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setSelectedMemberConfigs(prev => ({
+                                        ...prev,
+                                        [emp.id]: {
+                                          ...cfg,
+                                          rate: val
+                                        }
+                                      }));
+                                    }}
+                                    className={styles.inputField}
+                                    style={{ width: '110px', padding: '4px 8px', fontSize: '12px', fontWeight: 600 }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Modal Footer */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Selected: <strong>{Object.values(selectedMemberConfigs).filter(c => c.selected).length}</strong> collaborator(s)
+                  </span>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddMemberModalOpen(false)}
+                      className={styles.backBtn}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSubmittingMembers || Object.values(selectedMemberConfigs).filter(c => c.selected).length === 0}
+                      onClick={handleSaveMultiMembers}
+                      className={styles.submitBtn}
+                    >
+                      {isSubmittingMembers ? 'Saving...' : 'Assign Selected Members'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

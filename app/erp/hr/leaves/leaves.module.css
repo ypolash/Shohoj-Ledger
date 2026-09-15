@@ -483,7 +483,10 @@
   border: 1px solid var(--border-main, #e2e8f0);
   border-radius: 18px;
   box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dataTable {
@@ -498,13 +501,14 @@
 }
 
 .tableHeaderCell {
-  padding: 14px 18px;
+  padding: 12px 14px;
   text-align: left;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .tableRow {
@@ -517,7 +521,7 @@
 }
 
 .tableCell {
-  padding: 14px 18px;
+  padding: 12px 14px;
   vertical-align: middle;
 }
 
@@ -653,14 +657,21 @@
 }
 
 /* Reason Box */
+.reasonCell {
+  max-width: 240px;
+  min-width: 140px;
+}
+
 .reasonText {
   font-size: 13px;
   color: var(--text-secondary, #475569);
-  max-width: 220px;
+  max-width: 240px;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.4;
+  cursor: default;
 }
 
 /* Status Chips */
@@ -702,9 +713,10 @@
 
 /* Quick Action Buttons */
 .actionBtnGroup {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .approveBtn {
@@ -720,6 +732,7 @@
   align-items: center;
   gap: 4px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .approveBtn:hover:not(:disabled) {
@@ -741,6 +754,7 @@
   align-items: center;
   gap: 4px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .rejectBtn:hover:not(:disabled) {

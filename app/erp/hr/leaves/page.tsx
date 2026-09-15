@@ -675,13 +675,13 @@ export default function LeavesPage() {
           <table className={styles.dataTable}>
             <thead>
               <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Employee</th>
-                <th className={styles.tableHeaderCell}>Leave Type</th>
-                <th className={styles.tableHeaderCell}>Date Range & Duration</th>
-                <th className={styles.tableHeaderCell}>Reason / Context</th>
-                <th className={styles.tableHeaderCell}>Applied Date</th>
-                <th className={styles.tableHeaderCell}>Status</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
+                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap' }}>Employee</th>
+                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap' }}>Leave Type</th>
+                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap' }}>Date Range & Duration</th>
+                <th className={styles.tableHeaderCell} style={{ maxWidth: '240px' }}>Reason / Context</th>
+                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>Applied Date</th>
+                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>Status</th>
+                <th className={styles.tableHeaderCell} style={{ textAlign: 'right', whiteSpace: 'nowrap', width: '1%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -701,7 +701,7 @@ export default function LeavesPage() {
                 return (
                   <tr key={l.id} className={styles.tableRow}>
                     {/* Employee Profile */}
-                    <td className={styles.tableCell}>
+                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap' }}>
                       <div className={styles.employeeProfileGroup}>
                         <div className={styles.empAvatar}>{initials}</div>
                         <div className={styles.empDetailsGroup}>
@@ -713,7 +713,7 @@ export default function LeavesPage() {
                     </td>
 
                     {/* Leave Type */}
-                    <td className={styles.tableCell}>
+                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap' }}>
                       <span className={`${styles.leaveTypeChip} ${getTypeBadgeClass(l.type)}`}>
                         <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
                           {getTypeIcon(l.type)}
@@ -723,7 +723,7 @@ export default function LeavesPage() {
                     </td>
 
                     {/* Date Range & Duration */}
-                    <td className={styles.tableCell}>
+                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap' }}>
                       <div className={styles.dateRangeBox}>
                         <span className={styles.dateRangeText}>
                           {formatDate(l.startDate)} → {formatDate(l.endDate)}
@@ -735,21 +735,21 @@ export default function LeavesPage() {
                     </td>
 
                     {/* Reason */}
-                    <td className={styles.tableCell}>
+                    <td className={`${styles.tableCell} ${styles.reasonCell}`}>
                       <span className={styles.reasonText} title={l.reason}>
                         {l.reason || '—'}
                       </span>
                     </td>
 
                     {/* Applied Date */}
-                    <td className={styles.tableCell}>
+                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>
                       <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                         {formatDate(l.createdAt)}
                       </span>
                     </td>
 
                     {/* Status Pill */}
-                    <td className={styles.tableCell}>
+                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>
                       <span className={`${styles.statusChip} ${getStatusChipClass(l.status)}`}>
                         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
                           {isApproved ? 'check_circle' : isPending ? 'schedule' : 'cancel'}
@@ -759,7 +759,7 @@ export default function LeavesPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                    <td className={styles.tableCell} style={{ textAlign: 'right', whiteSpace: 'nowrap', width: '1%' }}>
                       <div className={styles.actionBtnGroup} style={{ justifyContent: 'flex-end' }}>
                         {isPending ? (
                           <>

@@ -78,8 +78,16 @@ interface Channel {
   memberCount: number;
   messageCount: number;
   hasUnread: boolean;
+  unreadCount?: number;
+  lastMessage?: {
+    content: string;
+    senderName: string;
+    createdAt: string;
+  } | null;
   dmParticipant?: ChannelMember | null;
 }
+
+type CommunityMessage = Message;
 
 interface UserProfile {
   id: string;
@@ -87,6 +95,7 @@ interface UserProfile {
   role: string;
   type: "ADMIN" | "STAFF" | "MEMBER";
   email?: string;
+  employeeId?: string | null;
 }
 
 interface DirectoryPerson {

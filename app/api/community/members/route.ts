@@ -69,7 +69,7 @@ export async function GET() {
     for (const u of companyUsers) {
       const roleLower = (u.role || "").toLowerCase();
       const isOwner = roleLower.includes("owner") || u.platformRole === "SUPER_ADMIN";
-      const isAdmin = roleLower.includes("admin") || u.platformRole === "ADMIN";
+      const isAdmin = roleLower.includes("admin");
 
       const emailLower = u.email?.toLowerCase() || "";
       const isAlreadyEmployee = employeeUserIds.has(u.id) || (emailLower && employeeEmails.has(emailLower));

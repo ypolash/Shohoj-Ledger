@@ -97,6 +97,10 @@ export async function GET() {
     const outstandingLoans = Number(loans._sum.remainingAmount || 0);
     const activeAdvances = Number(advances._sum.remainingAmount || 0);
 
+    const inventoryValue = inventoryValuationLayers.reduce((acc, layer) => {
+      return acc + (Number(layer.remainingQuantity || 0) * Number(layer.unitCost || 0));
+    }, 0);
+
     const monthlyData = [];
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const today = new Date();

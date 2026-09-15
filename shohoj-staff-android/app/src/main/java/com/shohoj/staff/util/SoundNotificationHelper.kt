@@ -78,6 +78,7 @@ object SoundNotificationHelper {
                 ).apply {
                     description = CHANNEL_DESC
                     enableVibration(true)
+                    vibrationPattern = longArrayOf(0, 200, 100, 200)
                     setSound(
                         soundUri,
                         AudioAttributes.Builder()
@@ -89,19 +90,38 @@ object SoundNotificationHelper {
                 notificationManager.createNotificationChannel(channel)
             }
 
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = if (launchIntent != null) {
+                android.app.PendingIntent.getActivity(
+                    context,
+                    0,
+                    launchIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+            } else null
+
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(if (isMention) "🔔 $title" else title)
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
+                .setShowWhen(true)
+                .setWhen(System.currentTimeMillis())
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
+
+            if (pendingIntent != null) {
+                builder.setContentIntent(pendingIntent)
+            }
 
             val notifId = (System.currentTimeMillis() % 100000).toInt()
             notificationManager.notify(notifId, builder.build())
         } catch (e: Exception) {
-            // Safe fallback
+            e.printStackTrace()
         }
     }
 }

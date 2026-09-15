@@ -93,10 +93,21 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             val result = repo.getChannels()
             result.onSuccess { freshChannels ->
-                val prevTotal = _uiState.value.channels.sumOf { it.unreadCount }
+                val prevChannels = _uiState.value.channels
+                val prevTotal = prevChannels.sumOf { it.unreadCount }
                 val newTotal = freshChannels.sumOf { it.unreadCount }
                 if (newTotal > prevTotal) {
+                    val unreadChannel = freshChannels.find { it.unreadCount > 0 && it.unreadCount > (prevChannels.find { p -> p.id == it.id }?.unreadCount ?: 0) }
+                    val channelName = unreadChannel?.name ?: "Chat"
+                    val lastMsg = unreadChannel?.lastMessage
+                    val title = if (unreadChannel?.type == "DIRECT_MESSAGE") {
+                        "New message from $channelName"
+                    } else {
+                        "New message in #$channelName"
+                    }
+                    val body = lastMsg?.content?.ifBlank { "You have new unread messages" } ?: "You have new unread messages"
                     SoundNotificationHelper.playNotificationSound(app, isMention = false)
+                    SoundNotificationHelper.showNotification(app, title, body, isMention = false)
                 }
                 _uiState.value = _uiState.value.copy(channels = freshChannels)
             }
@@ -178,26 +189,39 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                         if (newIncoming.isNotEmpty()) {
                             val hasMention = newIncoming.any { msg ->
                                 val text = msg.content.lowercase()
-                                text.contains("@$myName") ||
-                                    (myName.isNotBlank() && text.contains("@${myName.split(" ").first()}"))
+                                myName.isNotBlank() && (
+                                    text.contains("@$myName") ||
+                                    text.contains("@${myName.split(" ").first()}")
+                                )
                             }
 
                             SoundNotificationHelper.playNotificationSound(app, isMention = hasMention)
 
-                            if (hasMention) {
-                                val latestMention = newIncoming.last { msg ->
-                                    val text = msg.content.lowercase()
-                                    text.contains("@$myName") ||
-                                        (myName.isNotBlank() && text.contains("@${myName.split(" ").first()}"))
-                                }
-                                val channelTitle = _uiState.value.activeChannel?.name ?: "Chat"
-                                SoundNotificationHelper.showNotification(
-                                    app,
-                                    "Mentioned by ${latestMention.senderName} in #$channelTitle",
-                                    latestMention.content,
-                                    isMention = true
-                                )
+                            val channelTitle = _uiState.value.activeChannel?.name ?: "Chat"
+                            val latestMsg = newIncoming.last()
+                            val isLatestMention = hasMention && (
+                                latestMsg.content.lowercase().contains("@$myName") ||
+                                (myName.isNotBlank() && latestMsg.content.lowercase().contains("@${myName.split(" ").first()}"))
+                            )
+
+                            val notifTitle = if (isLatestMention) {
+                                "Mentioned by ${latestMsg.senderName} in #$channelTitle"
+                            } else if (_uiState.value.activeChannel?.type == "DIRECT_MESSAGE") {
+                                latestMsg.senderName
+                            } else {
+                                "${latestMsg.senderName} in #$channelTitle"
                             }
+
+                            val notifBody = latestMsg.content.ifBlank {
+                                if (latestMsg.attachments.isNotEmpty()) "Sent an attachment" else "New message"
+                            }
+
+                            SoundNotificationHelper.showNotification(
+                                context = app,
+                                title = notifTitle,
+                                message = notifBody,
+                                isMention = isLatestMention
+                            )
                         }
 
                         _uiState.value = _uiState.value.copy(messages = fresh)
@@ -348,6 +372,8 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
     }
+
+    fun getEmployeeId(): String? = sessionManager.employeeId ?: sessionManager.getEmployee()?.employeeId
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)

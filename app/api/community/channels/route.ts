@@ -135,8 +135,11 @@ export async function GET() {
           if (otherMember) {
             displayName = otherMember.userName;
             dmParticipant = otherMember;
+          } else if (ch.members && ch.members.length > 0) {
+            displayName = ch.members[0].userName;
+            dmParticipant = ch.members[0];
           } else {
-            displayName = "Direct Chat (You)";
+            displayName = "Direct Message";
           }
         }
 

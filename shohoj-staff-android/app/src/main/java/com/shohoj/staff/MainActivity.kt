@@ -47,11 +47,15 @@ class MainActivity : ComponentActivity() {
                 ) { /* Permissions evaluated */ }
 
                 LaunchedEffect(Unit) {
-                    val permissions = arrayOf(
+                    val permissionsList = mutableListOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACCESS_WIFI_STATE
                     )
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        permissionsList.add(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                    val permissions = permissionsList.toTypedArray()
                     val needsRequest = permissions.any {
                         ContextCompat.checkSelfPermission(this@MainActivity, it) != PackageManager.PERMISSION_GRANTED
                     }

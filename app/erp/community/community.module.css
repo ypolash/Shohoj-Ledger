@@ -1070,3 +1070,159 @@
 .submitBtn:hover {
   background: var(--primary-hover, #1d4ed8);
 }
+
+/* -------------------------------------------------------------
+   MENTION AUTOCOMPLETE POPUP
+------------------------------------------------------------- */
+.mentionPopup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  background: var(--surface-main, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 50;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+:global(.dark) .mentionPopup {
+  background: #0f172a;
+  border-color: #334155;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.mentionPopupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+:global(.dark) .mentionPopupHeader {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border-color: #1e293b;
+}
+
+.mentionList {
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.mentionItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+}
+
+.mentionItem:hover,
+.mentionItemActive {
+  background: #f1f5f9;
+}
+
+:global(.dark) .mentionItem:hover,
+:global(.dark) .mentionItemActive {
+  background: #1e293b;
+}
+
+.mentionAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mentionItemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.mentionItemName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(.dark) .mentionItemName {
+  color: #f8fafc;
+}
+
+.mentionItemMeta {
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.composerMentionBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #64748b);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.composerMentionBtn:hover {
+  background: var(--surface-hover, #f1f5f9);
+  color: #0284c7;
+}
+
+:global(.dark) .composerMentionBtn:hover {
+  background: #1e293b;
+  color: #38bdf8;
+}
+
+.rolePillYou {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+:global(.dark) .rolePillYou {
+  background: #334155;
+  color: #94a3b8;
+}
+

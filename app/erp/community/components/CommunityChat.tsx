@@ -20,7 +20,8 @@ import {
   Reply,
   ChevronRight,
   ShieldAlert,
-  File
+  File,
+  AtSign
 } from "lucide-react";
 import styles from "../community.module.css";
 
@@ -137,9 +138,56 @@ export function CommunityChat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Mention autocomplete state
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+
+  const lastWord = useMemo(() => {
+    const lastSpace = Math.max(inputText.lastIndexOf(" "), inputText.lastIndexOf("\n"));
+    return lastSpace === -1 ? inputText : inputText.substring(lastSpace + 1);
+  }, [inputText]);
+
+  const isMentioning = lastWord.startsWith("@");
+  const mentionQuery = isMentioning ? lastWord.slice(1).toLowerCase() : "";
+
+  const matchingMentionMembers = useMemo(() => {
+    if (!isMentioning) return [];
+    const all = [
+      ...staffDirectory.map((s) => ({ ...s, isStaff: true })),
+      ...memberDirectory.map((m) => ({ ...m, isStaff: false })),
+    ].filter(
+      (p) =>
+        p.id !== currentUser?.id &&
+        p.name &&
+        p.name.toLowerCase() !== currentUser?.name?.toLowerCase()
+    );
+
+    if (!mentionQuery) return all.slice(0, 6);
+    return all
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(mentionQuery) ||
+          p.role.toLowerCase().includes(mentionQuery) ||
+          (p.department && p.department.toLowerCase().includes(mentionQuery))
+      )
+      .slice(0, 6);
+  }, [isMentioning, mentionQuery, staffDirectory, memberDirectory, currentUser]);
+
+  const handleInsertMention = (person: DirectoryPerson) => {
+    const lastSpace = Math.max(inputText.lastIndexOf(" "), inputText.lastIndexOf("\n"));
+    const prefix = lastSpace === -1 ? "" : inputText.substring(0, lastSpace + 1);
+    setInputText(`${prefix}@${person.name} `);
+    setActiveMentionIndex(0);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 10);
+  };
+
   // 1. Initial Load: Channels & Directory
   useEffect(() => {
     loadDirectoryAndChannels();
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
   }, []);
 
   const loadDirectoryAndChannels = async () => {
@@ -251,9 +299,28 @@ export function CommunityChat() {
             if (newIncoming.length > 0) {
               const myName = currentUser?.name?.toLowerCase() || "";
               const hasMention = newIncoming.some(
-                (m) => myName && m.content.toLowerCase().includes(`@${myName}`)
+                (m) =>
+                  myName &&
+                  (m.content.toLowerCase().includes(`@${myName}`) ||
+                    m.content.toLowerCase().includes(`@${myName.split(" ")[0]}`))
               );
               playWebAudioChime(hasMention);
+
+              if (
+                typeof window !== "undefined" &&
+                "Notification" in window &&
+                Notification.permission === "granted" &&
+                document.hidden
+              ) {
+                const latest = newIncoming[newIncoming.length - 1];
+                const notifTitle = hasMention
+                  ? `🔔 Mentioned by ${latest.senderName}`
+                  : `New message from ${latest.senderName}`;
+                new Notification(notifTitle, {
+                  body: latest.content || "Sent an attachment",
+                  icon: "/favicon.ico",
+                });
+              }
             }
             return fresh;
           }
@@ -928,24 +995,33 @@ export function CommunityChat() {
                     <div className={styles.messageBody}>
                       <div className={styles.messageHeader}>
                         <span className={styles.messageSenderName}>{msg.senderName}</span>
-                        <span
-                          className={
-                            msg.senderType === "ADMIN"
-                              ? styles.rolePillAdmin
-                              : msg.senderType === "STAFF"
-                              ? styles.rolePillStaff
-                              : styles.rolePillMember
-                          }
-                        >
-                          {msg.senderRole}
-                        </span>
+                        {msg.senderId === currentUser?.id ? (
+                          <span className={styles.rolePillYou}>You</span>
+                        ) : (
+                          <span
+                            className={
+                              msg.senderType === "ADMIN" || msg.senderRole.toLowerCase().includes("owner")
+                                ? styles.rolePillAdmin
+                                : msg.senderType === "STAFF"
+                                ? styles.rolePillStaff
+                                : styles.rolePillMember
+                            }
+                          >
+                            {msg.senderType === "ADMIN" || msg.senderRole.toLowerCase().includes("owner")
+                              ? "Owner"
+                              : msg.senderRole}
+                          </span>
+                        )}
                         <span className={styles.messageTimestamp}>
                           {new Date(msg.createdAt).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </span>
-                        {currentUser?.name && msg.content.toLowerCase().includes(`@${currentUser.name.toLowerCase()}`) && (
+                        {currentUser?.name && (
+                          msg.content.toLowerCase().includes(`@${currentUser.name.toLowerCase()}`) ||
+                          msg.content.toLowerCase().includes(`@${currentUser.name.toLowerCase().split(" ")[0]}`)
+                        ) && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-100 dark:bg-sky-950/60 px-1.5 py-0.5 rounded-full border border-sky-300 dark:border-sky-700">
                             @ Mentioned you
                           </span>
@@ -1116,7 +1192,60 @@ export function CommunityChat() {
 
           {/* Composer Input Box */}
           {isCurrentMemberAllowedToPost ? (
-            <div className={styles.composerBox}>
+            <div className={styles.composerBox} style={{ position: "relative" }}>
+              {/* Mention Autocomplete Popup */}
+              {matchingMentionMembers.length > 0 && (
+                <div className={styles.mentionPopup}>
+                  <div className={styles.mentionPopupHeader}>
+                    <span>@ Ping Team Member</span>
+                  </div>
+                  <div className={styles.mentionList}>
+                    {matchingMentionMembers.map((person, idx) => {
+                      const isOwner =
+                        person.role?.toLowerCase().includes("owner") ||
+                        (person as any).type === "ADMIN";
+                      return (
+                        <button
+                          key={person.id}
+                          type="button"
+                          onClick={() => handleInsertMention(person)}
+                          className={`${styles.mentionItem} ${
+                            activeMentionIndex === idx ? styles.mentionItemActive : ""
+                          }`}
+                        >
+                          <div
+                            className={styles.mentionAvatar}
+                            style={{
+                              background: getRoleGradient((person as any).type, person.role),
+                            }}
+                          >
+                            {getInitials(person.name)}
+                          </div>
+                          <div className={styles.mentionItemInfo}>
+                            <div className={styles.mentionItemName}>{person.name}</div>
+                            <div className={styles.mentionItemMeta}>
+                              <span
+                                className={
+                                  isOwner
+                                    ? styles.rolePillAdmin
+                                    : person.isStaff
+                                    ? styles.rolePillStaff
+                                    : styles.rolePillMember
+                                }
+                                style={{ fontSize: "0.68rem", padding: "1px 5px" }}
+                              >
+                                {isOwner ? "Owner" : person.role}
+                              </span>
+                              {person.department && <span>• {person.department}</span>}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1138,6 +1267,21 @@ export function CommunityChat() {
                 )}
               </button>
 
+              {/* Quick @ Mention Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setInputText((prev) =>
+                    prev.endsWith(" ") || prev === "" ? `${prev}@` : `${prev} @`
+                  );
+                  setTimeout(() => textareaRef.current?.focus(), 10);
+                }}
+                className={styles.composerMentionBtn}
+                title="Mention colleague (@)"
+              >
+                @
+              </button>
+
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -1147,8 +1291,36 @@ export function CommunityChat() {
                     : `Message #${activeChannel?.name || "channel"}...`
                 }
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={(e) => {
+                  setInputText(e.target.value);
+                  setActiveMentionIndex(0);
+                }}
                 onKeyDown={(e) => {
+                  if (matchingMentionMembers.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setActiveMentionIndex((prev) => (prev + 1) % matchingMentionMembers.length);
+                      return;
+                    }
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setActiveMentionIndex(
+                        (prev) => (prev - 1 + matchingMentionMembers.length) % matchingMentionMembers.length
+                      );
+                      return;
+                    }
+                    if ((e.key === "Enter" || e.key === "Tab") && !e.shiftKey) {
+                      e.preventDefault();
+                      handleInsertMention(matchingMentionMembers[activeMentionIndex]);
+                      return;
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setInputText((prev) => prev + " ");
+                      return;
+                    }
+                  }
+
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage();

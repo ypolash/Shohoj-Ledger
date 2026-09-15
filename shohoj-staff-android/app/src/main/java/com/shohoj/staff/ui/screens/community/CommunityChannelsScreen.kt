@@ -305,7 +305,9 @@ fun CommunityChannelsScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val allPersons = (uiState.staffDirectory + uiState.memberDirectory).distinctBy { it.id }
+                val allPersons = (uiState.staffDirectory + uiState.memberDirectory)
+                    .distinctBy { it.id }
+                    .filter { it.id != uiState.currentUserId && !it.name.equals(uiState.currentUserName, ignoreCase = true) }
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)

@@ -71,10 +71,16 @@ fun CommunityChatScreen(
     val isTaskQuery = lastWord.startsWith("#")
     val taskQuery = if (isTaskQuery) lastWord.removePrefix("#").lowercase() else ""
 
-    val matchingMembers = remember(mentionQuery, uiState.staffDirectory, uiState.memberDirectory, isMentionQuery) {
+    val matchingMembers = remember(mentionQuery, uiState.staffDirectory, uiState.memberDirectory, isMentionQuery, uiState.currentUserId, uiState.currentUserName) {
         if (!isMentionQuery) emptyList<DirectoryPerson>()
         else {
-            val all = (uiState.staffDirectory + uiState.memberDirectory).distinctBy { it.id }
+            val all = (uiState.staffDirectory + uiState.memberDirectory)
+                .distinctBy { it.id }
+                .filter { person ->
+                    val isSelf = person.id == uiState.currentUserId ||
+                                 (uiState.currentUserName.isNotBlank() && uiState.currentUserName != "Me" && person.name.equals(uiState.currentUserName, ignoreCase = true))
+                    !isSelf
+                }
             if (mentionQuery.isBlank()) all.take(5)
             else all.filter {
                 it.name.lowercase().contains(mentionQuery) ||
@@ -284,13 +290,16 @@ fun CommunityChatScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(uiState.messages, key = { it.id }) { message ->
+                            val empId = viewModel.getEmployeeId()
                             val isMe = message.senderId == uiState.currentUserId ||
-                                       message.senderName == uiState.currentUserName
+                                       (empId != null && empId.isNotBlank() && message.senderId == empId) ||
+                                       (uiState.currentUserName.isNotBlank() && uiState.currentUserName != "Me" && uiState.currentUserName != "Anonymous" && message.senderName.equals(uiState.currentUserName, ignoreCase = true))
 
                             MessageBubble(
                                 message = message,
                                 isMe = isMe,
                                 currentUserName = uiState.currentUserName,
+                                directory = uiState.staffDirectory + uiState.memberDirectory,
                                 onLongClick = { selectedMessageForMenu = message },
                                 onReactionClick = { emoji ->
                                     viewModel.toggleReaction(message.id, emoji)
@@ -723,6 +732,7 @@ fun MessageBubble(
     message: CommunityMessage,
     isMe: Boolean,
     currentUserName: String,
+    directory: List<DirectoryPerson> = emptyList(),
     onLongClick: () -> Unit,
     onReactionClick: (String) -> Unit
 ) {
@@ -731,6 +741,18 @@ fun MessageBubble(
         message.content.lowercase().contains("@$myName") ||
         message.content.lowercase().contains("@${myName.split(" ").first()}")
     )
+
+    val matchedPerson = remember(message.senderId, directory) {
+        directory.find { it.id == message.senderId }
+    }
+    val rawSender = message.senderName.trim()
+    val cleanSenderName = when {
+        rawSender.isNotBlank() && !rawSender.startsWith("cm") && !rawSender.contains("-") -> rawSender
+        matchedPerson != null -> matchedPerson.name
+        else -> rawSender.ifBlank { "Team Member" }
+    }
+    val isOwner = message.senderType == "ADMIN" || message.senderRole.contains("Owner", ignoreCase = true)
+    val badgeRole = if (isOwner) "Owner" else message.senderRole
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -745,9 +767,9 @@ fun MessageBubble(
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
-                            when (message.senderType) {
-                                "ADMIN" -> listOf(Rose500, Amber500)
-                                "STAFF" -> listOf(Emerald500, Cyan500)
+                            when {
+                                isOwner -> listOf(Rose500, Amber500)
+                                message.senderType == "STAFF" -> listOf(Emerald500, Cyan500)
                                 else -> listOf(Indigo500, Purple500)
                             }
                         )
@@ -757,14 +779,14 @@ fun MessageBubble(
                 if (!message.senderAvatar.isNullOrBlank()) {
                     AsyncImage(
                         model = message.senderAvatar,
-                        contentDescription = message.senderName,
+                        contentDescription = cleanSenderName,
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
                     )
                 } else {
                     Text(
-                        text = message.senderName.take(2).uppercase(),
+                        text = cleanSenderName.take(2).uppercase(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -780,7 +802,7 @@ fun MessageBubble(
             modifier = Modifier.widthIn(max = 280.dp),
             horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
         ) {
-            // Sender Name and Badge (if not me)
+            // Sender Name and Badge
             if (!isMe) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -788,33 +810,48 @@ fun MessageBubble(
                     modifier = Modifier.padding(bottom = 3.dp, start = 4.dp)
                 ) {
                     Text(
-                        text = message.senderName,
+                        text = cleanSenderName,
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Slate300
                         )
                     )
                     Surface(
-                        color = when (message.senderType) {
-                            "ADMIN" -> Rose500.copy(alpha = 0.2f)
-                            "STAFF" -> Emerald500.copy(alpha = 0.2f)
+                        color = when {
+                            isOwner -> Rose500.copy(alpha = 0.2f)
+                            message.senderType == "STAFF" -> Emerald500.copy(alpha = 0.2f)
                             else -> Slate700
                         },
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = message.senderRole,
+                            text = badgeRole,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 9.sp,
-                                color = when (message.senderType) {
-                                    "ADMIN" -> Rose400
-                                    "STAFF" -> Emerald400
+                                color = when {
+                                    isOwner -> Rose400
+                                    message.senderType == "STAFF" -> Emerald400
                                     else -> Slate300
                                 }
                             ),
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                         )
                     }
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(bottom = 3.dp, end = 4.dp)
+                ) {
+                    Text(
+                        text = "You",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Slate400
+                        )
+                    )
                 }
             }
 

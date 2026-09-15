@@ -107,13 +107,36 @@ export async function POST(request: Request) {
     }
 
     // Check announcement posting permission (only Admins or Staff can post in announcement channels)
-    const userRole = session.user.role || "Member";
+    const rawRole = session.user.role || "";
+    const isOwnerOrAdmin =
+      session.user.loginType === "ADMIN" ||
+      rawRole.toLowerCase().includes("owner") ||
+      rawRole.toLowerCase().includes("admin") ||
+      session.user.platformRole === "SUPER_ADMIN";
+
     const userType =
       session.user.loginType === "EMPLOYEE"
         ? "STAFF"
-        : session.user.loginType === "ADMIN" || userRole === "Admin" || userRole === "Owner"
+        : isOwnerOrAdmin
         ? "ADMIN"
         : "MEMBER";
+
+    const userRole = isOwnerOrAdmin
+      ? (rawRole || "Owner")
+      : userType === "STAFF"
+      ? (rawRole || "Staff")
+      : (rawRole || "Member");
+
+    let senderName = session.user.name?.trim();
+    if (!senderName) {
+      if (session.user.email) {
+        senderName = session.user.email.split("@")[0];
+      } else if (session.user.employeeId) {
+        senderName = `Staff (${session.user.employeeId})`;
+      } else {
+        senderName = isOwnerOrAdmin ? "Owner" : "Staff Member";
+      }
+    }
 
     if (channel.type === "ANNOUNCEMENT" && userType === "MEMBER") {
       return NextResponse.json({ error: "Only staff and admins can post in announcements" }, { status: 403 });
@@ -124,7 +147,7 @@ export async function POST(request: Request) {
       data: {
         channelId,
         senderId: session.user.id,
-        senderName: session.user.name || "Anonymous",
+        senderName: senderName,
         senderRole: userRole,
         senderType: userType,
         senderAvatar: session.user.image || null,

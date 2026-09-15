@@ -2,26 +2,37 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
 
-/**
- * OPTIONS /api/ess/announcements
- */
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
 }
 
-/**
- * GET /api/ess/announcements
- * Returns company-wide announcements for the authenticated employee.
- */
-export async function GET(request: Request) {
+export async function GET(req: Request) {
   try {
-    const employee = await resolveEssEmployee(request);
+    let employee = await resolveEssEmployee(req);
+
     if (!employee) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: ESS_CORS_HEADERS });
+      const { searchParams } = new URL(req.url);
+      const employeeId = searchParams.get("employeeId");
+      if (employeeId) {
+        employee = await prisma.employee.findFirst({
+          where: {
+            OR: [
+              { employeeId },
+              { id: employeeId },
+            ],
+          },
+        });
+      }
+    }
+
+    if (!employee) {
+      return NextResponse.json(
+        { error: "Unauthorized or employee not found" },
+        { status: 401, headers: ESS_CORS_HEADERS }
+      );
     }
 
     const { companyId, departmentId } = employee;
-
     const whereClause: any = {
       status: "ACTIVE",
       OR: [
@@ -39,8 +50,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Map to AnnouncementItem expected by Shohoj Staff mobile app and web ESS
-    const mappedAnnouncements = announcements.map((a) => ({
+    const mapped = announcements.map((a) => ({
       id: a.id,
       title: a.title,
       content: a.message,
@@ -50,12 +60,9 @@ export async function GET(request: Request) {
       createdAt: a.createdAt.toISOString(),
     }));
 
-    return NextResponse.json(
-      { announcements: mappedAnnouncements },
-      { headers: ESS_CORS_HEADERS }
-    );
-  } catch (error) {
-    console.error("[ESS] Announcements fetch error:", error);
+    return NextResponse.json({ announcements: mapped }, { headers: ESS_CORS_HEADERS });
+  } catch (error: any) {
+    console.error("[Mobile Announcements GET Error]:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500, headers: ESS_CORS_HEADERS }

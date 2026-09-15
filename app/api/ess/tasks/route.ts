@@ -11,7 +11,7 @@ export async function OPTIONS() {
 
 /**
  * GET /api/ess/tasks
- * Returns tasks assigned to the authenticated employee.
+ * Returns tasks assigned strictly to the authenticated employee.
  */
 export async function GET(request: Request) {
   try {
@@ -21,13 +21,18 @@ export async function GET(request: Request) {
     }
 
     const tasks = await prisma.task.findMany({
-      where: { assignedToEmployeeId: employee.employeeId },
+      where: {
+        assignedToEmployeeId: employee.employeeId,
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ tasks });
+    return NextResponse.json({ tasks }, { headers: ESS_CORS_HEADERS });
   } catch (error) {
     console.error("[ESS] Tasks fetch error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500, headers: ESS_CORS_HEADERS }
+    );
   }
 }

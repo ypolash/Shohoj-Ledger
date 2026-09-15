@@ -2,6 +2,11 @@ import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyOwnership } from "@/lib/company/verifyOwnership";
+import { ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
+}
 
 export async function PATCH(
   request: Request,
@@ -61,20 +66,20 @@ export async function PATCH(
       console.error("Failed to log mobile task update to lead activity:", actErr);
     }
 
-    return NextResponse.json(updatedTask);
+    return NextResponse.json(updatedTask, { headers: ESS_CORS_HEADERS });
   } catch (error: any) {
     console.error("Error updating task status:", error);
     
     if (error.code === 'P2025') {
       return NextResponse.json(
         { error: "Task not found" },
-        { status: 404 }
+        { status: 404, headers: ESS_CORS_HEADERS }
       );
     }
 
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500, headers: ESS_CORS_HEADERS }
     );
   }
 }

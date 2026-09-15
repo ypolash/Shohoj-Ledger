@@ -244,6 +244,16 @@ export default function HRDashboardPage() {
           </div>
 
           <div className={styles.headerActions}>
+            <Link href="/erp/hr/tasks" className={styles.secondaryBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>assignment</span>
+              Tasks
+            </Link>
+
+            <Link href="/erp/hr/notices" className={styles.secondaryBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>campaign</span>
+              Notices
+            </Link>
+
             <Link href="/erp/hr/employees/new" className={styles.primaryBtn}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
               Add Employee
@@ -1071,7 +1081,7 @@ export default function HRDashboardPage() {
                             {isProject ? (
                               <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                 <span style={{ fontWeight: 700, fontSize: '14px', color: '#7c3aed' }}>
-                                  {Number(emp.basicSalary) > 0 ? formatCurrency(emp.basicSalary) : 'Per Project'}
+                                  {Number(emp.basicSalary) > 0 ? formatCurrency(emp.basicSalary || 0) : 'Per Project'}
                                 </span>
                                 {Number(emp.basicSalary) > 0 && (
                                   <span style={{ fontSize: '10.5px', color: 'var(--text-muted, #64748b)' }}>rate / project</span>

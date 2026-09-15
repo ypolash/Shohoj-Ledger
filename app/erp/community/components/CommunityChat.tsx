@@ -151,15 +151,23 @@ export function CommunityChat() {
 
   const matchingMentionMembers = useMemo(() => {
     if (!isMentioning) return [];
+    const seen = new Set<string>();
     const all = [
       ...staffDirectory.map((s) => ({ ...s, isStaff: true })),
       ...memberDirectory.map((m) => ({ ...m, isStaff: false })),
-    ].filter(
-      (p) =>
-        p.id !== currentUser?.id &&
-        p.name &&
-        p.name.toLowerCase() !== currentUser?.name?.toLowerCase()
-    );
+    ].filter((p) => {
+      if (!p.name) return false;
+      const key = `${p.name.trim().toLowerCase()}-${(p.email || p.id).toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+
+      const isCurrent =
+        p.id === currentUser?.id ||
+        ((p as any).employeeId && currentUser?.employeeId && (p as any).employeeId === currentUser.employeeId) ||
+        (p.email && currentUser?.email && p.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+        (currentUser?.name && p.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase());
+      return !isCurrent;
+    });
 
     if (!mentionQuery) return all.slice(0, 6);
     return all
@@ -1000,16 +1008,16 @@ export function CommunityChat() {
                         ) : (
                           <span
                             className={
-                              msg.senderType === "ADMIN" || msg.senderRole.toLowerCase().includes("owner")
+                              msg.senderRole?.toLowerCase().includes("owner")
+                                ? styles.rolePillAdmin
+                                : msg.senderType === "ADMIN" || msg.senderRole?.toLowerCase().includes("admin")
                                 ? styles.rolePillAdmin
                                 : msg.senderType === "STAFF"
                                 ? styles.rolePillStaff
                                 : styles.rolePillMember
                             }
                           >
-                            {msg.senderType === "ADMIN" || msg.senderRole.toLowerCase().includes("owner")
-                              ? "Owner"
-                              : msg.senderRole}
+                            {msg.senderRole || (msg.senderType === "ADMIN" ? "Admin" : "Staff")}
                           </span>
                         )}
                         <span className={styles.messageTimestamp}>
@@ -1201,9 +1209,8 @@ export function CommunityChat() {
                   </div>
                   <div className={styles.mentionList}>
                     {matchingMentionMembers.map((person, idx) => {
-                      const isOwner =
-                        person.role?.toLowerCase().includes("owner") ||
-                        (person as any).type === "ADMIN";
+                      const isOwner = person.role?.toLowerCase().includes("owner");
+                      const isAdmin = !isOwner && ((person as any).type === "ADMIN" || person.role?.toLowerCase().includes("admin"));
                       return (
                         <button
                           key={person.id}
@@ -1226,7 +1233,7 @@ export function CommunityChat() {
                             <div className={styles.mentionItemMeta}>
                               <span
                                 className={
-                                  isOwner
+                                  isOwner || isAdmin
                                     ? styles.rolePillAdmin
                                     : person.isStaff
                                     ? styles.rolePillStaff
@@ -1234,7 +1241,7 @@ export function CommunityChat() {
                                 }
                                 style={{ fontSize: "0.68rem", padding: "1px 5px" }}
                               >
-                                {isOwner ? "Owner" : person.role}
+                                {person.role || (isOwner ? "Owner" : isAdmin ? "Admin" : "Staff")}
                               </span>
                               {person.department && <span>• {person.department}</span>}
                             </div>

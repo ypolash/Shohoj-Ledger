@@ -14,7 +14,43 @@ export async function GET() {
       return NextResponse.json({ error: "Company context required" }, { status: 400 });
     }
 
-    // 1. Fetch Company Owners & Admins (Users)
+    // 1. Fetch Staff (Employees)
+    const employees = await prisma.employee.findMany({
+      where: { companyId, status: "ACTIVE" },
+      select: {
+        id: true,
+        userId: true,
+        employeeId: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        designation: true,
+        department: true,
+        status: true,
+      },
+      orderBy: { firstName: "asc" },
+    });
+
+    const staffList = employees.map((e) => {
+      const fullName = `${e.firstName || ""} ${e.lastName || ""}`.trim();
+      const displayName = fullName || e.employeeId || e.email?.split("@")[0] || "Staff Member";
+      return {
+        id: e.id,
+        userId: e.userId || null,
+        employeeId: e.employeeId,
+        name: displayName,
+        role: e.designation || "Staff",
+        type: "STAFF" as const,
+        email: e.email,
+        department: e.department || "General",
+      };
+    });
+
+    // Known employee identifiers to prevent duplicate listings & role confusion
+    const employeeUserIds = new Set(employees.map((e) => e.userId).filter(Boolean));
+    const employeeEmails = new Set(employees.map((e) => e.email?.toLowerCase()).filter(Boolean));
+
+    // 2. Fetch Company Owners & Admins (Users)
     const companyUsers = await prisma.user.findMany({
       where: { companyId },
       select: {
@@ -28,35 +64,35 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    const adminList = companyUsers.map((u) => {
-      const isOwner = (u.role || "").toLowerCase().includes("owner") || u.platformRole === "SUPER_ADMIN";
-      const roleName = isOwner ? "Owner" : u.role || "Admin";
-      return {
+    // Include ONLY genuine Owners or Admins (never misclassify employee accounts as owners)
+    const adminList: any[] = [];
+    for (const u of companyUsers) {
+      const roleLower = (u.role || "").toLowerCase();
+      const isOwner = roleLower.includes("owner") || u.platformRole === "SUPER_ADMIN";
+      const isAdmin = roleLower.includes("admin") || u.platformRole === "ADMIN";
+
+      const emailLower = u.email?.toLowerCase() || "";
+      const isAlreadyEmployee = employeeUserIds.has(u.id) || (emailLower && employeeEmails.has(emailLower));
+
+      // Skip employee accounts from the admin/owner list
+      if (isAlreadyEmployee && !isOwner) {
+        continue;
+      }
+      if (!isOwner && !isAdmin) {
+        continue;
+      }
+
+      const roleName = isOwner ? "Owner" : "Admin";
+      adminList.push({
         id: u.id,
-        name: u.name || u.email?.split("@")[0] || "Admin",
+        name: u.name || u.email?.split("@")[0] || roleName,
         role: roleName,
         type: "ADMIN" as const,
         email: u.email,
         department: "Leadership",
         avatar: u.image || null,
-      };
-    });
-
-    // 2. Fetch Staff (Employees)
-    const employees = await prisma.employee.findMany({
-      where: { companyId, status: "ACTIVE" },
-      select: {
-        id: true,
-        employeeId: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        designation: true,
-        department: true,
-        status: true,
-      },
-      orderBy: { firstName: "asc" },
-    });
+      });
+    }
 
     // 3. Fetch Members
     const members = await prisma.member.findMany({
@@ -70,20 +106,6 @@ export async function GET() {
         status: true,
       },
       orderBy: { name: "asc" },
-    });
-
-    const staffList = employees.map((e) => {
-      const fullName = `${e.firstName || ""} ${e.lastName || ""}`.trim();
-      const displayName = fullName || e.employeeId || e.email?.split("@")[0] || "Staff Member";
-      return {
-        id: e.id,
-        employeeId: e.employeeId,
-        name: displayName,
-        role: e.designation || "Staff",
-        type: "STAFF" as const,
-        email: e.email,
-        department: e.department || "General",
-      };
     });
 
     const memberList = members.map((m) => ({
@@ -102,8 +124,28 @@ export async function GET() {
         ? "ADMIN"
         : "MEMBER";
 
-    // Combined team list (Admins/Owners + Staff) for directory and mentions
-    const combinedStaff = [...adminList, ...staffList];
+    // Deduplicated team list (Leadership first, then unique staff)
+    const seenKeys = new Set<string>();
+    const combinedStaff: any[] = [];
+
+    for (const admin of adminList) {
+      const key = (admin.email || admin.name).toLowerCase();
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        combinedStaff.push(admin);
+      }
+    }
+
+    for (const staff of staffList) {
+      const emailKey = staff.email ? staff.email.toLowerCase() : "";
+      const nameKey = staff.name.toLowerCase();
+      if ((emailKey && seenKeys.has(emailKey)) || seenKeys.has(nameKey)) {
+        continue;
+      }
+      if (emailKey) seenKeys.add(emailKey);
+      seenKeys.add(nameKey);
+      combinedStaff.push(staff);
+    }
 
     return NextResponse.json({
       success: true,

@@ -102,3 +102,74 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     return NextResponse.json({ error: "Failed to record cost" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+  const projectId = params.id;
+
+  try {
+    const ownershipGuard = await verifyOwnership("project", projectId);
+    if (ownershipGuard) return ownershipGuard;
+
+    const companyId = await getCompanyId();
+    const session = await getSession();
+    if (!companyId || !session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rbacGuard = await requirePermission("EDIT_PROJECTS");
+    if (rbacGuard) return rbacGuard;
+
+    const url = new URL(req.url);
+    const costId = url.searchParams.get("costId");
+
+    if (!costId) {
+      return NextResponse.json({ error: "Cost ID is required" }, { status: 400 });
+    }
+
+    const expense = await prisma.expense.findFirst({
+      where: { id: costId, projectId, companyId, category: "Project Custom Cost" }
+    });
+
+    if (!expense) return NextResponse.json({ error: "Cost not found" }, { status: 404 });
+
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, companyId }
+    });
+
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
+    const costAmount = Number(expense.amount || 0);
+
+    await prisma.$transaction(async (tx: any) => {
+      // Revert actualCost on project
+      const currentActualCost = Number(project.actualCost || 0);
+      await tx.project.update({
+        where: { id: project.id },
+        data: {
+          actualCost: Math.max(0, currentActualCost - costAmount)
+        }
+      });
+
+      // Delete Expense record
+      await tx.expense.delete({
+        where: { id: costId }
+      });
+
+      // Activity log
+      await tx.projectActivity.create({
+        data: {
+          companyId,
+          projectId: project.id,
+          type: "COST_DELETED",
+          description: `Deleted custom cost of ৳${costAmount.toLocaleString()} (${expense.description || ''}).`,
+          performedById: session.user.id
+        }
+      });
+    });
+
+    return NextResponse.json({ success: true, message: "Cost deleted successfully" });
+  } catch (error) {
+    console.error("DELETE Project Cost Error:", error);
+    return NextResponse.json({ error: "Failed to delete cost" }, { status: 500 });
+  }
+}
+

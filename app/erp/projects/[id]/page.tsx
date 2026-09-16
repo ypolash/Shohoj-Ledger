@@ -61,6 +61,32 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [costForm, setCostForm] = useState({ amount: '', reason: '' });
   const [isSubmittingCost, setIsSubmittingCost] = useState(false);
 
+  // Edit Payment State
+  const [isEditPaymentModalOpen, setIsEditPaymentModalOpen] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [editPaymentForm, setEditPaymentForm] = useState({
+    amount: '',
+    customCost: '',
+    costReason: '',
+    paymentMethod: 'Bank Transfer',
+    notes: '',
+    date: ''
+  });
+  const [isSubmittingEditPayment, setIsSubmittingEditPayment] = useState(false);
+
+  // Delete Item (Payment / Cost) State
+  const [deleteItemConfirm, setDeleteItemConfirm] = useState<{
+    id: string;
+    type: 'payment' | 'expense';
+    amount: number;
+    label: string;
+  } | null>(null);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+
+  // Delete Project Modal State
+  const [isDeleteProjectModalOpen, setIsDeleteProjectModalOpen] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
+
   // Multi-Employee Assignment State
   const [selectedMemberConfigs, setSelectedMemberConfigs] = useState<Record<string, { selected: boolean; isProjectBased: boolean; rate: string }>>({});
   const [memberSearch, setMemberSearch] = useState('');
@@ -397,6 +423,104 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     }
   };
 
+  const handleOpenEditPayment = (record: any) => {
+    const costInfo = parsePaymentCost(record.notes);
+    const userNote = record.notes && costInfo
+      ? record.notes.replace(costInfo.fullTag, '').replace(/^[•\s]+|[•\s]+$/g, '')
+      : (record.notes || '');
+
+    setEditingPaymentId(record.id);
+    setEditPaymentForm({
+      amount: String(record.amount || ''),
+      customCost: costInfo ? costInfo.amountStr.replace(/[^0-9.]/g, '') : '',
+      costReason: costInfo ? costInfo.reason : '',
+      paymentMethod: record.paymentMethod || 'Bank Transfer',
+      notes: userNote,
+      date: record.createdAt ? record.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]
+    });
+    setIsEditPaymentModalOpen(true);
+  };
+
+  const handleSaveEditPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPaymentId) return;
+    const amt = parseFloat(editPaymentForm.amount);
+    if (isNaN(amt) || amt <= 0) {
+      showToast("Please enter a valid payment amount");
+      return;
+    }
+    setIsSubmittingEditPayment(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/payments/${editingPaymentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editPaymentForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || "Payment updated successfully");
+        setIsEditPaymentModalOpen(false);
+        setEditingPaymentId(null);
+        fetchProject();
+      } else {
+        showToast(data.error || "Failed to update payment");
+      }
+    } catch (err) {
+      showToast("Network error updating payment");
+    } finally {
+      setIsSubmittingEditPayment(false);
+    }
+  };
+
+  const handleExecuteDeleteItem = async () => {
+    if (!deleteItemConfirm) return;
+    setIsDeletingItem(true);
+    try {
+      let res;
+      if (deleteItemConfirm.type === 'payment') {
+        res = await fetch(`/api/projects/${projectId}/payments/${deleteItemConfirm.id}`, {
+          method: "DELETE"
+        });
+      } else {
+        res = await fetch(`/api/projects/${projectId}/costs?costId=${deleteItemConfirm.id}`, {
+          method: "DELETE"
+        });
+      }
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || `${deleteItemConfirm.type === 'payment' ? 'Payment' : 'Cost'} deleted successfully`);
+        setDeleteItemConfirm(null);
+        fetchProject();
+      } else {
+        showToast(data.error || "Failed to delete item");
+      }
+    } catch (err) {
+      showToast("Network error deleting item");
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    setIsDeletingProject(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Project deleted successfully");
+        router.push("/erp/projects");
+      } else {
+        showToast(data.error || "Failed to delete project");
+      }
+    } catch (err) {
+      showToast("Network error deleting project");
+    } finally {
+      setIsDeletingProject(false);
+    }
+  };
+
   // Kanban Drag and Drop
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     setProject((prev: any) => ({
@@ -545,6 +669,20 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </div>
         )}
 
+        {/* Print-Only Executive Header */}
+        <div className={styles.printOnlyHeader}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '20pt', fontWeight: 800, color: '#0f172a' }}>{project.name}</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '11pt', color: '#475569' }}>
+              Project Code: <strong>{project.projectCode || 'N/A'}</strong> • Client: <strong>{project.clientName || 'Internal'}</strong>
+            </p>
+          </div>
+          <div style={{ textAlign: 'right', fontSize: '10pt', color: '#475569' }}>
+            <div>Status: <strong style={{ color: '#0f172a' }}>{project.status}</strong> • Priority: <strong style={{ color: '#0f172a' }}>{project.priority}</strong></div>
+            <div>Generated: {new Date().toLocaleDateString()}</div>
+          </div>
+        </div>
+
         {/* 1. Hero Navigation & Command Header */}
         <div className={styles.heroHeader}>
           <div className={styles.navRow}>
@@ -576,9 +714,32 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className={styles.editBtn}
+                title="Edit Project Parameters"
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                 Edit Project
+              </button>
+
+              {/* Print Project Report Button */}
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className={styles.printBtn}
+                title="Print Project Report"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
+                Print Report
+              </button>
+
+              {/* Delete Project Button */}
+              <button
+                type="button"
+                onClick={() => setIsDeleteProjectModalOpen(true)}
+                className={styles.deleteBtn}
+                title="Delete Project Permanently"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                Delete Project
               </button>
             </div>
           </div>
@@ -1148,6 +1309,34 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                                   Staff: {formatCurrency(Number(record.paidToStaff))} • Profit: {formatCurrency(Number(record.profit))}
                                 </span>
                               )}
+                              <div className={styles.historyActionGroup}>
+                                {record._type === 'payment' && (
+                                  <button
+                                    type="button"
+                                    className={`${styles.historyActionBtn} ${styles.historyEditBtn}`}
+                                    onClick={() => handleOpenEditPayment(record)}
+                                    title="Edit payment"
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>edit</span>
+                                    <span>Edit</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className={`${styles.historyActionBtn} ${styles.historyDeleteBtn}`}
+                                  onClick={() => setDeleteItemConfirm({
+                                    id: record.id,
+                                    type: record._type,
+                                    title: record._type === 'payment'
+                                      ? `Payment of ${formatCurrency(Number(record.amount))}`
+                                      : `Cost of ${formatCurrency(Number(record.amount))} (${record.description || 'Custom Cost'})`
+                                  })}
+                                  title={`Delete ${record._type}`}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>delete</span>
+                                  <span>Delete</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
@@ -2143,6 +2332,288 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       {isSubmittingMembers ? 'Saving...' : 'Assign Selected Members'}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: EDIT PROJECT PAYMENT
+            ==================================================================== */}
+        {isEditPaymentModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsEditPaymentModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '520px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#c084fc' }}>edit_note</span>
+                  Edit Project Payment
+                </h3>
+                <button onClick={() => setIsEditPaymentModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEditPayment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                    Payment Amount (BDT) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    step="0.01"
+                    placeholder="e.g. 50000"
+                    value={editPaymentForm.amount}
+                    onChange={(e) => setEditPaymentForm(f => ({ ...f, amount: e.target.value }))}
+                    className={styles.inputField}
+                    style={{ fontSize: '16px', fontWeight: 700 }}
+                  />
+                </div>
+
+                {/* Custom Cost Field */}
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.06)',
+                  border: '1px solid rgba(239, 68, 68, 0.22)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>price_change</span>
+                      Custom Project Cost (Deducted from Budget)
+                    </label>
+                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>Optional</span>
+                  </div>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter cost (e.g. 5000)"
+                    value={editPaymentForm.customCost}
+                    onChange={(e) => setEditPaymentForm(f => ({ ...f, customCost: e.target.value }))}
+                    className={styles.inputField}
+                    style={{
+                      borderColor: Number(editPaymentForm.customCost) > 0 ? '#ef4444' : undefined,
+                      color: Number(editPaymentForm.customCost) > 0 ? '#fca5a5' : '#f8fafc'
+                    }}
+                  />
+
+                  {Number(editPaymentForm.customCost) > 0 && (
+                    <input
+                      type="text"
+                      placeholder="Cost reason / note (e.g. Hosting, Domain, Hardware)..."
+                      value={editPaymentForm.costReason}
+                      onChange={(e) => setEditPaymentForm(f => ({ ...f, costReason: e.target.value }))}
+                      className={styles.inputField}
+                      style={{ fontSize: '12px' }}
+                    />
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                      Payment Method
+                    </label>
+                    <select
+                      value={editPaymentForm.paymentMethod}
+                      onChange={(e) => setEditPaymentForm(f => ({ ...f, paymentMethod: e.target.value }))}
+                      className={styles.inputField}
+                    >
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Cash">Cash</option>
+                      <option value="bKash / Mobile Banking">bKash / Mobile Banking</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="Online Gateway">Online Gateway</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                      Payment Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editPaymentForm.date}
+                      onChange={(e) => setEditPaymentForm(f => ({ ...f, date: e.target.value }))}
+                      className={styles.inputField}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
+                    Reference / Notes
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Milestone 1 payment adjustment"
+                    value={editPaymentForm.notes}
+                    onChange={(e) => setEditPaymentForm(f => ({ ...f, notes: e.target.value }))}
+                    className={styles.inputField}
+                  />
+                </div>
+
+                <div style={{
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  fontSize: '11px',
+                  color: '#93c5fd',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>info</span>
+                  <span>Saving changes will automatically re-balance staff payouts, project custom costs, and company income records.</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditPaymentModalOpen(false)}
+                    className={styles.backBtn}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEditPayment}
+                    className={styles.submitBtn}
+                    style={{ background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)' }}
+                  >
+                    {isSubmittingEditPayment ? 'Saving Changes...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: CONFIRM DELETE PAYMENT OR COST ITEM
+            ==================================================================== */}
+        {deleteItemConfirm && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setDeleteItemConfirm(null); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '440px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ef4444' }}>warning</span>
+                  Delete {deleteItemConfirm.type === 'payment' ? 'Payment' : 'Cost Record'}
+                </h3>
+                <button onClick={() => setDeleteItemConfirm(null)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5', margin: 0 }}>
+                  Are you sure you want to delete this {deleteItemConfirm.type === 'payment' ? 'payment transaction' : 'custom cost record'}?
+                </p>
+
+                <div style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  fontSize: '12px',
+                  color: '#fca5a5'
+                }}>
+                  <strong style={{ display: 'block', color: '#f8fafc', marginBottom: '4px' }}>
+                    {deleteItemConfirm.title}
+                  </strong>
+                  {deleteItemConfirm.type === 'payment' ? (
+                    <span>Deleting this payment will revert staff payouts, custom cost deductions, and adjust company financial balances.</span>
+                  ) : (
+                    <span>Deleting this custom cost will restore the project cost balance and remove the corresponding ledger expense.</span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteItemConfirm(null)}
+                    className={styles.backBtn}
+                    disabled={isDeletingItem}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExecuteDeleteItem}
+                    disabled={isDeletingItem}
+                    className={styles.submitBtn}
+                    style={{ background: '#ef4444', borderColor: '#ef4444' }}
+                  >
+                    {isDeletingItem ? 'Deleting...' : 'Yes, Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: CONFIRM DELETE PROJECT
+            ==================================================================== */}
+        {isDeleteProjectModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsDeleteProjectModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '460px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ef4444' }}>delete_forever</span>
+                  Delete Project
+                </h3>
+                <button onClick={() => setIsDeleteProjectModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5', margin: 0 }}>
+                  Are you sure you want to permanently delete project <strong style={{ color: '#f8fafc' }}>{project?.name}</strong>?
+                </p>
+
+                <div style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  fontSize: '12px',
+                  color: '#fca5a5',
+                  lineHeight: '1.4'
+                }}>
+                  <strong style={{ display: 'block', color: '#ef4444', marginBottom: '4px' }}>
+                    Warning: This action is irreversible!
+                  </strong>
+                  All associated project tasks, milestones, payment records, member rate assignments, and project history will be permanently deleted.
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteProjectModalOpen(false)}
+                    className={styles.backBtn}
+                    disabled={isDeletingProject}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteProject}
+                    disabled={isDeletingProject}
+                    className={styles.submitBtn}
+                    style={{ background: '#dc2626', borderColor: '#dc2626' }}
+                  >
+                    {isDeletingProject ? 'Deleting Project...' : 'Permanently Delete Project'}
+                  </button>
                 </div>
               </div>
             </div>

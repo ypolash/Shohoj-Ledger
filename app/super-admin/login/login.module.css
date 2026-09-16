@@ -1,0 +1,404 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 20% 20%, #1e1b4b 0%, #0c0a1a 50%, #030208 100%);
+  font-family: var(--font-inter, "Inter"), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient Glow Orbs */
+.ambientGlowLeft {
+  position: absolute;
+  top: 15%;
+  left: 10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambientGlowRight {
+  position: absolute;
+  bottom: 15%;
+  right: 10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Outer Glassmorphic Card Wrapper */
+.authWrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  max-width: 980px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(168, 85, 247, 0.22);
+  border-radius: 28px;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.7), 0 0 50px rgba(139, 92, 246, 0.1);
+  overflow: hidden;
+  animation: slideUpFade 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Top Glow Accent Bar */
+.topAccentBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, #6366f1);
+  z-index: 2;
+}
+
+/* ================= LEFT SIDE: SITE DETAILS ================= */
+.detailsSection {
+  flex: 1.15;
+  padding: 3.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.brandHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.logoBadge {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.3) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c084fc;
+  box-shadow: 0 8px 24px -4px rgba(168, 85, 247, 0.35);
+  flex-shrink: 0;
+}
+
+.brandTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.systemTag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a855f7;
+}
+
+.brandTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.brandTagline {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0 0 1.75rem 0;
+}
+
+/* Feature Highlights */
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.featureIconBox {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.featureTextBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.featureTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.featureDesc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Security Badge Bottom */
+.securityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ================= VERTICAL DIVIDER ================= */
+.divider {
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(168, 85, 247, 0.25) 20%, rgba(99, 102, 241, 0.25) 80%, transparent);
+  flex-shrink: 0;
+}
+
+/* ================= RIGHT SIDE: LOGIN FORM ================= */
+.formSection {
+  flex: 1;
+  padding: 3.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(10, 14, 26, 0.4);
+}
+
+.formHeader {
+  margin-bottom: 2rem;
+}
+
+.formHeaderTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
+}
+
+.formHeaderSubtitle {
+  font-size: 13.5px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Alert Error */
+.alertError {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #fca5a5;
+  font-size: 13px;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Groups */
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 7px;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.inputField {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border-radius: 12px;
+  background: rgba(9, 9, 11, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.inputField::placeholder {
+  color: #64748b;
+}
+
+.inputField:focus {
+  border-color: #a855f7;
+  background: rgba(15, 23, 42, 0.85);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+}
+
+.passwordField {
+  padding-right: 44px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.passwordToggle:hover {
+  color: #c084fc;
+}
+
+/* Submit Button */
+.submitBtn {
+  width: 100%;
+  padding: 13px 20px;
+  margin-top: 0.5rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(139, 92, 246, 0.55);
+  background: linear-gradient(135deg, #9333ea, #4f46e5);
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Footer Section */
+.formFooter {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.restrictedNote {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.switchLink {
+  font-size: 12.5px;
+  color: #a855f7;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.switchLink:hover {
+  color: #c084fc;
+  text-decoration: underline;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 860px) {
+  .authWrapper {
+    flex-direction: column;
+    max-width: 520px;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(168, 85, 247, 0.25) 20%, rgba(99, 102, 241, 0.25) 80%, transparent);
+  }
+
+  .detailsSection {
+    padding: 2.5rem 2rem;
+    gap: 1.5rem;
+  }
+
+  .formSection {
+    padding: 2.5rem 2rem;
+  }
+}

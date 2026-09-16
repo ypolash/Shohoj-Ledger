@@ -74,6 +74,9 @@
   --surface-glass: rgba(255, 255, 255, 0.85);
   --surface-card: #ffffff;
   --surface-bg: var(--gray-50);
+  --surface-input: #ffffff;
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --input-border: var(--border-main);
   
   /* Text & Borders */
   --text-main: var(--gray-900);
@@ -156,6 +159,8 @@
    DARK THEME OVERRIDES
    ========================================================================== */
 .dark {
+  color-scheme: dark;
+
   /* Backgrounds & Surfaces */
   --bg-main: #020617; /* Very deep slate/blue for minimal premium look */
   --surface-main: #0f172a; 
@@ -163,6 +168,9 @@
   --surface-glass: rgba(15, 23, 42, 0.85);
   --surface-card: #0f172a;
   --surface-bg: #020617;
+  --surface-input: #0f172a;
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: var(--border-main);
   
   /* Text & Borders */
   --text-main: var(--gray-50);
@@ -187,6 +195,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
+    color-scheme: dark;
+
     /* Backgrounds & Surfaces */
     --bg-main: #020617; 
     --surface-main: #0f172a; 
@@ -194,6 +204,9 @@
     --surface-glass: rgba(15, 23, 42, 0.85);
     --surface-card: #0f172a;
     --surface-bg: #020617;
+    --surface-input: #0f172a;
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --input-border: var(--border-main);
     
     /* Text & Borders */
     --text-main: var(--gray-50);

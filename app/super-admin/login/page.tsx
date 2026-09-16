@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Server, Layers, KeyRound, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import styles from './login.module.css';
 
 export default function SuperAdminLoginPage() {
-  const [email, setEmail] = useState('team@shohoj.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,209 +42,174 @@ export default function SuperAdminLoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'radial-gradient(circle at top, #1e1b4b 0%, #09090b 100%)',
-      padding: '24px',
-      color: '#f8fafc',
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '440px',
-        background: 'rgba(24, 24, 27, 0.85)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(168, 85, 247, 0.25)',
-        borderRadius: '20px',
-        padding: '40px 36px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.15)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Top Glow Accent */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: 'linear-gradient(90deg, #8b5cf6, #ec4899, #6366f1)',
-        }} />
+    <div className={styles.container}>
+      {/* Background Ambient Glows */}
+      <div className={styles.ambientGlowLeft} />
+      <div className={styles.ambientGlowRight} />
 
-        {/* Brand Shield Icon */}
-        <div style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(99, 102, 241, 0.25))',
-          border: '1px solid rgba(168, 85, 247, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#c084fc',
-          margin: '0 auto 20px',
-          boxShadow: '0 0 20px rgba(168, 85, 247, 0.3)',
-        }}>
-          <Shield size={28} />
-        </div>
+      {/* Main Container Box */}
+      <div className={styles.authWrapper}>
+        {/* Top Accent Gradient Bar */}
+        <div className={styles.topAccentBar} />
 
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em', color: '#fff' }}>
-            Shohoj Super Admin
-          </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
-            Dedicated multi-tenant control center & master governance.
-          </p>
-        </div>
+        {/* LEFT SIDE: Site Details & Platform Governance */}
+        <div className={styles.detailsSection}>
+          <div>
+            {/* Brand Header */}
+            <div className={styles.brandHeader}>
+              <div className={styles.logoBadge}>
+                <Shield size={28} />
+              </div>
+              <div className={styles.brandTextGroup}>
+                <span className={styles.systemTag}>Master Governance</span>
+                <h1 className={styles.brandTitle}>Shohoj Super Admin</h1>
+              </div>
+            </div>
 
-        {errorMessage && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '12px 16px',
-            borderRadius: '10px',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
-            fontSize: '13px',
-            marginBottom: '20px',
-          }}>
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
-            <span>{errorMessage}</span>
-          </div>
-        )}
+            <p className={styles.brandTagline}>
+              Dedicated multi-tenant control center, system telemetry, and centralized master governance.
+            </p>
 
-        <form onSubmit={handleLogin}>
-          {/* Email Field */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#cbd5e1', marginBottom: '8px' }}>
-              Super Admin Email
-            </label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-              <input
-                required
-                type="email"
-                placeholder="team@shohoj.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px 12px 42px',
-                  borderRadius: '10px',
-                  background: 'rgba(9, 9, 11, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-              />
+            {/* Governance Features Highlights */}
+            <div className={styles.featureList}>
+              <div className={styles.featureItem}>
+                <div className={styles.featureIconBox}>
+                  <Layers size={18} />
+                </div>
+                <div className={styles.featureTextBox}>
+                  <span className={styles.featureTitle}>Multi-Tenant Orchestration</span>
+                  <span className={styles.featureDesc}>
+                    Provision, govern, and monitor company tenants and enterprise workspaces.
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.featureItem}>
+                <div className={styles.featureIconBox}>
+                  <Server size={18} />
+                </div>
+                <div className={styles.featureTextBox}>
+                  <span className={styles.featureTitle}>Real-Time Infrastructure Health</span>
+                  <span className={styles.featureDesc}>
+                    Live telemetry, database operations, background jobs, and error logs.
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.featureItem}>
+                <div className={styles.featureIconBox}>
+                  <KeyRound size={18} />
+                </div>
+                <div className={styles.featureTextBox}>
+                  <span className={styles.featureTitle}>Plan & Entitlement Control</span>
+                  <span className={styles.featureDesc}>
+                    Configure subscription tiers, quotas, feature flags, and custom limits.
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Password Field */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#cbd5e1', marginBottom: '8px' }}>
-              Master Security Password
-            </label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-              <input
-                required
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter Super Admin password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 42px 12px 42px',
-                  borderRadius: '10px',
-                  background: 'rgba(9, 9, 11, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#fff',
-                  fontSize: '14px',
-                  outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: 0,
-                  display: 'flex',
-                }}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+          {/* Security Note at Bottom of Left Panel */}
+          <div className={styles.securityBadge}>
+            <ShieldCheck size={16} style={{ color: '#10b981' }} />
+            <span>Zero-Trust Architecture · Cryptographically Audited Sessions</span>
+          </div>
+        </div>
+
+        {/* VERTICAL DIVIDER */}
+        <div className={styles.divider} />
+
+        {/* RIGHT SIDE: Login Box */}
+        <div className={styles.formSection}>
+          <div className={styles.formHeader}>
+            <h2 className={styles.formHeaderTitle}>Super Admin Sign In</h2>
+            <p className={styles.formHeaderSubtitle}>
+              Enter your administrative credentials to continue.
+            </p>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '13px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-              color: '#fff',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)',
-              transition: 'transform 0.15s ease, opacity 0.15s ease',
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? (
-              <span>Verifying Credentials...</span>
-            ) : (
-              <>
-                <span>Enter Super Admin Console</span>
-                <ArrowRight size={16} />
-              </>
-            )}
-          </button>
-        </form>
+          {errorMessage && (
+            <div className={styles.alertError}>
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
-        {/* Security Footer Note */}
-        <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', textAlign: 'center' }}>
-          <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#64748b', lineHeight: '1.5' }}>
-            🔒 <strong>Strictly Restricted Access.</strong> All login events and tenant management actions are audited.
-          </p>
-          <Link
-            href="/login"
-            style={{
-              fontSize: '12px',
-              color: '#a855f7',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            Switch to Regular Business Login →
-          </Link>
+          <form onSubmit={handleLogin}>
+            {/* Email Field */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Super Admin Email
+              </label>
+              <div className={styles.inputWrapper}>
+                <Mail size={16} className={styles.inputIcon} />
+                <input
+                  required
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={styles.inputField}
+                  autoComplete="email"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className={styles.formGroup} style={{ marginBottom: '1.75rem' }}>
+              <label className={styles.formLabel}>
+                Master Security Password
+              </label>
+              <div className={styles.inputWrapper}>
+                <Lock size={16} className={styles.inputIcon} />
+                <input
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${styles.inputField} ${styles.passwordField}`}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={styles.passwordToggle}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className={styles.submitBtn}
+            >
+              {loading ? (
+                <span>Verifying Credentials...</span>
+              ) : (
+                <>
+                  <span>Enter Super Admin Console</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Note */}
+          <div className={styles.formFooter}>
+            <p className={styles.restrictedNote}>
+              🔒 <strong>Strictly Restricted Access.</strong> All login attempts and tenant operations are audited.
+            </p>
+            <Link href="/login" className={styles.switchLink}>
+              Switch to Regular Business Login →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

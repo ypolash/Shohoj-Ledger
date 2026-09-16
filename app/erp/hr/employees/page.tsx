@@ -1434,7 +1434,6 @@ export default function EmployeesPage() {
                   className={styles.input}
                   value={dutyStartTime}
                   onChange={e => setDutyStartTime(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px' }}
                   required
                 />
               </div>
@@ -1448,7 +1447,6 @@ export default function EmployeesPage() {
                   className={styles.input}
                   value={dutyEndTime}
                   onChange={e => setDutyEndTime(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px' }}
                   required
                 />
               </div>
@@ -1464,7 +1462,6 @@ export default function EmployeesPage() {
                   className={styles.input}
                   value={dutyGracePeriod}
                   onChange={e => setDutyGracePeriod(Number(e.target.value))}
-                  style={{ width: '100%', padding: '9px 12px' }}
                 />
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Late mark threshold</span>
               </div>
@@ -1480,7 +1477,6 @@ export default function EmployeesPage() {
                   className={styles.input}
                   value={dutyBreakTime}
                   onChange={e => setDutyBreakTime(Number(e.target.value))}
-                  style={{ width: '100%', padding: '9px 12px' }}
                 />
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Lunch / tea recess</span>
               </div>

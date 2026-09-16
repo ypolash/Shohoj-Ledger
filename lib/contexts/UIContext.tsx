@@ -20,7 +20,7 @@ const UIContext = createContext<UIContextType | undefined>(undefined);
 import { usePathname } from 'next/navigation';
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [theme, setThemeState] = useState<Theme>('system');
   const [pageTitleOverride, setPageTitleOverride] = useState<string | null>(null);

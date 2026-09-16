@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUI } from '@/lib/contexts/UIContext';
@@ -21,15 +21,18 @@ import {
   Shield, 
   LayoutDashboard, 
   Receipt,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Pin,
+  PinOff,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 export function SuperAdminSidebar() {
   const { sidebarOpen, toggleSidebar, isMobile } = useUI();
+  const [isHovered, setIsHovered] = useState(false);
   const pathname = usePathname() || '';
 
-  const isExpanded = sidebarOpen;
+  const isExpanded = sidebarOpen || isHovered;
 
   const platformControlItems = [
     { name: 'SaaS Overview', icon: LayoutDashboard, href: '/super-admin' },
@@ -61,6 +64,8 @@ export function SuperAdminSidebar() {
     <aside 
       className={sidebarClass} 
       aria-label="Super Admin Navigation"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Brand Header */}
       <div className={styles.brand}>
@@ -76,15 +81,15 @@ export function SuperAdminSidebar() {
           )}
         </div>
 
-        {/* Collapse / Expand Toggle Button */}
+        {/* Pin / Toggle Button */}
         {!isMobile && isExpanded && (
           <button
             onClick={toggleSidebar}
             className={styles.collapseToggleBtn}
-            title="Collapse sidebar"
-            aria-label="Collapse sidebar"
+            title={sidebarOpen ? "Unpin sidebar (auto-collapse on mouse leave)" : "Pin sidebar open"}
+            aria-label={sidebarOpen ? "Unpin sidebar" : "Pin sidebar open"}
           >
-            <PanelLeftClose size={15} />
+            {sidebarOpen ? <PinOff size={14} /> : <Pin size={14} />}
           </button>
         )}
       </div>

@@ -664,37 +664,9 @@ export default function EmployeesPageClient() {
 
       {/* Custom Duty Modal Dialog */}
       {dutyModalEmployee && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1050,
-            padding: '16px'
-          }}
-          onClick={() => !isSavingDuty && setDutyModalEmployee(null)}
-        >
-          <div
-            style={{
-              background: 'var(--card-bg, #1e293b)',
-              border: '1px solid var(--border)',
-              borderRadius: '20px',
-              width: '100%',
-              maxWidth: '520px',
-              padding: '28px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className={styles.modalOverlay} onClick={() => !isSavingDuty && setDutyModalEmployee(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className={styles.modalHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{
                   width: '46px',
@@ -710,235 +682,171 @@ export default function EmployeesPageClient() {
                   <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>schedule</span>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>
-                    Custom Duty Schedule
-                  </h3>
+                  <h3 style={{ margin: 0 }}>Custom Duty Schedule</h3>
                   <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
                     {dutyModalEmployee.firstName} {dutyModalEmployee.lastName} ({dutyModalEmployee.employeeId})
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setDutyModalEmployee(null)}
-                disabled={isSavingDuty}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '4px'
-                }}
-              >
+              <button onClick={() => setDutyModalEmployee(null)} disabled={isSavingDuty} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            {/* Shift Banner */}
-            <div style={{
-              padding: '12px 16px',
-              borderRadius: '12px',
-              background: dutyModalEmployee.workShift ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
-              border: `1px solid ${dutyModalEmployee.workShift ? 'rgba(16, 185, 129, 0.25)' : 'rgba(59, 130, 246, 0.2)'}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '20px', color: dutyModalEmployee.workShift ? '#10b981' : '#60a5fa' }}>
-                {dutyModalEmployee.workShift ? 'verified' : 'info'}
-              </span>
-              <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-                {dutyModalEmployee.workShift ? (
-                  <>
-                    <strong>Custom Duty Active:</strong> {dutyModalEmployee.workShift.startTime} — {dutyModalEmployee.workShift.endTime} (+{dutyModalEmployee.workShift.gracePeriod ?? 15}m grace)
-                  </>
-                ) : (
-                  <>
-                    <strong>Company Default Shift:</strong> 09:30 — 18:00 (+15m grace)
-                  </>
-                )}
+            <div className={styles.form}>
+              {/* Shift Banner */}
+              <div style={{
+                padding: '12px 16px',
+                borderRadius: '12px',
+                background: dutyModalEmployee.workShift ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
+                border: `1px solid ${dutyModalEmployee.workShift ? 'rgba(16, 185, 129, 0.25)' : 'rgba(59, 130, 246, 0.2)'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: dutyModalEmployee.workShift ? '#10b981' : '#60a5fa' }}>
+                  {dutyModalEmployee.workShift ? 'verified' : 'info'}
+                </span>
+                <div style={{ fontSize: '13px', color: 'var(--text)' }}>
+                  {dutyModalEmployee.workShift ? (
+                    <>
+                      <strong>Custom Duty Active:</strong> {dutyModalEmployee.workShift.startTime} — {dutyModalEmployee.workShift.endTime} (+{dutyModalEmployee.workShift.gracePeriod ?? 15}m grace)
+                    </>
+                  ) : (
+                    <>
+                      <strong>Company Default Shift:</strong> 09:30 — 18:00 (+15m grace)
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Presets */}
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Quick Preset Shifts
-              </label>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {[
-                  { label: 'Standard (9:30 - 6:00)', start: '09:30', end: '18:00', grace: 15, breakMin: 60, night: false },
-                  { label: 'Morning (8:00 - 4:30)', start: '08:00', end: '16:30', grace: 15, breakMin: 45, night: false },
-                  { label: 'Late (11:00 - 7:30)', start: '11:00', end: '19:30', grace: 15, breakMin: 60, night: false },
-                  { label: 'Night (10:00 - 6:00)', start: '22:00', end: '06:00', grace: 20, breakMin: 60, night: true },
-                ].map(preset => (
+              {/* Presets */}
+              <div style={{ marginTop: 'var(--spacing-4)' }}>
+                <label className="label" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Quick Preset Shifts
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Standard (9:30 - 6:00)', start: '09:30', end: '18:00', grace: 15, breakMin: 60, night: false },
+                    { label: 'Morning (8:00 - 4:30)', start: '08:00', end: '16:30', grace: 15, breakMin: 45, night: false },
+                    { label: 'Late (11:00 - 7:30)', start: '11:00', end: '19:30', grace: 15, breakMin: 60, night: false },
+                    { label: 'Night (10:00 - 6:00)', start: '22:00', end: '06:00', grace: 20, breakMin: 60, night: true },
+                  ].map(preset => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        setDutyStartTime(preset.start);
+                        setDutyEndTime(preset.end);
+                        setDutyGracePeriod(preset.grace);
+                        setDutyBreakTime(preset.breakMin);
+                        setDutyNightShift(preset.night);
+                      }}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text)',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className={styles.formRow} style={{ marginTop: 'var(--spacing-4)' }}>
+                <div className={styles.formGroup}>
+                  <label className="label">Duty Start Time *</label>
+                  <input type="time" className="input" value={dutyStartTime} onChange={e => setDutyStartTime(e.target.value)} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className="label">Duty End Time *</label>
+                  <input type="time" className="input" value={dutyEndTime} onChange={e => setDutyEndTime(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className="label">Grace Period (Minutes)</label>
+                  <input type="number" min="0" max="120" className="input" value={dutyGracePeriod} onChange={e => setDutyGracePeriod(Number(e.target.value))} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className="label">Break Allowance (Minutes)</label>
+                  <input type="number" min="0" max="240" className="input" value={dutyBreakTime} onChange={e => setDutyBreakTime(Number(e.target.value))} />
+                </div>
+              </div>
+
+              {/* Night Shift Checkbox */}
+              <div style={{ marginTop: 'var(--spacing-4)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text)' }}>
+                  <input
+                    type="checkbox"
+                    checked={dutyNightShift}
+                    onChange={e => setDutyNightShift(e.target.checked)}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                  />
+                  Night Shift (Duty crosses midnight to next morning)
+                </label>
+              </div>
+
+              {/* Sync Notice */}
+              <div style={{
+                fontSize: '12px',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(255,255,255,0.02)',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.05)',
+                marginTop: 'var(--spacing-4)'
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--primary)' }}>sync</span>
+                Instantly synced with Staff App mobile portal & late mark calculations.
+              </div>
+
+              {/* Feedback message */}
+              {dutyFeedback && (
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  marginTop: 'var(--spacing-4)',
+                  background: dutyFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  color: dutyFeedback.type === 'success' ? '#10b981' : '#ef4444',
+                  border: `1px solid ${dutyFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
+                }}>
+                  {dutyFeedback.message}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '16px', marginTop: 'var(--spacing-6)' }}>
+                <button type="button" className="btn btn-primary" onClick={handleSaveCustomDuty} disabled={isSavingDuty} style={{ flex: 1 }}>
+                  {isSavingDuty ? "Saving..." : "Save Custom Duty"}
+                </button>
+                {dutyModalEmployee.workShift && (
                   <button
-                    key={preset.label}
                     type="button"
-                    onClick={() => {
-                      setDutyStartTime(preset.start);
-                      setDutyEndTime(preset.end);
-                      setDutyGracePeriod(preset.grace);
-                      setDutyBreakTime(preset.breakMin);
-                      setDutyNightShift(preset.night);
-                    }}
+                    onClick={handleResetCustomDuty}
+                    disabled={isSavingDuty}
+                    className="btn btn-secondary"
                     style={{
-                      padding: '5px 10px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      fontSize: '12px',
-                      cursor: 'pointer'
+                      borderColor: 'rgba(239, 68, 68, 0.3)',
+                      color: '#ef4444',
                     }}
                   >
-                    {preset.label}
+                    Reset
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Form Fields */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
-                  Duty Start Time *
-                </label>
-                <input
-                  type="time"
-                  className="input"
-                  value={dutyStartTime}
-                  onChange={e => setDutyStartTime(e.target.value)}
-                  style={{ width: '100%' }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
-                  Duty End Time *
-                </label>
-                <input
-                  type="time"
-                  className="input"
-                  value={dutyEndTime}
-                  onChange={e => setDutyEndTime(e.target.value)}
-                  style={{ width: '100%' }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
-                  Grace Period (Minutes)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="120"
-                  className="input"
-                  value={dutyGracePeriod}
-                  onChange={e => setDutyGracePeriod(Number(e.target.value))}
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
-                  Break Allowance (Minutes)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="240"
-                  className="input"
-                  value={dutyBreakTime}
-                  onChange={e => setDutyBreakTime(Number(e.target.value))}
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
-
-            {/* Night Shift Checkbox */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text)' }}>
-              <input
-                type="checkbox"
-                checked={dutyNightShift}
-                onChange={e => setDutyNightShift(e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
-              />
-              Night Shift (Duty crosses midnight to next morning)
-            </label>
-
-            {/* Sync Notice */}
-            <div style={{
-              fontSize: '12px',
-              color: 'var(--text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(255,255,255,0.02)',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.05)'
-            }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#10b981' }}>sync</span>
-              Instantly synced with Staff App mobile portal & late mark calculations.
-            </div>
-
-            {/* Feedback message */}
-            {dutyFeedback && (
-              <div style={{
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                background: dutyFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                color: dutyFeedback.type === 'success' ? '#10b981' : '#ef4444',
-                border: `1px solid ${dutyFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
-              }}>
-                {dutyFeedback.message}
-              </div>
-            )}
-
-            {/* Actions */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-              {dutyModalEmployee.workShift ? (
-                <button
-                  type="button"
-                  onClick={handleResetCustomDuty}
-                  disabled={isSavingDuty}
-                  style={{
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    color: '#ef4444',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Reset to Default
-                </button>
-              ) : <div />}
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setDutyModalEmployee(null)}
-                  disabled={isSavingDuty}
-                >
+                )}
+                <button type="button" className="btn btn-secondary" onClick={() => setDutyModalEmployee(null)} disabled={isSavingDuty}>
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleSaveCustomDuty}
-                  disabled={isSavingDuty}
-                  style={{ background: '#10b981', borderColor: '#10b981' }}
-                >
-                  {isSavingDuty ? "Saving..." : "Save Custom Duty"}
                 </button>
               </div>
             </div>

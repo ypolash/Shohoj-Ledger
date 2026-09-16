@@ -15,20 +15,19 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 18,
-      versionName: '1.5.3',
+      versionCode: 19,
+      versionName: '1.5.4',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5.3 Available',
+      title: 'Shohoj Staff v1.5.4 Available',
       releaseNotes: [
-        '💬 Excluded self and "Me" from community mention autocomplete',
-        '👤 Fixed chat bubble alignment and styling for current user',
-        '👥 Deduplicated directory and resolved accurate designations',
+        '📋 Interactive To-Do Checklists under task cards',
+        '✅ Real-time checkbox toggling and progress bar',
         '⚡ Performance and background sync improvements'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.3.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.4.apk`,
       fileSize: '18.2 MB',
       isForceUpdate: false,
-      publishedAt: '2026-09-15T00:00:00Z'
+      publishedAt: '2026-09-16T00:00:00Z'
     });
   }
 

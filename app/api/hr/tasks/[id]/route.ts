@@ -30,6 +30,7 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description ? body.description.trim() : null;
     if (body.priority !== undefined) updateData.priority = body.priority;
     if (body.dueDate !== undefined) updateData.dueDate = body.dueDate ? new Date(body.dueDate) : null;
+    if (body.checklist !== undefined) updateData.checklist = body.checklist;
 
     if (body.assignedToEmployeeId !== undefined) {
       const employee = await prisma.employee.findFirst({

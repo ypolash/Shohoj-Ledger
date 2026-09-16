@@ -78,8 +78,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [deleteItemConfirm, setDeleteItemConfirm] = useState<{
     id: string;
     type: 'payment' | 'expense';
-    amount: number;
-    label: string;
+    title: string;
+    amount?: number;
+    label?: string;
   } | null>(null);
   const [isDeletingItem, setIsDeletingItem] = useState(false);
 

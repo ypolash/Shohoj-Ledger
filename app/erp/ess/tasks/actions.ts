@@ -42,3 +42,49 @@ export async function updateMyTaskStatus(taskId: string, status: string) {
   revalidatePath("/erp/ess/tasks");
   return { success: true };
 }
+
+export async function toggleMyTaskChecklistItem(taskId: string, itemId: string, completed: boolean) {
+  const { employeeId, companyId } = await getEssEmployeeId();
+
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId }
+  });
+  if (!employee) throw new Error("Employee not found");
+
+  const existing = await prisma.task.findFirst({
+    where: { id: taskId, companyId, assignedToEmployeeId: employee.employeeId }
+  });
+
+  if (!existing) throw new Error("Task not found or you don't have permission to update it.");
+
+  const checklistData: any = existing.checklist;
+  if (!checklistData) {
+    throw new Error("No checklist found on this task");
+  }
+
+  let items: any[] = [];
+  if (Array.isArray(checklistData)) {
+    items = [...checklistData];
+  } else if (Array.isArray(checklistData.items)) {
+    items = [...checklistData.items];
+  }
+
+  const updatedItems = items.map((item) => {
+    if (item.id === itemId) {
+      return { ...item, completed };
+    }
+    return item;
+  });
+
+  const newChecklist = Array.isArray(checklistData)
+    ? updatedItems
+    : { ...checklistData, items: updatedItems };
+
+  const updated = await prisma.task.update({
+    where: { id: taskId },
+    data: { checklist: newChecklist }
+  });
+
+  revalidatePath("/erp/ess/tasks");
+  return { success: true, task: updated };
+}

@@ -364,6 +364,7 @@
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -795,3 +796,364 @@
   max-width: 360px;
   margin: 0;
 }
+
+/* --------------------------------------------------------------------------
+   Task Type Selector (Segmented Toggle)
+   -------------------------------------------------------------------------- */
+.typeSelectorGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.typeToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--surface-bg, #f1f5f9);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-main, #e2e8f0);
+}
+
+.typeToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.typeToggleBtnActive {
+  background: var(--surface-card, #ffffff);
+  color: var(--primary, #2563eb);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.typeToggleDesc {
+  font-size: 11.5px;
+  color: var(--text-muted, #64748b);
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   To-Do List Builder in Modal
+   -------------------------------------------------------------------------- */
+.checklistBuilder {
+  background: var(--surface-bg, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checklistBuilderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checklistBuilderTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checklistCountBadge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary, #2563eb);
+}
+
+.todoInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.todoInput {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 9px;
+  font-size: 13px;
+  background: var(--surface-card, #ffffff);
+  color: var(--text-main, #0f172a);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.todoInput:focus {
+  border-color: var(--primary, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.addTodoBtn {
+  background: var(--primary, #2563eb);
+  color: #ffffff;
+  border: none;
+  border-radius: 9px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.addTodoBtn:hover {
+  background: #1d4ed8;
+}
+
+.todoItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.todoItemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 9px;
+  padding: 8px 12px;
+  transition: all 0.15s ease;
+}
+
+.todoItemRow:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.todoItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.todoCheckboxCustom {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.todoCheckboxCustomChecked {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.todoItemText {
+  font-size: 13px;
+  color: var(--text-main, #0f172a);
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.todoItemTextDone {
+  text-decoration: line-through;
+  color: var(--text-muted, #94a3b8);
+}
+
+.todoDeleteBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.todoDeleteBtn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.todoItemsEmpty {
+  text-align: center;
+  padding: 14px 8px;
+  font-size: 12.5px;
+  color: var(--text-muted, #64748b);
+  border: 1px dashed var(--border-main, #cbd5e1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   Checklist on Task Cards & Table
+   -------------------------------------------------------------------------- */
+.typeBadgeChecklist {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.typeBadgePlain {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
+.cardProgressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface-bg, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.progressInfoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.progressLabel {
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.progressValue {
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 6px;
+  background: var(--border-main, #e2e8f0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+  border-radius: 4px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardChecklistItems {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.cardChecklistItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cardChecklistItem:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.cardChecklistText {
+  font-size: 12.5px;
+  color: var(--text-main, #1e293b);
+  line-height: 1.35;
+  transition: color 0.15s ease;
+  word-break: break-word;
+}
+
+.cardChecklistTextCompleted {
+  text-decoration: line-through;
+  color: var(--text-muted, #94a3b8);
+}
+
+.expandChecklistBtn {
+  background: transparent;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--primary, #2563eb);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.expandChecklistBtn:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Table Mini Progress
+   -------------------------------------------------------------------------- */
+.tableProgressCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+}
+
+.tableProgressTrack {
+  width: 100%;
+  height: 5px;
+  background: var(--border-main, #e2e8f0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tableProgressFill {
+  height: 100%;
+  background: #10b981;
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+

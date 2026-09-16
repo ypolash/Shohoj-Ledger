@@ -14,6 +14,12 @@ interface Employee {
   phone?: string;
 }
 
+interface TaskChecklistItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -23,6 +29,7 @@ interface Task {
   status: string;
   dueDate: string | null;
   createdAt: string;
+  checklist?: any;
   employee?: {
     id: string;
     employeeId: string;
@@ -33,13 +40,30 @@ interface Task {
   } | null;
 }
 
+function extractChecklistItems(checklist: any): TaskChecklistItem[] {
+  if (!checklist) return [];
+  if (Array.isArray(checklist)) return checklist;
+  if (Array.isArray(checklist.items)) return checklist.items;
+  return [];
+}
+
+function isChecklistTask(task: Task): boolean {
+  if (!task.checklist) return false;
+  if (task.checklist?.type === "CHECKLIST") return true;
+  if (Array.isArray(task.checklist) && task.checklist.length > 0) return true;
+  if (Array.isArray(task.checklist?.items) && task.checklist.items.length > 0) return true;
+  return false;
+}
+
 const EMPTY_TASK_FORM = {
+  taskType: "PLAIN" as "PLAIN" | "CHECKLIST",
   title: "",
   description: "",
   assignedToEmployeeId: "",
   priority: "Medium",
   status: "Pending",
   dueDate: "",
+  checklistItems: [] as TaskChecklistItem[],
 };
 
 export default function HRTasksPage() {
@@ -53,6 +77,7 @@ export default function HRTasksPage() {
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [selectedPriority, setSelectedPriority] = useState("ALL");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("ALL");
+  const [selectedType, setSelectedType] = useState("ALL");
 
   // Modals
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -61,6 +86,8 @@ export default function HRTasksPage() {
 
   // Form State
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
+  const [newTodoText, setNewTodoText] = useState("");
+  const [expandedCardIds, setExpandedCardIds] = useState<Record<string, boolean>>({});
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -134,9 +161,97 @@ export default function HRTasksPage() {
         selectedEmployeeId === "ALL" ||
         t.assignedToEmployeeId === selectedEmployeeId;
 
-      return matchSearch && matchStatus && matchPriority && matchEmployee;
+      const isChecklist = isChecklistTask(t);
+      const matchType =
+        selectedType === "ALL" ||
+        (selectedType === "CHECKLIST" && isChecklist) ||
+        (selectedType === "PLAIN" && !isChecklist);
+
+      return matchSearch && matchStatus && matchPriority && matchEmployee && matchType;
     });
-  }, [tasks, searchQuery, selectedStatus, selectedPriority, selectedEmployeeId]);
+  }, [tasks, searchQuery, selectedStatus, selectedPriority, selectedEmployeeId, selectedType]);
+
+  // Checklist Helpers for Form
+  const handleAddTodoItem = () => {
+    if (!newTodoText.trim()) return;
+    const newItem: TaskChecklistItem = {
+      id: `todo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      title: newTodoText.trim(),
+      completed: false,
+    };
+    setTaskForm((prev) => ({
+      ...prev,
+      checklistItems: [...prev.checklistItems, newItem],
+    }));
+    setNewTodoText("");
+  };
+
+  const handleRemoveTodoItem = (id: string) => {
+    setTaskForm((prev) => ({
+      ...prev,
+      checklistItems: prev.checklistItems.filter((item) => item.id !== id),
+    }));
+  };
+
+  const handleToggleFormTodo = (id: string) => {
+    setTaskForm((prev) => ({
+      ...prev,
+      checklistItems: prev.checklistItems.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      ),
+    }));
+  };
+
+  const toggleExpandTask = (taskId: string) => {
+    setExpandedCardIds((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  };
+
+  // Inline Card Checklist Item Toggle
+  const handleToggleCardTodo = async (task: Task, itemId: string) => {
+    const currentItems = extractChecklistItems(task.checklist);
+    const updatedItems = currentItems.map((item) =>
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    );
+
+    const updatedChecklist = Array.isArray(task.checklist)
+      ? updatedItems
+      : {
+          ...(typeof task.checklist === "object" ? task.checklist : {}),
+          type: "CHECKLIST",
+          items: updatedItems,
+        };
+
+    const allCompleted = updatedItems.length > 0 && updatedItems.every((it) => it.completed);
+    let newStatus = task.status;
+    if (allCompleted && task.status !== "Completed") {
+      newStatus = "Completed";
+    }
+
+    // Optimistic UI update
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === task.id ? { ...t, checklist: updatedChecklist, status: newStatus } : t
+      )
+    );
+
+    try {
+      const res = await fetch(`/api/hr/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checklist: updatedChecklist, status: newStatus }),
+      });
+      if (!res.ok) {
+        await loadData();
+        showToast("Failed to update to-do item");
+      }
+    } catch {
+      await loadData();
+      showToast("Error updating to-do item");
+    }
+  };
 
   // Handle Assign Task
   const handleAssignTask = async (e: React.FormEvent) => {
@@ -146,17 +261,39 @@ export default function HRTasksPage() {
       return;
     }
 
+    if (taskForm.taskType === "CHECKLIST" && taskForm.checklistItems.length === 0) {
+      alert("Please add at least one to-do item to the checklist, or switch to Plain Task.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const payload: any = {
+        title: taskForm.title.trim(),
+        description: taskForm.description ? taskForm.description.trim() : null,
+        assignedToEmployeeId: taskForm.assignedToEmployeeId,
+        priority: taskForm.priority,
+        status: taskForm.status,
+        dueDate: taskForm.dueDate || null,
+        checklist:
+          taskForm.taskType === "CHECKLIST"
+            ? {
+                type: "CHECKLIST",
+                items: taskForm.checklistItems,
+              }
+            : null,
+      };
+
       const res = await fetch("/api/hr/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskForm),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         setIsAssignModalOpen(false);
         setTaskForm(EMPTY_TASK_FORM);
+        setNewTodoText("");
         showToast("Task assigned successfully and staff notified!");
         await loadData();
       } else {
@@ -175,17 +312,40 @@ export default function HRTasksPage() {
     e.preventDefault();
     if (!activeTask) return;
 
+    if (taskForm.taskType === "CHECKLIST" && taskForm.checklistItems.length === 0) {
+      alert("Please add at least one to-do item to the checklist, or switch to Plain Task.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const payload: any = {
+        title: taskForm.title.trim(),
+        description: taskForm.description ? taskForm.description.trim() : null,
+        assignedToEmployeeId: taskForm.assignedToEmployeeId,
+        priority: taskForm.priority,
+        status: taskForm.status,
+        dueDate: taskForm.dueDate || null,
+        checklist:
+          taskForm.taskType === "CHECKLIST"
+            ? {
+                ...(typeof activeTask.checklist === "object" ? activeTask.checklist : {}),
+                type: "CHECKLIST",
+                items: taskForm.checklistItems,
+              }
+            : null,
+      };
+
       const res = await fetch(`/api/hr/tasks/${activeTask.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskForm),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         setIsEditModalOpen(false);
         setActiveTask(null);
+        setNewTodoText("");
         showToast("Task updated successfully!");
         await loadData();
       } else {
@@ -250,14 +410,19 @@ export default function HRTasksPage() {
 
   const openEditModal = (task: Task) => {
     setActiveTask(task);
+    const hasChecklist = isChecklistTask(task);
+    const items = extractChecklistItems(task.checklist);
     setTaskForm({
+      taskType: hasChecklist ? "CHECKLIST" : "PLAIN",
       title: task.title,
       description: task.description || "",
       assignedToEmployeeId: task.assignedToEmployeeId || "",
       priority: task.priority,
       status: task.status,
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : "",
+      checklistItems: items,
     });
+    setNewTodoText("");
     setIsEditModalOpen(true);
   };
 
@@ -343,6 +508,7 @@ export default function HRTasksPage() {
             <button
               onClick={() => {
                 setTaskForm(EMPTY_TASK_FORM);
+                setNewTodoText("");
                 setIsAssignModalOpen(true);
               }}
               className={styles.primaryBtn}
@@ -435,6 +601,16 @@ export default function HRTasksPage() {
 
           <div className={styles.filterGroup}>
             <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className={styles.selectInput}
+            >
+              <option value="ALL">All Task Types</option>
+              <option value="PLAIN">Plain Tasks Only</option>
+              <option value="CHECKLIST">Checklist Tasks Only</option>
+            </select>
+
+            <select
               value={selectedPriority}
               onChange={(e) => setSelectedPriority(e.target.value)}
               className={styles.selectInput}
@@ -521,6 +697,7 @@ export default function HRTasksPage() {
           <button
             onClick={() => {
               setTaskForm(EMPTY_TASK_FORM);
+              setNewTodoText("");
               setIsAssignModalOpen(true);
             }}
             className={styles.primaryBtn}
@@ -537,13 +714,39 @@ export default function HRTasksPage() {
         <div className={styles.cardsGrid}>
           {filteredTasks.map((task) => {
             const overdue = isOverdue(task.dueDate, task.status);
+            const isChecklist = isChecklistTask(task);
+            const checklistItems = extractChecklistItems(task.checklist);
+            const totalCount = checklistItems.length;
+            const completedCount = checklistItems.filter((i) => i.completed).length;
+            const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            const isExpanded = !!expandedCardIds[task.id];
+            const visibleItems = isExpanded ? checklistItems : checklistItems.slice(0, 3);
+
             return (
               <div key={task.id} className={styles.taskCard}>
                 <div className={styles.cardTopRow}>
-                  <span className={`${styles.badge} ${getPriorityBadgeClass(task.priority)}`}>
-                    <span className={styles.badgeDot} style={{ background: "currentColor" }} />
-                    {task.priority} Priority
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span className={`${styles.badge} ${getPriorityBadgeClass(task.priority)}`}>
+                      <span className={styles.badgeDot} style={{ background: "currentColor" }} />
+                      {task.priority} Priority
+                    </span>
+
+                    {isChecklist ? (
+                      <span className={`${styles.badge} ${styles.typeBadgeChecklist}`}>
+                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+                          checklist
+                        </span>
+                        Checklist ({completedCount}/{totalCount})
+                      </span>
+                    ) : (
+                      <span className={`${styles.badge} ${styles.typeBadgePlain}`}>
+                        <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+                          description
+                        </span>
+                        Plain Task
+                      </span>
+                    )}
+                  </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <button
@@ -570,6 +773,75 @@ export default function HRTasksPage() {
                 <h3 className={styles.taskTitle}>{task.title}</h3>
 
                 {task.description && <p className={styles.taskDesc}>{task.description}</p>}
+
+                {/* Checklist / To-Do Items Section */}
+                {isChecklist && totalCount > 0 && (
+                  <div className={styles.cardProgressSection}>
+                    <div className={styles.progressInfoRow}>
+                      <span className={styles.progressLabel}>
+                        <span className="material-symbols-outlined" style={{ fontSize: "15px", color: "#2563eb" }}>
+                          playlist_add_check
+                        </span>
+                        To-Do Checklist
+                      </span>
+                      <span className={styles.progressValue}>
+                        {completedCount}/{totalCount} ({percent}%)
+                      </span>
+                    </div>
+
+                    <div className={styles.progressBarTrack}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+
+                    <div className={styles.cardChecklistItems}>
+                      {visibleItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className={styles.cardChecklistItem}
+                          onClick={() => handleToggleCardTodo(task, item.id)}
+                        >
+                          <button
+                            type="button"
+                            className={`${styles.todoCheckboxCustom} ${item.completed ? styles.todoCheckboxCustomChecked : ""}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleCardTodo(task, item.id);
+                            }}
+                            title={item.completed ? "Mark incomplete" : "Mark completed"}
+                          >
+                            {item.completed && (
+                              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
+                                check
+                              </span>
+                            )}
+                          </button>
+                          <span className={`${styles.cardChecklistText} ${item.completed ? styles.cardChecklistTextCompleted : ""}`}>
+                            {item.title}
+                          </span>
+                        </div>
+                      ))}
+
+                      {totalCount > 3 && (
+                        <button
+                          type="button"
+                          className={styles.expandChecklistBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpandTask(task.id);
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: "15px" }}>
+                            {isExpanded ? "expand_less" : "expand_more"}
+                          </span>
+                          {isExpanded ? "Show fewer items" : `View all ${totalCount} items`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Assignee Information */}
                 <div className={styles.cardAssigneeRow}>
@@ -632,6 +904,7 @@ export default function HRTasksPage() {
               <thead>
                 <tr>
                   <th>Task Title</th>
+                  <th>Type &amp; To-Dos</th>
                   <th>Assigned Employee</th>
                   <th>Priority</th>
                   <th>Status</th>
@@ -642,6 +915,12 @@ export default function HRTasksPage() {
               <tbody>
                 {filteredTasks.map((task) => {
                   const overdue = isOverdue(task.dueDate, task.status);
+                  const isChecklist = isChecklistTask(task);
+                  const checklistItems = extractChecklistItems(task.checklist);
+                  const totalCount = checklistItems.length;
+                  const completedCount = checklistItems.filter((i) => i.completed).length;
+                  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
                   return (
                     <tr key={task.id}>
                       <td>
@@ -650,6 +929,31 @@ export default function HRTasksPage() {
                           <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px", maxWidth: "320px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {task.description}
                           </div>
+                        )}
+                      </td>
+                      <td>
+                        {isChecklist ? (
+                          <div className={styles.tableProgressCell}>
+                            <span
+                              className={`${styles.badge} ${styles.typeBadgeChecklist}`}
+                              style={{ alignSelf: "flex-start", fontSize: "11px", padding: "2px 8px" }}
+                            >
+                              Checklist ({completedCount}/{totalCount})
+                            </span>
+                            <div className={styles.tableProgressTrack}>
+                              <div
+                                className={styles.tableProgressFill}
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <span
+                            className={`${styles.badge} ${styles.typeBadgePlain}`}
+                            style={{ fontSize: "11px", padding: "2px 8px" }}
+                          >
+                            Plain Task
+                          </span>
                         )}
                       </td>
                       <td>
@@ -753,17 +1057,132 @@ export default function HRTasksPage() {
 
             <form onSubmit={handleAssignTask}>
               <div className={styles.modalBody}>
+                {/* Task Type Selector */}
+                <div className={styles.typeSelectorGroup}>
+                  <label className={styles.formLabel}>Task Type</label>
+                  <div className={styles.typeToggle}>
+                    <button
+                      type="button"
+                      onClick={() => setTaskForm({ ...taskForm, taskType: "PLAIN" })}
+                      className={`${styles.typeToggleBtn} ${taskForm.taskType === "PLAIN" ? styles.typeToggleBtnActive : ""}`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "17px" }}>
+                        description
+                      </span>
+                      Plain Task
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTaskForm({ ...taskForm, taskType: "CHECKLIST" })}
+                      className={`${styles.typeToggleBtn} ${taskForm.taskType === "CHECKLIST" ? styles.typeToggleBtnActive : ""}`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "17px" }}>
+                        checklist
+                      </span>
+                      Checklist / To-Do Task
+                    </button>
+                  </div>
+                  <span className={styles.typeToggleDesc}>
+                    {taskForm.taskType === "PLAIN"
+                      ? "Standard task with a single title and description."
+                      : "Task with a title and a dynamic to-do checklist that staff can check off."}
+                  </span>
+                </div>
+
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Task Title *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g., Audit Monthly Payroll Records"
+                    placeholder={taskForm.taskType === "CHECKLIST" ? "e.g., Staff Onboarding Checklist" : "e.g., Audit Monthly Payroll Records"}
                     value={taskForm.title}
                     onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                     className={styles.formInput}
                   />
                 </div>
+
+                {/* To-Do List Builder */}
+                {taskForm.taskType === "CHECKLIST" && (
+                  <div className={styles.checklistBuilder}>
+                    <div className={styles.checklistBuilderHeader}>
+                      <div className={styles.checklistBuilderTitle}>
+                        <span className="material-symbols-outlined" style={{ color: "#2563eb", fontSize: "18px" }}>
+                          playlist_add_check
+                        </span>
+                        Checklist / To-Do Items
+                      </div>
+                      <span className={styles.checklistCountBadge}>
+                        {taskForm.checklistItems.length} {taskForm.checklistItems.length === 1 ? "item" : "items"}
+                      </span>
+                    </div>
+
+                    <div className={styles.todoInputRow}>
+                      <input
+                        type="text"
+                        placeholder="Add a to-do item (e.g., Collect signed contract)..."
+                        value={newTodoText}
+                        onChange={(e) => setNewTodoText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddTodoItem();
+                          }
+                        }}
+                        className={styles.todoInput}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddTodoItem}
+                        className={styles.addTodoBtn}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                          add
+                        </span>
+                        Add
+                      </button>
+                    </div>
+
+                    {taskForm.checklistItems.length === 0 ? (
+                      <div className={styles.todoItemsEmpty}>
+                        No to-do items added yet. Type an item above and click Add (or press Enter).
+                      </div>
+                    ) : (
+                      <div className={styles.todoItemsList}>
+                        {taskForm.checklistItems.map((item) => (
+                          <div key={item.id} className={styles.todoItemRow}>
+                            <div className={styles.todoItemLeft}>
+                              <button
+                                type="button"
+                                className={`${styles.todoCheckboxCustom} ${item.completed ? styles.todoCheckboxCustomChecked : ""}`}
+                                onClick={() => handleToggleFormTodo(item.id)}
+                                title={item.completed ? "Mark incomplete" : "Mark completed"}
+                              >
+                                {item.completed && (
+                                  <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
+                                    check
+                                  </span>
+                                )}
+                              </button>
+                              <span className={`${styles.todoItemText} ${item.completed ? styles.todoItemTextDone : ""}`}>
+                                {item.title}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.todoDeleteBtn}
+                              onClick={() => handleRemoveTodoItem(item.id)}
+                              title="Remove item"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                                delete
+                              </span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Assign to Staff (Employee ID) *</label>
@@ -878,6 +1297,38 @@ export default function HRTasksPage() {
 
             <form onSubmit={handleSaveEdit}>
               <div className={styles.modalBody}>
+                {/* Task Type Selector */}
+                <div className={styles.typeSelectorGroup}>
+                  <label className={styles.formLabel}>Task Type</label>
+                  <div className={styles.typeToggle}>
+                    <button
+                      type="button"
+                      onClick={() => setTaskForm({ ...taskForm, taskType: "PLAIN" })}
+                      className={`${styles.typeToggleBtn} ${taskForm.taskType === "PLAIN" ? styles.typeToggleBtnActive : ""}`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "17px" }}>
+                        description
+                      </span>
+                      Plain Task
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTaskForm({ ...taskForm, taskType: "CHECKLIST" })}
+                      className={`${styles.typeToggleBtn} ${taskForm.taskType === "CHECKLIST" ? styles.typeToggleBtnActive : ""}`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "17px" }}>
+                        checklist
+                      </span>
+                      Checklist / To-Do Task
+                    </button>
+                  </div>
+                  <span className={styles.typeToggleDesc}>
+                    {taskForm.taskType === "PLAIN"
+                      ? "Standard task with a single title and description."
+                      : "Task with a title and a dynamic to-do checklist that staff can check off."}
+                  </span>
+                </div>
+
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Task Title *</label>
                   <input
@@ -888,6 +1339,89 @@ export default function HRTasksPage() {
                     className={styles.formInput}
                   />
                 </div>
+
+                {/* To-Do List Builder in Edit Modal */}
+                {taskForm.taskType === "CHECKLIST" && (
+                  <div className={styles.checklistBuilder}>
+                    <div className={styles.checklistBuilderHeader}>
+                      <div className={styles.checklistBuilderTitle}>
+                        <span className="material-symbols-outlined" style={{ color: "#2563eb", fontSize: "18px" }}>
+                          playlist_add_check
+                        </span>
+                        Checklist / To-Do Items
+                      </div>
+                      <span className={styles.checklistCountBadge}>
+                        {taskForm.checklistItems.length} {taskForm.checklistItems.length === 1 ? "item" : "items"}
+                      </span>
+                    </div>
+
+                    <div className={styles.todoInputRow}>
+                      <input
+                        type="text"
+                        placeholder="Add a to-do item..."
+                        value={newTodoText}
+                        onChange={(e) => setNewTodoText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddTodoItem();
+                          }
+                        }}
+                        className={styles.todoInput}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddTodoItem}
+                        className={styles.addTodoBtn}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                          add
+                        </span>
+                        Add
+                      </button>
+                    </div>
+
+                    {taskForm.checklistItems.length === 0 ? (
+                      <div className={styles.todoItemsEmpty}>
+                        No to-do items in this checklist yet. Add items above.
+                      </div>
+                    ) : (
+                      <div className={styles.todoItemsList}>
+                        {taskForm.checklistItems.map((item) => (
+                          <div key={item.id} className={styles.todoItemRow}>
+                            <div className={styles.todoItemLeft}>
+                              <button
+                                type="button"
+                                className={`${styles.todoCheckboxCustom} ${item.completed ? styles.todoCheckboxCustomChecked : ""}`}
+                                onClick={() => handleToggleFormTodo(item.id)}
+                                title={item.completed ? "Mark incomplete" : "Mark completed"}
+                              >
+                                {item.completed && (
+                                  <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
+                                    check
+                                  </span>
+                                )}
+                              </button>
+                              <span className={`${styles.todoItemText} ${item.completed ? styles.todoItemTextDone : ""}`}>
+                                {item.title}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.todoDeleteBtn}
+                              onClick={() => handleRemoveTodoItem(item.id)}
+                              title="Remove item"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                                delete
+                              </span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Assigned Employee *</label>

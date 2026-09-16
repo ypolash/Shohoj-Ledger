@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, description, assignedToEmployeeId, priority, status, dueDate } = body;
+    const { title, description, assignedToEmployeeId, priority, status, dueDate, checklist } = body;
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: "Task title is required" }, { status: 400 });
@@ -95,6 +95,7 @@ export async function POST(req: Request) {
         status: status || "Pending",
         dueDate: dueDate ? new Date(dueDate) : null,
         systemSource: "ERP",
+        checklist: checklist !== undefined ? checklist : null,
       },
       include: {
         employee: {

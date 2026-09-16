@@ -1015,7 +1015,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
                 {/* Add Cost Section */}
                 <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', padding: '12px', marginTop: '16px' }}>
-                  <div style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fca5a5', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#fca5a5', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_change</span>
                     Add Project Cost
                   </div>

@@ -39,11 +39,14 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       const currentBudget = Number(project.estimatedBudget || 0);
       const updatedBudget = Math.max(0, currentBudget - customCost);
 
+      const currentActualCost = Number(project.actualCost || 0);
+      const updatedActualCost = currentActualCost + customCost;
+
       await tx.project.update({
         where: { id: project.id },
         data: {
           estimatedBudget: updatedBudget,
-          actualCost: { increment: customCost }
+          actualCost: updatedActualCost
         }
       });
 

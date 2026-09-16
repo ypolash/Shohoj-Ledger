@@ -275,9 +275,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       const updatedBudget = currentBudget;
 
       if (staffPayoutTotal > 0) {
+        const currentActualCost = Number(project.actualCost || 0);
         await tx.project.update({
           where: { id: project.id },
-          data: { actualCost: { increment: staffPayoutTotal } }
+          data: { actualCost: currentActualCost + staffPayoutTotal }
         });
       }
 

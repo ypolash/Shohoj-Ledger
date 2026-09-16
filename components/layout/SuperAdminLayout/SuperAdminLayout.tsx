@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useUI } from '@/lib/contexts/UIContext';
-import styles from '../AppShell/AppShell.module.css'; // Reusing AppShell styles
+import styles from './SuperAdminLayout.module.css';
 import { SuperAdminSidebar } from '../SuperAdminSidebar/SuperAdminSidebar';
 import { Topbar } from '../Topbar/Topbar';
 
@@ -29,7 +29,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
 
       {/* Main Content Area */}
       <div 
-        className={`${styles.mainWrapper} ${!sidebarOpen && !isMobile ? styles.mainWrapperExpanded : ''}`}
+        className={`${styles.mainWrapper} ${!sidebarOpen && !isMobile ? styles.mainWrapperCollapsed : ''}`}
       >
         <Topbar />
         

@@ -1,0 +1,387 @@
+/* ==========================================================================
+   SUPER ADMIN SIDEBAR - ULTRA-PREMIUM MISSION CONTROL STYLES
+   ========================================================================== */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #090d16 0%, #060911 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
+  color: #f1f5f9;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.open {
+  width: 260px;
+}
+
+.collapsed {
+  width: 72px;
+}
+
+/* Mobile Drawer */
+.mobile {
+  transform: translateX(-100%);
+}
+
+.mobile.open {
+  transform: translateX(0);
+}
+
+/* --------------------------------------------------------------------------
+   1. Brand Header
+   -------------------------------------------------------------------------- */
+.brand {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.brandLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.brand::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: -20px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.logoMark {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e3a8a 100%);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.45);
+  position: relative;
+  z-index: 1;
+}
+
+.brandInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.brandName {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.brandBadge {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.collapseToggleBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.collapseToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   2. Navigation Container & Section Groups
+   -------------------------------------------------------------------------- */
+.navContainer {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.navContainer::-webkit-scrollbar {
+  width: 4px;
+}
+
+.navContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sectionHeader {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  padding: 0 10px 6px 10px;
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   3. Navigation Items & Active State
+   -------------------------------------------------------------------------- */
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  white-space: nowrap;
+}
+
+.navItem:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navItem.active {
+  color: #ffffff;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.04) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.navItem.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 3.5px;
+  background: #60a5fa;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px #60a5fa;
+}
+
+.navIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.navItem:hover .navIconWrapper {
+  color: #60a5fa;
+}
+
+.navItem.active .navIconWrapper {
+  color: #60a5fa;
+}
+
+.navText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.pulseDotLive {
+  width: 6.5px;
+  height: 6.5px;
+  background-color: #34d399;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #34d399;
+  animation: pulseLive 2s infinite;
+  margin-left: auto;
+}
+
+@keyframes pulseLive {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #34d399; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* --------------------------------------------------------------------------
+   4. Collapsed State Adjustments
+   -------------------------------------------------------------------------- */
+.collapsed .brand {
+  padding: 0 10px;
+  justify-content: center;
+}
+
+.collapsed .navItem {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+.collapsed .sectionHeader {
+  display: none;
+}
+
+.collapsed .sidebarFooter {
+  padding: 10px 6px;
+  align-items: center;
+}
+
+.collapsed .erpSwitchBtn {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. Footer Switcher & Profile Card
+   -------------------------------------------------------------------------- */
+.sidebarFooter {
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.erpSwitchBtn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.erpSwitchBtn:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+}
+
+.operatorCard {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.operatorAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(30, 58, 138, 0.5));
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c7d2fe;
+  font-weight: 800;
+  font-size: 12px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.onlineIndicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border: 1.5px solid #060911;
+  border-radius: 50%;
+}
+
+.operatorInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.operatorName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.operatorRole {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

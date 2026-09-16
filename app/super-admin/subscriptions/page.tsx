@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader/PageHeader';
 import { 
   CreditCard, 
   Layers, 
@@ -14,11 +12,17 @@ import {
   AlertCircle, 
   CheckCircle2, 
   XCircle, 
+  X,
   ExternalLink,
-  ChevronRight,
-  ShieldCheck
+  Sparkles,
+  ShieldCheck,
+  Search,
+  Check,
+  Zap,
+  DollarSign
 } from 'lucide-react';
 import Link from 'next/link';
+import styles from './subscriptions.module.css';
 
 interface SubscriptionRecord {
   id: string;
@@ -99,7 +103,7 @@ export default function SubscriptionsPage() {
     try {
       const res = await fetch('/api/system/subscriptions');
       if (res.status === 401) {
-        window.location.href = '/login';
+        window.location.href = '/super-admin/login';
         return;
       }
       if (!res.ok) {
@@ -162,16 +166,18 @@ export default function SubscriptionsPage() {
 
   const handleUpdateStatus = async (subscriptionId: string, newStatus: string) => {
     try {
+      setSubscriptions(prev => prev.map(s => s.id === subscriptionId ? { ...s, status: newStatus } : s));
+
       const res = await fetch('/api/system/subscriptions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscriptionId, status: newStatus }),
       });
       if (!res.ok) throw new Error('Failed to update status');
-      setSubscriptions(prev => prev.map(s => s.id === subscriptionId ? { ...s, status: newStatus } : s));
       showToast(`Subscription marked as ${newStatus}`, 'success');
     } catch (error: any) {
       showToast(error.message || 'Failed to update subscription status', 'error');
+      fetchSubscriptions();
     }
   };
 
@@ -228,171 +234,263 @@ export default function SubscriptionsPage() {
   });
 
   return (
-    <PageContainer>
-      <PageHeader 
-        title="Tenant Subscriptions Control" 
-        description="Monitor tenant lifecycle, manage billing terms, upgrade pricing plans, and grant grace period extensions."
-      />
-
+    <div className={styles.pageContainer}>
       {/* Toast Notification */}
       {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          top: '24px',
-          right: '24px',
-          zIndex: 9999,
-          padding: '12px 20px',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          color: '#fff',
-          backgroundColor: toastMessage.type === 'success' ? '#10b981' : '#ef4444',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        }}>
+        <div 
+          className={styles.toast}
+          style={{ backgroundColor: toastMessage.type === 'success' ? '#10b981' : '#ef4444' }}
+        >
           {toastMessage.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>{toastMessage.text}</span>
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
-            <CheckCircle2 size={24} />
+      {/* 1. Executive Mission Control Header Card */}
+      <section className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <div className={styles.liveBadgeRow}>
+            <div className={styles.livePulseDot} />
+            <span className={styles.liveBadgeText}>Automated Billing &amp; License Engine Active</span>
           </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Active Subscriptions</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#34d399' }}>{metrics.activeSubscriptions}</div>
+          <h1 className={styles.pageTitle}>
+            <CreditCard size={26} style={{ color: '#818cf8' }} />
+            Tenant Subscriptions &amp; Billing Lifecycle
+          </h1>
+          <p className={styles.pageSubtitle}>
+            Monitor tenant licensing, configure recurring billing terms, adjust subscription tier entitlements, and grant operational grace periods.
+          </p>
+        </div>
+
+        <div className={styles.headerActions}>
+          <button 
+            type="button" 
+            onClick={fetchSubscriptions} 
+            disabled={loading}
+            className={styles.refreshBtn}
+            title="Refresh subscriptions"
+          >
+            <RefreshCw size={15} className={loading ? styles.spinning : ''} />
+            <span>{loading ? 'Refreshing...' : 'Refresh Status'}</span>
+          </button>
+
+          <Link href="/super-admin/plans" className={styles.secondaryActionBtn}>
+            <Layers size={15} />
+            <span>Manage Pricing Tiers</span>
+          </Link>
+
+          <button 
+            type="button" 
+            onClick={() => setShowAssignModal(true)} 
+            className={styles.primaryActionBtn}
+          >
+            <PlusCircle size={16} />
+            <span>Assign Plan</span>
+          </button>
+        </div>
+      </section>
+
+      {/* 2. Revenue & Licensing KPI Metric Cards Grid */}
+      <section className={styles.kpiGrid}>
+        {/* Active Subscriptions */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+              <CheckCircle2 size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+              Active
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Active Subscriptions</span>
+            <span className={styles.kpiValue} style={{ color: '#34d399' }}>{metrics.activeSubscriptions}</span>
           </div>
         </div>
 
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
-            <CreditCard size={24} />
+        {/* Estimated MRR */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1' }}>
+              <DollarSign size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#a5b4fc' }}>
+              Revenue
+            </span>
           </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Estimated MRR</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#818cf8' }}>${metrics.estimatedMRR.toFixed(2)}</div>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
-            <AlertCircle size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Past Due / Unpaid</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#f87171' }}>{metrics.pastDueSubscriptions}</div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Estimated MRR</span>
+            <span className={styles.kpiValue} style={{ color: '#a5b4fc' }}>
+              ${metrics.estimatedMRR.toFixed(2)}
+            </span>
           </div>
         </div>
 
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a855f7' }}>
-            <Layers size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Unassigned Tenants</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>{unassignedCompanies.length}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Glass Card */}
-      <div className="glass-card" style={{ padding: '24px' }}>
-        {/* Controls Bar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', flex: 1, minWidth: '300px' }}>
-            <input
-              type="text"
-              placeholder="Search company or plan name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '260px',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-main)',
-                background: 'var(--surface-subtle)',
-                color: 'var(--text-main)',
-                fontSize: '14px',
+        {/* Past Due / Unpaid */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+              <AlertCircle size={24} />
+            </div>
+            <span 
+              className={styles.kpiBadge} 
+              style={{ 
+                background: metrics.pastDueSubscriptions > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(100, 116, 139, 0.15)', 
+                color: metrics.pastDueSubscriptions > 0 ? '#f87171' : '#94a3b8' 
               }}
-            />
+            >
+              {metrics.pastDueSubscriptions > 0 ? 'Action Needed' : 'Good Standing'}
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Past Due / In Grace</span>
+            <span className={styles.kpiValue} style={{ color: metrics.pastDueSubscriptions > 0 ? '#f87171' : '#ffffff' }}>
+              {metrics.pastDueSubscriptions}
+            </span>
+          </div>
+        </div>
 
+        {/* Unassigned Tenants */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}>
+              <Layers size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
+              Unassigned
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Unassigned Tenants</span>
+            <span className={styles.kpiValue} style={{ color: '#c084fc' }}>
+              {unassignedCompanies.length}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Main Data Card & Governance Controls */}
+      <section className={styles.mainCard}>
+        {/* Controls Bar */}
+        <div className={styles.controlsBar}>
+          <div className={styles.controlsLeft}>
+            {/* Search Input */}
+            <div className={styles.searchWrapper}>
+              <Search size={15} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search company or plan name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+              {searchQuery && (
+                <button 
+                  type="button" 
+                  onClick={() => setSearchQuery('')} 
+                  className={styles.clearSearchBtn}
+                  title="Clear search"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{
-                padding: '9px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-main)',
-                background: 'var(--surface-subtle)',
-                color: 'var(--text-main)',
-                fontSize: '14px',
-              }}
+              className={styles.filterSelect}
             >
               <option value="">All Subscription Statuses</option>
               <option value="ACTIVE">Active Only</option>
               <option value="PAST_DUE">Past Due</option>
               <option value="CANCELED">Canceled</option>
             </select>
-
-            <button
-              className="btn btn-secondary"
-              onClick={fetchSubscriptions}
-              title="Refresh subscriptions"
-              style={{ padding: '9px 14px' }}
-            >
-              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link href="/super-admin/plans" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Layers size={16} /> Manage Pricing Tiers
-            </Link>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowAssignModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <PlusCircle size={16} /> Assign Plan to Company
-            </button>
           </div>
         </div>
 
+        {/* Quick Filter Tabs */}
+        <div className={styles.filterTabsRow}>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('')}
+            className={`${styles.filterTabBtn} ${statusFilter === '' ? styles.filterTabBtnActive : ''}`}
+          >
+            <CreditCard size={13} />
+            <span>All Subscriptions ({subscriptions.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('ACTIVE')}
+            className={`${styles.filterTabBtn} ${statusFilter === 'ACTIVE' ? styles.filterTabBtnActive : ''}`}
+          >
+            <CheckCircle2 size={13} />
+            <span>Active ({metrics.activeSubscriptions})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('PAST_DUE')}
+            className={`${styles.filterTabBtn} ${statusFilter === 'PAST_DUE' ? styles.filterTabBtnActive : ''}`}
+          >
+            <AlertCircle size={13} />
+            <span>Past Due ({metrics.pastDueSubscriptions})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('CANCELED')}
+            className={`${styles.filterTabBtn} ${statusFilter === 'CANCELED' ? styles.filterTabBtnActive : ''}`}
+          >
+            <XCircle size={13} />
+            <span>Canceled ({metrics.canceledSubscriptions})</span>
+          </button>
+        </div>
+
         {/* Subscriptions Table */}
-        <div className="table-responsive">
-          <table className="table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className={styles.tableContainer}>
+          <table className={styles.subsTable}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Company / Tenant</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Active Plan</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Status</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Period Valid From</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Renewal / Expiration</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600 }}>Days Left</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+              <tr>
+                <th>Company / Tenant</th>
+                <th>Active Plan</th>
+                <th>Status</th>
+                <th>Period Valid From</th>
+                <th>Renewal / Expiration</th>
+                <th>Days Left</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
-                    <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 12px' }} />
-                    <p style={{ margin: 0 }}>Loading tenant subscriptions...</p>
+                  <td colSpan={7}>
+                    <div className={styles.emptyState}>
+                      <RefreshCw size={24} className={styles.spinning} style={{ color: '#818cf8' }} />
+                      <span>Loading tenant subscriptions...</span>
+                    </div>
                   </td>
                 </tr>
               ) : filteredSubs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
-                    <CreditCard size={48} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
-                    <p style={{ margin: '0 0 12px 0', fontWeight: 500 }}>No active subscriptions found.</p>
-                    {unassignedCompanies.length > 0 && (
-                      <button className="btn btn-primary" onClick={() => setShowAssignModal(true)}>
-                        Assign Plan to Existing Company ({unassignedCompanies.length} awaiting plan)
-                      </button>
-                    )}
+                  <td colSpan={7}>
+                    <div className={styles.emptyState}>
+                      <CreditCard size={48} style={{ opacity: 0.3 }} />
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: '15px', color: '#cbd5e1' }}>No subscription records found</p>
+                      <span style={{ fontSize: '13px' }}>There are currently no active tenant subscriptions matching this filter.</span>
+                      {unassignedCompanies.length > 0 && (
+                        <button 
+                          className={styles.primaryActionBtn} 
+                          onClick={() => setShowAssignModal(true)}
+                          style={{ marginTop: '10px' }}
+                        >
+                          <PlusCircle size={15} />
+                          <span>Assign Plan to Tenant ({unassignedCompanies.length} awaiting plan)</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -404,96 +502,90 @@ export default function SubscriptionsPage() {
                   const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0;
                   const isExpired = daysRemaining <= 0;
 
+                  const initials = sub.company?.name ? sub.company.name.slice(0, 2).toUpperCase() : 'CO';
+                  const isPastDue = sub.status === 'PAST_DUE';
+                  const isCanceled = sub.status === 'CANCELED';
+                  const statusClass = isPastDue ? styles.statusPastDue : isCanceled ? styles.statusCanceled : styles.statusActive;
+
+                  const daysClass = isExpired ? styles.daysLeftExpired : isExpiringSoon ? styles.daysLeftWarning : styles.daysLeftNormal;
+
                   return (
-                    <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <tr key={sub.id} className={styles.subRow}>
                       {/* Company Name */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Building2 size={16} style={{ color: 'var(--text-muted)' }} />
-                          <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>
-                            {sub.company?.name || 'Unknown Company'}
-                          </span>
+                      <td>
+                        <div className={styles.companyIdentityCell}>
+                          <div className={styles.companyAvatar}>
+                            {initials}
+                          </div>
+                          <div className={styles.companyInfoText}>
+                            <span className={styles.companyName}>
+                              {sub.company?.name || 'Unknown Company'}
+                            </span>
+                            <span className={styles.companySector}>
+                              {sub.company?.businessType || 'Enterprise'}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
                       {/* Plan */}
-                      <td style={{ padding: '14px 16px', fontSize: '14px' }}>
-                        <div style={{ fontWeight: 600, color: '#818cf8' }}>
-                          {sub.plan?.name || 'Custom Plan'}
+                      <td>
+                        <div className={styles.planName}>
+                          <Sparkles size={13} />
+                          <span>{sub.plan?.name || 'Custom Plan'}</span>
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        <div className={styles.planPrice}>
                           ${sub.plan?.price || 0} / {sub.plan?.billingCycle?.toLowerCase()}
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '11px',
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontWeight: 700,
-                          background: sub.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                          color: sub.status === 'ACTIVE' ? '#10b981' : '#ef4444',
-                        }}>
-                          {sub.status === 'ACTIVE' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                          {sub.status}
+                      <td>
+                        <span className={`${styles.statusPill} ${statusClass}`}>
+                          <div className={styles.statusDot} />
+                          <span>{sub.status}</span>
                         </span>
                       </td>
 
-                      {/* Start */}
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                      {/* Period Start */}
+                      <td style={{ color: '#94a3b8', fontSize: '13px' }}>
                         {new Date(sub.currentPeriodStart).toLocaleDateString()}
                       </td>
 
-                      {/* End */}
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text-main)', fontWeight: 500 }}>
+                      {/* Period End */}
+                      <td style={{ color: '#f1f5f9', fontSize: '13px', fontWeight: 600 }}>
                         {new Date(sub.currentPeriodEnd).toLocaleDateString()}
                       </td>
 
                       {/* Days Left */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <span style={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          background: isExpired ? 'rgba(239, 68, 68, 0.2)' : isExpiringSoon ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-                          color: isExpired ? '#f87171' : isExpiringSoon ? '#f59e0b' : '#34d399',
-                        }}>
-                          {isExpired ? 'Expired' : `${daysRemaining} days left`}
+                      <td>
+                        <span className={`${styles.daysLeftBadge} ${daysClass}`}>
+                          <Clock size={12} />
+                          <span>{isExpired ? 'Expired' : `${daysRemaining} days left`}</span>
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <td>
+                        <div className={styles.actionsGroup}>
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedSub(sub);
                               setShowExtendModal(true);
                             }}
-                            className="btn btn-secondary"
-                            style={{ padding: '5px 10px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            className={styles.extendBtn}
                             title="Extend expiration or grant grace period"
                           >
-                            <Clock size={13} /> Extend
+                            <Clock size={13} />
+                            <span>Extend</span>
                           </button>
 
                           <select
                             value={sub.status}
                             onChange={(e) => handleUpdateStatus(sub.id, e.target.value)}
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border-main)',
-                              background: 'var(--surface-subtle)',
-                              color: 'var(--text-main)',
-                              fontSize: '12px',
-                            }}
+                            className={styles.statusActionSelect}
+                            title="Update Subscription Status"
                           >
                             <option value="ACTIVE">Active</option>
                             <option value="PAST_DUE">Past Due</option>
@@ -501,12 +593,12 @@ export default function SubscriptionsPage() {
                           </select>
 
                           <button
+                            type="button"
                             onClick={() => handleDeleteSubscription(sub.id)}
-                            className="btn btn-secondary"
-                            style={{ padding: '5px 8px', fontSize: '12px', color: '#ef4444' }}
-                            title="Delete Subscription"
+                            className={styles.iconDeleteBtn}
+                            title="Terminate Subscription"
                           >
-                            <XCircle size={14} />
+                            <XCircle size={15} />
                           </button>
                         </div>
                       </td>
@@ -517,82 +609,92 @@ export default function SubscriptionsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
       {/* ASSIGN PLAN MODAL */}
       {showAssignModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '28px', position: 'relative', borderRadius: '16px' }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 700 }}>Assign Subscription Plan</h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Attach a subscription plan to a company and activate their billing cycle.
-            </p>
+        <div className={styles.modalOverlay} onClick={() => setShowAssignModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                <PlusCircle size={18} style={{ color: '#818cf8' }} />
+                Assign Subscription Plan
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setShowAssignModal(false)}
+                className={styles.modalCloseBtn}
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             <form onSubmit={handleAssignPlan}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600 }}>Select Company / Tenant *</label>
-                <select
-                  required
-                  value={assignForm.companyId}
-                  onChange={(e) => setAssignForm({ ...assignForm, companyId: e.target.value })}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: 'var(--text-main)', fontSize: '14px' }}
-                >
-                  <option value="" disabled>Choose a company...</option>
-                  {allCompanies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {unassignedCompanies.some(u => u.id === c.id) ? '(No active subscription)' : '(Has existing plan)'}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className={styles.modalBody}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Select Company / Tenant *</label>
+                  <select
+                    required
+                    value={assignForm.companyId}
+                    onChange={(e) => setAssignForm({ ...assignForm, companyId: e.target.value })}
+                    className={styles.formInput}
+                  >
+                    <option value="" disabled>Choose a company...</option>
+                    {allCompanies.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {unassignedCompanies.some(u => u.id === c.id) ? '(No active subscription)' : '(Has existing plan)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600 }}>Select Subscription Plan *</label>
-                <select
-                  required
-                  value={assignForm.planId}
-                  onChange={(e) => setAssignForm({ ...assignForm, planId: e.target.value })}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: 'var(--text-main)', fontSize: '14px' }}
-                >
-                  <option value="" disabled>Choose a plan...</option>
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} - ${p.price} / {p.billingCycle.toLowerCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Select Subscription Plan *</label>
+                  <select
+                    required
+                    value={assignForm.planId}
+                    onChange={(e) => setAssignForm({ ...assignForm, planId: e.target.value })}
+                    className={styles.formInput}
+                  >
+                    <option value="" disabled>Choose a plan...</option>
+                    {plans.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} - ${p.price} / {p.billingCycle.toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600 }}>Duration</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                  {[14, 30, 90, 365].map((days) => (
-                    <button
-                      type="button"
-                      key={days}
-                      onClick={() => setAssignForm({ ...assignForm, durationDays: days })}
-                      style={{
-                        padding: '8px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        border: assignForm.durationDays === days ? '2px solid #6366f1' : '1px solid var(--border-main)',
-                        background: assignForm.durationDays === days ? 'rgba(99, 102, 241, 0.2)' : 'var(--surface-subtle)',
-                        color: assignForm.durationDays === days ? '#818cf8' : 'var(--text-main)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {days === 365 ? '1 Year' : `${days} Days`}
-                    </button>
-                  ))}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Initial Duration Period</label>
+                  <div className={styles.durationGrid}>
+                    {[14, 30, 90, 365].map((days) => (
+                      <button
+                        type="button"
+                        key={days}
+                        onClick={() => setAssignForm({ ...assignForm, durationDays: days })}
+                        className={`${styles.durationOptionBtn} ${assignForm.durationDays === days ? styles.durationOptionBtnActive : ''}`}
+                      >
+                        {days === 365 ? '1 Year' : `${days} Days`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAssignModal(false)}>
+              <div className={styles.modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setShowAssignModal(false)}
+                  className={styles.modalCancelBtn}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className={styles.modalSubmitBtn}
+                >
                   {submitting ? 'Assigning...' : 'Assign & Activate'}
                 </button>
               </div>
@@ -603,43 +705,56 @@ export default function SubscriptionsPage() {
 
       {/* EXTEND SUBSCRIPTION MODAL */}
       {showExtendModal && selectedSub && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '420px', padding: '28px', position: 'relative', borderRadius: '16px' }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 700 }}>Extend Subscription Period</h3>
-            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Add extra days to <strong>{selectedSub.company?.name}</strong>. Current expiration: <strong>{new Date(selectedSub.currentPeriodEnd).toLocaleDateString()}</strong>.
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '24px' }}>
-              {[14, 30, 90, 365].map((days) => (
-                <button
-                  type="button"
-                  key={days}
-                  onClick={() => setExtendDays(days)}
-                  style={{
-                    padding: '10px 4px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    border: extendDays === days ? '2px solid #10b981' : '1px solid var(--border-main)',
-                    background: extendDays === days ? 'rgba(16, 185, 129, 0.2)' : 'var(--surface-subtle)',
-                    color: extendDays === days ? '#34d399' : 'var(--text-main)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  +{days === 365 ? '1 Yr' : `${days}d`}
-                </button>
-              ))}
+        <div className={styles.modalOverlay} onClick={() => setShowExtendModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                <Clock size={18} style={{ color: '#818cf8' }} />
+                Extend Subscription Period
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setShowExtendModal(false)}
+                className={styles.modalCloseBtn}
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowExtendModal(false)}>
+            <div className={styles.modalBody}>
+              <p style={{ margin: 0, fontSize: '13.5px', color: '#94a3b8' }}>
+                Add extra duration days to <strong>{selectedSub.company?.name}</strong>. Current expiration: <strong>{new Date(selectedSub.currentPeriodEnd).toLocaleDateString()}</strong>.
+              </p>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Extension Amount</label>
+                <div className={styles.durationGrid}>
+                  {[14, 30, 90, 365].map((days) => (
+                    <button
+                      type="button"
+                      key={days}
+                      onClick={() => setExtendDays(days)}
+                      className={`${styles.durationOptionBtn} ${extendDays === days ? styles.durationOptionBtnActive : ''}`}
+                    >
+                      +{days === 365 ? '1 Yr' : `${days}d`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                onClick={() => setShowExtendModal(false)}
+                className={styles.modalCancelBtn}
+              >
                 Cancel
               </button>
               <button 
                 type="button" 
                 onClick={handleExtendSubscription} 
-                className="btn btn-primary" 
+                className={styles.modalSubmitBtn} 
                 disabled={submitting}
               >
                 {submitting ? 'Extending...' : `Confirm +${extendDays} Days`}
@@ -648,6 +763,6 @@ export default function SubscriptionsPage() {
           </div>
         </div>
       )}
-    </PageContainer>
+    </div>
   );
 }

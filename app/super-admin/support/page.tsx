@@ -1,12 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader/PageHeader';
 import { 
   Headphones, 
   Search, 
-  Filter, 
   RefreshCw, 
   Send, 
   MessageSquare, 
@@ -18,11 +15,13 @@ import {
   Building2, 
   User, 
   ShieldCheck,
-  ChevronRight,
-  Sparkles,
   Tag,
-  ArrowLeft
+  X,
+  Sparkles,
+  Layers,
+  FileText
 } from 'lucide-react';
+import styles from './support.module.css';
 
 interface SupportMessage {
   id: string;
@@ -103,7 +102,7 @@ export default function SuperAdminSupportPage() {
 
       const res = await fetch(`/api/system/support/tickets?${params.toString()}`);
       if (res.status === 401) {
-        window.location.href = '/login';
+        window.location.href = '/super-admin/login';
         return;
       }
       if (!res.ok) throw new Error('Failed to load tickets');
@@ -153,7 +152,7 @@ export default function SuperAdminSupportPage() {
 
       setMessages(prev => [...prev, data.message]);
       setReplyText('');
-      showToast('Reply dispatched to customer!', 'success');
+      showToast('Official response dispatched to customer!', 'success');
 
       // Refresh list to update status if auto-transitioned
       fetchTickets();
@@ -186,254 +185,323 @@ export default function SuperAdminSupportPage() {
     }
   };
 
-  const getPriorityBadge = (p: string) => {
+  const getPriorityBadgeStyle = (p: string) => {
     switch (p) {
       case 'URGENT':
-        return { bg: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)' };
+        return { background: 'rgba(239, 68, 68, 0.18)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.4)' };
       case 'HIGH':
-        return { bg: 'rgba(249, 115, 22, 0.2)', color: '#fb923c', border: '1px solid rgba(249, 115, 22, 0.4)' };
+        return { background: 'rgba(249, 115, 22, 0.18)', color: '#fb923c', border: '1px solid rgba(249, 115, 22, 0.35)' };
       case 'MEDIUM':
-        return { bg: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.3)' };
+        return { background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.3)' };
       default:
-        return { bg: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.3)' };
+        return { background: 'rgba(148, 163, 184, 0.12)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.25)' };
     }
   };
 
-  const getStatusBadge = (s: string) => {
+  const getStatusBadgeStyle = (s: string) => {
     switch (s) {
       case 'OPEN':
-        return { bg: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' };
+        return { background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.3)' };
       case 'IN_PROGRESS':
-        return { bg: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' };
+        return { background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' };
       case 'RESOLVED':
-        return { bg: 'rgba(16, 185, 129, 0.15)', color: '#34d399' };
+        return { background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)' };
       default:
-        return { bg: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8' };
+        return { background: 'rgba(100, 116, 139, 0.15)', color: '#94a3b8', border: '1px solid rgba(100, 116, 139, 0.25)' };
     }
   };
 
   return (
-    <PageContainer>
-      <PageHeader 
-        title="Super Admin Customer Support Desk" 
-        description="Central helpdesk for customer support queries across all tenant organizations. Respond to inquiries, track SLA, and resolve issues."
-      />
-
+    <div className={styles.pageContainer}>
       {/* Toast Notification */}
       {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          top: '24px',
-          right: '24px',
-          zIndex: 9999,
-          padding: '12px 20px',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          color: '#fff',
-          backgroundColor: toastMessage.type === 'success' ? '#10b981' : '#ef4444',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        }}>
+        <div 
+          className={styles.toast}
+          style={{ backgroundColor: toastMessage.type === 'success' ? '#10b981' : '#ef4444' }}
+        >
           {toastMessage.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>{toastMessage.text}</span>
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Metric Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
-            <MessageSquare size={24} />
+      {/* 1. Executive Mission Control Header */}
+      <section className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <div className={styles.liveBadgeRow}>
+            <div className={styles.livePulseDot} />
+            <span className={styles.liveBadgeText}>Master Helpdesk &amp; SLA Queue Active</span>
           </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Open Inquiries</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#60a5fa' }}>{metrics.open}</div>
-          </div>
+          <h1 className={styles.pageTitle}>
+            <Headphones size={26} style={{ color: '#c084fc' }} />
+            Super Admin Customer Support Desk
+          </h1>
+          <p className={styles.pageSubtitle}>
+            Central multi-tenant helpdesk: resolve tenant inquiries, track service SLA response metrics, and maintain cross-tenant operational support.
+          </p>
         </div>
 
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a855f7' }}>
-            <Clock size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>In Progress</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#c084fc' }}>{metrics.inProgress}</div>
-          </div>
+        <div className={styles.headerActions}>
+          <button 
+            type="button" 
+            onClick={fetchTickets} 
+            disabled={loading}
+            className={styles.refreshBtn}
+            title="Refresh Queue"
+          >
+            <RefreshCw size={15} className={loading ? styles.spinning : ''} />
+            <span>{loading ? 'Refreshing...' : 'Refresh Queue'}</span>
+          </button>
         </div>
+      </section>
 
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
-            <AlertTriangle size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Urgent Escalations</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#f87171' }}>{metrics.urgent}</div>
-          </div>
-        </div>
-
-        <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Resolved Tickets</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: '#34d399' }}>{metrics.resolved}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Split Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: selectedTicket ? '1fr 1.2fr' : '1fr', gap: '20px', transition: 'all 0.2s ease-in-out' }}>
-        
-        {/* Left / List View */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          {/* Controls */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
-              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search ticket # or subject..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px 8px 32px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-main)',
-                  background: 'var(--surface-subtle)',
-                  color: 'var(--text-main)',
-                  fontSize: '13px',
-                }}
-              />
+      {/* 2. KPI Metric Cards Grid */}
+      <section className={styles.kpiGrid}>
+        {/* Open Inquiries */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
+              <MessageSquare size={24} />
             </div>
+            <span className={styles.kpiBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
+              Queue
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Open Inquiries</span>
+            <span className={styles.kpiValue} style={{ color: '#60a5fa' }}>{metrics.open}</span>
+          </div>
+        </div>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: 'var(--text-main)', fontSize: '13px' }}
-            >
-              <option value="">All Statuses</option>
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="CLOSED">Closed</option>
-            </select>
+        {/* In Progress */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}>
+              <Clock size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
+              Investigating
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>In Progress</span>
+            <span className={styles.kpiValue} style={{ color: '#c084fc' }}>{metrics.inProgress}</span>
+          </div>
+        </div>
 
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: 'var(--text-main)', fontSize: '13px' }}
+        {/* Urgent Escalations */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>
+              <AlertTriangle size={24} />
+            </div>
+            <span 
+              className={styles.kpiBadge} 
+              style={{ 
+                background: metrics.urgent > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(100, 116, 139, 0.15)', 
+                color: metrics.urgent > 0 ? '#f87171' : '#94a3b8' 
+              }}
             >
-              <option value="">All Priorities</option>
-              <option value="URGENT">Urgent</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
+              {metrics.urgent > 0 ? 'Urgent Alert' : 'Normal'}
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Urgent Escalations</span>
+            <span className={styles.kpiValue} style={{ color: metrics.urgent > 0 ? '#f87171' : '#ffffff' }}>
+              {metrics.urgent}
+            </span>
+          </div>
+        </div>
+
+        {/* Resolved Tickets */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+              <CheckCircle2 size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+              Completed
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Resolved Tickets</span>
+            <span className={styles.kpiValue} style={{ color: '#34d399' }}>{metrics.resolved}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Main Split Helpdesk Workspace */}
+      <div className={`${styles.workspaceGrid} ${selectedTicket ? styles.workspaceGridSplit : ''}`}>
+        {/* Left Side: Ticket Queue & Filters */}
+        <section className={styles.mainCard}>
+          {/* Controls Bar */}
+          <div className={styles.controlsBar}>
+            <div className={styles.controlsLeft}>
+              {/* Search */}
+              <div className={styles.searchWrapper}>
+                <Search size={15} className={styles.searchIcon} />
+                <input
+                  type="text"
+                  placeholder="Search ticket # or subject..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={styles.searchInput}
+                />
+                {searchTerm && (
+                  <button 
+                    type="button" 
+                    onClick={() => setSearchTerm('')} 
+                    className={styles.clearSearchBtn}
+                    title="Clear search"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={styles.filterSelect}
+              >
+                <option value="">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+
+              {/* Priority Filter */}
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className={styles.filterSelect}
+              >
+                <option value="">All Priorities</option>
+                <option value="URGENT">Urgent</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Quick Filter Tabs */}
+          <div className={styles.filterTabsRow}>
+            <button
+              type="button"
+              onClick={() => { setStatusFilter(''); setPriorityFilter(''); }}
+              className={`${styles.filterTabBtn} ${statusFilter === '' && priorityFilter === '' ? styles.filterTabBtnActive : ''}`}
+            >
+              <Headphones size={13} />
+              <span>All ({tickets.length})</span>
+            </button>
 
             <button
-              className="btn btn-secondary"
-              onClick={fetchTickets}
-              title="Refresh tickets"
-              style={{ padding: '8px 12px' }}
+              type="button"
+              onClick={() => setStatusFilter('OPEN')}
+              className={`${styles.filterTabBtn} ${statusFilter === 'OPEN' ? styles.filterTabBtnActive : ''}`}
             >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <MessageSquare size={13} />
+              <span>Open ({metrics.open})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter('IN_PROGRESS')}
+              className={`${styles.filterTabBtn} ${statusFilter === 'IN_PROGRESS' ? styles.filterTabBtnActive : ''}`}
+            >
+              <Clock size={13} />
+              <span>In Progress ({metrics.inProgress})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPriorityFilter('URGENT')}
+              className={`${styles.filterTabBtn} ${priorityFilter === 'URGENT' ? styles.filterTabBtnActive : ''}`}
+            >
+              <AlertTriangle size={13} />
+              <span>Urgent ({metrics.urgent})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter('RESOLVED')}
+              className={`${styles.filterTabBtn} ${statusFilter === 'RESOLVED' ? styles.filterTabBtnActive : ''}`}
+            >
+              <CheckCircle2 size={13} />
+              <span>Resolved ({metrics.resolved})</span>
             </button>
           </div>
 
-          {/* Tickets List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', maxHeight: '680px' }}>
+          {/* Ticket List Stream */}
+          <div className={styles.ticketList}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px' }} />
-                <p style={{ margin: 0 }}>Loading support tickets...</p>
+              <div className={styles.emptyState}>
+                <RefreshCw size={24} className={styles.spinning} style={{ color: '#a855f7' }} />
+                <span>Loading support queue...</span>
               </div>
             ) : tickets.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
-                <Headphones size={48} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
-                <p style={{ margin: 0, fontWeight: 500 }}>No support tickets found.</p>
+              <div className={styles.emptyState}>
+                <Headphones size={48} style={{ opacity: 0.3 }} />
+                <p style={{ margin: 0, fontWeight: 600, fontSize: '15px', color: '#cbd5e1' }}>No support tickets found</p>
+                <span style={{ fontSize: '13px' }}>There are currently no customer inquiries matching this filter.</span>
               </div>
             ) : (
               tickets.map((t) => {
                 const isSelected = selectedTicket?.id === t.id;
-                const pStyle = getPriorityBadge(t.priority);
-                const sStyle = getStatusBadge(t.status);
+                const pStyle = getPriorityBadgeStyle(t.priority);
+                const sStyle = getStatusBadgeStyle(t.status);
 
                 return (
                   <div
                     key={t.id}
                     onClick={() => loadTicketDetail(t.id)}
-                    style={{
-                      padding: '16px',
-                      borderRadius: '10px',
-                      background: isSelected ? 'rgba(99, 102, 241, 0.12)' : 'var(--surface-subtle)',
-                      border: isSelected ? '1px solid #6366f1' : '1px solid var(--border-main)',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease-in-out',
-                    }}
+                    className={`${styles.ticketItem} ${isSelected ? styles.ticketItemActive : ''}`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'monospace', color: '#818cf8' }}>
-                          {t.ticketNumber}
+                    <div className={styles.ticketTopRow}>
+                      <div className={styles.ticketNumberGroup}>
+                        <span className={styles.ticketNumber}>
+                          #{t.ticketNumber || t.id.slice(-6)}
                         </span>
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: pStyle.bg,
-                          color: pStyle.color,
-                          border: pStyle.border,
-                        }}>
+                        <span className={styles.priorityTag} style={pStyle}>
                           {t.priority}
                         </span>
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: sStyle.bg,
-                          color: sStyle.color,
-                        }}>
+                        <span className={styles.statusTag} style={sStyle}>
                           {t.status.replace('_', ' ')}
                         </span>
                       </div>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        {new Date(t.updatedAt).toLocaleDateString()}
+
+                      <span className={styles.ticketDate}>
+                        {new Date(t.updatedAt || t.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: 600, color: 'var(--text-main)' }}>
+                    <h4 className={styles.ticketSubject}>
                       {t.subject}
                     </h4>
 
-                    <p style={{
-                      margin: '0 0 10px 0',
-                      fontSize: '13px',
-                      color: 'var(--text-muted)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
+                    <p className={styles.ticketDesc}>
                       {t.description}
                     </p>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <User size={12} /> {t.user?.name || 'Customer'}
+                    <div className={styles.ticketFooterRow}>
+                      <div className={styles.ticketUserMeta}>
+                        <span className={styles.ticketMetaItem}>
+                          <User size={13} style={{ color: '#94a3b8' }} /> 
+                          <span>{t.user?.name || 'Customer'}</span>
                         </span>
                         {t.company && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Building2 size={12} /> {t.company.name}
+                          <span className={styles.ticketMetaItem}>
+                            <Building2 size={13} style={{ color: '#94a3b8' }} /> 
+                            <span>{t.company.name}</span>
                           </span>
                         )}
                       </div>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <MessageSquare size={12} /> {t._count?.messages || 1}
+
+                      <span className={styles.ticketMetaItem}>
+                        <MessageSquare size={13} /> 
+                        <span>{t._count?.messages || 1} msgs</span>
                       </span>
                     </div>
                   </div>
@@ -441,57 +509,60 @@ export default function SuperAdminSupportPage() {
               })
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Right / Ticket Conversation Panel */}
+        {/* Right Side: Active Ticket Conversation & Reply Panel */}
         {selectedTicket && (
-          <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', height: '780px' }}>
+          <section className={styles.conversationCard}>
             {/* Thread Header */}
-            <div style={{ borderBottom: '1px solid var(--border-main)', paddingBottom: '16px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+            <div className={styles.threadHeader}>
+              <div className={styles.threadTopRow}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: '#818cf8' }}>
-                      {selectedTicket.ticketNumber}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: '#c084fc' }}>
+                      #{selectedTicket.ticketNumber || selectedTicket.id.slice(-6)}
                     </span>
-                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
-                      {selectedTicket.category}
+                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.06)', color: '#94a3b8', textTransform: 'uppercase' }}>
+                      {selectedTicket.category || 'GENERAL'}
                     </span>
                   </div>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+                  <h3 className={styles.threadTitle}>
                     {selectedTicket.subject}
                   </h3>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => setSelectedTicket(null)}
-                  className="btn btn-secondary"
-                  style={{ padding: '4px 8px', fontSize: '12px' }}
+                  className={styles.closePanelBtn}
                 >
                   Close Panel
                 </button>
               </div>
 
-              {/* Tenant & User details */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <User size={14} /> <strong>{selectedTicket.user?.name}</strong> ({selectedTicket.user?.email})
+              {/* User & Company Meta */}
+              <div className={styles.threadMetaRow}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <User size={14} style={{ color: '#60a5fa' }} /> 
+                  <strong>{selectedTicket.user?.name}</strong> ({selectedTicket.user?.email})
                 </span>
                 {selectedTicket.company && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Building2 size={14} /> {selectedTicket.company.name}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Building2 size={14} style={{ color: '#fbbf24' }} /> 
+                    <span>{selectedTicket.company.name}</span>
                   </span>
                 )}
               </div>
 
-              {/* Status and Priority controls */}
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>Status:</span>
+              {/* Status & Priority Quick Modifiers */}
+              <div className={styles.threadControlsRow}>
+                <div className={styles.controlGroup}>
+                  <span className={styles.controlLabel}>Status:</span>
                   <select
                     value={selectedTicket.status}
                     onChange={(e) => handleUpdateTicket(e.target.value, undefined)}
-                    style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: 'var(--text-main)', fontSize: '12px' }}
+                    className={styles.filterSelect}
+                    style={{ padding: '4px 8px', fontSize: '12px' }}
                   >
                     <option value="OPEN">Open</option>
                     <option value="IN_PROGRESS">In Progress</option>
@@ -500,12 +571,13 @@ export default function SuperAdminSupportPage() {
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>Priority:</span>
+                <div className={styles.controlGroup}>
+                  <span className={styles.controlLabel}>Priority:</span>
                   <select
                     value={selectedTicket.priority}
                     onChange={(e) => handleUpdateTicket(undefined, e.target.value)}
-                    style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-subtle)', color: 'var(--text-main)', fontSize: '12px' }}
+                    className={styles.filterSelect}
+                    style={{ padding: '4px 8px', fontSize: '12px' }}
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -515,21 +587,22 @@ export default function SuperAdminSupportPage() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => handleUpdateTicket('RESOLVED')}
-                  className="btn btn-secondary"
-                  style={{ padding: '4px 10px', fontSize: '12px', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)', marginLeft: 'auto' }}
+                  className={styles.resolveBtn}
                 >
-                  <CheckCircle size={13} style={{ marginRight: '4px' }} /> Mark Resolved
+                  <CheckCircle size={14} />
+                  <span>Mark Resolved</span>
                 </button>
               </div>
             </div>
 
-            {/* Conversation Messages */}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '6px' }}>
+            {/* Live Message Thread Stream */}
+            <div className={styles.messageStream}>
               {loadingTicketDetail ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px' }} />
-                  <p style={{ margin: 0 }}>Loading messages...</p>
+                <div className={styles.emptyState}>
+                  <RefreshCw size={20} className={styles.spinning} style={{ color: '#a855f7' }} />
+                  <span>Loading conversation stream...</span>
                 </div>
               ) : (
                 messages.map((m) => {
@@ -538,31 +611,19 @@ export default function SuperAdminSupportPage() {
                   return (
                     <div
                       key={m.id}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isSuper ? 'flex-end' : 'flex-start',
-                      }}
+                      className={isSuper ? styles.messageBubbleSuper : styles.messageBubbleCustomer}
                     >
-                      <div style={{
-                        maxWidth: '85%',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        background: isSuper ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25))' : 'var(--surface-subtle)',
-                        border: isSuper ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid var(--border-main)',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontSize: '12px' }}>
-                          <strong style={{ color: isSuper ? '#c084fc' : 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {isSuper && <ShieldCheck size={13} />}
-                            {m.senderName} {isSuper && '(Super Admin)'}
-                          </strong>
-                          <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
-                            {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '13px', lineHeight: '1.5', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
-                          {m.message}
-                        </div>
+                      <div className={styles.messageHeader}>
+                        <span className={isSuper ? styles.senderSuper : styles.senderCustomer}>
+                          {isSuper ? <ShieldCheck size={14} /> : <User size={13} />}
+                          <span>{m.senderName} {isSuper && '(Super Admin)'}</span>
+                        </span>
+                        <span className={styles.messageTime}>
+                          {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className={styles.messageBody}>
+                        {m.message}
                       </div>
                     </div>
                   );
@@ -570,46 +631,35 @@ export default function SuperAdminSupportPage() {
               )}
             </div>
 
-            {/* Reply Input Box */}
-            <form onSubmit={handleSendReply} style={{ marginTop: '16px', borderTop: '1px solid var(--border-main)', paddingTop: '16px' }}>
-              <div style={{ position: 'relative' }}>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Type your official Super Admin response..."
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-main)',
-                    background: 'var(--surface-subtle)',
-                    color: 'var(--text-main)',
-                    fontSize: '13px',
-                    resize: 'none',
-                    fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Press Send to notify the user and advance ticket to In Progress.
+            {/* Official Response Composer */}
+            <form onSubmit={handleSendReply} className={styles.replyComposer}>
+              <textarea
+                required
+                rows={3}
+                placeholder="Type your official Super Admin response..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                className={styles.replyTextarea}
+              />
+
+              <div className={styles.replyBottomBar}>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  Press Send to notify user and automatically transition ticket.
                 </span>
+
                 <button
                   type="submit"
-                  className="btn btn-primary"
                   disabled={sendingReply || !replyText.trim()}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  className={styles.replySendBtn}
                 >
                   <Send size={14} />
                   <span>{sendingReply ? 'Dispatching...' : 'Send Reply'}</span>
                 </button>
               </div>
             </form>
-          </div>
+          </section>
         )}
       </div>
-    </PageContainer>
+    </div>
   );
 }

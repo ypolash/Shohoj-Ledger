@@ -1,0 +1,48 @@
+.appShell {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--bg-main, #09090b);
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-left: 260px; /* Default open sidebar width */
+}
+
+/* When sidebar is collapsed on desktop */
+.mainWrapperCollapsed {
+  margin-left: 72px;
+}
+
+.mainContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 90;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Mobile Overrides */
+@media (max-width: 1023px) {
+  .mainWrapper {
+    margin-left: 0 !important;
+  }
+  .mainWrapperCollapsed {
+    margin-left: 0 !important;
+  }
+}

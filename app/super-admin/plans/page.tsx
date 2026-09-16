@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
 import {
   CRM_FEATURES,
   ERP_SYSTEM_MODULES,
@@ -22,7 +20,15 @@ import {
   AlertTriangle,
   Users,
   CheckCircle2,
+  XCircle,
+  DollarSign,
+  Search,
+  Sliders,
+  CheckSquare,
+  Square,
+  Building2,
 } from "lucide-react";
+import styles from "./plans.module.css";
 
 interface SubscriptionPlanItem {
   id: string;
@@ -41,6 +47,11 @@ interface SubscriptionPlanItem {
 export default function PlansPage() {
   const [plans, setPlans] = useState<SubscriptionPlanItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [cycleFilter, setCycleFilter] = useState("");
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -101,7 +112,6 @@ export default function PlansPage() {
     setBillingCycle("MONTHLY");
     setIsUnlimitedUsers(false);
     setMaxUsers(10);
-    // By default, pre-select Full CRM suite for smooth initial flow
     setSelectedFeatures(FEATURE_PRESETS.FULL_CRM.keys);
     setPlanStatus("ACTIVE");
     setActiveTab("CRM");
@@ -130,10 +140,19 @@ export default function PlansPage() {
   };
 
   const applyPreset = (keys: string[]) => {
-    // Preserve any existing non-CRM modules if selecting CRM preset
     const erpKeys = selectedFeatures.filter((k) => k.startsWith("mod_"));
     const newKeys = Array.from(new Set([...keys, ...erpKeys]));
     setSelectedFeatures(newKeys);
+  };
+
+  const applyAllErp = () => {
+    const allErpKeys = ERP_SYSTEM_MODULES.map((m) => m.key);
+    const crmKeys = selectedFeatures.filter((k) => k.startsWith("crm_"));
+    setSelectedFeatures(Array.from(new Set([...crmKeys, ...allErpKeys])));
+  };
+
+  const clearAllFeatures = () => {
+    setSelectedFeatures([]);
   };
 
   const handleSavePlan = async (e: React.FormEvent) => {
@@ -155,7 +174,6 @@ export default function PlansPage() {
       };
 
       if (editingPlan) {
-        // Update existing plan
         const res = await fetch("/api/system/plans", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -165,7 +183,6 @@ export default function PlansPage() {
         if (!res.ok) throw new Error(data.error || "Failed to update plan");
         showToast("Subscription plan updated successfully!");
       } else {
-        // Create new plan
         const res = await fetch("/api/system/plans", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -188,6 +205,10 @@ export default function PlansPage() {
 
   const handleUpdateStatus = async (planId: string, newStatus: string) => {
     try {
+      setPlans((prev) =>
+        prev.map((p) => (p.id === planId ? { ...p, status: newStatus } : p))
+      );
+
       const res = await fetch("/api/system/plans", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -197,13 +218,11 @@ export default function PlansPage() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to update status");
       }
-      setPlans((prev) =>
-        prev.map((p) => (p.id === planId ? { ...p, status: newStatus } : p))
-      );
       showToast(`Plan marked as ${newStatus}`);
     } catch (error: any) {
       console.error(error);
       showToast(error.message || "Failed to update plan status", "error");
+      fetchPlans();
     }
   };
 
@@ -228,292 +247,326 @@ export default function PlansPage() {
     }
   };
 
-  const selectedCrmCount = selectedFeatures.filter((k) => k.startsWith("crm_")).length;
-  const isAllCrmSelected = selectedCrmCount === CRM_FEATURES.length;
+  // Metrics
+  const totalPlans = plans.length;
+  const activePlans = plans.filter((p) => p.status === "ACTIVE").length;
+  const totalSubscribers = plans.reduce((sum, p) => sum + (p._count?.subscriptions || 0), 0);
+  const avgPrice = totalPlans > 0 ? (plans.reduce((sum, p) => sum + p.price, 0) / totalPlans).toFixed(2) : "0.00";
+
+  // Filtered plans
+  const filteredPlans = plans.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.features?.some((f) => f.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesStatus = !statusFilter || p.status === statusFilter;
+    const matchesCycle = !cycleFilter || p.billingCycle === cycleFilter;
+
+    return matchesSearch && matchesStatus && matchesCycle;
+  });
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Subscription Plans & Feature Manager"
-        description="Build custom subscription pricing tiers and choose which CRM features & system modules are enabled for each plan."
-      />
-
-      {/* Notification Toast */}
+    <div className={styles.pageContainer}>
+      {/* Toast Notification */}
       {toastMessage && (
         <div
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            zIndex: 9999,
-            padding: "12px 20px",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            fontSize: "14px",
-            fontWeight: 500,
-            boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-            background: toastMessage.type === "success" ? "#064e3b" : "#7f1d1d",
-            color: toastMessage.type === "success" ? "#34d399" : "#fca5a5",
-            border: `1px solid ${toastMessage.type === "success" ? "#059669" : "#dc2626"}`,
-            animation: "fadeIn 0.2s ease-out",
-          }}
+          className={styles.toast}
+          style={{ backgroundColor: toastMessage.type === "success" ? "#10b981" : "#ef4444" }}
         >
-          {toastMessage.type === "success" ? <Check size={18} /> : <AlertTriangle size={18} />}
+          {toastMessage.type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
           <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Main Glass Card */}
-      <div className="glass-card" style={{ padding: "var(--spacing-6)", marginTop: "var(--spacing-4)" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "12px",
-            marginBottom: "var(--spacing-5)",
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "var(--text-main)" }}>
-              Active SaaS Plans ({plans.length})
-            </h2>
-            <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
-              Configure feature access, user limits, and billing frequencies for your subscribers.
-            </p>
+      {/* 1. Executive Mission Control Header Card */}
+      <section className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <div className={styles.liveBadgeRow}>
+            <div className={styles.livePulseDot} />
+            <span className={styles.liveBadgeText}>Subscription Tier Engine &amp; Entitlement Matrix Active</span>
           </div>
+          <h1 className={styles.pageTitle}>
+            <Sparkles size={26} style={{ color: "#c084fc" }} />
+            Subscription Plans &amp; Feature Manager
+          </h1>
+          <p className={styles.pageSubtitle}>
+            Build custom subscription pricing tiers, set user seat thresholds, and configure granular CRM features and ERP system modules enabled for each tier.
+          </p>
+        </div>
 
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button className="btn btn-secondary" onClick={fetchPlans} disabled={loading} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <RefreshCw size={15} className={loading ? "animate-spin" : ""} /> Refresh
-            </button>
-            <button className="btn btn-primary" onClick={openCreateModal} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <Plus size={16} /> Create New Plan
-            </button>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            onClick={fetchPlans}
+            disabled={loading}
+            className={styles.refreshBtn}
+            title="Refresh Plans"
+          >
+            <RefreshCw size={15} className={loading ? styles.spinning : ""} />
+            <span>{loading ? "Refreshing..." : "Refresh Plans"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className={styles.primaryActionBtn}
+          >
+            <Plus size={16} />
+            <span>Create New Plan</span>
+          </button>
+        </div>
+      </section>
+
+      {/* 2. KPI Metric Cards Grid */}
+      <section className={styles.kpiGrid}>
+        {/* Total Plans */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc" }}>
+              <Layers size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc" }}>
+              Tiers
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Configured Plans</span>
+            <span className={styles.kpiValue} style={{ color: "#c084fc" }}>{totalPlans}</span>
           </div>
         </div>
 
+        {/* Active Tiers */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#10b981" }}>
+              <ShieldCheck size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
+              Live
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Active Plans</span>
+            <span className={styles.kpiValue} style={{ color: "#34d399" }}>{activePlans}</span>
+          </div>
+        </div>
+
+        {/* Subscribed Companies */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6" }}>
+              <Building2 size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa" }}>
+              Tenants
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Subscribed Tenants</span>
+            <span className={styles.kpiValue} style={{ color: "#60a5fa" }}>{totalSubscribers}</span>
+          </div>
+        </div>
+
+        {/* Average Tier Price */}
+        <div className={styles.kpiCard}>
+          <div className={styles.kpiCardTop}>
+            <div className={styles.kpiIconBox} style={{ background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b" }}>
+              <DollarSign size={24} />
+            </div>
+            <span className={styles.kpiBadge} style={{ background: "rgba(245, 158, 11, 0.15)", color: "#fbbf24" }}>
+              Pricing
+            </span>
+          </div>
+          <div className={styles.kpiBody}>
+            <span className={styles.kpiLabel}>Average Tier Price</span>
+            <span className={styles.kpiValue} style={{ color: "#fbbf24" }}>${avgPrice}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Main Card & Data Controls */}
+      <section className={styles.mainCard}>
+        {/* Controls Bar */}
+        <div className={styles.controlsBar}>
+          <div className={styles.controlsLeft}>
+            {/* Search Input */}
+            <div className={styles.searchWrapper}>
+              <Search size={15} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search plans by name or features..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={styles.searchInput}
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className={styles.clearSearchBtn}
+                  title="Clear search"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={styles.filterSelect}
+            >
+              <option value="">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+
+            {/* Billing Cycle Filter */}
+            <select
+              value={cycleFilter}
+              onChange={(e) => setCycleFilter(e.target.value)}
+              className={styles.filterSelect}
+            >
+              <option value="">All Cycles</option>
+              <option value="MONTHLY">Monthly</option>
+              <option value="YEARLY">Yearly</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Quick Filter Tabs */}
+        <div className={styles.filterTabsRow}>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter(""); setCycleFilter(""); }}
+            className={`${styles.filterTabBtn} ${statusFilter === "" && cycleFilter === "" ? styles.filterTabBtnActive : ""}`}
+          >
+            <Layers size={13} />
+            <span>All Tiers ({totalPlans})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("ACTIVE")}
+            className={`${styles.filterTabBtn} ${statusFilter === "ACTIVE" ? styles.filterTabBtnActive : ""}`}
+          >
+            <CheckCircle2 size={13} />
+            <span>Active ({activePlans})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter("INACTIVE")}
+            className={`${styles.filterTabBtn} ${statusFilter === "INACTIVE" ? styles.filterTabBtnActive : ""}`}
+          >
+            <AlertTriangle size={13} />
+            <span>Inactive ({plans.filter((p) => p.status === "INACTIVE").length})</span>
+          </button>
+        </div>
+
         {/* Plans Table */}
-        <div className="table-responsive">
-          <table className="table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+        <div className={styles.tableContainer}>
+          <table className={styles.plansTable}>
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--border-main)", background: "var(--surface-subtle)" }}>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)" }}>Plan & Cycle</th>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)" }}>Pricing</th>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)" }}>User Limit</th>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)" }}>Features Included</th>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)" }}>Subscribers</th>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)" }}>Status</th>
-                <th style={{ padding: "14px 16px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)", textAlign: "right" }}>Actions</th>
+              <tr>
+                <th>Plan &amp; Cycle</th>
+                <th>Pricing</th>
+                <th>User Limit</th>
+                <th>Features Included</th>
+                <th>Subscribers</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "48px", color: "var(--text-muted)" }}>
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "10px" }}>
-                      <RefreshCw size={20} className="animate-spin" />
+                  <td colSpan={7}>
+                    <div className={styles.emptyState}>
+                      <RefreshCw size={24} className={styles.spinning} style={{ color: "#c084fc" }} />
                       <span>Loading subscription plans...</span>
                     </div>
                   </td>
                 </tr>
-              ) : plans.length === 0 ? (
+              ) : filteredPlans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "48px 16px", color: "var(--text-muted)" }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                      <div
-                        style={{
-                          width: "56px",
-                          height: "56px",
-                          borderRadius: "16px",
-                          background: "var(--surface-subtle)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        <Layers size={28} />
-                      </div>
-                      <p style={{ margin: 0, fontWeight: 500, color: "var(--text-main)" }}>No pricing plans found</p>
-                      <p style={{ margin: 0, fontSize: "13px", maxWidth: "340px" }}>
-                        Create your first subscription plan and pick which CRM features are included.
-                      </p>
-                      <button className="btn btn-primary" onClick={openCreateModal} style={{ marginTop: "8px" }}>
-                        <Plus size={16} /> Create Plan
-                      </button>
+                  <td colSpan={7}>
+                    <div className={styles.emptyState}>
+                      <Layers size={48} style={{ opacity: 0.3 }} />
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: "15px", color: "#cbd5e1" }}>No subscription plans found</p>
+                      <span style={{ fontSize: "13px" }}>Create your first tier or adjust your search filter.</span>
                     </div>
                   </td>
                 </tr>
               ) : (
-                plans.map((plan) => {
-                  const planFeatures = plan.features || [];
-                  const crmCount = planFeatures.filter((k) => k.startsWith("crm_")).length;
-                  const isFullCrm = crmCount === CRM_FEATURES.length;
-                  const activeSubCount = plan._count?.subscriptions || 0;
+                filteredPlans.map((plan) => {
+                  const crmFeaturesCount = (plan.features || []).filter((f) => f.startsWith("crm_")).length;
+                  const erpModulesCount = (plan.features || []).filter((f) => f.startsWith("mod_")).length;
+                  const previewFeatures = (plan.features || []).slice(0, 3);
+                  const remainingCount = Math.max(0, (plan.features || []).length - 3);
 
                   return (
-                    <tr
-                      key={plan.id}
-                      style={{
-                        borderBottom: "1px solid var(--border-main)",
-                        transition: "background 0.15s ease",
-                      }}
-                      className="table-row-hover"
-                    >
-                      {/* Name & Cycle */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div
-                            style={{
-                              width: "36px",
-                              height: "36px",
-                              borderRadius: "10px",
-                              background: "rgba(99, 102, 241, 0.12)",
-                              border: "1px solid rgba(99, 102, 241, 0.25)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "var(--primary, #6366f1)",
-                            }}
-                          >
-                            <Sparkles size={18} />
+                    <tr key={plan.id} className={styles.planRow}>
+                      {/* Plan & Cycle */}
+                      <td>
+                        <div className={styles.planIdentityCell}>
+                          <div className={styles.planIconBox}>
+                            <Sparkles size={20} />
                           </div>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: "14px", color: "var(--text-main)" }}>
-                              {plan.name}
-                            </div>
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                                background: "var(--surface-subtle)",
-                                color: "var(--text-muted)",
-                                textTransform: "uppercase",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {plan.billingCycle}
-                            </span>
+                          <div className={styles.planInfoText}>
+                            <span className={styles.planName}>{plan.name}</span>
+                            <span className={styles.billingCycleBadge}>{plan.billingCycle}</span>
                           </div>
                         </div>
                       </td>
 
-                      {/* Price */}
-                      <td style={{ padding: "14px 16px", fontWeight: 600, fontSize: "14px", color: "var(--text-main)" }}>
-                        ${Number(plan.price).toFixed(2)}
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 400 }}>
-                          /{plan.billingCycle === "YEARLY" ? "yr" : "mo"}
+                      {/* Pricing */}
+                      <td>
+                        <span className={styles.priceDisplay}>${plan.price.toFixed(2)}</span>
+                        <span className={styles.priceCycle}>/{plan.billingCycle === "YEARLY" ? "yr" : "mo"}</span>
+                      </td>
+
+                      {/* User Limit */}
+                      <td>
+                        <span className={styles.userLimitBadge}>
+                          <Users size={14} style={{ color: "#a855f7" }} />
+                          <span>{plan.maxUsers ? `${plan.maxUsers} Users` : "Unlimited Users"}</span>
                         </span>
                       </td>
 
-                      {/* Max Users */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", color: "var(--text-main)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <Users size={14} style={{ color: "var(--text-muted)" }} />
-                          <span>{plan.maxUsers ? `${plan.maxUsers} Users` : "Unlimited"}</span>
-                        </div>
-                      </td>
-
                       {/* Features Included */}
-                      <td style={{ padding: "14px 16px", maxWidth: "340px" }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                            {isFullCrm ? (
-                              <span
-                                style={{
-                                  fontSize: "11px",
-                                  padding: "3px 8px",
-                                  borderRadius: "12px",
-                                  fontWeight: 600,
-                                  background: "rgba(16, 185, 129, 0.15)",
-                                  color: "#10b981",
-                                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                }}
-                              >
-                                <CheckCircle2 size={12} /> Full CRM Suite ({crmCount}/7)
-                              </span>
-                            ) : crmCount > 0 ? (
-                              <span
-                                style={{
-                                  fontSize: "11px",
-                                  padding: "3px 8px",
-                                  borderRadius: "12px",
-                                  fontWeight: 600,
-                                  background: "rgba(99, 102, 241, 0.15)",
-                                  color: "#818cf8",
-                                  border: "1px solid rgba(99, 102, 241, 0.3)",
-                                }}
-                              >
-                                {crmCount} CRM Feature{crmCount > 1 ? "s" : ""}
+                      <td>
+                        <div className={styles.featuresList}>
+                          <div className={styles.featurePillRow}>
+                            {crmFeaturesCount > 0 ? (
+                              <span className={styles.featureCountTag} style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", borderColor: "rgba(168, 85, 247, 0.3)" }}>
+                                +{crmFeaturesCount} CRM
                               </span>
                             ) : (
-                              <span
-                                style={{
-                                  fontSize: "11px",
-                                  padding: "3px 8px",
-                                  borderRadius: "12px",
-                                  background: "rgba(239, 68, 68, 0.1)",
-                                  color: "#f87171",
-                                }}
-                              >
+                              <span className={styles.featureCountTag} style={{ background: "rgba(239, 68, 68, 0.1)", color: "#f87171", borderColor: "rgba(239, 68, 68, 0.25)" }}>
                                 No CRM Features
                               </span>
                             )}
-
-                            {planFeatures.length > crmCount && (
-                              <span
-                                style={{
-                                  fontSize: "11px",
-                                  padding: "3px 8px",
-                                  borderRadius: "12px",
-                                  background: "rgba(245, 158, 11, 0.15)",
-                                  color: "#fbbf24",
-                                  border: "1px solid rgba(245, 158, 11, 0.3)",
-                                }}
-                              >
-                                +{planFeatures.length - crmCount} ERP
+                            {erpModulesCount > 0 && (
+                              <span className={styles.featureCountTag} style={{ background: "rgba(245, 158, 11, 0.15)", color: "#fbbf24", borderColor: "rgba(245, 158, 11, 0.3)" }}>
+                                +{erpModulesCount} ERP
                               </span>
                             )}
                           </div>
 
-                          {/* Feature tags previews */}
-                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                            {planFeatures.slice(0, 3).map((fKey) => {
-                              const fDef = getFeatureByKey(fKey);
+                          <div className={styles.featurePillRow}>
+                            {previewFeatures.map((fKey) => {
+                              const feat = getFeatureByKey(fKey);
                               return (
-                                <span
-                                  key={fKey}
-                                  style={{
-                                    fontSize: "10px",
-                                    padding: "2px 6px",
-                                    borderRadius: "4px",
-                                    background: "var(--surface-subtle)",
-                                    color: "var(--text-muted)",
-                                  }}
-                                >
-                                  {fDef ? fDef.name.replace(" & Metrics", "").replace(" & Kanban Pipeline", "") : fKey}
+                                <span key={fKey} className={styles.featureTag}>
+                                  • {feat ? feat.name : fKey}
                                 </span>
                               );
                             })}
-                            {planFeatures.length > 3 && (
-                              <span
-                                style={{
-                                  fontSize: "10px",
-                                  padding: "2px 5px",
-                                  borderRadius: "4px",
-                                  background: "var(--surface-subtle)",
-                                  color: "var(--text-muted)",
-                                }}
-                              >
-                                +{planFeatures.length - 3} more
+                            {remainingCount > 0 && (
+                              <span className={styles.featureTag} style={{ color: "#a855f7", fontWeight: 600 }}>
+                                +{remainingCount} more
                               </span>
                             )}
                           </div>
@@ -521,81 +574,50 @@ export default function PlansPage() {
                       </td>
 
                       {/* Subscribers */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", color: "var(--text-main)" }}>
-                        <span
-                          style={{
-                            fontWeight: 600,
-                            padding: "3px 8px",
-                            borderRadius: "6px",
-                            background: activeSubCount > 0 ? "rgba(59, 130, 246, 0.12)" : "var(--surface-subtle)",
-                            color: activeSubCount > 0 ? "#60a5fa" : "var(--text-muted)",
-                          }}
-                        >
-                          {activeSubCount} {activeSubCount === 1 ? "Company" : "Companies"}
+                      <td>
+                        <span className={styles.subscribersBadge}>
+                          <Building2 size={13} />
+                          <span>{plan._count?.subscriptions || 0} Compan{plan._count?.subscriptions === 1 ? "y" : "ies"}</span>
                         </span>
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <select
-                          value={plan.status}
-                          onChange={(e) => handleUpdateStatus(plan.id, e.target.value)}
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: "6px",
-                            border: `1px solid ${
-                              plan.status === "ACTIVE" ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)"
-                            }`,
-                            background: plan.status === "ACTIVE" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                            color: plan.status === "ACTIVE" ? "#34d399" : "#f87171",
-                            fontWeight: 600,
-                            fontSize: "12px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <option value="ACTIVE" style={{ background: "#18181b", color: "#fff" }}>ACTIVE</option>
-                          <option value="ARCHIVED" style={{ background: "#18181b", color: "#fff" }}>ARCHIVED</option>
-                        </select>
+                      <td>
+                        <span className={`${styles.statusPill} ${plan.status === "ACTIVE" ? styles.statusActive : styles.statusInactive}`}>
+                          <div className={styles.statusDot} />
+                          <span>{plan.status}</span>
+                        </span>
                       </td>
 
                       {/* Actions */}
-                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                      <td>
+                        <div className={styles.actionsGroup}>
+                          <select
+                            value={plan.status}
+                            onChange={(e) => handleUpdateStatus(plan.id, e.target.value)}
+                            className={styles.statusActionSelect}
+                          >
+                            <option value="ACTIVE">Set Active</option>
+                            <option value="INACTIVE">Set Inactive</option>
+                          </select>
+
                           <button
+                            type="button"
                             onClick={() => openEditModal(plan)}
-                            title="Edit Plan & Features"
-                            style={{
-                              padding: "6px 10px",
-                              borderRadius: "6px",
-                              border: "1px solid var(--border-main)",
-                              background: "var(--surface-subtle)",
-                              color: "var(--text-main)",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "12px",
-                            }}
+                            className={styles.iconEditBtn}
+                            title="Edit Plan"
                           >
                             <Edit3 size={13} />
                             <span>Edit</span>
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => setPlanToDelete(plan)}
+                            className={styles.iconDeleteBtn}
                             title="Delete Plan"
-                            style={{
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid rgba(239, 68, 68, 0.2)",
-                              background: "rgba(239, 68, 68, 0.08)",
-                              color: "#f87171",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
@@ -606,626 +628,249 @@ export default function PlansPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* Plan Creator / Editor Modal */}
+      {/* 4. Plan Customizer Modal (Create & Edit) */}
       {showModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            padding: "20px",
-          }}
-        >
-          <div
-            className="glass-card"
-            style={{
-              width: "100%",
-              maxWidth: "760px",
-              maxHeight: "90vh",
-              display: "flex",
-              flexDirection: "column",
-              borderRadius: "16px",
-              border: "1px solid var(--border-main)",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
-              background: "#0f172a",
-              overflow: "hidden",
-            }}
-          >
-            {/* Modal Header */}
-            <div
-              style={{
-                padding: "20px 24px",
-                borderBottom: "1px solid var(--border-main)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                background: "rgba(30, 41, 59, 0.5)",
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#fff" }}>
-                  {editingPlan ? `Edit Plan: ${editingPlan.name}` : "Create New Subscription Plan"}
-                </h3>
-                <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
-                  Configure pricing, limits, and select which CRM features are included.
-                </p>
-              </div>
+        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                <Sparkles size={18} style={{ color: "#c084fc" }} />
+                <span>{editingPlan ? "Edit Subscription Plan" : "Create New Subscription Plan"}</span>
+              </h3>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  padding: "4px",
-                  display: "flex",
-                }}
+                className={styles.modalCloseBtn}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Modal Body - Scrollable Form */}
-            <form onSubmit={handleSavePlan} style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
-              <div style={{ padding: "24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "20px" }}>
-                
-                {/* Basic Details Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                  {/* Plan Name */}
-                  <div>
-                    <label style={{ display: "block", marginBottom: "6px", fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>
-                      Plan Name <span style={{ color: "#f87171" }}>*</span>
-                    </label>
+            <form onSubmit={handleSavePlan}>
+              <div className={styles.modalScrollBody}>
+                {/* Basic Details */}
+                <div className={styles.formGridTwoCol}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Plan Name *</label>
                     <input
-                      required
                       type="text"
-                      placeholder="e.g. Sales Pro CRM, Enterprise Tier"
+                      required
+                      placeholder="e.g. Enterprise Ultimate"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "9px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--border-main)",
-                        background: "var(--surface-subtle)",
-                        color: "#fff",
-                        fontSize: "14px",
-                      }}
+                      className={styles.formInput}
                     />
                   </div>
 
-                  {/* Price */}
-                  <div>
-                    <label style={{ display: "block", marginBottom: "6px", fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>
-                      Price (USD $) <span style={{ color: "#f87171" }}>*</span>
-                    </label>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Price (USD) *</label>
                     <input
-                      required
                       type="number"
                       step="0.01"
                       min="0"
+                      required
                       value={price}
-                      onChange={(e) => setPrice(e.target.value === "" ? "" : parseFloat(e.target.value))}
-                      style={{
-                        width: "100%",
-                        padding: "9px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--border-main)",
-                        background: "var(--surface-subtle)",
-                        color: "#fff",
-                        fontSize: "14px",
-                      }}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className={styles.formInput}
                     />
                   </div>
+                </div>
 
-                  {/* Billing Cycle */}
-                  <div>
-                    <label style={{ display: "block", marginBottom: "6px", fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>
-                      Billing Cycle
-                    </label>
+                <div className={styles.formGridTwoCol}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Billing Frequency</label>
                     <select
                       value={billingCycle}
                       onChange={(e) => setBillingCycle(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "9px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--border-main)",
-                        background: "var(--surface-subtle)",
-                        color: "#fff",
-                        fontSize: "14px",
-                      }}
+                      className={styles.formInput}
                     >
                       <option value="MONTHLY">Monthly</option>
                       <option value="YEARLY">Yearly</option>
-                      <option value="QUARTERLY">Quarterly</option>
-                      <option value="LIFETIME">Lifetime / One-time</option>
                     </select>
                   </div>
 
-                  {/* Max Users / Seats */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                      <label style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>
-                        User Limit
-                      </label>
-                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--text-muted)", cursor: "pointer" }}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>User Seat Limit</label>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <input
+                        type="number"
+                        min="1"
+                        disabled={isUnlimitedUsers}
+                        value={maxUsers}
+                        onChange={(e) => setMaxUsers(e.target.value)}
+                        className={styles.formInput}
+                        style={{ flex: 1, opacity: isUnlimitedUsers ? 0.4 : 1 }}
+                      />
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#cbd5e1", cursor: "pointer", whiteSpace: "nowrap" }}>
                         <input
                           type="checkbox"
                           checked={isUnlimitedUsers}
                           onChange={(e) => setIsUnlimitedUsers(e.target.checked)}
+                          style={{ accentColor: "#a855f7" }}
                         />
                         Unlimited
                       </label>
                     </div>
-                    <input
-                      disabled={isUnlimitedUsers}
-                      type="number"
-                      min="1"
-                      placeholder={isUnlimitedUsers ? "Unlimited users allowed" : "Number of user seats"}
-                      value={isUnlimitedUsers ? "" : maxUsers}
-                      onChange={(e) => setMaxUsers(e.target.value === "" ? "" : parseInt(e.target.value, 10))}
-                      style={{
-                        width: "100%",
-                        padding: "9px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--border-main)",
-                        background: isUnlimitedUsers ? "rgba(255,255,255,0.04)" : "var(--surface-subtle)",
-                        color: isUnlimitedUsers ? "var(--text-muted)" : "#fff",
-                        fontSize: "14px",
-                        opacity: isUnlimitedUsers ? 0.6 : 1,
-                      }}
-                    />
                   </div>
                 </div>
 
-                {/* FEATURE SELECTOR SECTION */}
-                <div
-                  style={{
-                    border: "1px solid var(--border-main)",
-                    borderRadius: "12px",
-                    padding: "16px",
-                    background: "rgba(15, 23, 42, 0.6)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "14px" }}>
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Sparkles size={16} style={{ color: "#a855f7" }} />
-                        CRM & System Features Included in Plan
-                      </h4>
-                      <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                        Companies subscribed to this plan will only get access to the features checked below.
-                      </p>
-                    </div>
-
-                    {/* Feature selection tabs */}
-                    <div style={{ display: "flex", gap: "6px", background: "rgba(0,0,0,0.3)", padding: "3px", borderRadius: "8px" }}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab("CRM")}
-                        style={{
-                          padding: "5px 12px",
-                          borderRadius: "6px",
-                          border: "none",
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          background: activeTab === "CRM" ? "var(--primary, #6366f1)" : "transparent",
-                          color: activeTab === "CRM" ? "#fff" : "var(--text-muted)",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        CRM Features ({selectedCrmCount}/7)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab("ERP")}
-                        style={{
-                          padding: "5px 12px",
-                          borderRadius: "6px",
-                          border: "none",
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          background: activeTab === "ERP" ? "var(--primary, #6366f1)" : "transparent",
-                          color: activeTab === "ERP" ? "#fff" : "var(--text-muted)",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        Additional ERP Modules ({selectedFeatures.filter(k => k.startsWith("mod_")).length})
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Preset Quick Actions */}
-                  {activeTab === "CRM" && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        flexWrap: "wrap",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        background: "var(--surface-subtle)",
-                        marginBottom: "14px",
-                      }}
+                {/* One-Click Presets */}
+                <div className={styles.presetSection}>
+                  <span className={styles.presetTitle}>One-Click Feature Presets</span>
+                  <div className={styles.presetBtnsRow}>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset(FEATURE_PRESETS.FULL_CRM.keys)}
+                      className={styles.presetBtn}
                     >
-                      <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)" }}>
-                        Presets:
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => applyPreset(FEATURE_PRESETS.FULL_CRM.keys)}
-                        style={{
-                          fontSize: "11px",
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid rgba(99, 102, 241, 0.4)",
-                          background: isAllCrmSelected ? "rgba(99, 102, 241, 0.2)" : "transparent",
-                          color: "#818cf8",
-                          cursor: "pointer",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Full CRM Suite (All 7)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyPreset(FEATURE_PRESETS.SALES_PIPELINE.keys)}
-                        style={{
-                          fontSize: "11px",
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--border-main)",
-                          background: "transparent",
-                          color: "var(--text-main)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Sales Pipeline
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyPreset(FEATURE_PRESETS.BASIC_CRM.keys)}
-                        style={{
-                          fontSize: "11px",
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--border-main)",
-                          background: "transparent",
-                          color: "var(--text-main)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Basic CRM
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFeatures(prev => prev.filter(k => !k.startsWith("crm_")))}
-                        style={{
-                          fontSize: "11px",
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          border: "none",
-                          background: "transparent",
-                          color: "#f87171",
-                          cursor: "pointer",
-                          marginLeft: "auto",
-                        }}
-                      >
-                        Clear CRM
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Feature Cards Grid */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                      gap: "10px",
-                      maxHeight: "260px",
-                      overflowY: "auto",
-                      paddingRight: "4px",
-                    }}
-                  >
-                    {(activeTab === "CRM" ? CRM_FEATURES : ERP_SYSTEM_MODULES).map((feat) => {
-                      const isChecked = selectedFeatures.includes(feat.key);
-                      return (
-                        <div
-                          key={feat.key}
-                          onClick={() => handleToggleFeature(feat.key)}
-                          style={{
-                            padding: "12px",
-                            borderRadius: "10px",
-                            border: `1px solid ${
-                              isChecked ? "var(--primary, #6366f1)" : "var(--border-main)"
-                            }`,
-                            background: isChecked
-                              ? "rgba(99, 102, 241, 0.12)"
-                              : "var(--surface-subtle)",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: "10px",
-                            position: "relative",
-                          }}
-                        >
-                          <div
-                            style={{
-                              marginTop: "2px",
-                              width: "18px",
-                              height: "18px",
-                              borderRadius: "4px",
-                              border: `1.5px solid ${isChecked ? "var(--primary, #6366f1)" : "var(--text-muted)"}`,
-                              background: isChecked ? "var(--primary, #6366f1)" : "transparent",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#fff",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {isChecked && <Check size={13} strokeWidth={3} />}
-                          </div>
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span
-                                className="material-symbols-outlined"
-                                style={{
-                                  fontSize: "16px",
-                                  color: isChecked ? "var(--primary, #818cf8)" : "var(--text-muted)",
-                                }}
-                              >
-                                {feat.icon}
-                              </span>
-                              <span
-                                style={{
-                                  fontWeight: 600,
-                                  fontSize: "13px",
-                                  color: isChecked ? "#fff" : "var(--text-main)",
-                                }}
-                              >
-                                {feat.name}
-                              </span>
-                            </div>
-                            <p
-                              style={{
-                                margin: "4px 0 0 0",
-                                fontSize: "11px",
-                                color: "var(--text-muted)",
-                                lineHeight: "1.4",
-                              }}
-                            >
-                              {feat.description}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Bottom Counter */}
-                  <div
-                    style={{
-                      marginTop: "12px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      fontSize: "12px",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    <span>
-                      Total selected:{" "}
-                      <strong style={{ color: "#fff" }}>
-                        {selectedFeatures.length} features
-                      </strong>{" "}
-                      ({selectedCrmCount} CRM, {selectedFeatures.length - selectedCrmCount} ERP)
-                    </span>
-                    {selectedCrmCount === 0 && (
-                      <span style={{ color: "#f87171" }}>
-                        Warning: No CRM features selected for this plan.
-                      </span>
-                    )}
+                      Full CRM Suite
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset(FEATURE_PRESETS.STANDARD_CRM.keys)}
+                      className={styles.presetBtn}
+                    >
+                      Standard CRM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset(FEATURE_PRESETS.BASIC_CRM.keys)}
+                      className={styles.presetBtn}
+                    >
+                      Basic CRM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyAllErp}
+                      className={styles.presetBtn}
+                    >
+                      All ERP Modules
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearAllFeatures}
+                      className={styles.presetBtn}
+                      style={{ color: "#f87171", borderColor: "rgba(239, 68, 68, 0.3)" }}
+                    >
+                      Clear All
+                    </button>
                   </div>
                 </div>
 
-                {/* Status Selection */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "6px", fontSize: "13px", fontWeight: 600, color: "var(--text-main)" }}>
-                    Plan Status
-                  </label>
-                  <select
-                    value={planStatus}
-                    onChange={(e) => setPlanStatus(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "9px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--border-main)",
-                      background: "var(--surface-subtle)",
-                      color: "#fff",
-                      fontSize: "14px",
-                    }}
+                {/* Feature Selector Tabs */}
+                <div className={styles.tabSwitcher}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("CRM")}
+                    className={`${styles.tabBtn} ${activeTab === "CRM" ? styles.tabBtnActive : ""}`}
                   >
-                    <option value="ACTIVE">ACTIVE (Available for subscription)</option>
-                    <option value="ARCHIVED">ARCHIVED (Hidden from new subscriptions)</option>
-                  </select>
+                    CRM Features ({CRM_FEATURES.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("ERP")}
+                    className={`${styles.tabBtn} ${activeTab === "ERP" ? styles.tabBtnActive : ""}`}
+                  >
+                    ERP Core Modules ({ERP_SYSTEM_MODULES.length})
+                  </button>
+                </div>
+
+                {/* Feature Grid */}
+                <div className={styles.featureGrid}>
+                  {(activeTab === "CRM" ? CRM_FEATURES : ERP_SYSTEM_MODULES).map((feat) => {
+                    const isSelected = selectedFeatures.includes(feat.key);
+                    return (
+                      <div
+                        key={feat.key}
+                        onClick={() => handleToggleFeature(feat.key)}
+                        className={`${styles.featureCheckboxCard} ${isSelected ? styles.featureCheckboxCardActive : ""}`}
+                      >
+                        <div className={`${styles.featureCheckbox} ${isSelected ? styles.featureCheckboxActive : ""}`}>
+                          {isSelected && <Check size={12} />}
+                        </div>
+                        <div className={styles.featureCardText}>
+                          <span className={styles.featureName}>{feat.name}</span>
+                          <span className={styles.featureDesc}>{feat.description}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Modal Footer */}
-              <div
-                style={{
-                  padding: "16px 24px",
-                  borderTop: "1px solid var(--border-main)",
-                  background: "rgba(30, 41, 59, 0.5)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                  {editingPlan ? "Editing existing plan" : "Creating new pricing tier"}
-                </div>
-                <div style={{ display: "flex", gap: "10px" }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowModal(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={isSubmitting}
-                    style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw size={15} className="animate-spin" /> Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Check size={16} /> {editingPlan ? "Update Plan" : "Create Plan"}
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className={styles.modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className={styles.modalCancelBtn}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={styles.modalSubmitBtn}
+                >
+                  {isSubmitting ? "Saving..." : editingPlan ? "Update Plan" : "Create Plan"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* 5. Delete Confirmation Modal */}
       {planToDelete && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1050,
-            padding: "20px",
-          }}
-        >
-          <div
-            className="glass-card"
-            style={{
-              width: "100%",
-              maxWidth: "460px",
-              padding: "24px",
-              borderRadius: "14px",
-              background: "#0f172a",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-              <div
-                style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "10px",
-                  background: "rgba(239, 68, 68, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#ef4444",
-                }}
-              >
-                <AlertTriangle size={24} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#fff" }}>
-                  Delete Subscription Plan
-                </h3>
-                <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
-                  Are you sure you want to remove &quot;{planToDelete.name}&quot;?
-                </p>
-              </div>
-            </div>
-
-            {planToDelete._count && planToDelete._count.subscriptions > 0 ? (
-              <div
-                style={{
-                  padding: "12px",
-                  borderRadius: "8px",
-                  background: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.2)",
-                  color: "#fca5a5",
-                  fontSize: "13px",
-                  marginBottom: "20px",
-                  lineHeight: "1.5",
-                }}
-              >
-                <strong style={{ display: "block", marginBottom: "4px" }}>Active Subscriptions Detected:</strong>
-                {planToDelete._count.subscriptions} company account(s) are currently assigned to this plan. You must reassign those companies or set the plan status to &quot;ARCHIVED&quot; instead of deleting.
-              </div>
-            ) : (
-              <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "20px" }}>
-                This action cannot be undone. This plan has no active subscriptions attached.
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        <div className={styles.modalOverlay} onClick={() => setPlanToDelete(null)}>
+          <div className={styles.modalContent} style={{ maxWidth: "460px" }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle} style={{ color: "#f87171" }}>
+                <AlertTriangle size={18} />
+                Delete Subscription Plan
+              </h3>
               <button
                 type="button"
-                className="btn btn-secondary"
                 onClick={() => setPlanToDelete(null)}
-                disabled={isDeleting}
+                className={styles.modalCloseBtn}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.modalScrollBody} style={{ gap: "12px" }}>
+              <p style={{ margin: 0, fontSize: "14px", color: "#cbd5e1" }}>
+                Are you sure you want to delete <strong>{planToDelete.name}</strong>?
+              </p>
+              {(planToDelete._count?.subscriptions || 0) > 0 && (
+                <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.3)", color: "#fca5a5", fontSize: "13px" }}>
+                  <strong>Warning:</strong> This plan is currently used by <strong>{planToDelete._count?.subscriptions}</strong> subscribed tenant organization(s).
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                onClick={() => setPlanToDelete(null)}
+                className={styles.modalCancelBtn}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDeletePlan}
-                disabled={isDeleting || (planToDelete._count ? planToDelete._count.subscriptions > 0 : false)}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "#ef4444",
-                  color: "#fff",
-                  fontWeight: 600,
-                  fontSize: "13px",
-                  cursor: (planToDelete._count ? planToDelete._count.subscriptions > 0 : false) ? "not-allowed" : "pointer",
-                  opacity: (planToDelete._count ? planToDelete._count.subscriptions > 0 : false) ? 0.5 : 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
+                disabled={isDeleting}
+                className={styles.modalSubmitBtn}
+                style={{ background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", boxShadow: "0 4px 14px rgba(220, 38, 38, 0.4)" }}
               >
-                {isDeleting ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                Confirm Delete
+                {isDeleting ? "Deleting..." : "Confirm Delete"}
               </button>
             </div>
           </div>
         </div>
       )}
-    </PageContainer>
+    </div>
   );
 }

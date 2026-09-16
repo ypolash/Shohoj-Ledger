@@ -16,7 +16,10 @@ import {
   Settings,
   LogOut,
   User,
-  Menu
+  Menu,
+  Shield,
+  Headphones,
+  ArrowLeft
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Dropdown } from '@/components/ui/Dropdown/Dropdown';
@@ -28,7 +31,23 @@ export function Topbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data.user);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -128,6 +147,31 @@ export function Topbar() {
           </button>
 
           <div className={styles.actions}>
+            {/* If in ERP workspace and logged in as SUPER_ADMIN, provide link to Super Admin */}
+            {currentUser?.platformRole === 'SUPER_ADMIN' && !pathname.startsWith('/super-admin') && (
+              <Link
+                href="/super-admin"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(99, 102, 241, 0.25))',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  color: '#c084fc',
+                  textDecoration: 'none',
+                  letterSpacing: '0.02em',
+                }}
+                title="Switch to Super Admin mission control"
+              >
+                <Shield size={14} />
+                <span>Super Admin</span>
+              </Link>
+            )}
+
             <button 
               className={styles.iconButton} 
               onClick={() => setTheme(nextTheme)}
@@ -170,6 +214,14 @@ export function Topbar() {
                 </button>
               }
               items={[
+                ...(currentUser?.platformRole === 'SUPER_ADMIN' ? [
+                  { label: 'Super Admin Portal', icon: <Shield size={16} />, onClick: () => window.location.href = '/super-admin' },
+                ] : []),
+                { 
+                  label: 'Customer Support', 
+                  icon: <Headphones size={16} />, 
+                  onClick: () => window.location.href = currentUser?.platformRole === 'SUPER_ADMIN' ? '/super-admin/support' : '/erp/support' 
+                },
                 { label: 'My Profile', icon: <User size={16} />, onClick: () => window.location.href = '/erp/settings/profile' },
                 { label: 'Account Settings', icon: <Settings size={16} />, onClick: () => window.location.href = '/erp/settings' },
                 { label: 'Sign Out', icon: <LogOut size={16} />, danger: true, onClick: handleLogout }

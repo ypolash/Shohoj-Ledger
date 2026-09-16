@@ -39,7 +39,7 @@ async function main() {
   } else {
     user = await prisma.user.update({
       where: { email },
-      data: { companyId: company.id, role: 'Owner' }
+      data: { companyId: company.id, role: 'Owner', platformRole: 'SUPER_ADMIN' }
     });
   }
 

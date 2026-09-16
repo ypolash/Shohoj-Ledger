@@ -14,7 +14,12 @@ import {
   Database, 
   ShieldCheck, 
   Layers, 
-  Globe 
+  Globe,
+  Users,
+  Headphones,
+  Tag,
+  ArrowLeft,
+  LayoutDashboard
 } from 'lucide-react';
 
 export function SuperAdminSidebar() {
@@ -24,19 +29,22 @@ export function SuperAdminSidebar() {
 
   const isExpanded = sidebarOpen || isHovered;
 
-  const navItems = [
+  const multiTenantItems = [
     { name: 'SaaS Overview', icon: Globe, href: '/super-admin' },
+    { name: 'User Management', icon: Users, href: '/super-admin/users' },
+    { name: 'Customer Support', icon: Headphones, href: '/super-admin/support' },
     { name: 'Tenants & Companies', icon: Building2, href: '/super-admin/companies' },
-    { name: 'Subscriptions & Plans', icon: Layers, href: '/super-admin/subscriptions' },
-    { name: 'Billing & Invoices', icon: CreditCard, href: '/super-admin/billing' },
-    { name: 'System Health', icon: Activity, href: '/super-admin/system-health' },
-    { name: 'Logs & Audit', icon: FileText, href: '/super-admin/audit' },
+    { name: 'Subscriptions', icon: CreditCard, href: '/super-admin/subscriptions' },
+    { name: 'Pricing Plans', icon: Layers, href: '/super-admin/plans' },
+    { name: 'Billing & Invoices', icon: FileText, href: '/super-admin/billing' },
   ];
 
-  const adminItems = [
-    { name: 'Global Settings', icon: Settings, href: '/super-admin/settings' },
+  const systemItems = [
+    { name: 'System Health', icon: Activity, href: '/super-admin/system-health' },
+    { name: 'Logs & Audit', icon: FileText, href: '/super-admin/audit' },
     { name: 'Feature Flags', icon: ShieldCheck, href: '/super-admin/feature-flags' },
     { name: 'Database & Storage', icon: Database, href: '/super-admin/storage' },
+    { name: 'Global Settings', icon: Settings, href: '/super-admin/settings' },
   ];
 
   const isActive = (path: string) => {
@@ -56,48 +64,39 @@ export function SuperAdminSidebar() {
     >
       <div className={styles.brand}>
         <div className={styles.logoMark} style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
-          <span style={{ fontSize: '24px', color: '#ffffff' }}>🦉</span>
+          <span style={{ fontSize: '24px', color: '#ffffff' }}>🛡️</span>
         </div>
-        {isExpanded && <span className={styles.brandName}>SaaS Admin</span>}
+        {isExpanded && <span className={styles.brandName}>Super Admin</span>}
       </div>
 
       <div className={styles.navContainer}>
-        {isExpanded && (
-          <div className={styles.searchContainer}>
-            <input 
-              type="text" 
-              placeholder="Search SaaS modules..." 
-              className={styles.searchInput}
-              aria-label="Filter menu items"
-            />
-          </div>
-        )}
-
+        {/* Multi-Tenant Group */}
         <nav className={styles.navGroup}>
-          {isExpanded && <div className={styles.sectionHeader}>Multi-Tenant</div>}
-          {navItems.map((item) => (
+          {isExpanded && <div className={styles.sectionHeader}>Platform Control</div>}
+          {multiTenantItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={`${styles.navItem} ${isActive(item.href) ? styles.active : ''}`}
               title={!isExpanded ? item.name : undefined}
             >
-              <item.icon size={20} className={styles.navIcon} />
+              <item.icon size={19} className={styles.navIcon} />
               {isExpanded && <span className={styles.navText}>{item.name}</span>}
             </Link>
           ))}
         </nav>
 
+        {/* System Group */}
         <nav className={styles.navGroup}>
-          {isExpanded && <div className={styles.sectionHeader}>System</div>}
-          {adminItems.map((item) => (
+          {isExpanded && <div className={styles.sectionHeader}>Platform Infrastructure</div>}
+          {systemItems.map((item) => (
             <Link 
               key={item.href} 
               href={item.href}
               className={`${styles.navItem} ${isActive(item.href) ? styles.active : ''}`}
               title={!isExpanded ? item.name : undefined}
             >
-              <item.icon size={20} className={styles.navIcon} />
+              <item.icon size={19} className={styles.navIcon} />
               {isExpanded && <span className={styles.navText}>{item.name}</span>}
             </Link>
           ))}

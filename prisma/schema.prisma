@@ -78,6 +78,8 @@ model User {
   createdWorkflows              Workflow[]               @relation("WorkflowCreator")
   systemRoleId                  String?
   systemRole                    Role?                    @relation("UserRole", fields: [systemRoleId], references: [id])
+  supportTickets                SupportTicket[]
+  assignedTickets               SupportTicket[]          @relation("AssignedTickets")
 }
 
 model Session {
@@ -1410,6 +1412,7 @@ model Company {
   updatedAt                DateTime                      @updatedAt
   subscription             Subscription?
   saasInvoices             SaaSInvoice[]
+  supportTickets           SupportTicket[]
   accountingPeriods        AccountingPeriod[]
   advances                 Advance[]
   allowedNetworks          AllowedNetwork[]
@@ -5470,4 +5473,44 @@ model CommunityReaction {
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
+}
+
+// -------------------------------------------------------------
+// SUPER ADMIN & CUSTOMER SUPPORT HELPDESK
+// -------------------------------------------------------------
+
+model SupportTicket {
+  id           String                 @id @default(uuid())
+  ticketNumber String                 @unique
+  subject      String
+  description  String                 @db.Text
+  status       String                 @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  priority     String                 @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  category     String                 @default("GENERAL") // BILLING, TECHNICAL, ACCOUNT, FEATURE_REQUEST, GENERAL
+  userId       String
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId    String?
+  company      Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  assignedToId String?
+  assignedTo   User?                  @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages     SupportTicketMessage[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([status])
+}
+
+model SupportTicketMessage {
+  id         String        @id @default(uuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId   String
+  senderName String
+  senderRole String        // "SUPER_ADMIN" | "USER"
+  message    String        @db.Text
+  createdAt  DateTime      @default(now())
+
+  @@index([ticketId])
 }

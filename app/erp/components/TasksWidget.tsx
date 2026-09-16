@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../dashboard.module.css';
 
+interface ChecklistItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface TaskItem {
   id: string;
   title: string;
@@ -10,6 +16,23 @@ interface TaskItem {
   dueDate?: string;
   priority?: string;
   completed?: boolean;
+  checklistItems?: ChecklistItem[];
+}
+
+function parseWidgetChecklist(raw: any): ChecklistItem[] {
+  if (!raw) return [];
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed?.items)) return parsed.items;
+  if (Array.isArray(parsed?.todos)) return parsed.todos;
+  return [];
 }
 
 export function TasksWidget({ data }: { data?: any }) {
@@ -18,14 +41,18 @@ export function TasksWidget({ data }: { data?: any }) {
   useEffect(() => {
     if (data?.recentTasks) {
       setTasks(
-        data.recentTasks.map((t: any) => ({
-          id: t.id,
-          title: t.title,
-          status: t.status || 'PENDING',
-          dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today',
-          priority: t.priority || 'MEDIUM',
-          completed: t.status === 'COMPLETED'
-        }))
+        data.recentTasks.map((t: any) => {
+          const checklistItems = parseWidgetChecklist(t.checklist);
+          return {
+            id: t.id,
+            title: t.title,
+            status: t.status || 'PENDING',
+            dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today',
+            priority: t.priority || 'MEDIUM',
+            completed: t.status === 'COMPLETED',
+            checklistItems,
+          };
+        })
       );
     }
   }, [data]);
@@ -127,9 +154,31 @@ export function TasksWidget({ data }: { data?: any }) {
                     >
                       {t.title}
                     </span>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>
-                      Due: {t.dueDate}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>
+                        Due: {t.dueDate}
+                      </span>
+                      {t.checklistItems && t.checklistItems.length > 0 && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '10.5px',
+                            color: '#38bdf8',
+                            background: 'rgba(56, 189, 248, 0.12)',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
+                            checklist
+                          </span>
+                          {t.checklistItems.filter(i => i.completed).length}/{t.checklistItems.length}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 

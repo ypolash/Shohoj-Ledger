@@ -13,6 +13,26 @@ export async function OPTIONS() {
  * GET /api/ess/tasks
  * Returns tasks assigned strictly to the authenticated employee.
  */
+function normalizeChecklist(raw: any) {
+  if (!raw) return null;
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (Array.isArray(parsed)) {
+    return { type: "CHECKLIST", items: parsed };
+  }
+  if (parsed && typeof parsed === "object") {
+    const items = Array.isArray(parsed.items) ? parsed.items : [];
+    return { ...parsed, type: parsed.type || "CHECKLIST", items };
+  }
+  return null;
+}
+
 export async function GET(request: Request) {
   try {
     const employee = await resolveEssEmployee(request);
@@ -27,7 +47,12 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ tasks }, { headers: ESS_CORS_HEADERS });
+    const mapped = tasks.map(t => ({
+      ...t,
+      checklist: normalizeChecklist(t.checklist)
+    }));
+
+    return NextResponse.json({ tasks: mapped }, { headers: ESS_CORS_HEADERS });
   } catch (error) {
     console.error("[ESS] Tasks fetch error:", error);
     return NextResponse.json(

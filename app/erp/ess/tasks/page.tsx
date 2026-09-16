@@ -12,8 +12,17 @@ interface ChecklistItem {
 
 function extractChecklistItems(checklist: any): ChecklistItem[] {
   if (!checklist) return [];
-  if (Array.isArray(checklist)) return checklist;
-  if (Array.isArray(checklist.items)) return checklist.items;
+  let parsed = checklist;
+  if (typeof checklist === "string") {
+    try {
+      parsed = JSON.parse(checklist);
+    } catch {
+      return [];
+    }
+  }
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed?.items)) return parsed.items;
+  if (Array.isArray(parsed?.todos)) return parsed.todos;
   return [];
 }
 

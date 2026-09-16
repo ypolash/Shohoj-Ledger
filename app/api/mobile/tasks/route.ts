@@ -6,6 +6,26 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
 }
 
+function normalizeChecklist(raw: any) {
+  if (!raw) return null;
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (Array.isArray(parsed)) {
+    return { type: "CHECKLIST", items: parsed };
+  }
+  if (parsed && typeof parsed === "object") {
+    const items = Array.isArray(parsed.items) ? parsed.items : [];
+    return { ...parsed, type: parsed.type || "CHECKLIST", items };
+  }
+  return null;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -40,7 +60,12 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json(tasks, { headers: ESS_CORS_HEADERS });
+    const mapped = tasks.map(t => ({
+      ...t,
+      checklist: normalizeChecklist(t.checklist)
+    }));
+
+    return NextResponse.json(mapped, { headers: ESS_CORS_HEADERS });
   } catch (error) {
     console.error("[Mobile Tasks GET Error]:", error);
     return NextResponse.json(

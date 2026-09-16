@@ -50,4 +50,21 @@ class TaskRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun updateTaskChecklist(taskId: String, checklist: com.shohoj.staff.data.model.TaskChecklist, newStatus: String? = null): Result<TaskItem> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiClient.getService().updateTaskStatus(
+                taskId = taskId,
+                request = TaskStatusUpdateRequest(status = newStatus, checklist = checklist)
+            )
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val err = response.errorBody()?.string() ?: "Failed to update checklist"
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

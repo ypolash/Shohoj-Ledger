@@ -57,9 +57,16 @@ export async function toggleMyTaskChecklistItem(taskId: string, itemId: string, 
 
   if (!existing) throw new Error("Task not found or you don't have permission to update it.");
 
-  const checklistData: any = existing.checklist;
+  let checklistData: any = existing.checklist;
   if (!checklistData) {
     throw new Error("No checklist found on this task");
+  }
+  if (typeof checklistData === "string") {
+    try {
+      checklistData = JSON.parse(checklistData);
+    } catch {
+      throw new Error("Invalid checklist JSON");
+    }
   }
 
   let items: any[] = [];

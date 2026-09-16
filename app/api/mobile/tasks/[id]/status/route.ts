@@ -8,6 +8,26 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
 }
 
+function normalizeChecklist(raw: any) {
+  if (!raw) return null;
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (Array.isArray(parsed)) {
+    return { type: "CHECKLIST", items: parsed };
+  }
+  if (parsed && typeof parsed === "object") {
+    const items = Array.isArray(parsed.items) ? parsed.items : [];
+    return { ...parsed, type: parsed.type || "CHECKLIST", items };
+  }
+  return null;
+}
+
 export async function PATCH(
   request: Request,
   props: { params: Promise<{ id: string }> }
@@ -27,19 +47,30 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status } = body;
+    const { status, checklist } = body;
 
     const validStatuses = ["Pending", "In Progress", "Completed", "Blocked"];
-    if (!status || !validStatuses.includes(status)) {
+    if (status && !validStatuses.includes(status)) {
       return NextResponse.json(
-        { error: "Invalid or missing status" },
+        { error: "Invalid status" },
         { status: 400 }
       );
     }
 
+    if (!status && checklist === undefined) {
+      return NextResponse.json(
+        { error: "Either status or checklist is required" },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (checklist !== undefined) updateData.checklist = checklist;
+
     const updatedTask = await prisma.task.update({
       where: { ...(await withCompany()), id: params.id },
-      data: { status },
+      data: updateData,
     });
 
     // If this task is tied to a CRM lead, log activity on the lead timeline
@@ -66,7 +97,10 @@ export async function PATCH(
       console.error("Failed to log mobile task update to lead activity:", actErr);
     }
 
-    return NextResponse.json(updatedTask, { headers: ESS_CORS_HEADERS });
+    return NextResponse.json({
+      ...updatedTask,
+      checklist: normalizeChecklist(updatedTask.checklist),
+    }, { headers: ESS_CORS_HEADERS });
   } catch (error: any) {
     console.error("Error updating task status:", error);
     

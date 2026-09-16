@@ -81,6 +81,41 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleChecklistItem(taskId: String, itemId: String, isCompleted: Boolean) {
+        val currentTasks = _uiState.value.tasks
+        val task = currentTasks.find { it.id == taskId } ?: return
+        val currentChecklist = task.checklist ?: return
+
+        val updatedItems = currentChecklist.items.map { item ->
+            if (item.id == itemId) item.copy(completed = isCompleted) else item
+        }
+        val updatedChecklist = currentChecklist.copy(items = updatedItems)
+        val updatedTask = task.copy(checklist = updatedChecklist)
+
+        // Optimistic UI update
+        _uiState.value = _uiState.value.copy(
+            tasks = currentTasks.map { if (it.id == taskId) updatedTask else it }
+        )
+
+        viewModelScope.launch {
+            val result = taskRepo.updateTaskChecklist(taskId, updatedChecklist)
+            result.fold(
+                onSuccess = { serverTask ->
+                    _uiState.value = _uiState.value.copy(
+                        tasks = _uiState.value.tasks.map { if (it.id == taskId) serverTask else it }
+                    )
+                },
+                onFailure = { ex ->
+                    // Revert to previous state on failure
+                    _uiState.value = _uiState.value.copy(
+                        tasks = currentTasks,
+                        error = ex.localizedMessage ?: "Failed to update checklist item"
+                    )
+                }
+            )
+        }
+    }
+
     fun clearFeedback() {
         _uiState.value = _uiState.value.copy(successMessage = null, error = null)
     }

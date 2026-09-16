@@ -40,18 +40,34 @@ interface Task {
   } | null;
 }
 
-function extractChecklistItems(checklist: any): TaskChecklistItem[] {
+function parseChecklistData(raw: any): any {
+  if (!raw) return null;
+  let parsed = raw;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return null;
+    }
+  }
+  return parsed;
+}
+
+function extractChecklistItems(raw: any): TaskChecklistItem[] {
+  const checklist = parseChecklistData(raw);
   if (!checklist) return [];
   if (Array.isArray(checklist)) return checklist;
   if (Array.isArray(checklist.items)) return checklist.items;
+  if (Array.isArray(checklist.todos)) return checklist.todos;
   return [];
 }
 
 function isChecklistTask(task: Task): boolean {
   if (!task.checklist) return false;
-  if (task.checklist?.type === "CHECKLIST") return true;
-  if (Array.isArray(task.checklist) && task.checklist.length > 0) return true;
-  if (Array.isArray(task.checklist?.items) && task.checklist.items.length > 0) return true;
+  const items = extractChecklistItems(task.checklist);
+  if (items.length > 0) return true;
+  const parsed = parseChecklistData(task.checklist);
+  if (parsed?.type?.toUpperCase() === "CHECKLIST") return true;
   return false;
 }
 

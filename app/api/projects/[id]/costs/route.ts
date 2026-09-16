@@ -36,16 +36,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
     const result = await prisma.$transaction(async (tx: any) => {
-      const currentBudget = Number(project.estimatedBudget || 0);
-      const updatedBudget = Math.max(0, currentBudget - customCost);
-
       const currentActualCost = Number(project.actualCost || 0);
       const updatedActualCost = currentActualCost + customCost;
 
       await tx.project.update({
         where: { id: project.id },
         data: {
-          estimatedBudget: updatedBudget,
           actualCost: updatedActualCost
         }
       });
@@ -60,8 +56,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           paymentMethod: "Cash", // Defaulting to Cash or could be selectable
           approvalStatus: "APPROVED",
           description: costReason
-            ? `Project "${project.name}" custom cost: ${costReason} (deducted from budget)`
-            : `Project "${project.name}" custom cost deducted from budget`,
+            ? `Project "${project.name}" custom cost: ${costReason} (deducted from profit)`
+            : `Project "${project.name}" custom cost deducted from profit`,
           systemSource: "ERP"
         }
       });
@@ -73,13 +69,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         amount: customCost,
         isDebit: false,
         accountType: "Cash",
-        description: `Project Cost: ${costReason || 'Custom Cost'} deducted from budget (${project.name})`,
+        description: `Project Cost: ${costReason || 'Custom Cost'} deducted from project profit (${project.name})`,
         createdById: session.user.id,
         systemSource: "ERP"
       });
 
       // Activity log
-      const activityDesc = `Added project cost of ৳${customCost.toLocaleString()} ${costReason ? `(${costReason})` : ''}. Deducted from budget (New Budget: ৳${updatedBudget.toLocaleString()}).`;
+      const activityDesc = `Added project cost of ৳${customCost.toLocaleString()} ${costReason ? `(${costReason})` : ''}. (Reduces net profit).`;
 
       await tx.projectActivity.create({
         data: {
@@ -92,14 +88,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       });
 
       return {
-        customCost,
-        updatedBudget
+        customCost
       };
     });
 
     return NextResponse.json({
       success: true,
-      message: "Cost recorded and budget updated successfully",
+      message: "Cost recorded successfully",
       ...result
     }, { status: 201 });
   } catch (error) {

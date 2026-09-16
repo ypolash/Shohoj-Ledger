@@ -483,7 +483,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const totalStaffDue = Math.max(0, totalStaffRate - totalStaffPaid);
 
   // Profit
-  const totalProfit = payments.reduce((sum: number, p: any) => sum + Number(p.profit || 0), 0);
+  // Calculated holistically: everything received from client minus everything spent (staff payouts + custom costs)
+  const totalProfit = totalReceived - actualCost;
 
   return (
     <PageContainer>
@@ -995,11 +996,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   </div>
 
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ display: 'block', fontSize: '10px', color: '#10b981', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Saved to Income (Profit)
+                    <span style={{ display: 'block', fontSize: '10px', color: totalProfit >= 0 ? '#10b981' : '#f87171', textTransform: 'uppercase', fontWeight: 700 }}>
+                      {totalProfit >= 0 ? 'Saved to Income (Profit)' : 'Project Loss'}
                     </span>
-                    <strong style={{ fontSize: '18px', color: '#34d399', fontWeight: 800 }}>
-                      +{formatCurrency(totalProfit)}
+                    <strong style={{ fontSize: '18px', color: totalProfit >= 0 ? '#34d399' : '#f87171', fontWeight: 800 }}>
+                      {totalProfit > 0 ? '+' : ''}{formatCurrency(totalProfit)}
                     </strong>
                   </div>
                 </div>

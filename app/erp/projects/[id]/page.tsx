@@ -51,6 +51,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
+    customCost: '',
+    costReason: '',
     paymentMethod: 'Bank Transfer',
     notes: '',
     date: new Date().toISOString().split('T')[0]
@@ -336,6 +338,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       showToast("Please enter a valid payment amount");
       return;
     }
+    const costAmt = parseFloat(paymentForm.customCost) || 0;
     setIsSubmittingPayment(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/payments`, {
@@ -345,10 +348,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || "Payment processed successfully");
+        showToast(data.message || (costAmt > 0 ? "Payment recorded & cost deducted from budget" : "Payment processed successfully"));
         setIsAddPaymentModalOpen(false);
         setPaymentForm({
           amount: '',
+          customCost: '',
+          costReason: '',
           paymentMethod: 'Bank Transfer',
           notes: '',
           date: new Date().toISOString().split('T')[0]
@@ -484,10 +489,29 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
   const expenses = project.expenses || [];
   
-  // Combine payments and expenses into a single history array
+  // Helper to extract custom cost from payment notes
+  const parsePaymentCost = (notes: string | null) => {
+    if (!notes) return null;
+    const match = notes.match(/\[Custom Cost:\s*(-?৳?[0-9,]+(?:\.[0-9]+)?)(?:\s*\(([^)]+)\))?[^\]]*\]/i);
+    if (match) {
+      return {
+        amountStr: match[1],
+        reason: match[2] || '',
+        fullTag: match[0]
+      };
+    }
+    return null;
+  };
+
+  // Combine payments and expenses into history array
+  // Filter out expenses that were generated during a client payment to prevent duplicate display
+  const standaloneExpenses = expenses.filter(
+    (e: any) => !e.description?.includes('during client payment') && !e.description?.includes('(deducted from budget)')
+  );
+
   const financialHistory = [
     ...payments.map((p: any) => ({ ...p, _type: 'payment' })),
-    ...expenses.map((e: any) => ({ ...e, _type: 'expense' }))
+    ...standaloneExpenses.map((e: any) => ({ ...e, _type: 'expense' }))
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Profit
@@ -1031,61 +1055,103 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 {/* Recent Payments Breakdown */}
                 {financialHistory.length > 0 && (
                   <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>
-                      Financial History ({financialHistory.length})
-                    </span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {financialHistory.slice(0, 10).map((record: any) => (
-                        <div key={record.id} className={styles.paymentHistoryItem}>
-                          <div>
-                            {record._type === 'payment' ? (
-                              <>
-                                <strong style={{ color: '#f8fafc' }}>+{formatCurrency(Number(record.amount))}</strong>
-                                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
-                                  via {record.paymentMethod}
-                                </span>
-                                {record.notes && (
-                                  <span style={{
-                                    fontSize: '10px',
-                                    color: record.notes.includes('Custom Cost') ? '#fca5a5' : '#64748b',
-                                    display: 'block',
-                                    marginTop: '2px'
-                                  }}>
-                                    {record.notes}
-                                  </span>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                <strong style={{ color: '#fca5a5' }}>-{formatCurrency(Number(record.amount))}</strong>
-                                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
-                                  Cost
-                                </span>
-                                {record.description && (
-                                  <span style={{
-                                    fontSize: '10px',
-                                    color: '#fca5a5',
-                                    display: 'block',
-                                    marginTop: '2px'
-                                  }}>
-                                    {record.description}
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>
-                              {new Date(record.createdAt).toLocaleDateString()}
-                            </span>
-                            {record._type === 'payment' && (
-                              <span style={{ fontSize: '10px', color: '#34d399' }}>
-                                Staff: {formatCurrency(Number(record.paidToStaff))} • Profit: {formatCurrency(Number(record.profit))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                        Payment & Cost History ({financialHistory.length})
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {financialHistory.slice(0, 15).map((record: any) => {
+                        const costInfo = record._type === 'payment' ? parsePaymentCost(record.notes) : null;
+                        const userNote = record.notes && costInfo
+                          ? record.notes.replace(costInfo.fullTag, '').replace(/^[•\s]+|[•\s]+$/g, '')
+                          : record.notes;
+
+                        return (
+                          <div key={record.id} className={styles.paymentHistoryItem}>
+                            <div>
+                              {record._type === 'payment' ? (
+                                <>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    <strong style={{ color: '#f8fafc', fontSize: '13px' }}>+{formatCurrency(Number(record.amount))}</strong>
+                                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                      via {record.paymentMethod}
+                                    </span>
+                                  </div>
+
+                                  {costInfo && (
+                                    <div style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      background: 'rgba(239, 68, 68, 0.12)',
+                                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                                      color: '#fca5a5',
+                                      borderRadius: '6px',
+                                      padding: '2px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      marginTop: '4px'
+                                    }}>
+                                      <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#ef4444' }}>price_change</span>
+                                      <span>Cost: {costInfo.amountStr} {costInfo.reason ? `(${costInfo.reason})` : ''}</span>
+                                    </div>
+                                  )}
+
+                                  {userNote ? (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      color: '#64748b',
+                                      display: 'block',
+                                      marginTop: '2px'
+                                    }}>
+                                      {userNote}
+                                    </span>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    <strong style={{ color: '#f87171', fontSize: '13px' }}>-{formatCurrency(Number(record.amount))}</strong>
+                                    <span style={{
+                                      background: 'rgba(239, 68, 68, 0.15)',
+                                      color: '#ef4444',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      borderRadius: '4px',
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      padding: '1px 5px',
+                                      letterSpacing: '0.5px'
+                                    }}>
+                                      COST
+                                    </span>
+                                  </div>
+                                  {record.description && (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      color: '#fca5a5',
+                                      display: 'block',
+                                      marginTop: '2px'
+                                    }}>
+                                      {record.description}
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: '8px' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>
+                                {new Date(record.createdAt).toLocaleDateString()}
                               </span>
-                            )}
+                              {record._type === 'payment' && (
+                                <span style={{ fontSize: '10px', color: '#34d399', display: 'block', marginTop: '2px' }}>
+                                  Staff: {formatCurrency(Number(record.paidToStaff))} • Profit: {formatCurrency(Number(record.profit))}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1717,6 +1783,63 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   />
                 </div>
 
+                {/* Custom Cost Deduction Field */}
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.06)',
+                  border: '1px solid rgba(239, 68, 68, 0.22)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>price_change</span>
+                      Custom Project Cost (Deducted from Budget)
+                    </label>
+                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>Optional</span>
+                  </div>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter cost to subtract from budget (e.g. 10000)"
+                    value={paymentForm.customCost}
+                    onChange={(e) => setPaymentForm(f => ({ ...f, customCost: e.target.value }))}
+                    className={styles.inputField}
+                    style={{
+                      borderColor: Number(paymentForm.customCost) > 0 ? '#ef4444' : undefined,
+                      color: Number(paymentForm.customCost) > 0 ? '#fca5a5' : '#f8fafc'
+                    }}
+                  />
+
+                  {Number(paymentForm.customCost) > 0 && (
+                    <input
+                      type="text"
+                      placeholder="Cost purpose / note (e.g. Server hosting, Subcontractor, Hardware)..."
+                      value={paymentForm.costReason}
+                      onChange={(e) => setPaymentForm(f => ({ ...f, costReason: e.target.value }))}
+                      className={styles.inputField}
+                      style={{ fontSize: '12px' }}
+                    />
+                  )}
+
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#94a3b8',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    paddingTop: '2px'
+                  }}>
+                    <span>Budget Impact:</span>
+                    <span>
+                      {formatCurrency(budget)} - {formatCurrency(Number(paymentForm.customCost) || 0)} = <strong style={{ color: '#38bdf8' }}>{formatCurrency(Math.max(0, budget - (Number(paymentForm.customCost) || 0)))}</strong>
+                    </span>
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
@@ -1762,11 +1885,17 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 </div>
 
                 {/* Live Distribution Preview */}
-                {(Number(paymentForm.amount) > 0) && (
+                {(Number(paymentForm.amount) > 0 || Number(paymentForm.customCost) > 0) && (
                   <div className={styles.previewBox}>
                     <span style={{ fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', fontSize: '11px' }}>
                       Automated Settlement Preview:
                     </span>
+                    {Number(paymentForm.customCost) > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fca5a5' }}>
+                        <span>Budget Reduction (Custom Cost):</span>
+                        <strong>-{formatCurrency(Number(paymentForm.customCost))}</strong>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Auto-Payout to Staff Dues:</span>
                       <strong style={{ color: '#f87171' }}>

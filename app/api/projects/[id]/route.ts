@@ -30,10 +30,6 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
         payments: {
           orderBy: { createdAt: 'desc' }
         },
-        expenses: {
-          where: { category: "Project Custom Cost" },
-          orderBy: { createdAt: 'desc' }
-        },
         tasks: {
           include: {
             employee: { select: { firstName: true, lastName: true } }
@@ -50,7 +46,18 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
-    return NextResponse.json({ project });
+    // Fetch custom cost expenses for this project
+    const expenses = await prisma.expense.findMany({
+      where: { projectId: params.id, companyId, category: "Project Custom Cost" },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return NextResponse.json({
+      project: {
+        ...project,
+        expenses
+      }
+    });
   } catch (error) {
     console.error("GET Project Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

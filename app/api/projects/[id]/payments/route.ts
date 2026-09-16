@@ -109,8 +109,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
     const body = await req.json();
     const paymentAmount = parseFloat(body.amount);
-    const customCost = Math.max(0, parseFloat(body.customCost) || 0);
-    const costReason = (body.costReason || "").trim();
     const paymentMethod = body.paymentMethod || "Bank";
     const notes = body.notes || "";
     const paymentDate = body.date ? new Date(body.date) : new Date();
@@ -273,60 +271,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         });
       }
 
-      // If custom cost is provided, deduct it from project's estimated budget & increment actual cost
       const currentBudget = Number(project.estimatedBudget || 0);
-      let updatedBudget = currentBudget;
-      if (customCost > 0) {
-        updatedBudget = Math.max(0, currentBudget - customCost);
+      const updatedBudget = currentBudget;
 
-        await tx.project.update({
-          where: { id: project.id },
-          data: {
-            estimatedBudget: updatedBudget,
-            actualCost: { increment: customCost + staffPayoutTotal }
-          }
-        });
-
-        // Record custom cost as a project expense
-        const costExpense = await tx.expense.create({
-          data: {
-            companyId,
-            projectId: project.id,
-            category: "Project Custom Cost",
-            amount: customCost,
-            paymentMethod,
-            approvalStatus: "APPROVED",
-            description: costReason
-              ? `Project "${project.name}" custom cost: ${costReason} (deducted from budget)`
-              : `Project "${project.name}" custom cost deducted from budget during client payment`,
-            systemSource: "ERP"
-          }
-        });
-
-        await createLedgerEntry({
-          companyId,
-          module: "Expense",
-          referenceId: costExpense.id,
-          amount: customCost,
-          isDebit: false,
-          accountType: paymentMethod,
-          description: `Project Cost: ${costReason || 'Custom Cost'} deducted from budget (${project.name})`,
-          createdById: session.user.id,
-          systemSource: "ERP"
-        });
-      } else if (staffPayoutTotal > 0) {
+      if (staffPayoutTotal > 0) {
         await tx.project.update({
           where: { id: project.id },
           data: { actualCost: { increment: staffPayoutTotal } }
         });
       }
 
-      // Format payment notes with cost deduction details
+      // Format payment notes
       let formattedNotes = notes || "";
-      if (customCost > 0) {
-        const costTag = `[Custom Cost: -৳${customCost.toLocaleString()}${costReason ? ` (${costReason})` : ''} • New Budget: ৳${updatedBudget.toLocaleString()}]`;
-        formattedNotes = formattedNotes ? `${formattedNotes} • ${costTag}` : costTag;
-      }
 
       // Record Project Payment Entry
       const paymentRecord = await tx.projectPayment.create({
@@ -343,9 +299,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
       // Activity log
       let activityDesc = `Recorded payment of ৳${paymentAmount.toLocaleString()} (${paymentMethod}).`;
-      if (customCost > 0) {
-        activityDesc += ` Deducted custom cost of ৳${customCost.toLocaleString()} from budget (New Budget: ৳${updatedBudget.toLocaleString()}).`;
-      }
       activityDesc += ` Auto-paid staff: ৳${staffPayoutTotal.toLocaleString()}, Net Profit: ৳${profit.toLocaleString()}`;
 
       await tx.projectActivity.create({
@@ -360,8 +313,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
       return {
         paymentRecord,
-        customCost,
-        updatedBudget,
         staffPayoutTotal,
         profit,
         employeePayouts

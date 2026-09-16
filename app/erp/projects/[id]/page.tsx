@@ -51,12 +51,13 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
-    customCost: '',
-    costReason: '',
     paymentMethod: 'Bank Transfer',
     notes: '',
     date: new Date().toISOString().split('T')[0]
   });
+
+  const [costForm, setCostForm] = useState({ amount: '', reason: '' });
+  const [isSubmittingCost, setIsSubmittingCost] = useState(false);
 
   // Multi-Employee Assignment State
   const [selectedMemberConfigs, setSelectedMemberConfigs] = useState<Record<string, { selected: boolean; isProjectBased: boolean; rate: string }>>({});
@@ -335,11 +336,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       showToast("Please enter a valid payment amount");
       return;
     }
-    const costAmt = parseFloat(paymentForm.customCost) || 0;
-    if (costAmt < 0) {
-      showToast("Custom cost cannot be negative");
-      return;
-    }
     setIsSubmittingPayment(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/payments`, {
@@ -349,12 +345,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || (costAmt > 0 ? "Payment recorded & cost deducted from budget" : "Payment processed successfully"));
+        showToast(data.message || "Payment processed successfully");
         setIsAddPaymentModalOpen(false);
         setPaymentForm({
           amount: '',
-          customCost: '',
-          costReason: '',
           paymentMethod: 'Bank Transfer',
           notes: '',
           date: new Date().toISOString().split('T')[0]
@@ -367,6 +361,34 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       showToast("Network error saving payment");
     } finally {
       setIsSubmittingPayment(false);
+    }
+  };
+
+  const handleSaveCost = async () => {
+    const amt = parseFloat(costForm.amount);
+    if (isNaN(amt) || amt <= 0) {
+      showToast("Please enter a valid cost amount");
+      return;
+    }
+    setIsSubmittingCost(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/costs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: costForm.amount, reason: costForm.reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || "Cost deducted from budget");
+        setCostForm({ amount: '', reason: '' });
+        fetchProject();
+      } else {
+        showToast(data.error || "Failed to add cost");
+      }
+    } catch (err) {
+      showToast("Network error saving cost");
+    } finally {
+      setIsSubmittingCost(false);
     }
   };
 
@@ -979,6 +1001,21 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     <strong style={{ fontSize: '18px', color: '#34d399', fontWeight: 800 }}>
                       +{formatCurrency(totalProfit)}
                     </strong>
+                  </div>
+                </div>
+
+                {/* Add Cost Section */}
+                <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', padding: '12px', marginTop: '16px' }}>
+                  <div style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#fca5a5', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_change</span>
+                    Add Project Cost
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input type="text" placeholder="Cost Name (e.g. Server hosting, Subcontractor)" className={styles.inputField} value={costForm.reason} onChange={(e) => setCostForm({ ...costForm, reason: e.target.value })} style={{ flex: 1, fontSize: '12px', padding: '8px 12px' }} />
+                    <input type="number" placeholder="Amount" className={styles.inputField} value={costForm.amount} onChange={(e) => setCostForm({ ...costForm, amount: e.target.value })} style={{ width: '100px', fontSize: '12px', padding: '8px 12px' }} />
+                    <button onClick={handleSaveCost} disabled={isSubmittingCost} className={styles.submitBtn} style={{ padding: '8px 16px', fontSize: '12px', background: '#ef4444', borderColor: '#ef4444', cursor: 'pointer' }}>
+                      {isSubmittingCost ? 'Saving...' : 'Save'}
+                    </button>
                   </div>
                 </div>
 
@@ -1648,63 +1685,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   />
                 </div>
 
-                {/* Custom Cost Deduction Field */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: '10px',
-                  background: 'rgba(239, 68, 68, 0.06)',
-                  border: '1px solid rgba(239, 68, 68, 0.22)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>price_change</span>
-                      Custom Project Cost (Deducted from Budget)
-                    </label>
-                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>Optional</span>
-                  </div>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Enter cost to subtract from budget (e.g. 10000)"
-                    value={paymentForm.customCost}
-                    onChange={(e) => setPaymentForm(f => ({ ...f, customCost: e.target.value }))}
-                    className={styles.inputField}
-                    style={{
-                      borderColor: Number(paymentForm.customCost) > 0 ? '#ef4444' : undefined,
-                      color: Number(paymentForm.customCost) > 0 ? '#fca5a5' : '#f8fafc'
-                    }}
-                  />
-
-                  {Number(paymentForm.customCost) > 0 && (
-                    <input
-                      type="text"
-                      placeholder="Cost purpose / note (e.g. Server hosting, Subcontractor, Hardware)..."
-                      value={paymentForm.costReason}
-                      onChange={(e) => setPaymentForm(f => ({ ...f, costReason: e.target.value }))}
-                      className={styles.inputField}
-                      style={{ fontSize: '12px' }}
-                    />
-                  )}
-
-                  <div style={{
-                    fontSize: '11px',
-                    color: '#94a3b8',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    paddingTop: '2px'
-                  }}>
-                    <span>Budget Impact:</span>
-                    <span>
-                      {formatCurrency(budget)} - {formatCurrency(Number(paymentForm.customCost) || 0)} = <strong style={{ color: '#38bdf8' }}>{formatCurrency(Math.max(0, budget - (Number(paymentForm.customCost) || 0)))}</strong>
-                    </span>
-                  </div>
-                </div>
-
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
@@ -1750,17 +1730,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 </div>
 
                 {/* Live Distribution Preview */}
-                {(Number(paymentForm.amount) > 0 || Number(paymentForm.customCost) > 0) && (
+                {(Number(paymentForm.amount) > 0) && (
                   <div className={styles.previewBox}>
                     <span style={{ fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', fontSize: '11px' }}>
                       Automated Settlement Preview:
                     </span>
-                    {Number(paymentForm.customCost) > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fca5a5' }}>
-                        <span>Budget Reduction (Custom Cost):</span>
-                        <strong>-{formatCurrency(Number(paymentForm.customCost))}</strong>
-                      </div>
-                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Auto-Payout to Staff Dues:</span>
                       <strong style={{ color: '#f87171' }}>

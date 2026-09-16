@@ -20,6 +20,9 @@ type Employee = {
   basicSalary: string | number;
   joinDate: string | Date;
   createdAt: string | Date;
+  shift?: string | null;
+  workShiftId?: string | null;
+  workShift?: any;
 };
 
 export default function EmployeesPageClient() {
@@ -32,6 +35,115 @@ export default function EmployeesPageClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Custom Duty Modal State
+  const [dutyModalEmployee, setDutyModalEmployee] = useState<Employee | null>(null);
+  const [dutyStartTime, setDutyStartTime] = useState('09:30');
+  const [dutyEndTime, setDutyEndTime] = useState('18:00');
+  const [dutyGracePeriod, setDutyGracePeriod] = useState(15);
+  const [dutyBreakTime, setDutyBreakTime] = useState(60);
+  const [dutyNightShift, setDutyNightShift] = useState(false);
+  const [isSavingDuty, setIsSavingDuty] = useState(false);
+  const [dutyFeedback, setDutyFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleOpenCustomDuty = (emp: Employee) => {
+    setDutyModalEmployee(emp);
+    setDutyFeedback(null);
+    if (emp.workShift) {
+      setDutyStartTime(emp.workShift.startTime || '09:30');
+      setDutyEndTime(emp.workShift.endTime || '18:00');
+      setDutyGracePeriod(emp.workShift.gracePeriod ?? 15);
+      setDutyBreakTime(emp.workShift.breakTime ?? 60);
+      setDutyNightShift(!!emp.workShift.nightShift);
+    } else {
+      setDutyStartTime('09:30');
+      setDutyEndTime('18:00');
+      setDutyGracePeriod(15);
+      setDutyBreakTime(60);
+      setDutyNightShift(false);
+    }
+  };
+
+  const handleSaveCustomDuty = async () => {
+    if (!dutyModalEmployee) return;
+    setIsSavingDuty(true);
+    setDutyFeedback(null);
+    try {
+      const res = await fetch(`/api/employees/${dutyModalEmployee.id}/custom-duty`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startTime: dutyStartTime,
+          endTime: dutyEndTime,
+          gracePeriod: Number(dutyGracePeriod) || 0,
+          breakTime: Number(dutyBreakTime) || 0,
+          nightShift: dutyNightShift,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save custom duty schedule.');
+      }
+      setEmployees(prev =>
+        prev.map(e =>
+          e.id === dutyModalEmployee.id
+            ? {
+                ...e,
+                workShiftId: data.customDuty?.id || e.workShiftId,
+                workShift: data.customDuty,
+                shift: `${dutyStartTime} - ${dutyEndTime}`,
+              }
+            : e
+        )
+      );
+      setDutyFeedback({ type: 'success', message: 'Custom duty schedule saved successfully!' });
+      setTimeout(() => {
+        setDutyModalEmployee(null);
+        setDutyFeedback(null);
+      }, 1200);
+    } catch (err: any) {
+      setDutyFeedback({ type: 'error', message: err.message || 'Error saving custom duty' });
+    } finally {
+      setIsSavingDuty(false);
+    }
+  };
+
+  const handleResetCustomDuty = async () => {
+    if (!dutyModalEmployee) return;
+    if (!confirm('Are you sure you want to reset this employee to the company default shift?')) return;
+    setIsSavingDuty(true);
+    setDutyFeedback(null);
+    try {
+      const res = await fetch(`/api/employees/${dutyModalEmployee.id}/custom-duty`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to reset custom duty.');
+      }
+      setEmployees(prev =>
+        prev.map(e =>
+          e.id === dutyModalEmployee.id
+            ? {
+                ...e,
+                workShiftId: null,
+                workShift: null,
+                shift: null,
+              }
+            : e
+        )
+      );
+      setDutyFeedback({ type: 'success', message: 'Reset to company default shift.' });
+      setTimeout(() => {
+        setDutyModalEmployee(null);
+        setDutyFeedback(null);
+      }, 1000);
+    } catch (err: any) {
+      setDutyFeedback({ type: 'error', message: err.message || 'Error resetting duty' });
+    } finally {
+      setIsSavingDuty(false);
+    }
+  };
 
   // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
@@ -333,7 +445,25 @@ export default function EmployeesPageClient() {
                         </span>
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenCustomDuty(emp)}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '4px 8px',
+                              fontSize: '12px',
+                              borderColor: emp.workShiftId ? 'rgba(16, 185, 129, 0.4)' : 'rgba(99, 102, 241, 0.4)',
+                              color: emp.workShiftId ? 'var(--success)' : 'var(--primary)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Set Custom Duty Time"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>schedule</span>
+                            Custom Duty
+                          </button>
                           <button onClick={() => handleRowClick(emp)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', borderColor: 'var(--border)' }}>View</button>
                           <button onClick={(e) => handleDeleteEmployee(emp.id, e)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px', color: 'var(--danger)', borderColor: 'var(--danger)' }}>Delete</button>
                         </div>
@@ -528,6 +658,290 @@ export default function EmployeesPageClient() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Duty Modal Dialog */}
+      {dutyModalEmployee && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1050,
+            padding: '16px'
+          }}
+          onClick={() => !isSavingDuty && setDutyModalEmployee(null)}
+        >
+          <div
+            style={{
+              background: 'var(--card-bg, #1e293b)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '520px',
+              padding: '28px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: 'rgba(16, 185, 129, 0.14)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>schedule</span>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>
+                    Custom Duty Schedule
+                  </h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {dutyModalEmployee.firstName} {dutyModalEmployee.lastName} ({dutyModalEmployee.employeeId})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDutyModalEmployee(null)}
+                disabled={isSavingDuty}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Shift Banner */}
+            <div style={{
+              padding: '12px 16px',
+              borderRadius: '12px',
+              background: dutyModalEmployee.workShift ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
+              border: `1px solid ${dutyModalEmployee.workShift ? 'rgba(16, 185, 129, 0.25)' : 'rgba(59, 130, 246, 0.2)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '20px', color: dutyModalEmployee.workShift ? '#10b981' : '#60a5fa' }}>
+                {dutyModalEmployee.workShift ? 'verified' : 'info'}
+              </span>
+              <div style={{ fontSize: '13px', color: 'var(--text)' }}>
+                {dutyModalEmployee.workShift ? (
+                  <>
+                    <strong>Custom Duty Active:</strong> {dutyModalEmployee.workShift.startTime} — {dutyModalEmployee.workShift.endTime} (+{dutyModalEmployee.workShift.gracePeriod ?? 15}m grace)
+                  </>
+                ) : (
+                  <>
+                    <strong>Company Default Shift:</strong> 09:30 — 18:00 (+15m grace)
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Presets */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Quick Preset Shifts
+              </label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Standard (9:30 - 6:00)', start: '09:30', end: '18:00', grace: 15, breakMin: 60, night: false },
+                  { label: 'Morning (8:00 - 4:30)', start: '08:00', end: '16:30', grace: 15, breakMin: 45, night: false },
+                  { label: 'Late (11:00 - 7:30)', start: '11:00', end: '19:30', grace: 15, breakMin: 60, night: false },
+                  { label: 'Night (10:00 - 6:00)', start: '22:00', end: '06:00', grace: 20, breakMin: 60, night: true },
+                ].map(preset => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setDutyStartTime(preset.start);
+                      setDutyEndTime(preset.end);
+                      setDutyGracePeriod(preset.grace);
+                      setDutyBreakTime(preset.breakMin);
+                      setDutyNightShift(preset.night);
+                    }}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text)',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
+                  Duty Start Time *
+                </label>
+                <input
+                  type="time"
+                  className="input"
+                  value={dutyStartTime}
+                  onChange={e => setDutyStartTime(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
+                  Duty End Time *
+                </label>
+                <input
+                  type="time"
+                  className="input"
+                  value={dutyEndTime}
+                  onChange={e => setDutyEndTime(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
+                  Grace Period (Minutes)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="120"
+                  className="input"
+                  value={dutyGracePeriod}
+                  onChange={e => setDutyGracePeriod(Number(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
+                  Break Allowance (Minutes)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="240"
+                  className="input"
+                  value={dutyBreakTime}
+                  onChange={e => setDutyBreakTime(Number(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            {/* Night Shift Checkbox */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text)' }}>
+              <input
+                type="checkbox"
+                checked={dutyNightShift}
+                onChange={e => setDutyNightShift(e.target.checked)}
+                style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
+              />
+              Night Shift (Duty crosses midnight to next morning)
+            </label>
+
+            {/* Sync Notice */}
+            <div style={{
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(255,255,255,0.02)',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.05)'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#10b981' }}>sync</span>
+              Instantly synced with Staff App mobile portal & late mark calculations.
+            </div>
+
+            {/* Feedback message */}
+            {dutyFeedback && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                background: dutyFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                color: dutyFeedback.type === 'success' ? '#10b981' : '#ef4444',
+                border: `1px solid ${dutyFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
+              }}>
+                {dutyFeedback.message}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+              {dutyModalEmployee.workShift ? (
+                <button
+                  type="button"
+                  onClick={handleResetCustomDuty}
+                  disabled={isSavingDuty}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    color: '#ef4444',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Reset to Default
+                </button>
+              ) : <div />}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setDutyModalEmployee(null)}
+                  disabled={isSavingDuty}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleSaveCustomDuty}
+                  disabled={isSavingDuty}
+                  style={{ background: '#10b981', borderColor: '#10b981' }}
+                >
+                  {isSavingDuty ? "Saving..." : "Save Custom Duty"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

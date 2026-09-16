@@ -49,9 +49,26 @@ export async function GET(request: Request) {
       isCheckedIn: !!rec.checkInTime && !rec.checkOutTime
     });
 
+    const empWithShift = await prisma.employee.findUnique({
+      where: { id: employee.id },
+      include: { workShift: true }
+    });
+
+    const dutySchedule = empWithShift?.workShift ? {
+      name: empWithShift.workShift.name,
+      startTime: empWithShift.workShift.startTime,
+      endTime: empWithShift.workShift.endTime,
+      gracePeriod: empWithShift.workShift.gracePeriod,
+      breakTime: empWithShift.workShift.breakTime,
+      nightShift: empWithShift.workShift.nightShift,
+      isCustom: true,
+      dutyHoursFormatted: `${empWithShift.workShift.startTime} - ${empWithShift.workShift.endTime}`,
+    } : null;
+
     return NextResponse.json({
       records: records.map(mapRecord),
       today: todayRecord ? mapRecord(todayRecord) : null,
+      dutySchedule,
       summary: {
         present: records.filter((r) => r.status === "PRESENT").length,
         absent: records.filter((r) => r.status === "ABSENT").length,

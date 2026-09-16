@@ -22,6 +22,7 @@ export async function GET(req: Request) {
 
     const employee = await prisma.employee.findUnique({
       where: { employeeId },
+      include: { workShift: true }
     });
 
     if (!employee) {
@@ -75,6 +76,17 @@ export async function GET(req: Request) {
     const checkInTimeIso = attendance?.checkInTime ? attendance.checkInTime.toISOString() : null;
     const checkOutTimeIso = attendance?.checkOutTime ? attendance.checkOutTime.toISOString() : null;
 
+    const dutySchedule = employee.workShift ? {
+      name: employee.workShift.name,
+      startTime: employee.workShift.startTime,
+      endTime: employee.workShift.endTime,
+      gracePeriod: employee.workShift.gracePeriod,
+      breakTime: employee.workShift.breakTime,
+      nightShift: employee.workShift.nightShift,
+      isCustom: true,
+      dutyHoursFormatted: `${employee.workShift.startTime} - ${employee.workShift.endTime}`,
+    } : null;
+
     return NextResponse.json({
       success: true,
       checkInTime: checkInTimeIso,
@@ -82,6 +94,7 @@ export async function GET(req: Request) {
       status: currentStatus,
       lateMinutes: attendance?.lateMinutes || 0,
       isLate: attendance?.isLate || false,
+      dutySchedule,
       record: attendance ? {
         id: attendance.id,
         employeeId: employee.employeeId,
@@ -92,6 +105,7 @@ export async function GET(req: Request) {
         lateMinutes: attendance.lateMinutes || 0,
         isLate: attendance.isLate || false,
         isCheckedIn: !!attendance.checkInTime && !attendance.checkOutTime,
+        dutySchedule,
       } : null,
     });
 

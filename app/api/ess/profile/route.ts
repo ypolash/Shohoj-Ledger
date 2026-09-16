@@ -27,6 +27,7 @@ export async function GET(request: Request) {
         departmentRef: { select: { name: true } },
         designationRef: { select: { name: true } },
         reportingManager: { select: { firstName: true, lastName: true } },
+        workShift: true,
       },
     });
 

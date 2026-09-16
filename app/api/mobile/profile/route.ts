@@ -26,6 +26,7 @@ export async function GET(req: Request) {
 
     const employee = await prisma.employee.findUnique({
       where: { employeeId },
+      include: { workShift: true }
     });
 
     if (!employee) {
@@ -44,6 +45,17 @@ export async function GET(req: Request) {
         profileImage = user?.image;
     }
 
+    const dutySchedule = employee.workShift ? {
+      name: employee.workShift.name,
+      startTime: employee.workShift.startTime,
+      endTime: employee.workShift.endTime,
+      gracePeriod: employee.workShift.gracePeriod,
+      breakTime: employee.workShift.breakTime,
+      nightShift: employee.workShift.nightShift,
+      isCustom: true,
+      dutyHoursFormatted: `${employee.workShift.startTime} - ${employee.workShift.endTime}`,
+    } : null;
+
     const profile = {
       id: employee.id,
       fullName: `${employee.firstName} ${employee.lastName}`,
@@ -54,7 +66,9 @@ export async function GET(req: Request) {
       phone: employee.phone || "N/A",
       email: employee.email,
       profileImage: profileImage,
-      isActive: employee.status === "ACTIVE"
+      isActive: employee.status === "ACTIVE",
+      shift: employee.workShift ? `${employee.workShift.startTime} - ${employee.workShift.endTime}` : (employee.shift || "Regular"),
+      dutySchedule,
     };
 
     return NextResponse.json(profile);

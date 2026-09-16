@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from "../../income/page.module.css";
-import { fetchMyAttendanceHistory, fetchMyAttendanceSummary } from './actions';
+import { fetchMyAttendanceHistory, fetchMyAttendanceSummary, fetchMyDutySchedule } from './actions';
 
 export default function EssAttendancePage() {
   const [history, setHistory] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [dutySchedule, setDutySchedule] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -15,12 +16,14 @@ export default function EssAttendancePage() {
 
   const loadData = async () => {
     try {
-      const [histData, sumData] = await Promise.all([
+      const [histData, sumData, dutyData] = await Promise.all([
         fetchMyAttendanceHistory(),
-        fetchMyAttendanceSummary()
+        fetchMyAttendanceSummary(),
+        fetchMyDutySchedule()
       ]);
       setHistory(histData);
       setSummary(sumData);
+      setDutySchedule(dutyData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -41,6 +44,64 @@ export default function EssAttendancePage() {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
+      {/* Duty Schedule Card */}
+      <div className="glass-card" style={{
+        padding: '20px 24px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+        border: '1px solid var(--border)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: dutySchedule?.isCustom ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: dutySchedule?.isCustom ? 'var(--success)' : 'var(--primary)',
+            fontSize: '22px'
+          }}>
+            <span className="material-symbols-outlined">schedule</span>
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: dutySchedule?.isCustom ? 'var(--success)' : 'var(--text-muted)' }}>
+                {dutySchedule?.isCustom ? '★ Assigned Custom Duty' : 'Office Standard Shift'}
+              </span>
+              {dutySchedule?.nightShift && (
+                <span style={{ fontSize: '11px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '2px 8px', borderRadius: '12px' }}>
+                  Night Shift
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
+              {dutySchedule?.startTime ? `${dutySchedule.startTime} — ${dutySchedule.endTime}` : '09:30 — 18:00'}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Grace Period</div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--warning)' }}>
+              +{dutySchedule?.gracePeriod ?? 15} mins
+            </div>
+          </div>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Break Allowance</div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--primary)' }}>
+              {dutySchedule?.breakTime ?? 60} mins
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className={styles.metricsGrid}>
         <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
           <div className={styles.metricTitle}>Days Present (This Month)</div>

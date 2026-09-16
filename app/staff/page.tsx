@@ -13,6 +13,7 @@ export default function StaffPortalPage() {
   const [leaves, setLeaves] = useState<any[]>([]);
   const [payroll, setPayroll] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('ATTENDANCE');
+  const [dutySchedule, setDutySchedule] = useState<any>(null);
 
   // New Leave Form
   const [availableLeaveTypes, setAvailableLeaveTypes] = useState<any[]>([]);
@@ -32,16 +33,41 @@ export default function StaffPortalPage() {
     const emp = employees.find(e => e.employeeId === employeeId && e.password === password);
     if (emp) {
       setIsAuthenticated(true);
-      fetchDashboardData(emp.id);
+      if (emp.workShift) {
+        setDutySchedule({
+          name: emp.workShift.name,
+          startTime: emp.workShift.startTime,
+          endTime: emp.workShift.endTime,
+          gracePeriod: emp.workShift.gracePeriod,
+          breakTime: emp.workShift.breakTime,
+          nightShift: emp.workShift.nightShift,
+          isCustom: true,
+          dutyHoursFormatted: `${emp.workShift.startTime} - ${emp.workShift.endTime}`
+        });
+      }
+      fetchDashboardData(emp.id, emp);
     } else {
       alert('Invalid Employee ID or Password');
     }
   };
 
-  const fetchDashboardData = async (empId: string) => {
+  const fetchDashboardData = async (empId: string, currentEmp?: any) => {
     // Fetch Attendance
     const attRes = await fetch(`/api/attendance?employeeId=${empId}`);
     if (attRes.ok) setAttendance(await attRes.json());
+
+    // Fetch Mobile Attendance Status for Duty Schedule
+    const targetEmpId = currentEmp?.employeeId || employeeId;
+    if (targetEmpId) {
+      fetch(`/api/mobile/attendance/status?employeeId=${targetEmpId}`)
+        .then(res => res.json())
+        .then(d => {
+          if (d.dutySchedule) {
+            setDutySchedule(d.dutySchedule);
+          }
+        })
+        .catch(() => {});
+    }
 
     // Fetch Leaves
     const leaveRes = await fetch(`/api/leaves?employeeId=${empId}`);
@@ -127,12 +153,73 @@ export default function StaffPortalPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#f8fafc', padding: '40px' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
             <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0 0 8px 0' }}>Welcome, {emp.firstName}!</h1>
             <span style={{ color: '#94a3b8' }}>{emp.designation} • {emp.employeeId}</span>
           </div>
           <button onClick={() => setIsAuthenticated(false)} className="btn" style={{ background: 'rgba(255,255,255,0.1)' }}>Logout</button>
+        </div>
+
+        {/* Duty Schedule Banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          padding: '20px 24px',
+          marginBottom: '28px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              background: dutySchedule?.isCustom ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: dutySchedule?.isCustom ? '#34d399' : '#60a5fa',
+              fontSize: '22px'
+            }}>
+              <span className="material-symbols-outlined">schedule</span>
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: dutySchedule?.isCustom ? '#34d399' : '#94a3b8' }}>
+                  {dutySchedule?.isCustom ? '★ Assigned Custom Duty' : 'Standard Company Shift'}
+                </span>
+                {dutySchedule?.nightShift && (
+                  <span style={{ fontSize: '11px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '2px 8px', borderRadius: '12px' }}>
+                    Night Shift
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#f8fafc', marginTop: '2px' }}>
+                {dutySchedule?.startTime ? `${dutySchedule.startTime} — ${dutySchedule.endTime}` : (emp?.shift || '09:30 — 18:00')}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Grace Period</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#fbbf24' }}>
+                +{dutySchedule?.gracePeriod ?? 15} mins
+              </div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Break Allowance</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#60a5fa' }}>
+                {dutySchedule?.breakTime ?? 60} mins
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tab Navigation */}

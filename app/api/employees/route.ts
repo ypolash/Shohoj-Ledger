@@ -22,7 +22,8 @@ export async function GET(req: Request) {
       include: {
         departmentRef: true,
         designationRef: true,
-        reportingManager: true
+        reportingManager: true,
+        workShift: true
       }
     });
     return NextResponse.json(JSON.parse(JSON.stringify(employees)));

@@ -40,3 +40,23 @@ export async function fetchMyAttendanceSummary() {
     return acc;
   }, { present: 0, late: 0, absent: 0, halfDay: 0 });
 }
+
+export async function fetchMyDutySchedule() {
+  const { employeeId } = await getEssEmployeeId();
+  const emp = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    include: { workShift: true }
+  });
+  if (emp?.workShift) {
+    return {
+      name: emp.workShift.name,
+      startTime: emp.workShift.startTime,
+      endTime: emp.workShift.endTime,
+      gracePeriod: emp.workShift.gracePeriod,
+      breakTime: emp.workShift.breakTime,
+      nightShift: emp.workShift.nightShift,
+      isCustom: true,
+    };
+  }
+  return null;
+}

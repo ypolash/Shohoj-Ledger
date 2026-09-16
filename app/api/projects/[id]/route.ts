@@ -30,6 +30,10 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
         payments: {
           orderBy: { createdAt: 'desc' }
         },
+        expenses: {
+          where: { category: "Project Custom Cost" },
+          orderBy: { createdAt: 'desc' }
+        },
         tasks: {
           include: {
             employee: { select: { firstName: true, lastName: true } }

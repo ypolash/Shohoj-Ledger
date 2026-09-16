@@ -482,6 +482,14 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const totalStaffPaid = projectBasedStaff.reduce((sum: number, pe: any) => sum + Number(pe.paidAmount || 0), 0);
   const totalStaffDue = Math.max(0, totalStaffRate - totalStaffPaid);
 
+  const expenses = project.expenses || [];
+  
+  // Combine payments and expenses into a single history array
+  const financialHistory = [
+    ...payments.map((p: any) => ({ ...p, _type: 'payment' })),
+    ...expenses.map((e: any) => ({ ...e, _type: 'expense' }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   // Profit
   // Calculated holistically: everything received from client minus everything spent (staff payouts + custom costs)
   const totalProfit = totalReceived - actualCost;
@@ -1021,37 +1029,60 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 </div>
 
                 {/* Recent Payments Breakdown */}
-                {payments.length > 0 && (
-                  <div>
-                    <span style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      Payment History ({payments.length})
+                {financialHistory.length > 0 && (
+                  <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>
+                      Financial History ({financialHistory.length})
                     </span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {payments.slice(0, 5).map((p: any) => (
-                        <div key={p.id} className={styles.paymentHistoryItem}>
+                      {financialHistory.slice(0, 10).map((record: any) => (
+                        <div key={record.id} className={styles.paymentHistoryItem}>
                           <div>
-                            <strong style={{ color: '#f8fafc' }}>+{formatCurrency(Number(p.amount))}</strong>
-                            <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
-                              via {p.paymentMethod}
-                            </span>
-                            {p.notes && (
-                              <span style={{
-                                fontSize: '10px',
-                                color: p.notes.includes('Custom Cost') ? '#fca5a5' : '#64748b',
-                                display: 'block',
-                                marginTop: '2px'
-                              }}>
-                                {p.notes}
-                              </span>
+                            {record._type === 'payment' ? (
+                              <>
+                                <strong style={{ color: '#f8fafc' }}>+{formatCurrency(Number(record.amount))}</strong>
+                                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
+                                  via {record.paymentMethod}
+                                </span>
+                                {record.notes && (
+                                  <span style={{
+                                    fontSize: '10px',
+                                    color: record.notes.includes('Custom Cost') ? '#fca5a5' : '#64748b',
+                                    display: 'block',
+                                    marginTop: '2px'
+                                  }}>
+                                    {record.notes}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <strong style={{ color: '#fca5a5' }}>-{formatCurrency(Number(record.amount))}</strong>
+                                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
+                                  Cost
+                                </span>
+                                {record.description && (
+                                  <span style={{
+                                    fontSize: '10px',
+                                    color: '#fca5a5',
+                                    display: 'block',
+                                    marginTop: '2px'
+                                  }}>
+                                    {record.description}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>
-                              {new Date(p.createdAt).toLocaleDateString()}
+                              {new Date(record.createdAt).toLocaleDateString()}
                             </span>
-                            <span style={{ fontSize: '10px', color: '#34d399' }}>
-                              Staff: {formatCurrency(Number(p.paidToStaff))} • Profit: {formatCurrency(Number(p.profit))}
-                            </span>
+                            {record._type === 'payment' && (
+                              <span style={{ fontSize: '10px', color: '#34d399' }}>
+                                Staff: {formatCurrency(Number(record.paidToStaff))} • Profit: {formatCurrency(Number(record.profit))}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}

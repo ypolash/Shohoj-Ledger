@@ -147,15 +147,15 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       await tx.performanceImprovementPlan.deleteMany({ where: { employeeId: empId } });
       await tx.interviewFeedback.deleteMany({ where: { interviewerId: empId } });
       await tx.interview.deleteMany({ where: { interviewerId: empId } });
-      await tx.trainingAssessment.deleteMany({ where: { assessorId: empId } });
-      await tx.trainingEnrollment.deleteMany({ where: { traineeId: empId } });
+      await tx.trainingAssessment.deleteMany({ where: { evaluatorId: empId } });
+      await tx.trainingEnrollment.deleteMany({ where: { employeeId: empId } });
 
       // 4. Clear task rewards, submissions, and payouts
       await tx.taskRewardSubmission.deleteMany({ where: { employeeId: empId } });
       await tx.taskRewardPayout.deleteMany({ where: { employeeId: empId } });
 
       // 5. Clear leave records & approvals
-      await tx.leaveApproval.deleteMany({ where: { approvedById: empId } });
+      await tx.leaveApproval.deleteMany({ where: { approverId: empId } });
       await tx.leaveApproval.deleteMany({ where: { leaveRequest: { employeeId: empId } } });
       await tx.leaveRequest.deleteMany({ where: { employeeId: empId } });
       await tx.leaveBalance.deleteMany({ where: { employeeId: empId } });
@@ -172,10 +172,10 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       await tx.attendance.deleteMany({ where: { employeeId: empId } });
 
       // 7. Clear payroll, loans, salary and finance relations
-      await tx.payrollApproval.deleteMany({ where: { approvedById: empId } });
+      await tx.payrollApproval.deleteMany({ where: { approverId: empId } });
       await tx.payrollItem.deleteMany({ where: { employeeId: empId } });
       await tx.payslip.deleteMany({ where: { employeeId: empId } });
-      await tx.salaryAdvanceRecovery.deleteMany({ where: { salaryAdvance: { employeeId: empId } } });
+      await tx.salaryAdvanceRecovery.deleteMany({ where: { advance: { employeeId: empId } } });
       await tx.salaryAdvance.deleteMany({ where: { employeeId: empId } });
       await tx.salaryDeduction.deleteMany({ where: { employeeId: empId } });
       await tx.salaryPayment.deleteMany({ where: { employeeId: empId } });
@@ -183,8 +183,8 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       await tx.employeeLoan.deleteMany({ where: { employeeId: empId } });
       await tx.employeeLoan.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
       await tx.bonus.deleteMany({ where: { employeeId: empId } });
-      await tx.barcode.deleteMany({ where: { employeeId: empId } });
-      await tx.stockMovement.deleteMany({ where: { employeeId: empId } });
+      await tx.barcode.updateMany({ where: { generatedById: empId }, data: { generatedById: null } });
+      await tx.stockMovement.updateMany({ where: { performedById: empId }, data: { performedById: null } });
 
       // 8. Clear profile, reporting, lifecycle, and documents
       await tx.employeeFine.deleteMany({ where: { employeeId: empId } });

@@ -63,7 +63,7 @@ export async function GET(req: Request) {
       },
     });
 
-    const mappedRegular = regularTasks.map(t => ({
+    const mappedRegular = regularTasks.map((t: any) => ({
       id: t.id,
       title: t.title,
       description: t.description,
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
     // 2. Fetch Special Reward Tasks if companyId is resolved
     let mappedSpecial: any[] = [];
     if (companyId) {
-      const specialTasks = await prisma.taskReward.findMany({
+      const specialTasks = await (prisma as any).taskReward.findMany({
         where: {
           companyId,
           status: { in: ["OPEN", "IN_PROGRESS", "COMPLETED"] },
@@ -102,12 +102,12 @@ export async function GET(req: Request) {
         },
       });
 
-      const setting = await prisma.taskRewardSetting.findUnique({
+      const setting = await (prisma as any).taskRewardSetting.findUnique({
         where: { companyId },
       });
       const pointRate = setting ? Number(setting.pointToCashRate) : 10;
 
-      mappedSpecial = specialTasks.map(st => {
+      mappedSpecial = (specialTasks || []).map((st: any) => {
         const mySub = st.submissions && st.submissions.length > 0 ? st.submissions[0] : null;
         let mappedStatus = "Pending";
         if (mySub) {

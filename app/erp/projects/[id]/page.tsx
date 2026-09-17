@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, use, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
 import styles from './workspace.module.css';
@@ -26,8 +26,9 @@ const STAGE_CONFIG: Record<string, { dot: string; bg: string }> = {
   "Completed": { dot: '#34d399', bg: 'rgba(16, 185, 129, 0.15)' },
 };
 
-export default function ProjectWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: projectId } = use(params);
+export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id: string }> }) {
+  const routeParams = useParams();
+  const projectId = (routeParams?.id as string) || '';
   const router = useRouter();
 
   const [project, setProject] = useState<any>(null);
@@ -128,12 +129,13 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   };
 
   const fetchProject = useCallback(async () => {
+    if (!projectId) return;
     setIsLoading(true);
     setApiError(null);
     try {
       const res = await fetch(`/api/projects/${projectId}`);
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data?.project) {
         setProject(data.project);
         setEditForm({
           name: data.project.name || '',
@@ -151,7 +153,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           description: data.project.description || ''
         });
       } else {
-        setApiError({ status: res.status, message: data.error || data.message || `HTTP ${res.status}` });
+        setApiError({ status: res.status, message: data?.error || data?.message || `HTTP ${res.status}` });
       }
     } catch (e) {
       setApiError({ status: 0, message: 'Network error connecting to workspace' });
@@ -751,7 +753,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               {/* Delete Project Button */}
               <button
                 type="button"
-                onClick={() => setDeleteConfirmOpen(true)}
+                onClick={() => setIsDeleteProjectModalOpen(true)}
                 className={styles.deleteProjectBtn}
                 title="Delete Project"
               >
@@ -776,7 +778,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
                 <span className={styles.metaItem}>
                   <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#a855f7' }}>badge</span>
-                  Manager: <strong>{project.manager ? `${project.manager.firstName} ${project.manager.lastName}` : 'Unassigned'}</strong>
+                  Manager: <strong>{project.manager ? `${project.manager.firstName || ''} ${project.manager.lastName || ''}`.trim() || 'Unassigned' : 'Unassigned'}</strong>
                 </span>
 
                 <span className={styles.metaItem}>
@@ -1371,12 +1373,12 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   {/* Manager */}
                   <div className={styles.stakeholderCard}>
                     <div className={styles.avatarBadge} style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', borderColor: 'rgba(59, 130, 246, 0.4)' }}>
-                      {project.manager ? `${project.manager.firstName[0]}${project.manager.lastName[0]}` : 'U'}
+                      {project.manager ? `${project.manager.firstName?.[0] || 'M'}${project.manager.lastName?.[0] || ''}` : 'U'}
                     </div>
                     <div style={{ flex: 1 }}>
                       <span style={{ display: 'block', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Project Manager</span>
                       <strong className={styles.stakeholderTitle}>
-                        {project.manager ? `${project.manager.firstName} ${project.manager.lastName}` : 'Unassigned'}
+                        {project.manager ? `${project.manager.firstName || ''} ${project.manager.lastName || ''}`.trim() || 'Unassigned' : 'Unassigned'}
                       </strong>
                     </div>
                   </div>
@@ -1779,7 +1781,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                         setEditForm(f => ({
                           ...f,
                           status: newStatus,
-                          progress: newStatus === 'Completed' ? 100 : f.progress
+                          progress: newStatus === 'Completed' ? '100' : f.progress
                         }));
                       }}
                       className={styles.inputField}
@@ -1805,7 +1807,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                         const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
                         setEditForm(f => ({
                           ...f,
-                          progress: val,
+                          progress: String(val),
                           status: val === 100 ? 'Completed' : (f.status === 'Completed' ? 'In Progress' : f.status)
                         }));
                       }}
@@ -2081,7 +2083,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   }}>
                     <span>Cost Impact:</span>
                     <span>
-                      Total Project Costs: <strong style={{ color: '#fca5a5' }}>{formatCurrency(totalCost + (Number(paymentForm.customCost) || 0))}</strong>
+                      Total Project Costs: <strong style={{ color: '#fca5a5' }}>{formatCurrency(actualCost + (Number(paymentForm.customCost) || 0))}</strong>
                     </span>
                   </div>
                 </div>
@@ -2135,7 +2137,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   const incomingPay = Number(paymentForm.amount) || 0;
                   const incomingCost = Number(paymentForm.customCost) || 0;
                   const newTotalReceived = totalReceived + incomingPay;
-                  const newTotalCost = totalCost + incomingCost;
+                  const newTotalCost = actualCost + incomingCost;
                   const newClientDue = Math.max(0, budget - newTotalReceived);
                   const newRealized = newTotalReceived - newTotalCost;
                   const newProjected = budget - newTotalCost;
@@ -2289,11 +2291,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                                 style={{ width: '16px', height: '16px', accentColor: '#a855f7', cursor: 'pointer' }}
                               />
                               <div className={styles.avatarBadge} style={{ width: '32px', height: '32px', fontSize: '12px' }}>
-                                {emp.firstName[0]}{emp.lastName[0]}
+                                {emp.firstName?.[0] || 'E'}{emp.lastName?.[0] || ''}
                               </div>
                               <div>
                                 <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '13px', display: 'block' }}>
-                                  {emp.firstName} {emp.lastName}
+                                  {emp.firstName || ''} {emp.lastName || ''}
                                 </span>
                                 <span style={{ fontSize: '11px', color: '#94a3b8' }}>
                                   {emp.designation || 'Staff'} {emp.email ? `• ${emp.email}` : ''}

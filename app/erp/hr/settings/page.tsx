@@ -67,9 +67,16 @@ interface LeaveType {
   name: string;
   description?: string | null;
   displayDescription?: string;
-  quotaModel?: "ANNUAL" | "MONTHLY" | "DAILY";
+  quotaModel?: "ANNUAL" | "MONTHLY" | "DAILY" | "SHORT_BREAK";
   isPaid: boolean;
   leavePolicies?: LeavePolicy[];
+  isShortBreak?: boolean;
+  breakDurationMinutes?: number;
+  gracePeriodMinutes?: number;
+  fineAmount?: number;
+  fineType?: "FIXED" | "PER_MINUTE";
+  autoFine?: boolean;
+  maxPerDay?: number;
 }
 
 const ALL_DAYS = [
@@ -183,12 +190,18 @@ export default function HRSettingsPage() {
     name: string;
     description: string;
     displayDescription: string;
-    quotaModel: "ANNUAL" | "MONTHLY" | "DAILY";
+    quotaModel: "ANNUAL" | "MONTHLY" | "DAILY" | "SHORT_BREAK";
     isPaid: boolean;
     accrualRate: number | string;
     maxBalance: number | string;
     carryForward: boolean;
     carryForwardLimit: number | string;
+    breakDurationMinutes: number | string;
+    gracePeriodMinutes: number | string;
+    fineAmount: number | string;
+    fineType: "FIXED" | "PER_MINUTE";
+    autoFine: boolean;
+    maxPerDay: number | string;
   }>({
     name: "",
     description: "",
@@ -198,7 +211,13 @@ export default function HRSettingsPage() {
     accrualRate: 12,
     maxBalance: 12,
     carryForward: false,
-    carryForwardLimit: 0
+    carryForwardLimit: 0,
+    breakDurationMinutes: 30,
+    gracePeriodMinutes: 5,
+    fineAmount: 50,
+    fineType: "FIXED",
+    autoFine: true,
+    maxPerDay: 2
   });
 
   // Fetch initial settings
@@ -624,7 +643,13 @@ export default function HRSettingsPage() {
       accrualRate: 12,
       maxBalance: 12,
       carryForward: false,
-      carryForwardLimit: 0
+      carryForwardLimit: 0,
+      breakDurationMinutes: 30,
+      gracePeriodMinutes: 5,
+      fineAmount: 50,
+      fineType: "FIXED",
+      autoFine: true,
+      maxPerDay: 2
     });
     setShowLeaveModal(true);
   };
@@ -633,8 +658,8 @@ export default function HRSettingsPage() {
     setEditingLeaveId(type.id);
     setLeaveError("");
     const policy = type.leavePolicies?.[0];
-    const model = type.quotaModel || (type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
-    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*/s, '') : "");
+    const model = type.quotaModel || (type.description?.includes("[TIMER_CONFIG:") || type.description?.includes("[QUOTA:SHORT_BREAK]") ? "SHORT_BREAK" : type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
+    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[(TIMER_CONFIG:{.*?}|QUOTA:(ANNUAL|MONTHLY|DAILY|SHORT_BREAK))\]\s*/s, '') : "");
     setLeaveForm({
       name: type.name,
       description: cleanDesc,
@@ -644,7 +669,13 @@ export default function HRSettingsPage() {
       accrualRate: policy ? Number(policy.accrualRate) : 12,
       maxBalance: policy?.maxBalance ? Number(policy.maxBalance) : 12,
       carryForward: Boolean(policy?.carryForward),
-      carryForwardLimit: policy?.carryForwardLimit ? Number(policy.carryForwardLimit) : 0
+      carryForwardLimit: policy?.carryForwardLimit ? Number(policy.carryForwardLimit) : 0,
+      breakDurationMinutes: type.breakDurationMinutes !== undefined ? type.breakDurationMinutes : 30,
+      gracePeriodMinutes: type.gracePeriodMinutes !== undefined ? type.gracePeriodMinutes : 5,
+      fineAmount: type.fineAmount !== undefined ? type.fineAmount : 50,
+      fineType: type.fineType || "FIXED",
+      autoFine: type.autoFine !== undefined ? type.autoFine : true,
+      maxPerDay: type.maxPerDay !== undefined ? type.maxPerDay : 2
     });
     setShowLeaveModal(true);
   };
@@ -668,10 +699,16 @@ export default function HRSettingsPage() {
         description: leaveForm.description,
         quotaModel: leaveForm.quotaModel,
         isPaid: leaveForm.isPaid,
-        carryForward: leaveForm.carryForward,
-        accrualRate: Number(leaveForm.accrualRate) || 0,
-        maxBalance: Number(leaveForm.maxBalance) || 0,
-        carryForwardLimit: Number(leaveForm.carryForwardLimit) || 0
+        carryForward: leaveForm.quotaModel === "SHORT_BREAK" ? false : leaveForm.carryForward,
+        accrualRate: leaveForm.quotaModel === "SHORT_BREAK" ? 0 : Number(leaveForm.accrualRate) || 0,
+        maxBalance: leaveForm.quotaModel === "SHORT_BREAK" ? null : Number(leaveForm.maxBalance) || 0,
+        carryForwardLimit: Number(leaveForm.carryForwardLimit) || 0,
+        breakDurationMinutes: Number(leaveForm.breakDurationMinutes) || 30,
+        gracePeriodMinutes: Number(leaveForm.gracePeriodMinutes) || 5,
+        fineAmount: Number(leaveForm.fineAmount) || 0,
+        fineType: leaveForm.fineType || "FIXED",
+        autoFine: Boolean(leaveForm.autoFine),
+        maxPerDay: Number(leaveForm.maxPerDay) || 2
       };
       const payload = isEditing ? { id: editingLeaveId, ...sanitizedLeaveForm } : sanitizedLeaveForm;
 
@@ -1483,8 +1520,8 @@ export default function HRSettingsPage() {
                 ) : (
                   leaveTypes.map((type) => {
                     const policy = type.leavePolicies?.[0];
-                    const model = type.quotaModel || (type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
-                    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*/s, '') : "");
+                    const model = type.quotaModel || (type.description?.includes("[TIMER_CONFIG:") || type.description?.includes("[QUOTA:SHORT_BREAK]") ? "SHORT_BREAK" : type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
+                    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[(TIMER_CONFIG:{.*?}|QUOTA:(ANNUAL|MONTHLY|DAILY|SHORT_BREAK))\]\s*/s, '') : "");
                     const rate = policy ? Number(policy.accrualRate) : 0;
 
                     return (
@@ -1504,7 +1541,29 @@ export default function HRSettingsPage() {
                         </td>
                         <td className={styles.td}>
                           <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
-                            {model === 'MONTHLY' ? (
+                            {model === 'SHORT_BREAK' ? (
+                              <>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(245, 158, 11, 0.12)',
+                                  color: '#f59e0b',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                                  width: 'fit-content'
+                                }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>av_timer</span>
+                                  Short Break ({type.breakDurationMinutes || 30}m Timer)
+                                </span>
+                                <span style={{ fontWeight: 700, fontSize: '12px', color: '#f87171' }}>
+                                  Overstay Fine: ৳{type.fineAmount || 50} <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>({type.gracePeriodMinutes || 5}m grace)</span>
+                                </span>
+                              </>
+                            ) : model === 'MONTHLY' ? (
                               <>
                                 <span style={{
                                   display: 'inline-flex',
@@ -1574,10 +1633,20 @@ export default function HRSettingsPage() {
                           </div>
                         </td>
                         <td className={styles.td}>
-                          {policy?.maxBalance ? `${Number(policy.maxBalance)} days max` : "Unlimited"}
+                          {model === 'SHORT_BREAK' ? (
+                            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                              Max {type.maxPerDay || 2} breaks/day
+                            </span>
+                          ) : (
+                            policy?.maxBalance ? `${Number(policy.maxBalance)} days max` : "Unlimited"
+                          )}
                         </td>
                         <td className={styles.td}>
-                          {policy?.carryForward ? (
+                          {model === 'SHORT_BREAK' ? (
+                            <span className={`${styles.badge} ${type.autoFine !== false ? styles.badgeActive : styles.badgeInactive}`}>
+                              {type.autoFine !== false ? "Auto-Fine Active" : "Manual Fine"}
+                            </span>
+                          ) : policy?.carryForward ? (
                             <span className={`${styles.badge} ${styles.badgeActive}`}>
                               Up to {Number(policy.carryForwardLimit || 0)} days
                             </span>
@@ -2182,7 +2251,7 @@ export default function HRSettingsPage() {
                 {/* Quota Allocation Model Selector */}
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Quota Allocation Model *</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                     <button
                       type="button"
                       onClick={() => setLeaveForm({ ...leaveForm, quotaModel: 'ANNUAL' })}
@@ -2193,7 +2262,7 @@ export default function HRSettingsPage() {
                         background: leaveForm.quotaModel === 'ANNUAL' ? 'rgba(37, 99, 235, 0.12)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
                         color: leaveForm.quotaModel === 'ANNUAL' ? 'var(--primary, #60a5fa)' : 'var(--text-main, #f8fafc)',
                         fontWeight: 700,
-                        fontSize: '12.5px',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         flexDirection: 'column',
@@ -2217,7 +2286,7 @@ export default function HRSettingsPage() {
                         background: leaveForm.quotaModel === 'MONTHLY' ? 'rgba(139, 92, 246, 0.12)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
                         color: leaveForm.quotaModel === 'MONTHLY' ? '#a78bfa' : 'var(--text-main, #f8fafc)',
                         fontWeight: 700,
-                        fontSize: '12.5px',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         flexDirection: 'column',
@@ -2241,7 +2310,31 @@ export default function HRSettingsPage() {
                         background: leaveForm.quotaModel === 'DAILY' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
                         color: leaveForm.quotaModel === 'DAILY' ? '#34d399' : 'var(--text-main, #f8fafc)',
                         fontWeight: 700,
-                        fontSize: '12.5px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>more_time</span>
+                      <span>Daily Model</span>
+                      <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted, #94a3b8)' }}>Daily credit</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLeaveForm({ ...leaveForm, quotaModel: 'SHORT_BREAK' })}
+                      style={{
+                        padding: '12px 10px',
+                        borderRadius: '12px',
+                        border: leaveForm.quotaModel === 'SHORT_BREAK' ? '2px solid #f59e0b' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                        background: leaveForm.quotaModel === 'SHORT_BREAK' ? 'rgba(245, 158, 11, 0.14)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
+                        color: leaveForm.quotaModel === 'SHORT_BREAK' ? '#fbbf24' : 'var(--text-main, #f8fafc)',
+                        fontWeight: 700,
+                        fontSize: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         flexDirection: 'column',
@@ -2251,53 +2344,265 @@ export default function HRSettingsPage() {
                       }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>timer</span>
-                      <span>Daily Model</span>
-                      <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted, #94a3b8)' }}>Daily credit</span>
+                      <span>Short Break</span>
+                      <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted, #94a3b8)' }}>Timer & Fines</span>
                     </button>
                   </div>
                 </div>
 
-                <div className={styles.grid2}>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>
-                      {leaveForm.quotaModel === 'MONTHLY'
-                        ? 'Monthly Allowance (Days / Month) *'
-                        : leaveForm.quotaModel === 'DAILY'
-                        ? 'Daily Accrual Credit (Days / Day) *'
-                        : 'Annual Allowance (Days / Year) *'}
-                    </label>
-                    <input
-                      type="number"
-                      step={leaveForm.quotaModel === 'DAILY' ? "0.01" : "0.5"}
-                      required
-                      min="0"
-                      className={styles.input}
-                      value={leaveForm.accrualRate}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, accrualRate: e.target.value === "" ? "" : parseFloat(e.target.value) || 0 })}
-                    />
-                    <span className={styles.inputHelper}>
-                      {leaveForm.quotaModel === 'MONTHLY'
-                        ? `Equivalent to ~${((Number(leaveForm.accrualRate) || 0) * 12).toFixed(1)} days per year`
-                        : leaveForm.quotaModel === 'DAILY'
-                        ? 'Accrued incrementally per active workday'
-                        : 'Standard fixed allocation per calendar year'}
-                    </span>
-                  </div>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Max Accumulation (Days)</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      className={styles.input}
-                      value={leaveForm.maxBalance}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, maxBalance: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
-                    />
-                    <span className={styles.inputHelper}>Maximum balance allowed before capping</span>
-                  </div>
-                </div>
+                {leaveForm.quotaModel === 'SHORT_BREAK' ? (
+                  <>
+                    {/* Short Break Timing Configuration */}
+                    <div style={{
+                      padding: "14px 16px",
+                      borderRadius: "12px",
+                      background: "rgba(245, 158, 11, 0.05)",
+                      border: "1px solid rgba(245, 158, 11, 0.2)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fbbf24", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>timelapse</span>
+                          Break Duration & Timing Rules
+                        </span>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          {[15, 30, 45, 60].map(mins => (
+                            <button
+                              key={mins}
+                              type="button"
+                              onClick={() => setLeaveForm({ ...leaveForm, breakDurationMinutes: mins })}
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                border: Number(leaveForm.breakDurationMinutes) === mins ? "1px solid #f59e0b" : "1px solid var(--border-main, rgba(255,255,255,0.1))",
+                                background: Number(leaveForm.breakDurationMinutes) === mins ? "rgba(245, 158, 11, 0.2)" : "transparent",
+                                color: Number(leaveForm.breakDurationMinutes) === mins ? "#fbbf24" : "var(--text-muted, #94a3b8)",
+                                cursor: "pointer"
+                              }}
+                            >
+                              {mins}m
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                <div className={styles.fieldGroup}>
+                      <div className={styles.grid2}>
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Allowed Duration (Minutes) *</label>
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            max="720"
+                            className={styles.input}
+                            value={leaveForm.breakDurationMinutes}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, breakDurationMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                          />
+                          <span className={styles.inputHelper}>Auto-countdown starts on employee app upon approval</span>
+                        </div>
+
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Grace Period (Minutes)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="60"
+                            className={styles.input}
+                            value={leaveForm.gracePeriodMinutes}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, gracePeriodMinutes: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                          />
+                          <span className={styles.inputHelper}>Tolerance before overstay fine kicks in</span>
+                        </div>
+                      </div>
+
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>Max Allowed Requests (Per Day)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          className={styles.input}
+                          value={leaveForm.maxPerDay}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, maxPerDay: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                        />
+                        <span className={styles.inputHelper}>Daily break limit for each employee</span>
+                      </div>
+                    </div>
+
+                    {/* Overstay Fine Configuration */}
+                    <div style={{
+                      padding: "14px 16px",
+                      borderRadius: "12px",
+                      background: "rgba(239, 68, 68, 0.05)",
+                      border: "1px solid rgba(239, 68, 68, 0.2)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px"
+                    }}>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#f87171", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>gavel</span>
+                        Automatic Overstay Penalty & Fines
+                      </span>
+
+                      <div className={styles.grid2}>
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Overstay Fine (৳) *</label>
+                          <input
+                            type="number"
+                            required
+                            min="0"
+                            className={styles.input}
+                            value={leaveForm.fineAmount}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, fineAmount: e.target.value === "" ? "" : parseFloat(e.target.value) || 0 })}
+                          />
+                          <span className={styles.inputHelper}>Penalty applied if employee exceeds break time</span>
+                        </div>
+
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Fine Calculation Mode</label>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginTop: "2px" }}>
+                            <button
+                              type="button"
+                              onClick={() => setLeaveForm({ ...leaveForm, fineType: 'FIXED' })}
+                              style={{
+                                padding: "8px 6px",
+                                borderRadius: "8px",
+                                border: leaveForm.fineType === 'FIXED' ? "1px solid #ef4444" : "1px solid var(--border-main, rgba(255,255,255,0.1))",
+                                background: leaveForm.fineType === 'FIXED' ? "rgba(239, 68, 68, 0.18)" : "transparent",
+                                color: leaveForm.fineType === 'FIXED' ? "#fca5a5" : "var(--text-muted, #94a3b8)",
+                                fontSize: "11.5px",
+                                fontWeight: 700,
+                                cursor: "pointer"
+                              }}
+                            >
+                              Flat / Fixed
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLeaveForm({ ...leaveForm, fineType: 'PER_MINUTE' })}
+                              style={{
+                                padding: "8px 6px",
+                                borderRadius: "8px",
+                                border: leaveForm.fineType === 'PER_MINUTE' ? "1px solid #ef4444" : "1px solid var(--border-main, rgba(255,255,255,0.1))",
+                                background: leaveForm.fineType === 'PER_MINUTE' ? "rgba(239, 68, 68, 0.18)" : "transparent",
+                                color: leaveForm.fineType === 'PER_MINUTE' ? "#fca5a5" : "var(--text-muted, #94a3b8)",
+                                fontSize: "11.5px",
+                                fontWeight: 700,
+                                cursor: "pointer"
+                              }}
+                            >
+                              Per Minute
+                            </button>
+                          </div>
+                          <span className={styles.inputHelper}>
+                            {leaveForm.fineType === 'FIXED' ? 'Flat fine per overstay incident' : '৳ fine multiplied by minutes delayed'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", marginTop: "4px" }}>
+                        <input
+                          type="checkbox"
+                          checked={leaveForm.autoFine}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, autoFine: e.target.checked })}
+                          style={{ width: "18px", height: "18px", accentColor: "#ef4444", marginTop: "2px" }}
+                        />
+                        <div>
+                          <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-main, #f8fafc)" }}>
+                            Auto-issue fine to employee record upon timer overstay
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
+                            Automatically creates an active penalty deduction in Employee Fines when the break expires without return.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.grid2}>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>
+                          {leaveForm.quotaModel === 'MONTHLY'
+                            ? 'Monthly Allowance (Days / Month) *'
+                            : leaveForm.quotaModel === 'DAILY'
+                            ? 'Daily Accrual Credit (Days / Day) *'
+                            : 'Annual Allowance (Days / Year) *'}
+                        </label>
+                        <input
+                          type="number"
+                          step={leaveForm.quotaModel === 'DAILY' ? "0.01" : "0.5"}
+                          required
+                          min="0"
+                          className={styles.input}
+                          value={leaveForm.accrualRate}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, accrualRate: e.target.value === "" ? "" : parseFloat(e.target.value) || 0 })}
+                        />
+                        <span className={styles.inputHelper}>
+                          {leaveForm.quotaModel === 'MONTHLY'
+                            ? `Equivalent to ~${((Number(leaveForm.accrualRate) || 0) * 12).toFixed(1)} days per year`
+                            : leaveForm.quotaModel === 'DAILY'
+                            ? 'Accrued incrementally per active workday'
+                            : 'Standard fixed allocation per calendar year'}
+                        </span>
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>Max Accumulation (Days)</label>
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          className={styles.input}
+                          value={leaveForm.maxBalance}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, maxBalance: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                        />
+                        <span className={styles.inputHelper}>Maximum balance allowed before capping</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={leaveForm.isPaid}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, isPaid: e.target.checked })}
+                          style={{ width: "18px", height: "18px", accentColor: "var(--primary)" }}
+                        />
+                        <span style={{ fontSize: "13px", fontWeight: 600 }}>Paid Leave (Staff receives full salary)</span>
+                      </label>
+
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={leaveForm.carryForward}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, carryForward: e.target.checked })}
+                          style={{ width: "18px", height: "18px", accentColor: "var(--primary)" }}
+                        />
+                        <span style={{ fontSize: "13px", fontWeight: 600 }}>Allow Carry-Forward to Next Year</span>
+                      </label>
+
+                      {leaveForm.carryForward && (
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Max Carry-Forward Days</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="365"
+                            className={styles.input}
+                            value={leaveForm.carryForwardLimit}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, carryForwardLimit: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <div className={styles.fieldGroup} style={{ marginTop: "4px" }}>
                   <label className={styles.label}>Description & Guidelines</label>
                   <input
                     type="text"
@@ -2306,42 +2611,6 @@ export default function HRSettingsPage() {
                     value={leaveForm.description}
                     onChange={(e) => setLeaveForm({ ...leaveForm, description: e.target.value })}
                   />
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                    <input
-                      type="checkbox"
-                      checked={leaveForm.isPaid}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, isPaid: e.target.checked })}
-                      style={{ width: "18px", height: "18px", accentColor: "var(--primary)" }}
-                    />
-                    <span style={{ fontSize: "13px", fontWeight: 600 }}>Paid Leave (Staff receives full salary)</span>
-                  </label>
-
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                    <input
-                      type="checkbox"
-                      checked={leaveForm.carryForward}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, carryForward: e.target.checked })}
-                      style={{ width: "18px", height: "18px", accentColor: "var(--primary)" }}
-                    />
-                    <span style={{ fontSize: "13px", fontWeight: 600 }}>Allow Carry-Forward to Next Year</span>
-                  </label>
-
-                  {leaveForm.carryForward && (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Max Carry-Forward Days</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="365"
-                        className={styles.input}
-                        value={leaveForm.carryForwardLimit}
-                        onChange={(e) => setLeaveForm({ ...leaveForm, carryForwardLimit: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
 

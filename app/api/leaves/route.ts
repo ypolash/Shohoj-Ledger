@@ -105,15 +105,42 @@ export async function PATCH(request: Request) {
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
     const targetLeave = await prisma.leaveRequest.findFirst({
-      where: { id: data.id, companyId: companyIdForGuard, systemSource }
+      where: { id: data.id, companyId: companyIdForGuard, systemSource },
+      include: { leaveType: true }
     });
     if (!targetLeave) {
       return NextResponse.json({ error: 'Leave request not found or access denied' }, { status: 404 });
     }
 
+    const updateData: any = { status: data.status };
+
+    // If approving a short break, start live countdown immediately from approval moment
+    if (data.status === "APPROVED") {
+      const isShortBreak = targetLeave.leaveType?.description?.includes("TIMER_CONFIG") ||
+                           targetLeave.leaveType?.description?.includes("SHORT_BREAK") ||
+                           targetLeave.comments?.includes("Short Break") ||
+                           targetLeave.type.toLowerCase().includes("break");
+
+      if (isShortBreak) {
+        let durationMinutes = 30;
+        if (targetLeave.leaveType?.description?.includes("TIMER_CONFIG")) {
+          try {
+            const match = targetLeave.leaveType.description.match(/\[TIMER_CONFIG:({.*?})\]/s);
+            if (match) {
+              const cfg = JSON.parse(match[1]);
+              durationMinutes = Number(cfg.duration) || 30;
+            }
+          } catch {}
+        }
+        const now = new Date();
+        updateData.startDate = now;
+        updateData.endDate = new Date(now.getTime() + durationMinutes * 60 * 1000);
+      }
+    }
+
     const updated = await prisma.leaveRequest.update({
       where: { id: data.id },
-      data: { status: data.status }
+      data: updateData
     });
 
     return NextResponse.json(updated);

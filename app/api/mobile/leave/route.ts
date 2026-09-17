@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
+import { getActiveBreakForEmployee, parseLeaveTypeConfig } from "@/lib/hr/leaveTimer";
 
 /**
  * OPTIONS /api/mobile/leave
@@ -12,7 +13,7 @@ export async function OPTIONS() {
 
 /**
  * GET /api/mobile/leave
- * Returns leave requests for the employee.
+ * Returns leave requests, balances, and active live break timer for the employee.
  */
 export async function GET(request: Request) {
   try {
@@ -30,11 +31,13 @@ export async function GET(request: Request) {
     });
 
     const companyId = employee.companyId || "";
-    const leaveTypes: any[] = await (prisma.leaveType as any).findMany({
+    const rawLeaveTypes: any[] = await (prisma.leaveType as any).findMany({
       where: { companyId },
       include: { leavePolicies: true },
       orderBy: { createdAt: "asc" }
     });
+
+    const leaveTypes = rawLeaveTypes.map(parseLeaveTypeConfig);
 
     // Calculate dynamic balances based on company's active leave policies
     const balances = leaveTypes.map(lt => {
@@ -59,21 +62,39 @@ export async function GET(request: Request) {
         id: lt.id,
         name: lt.name,
         isPaid: lt.isPaid,
+        quotaModel: lt.quotaModel,
+        isShortBreak: lt.isShortBreak,
+        breakDurationMinutes: lt.breakDurationMinutes,
+        gracePeriodMinutes: lt.gracePeriodMinutes,
+        fineAmount: lt.fineAmount,
+        fineType: lt.fineType,
+        autoFine: lt.autoFine,
         total,
         used,
         remaining: Math.max(0, total - used)
       };
     });
 
+    const activeBreak = await getActiveBreakForEmployee(employee.id, employee.companyId);
+
     return NextResponse.json({
       success: true,
       leaves,
       balances,
+      activeBreak,
+      hasActiveBreak: Boolean(activeBreak),
       leaveTypes: leaveTypes.map(lt => ({
         id: lt.id,
         name: lt.name,
-        description: lt.description,
-        isPaid: lt.isPaid
+        description: lt.displayDescription || lt.description,
+        isPaid: lt.isPaid,
+        quotaModel: lt.quotaModel,
+        isShortBreak: lt.isShortBreak,
+        breakDurationMinutes: lt.breakDurationMinutes,
+        gracePeriodMinutes: lt.gracePeriodMinutes,
+        fineAmount: lt.fineAmount,
+        fineType: lt.fineType,
+        autoFine: lt.autoFine,
       }))
     }, { headers: ESS_CORS_HEADERS });
   } catch (error) {
@@ -94,7 +115,7 @@ export async function POST(request: Request) {
     let body: any = {};
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       body = {};
     }
 
@@ -106,25 +127,51 @@ export async function POST(request: Request) {
       );
     }
 
-    const { type, startDate, endDate, reason } = body;
+    const { type, leaveTypeId, startDate, endDate, reason } = body;
 
-    if (!type || !startDate || !endDate || !reason) {
+    if (!type && !leaveTypeId) {
       return NextResponse.json(
-        { error: "Missing required fields: type, startDate, endDate, reason" },
+        { error: "Missing required field: type or leaveTypeId" },
         { status: 400, headers: ESS_CORS_HEADERS }
       );
+    }
+
+    // Check if matching leave type has a short break timer model
+    let targetType: any = null;
+    if (leaveTypeId) {
+      targetType = await prisma.leaveType.findFirst({
+        where: { id: leaveTypeId, companyId: employee.companyId || "" }
+      });
+    } else if (type) {
+      targetType = await prisma.leaveType.findFirst({
+        where: { name: type, companyId: employee.companyId || "" }
+      });
+    }
+
+    const parsedType = targetType ? parseLeaveTypeConfig(targetType) : null;
+    let finalStartDate = startDate ? new Date(startDate) : new Date();
+    let finalEndDate = endDate ? new Date(endDate) : new Date();
+
+    if (parsedType && (parsedType.isShortBreak || parsedType.quotaModel === "SHORT_BREAK")) {
+      const durationMs = (parsedType.breakDurationMinutes || 30) * 60 * 1000;
+      finalStartDate = new Date();
+      finalEndDate = new Date(Date.now() + durationMs);
     }
 
     const leave = await prisma.leaveRequest.create({
       data: {
         companyId: employee.companyId,
         employeeId: employee.id,
-        type,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        reason,
+        leaveTypeId: targetType?.id || null,
+        type: targetType?.name || type,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        reason: reason || (parsedType?.isShortBreak ? "Short Break Request" : "Leave Request"),
         status: "PENDING",
         systemSource: employee.systemSource || "MOBILE",
+        comments: parsedType?.isShortBreak
+          ? `Short Break: ${parsedType.breakDurationMinutes}m allowed (+${parsedType.gracePeriodMinutes}m grace). Overstay fine: ৳${parsedType.fineAmount}.`
+          : null
       },
     });
 

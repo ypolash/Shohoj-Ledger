@@ -2,30 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
-
-function parseLeaveType(type: any) {
-  if (!type) return type;
-  let quotaModel = "ANNUAL";
-  let cleanDesc = type.description || "";
-  if (type.description?.startsWith("[QUOTA:")) {
-    const match = type.description.match(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*(.*)$/s);
-    if (match) {
-      quotaModel = match[1];
-      cleanDesc = match[2] || "";
-    }
-  }
-  return {
-    ...type,
-    quotaModel,
-    displayDescription: cleanDesc,
-  };
-}
-
-function encodeDescription(description?: string | null, quotaModel?: string) {
-  const model = quotaModel && ["ANNUAL", "MONTHLY", "DAILY"].includes(quotaModel) ? quotaModel : "ANNUAL";
-  const clean = description ? description.replace(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*/s, '').trim() : '';
-  return clean ? `[QUOTA:${model}] ${clean}` : `[QUOTA:${model}]`;
-}
+import { parseLeaveTypeConfig, encodeLeaveTypeConfig } from "@/lib/hr/leaveTimer";
 
 export async function GET() {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
@@ -41,7 +18,7 @@ export async function GET() {
       orderBy: { createdAt: "asc" }
     });
 
-    const parsedData = leaveTypes.map(parseLeaveType);
+    const parsedData = leaveTypes.map(parseLeaveTypeConfig);
     return NextResponse.json({ success: true, data: parsedData });
   } catch (error: any) {
     console.error("Error fetching leave types:", error);
@@ -66,7 +43,13 @@ export async function POST(request: Request) {
       accrualRate = 12,
       maxBalance = 12,
       carryForward = false,
-      carryForwardLimit = 0
+      carryForwardLimit = 0,
+      breakDurationMinutes = 30,
+      gracePeriodMinutes = 5,
+      fineAmount = 50,
+      fineType = "FIXED",
+      autoFine = true,
+      maxPerDay = 2,
     } = body;
 
     if (!name?.trim()) {
@@ -81,7 +64,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: `Leave type "${name}" already exists.` }, { status: 400 });
     }
 
-    const encodedDesc = encodeDescription(description, quotaModel);
+    const encodedDesc = encodeLeaveTypeConfig(description, quotaModel, {
+      breakDurationMinutes,
+      gracePeriodMinutes,
+      fineAmount,
+      fineType,
+      autoFine,
+      maxPerDay,
+    });
 
     const newType = await prisma.leaveType.create({
       data: {
@@ -91,9 +81,9 @@ export async function POST(request: Request) {
         isPaid: Boolean(isPaid),
         leavePolicies: {
           create: {
-            accrualRate: Number(accrualRate) || 0,
+            accrualRate: quotaModel === "SHORT_BREAK" ? 0 : Number(accrualRate) || 0,
             maxBalance: maxBalance !== null && maxBalance !== undefined && maxBalance !== "" ? Number(maxBalance) : null,
-            carryForward: Boolean(carryForward),
+            carryForward: quotaModel === "SHORT_BREAK" ? false : Boolean(carryForward),
             carryForwardLimit: carryForward ? Number(carryForwardLimit) || 0 : null,
             approvalLevels: 1
           }
@@ -102,7 +92,7 @@ export async function POST(request: Request) {
       include: { leavePolicies: true }
     });
 
-    return NextResponse.json({ success: true, data: parseLeaveType(newType) }, { status: 201 });
+    return NextResponse.json({ success: true, data: parseLeaveTypeConfig(newType) }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating leave type:", error);
     return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });
@@ -121,7 +111,23 @@ export async function PUT(request: Request) {
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { id, name, accrualRate, maxBalance, carryForward, carryForwardLimit, isPaid, description, quotaModel } = body;
+    const {
+      id,
+      name,
+      accrualRate,
+      maxBalance,
+      carryForward,
+      carryForwardLimit,
+      isPaid,
+      description,
+      quotaModel,
+      breakDurationMinutes,
+      gracePeriodMinutes,
+      fineAmount,
+      fineType,
+      autoFine,
+      maxPerDay,
+    } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "Leave type ID is required" }, { status: 400 });
@@ -151,10 +157,17 @@ export async function PUT(request: Request) {
     }
 
     // Parse existing model if not provided
-    const existingParsed = parseLeaveType(existing);
+    const existingParsed = parseLeaveTypeConfig(existing);
     const targetModel = quotaModel || existingParsed.quotaModel;
     const targetDesc = description !== undefined ? description : existingParsed.displayDescription;
-    const encodedDesc = encodeDescription(targetDesc, targetModel);
+    const encodedDesc = encodeLeaveTypeConfig(targetDesc, targetModel, {
+      breakDurationMinutes: breakDurationMinutes !== undefined ? breakDurationMinutes : existingParsed.breakDurationMinutes,
+      gracePeriodMinutes: gracePeriodMinutes !== undefined ? gracePeriodMinutes : existingParsed.gracePeriodMinutes,
+      fineAmount: fineAmount !== undefined ? fineAmount : existingParsed.fineAmount,
+      fineType: fineType !== undefined ? fineType : existingParsed.fineType,
+      autoFine: autoFine !== undefined ? autoFine : existingParsed.autoFine,
+      maxPerDay: maxPerDay !== undefined ? maxPerDay : existingParsed.maxPerDay,
+    });
 
     // Update leave type
     await prisma.leaveType.update({
@@ -171,9 +184,9 @@ export async function PUT(request: Request) {
       await prisma.leavePolicy.update({
         where: { id: existing.leavePolicies[0].id },
         data: {
-          ...(accrualRate !== undefined && { accrualRate: Number(accrualRate) }),
+          ...(accrualRate !== undefined && { accrualRate: targetModel === "SHORT_BREAK" ? 0 : Number(accrualRate) }),
           ...(maxBalance !== undefined && { maxBalance: maxBalance !== null && maxBalance !== "" ? Number(maxBalance) : null }),
-          ...(carryForward !== undefined && { carryForward: Boolean(carryForward) }),
+          ...(carryForward !== undefined && { carryForward: targetModel === "SHORT_BREAK" ? false : Boolean(carryForward) }),
           ...(carryForwardLimit !== undefined && { carryForwardLimit: carryForward ? Number(carryForwardLimit) : null }),
         }
       });
@@ -181,9 +194,9 @@ export async function PUT(request: Request) {
       await prisma.leavePolicy.create({
         data: {
           leaveTypeId: id,
-          accrualRate: Number(accrualRate) || 0,
+          accrualRate: targetModel === "SHORT_BREAK" ? 0 : Number(accrualRate) || 0,
           maxBalance: maxBalance !== null && maxBalance !== undefined && maxBalance !== "" ? Number(maxBalance) : null,
-          carryForward: Boolean(carryForward),
+          carryForward: targetModel === "SHORT_BREAK" ? false : Boolean(carryForward),
           carryForwardLimit: carryForward ? Number(carryForwardLimit) : null,
         }
       });
@@ -194,7 +207,7 @@ export async function PUT(request: Request) {
       include: { leavePolicies: true }
     });
 
-    return NextResponse.json({ success: true, data: parseLeaveType(updated) });
+    return NextResponse.json({ success: true, data: parseLeaveTypeConfig(updated) });
   } catch (error: any) {
     console.error("Error updating leave policy:", error);
     return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });

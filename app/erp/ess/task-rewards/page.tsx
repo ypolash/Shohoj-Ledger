@@ -518,12 +518,12 @@ export default function EssTaskRewardsPage() {
             </div>
 
             <form onSubmit={handleClaimSubmit} className={styles.formGrid}>
-              <div style={{ background: "var(--surface-bg)", padding: "14px", borderRadius: "12px" }}>
+              <div style={{ background: "rgba(30, 41, 59, 0.7)", padding: "14px", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>SPECIAL TASK BOUNTY</div>
                 <div style={{ fontWeight: 800, fontSize: "16px", marginTop: "2px" }}>
                   {claimingTask.title}
                 </div>
-                <div style={{ fontSize: "13px", color: "#d97706", marginTop: "4px", fontWeight: 700 }}>
+                <div style={{ fontSize: "13px", color: "#f59e0b", marginTop: "4px", fontWeight: 700 }}>
                   Reward: +{claimingTask.points} Points (৳ {(claimingTask.monetaryValue || claimingTask.points * wallet.pointToCashRate).toLocaleString()} Extra Income)
                 </div>
               </div>
@@ -532,8 +532,8 @@ export default function EssTaskRewardsPage() {
               {claimingTask.checklist?.items && claimingTask.checklist.items.length > 0 && (
                 <div
                   style={{
-                    background: "var(--surface-bg)",
-                    border: "1px solid var(--border-main)",
+                    background: "rgba(30, 41, 59, 0.7)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
                     borderRadius: "10px",
                     padding: "12px",
                     display: "flex",

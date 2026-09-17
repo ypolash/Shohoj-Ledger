@@ -1396,7 +1396,7 @@ export default function TaskRewardsPage() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ background: "var(--surface-bg)", padding: "14px", borderRadius: "12px" }}>
+              <div style={{ background: "rgba(30, 41, 59, 0.7)", padding: "14px", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>TASK TITLE</div>
                 <div style={{ fontWeight: 800, fontSize: "16px", marginTop: "2px" }}>
                   {reviewModalData.taskReward?.title}
@@ -1409,7 +1409,7 @@ export default function TaskRewardsPage() {
               {reviewModalData.submissionNotes && (
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Employee Submission Notes</label>
-                  <div style={{ padding: "10px 14px", background: "var(--surface-bg)", borderRadius: "10px", fontSize: "13px" }}>
+                  <div style={{ padding: "10px 14px", background: "rgba(30, 41, 59, 0.7)", borderRadius: "10px", fontSize: "13px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
                     {reviewModalData.submissionNotes}
                   </div>
                 </div>
@@ -1508,10 +1508,10 @@ export default function TaskRewardsPage() {
             </div>
 
             <form onSubmit={handleDisbursePayout} className={styles.formGrid}>
-              <div style={{ background: "var(--surface-bg)", padding: "14px", borderRadius: "12px" }}>
+              <div style={{ background: "rgba(30, 41, 59, 0.7)", padding: "14px", borderRadius: "12px", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>RECIPIENT</div>
                 <div style={{ fontWeight: 800, fontSize: "16px" }}>{payoutModalData.name}</div>
-                <div style={{ fontSize: "13px", color: "#2563eb", marginTop: "2px", fontWeight: 700 }}>
+                <div style={{ fontSize: "13px", color: "#60a5fa", marginTop: "2px", fontWeight: 700 }}>
                   Available Balance: {payoutModalData.balancePoints} pts (৳ {(payoutModalData.balancePoints * settings.pointToCashRate).toLocaleString()})
                 </div>
               </div>

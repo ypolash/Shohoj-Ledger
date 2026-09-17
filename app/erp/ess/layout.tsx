@@ -19,6 +19,7 @@ export default function EssLayout({
     { name: 'My Leave', path: '/erp/ess/leave', icon: 'event_busy' },
     { name: 'My Payroll', path: '/erp/ess/payroll', icon: 'payments' },
     { name: 'My Tasks', path: '/erp/ess/tasks', icon: 'task' },
+    { name: 'Task Rewards', path: '/erp/ess/task-rewards', icon: 'military_tech' },
   ];
 
   return (

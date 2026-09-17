@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 export async function GET() {
-  const versionedPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.6.apk');
+  const versionedPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.7.apk');
   const latestPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-latest.apk');
   const filePath = fs.existsSync(versionedPath) ? versionedPath : (fs.existsSync(latestPath) ? latestPath : path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.apk'));
 
@@ -33,7 +33,7 @@ export async function GET() {
     status: 200,
     headers: {
       'Content-Type': 'application/vnd.android.package-archive',
-      'Content-Disposition': 'attachment; filename="shohoj-staff-v1.5.6.apk"',
+      'Content-Disposition': 'attachment; filename="shohoj-staff-v1.5.7.apk"',
       'Content-Length': stat.size.toString(),
       'Cache-Control': 'public, max-age=86400, must-revalidate',
     },

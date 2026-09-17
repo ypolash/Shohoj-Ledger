@@ -15,20 +15,21 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 21,
-      versionName: '1.5.6',
+      versionCode: 22,
+      versionName: '1.5.7',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5.6 Available',
+      title: 'Shohoj Staff v1.5.7 Available',
       releaseNotes: [
-        '🔔 System notifications for assigned tasks & special bounties',
-        '📢 Company notices & HR announcement push alerts',
-        '💬 Background chat & direct message notifications with sound',
-        '⚡ Persistent WorkManager background sync when app is closed'
+        '⚡ Instant Auto-Approved Short Breaks (no HR approval wait)',
+        '⏱️ Pre-request warning banner with duration & overstay fine limits',
+        '☕ Real-time live countdown timer & 1-tap End Break on Home and Leave screens',
+        '🔔 Background notification sync for Tasks, Notices & Community Chat',
+        '🔧 Resolved overstay fine persistence settings'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.6.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.7.apk`,
       fileSize: '18.7 MB',
       isForceUpdate: false,
-      publishedAt: '2026-09-18T00:00:00Z'
+      publishedAt: '2026-09-18T01:00:00Z'
     });
   }
 

@@ -107,18 +107,27 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
     await prisma.$transaction(async (tx) => {
       // 1. Unlink organizational leadership & management references
-      await tx.department.updateMany({ where: { headOfDepartmentId: empId }, data: { headOfDepartmentId: null } });
-      await tx.division.updateMany({ where: { headOfDivisionId: empId }, data: { headOfDivisionId: null } });
-      await tx.section.updateMany({ where: { headOfSectionId: empId }, data: { headOfSectionId: null } });
-      await tx.team.updateMany({ where: { leadOfTeamId: empId }, data: { leadOfTeamId: null } });
+      await tx.department.updateMany({ where: { headId: empId }, data: { headId: null } });
+      await tx.division.updateMany({ where: { headId: empId }, data: { headId: null } });
+      await tx.section.updateMany({ where: { headId: empId }, data: { headId: null } });
+      await tx.team.updateMany({ where: { leadId: empId }, data: { leadId: null } });
       await tx.warehouse.updateMany({ where: { managerId: empId }, data: { managerId: null } });
       await tx.project.updateMany({ where: { managerId: empId }, data: { managerId: null } });
       await tx.employee.updateMany({ where: { reportingManagerId: empId }, data: { reportingManagerId: null } });
 
+      // Disconnect implicit team projects relation
+      await tx.employee.update({
+        where: { id: empId },
+        data: { teamProjects: { set: [] } }
+      }).catch(() => {});
+
       // 2. Unassign tasks, assets, leads, opportunities, sessions
-      await tx.task.updateMany({ where: { assignedToEmployeeId: empId }, data: { assignedToEmployeeId: null } });
+      await tx.task.updateMany({
+        where: { OR: [{ assignedToEmployeeId: empId }, { assignedToEmployeeId: existingEmp.employeeId }] },
+        data: { assignedToEmployeeId: null }
+      });
       await tx.taskReward.updateMany({ where: { assignedToEmployeeId: empId }, data: { assignedToEmployeeId: null } });
-      await tx.asset.updateMany({ where: { assignedToEmployeeId: empId }, data: { assignedToEmployeeId: null } });
+      await tx.asset.updateMany({ where: { assignedToId: empId }, data: { assignedToId: null } });
       await tx.lead.updateMany({ where: { assignedToId: empId }, data: { assignedToId: null } });
       await tx.opportunity.updateMany({ where: { ownerId: empId }, data: { ownerId: null } });
       await tx.trainingSession.updateMany({ where: { trainerId: empId }, data: { trainerId: null } });
@@ -126,11 +135,8 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       await tx.packingTask.updateMany({ where: { packedById: empId }, data: { packedById: null } });
       await tx.putAwayTask.updateMany({ where: { assignedToId: empId }, data: { assignedToId: null } });
       await tx.stockTransfer.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
-      await tx.stockTransfer.updateMany({ where: { requestedById: empId }, data: { requestedById: null } });
       await tx.cycleCount.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
-      await tx.cycleCount.updateMany({ where: { createdById: empId }, data: { createdById: null } });
       await tx.inventoryAdjustment.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
-      await tx.inventoryAdjustment.updateMany({ where: { createdById: empId }, data: { createdById: null } });
       await tx.payrollRun.updateMany({ where: { processedById: empId }, data: { processedById: null } });
 
       // 3. Clear reviews, feedback, and interviews

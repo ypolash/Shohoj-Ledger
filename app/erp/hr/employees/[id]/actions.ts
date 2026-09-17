@@ -30,6 +30,8 @@ export async function updateExtendedProfile(employeeId: string, data: any) {
       phone: data.phone,
       designation: data.designation,
       department: data.department,
+      departmentId: data.departmentId || null,
+      designationId: data.designationId || null,
       basicSalary: data.basicSalary,
       status: data.status,
       employeeId: data.employeeId,

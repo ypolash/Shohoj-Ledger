@@ -23,6 +23,8 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [lifecycles, setLifecycles] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [designations, setDesignations] = useState<{ id: string; title?: string; name?: string }[]>([]);
   const [isLifecycleModalOpen, setIsLifecycleModalOpen] = useState(false);
   const [newLifecycle, setNewLifecycle] = useState({
     eventType: 'HIRE',
@@ -32,7 +34,27 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
 
   useEffect(() => {
     fetchLifecycles();
+    fetchDepartmentsAndDesignations();
   }, []);
+
+  const fetchDepartmentsAndDesignations = async () => {
+    try {
+      const [deptRes, desigRes] = await Promise.all([
+        fetch('/api/departments').catch(() => null),
+        fetch('/api/designations').catch(() => null)
+      ]);
+      if (deptRes && deptRes.ok) {
+        const data = await deptRes.json();
+        setDepartments(Array.isArray(data) ? data : []);
+      }
+      if (desigRes && desigRes.ok) {
+        const data = await desigRes.json();
+        setDesignations(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error("Failed to load departments / designations", err);
+    }
+  };
 
   const fetchLifecycles = async () => {
     try {
@@ -762,13 +784,29 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '6px' }}>
                     Designation / Role *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     className="input"
                     value={formData.designation}
-                    onChange={e => setFormData({ ...formData, designation: e.target.value })}
-                  />
+                    onChange={e => {
+                      const selectedVal = e.target.value;
+                      const desigObj = designations.find(d => (d.title || d.name) === selectedVal);
+                      setFormData({
+                        ...formData,
+                        designation: selectedVal,
+                        designationId: desigObj ? desigObj.id : formData.designationId
+                      });
+                    }}
+                  >
+                    <option value="">Select Designation...</option>
+                    {designations.map(d => {
+                      const label = d.title || d.name || '';
+                      return <option key={d.id} value={label}>{label}</option>;
+                    })}
+                    {formData.designation && !designations.some(d => (d.title || d.name) === formData.designation) && (
+                      <option value={formData.designation}>{formData.designation}</option>
+                    )}
+                  </select>
                 </div>
 
                 {/* Department */}
@@ -776,12 +814,27 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '6px' }}>
                     Department
                   </label>
-                  <input
-                    type="text"
+                  <select
                     className="input"
                     value={formData.department}
-                    onChange={e => setFormData({ ...formData, department: e.target.value })}
-                  />
+                    onChange={e => {
+                      const selectedVal = e.target.value;
+                      const deptObj = departments.find(d => d.name === selectedVal);
+                      setFormData({
+                        ...formData,
+                        department: selectedVal,
+                        departmentId: deptObj ? deptObj.id : formData.departmentId
+                      });
+                    }}
+                  >
+                    <option value="">Select Department...</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
+                    {formData.department && !departments.some(d => d.name === formData.department) && (
+                      <option value={formData.department}>{formData.department}</option>
+                    )}
+                  </select>
                 </div>
 
                 {/* Basic Salary */}

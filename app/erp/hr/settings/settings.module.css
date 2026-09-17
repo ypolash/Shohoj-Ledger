@@ -317,12 +317,32 @@
   outline: none;
   transition: all 0.2s ease;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .input:focus {
   border-color: var(--primary, #2563eb);
-  background: #ffffff;
+  background: var(--surface-input, #ffffff);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+:global(html.light) .input:focus,
+:global(html:not(.dark)) .input:focus {
+  background: #ffffff;
+}
+
+:global(html.dark) .input,
+:global(.dark) .input {
+  background: var(--surface-input, #0f172a) !important;
+  color: var(--text-main, #f8fafc) !important;
+  border-color: var(--border-main, rgba(255, 255, 255, 0.12));
+}
+
+:global(html.dark) .input:focus,
+:global(.dark) .input:focus {
+  background: var(--surface-input, #0f172a) !important;
+  color: var(--text-main, #f8fafc) !important;
+  border-color: var(--primary, #3b82f6) !important;
 }
 
 .inputHelper {

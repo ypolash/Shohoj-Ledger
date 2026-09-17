@@ -13,9 +13,8 @@ export interface LeaveTimerConfig {
 }
 
 export function parseLeaveTypeConfig(type: any): any {
-  if (!type) return type;
   let quotaModel: "ANNUAL" | "MONTHLY" | "DAILY" | "SHORT_BREAK" = "ANNUAL";
-  let cleanDesc = type.description || "";
+  let cleanDesc = type?.description || "";
   let breakDurationMinutes = 30;
   let gracePeriodMinutes = 5;
   let fineAmount = 50;
@@ -24,7 +23,7 @@ export function parseLeaveTypeConfig(type: any): any {
   let maxPerDay = 2;
   let isShortBreak = false;
 
-  if (type.description) {
+  if (type?.description) {
     const timerMatch = type.description.match(/^\[TIMER_CONFIG:({.*?})\]\s*(.*)$/s);
     if (timerMatch) {
       try {
@@ -57,10 +56,13 @@ export function parseLeaveTypeConfig(type: any): any {
         cleanDesc = match[2] || "";
       }
     }
+  } else if (type?.name && type.name.toLowerCase().includes("break")) {
+    quotaModel = "SHORT_BREAK";
+    isShortBreak = true;
   }
 
   return {
-    ...type,
+    ...(type || {}),
     quotaModel,
     isShortBreak,
     displayDescription: cleanDesc,
@@ -124,69 +126,94 @@ export function encodeLeaveTypeConfig(
 }
 
 export async function getActiveBreakForEmployee(employeeId: string, companyId?: string | null) {
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const whereClause: any = {
-    employeeId,
-    status: { in: ["APPROVED", "IN_PROGRESS", "ACTIVE"] },
-    createdAt: { gte: startOfDay },
-  };
-  if (companyId) whereClause.companyId = companyId;
+    const whereClause: any = {
+      employeeId,
+      status: { in: ["APPROVED", "IN_PROGRESS", "ACTIVE"] },
+      createdAt: { gte: startOfDay },
+    };
+    if (companyId) whereClause.companyId = companyId;
 
-  const activeLeaves = await prisma.leaveRequest.findMany({
-    where: whereClause,
-    include: { leaveType: true },
-    orderBy: { createdAt: "desc" },
-    take: 1,
-  });
+    const activeLeaves = await prisma.leaveRequest.findMany({
+      where: whereClause,
+      include: { leaveType: true },
+      orderBy: { createdAt: "desc" },
+      take: 1,
+    });
 
-  if (activeLeaves.length === 0) return null;
-  const leave = activeLeaves[0];
-  const parsedType = parseLeaveTypeConfig(leave.leaveType);
+    if (!activeLeaves || activeLeaves.length === 0) return null;
+    const leave = activeLeaves[0];
 
-  if (!parsedType.isShortBreak && parsedType.quotaModel !== "SHORT_BREAK") {
+    let leaveTypeObj = leave.leaveType;
+    if (!leaveTypeObj && leave.companyId) {
+      leaveTypeObj = await prisma.leaveType.findFirst({
+        where: {
+          companyId: leave.companyId,
+          OR: [
+            { name: { equals: leave.type, mode: "insensitive" } },
+            { id: leave.leaveTypeId || "" }
+          ]
+        }
+      });
+    }
+
+    const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
+    const isShortBreak = Boolean(
+      parsedType?.isShortBreak ||
+      parsedType?.quotaModel === "SHORT_BREAK" ||
+      leave.type?.toLowerCase().includes("break") ||
+      (leave.comments && leave.comments.includes("Short Break"))
+    );
+
+    if (!isShortBreak) {
+      return null;
+    }
+
+    const startTime = new Date(leave.startDate || leave.createdAt);
+    const durationMs = (parsedType?.breakDurationMinutes || 30) * 60 * 1000;
+    const graceMs = (parsedType?.gracePeriodMinutes || 5) * 60 * 1000;
+    const targetEndTime = new Date(startTime.getTime() + durationMs);
+    const graceEndTime = new Date(targetEndTime.getTime() + graceMs);
+
+    const nowMs = Date.now();
+    const remainingSeconds = Math.max(0, Math.floor((targetEndTime.getTime() - nowMs) / 1000));
+    const isOverstayed = nowMs > graceEndTime.getTime();
+    const overstaySeconds = isOverstayed ? Math.floor((nowMs - graceEndTime.getTime()) / 1000) : 0;
+    const overstayMinutes = Math.ceil(overstaySeconds / 60);
+
+    let estimatedFine = 0;
+    if (isOverstayed && (parsedType?.fineAmount || 0) > 0) {
+      if (parsedType?.fineType === "PER_MINUTE") {
+        estimatedFine = (parsedType.fineAmount || 50) * overstayMinutes;
+      } else {
+        estimatedFine = parsedType?.fineAmount || 50;
+      }
+    }
+
+    return {
+      leaveId: leave.id,
+      type: leave.type,
+      status: leave.status,
+      startTime: startTime.toISOString(),
+      targetEndTime: targetEndTime.toISOString(),
+      graceEndTime: graceEndTime.toISOString(),
+      durationMinutes: parsedType?.breakDurationMinutes || 30,
+      gracePeriodMinutes: parsedType?.gracePeriodMinutes || 5,
+      fineAmount: parsedType?.fineAmount || 50,
+      fineType: parsedType?.fineType || "FIXED",
+      autoFine: parsedType?.autoFine !== false,
+      remainingSeconds,
+      isOverstayed,
+      overstayMinutes,
+      estimatedFine,
+    };
+  } catch (error) {
+    console.error("[getActiveBreakForEmployee] error:", error);
     return null;
   }
-
-  const startTime = new Date(leave.startDate || leave.createdAt);
-  const durationMs = (parsedType.breakDurationMinutes || 30) * 60 * 1000;
-  const graceMs = (parsedType.gracePeriodMinutes || 5) * 60 * 1000;
-  const targetEndTime = new Date(startTime.getTime() + durationMs);
-  const graceEndTime = new Date(targetEndTime.getTime() + graceMs);
-
-  const nowMs = Date.now();
-  const remainingSeconds = Math.max(0, Math.floor((targetEndTime.getTime() - nowMs) / 1000));
-  const isOverstayed = nowMs > graceEndTime.getTime();
-  const overstaySeconds = isOverstayed ? Math.floor((nowMs - graceEndTime.getTime()) / 1000) : 0;
-  const overstayMinutes = Math.ceil(overstaySeconds / 60);
-
-  let estimatedFine = 0;
-  if (isOverstayed && parsedType.fineAmount > 0) {
-    if (parsedType.fineType === "PER_MINUTE") {
-      estimatedFine = parsedType.fineAmount * overstayMinutes;
-    } else {
-      estimatedFine = parsedType.fineAmount;
-    }
-  }
-
-  return {
-    leaveId: leave.id,
-    type: leave.type,
-    status: leave.status,
-    startTime: startTime.toISOString(),
-    targetEndTime: targetEndTime.toISOString(),
-    graceEndTime: graceEndTime.toISOString(),
-    durationMinutes: parsedType.breakDurationMinutes,
-    gracePeriodMinutes: parsedType.gracePeriodMinutes,
-    fineAmount: parsedType.fineAmount,
-    fineType: parsedType.fineType,
-    autoFine: parsedType.autoFine,
-    remainingSeconds,
-    isOverstayed,
-    overstayMinutes,
-    estimatedFine,
-  };
 }
 
 export async function processBreakEnd(leaveId: string, employeeId: string, companyId?: string | null) {
@@ -199,10 +226,23 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
     throw new Error("Active break request not found");
   }
 
-  const parsedType = parseLeaveTypeConfig(leave.leaveType);
+  let leaveTypeObj = leave.leaveType;
+  if (!leaveTypeObj && leave.companyId) {
+    leaveTypeObj = await prisma.leaveType.findFirst({
+      where: {
+        companyId: leave.companyId,
+        OR: [
+          { name: { equals: leave.type, mode: "insensitive" } },
+          { id: leave.leaveTypeId || "" }
+        ]
+      }
+    });
+  }
+
+  const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
   const startTime = new Date(leave.startDate || leave.createdAt);
-  const durationMs = (parsedType.breakDurationMinutes || 30) * 60 * 1000;
-  const graceMs = (parsedType.gracePeriodMinutes || 5) * 60 * 1000;
+  const durationMs = (parsedType?.breakDurationMinutes || 30) * 60 * 1000;
+  const graceMs = (parsedType?.gracePeriodMinutes || 5) * 60 * 1000;
   const targetEndTime = new Date(startTime.getTime() + durationMs);
   const graceEndTime = new Date(targetEndTime.getTime() + graceMs);
 
@@ -214,8 +254,8 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
   let fineApplied = false;
   let fineAmount = 0;
 
-  if (isOverstayed && parsedType.fineAmount > 0 && parsedType.autoFine) {
-    fineAmount = parsedType.fineType === "PER_MINUTE" ? parsedType.fineAmount * overstayMinutes : parsedType.fineAmount;
+  if (isOverstayed && (parsedType?.fineAmount || 0) > 0 && parsedType?.autoFine !== false) {
+    fineAmount = parsedType?.fineType === "PER_MINUTE" ? (parsedType.fineAmount || 50) * overstayMinutes : (parsedType?.fineAmount || 50);
 
     // Check if fine already exists
     const existingFine = await prisma.employeeFine.findFirst({
@@ -232,7 +272,7 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
           companyId: leave.companyId || companyId || "",
           employeeId,
           amount: fineAmount,
-          reason: `Auto-Fine: Overstayed ${leave.type} by ${overstayMinutes}m (Allowed: ${parsedType.breakDurationMinutes}m + ${parsedType.gracePeriodMinutes}m grace) [Req: ${leave.id.substring(0, 8)}]`,
+          reason: `Auto-Fine: Overstayed ${leave.type} by ${overstayMinutes}m (Allowed: ${parsedType?.breakDurationMinutes || 30}m + ${parsedType?.gracePeriodMinutes || 5}m grace) [Req: ${leave.id.substring(0, 8)}]`,
           date: new Date(),
           status: "PENDING",
           systemSource: "MOBILE"

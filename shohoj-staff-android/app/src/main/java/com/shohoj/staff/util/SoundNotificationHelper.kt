@@ -55,6 +55,8 @@ object SoundNotificationHelper {
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 250, 150, 250)
                 setSound(soundUri, audioAttr)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+                enableLights(true)
             }
             notificationManager.createNotificationChannel(tasksChannel)
 
@@ -68,6 +70,8 @@ object SoundNotificationHelper {
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 300, 100, 300)
                 setSound(soundUri, audioAttr)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+                enableLights(true)
             }
             notificationManager.createNotificationChannel(noticesChannel)
 
@@ -81,6 +85,8 @@ object SoundNotificationHelper {
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 200, 100, 200)
                 setSound(soundUri, audioAttr)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+                enableLights(true)
             }
             notificationManager.createNotificationChannel(chatChannel)
         }

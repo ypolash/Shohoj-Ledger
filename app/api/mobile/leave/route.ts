@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "asc" }
     });
 
-    const leaveTypes = rawLeaveTypes.map(parseLeaveTypeConfig);
+    const leaveTypes = (rawLeaveTypes || []).map(parseLeaveTypeConfig);
 
     // Calculate dynamic balances based on company's active leave policies
     const balances = leaveTypes.map(lt => {
@@ -46,14 +46,14 @@ export async function GET(request: Request) {
 
       const approvedForType = leaves.filter(l =>
         l.status === "APPROVED" &&
-        (l.type.toLowerCase() === lt.name.toLowerCase() ||
-         l.type.toLowerCase().includes(lt.name.toLowerCase()) ||
-         lt.name.toLowerCase().includes(l.type.toLowerCase()))
+        (l.type?.toLowerCase() === lt.name?.toLowerCase() ||
+         l.type?.toLowerCase().includes(lt.name?.toLowerCase()) ||
+         lt.name?.toLowerCase().includes(l.type?.toLowerCase()))
       );
 
       const used = approvedForType.reduce((acc, l) => {
-        const s = new Date(l.startDate).getTime();
-        const e = new Date(l.endDate).getTime();
+        const s = new Date(l.startDate || l.createdAt).getTime();
+        const e = new Date(l.endDate || l.startDate || l.createdAt).getTime();
         const days = Math.max(1, Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1);
         return acc + (isNaN(days) ? 1 : days);
       }, 0);
@@ -61,14 +61,14 @@ export async function GET(request: Request) {
       return {
         id: lt.id,
         name: lt.name,
-        isPaid: lt.isPaid,
+        isPaid: Boolean(lt.isPaid),
         quotaModel: lt.quotaModel,
-        isShortBreak: lt.isShortBreak,
-        breakDurationMinutes: lt.breakDurationMinutes,
-        gracePeriodMinutes: lt.gracePeriodMinutes,
-        fineAmount: lt.fineAmount,
-        fineType: lt.fineType,
-        autoFine: lt.autoFine,
+        isShortBreak: Boolean(lt.isShortBreak),
+        breakDurationMinutes: Number(lt.breakDurationMinutes) || 30,
+        gracePeriodMinutes: Number(lt.gracePeriodMinutes) || 5,
+        fineAmount: Number(lt.fineAmount) || 50,
+        fineType: lt.fineType || "FIXED",
+        autoFine: lt.autoFine !== false,
         total,
         used,
         remaining: Math.max(0, total - used)
@@ -87,20 +87,20 @@ export async function GET(request: Request) {
         id: lt.id,
         name: lt.name,
         description: lt.displayDescription || lt.description,
-        isPaid: lt.isPaid,
+        isPaid: Boolean(lt.isPaid),
         quotaModel: lt.quotaModel,
-        isShortBreak: lt.isShortBreak,
-        breakDurationMinutes: lt.breakDurationMinutes,
-        gracePeriodMinutes: lt.gracePeriodMinutes,
-        fineAmount: lt.fineAmount,
-        fineType: lt.fineType,
-        autoFine: lt.autoFine,
+        isShortBreak: Boolean(lt.isShortBreak),
+        breakDurationMinutes: Number(lt.breakDurationMinutes) || 30,
+        gracePeriodMinutes: Number(lt.gracePeriodMinutes) || 5,
+        fineAmount: Number(lt.fineAmount) || 50,
+        fineType: lt.fineType || "FIXED",
+        autoFine: lt.autoFine !== false,
       }))
     }, { headers: ESS_CORS_HEADERS });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Mobile Leave] fetch error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error?.message || "Internal Server Error" },
       { status: 500, headers: ESS_CORS_HEADERS }
     );
   }
@@ -148,12 +148,22 @@ export async function POST(request: Request) {
       });
     }
 
-    const parsedType = targetType ? parseLeaveTypeConfig(targetType) : null;
+    const parsedType = parseLeaveTypeConfig(targetType || { name: type });
     let finalStartDate = startDate ? new Date(startDate) : new Date();
     let finalEndDate = endDate ? new Date(endDate) : new Date();
 
-    const isShortBreak = Boolean(parsedType && (parsedType.isShortBreak || parsedType.quotaModel === "SHORT_BREAK"));
+    const isShortBreak = Boolean(
+      parsedType?.isShortBreak ||
+      parsedType?.quotaModel === "SHORT_BREAK" ||
+      (type && type.toLowerCase().includes("break"))
+    );
     const finalStatus = isShortBreak ? "APPROVED" : "PENDING";
+
+    if (isShortBreak) {
+      const duration = parsedType?.breakDurationMinutes || 30;
+      finalStartDate = new Date();
+      finalEndDate = new Date(finalStartDate.getTime() + duration * 60 * 1000);
+    }
 
     const leave = await prisma.leaveRequest.create({
       data: {
@@ -167,7 +177,7 @@ export async function POST(request: Request) {
         status: finalStatus,
         systemSource: employee.systemSource || "MOBILE",
         comments: isShortBreak
-          ? `Auto-Approved Short Break: ${parsedType?.breakDurationMinutes}m allowed (+${parsedType?.gracePeriodMinutes}m grace). Overstay fine: ৳${parsedType?.fineAmount}.`
+          ? `Auto-Approved Short Break: ${parsedType?.breakDurationMinutes || 30}m allowed (+${parsedType?.gracePeriodMinutes || 5}m grace). Overstay fine: ৳${parsedType?.fineAmount || 50}.`
           : null
       },
     });
@@ -181,10 +191,10 @@ export async function POST(request: Request) {
       activeBreak,
       hasActiveBreak: Boolean(activeBreak)
     }, { status: 201, headers: ESS_CORS_HEADERS });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Mobile Leave] apply error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error?.message || "Internal Server Error" },
       { status: 500, headers: ESS_CORS_HEADERS }
     );
   }

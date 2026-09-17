@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
-  const versionedPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.7.apk');
+  const versionedPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.8.apk');
   const latestPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-latest.apk');
   const filePath = fs.existsSync(versionedPath) ? versionedPath : (fs.existsSync(latestPath) ? latestPath : path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.apk'));
 
@@ -36,7 +36,7 @@ export async function GET() {
     status: 200,
     headers: {
       'Content-Type': 'application/vnd.android.package-archive',
-      'Content-Disposition': 'attachment; filename="shohoj-staff-v1.5.7.apk"',
+      'Content-Disposition': 'attachment; filename="shohoj-staff-v1.5.8.apk"',
       'Content-Length': stat.size.toString(),
       'Cache-Control': 'public, max-age=86400, must-revalidate',
     },

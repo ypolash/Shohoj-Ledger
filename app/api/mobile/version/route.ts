@@ -18,18 +18,18 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 22,
-      versionName: '1.5.7',
+      versionCode: 23,
+      versionName: '1.5.8',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5.7 Available',
+      title: 'Shohoj Staff v1.5.8 Available',
       releaseNotes: [
         '⚡ Instant Auto-Approved Short Breaks (no HR approval wait)',
         '⏱️ Pre-request warning banner with duration & overstay fine limits',
         '☕ Real-time live countdown timer & 1-tap End Break on Home and Leave screens',
         '🔔 Background notification sync for Tasks, Notices & Community Chat',
-        '🔧 Resolved overstay fine persistence settings'
+        '🔧 Resolved 500 error on leave types & improved offline stability'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.7.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.8.apk`,
       fileSize: '18.7 MB',
       isForceUpdate: false,
       publishedAt: '2026-09-18T01:00:00Z'

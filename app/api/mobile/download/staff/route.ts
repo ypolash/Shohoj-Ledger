@@ -3,10 +3,12 @@ import fs from 'fs';
 import path from 'path';
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.apk');
+  const versionedPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.6.apk');
+  const latestPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-latest.apk');
+  const filePath = fs.existsSync(versionedPath) ? versionedPath : (fs.existsSync(latestPath) ? latestPath : path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.apk'));
 
   if (!fs.existsSync(filePath)) {
-    return new NextResponse('Shohoj Staff v1.5 APK not found on server.', {
+    return new NextResponse('Shohoj Staff APK not found on server.', {
       status: 404,
       headers: { 'Content-Type': 'text/plain' },
     });
@@ -31,7 +33,7 @@ export async function GET() {
     status: 200,
     headers: {
       'Content-Type': 'application/vnd.android.package-archive',
-      'Content-Disposition': 'attachment; filename="shohoj-staff-v1.5.apk"',
+      'Content-Disposition': 'attachment; filename="shohoj-staff-v1.5.6.apk"',
       'Content-Length': stat.size.toString(),
       'Cache-Control': 'public, max-age=86400, must-revalidate',
     },

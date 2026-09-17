@@ -28,6 +28,7 @@ val Slate50 = Color(0xFFF8FAFC)
 // Semantic
 val Amber500 = Color(0xFFF59E0B)
 val Amber400 = Color(0xFFFBBF24)
+val Amber300 = Color(0xFFFCD34D)
 val Rose500 = Color(0xFFF43F5E)
 val Rose400 = Color(0xFFFB7185)
 val Indigo500 = Color(0xFF6366F1)

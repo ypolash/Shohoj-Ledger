@@ -15,16 +15,17 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 20,
-      versionName: '1.5.5',
+      versionCode: 21,
+      versionName: '1.5.6',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5.5 Available',
+      title: 'Shohoj Staff v1.5.6 Available',
       releaseNotes: [
-        '⏰ Check Out button visibility rule (available 1 hour before duty end time)',
-        '🏢 Company & custom shift schedule synchronization',
+        '⭐ Golden Special Task cards & Bounty incentives',
+        '⏱️ Short Break live timer & instant auto-approval',
+        '⚠️ Overstay fine warnings & penalty telemetry',
         '⚡ Attendance reliability and background updates'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.5.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.6.apk`,
       fileSize: '18.2 MB',
       isForceUpdate: false,
       publishedAt: '2026-09-17T00:00:00Z'

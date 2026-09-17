@@ -100,16 +100,17 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                 val newTotal = freshChannels.sumOf { it.unreadCount }
                 if (newTotal > prevTotal) {
                     val unreadChannel = freshChannels.find { it.unreadCount > 0 && it.unreadCount > (prevChannels.find { p -> p.id == it.id }?.unreadCount ?: 0) }
-                    val channelName = unreadChannel?.name ?: "Chat"
                     val lastMsg = unreadChannel?.lastMessage
-                    val title = if (unreadChannel?.type == "DIRECT_MESSAGE") {
-                        "New message from $channelName"
-                    } else {
-                        "New message in #$channelName"
-                    }
                     val body = lastMsg?.content?.ifBlank { "You have new unread messages" } ?: "You have new unread messages"
-                    SoundNotificationHelper.playNotificationSound(app, isMention = false)
-                    SoundNotificationHelper.showNotification(app, title, body, isMention = false)
+                    unreadChannel?.let { ch ->
+                        SoundNotificationHelper.showChatNotification(
+                            context = app,
+                            channel = ch,
+                            messageContent = body,
+                            senderName = lastMsg?.senderName,
+                            isMention = false
+                        )
+                    }
                 }
                 _uiState.value = _uiState.value.copy(channels = freshChannels)
             }

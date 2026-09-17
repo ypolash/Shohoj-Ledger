@@ -10,7 +10,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-class ApiClient(private val context: Context) {
+class ApiClient(val context: Context) {
 
     val sessionManager = SessionManager(context)
     val cookieJar = SessionCookieJar(context)

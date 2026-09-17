@@ -77,6 +77,9 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
+    // WorkManager (for background notification sync when app is closed)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // Location (for Attendance Check-in GPS)
     implementation("com.google.android.gms:play-services-location:21.1.0")
 

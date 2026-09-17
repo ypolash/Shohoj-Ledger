@@ -5,6 +5,7 @@ import com.shohoj.staff.data.local.SessionManager
 import com.shohoj.staff.data.model.EmployeeDto
 import com.shohoj.staff.data.model.LoginRequest
 import com.shohoj.staff.data.model.LoginResponse
+import com.shohoj.staff.util.NotificationSyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -53,6 +54,11 @@ class AuthRepository(
 
                     body.token?.let { sessionManager.token = it }
                     sessionManager.saveEmployee(employee)
+
+                    // Schedule WorkManager and start live polling immediately upon login
+                    NotificationSyncManager.scheduleBackgroundSync(apiClient.context)
+                    (apiClient.context.applicationContext as? com.shohoj.staff.ShohojStaffApp)?.startLiveNotificationPoller()
+
                     return@withContext Result.success(employee)
                 } else {
                     val errMsg = body?.message ?: "Invalid Employee ID or Password"
@@ -77,6 +83,8 @@ class AuthRepository(
     fun getCurrentEmployee(): EmployeeDto? = sessionManager.getEmployee()
 
     fun logout() {
+        NotificationSyncManager.cancelBackgroundSync(apiClient.context)
+        (apiClient.context.applicationContext as? com.shohoj.staff.ShohojStaffApp)?.stopLiveNotificationPoller()
         sessionManager.clearSession()
         apiClient.cookieJar.clear()
     }

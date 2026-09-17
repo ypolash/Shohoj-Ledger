@@ -20,15 +20,15 @@ export async function GET(request: Request) {
       minVersion: '1.0.0',
       title: 'Shohoj Staff v1.5.6 Available',
       releaseNotes: [
-        '⭐ Golden Special Task cards & Bounty incentives',
-        '⏱️ Short Break live timer & instant auto-approval',
-        '⚠️ Overstay fine warnings & penalty telemetry',
-        '⚡ Attendance reliability and background updates'
+        '🔔 System notifications for assigned tasks & special bounties',
+        '📢 Company notices & HR announcement push alerts',
+        '💬 Background chat & direct message notifications with sound',
+        '⚡ Persistent WorkManager background sync when app is closed'
       ],
       downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.6.apk`,
-      fileSize: '18.2 MB',
+      fileSize: '18.7 MB',
       isForceUpdate: false,
-      publishedAt: '2026-09-17T00:00:00Z'
+      publishedAt: '2026-09-18T00:00:00Z'
     });
   }
 

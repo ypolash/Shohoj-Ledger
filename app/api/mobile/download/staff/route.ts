@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   const versionedPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-v1.5.7.apk');
   const latestPath = path.join(process.cwd(), 'public', 'downloads', 'shohoj-staff-latest.apk');

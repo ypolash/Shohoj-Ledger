@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.shohoj.staff.ShohojStaffApp
 import com.shohoj.staff.data.model.*
+import com.shohoj.staff.util.DateUtils
 import com.shohoj.staff.util.LocationHelper
 import com.shohoj.staff.util.WifiHelper
 import kotlinx.coroutines.delay
@@ -22,6 +23,7 @@ data class HomeUiState(
     val todayAttendance: AttendanceRecord? = null,
     val summary: AttendanceSummary? = null,
     val announcements: List<AnnouncementItem> = emptyList(),
+    val dutySchedule: DutyScheduleDto? = null,
     val currentTimeString: String = "",
     val currentDateString: String = "",
     val isClocking: Boolean = false,
@@ -74,11 +76,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             var todayRecord: AttendanceRecord? = null
             var summary: AttendanceSummary? = null
+            var dutySchedule: DutyScheduleDto? = currentEmp?.dutySchedule
             var announcementsList: List<AnnouncementItem> = emptyList()
 
             attResult.onSuccess { data ->
                 todayRecord = data.today
                 summary = data.summary
+                dutySchedule = data.dutySchedule ?: data.today?.dutySchedule ?: currentEmp?.dutySchedule
             }
 
             annResult.onSuccess { list ->
@@ -90,6 +94,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 employee = currentEmp,
                 todayAttendance = todayRecord,
                 summary = summary,
+                dutySchedule = dutySchedule,
                 announcements = announcementsList
             )
         }
@@ -106,6 +111,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         val action = if (!isCheckedIn) "CLOCK_IN" else "CLOCK_OUT"
+
+        if (action == "CLOCK_OUT") {
+            val dutyEndTime = _uiState.value.dutySchedule?.endTime ?: today?.dutySchedule?.endTime ?: "20:00"
+            val isNightShift = _uiState.value.dutySchedule?.nightShift == true
+            if (!DateUtils.isCheckOutVisible(dutyEndTime, isNightShift)) {
+                val openTime = DateUtils.getCheckOutOpenTimeString(dutyEndTime)
+                val dutyEndFormatted = DateUtils.getDutyEndTimeString(dutyEndTime)
+                _uiState.value = _uiState.value.copy(
+                    error = "Check-out is available from $openTime (1 hour before duty end at $dutyEndFormatted)"
+                )
+                return
+            }
+        }
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isClocking = true, error = null, clockActionSuccessMessage = null)

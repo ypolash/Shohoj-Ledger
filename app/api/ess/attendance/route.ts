@@ -42,28 +42,55 @@ export async function GET(request: Request) {
       },
     });
 
+    const empWithShift = await prisma.employee.findUnique({
+      where: { id: employee.id },
+      include: {
+        workShift: true,
+        company: {
+          include: {
+            settings: true,
+            attendanceConfigs: true,
+          }
+        }
+      }
+    });
+
+    let dutySchedule = null;
+    if (empWithShift?.workShift) {
+      dutySchedule = {
+        name: empWithShift.workShift.name,
+        startTime: empWithShift.workShift.startTime,
+        endTime: empWithShift.workShift.endTime,
+        gracePeriod: empWithShift.workShift.gracePeriod,
+        breakTime: empWithShift.workShift.breakTime,
+        nightShift: empWithShift.workShift.nightShift,
+        isCustom: true,
+        dutyHoursFormatted: `${empWithShift.workShift.startTime} - ${empWithShift.workShift.endTime}`,
+      };
+    } else {
+      const config = empWithShift?.company?.attendanceConfigs?.[0];
+      const setting = empWithShift?.company?.settings;
+      const startTime = config?.shiftStart || setting?.shiftStartTime || "09:00";
+      const endTime = config?.shiftEnd || setting?.shiftEndTime || "20:00";
+      dutySchedule = {
+        name: "Regular Shift",
+        startTime,
+        endTime,
+        gracePeriod: config?.gracePeriod ?? setting?.gracePeriodMinutes ?? 15,
+        breakTime: 0,
+        nightShift: false,
+        isCustom: false,
+        dutyHoursFormatted: `${startTime} - ${endTime}`,
+      };
+    }
+
     const mapRecord = (rec: any) => ({
       ...rec,
       checkIn: rec.checkInTime,
       checkOut: rec.checkOutTime,
-      isCheckedIn: !!rec.checkInTime && !rec.checkOutTime
+      isCheckedIn: !!rec.checkInTime && !rec.checkOutTime,
+      dutySchedule,
     });
-
-    const empWithShift = await prisma.employee.findUnique({
-      where: { id: employee.id },
-      include: { workShift: true }
-    });
-
-    const dutySchedule = empWithShift?.workShift ? {
-      name: empWithShift.workShift.name,
-      startTime: empWithShift.workShift.startTime,
-      endTime: empWithShift.workShift.endTime,
-      gracePeriod: empWithShift.workShift.gracePeriod,
-      breakTime: empWithShift.workShift.breakTime,
-      nightShift: empWithShift.workShift.nightShift,
-      isCustom: true,
-      dutyHoursFormatted: `${empWithShift.workShift.startTime} - ${empWithShift.workShift.endTime}`,
-    } : null;
 
     return NextResponse.json({
       records: records.map(mapRecord),

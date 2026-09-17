@@ -22,7 +22,15 @@ export async function GET(req: Request) {
 
     const employee = await prisma.employee.findUnique({
       where: { employeeId },
-      include: { workShift: true }
+      include: {
+        workShift: true,
+        company: {
+          include: {
+            settings: true,
+            attendanceConfigs: true,
+          }
+        }
+      }
     });
 
     if (!employee) {
@@ -76,16 +84,34 @@ export async function GET(req: Request) {
     const checkInTimeIso = attendance?.checkInTime ? attendance.checkInTime.toISOString() : null;
     const checkOutTimeIso = attendance?.checkOutTime ? attendance.checkOutTime.toISOString() : null;
 
-    const dutySchedule = employee.workShift ? {
-      name: employee.workShift.name,
-      startTime: employee.workShift.startTime,
-      endTime: employee.workShift.endTime,
-      gracePeriod: employee.workShift.gracePeriod,
-      breakTime: employee.workShift.breakTime,
-      nightShift: employee.workShift.nightShift,
-      isCustom: true,
-      dutyHoursFormatted: `${employee.workShift.startTime} - ${employee.workShift.endTime}`,
-    } : null;
+    let dutySchedule = null;
+    if (employee.workShift) {
+      dutySchedule = {
+        name: employee.workShift.name,
+        startTime: employee.workShift.startTime,
+        endTime: employee.workShift.endTime,
+        gracePeriod: employee.workShift.gracePeriod,
+        breakTime: employee.workShift.breakTime,
+        nightShift: employee.workShift.nightShift,
+        isCustom: true,
+        dutyHoursFormatted: `${employee.workShift.startTime} - ${employee.workShift.endTime}`,
+      };
+    } else {
+      const config = employee.company?.attendanceConfigs?.[0];
+      const setting = employee.company?.settings;
+      const startTime = config?.shiftStart || setting?.shiftStartTime || "09:00";
+      const endTime = config?.shiftEnd || setting?.shiftEndTime || "20:00";
+      dutySchedule = {
+        name: "Regular Shift",
+        startTime,
+        endTime,
+        gracePeriod: config?.gracePeriod ?? setting?.gracePeriodMinutes ?? 15,
+        breakTime: 0,
+        nightShift: false,
+        isCustom: false,
+        dutyHoursFormatted: `${startTime} - ${endTime}`,
+      };
+    }
 
     return NextResponse.json({
       success: true,

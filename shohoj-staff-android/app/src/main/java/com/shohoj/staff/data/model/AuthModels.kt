@@ -32,7 +32,8 @@ data class EmployeeDto(
     @SerializedName("designation") val designation: String? = null,
     @SerializedName("department") val department: String? = null,
     @SerializedName("status") val status: String? = null,
-    @SerializedName("companyId") val companyId: String? = null
+    @SerializedName("companyId") val companyId: String? = null,
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null
 ) {
     val displayName: String
         get() = name ?: "${firstName ?: ""} ${lastName ?: ""}".trim().ifEmpty { employeeId }

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.shohoj.staff.ShohojStaffApp
 import com.shohoj.staff.data.model.AttendanceRecord
 import com.shohoj.staff.data.model.AttendanceSummary
+import com.shohoj.staff.data.model.DutyScheduleDto
+import com.shohoj.staff.util.DateUtils
 import com.shohoj.staff.util.LocationHelper
 import com.shohoj.staff.util.WifiDetails
 import com.shohoj.staff.util.WifiHelper
@@ -19,6 +21,7 @@ data class AttendanceUiState(
     val records: List<AttendanceRecord> = emptyList(),
     val today: AttendanceRecord? = null,
     val summary: AttendanceSummary = AttendanceSummary(),
+    val dutySchedule: DutyScheduleDto? = null,
     val isActionLoading: Boolean = false,
     val currentLocationString: String = "Detecting location...",
     val currentWifiString: String = "Detecting Wi-Fi...",
@@ -74,7 +77,8 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         isLoading = false,
                         records = data.records,
                         today = data.today,
-                        summary = data.summary ?: AttendanceSummary()
+                        summary = data.summary ?: AttendanceSummary(),
+                        dutySchedule = data.dutySchedule ?: data.today?.dutySchedule
                     )
                 },
                 onFailure = { ex ->
@@ -88,6 +92,19 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun clockAction(action: String) {
+        if (action == "CLOCK_OUT") {
+            val dutyEndTime = _uiState.value.dutySchedule?.endTime ?: _uiState.value.today?.dutySchedule?.endTime ?: "20:00"
+            val isNightShift = _uiState.value.dutySchedule?.nightShift == true
+            if (!DateUtils.isCheckOutVisible(dutyEndTime, isNightShift)) {
+                val openTime = DateUtils.getCheckOutOpenTimeString(dutyEndTime)
+                val dutyEndFormatted = DateUtils.getDutyEndTimeString(dutyEndTime)
+                _uiState.value = _uiState.value.copy(
+                    error = "Check-out is available from $openTime (1 hour before duty end at $dutyEndFormatted)"
+                )
+                return
+            }
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isActionLoading = true, error = null, successMessage = null)
 

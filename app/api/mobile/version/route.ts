@@ -15,19 +15,19 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 19,
-      versionName: '1.5.4',
+      versionCode: 20,
+      versionName: '1.5.5',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.5.4 Available',
+      title: 'Shohoj Staff v1.5.5 Available',
       releaseNotes: [
-        '📋 Interactive To-Do Checklists under task cards',
-        '✅ Real-time checkbox toggling and progress bar',
-        '⚡ Performance and background sync improvements'
+        '⏰ Check Out button visibility rule (available 1 hour before duty end time)',
+        '🏢 Company & custom shift schedule synchronization',
+        '⚡ Attendance reliability and background updates'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.4.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.5.5.apk`,
       fileSize: '18.2 MB',
       isForceUpdate: false,
-      publishedAt: '2026-09-16T00:00:00Z'
+      publishedAt: '2026-09-17T00:00:00Z'
     });
   }
 

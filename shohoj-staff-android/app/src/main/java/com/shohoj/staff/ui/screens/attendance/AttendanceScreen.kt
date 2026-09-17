@@ -32,6 +32,13 @@ fun AttendanceScreen(
     val isCheckedIn = today?.checkInTime != null || today?.checkIn != null
     val isCheckedOut = today?.checkOutTime != null || today?.checkOut != null
 
+    val dutySchedule = uiState.dutySchedule ?: today?.dutySchedule
+    val dutyEndTime = dutySchedule?.endTime ?: "20:00"
+    val isNightShift = dutySchedule?.nightShift == true
+    val isCheckOutVisible = DateUtils.isCheckOutVisible(dutyEndTime, isNightShift)
+    val checkOutOpenTime = DateUtils.getCheckOutOpenTimeString(dutyEndTime)
+    val formattedDutyEnd = DateUtils.getDutyEndTimeString(dutyEndTime)
+
     Scaffold(
         topBar = {
             ShohojTopBar(
@@ -127,14 +134,11 @@ fun AttendanceScreen(
 
                         Divider(color = Slate700, thickness = 0.5.dp)
 
-                        // Action Buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
+                        // Action Buttons / Availability Notice
+                        if (!isCheckedIn) {
                             Button(
                                 onClick = { viewModel.clockAction("CLOCK_IN") },
-                                enabled = !uiState.isActionLoading && !isCheckedIn,
+                                enabled = !uiState.isActionLoading,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Emerald500,
                                     contentColor = Slate950,
@@ -142,28 +146,89 @@ fun AttendanceScreen(
                                     disabledContentColor = Slate500
                                 ),
                                 shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f).height(46.dp)
+                                modifier = Modifier.fillMaxWidth().height(46.dp)
                             ) {
                                 Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Clock In", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
-
-                            Button(
-                                onClick = { viewModel.clockAction("CLOCK_OUT") },
-                                enabled = !uiState.isActionLoading && isCheckedIn && !isCheckedOut,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Rose500,
-                                    contentColor = Slate50,
-                                    disabledContainerColor = Slate800,
-                                    disabledContentColor = Slate500
-                                ),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f).height(46.dp)
+                        } else if (!isCheckedOut) {
+                            if (isCheckOutVisible) {
+                                Button(
+                                    onClick = { viewModel.clockAction("CLOCK_OUT") },
+                                    enabled = !uiState.isActionLoading,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Rose500,
+                                        contentColor = Slate50,
+                                        disabledContainerColor = Slate800,
+                                        disabledContentColor = Slate500
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth().height(46.dp)
+                                ) {
+                                    Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Clock Out", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                                        .border(1.dp, Amber500.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                        .padding(12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .background(Amber500.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Schedule,
+                                                contentDescription = null,
+                                                tint = Amber400,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "Check-out opens at $checkOutOpenTime",
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    color = Slate50,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 13.sp
+                                                )
+                                            )
+                                            Text(
+                                                text = "Opens 1h before duty ends ($formattedDutyEnd)",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    color = Slate400,
+                                                    fontSize = 11.sp
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Slate800, RoundedCornerShape(10.dp))
+                                    .padding(12.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Clock Out", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald400, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "Shift Completed for Today", color = Slate200, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                }
                             }
                         }
 

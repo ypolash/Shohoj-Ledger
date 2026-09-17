@@ -62,4 +62,70 @@ object DateUtils {
         val mins = minutes % 60
         return "${hours}h ${mins}m"
     }
+
+    fun parseTimeToMinutes(timeStr: String?, defaultMinutes: Int = 20 * 60): Int {
+        if (timeStr.isNullOrBlank()) return defaultMinutes
+        return try {
+            val normalized = timeStr.trim().replace('.', ':')
+            val isPm = normalized.contains("PM", ignoreCase = true)
+            val isAm = normalized.contains("AM", ignoreCase = true)
+            val cleanStr = normalized.replace("AM", "", ignoreCase = true)
+                .replace("PM", "", ignoreCase = true)
+                .trim()
+            val parts = cleanStr.split(":")
+            var hour = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: (defaultMinutes / 60)
+            val minute = parts.getOrNull(1)?.trim()?.toIntOrNull() ?: 0
+            if (isPm && hour < 12) hour += 12
+            if (isAm && hour == 12) hour = 0
+            hour * 60 + minute
+        } catch (e: Exception) {
+            defaultMinutes
+        }
+    }
+
+    fun isCheckOutVisible(
+        dutyEndTime: String?,
+        isNightShift: Boolean = false,
+        calendar: Calendar = Calendar.getInstance()
+    ): Boolean {
+        val endMinutes = parseTimeToMinutes(dutyEndTime, defaultMinutes = 20 * 60)
+        val currentMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+        val checkoutOpenMinutes = endMinutes - 60
+
+        if (isNightShift && endMinutes < 12 * 60) {
+            // Night shift ending in the morning (e.g. 06:00 AM -> open at 05:00 AM)
+            return currentMinutes >= checkoutOpenMinutes && currentMinutes <= (endMinutes + 6 * 60)
+        }
+
+        // Daytime shift (e.g. 20:00 / 8:00 PM -> visible from 19:00 / 7:00 PM onwards)
+        return currentMinutes >= checkoutOpenMinutes
+    }
+
+    fun getCheckOutOpenTimeString(dutyEndTime: String?): String {
+        val endMinutes = parseTimeToMinutes(dutyEndTime, defaultMinutes = 20 * 60)
+        var openMinutes = endMinutes - 60
+        if (openMinutes < 0) openMinutes += 24 * 60
+        val hour24 = openMinutes / 60
+        val minute = openMinutes % 60
+        val period = if (hour24 >= 12) "PM" else "AM"
+        val hour12 = when {
+            hour24 == 0 -> 12
+            hour24 > 12 -> hour24 - 12
+            else -> hour24
+        }
+        return String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, period)
+    }
+
+    fun getDutyEndTimeString(dutyEndTime: String?): String {
+        val endMinutes = parseTimeToMinutes(dutyEndTime, defaultMinutes = 20 * 60)
+        val hour24 = endMinutes / 60
+        val minute = endMinutes % 60
+        val period = if (hour24 >= 12) "PM" else "AM"
+        val hour12 = when {
+            hour24 == 0 -> 12
+            hour24 > 12 -> hour24 - 12
+            else -> hour24
+        }
+        return String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, period)
+    }
 }

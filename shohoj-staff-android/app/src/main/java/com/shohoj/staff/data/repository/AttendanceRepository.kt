@@ -28,7 +28,7 @@ class AttendanceRepository(
             val statusBody = if (statusRes.isSuccessful) statusRes.body() else null
 
             val todayRecord = if (statusBody?.record != null) {
-                statusBody.record
+                statusBody.record.copy(dutySchedule = statusBody.record.dutySchedule ?: statusBody.dutySchedule)
             } else if (statusBody != null && (statusBody.checkInTime != null || statusBody.status != null)) {
                 AttendanceRecord(
                     employeeId = empId,
@@ -37,7 +37,8 @@ class AttendanceRepository(
                     status = statusBody.status,
                     lateMinutes = statusBody.lateMinutes ?: 0,
                     isLate = statusBody.isLate ?: (statusBody.status == "LATE" || (statusBody.lateMinutes ?: 0) > 0),
-                    isCheckedIn = statusBody.checkInTime != null && statusBody.checkOutTime == null
+                    isCheckedIn = statusBody.checkInTime != null && statusBody.checkOutTime == null,
+                    dutySchedule = statusBody.dutySchedule
                 )
             } else records.firstOrNull()
 
@@ -52,7 +53,8 @@ class AttendanceRepository(
                 EssAttendanceResponse(
                     records = records,
                     today = todayRecord,
-                    summary = summary
+                    summary = summary,
+                    dutySchedule = statusBody?.dutySchedule ?: todayRecord?.dutySchedule
                 )
             )
         } catch (e: Exception) {

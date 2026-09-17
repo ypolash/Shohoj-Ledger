@@ -25,6 +25,17 @@ data class ClockActionResponse(
     @SerializedName("serverTime") val serverTime: String? = null
 )
 
+data class DutyScheduleDto(
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("startTime") val startTime: String? = null,
+    @SerializedName("endTime") val endTime: String? = null,
+    @SerializedName("gracePeriod") val gracePeriod: Int? = null,
+    @SerializedName("breakTime") val breakTime: Int? = null,
+    @SerializedName("nightShift") val nightShift: Boolean? = false,
+    @SerializedName("isCustom") val isCustom: Boolean? = false,
+    @SerializedName("dutyHoursFormatted") val dutyHoursFormatted: String? = null
+)
+
 data class AttendanceRecord(
     @SerializedName("id") val id: String? = null,
     @SerializedName("employeeId") val employeeId: String? = null,
@@ -37,7 +48,8 @@ data class AttendanceRecord(
     @SerializedName("lateMinutes") val lateMinutes: Int? = 0,
     @SerializedName("totalWorkingMinutes") val totalWorkingMinutes: Int? = null,
     @SerializedName("isCheckedIn") val isCheckedIn: Boolean? = null,
-    @SerializedName("isLate") val isLate: Boolean? = false
+    @SerializedName("isLate") val isLate: Boolean? = false,
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null
 ) {
     val displayCheckIn: String?
         get() = checkInTime ?: checkIn
@@ -60,6 +72,7 @@ data class EssAttendanceResponse(
     @SerializedName("records") val records: List<AttendanceRecord> = emptyList(),
     @SerializedName("today") val today: AttendanceRecord? = null,
     @SerializedName("summary") val summary: AttendanceSummary? = null,
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null,
     @SerializedName("error") val error: String? = null
 )
 
@@ -70,6 +83,7 @@ data class MobileAttendanceStatusResponse(
     @SerializedName("status") val status: String? = null,
     @SerializedName("lateMinutes") val lateMinutes: Int? = null,
     @SerializedName("isLate") val isLate: Boolean? = null,
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null,
     @SerializedName("record") val record: AttendanceRecord? = null,
     @SerializedName("message") val message: String? = null
 )

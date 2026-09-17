@@ -39,6 +39,13 @@ fun HomeScreen(
     val isCheckedIn = today?.checkInTime != null || today?.checkIn != null
     val isCheckedOut = today?.checkOutTime != null || today?.checkOut != null
 
+    val dutySchedule = uiState.dutySchedule ?: today?.dutySchedule ?: uiState.employee?.dutySchedule
+    val dutyEndTime = dutySchedule?.endTime ?: "20:00"
+    val isNightShift = dutySchedule?.nightShift == true
+    val isCheckOutVisible = DateUtils.isCheckOutVisible(dutyEndTime, isNightShift)
+    val checkOutOpenTime = DateUtils.getCheckOutOpenTimeString(dutyEndTime)
+    val formattedDutyEnd = DateUtils.getDutyEndTimeString(dutyEndTime)
+
     Scaffold(
         topBar = {
             ShohojTopBar(
@@ -199,38 +206,120 @@ fun HomeScreen(
                         }
                     }
 
-                    // Action Button
-                    Button(
-                        onClick = { viewModel.performQuickClockAction() },
-                        enabled = !uiState.isClocking && (!isCheckedIn || !isCheckedOut),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (!isCheckedIn) Emerald500 else Rose500,
-                            contentColor = Slate950,
-                            disabledContainerColor = Slate800,
-                            disabledContentColor = Slate500
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    ) {
-                        if (uiState.isClocking) {
-                            CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                        } else {
-                            Icon(
-                                imageVector = if (!isCheckedIn) Icons.Default.Login else Icons.Default.Logout,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = when {
-                                    !isCheckedIn -> "Clock In (GPS & Wi-Fi)"
-                                    !isCheckedOut -> "Clock Out"
-                                    else -> "Shift Complete"
-                                },
-                                fontWeight = FontWeight.Bold
-                            )
+                    // Action Button / Pending State
+                    when {
+                        !isCheckedIn -> {
+                            Button(
+                                onClick = { viewModel.performQuickClockAction() },
+                                enabled = !uiState.isClocking,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Emerald500,
+                                    contentColor = Slate950,
+                                    disabledContainerColor = Slate800,
+                                    disabledContentColor = Slate500
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                if (uiState.isClocking) {
+                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                                } else {
+                                    Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "Clock In (GPS & Wi-Fi)", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                        !isCheckedOut -> {
+                            if (isCheckOutVisible) {
+                                Button(
+                                    onClick = { viewModel.performQuickClockAction() },
+                                    enabled = !uiState.isClocking,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Rose500,
+                                        contentColor = Slate50,
+                                        disabledContainerColor = Slate800,
+                                        disabledContentColor = Slate500
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                ) {
+                                    if (uiState.isClocking) {
+                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                                    } else {
+                                        Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(text = "Clock Out", fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Slate800.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                                        .border(1.dp, Amber500.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                        .padding(14.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .background(Amber500.copy(alpha = 0.15f), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Schedule,
+                                                contentDescription = null,
+                                                tint = Amber400,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "Check-out opens at $checkOutOpenTime",
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    color = Slate50,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 13.sp
+                                                )
+                                            )
+                                            Text(
+                                                text = "Available 1h before duty ends ($formattedDutyEnd)",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    color = Slate400,
+                                                    fontSize = 11.sp
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else -> {
+                            Button(
+                                onClick = {},
+                                enabled = false,
+                                colors = ButtonDefaults.buttonColors(
+                                    disabledContainerColor = Slate800,
+                                    disabledContentColor = Slate500
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = "Shift Complete", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

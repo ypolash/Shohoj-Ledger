@@ -109,7 +109,13 @@ data class TaskItem(
     @SerializedName("dueDate") val dueDate: String? = null,
     @SerializedName("assignedToEmployeeId") val assignedToEmployeeId: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
-    @SerializedName("checklist") val checklist: TaskChecklist? = null
+    @SerializedName("checklist") val checklist: TaskChecklist? = null,
+    @SerializedName("isSpecialTask") val isSpecialTask: Boolean = false,
+    @SerializedName("points") val points: Int? = 0,
+    @SerializedName("rewardAmount") val rewardAmount: Double? = 0.0,
+    @SerializedName("category") val category: String? = null,
+    @SerializedName("submissionStatus") val submissionStatus: String? = null,
+    @SerializedName("maxClaims") val maxClaims: Int? = null
 )
 
 data class TaskListResponse(

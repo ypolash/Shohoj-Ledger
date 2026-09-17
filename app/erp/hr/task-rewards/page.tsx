@@ -12,6 +12,12 @@ interface Employee {
   designation?: string;
 }
 
+interface ChecklistItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface TaskReward {
   id: string;
   title: string;
@@ -26,7 +32,7 @@ interface TaskReward {
   assignedEmployee?: Employee;
   departmentId?: string;
   maxClaims: number;
-  checklist?: any;
+  checklist?: { type: string; items: ChecklistItem[] };
   createdAt: string;
   submissions?: TaskSubmission[];
   _count?: { submissions: number };
@@ -65,7 +71,7 @@ interface PayoutRecord {
   conversionRate: number;
   amount: number;
   payoutMethod: string;
-  reference?: string;
+  referenceNo?: string;
   notes?: string;
   status: string;
   paidAt?: string;
@@ -111,7 +117,10 @@ export default function TaskRewardsPage() {
     deadline: "",
     assignedToEmployeeId: "",
     maxClaims: 1,
+    checklistItems: [] as ChecklistItem[],
   });
+
+  const [newChecklistInput, setNewChecklistInput] = useState("");
 
   const [payoutFormData, setPayoutFormData] = useState({
     pointsToRedeem: 10,
@@ -210,10 +219,23 @@ export default function TaskRewardsPage() {
       const url = editingTask ? `/api/hr/task-rewards/${editingTask.id}` : `/api/hr/task-rewards`;
       const method = editingTask ? "PUT" : "POST";
 
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        priority: formData.priority,
+        points: formData.points,
+        monetaryValue: formData.monetaryValue,
+        deadline: formData.deadline,
+        assignedToEmployeeId: formData.assignedToEmployeeId,
+        maxClaims: formData.maxClaims,
+        checklist: formData.checklistItems.length > 0 ? { type: "CHECKLIST", items: formData.checklistItems } : null,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -234,6 +256,7 @@ export default function TaskRewardsPage() {
         deadline: "",
         assignedToEmployeeId: "",
         maxClaims: 1,
+        checklistItems: [],
       });
       fetchData();
     } catch (err: any) {
@@ -260,6 +283,7 @@ export default function TaskRewardsPage() {
   // Open Edit Modal
   const openEditModal = (task: TaskReward) => {
     setEditingTask(task);
+    const existingChecklist = task.checklist?.items || [];
     setFormData({
       title: task.title,
       description: task.description || "",
@@ -270,8 +294,30 @@ export default function TaskRewardsPage() {
       deadline: task.deadline ? task.deadline.slice(0, 10) : "",
       assignedToEmployeeId: task.assignedToEmployeeId || "",
       maxClaims: task.maxClaims,
+      checklistItems: existingChecklist,
     });
     setIsCreateModalOpen(true);
+  };
+
+  const addChecklistItem = () => {
+    if (!newChecklistInput.trim()) return;
+    const newItem: ChecklistItem = {
+      id: Date.now().toString(),
+      title: newChecklistInput.trim(),
+      completed: false,
+    };
+    setFormData({
+      ...formData,
+      checklistItems: [...formData.checklistItems, newItem],
+    });
+    setNewChecklistInput("");
+  };
+
+  const removeChecklistItem = (id: string) => {
+    setFormData({
+      ...formData,
+      checklistItems: formData.checklistItems.filter((i) => i.id !== id),
+    });
   };
 
   // Handle Review Submission (Approve / Reject)
@@ -386,7 +432,7 @@ export default function TaskRewardsPage() {
               Task Rewards & Incentives
             </h1>
             <p className={styles.pageSubtitle}>
-              Create special bounties and extra tasks for employees. Employees earn reward points for completed tasks,
+              Create special bounties and extra tasks for employees with checkbox subtasks. Employees earn reward points for completed tasks,
               which convert directly into cash bonuses disbursed immediately (Cash/MFS) or added to payroll.
             </p>
           </div>
@@ -406,6 +452,7 @@ export default function TaskRewardsPage() {
                   deadline: "",
                   assignedToEmployeeId: "",
                   maxClaims: 1,
+                  checklistItems: [],
                 });
                 setIsCreateModalOpen(true);
               }}
@@ -517,9 +564,7 @@ export default function TaskRewardsPage() {
         </button>
       </div>
 
-      {/* =========================================================================
-          TAB 1: SPECIAL TASKS (BOUNTIES)
-          ========================================================================= */}
+      {/* TAB 1: SPECIAL TASKS (BOUNTIES) */}
       {activeTab === "tasks" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           {/* Toolbar */}
@@ -615,6 +660,7 @@ export default function TaskRewardsPage() {
                 const catStyle = getCategoryColor(task.category);
                 const cashValue = task.monetaryValue || task.points * settings.pointToCashRate;
                 const approvedCount = task.submissions?.filter((s) => s.status === "APPROVED").length || 0;
+                const checklistItems = task.checklist?.items || [];
 
                 return (
                   <div key={task.id} className={styles.taskCard}>
@@ -634,6 +680,36 @@ export default function TaskRewardsPage() {
 
                       <h3 className={styles.taskTitle}>{task.title}</h3>
                       {task.description && <p className={styles.taskDesc}>{task.description}</p>}
+
+                      {/* Checkbox List display on card */}
+                      {checklistItems.length > 0 && (
+                        <div
+                          style={{
+                            background: "var(--surface-bg)",
+                            border: "1px solid var(--border-main)",
+                            borderRadius: "10px",
+                            padding: "10px 12px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
+                          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                            📋 Checkbox Subtasks ({checklistItems.length})
+                          </div>
+                          {checklistItems.map((item) => (
+                            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12.5px" }}>
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: "16px", color: item.completed ? "#10b981" : "#f59e0b" }}
+                              >
+                                {item.completed ? "check_box" : "check_box_outline_blank"}
+                              </span>
+                              <span>{item.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -700,9 +776,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 2: PENDING REVIEWS
-          ========================================================================= */}
+      {/* TAB 2: PENDING REVIEWS */}
       {activeTab === "reviews" && (
         <div className={styles.tableCard}>
           <table className={styles.customTable}>
@@ -809,9 +883,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 3: STAFF POINTS & PAYOUTS WALLET
-          ========================================================================= */}
+      {/* TAB 3: STAFF POINTS & PAYOUTS WALLET */}
       {activeTab === "wallets" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {/* Top Earners Leaderboard */}
@@ -942,9 +1014,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 4: DISBURSED HISTORY
-          ========================================================================= */}
+      {/* TAB 4: DISBURSED HISTORY */}
       {activeTab === "payouts" && (
         <div className={styles.tableCard}>
           <table className={styles.customTable}>
@@ -991,7 +1061,7 @@ export default function TaskRewardsPage() {
                         {pay.payoutMethod.replace("_", " ")}
                       </span>
                     </td>
-                    <td>{pay.reference || <span style={{ color: "var(--text-muted)" }}>—</span>}</td>
+                    <td>{pay.referenceNo || <span style={{ color: "var(--text-muted)" }}>—</span>}</td>
                     <td>
                       <span className={styles.badgeApproved}>{pay.status}</span>
                     </td>
@@ -1003,9 +1073,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 5: RULES & CONVERSION SETTINGS
-          ========================================================================= */}
+      {/* TAB 5: RULES & CONVERSION SETTINGS */}
       {activeTab === "settings" && (
         <div
           style={{
@@ -1076,9 +1144,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          MODAL: CREATE / EDIT SPECIAL TASK
-          ========================================================================= */}
+      {/* MODAL: CREATE / EDIT SPECIAL TASK */}
       {isCreateModalOpen && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -1107,12 +1173,93 @@ export default function TaskRewardsPage() {
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Description & Instructions</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   placeholder="Detail what the employee needs to do to qualify for this reward points and bonus..."
                   className={styles.formTextarea}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
+              </div>
+
+              {/* Dynamic Checkbox List Builder */}
+              <div
+                style={{
+                  background: "var(--surface-bg)",
+                  border: "1px solid var(--border-main)",
+                  borderRadius: "12px",
+                  padding: "14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label className={styles.formLabel} style={{ margin: 0 }}>
+                    📋 Checkbox Task List ({formData.checklistItems.length} items)
+                  </label>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                    Subtasks employee must complete
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="text"
+                    placeholder="Add a checklist item (e.g. Verify CCTV logs)..."
+                    className={styles.formInput}
+                    value={newChecklistInput}
+                    onChange={(e) => setNewChecklistInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addChecklistItem();
+                      }
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.btnSecondary}
+                    onClick={addChecklistItem}
+                    style={{ padding: "8px 12px", fontSize: "12px" }}
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {formData.checklistItems.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "150px", overflowY: "auto" }}>
+                    {formData.checklistItems.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          background: "var(--surface-card)",
+                          padding: "6px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--border-main)",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "16px", color: "#f59e0b" }}>
+                            check_box_outline_blank
+                          </span>
+                          <span>{item.title}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeChecklistItem(item.id)}
+                          style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: "2px" }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className={styles.formRow}>
@@ -1237,9 +1384,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          MODAL: REVIEW SUBMISSION CLAIM
-          ========================================================================= */}
+      {/* MODAL: REVIEW SUBMISSION CLAIM */}
       {reviewModalData && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -1351,9 +1496,7 @@ export default function TaskRewardsPage() {
         </div>
       )}
 
-      {/* =========================================================================
-          MODAL: DISBURSE EXTRA INCOME PAYOUT
-          ========================================================================= */}
+      {/* MODAL: DISBURSE EXTRA INCOME PAYOUT */}
       {payoutModalData && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>

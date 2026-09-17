@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from "react";
 import styles from "../../hr/task-rewards/task-rewards.module.css";
 
+interface ChecklistItem {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 interface TaskReward {
   id: string;
   title: string;
@@ -14,7 +20,7 @@ interface TaskReward {
   status: string;
   deadline?: string;
   maxClaims: number;
-  checklist?: any;
+  checklist?: { type: string; items: ChecklistItem[] };
   submissions?: any[];
 }
 
@@ -37,7 +43,7 @@ interface Payout {
   conversionRate: number;
   amount: number;
   payoutMethod: string;
-  reference?: string;
+  referenceNo?: string;
   notes?: string;
   status: string;
   createdAt: string;
@@ -273,6 +279,7 @@ export default function EssTaskRewardsPage() {
                 const catStyle = getCategoryColor(task.category);
                 const cashValue = task.monetaryValue || task.points * wallet.pointToCashRate;
                 const hasSubmitted = task.submissions && task.submissions.length > 0;
+                const checklistItems = task.checklist?.items || [];
 
                 return (
                   <div key={task.id} className={styles.taskCard}>
@@ -292,6 +299,36 @@ export default function EssTaskRewardsPage() {
 
                       <h3 className={styles.taskTitle}>{task.title}</h3>
                       {task.description && <p className={styles.taskDesc}>{task.description}</p>}
+
+                      {/* Checkbox Subtasks Checklist */}
+                      {checklistItems.length > 0 && (
+                        <div
+                          style={{
+                            background: "var(--surface-bg)",
+                            border: "1px solid var(--border-main)",
+                            borderRadius: "10px",
+                            padding: "10px 12px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
+                          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                            📋 Checkbox Subtasks Checklist ({checklistItems.length})
+                          </div>
+                          {checklistItems.map((item) => (
+                            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12.5px" }}>
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: "16px", color: "#f59e0b" }}
+                              >
+                                check_box_outline_blank
+                              </span>
+                              <span>{item.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -457,7 +494,7 @@ export default function EssTaskRewardsPage() {
                         {pay.payoutMethod.replace("_", " ")}
                       </span>
                     </td>
-                    <td>{pay.reference || "—"}</td>
+                    <td>{pay.referenceNo || "—"}</td>
                     <td>
                       <span className={styles.badgeApproved}>{pay.status}</span>
                     </td>
@@ -490,6 +527,33 @@ export default function EssTaskRewardsPage() {
                   Reward: +{claimingTask.points} Points (৳ {(claimingTask.monetaryValue || claimingTask.points * wallet.pointToCashRate).toLocaleString()} Extra Income)
                 </div>
               </div>
+
+              {/* Show Checkbox items to candidate in modal */}
+              {claimingTask.checklist?.items && claimingTask.checklist.items.length > 0 && (
+                <div
+                  style={{
+                    background: "var(--surface-bg)",
+                    border: "1px solid var(--border-main)",
+                    borderRadius: "10px",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                    Required Subtasks:
+                  </div>
+                  {claimingTask.checklist.items.map((item) => (
+                    <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12.5px" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: "16px", color: "#f59e0b" }}>
+                        check_box
+                      </span>
+                      <span>{item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Completion Summary & Notes *</label>

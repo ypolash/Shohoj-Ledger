@@ -12,3 +12,8 @@ docs
 *.png
 *.jpg
 *.jpeg
+shohoj-staff-android
+shohoj-admin-android
+shohoj-team-android
+.gradle
+tests

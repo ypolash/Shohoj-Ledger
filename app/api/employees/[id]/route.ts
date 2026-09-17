@@ -103,35 +103,103 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       return NextResponse.json({ error: "Employee not found or unauthorized" }, { status: 404 });
     }
 
+    const empId = existingEmp.id;
+
     await prisma.$transaction(async (tx) => {
-      // 1. Unassign managed projects
-      await tx.project.updateMany({
-        where: { managerId: existingEmp.id },
-        data: { managerId: null }
-      });
+      // 1. Unlink organizational leadership & management references
+      await tx.department.updateMany({ where: { headOfDepartmentId: empId }, data: { headOfDepartmentId: null } });
+      await tx.division.updateMany({ where: { headOfDivisionId: empId }, data: { headOfDivisionId: null } });
+      await tx.section.updateMany({ where: { headOfSectionId: empId }, data: { headOfSectionId: null } });
+      await tx.team.updateMany({ where: { leadOfTeamId: empId }, data: { leadOfTeamId: null } });
+      await tx.warehouse.updateMany({ where: { managerId: empId }, data: { managerId: null } });
+      await tx.project.updateMany({ where: { managerId: empId }, data: { managerId: null } });
+      await tx.employee.updateMany({ where: { reportingManagerId: empId }, data: { reportingManagerId: null } });
 
-      // 2. Clear attendance-related entries
-      await tx.attendanceAdjustment.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.attendanceOvertime.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.attendanceRoster.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.attendanceHolidayAssignment.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.attendance.deleteMany({ where: { employeeId: existingEmp.id } });
+      // 2. Unassign tasks, assets, leads, opportunities, sessions
+      await tx.task.updateMany({ where: { assignedToEmployeeId: empId }, data: { assignedToEmployeeId: null } });
+      await tx.taskReward.updateMany({ where: { assignedToEmployeeId: empId }, data: { assignedToEmployeeId: null } });
+      await tx.asset.updateMany({ where: { assignedToEmployeeId: empId }, data: { assignedToEmployeeId: null } });
+      await tx.lead.updateMany({ where: { assignedToId: empId }, data: { assignedToId: null } });
+      await tx.opportunity.updateMany({ where: { ownerId: empId }, data: { ownerId: null } });
+      await tx.trainingSession.updateMany({ where: { trainerId: empId }, data: { trainerId: null } });
+      await tx.pickingTask.updateMany({ where: { assignedToId: empId }, data: { assignedToId: null } });
+      await tx.packingTask.updateMany({ where: { packedById: empId }, data: { packedById: null } });
+      await tx.putAwayTask.updateMany({ where: { assignedToId: empId }, data: { assignedToId: null } });
+      await tx.stockTransfer.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
+      await tx.stockTransfer.updateMany({ where: { requestedById: empId }, data: { requestedById: null } });
+      await tx.cycleCount.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
+      await tx.cycleCount.updateMany({ where: { createdById: empId }, data: { createdById: null } });
+      await tx.inventoryAdjustment.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
+      await tx.inventoryAdjustment.updateMany({ where: { createdById: empId }, data: { createdById: null } });
+      await tx.payrollRun.updateMany({ where: { processedById: empId }, data: { processedById: null } });
 
-      // 3. Clear profile, lifecycle, and documents
-      await tx.employeeFine.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.employeeSalary.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.employeeLifecycle.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.employeeExperience.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.employeeEducation.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.employeeDocument.deleteMany({ where: { employeeId: existingEmp.id } });
-      await tx.employeeProfile.deleteMany({ where: { employeeId: existingEmp.id } });
+      // 3. Clear reviews, feedback, and interviews
+      await tx.performanceFeedback.deleteMany({ where: { authorId: empId } });
+      await tx.performanceReview.deleteMany({ where: { reviewerId: empId } });
+      await tx.performanceReview.deleteMany({ where: { employeeId: empId } });
+      await tx.performanceGoal.deleteMany({ where: { employeeId: empId } });
+      await tx.performanceImprovementPlan.deleteMany({ where: { employeeId: empId } });
+      await tx.interviewFeedback.deleteMany({ where: { interviewerId: empId } });
+      await tx.interview.deleteMany({ where: { interviewerId: empId } });
+      await tx.trainingAssessment.deleteMany({ where: { assessorId: empId } });
+      await tx.trainingEnrollment.deleteMany({ where: { traineeId: empId } });
 
-      // 4. Delete the employee record
+      // 4. Clear task rewards, submissions, and payouts
+      await tx.taskRewardSubmission.deleteMany({ where: { employeeId: empId } });
+      await tx.taskRewardPayout.deleteMany({ where: { employeeId: empId } });
+
+      // 5. Clear leave records & approvals
+      await tx.leaveApproval.deleteMany({ where: { approvedById: empId } });
+      await tx.leaveApproval.deleteMany({ where: { leaveRequest: { employeeId: empId } } });
+      await tx.leaveRequest.deleteMany({ where: { employeeId: empId } });
+      await tx.leaveBalance.deleteMany({ where: { employeeId: empId } });
+      await tx.leaveAccrual.deleteMany({ where: { employeeId: empId } });
+      await tx.leaveEncashment.deleteMany({ where: { employeeId: empId } });
+
+      // 6. Clear attendance-related entries
+      await tx.attendanceAdjustment.deleteMany({ where: { employeeId: empId } });
+      await tx.attendanceOvertime.deleteMany({ where: { employeeId: empId } });
+      await tx.attendanceRoster.deleteMany({ where: { employeeId: empId } });
+      await tx.attendanceHolidayAssignment.deleteMany({ where: { employeeId: empId } });
+      await tx.attendanceException.deleteMany({ where: { employeeId: empId } });
+      await tx.attendanceShiftAssignment.deleteMany({ where: { employeeId: empId } });
+      await tx.attendance.deleteMany({ where: { employeeId: empId } });
+
+      // 7. Clear payroll, loans, salary and finance relations
+      await tx.payrollApproval.deleteMany({ where: { approvedById: empId } });
+      await tx.payrollItem.deleteMany({ where: { employeeId: empId } });
+      await tx.payslip.deleteMany({ where: { employeeId: empId } });
+      await tx.salaryAdvanceRecovery.deleteMany({ where: { salaryAdvance: { employeeId: empId } } });
+      await tx.salaryAdvance.deleteMany({ where: { employeeId: empId } });
+      await tx.salaryDeduction.deleteMany({ where: { employeeId: empId } });
+      await tx.salaryPayment.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeLoanInstallment.deleteMany({ where: { loan: { employeeId: empId } } });
+      await tx.employeeLoan.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeLoan.updateMany({ where: { approvedById: empId }, data: { approvedById: null } });
+      await tx.bonus.deleteMany({ where: { employeeId: empId } });
+      await tx.barcode.deleteMany({ where: { employeeId: empId } });
+      await tx.stockMovement.deleteMany({ where: { employeeId: empId } });
+
+      // 8. Clear profile, reporting, lifecycle, and documents
+      await tx.employeeFine.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeSalary.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeLifecycle.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeExperience.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeEducation.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeDocument.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeAddress.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeEmergencyContact.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeReporting.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeReporting.deleteMany({ where: { managerId: empId } });
+      await tx.projectEmployee.deleteMany({ where: { employeeId: empId } });
+      await tx.employeeProfile.deleteMany({ where: { employeeId: empId } });
+
+      // 9. Delete the employee record
       await tx.employee.delete({
-        where: { id: existingEmp.id }
+        where: { id: empId }
       });
 
-      // 5. Cleanup user login if exists
+      // 10. Cleanup user login if exists
       if (existingEmp.userId) {
         await tx.user.delete({ where: { id: existingEmp.userId } }).catch(() => {});
       }

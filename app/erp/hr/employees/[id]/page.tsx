@@ -16,12 +16,22 @@ export default async function EmployeeProfilePage(props: { params: Promise<{ id:
   
   let employee = null;
   
+  const employeeInclude = {
+    profile: true,
+    education: true,
+    experience: true,
+    departmentRef: true,
+    designationRef: true,
+    workShift: true,
+  };
+
   if (isUUID) {
     employee = await prisma.employee.findFirst({
       where: {
         id: decodedId,
         companyId: session.user.companyId,
       },
+      include: employeeInclude,
     });
   } else {
     const searchName = decodedId.replace(/_/g, ' ').toLowerCase();
@@ -36,7 +46,8 @@ export default async function EmployeeProfilePage(props: { params: Promise<{ id:
     
     if (matched) {
       employee = await prisma.employee.findFirst({
-        where: { id: matched.id }
+        where: { id: matched.id },
+        include: employeeInclude,
       });
     }
   }
@@ -44,6 +55,11 @@ export default async function EmployeeProfilePage(props: { params: Promise<{ id:
   if (!employee) {
     return <div>Employee not found</div>;
   }
+
+  const modeSetting = await prisma.systemSetting.findFirst({
+    where: { key: `onboarding_mode_${session.user.companyId}` }
+  });
+  const defaultMode = modeSetting?.value === 'BASIC' ? 'BASIC' : 'PROFESSIONAL';
 
   // Passing raw employee data to the client component
   // Note: Prisma returns Decimal for basicSalary and Date for joinDate/createdAt. 
@@ -54,11 +70,17 @@ export default async function EmployeeProfilePage(props: { params: Promise<{ id:
     joinDate: employee.joinDate ? employee.joinDate.toISOString() : null,
     createdAt: employee.createdAt ? employee.createdAt.toISOString() : null,
     updatedAt: employee.updatedAt ? employee.updatedAt.toISOString() : null,
+    profile: employee.profile ? {
+      ...employee.profile,
+      dateOfBirth: employee.profile.dateOfBirth ? employee.profile.dateOfBirth.toISOString() : null,
+      createdAt: employee.profile.createdAt ? employee.profile.createdAt.toISOString() : null,
+      updatedAt: employee.profile.updatedAt ? employee.profile.updatedAt.toISOString() : null,
+    } : null,
   };
 
   return (
     <div className="container" style={{ maxWidth: '1400px' }}>
-      <EmployeeProfileClient employee={serializedEmployee} />
+      <EmployeeProfileClient employee={serializedEmployee} initialMode={defaultMode} />
     </div>
   );
 }

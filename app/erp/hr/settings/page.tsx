@@ -66,6 +66,8 @@ interface LeaveType {
   id: string;
   name: string;
   description?: string | null;
+  displayDescription?: string;
+  quotaModel?: "ANNUAL" | "MONTHLY" | "DAILY";
   isPaid: boolean;
   leavePolicies?: LeavePolicy[];
 }
@@ -180,6 +182,8 @@ export default function HRSettingsPage() {
   const [leaveForm, setLeaveForm] = useState<{
     name: string;
     description: string;
+    displayDescription: string;
+    quotaModel: "ANNUAL" | "MONTHLY" | "DAILY";
     isPaid: boolean;
     accrualRate: number | string;
     maxBalance: number | string;
@@ -188,6 +192,8 @@ export default function HRSettingsPage() {
   }>({
     name: "",
     description: "",
+    displayDescription: "",
+    quotaModel: "ANNUAL",
     isPaid: true,
     accrualRate: 12,
     maxBalance: 12,
@@ -612,6 +618,8 @@ export default function HRSettingsPage() {
     setLeaveForm({
       name: "",
       description: "",
+      displayDescription: "",
+      quotaModel: "ANNUAL",
       isPaid: true,
       accrualRate: 12,
       maxBalance: 12,
@@ -625,9 +633,13 @@ export default function HRSettingsPage() {
     setEditingLeaveId(type.id);
     setLeaveError("");
     const policy = type.leavePolicies?.[0];
+    const model = type.quotaModel || (type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
+    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*/s, '') : "");
     setLeaveForm({
       name: type.name,
-      description: type.description || "",
+      description: cleanDesc,
+      displayDescription: cleanDesc,
+      quotaModel: model,
       isPaid: type.isPaid,
       accrualRate: policy ? Number(policy.accrualRate) : 12,
       maxBalance: policy?.maxBalance ? Number(policy.maxBalance) : 12,
@@ -652,7 +664,11 @@ export default function HRSettingsPage() {
       const method = isEditing ? "PUT" : "POST";
 
       const sanitizedLeaveForm = {
-        ...leaveForm,
+        name: leaveForm.name,
+        description: leaveForm.description,
+        quotaModel: leaveForm.quotaModel,
+        isPaid: leaveForm.isPaid,
+        carryForward: leaveForm.carryForward,
         accrualRate: Number(leaveForm.accrualRate) || 0,
         maxBalance: Number(leaveForm.maxBalance) || 0,
         carryForwardLimit: Number(leaveForm.carryForwardLimit) || 0
@@ -1450,7 +1466,7 @@ export default function HRSettingsPage() {
                 <tr>
                   <th className={styles.th}>Leave Category</th>
                   <th className={styles.th}>Compensation</th>
-                  <th className={styles.th}>Yearly Allowance</th>
+                  <th className={styles.th}>Quota Model & Allowance</th>
                   <th className={styles.th}>Max Balance</th>
                   <th className={styles.th}>Carry Forward</th>
                   <th className={styles.th}>Approval Chain</th>
@@ -1467,13 +1483,17 @@ export default function HRSettingsPage() {
                 ) : (
                   leaveTypes.map((type) => {
                     const policy = type.leavePolicies?.[0];
+                    const model = type.quotaModel || (type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
+                    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*/s, '') : "");
+                    const rate = policy ? Number(policy.accrualRate) : 0;
+
                     return (
                       <tr key={type.id}>
                         <td className={styles.td}>
                           <div>
                             <span style={{ fontWeight: 700 }}>{type.name}</span>
-                            {type.description && (
-                              <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "var(--text-muted)" }}>{type.description}</p>
+                            {cleanDesc && (
+                              <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "var(--text-muted)" }}>{cleanDesc}</p>
                             )}
                           </div>
                         </td>
@@ -1483,7 +1503,75 @@ export default function HRSettingsPage() {
                           </span>
                         </td>
                         <td className={styles.td}>
-                          <span style={{ fontWeight: 700 }}>{policy ? Number(policy.accrualRate) : 0} days</span> / year
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                            {model === 'MONTHLY' ? (
+                              <>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(139, 92, 246, 0.12)',
+                                  color: '#8b5cf6',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  border: '1px solid rgba(139, 92, 246, 0.25)',
+                                  width: 'fit-content'
+                                }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>date_range</span>
+                                  Monthly Model
+                                </span>
+                                <span style={{ fontWeight: 700, fontSize: '13px' }}>
+                                  {rate} days / mo <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({(rate * 12).toFixed(1)}/yr)</span>
+                                </span>
+                              </>
+                            ) : model === 'DAILY' ? (
+                              <>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(16, 185, 129, 0.12)',
+                                  color: '#10b981',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                                  width: 'fit-content'
+                                }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>timer</span>
+                                  Daily Model
+                                </span>
+                                <span style={{ fontWeight: 700, fontSize: '13px' }}>
+                                  {rate} days / day
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(37, 99, 235, 0.12)',
+                                  color: 'var(--primary)',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  border: '1px solid rgba(37, 99, 235, 0.25)',
+                                  width: 'fit-content'
+                                }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>calendar_today</span>
+                                  Annual Model
+                                </span>
+                                <span style={{ fontWeight: 700, fontSize: '13px' }}>
+                                  {rate} days / year
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td className={styles.td}>
                           {policy?.maxBalance ? `${Number(policy.maxBalance)} days max` : "Unlimited"}
@@ -2084,35 +2172,116 @@ export default function HRSettingsPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Study Leave, Paternity Leave"
+                    placeholder="e.g. Annual Vacation, Sick Leave, Casual Leave"
                     className={styles.input}
                     value={leaveForm.name}
                     onChange={(e) => setLeaveForm({ ...leaveForm, name: e.target.value })}
                   />
                 </div>
 
+                {/* Quota Allocation Model Selector */}
                 <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Description</label>
-                  <input
-                    type="text"
-                    placeholder="Brief guidelines for staff"
-                    className={styles.input}
-                    value={leaveForm.description}
-                    onChange={(e) => setLeaveForm({ ...leaveForm, description: e.target.value })}
-                  />
+                  <label className={styles.label}>Quota Allocation Model *</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setLeaveForm({ ...leaveForm, quotaModel: 'ANNUAL' })}
+                      style={{
+                        padding: '12px 10px',
+                        borderRadius: '12px',
+                        border: leaveForm.quotaModel === 'ANNUAL' ? '2px solid var(--primary, #2563eb)' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                        background: leaveForm.quotaModel === 'ANNUAL' ? 'rgba(37, 99, 235, 0.12)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
+                        color: leaveForm.quotaModel === 'ANNUAL' ? 'var(--primary, #60a5fa)' : 'var(--text-main, #f8fafc)',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>calendar_today</span>
+                      <span>Annual Model</span>
+                      <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted, #94a3b8)' }}>Yearly allotment</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLeaveForm({ ...leaveForm, quotaModel: 'MONTHLY' })}
+                      style={{
+                        padding: '12px 10px',
+                        borderRadius: '12px',
+                        border: leaveForm.quotaModel === 'MONTHLY' ? '2px solid #8b5cf6' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                        background: leaveForm.quotaModel === 'MONTHLY' ? 'rgba(139, 92, 246, 0.12)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
+                        color: leaveForm.quotaModel === 'MONTHLY' ? '#a78bfa' : 'var(--text-main, #f8fafc)',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>date_range</span>
+                      <span>Monthly Model</span>
+                      <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted, #94a3b8)' }}>Monthly accrued</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLeaveForm({ ...leaveForm, quotaModel: 'DAILY' })}
+                      style={{
+                        padding: '12px 10px',
+                        borderRadius: '12px',
+                        border: leaveForm.quotaModel === 'DAILY' ? '2px solid #10b981' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                        background: leaveForm.quotaModel === 'DAILY' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover, rgba(255,255,255,0.03))',
+                        color: leaveForm.quotaModel === 'DAILY' ? '#34d399' : 'var(--text-main, #f8fafc)',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>timer</span>
+                      <span>Daily Model</span>
+                      <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted, #94a3b8)' }}>Daily credit</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className={styles.grid2}>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Annual Allowance (Days)</label>
+                    <label className={styles.label}>
+                      {leaveForm.quotaModel === 'MONTHLY'
+                        ? 'Monthly Allowance (Days / Month) *'
+                        : leaveForm.quotaModel === 'DAILY'
+                        ? 'Daily Accrual Credit (Days / Day) *'
+                        : 'Annual Allowance (Days / Year) *'}
+                    </label>
                     <input
                       type="number"
+                      step={leaveForm.quotaModel === 'DAILY' ? "0.01" : "0.5"}
                       required
                       min="0"
                       className={styles.input}
                       value={leaveForm.accrualRate}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, accrualRate: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, accrualRate: e.target.value === "" ? "" : parseFloat(e.target.value) || 0 })}
                     />
+                    <span className={styles.inputHelper}>
+                      {leaveForm.quotaModel === 'MONTHLY'
+                        ? `Equivalent to ~${((Number(leaveForm.accrualRate) || 0) * 12).toFixed(1)} days per year`
+                        : leaveForm.quotaModel === 'DAILY'
+                        ? 'Accrued incrementally per active workday'
+                        : 'Standard fixed allocation per calendar year'}
+                    </span>
                   </div>
                   <div className={styles.fieldGroup}>
                     <label className={styles.label}>Max Accumulation (Days)</label>
@@ -2124,7 +2293,19 @@ export default function HRSettingsPage() {
                       value={leaveForm.maxBalance}
                       onChange={(e) => setLeaveForm({ ...leaveForm, maxBalance: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
                     />
+                    <span className={styles.inputHelper}>Maximum balance allowed before capping</span>
                   </div>
+                </div>
+
+                <div className={styles.fieldGroup}>
+                  <label className={styles.label}>Description & Guidelines</label>
+                  <input
+                    type="text"
+                    placeholder="Brief guidelines or applicability rules for staff"
+                    className={styles.input}
+                    value={leaveForm.description}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, description: e.target.value })}
+                  />
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
@@ -2154,7 +2335,7 @@ export default function HRSettingsPage() {
                       <input
                         type="number"
                         min="1"
-                        max="30"
+                        max="365"
                         className={styles.input}
                         value={leaveForm.carryForwardLimit}
                         onChange={(e) => setLeaveForm({ ...leaveForm, carryForwardLimit: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}

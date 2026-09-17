@@ -989,7 +989,10 @@ export default function EmployeesPage() {
 
                         <button
                           type="button"
-                          onClick={() => setEmployeeToDelete(emp)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEmployeeToDelete(emp);
+                          }}
                           title="Delete Employee"
                           style={{
                             display: 'inline-flex',
@@ -1147,7 +1150,10 @@ export default function EmployeesPage() {
 
                     <button
                       type="button"
-                      onClick={() => setEmployeeToDelete(emp)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEmployeeToDelete(emp);
+                      }}
                       style={{
                         padding: '5px 8px',
                         borderRadius: '6px',

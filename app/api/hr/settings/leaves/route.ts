@@ -3,6 +3,30 @@ import { prisma } from "@/lib/prisma";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
+function parseLeaveType(type: any) {
+  if (!type) return type;
+  let quotaModel = "ANNUAL";
+  let cleanDesc = type.description || "";
+  if (type.description?.startsWith("[QUOTA:")) {
+    const match = type.description.match(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*(.*)$/s);
+    if (match) {
+      quotaModel = match[1];
+      cleanDesc = match[2] || "";
+    }
+  }
+  return {
+    ...type,
+    quotaModel,
+    displayDescription: cleanDesc,
+  };
+}
+
+function encodeDescription(description?: string | null, quotaModel?: string) {
+  const model = quotaModel && ["ANNUAL", "MONTHLY", "DAILY"].includes(quotaModel) ? quotaModel : "ANNUAL";
+  const clean = description ? description.replace(/^\[QUOTA:(ANNUAL|MONTHLY|DAILY)\]\s*/s, '').trim() : '';
+  return clean ? `[QUOTA:${model}] ${clean}` : `[QUOTA:${model}]`;
+}
+
 export async function GET() {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
   if (rbacGuard) return rbacGuard;
@@ -17,7 +41,8 @@ export async function GET() {
       orderBy: { createdAt: "asc" }
     });
 
-    return NextResponse.json({ success: true, data: leaveTypes });
+    const parsedData = leaveTypes.map(parseLeaveType);
+    return NextResponse.json({ success: true, data: parsedData });
   } catch (error: any) {
     console.error("Error fetching leave types:", error);
     return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });
@@ -36,6 +61,7 @@ export async function POST(request: Request) {
     const {
       name,
       description = "",
+      quotaModel = "ANNUAL",
       isPaid = true,
       accrualRate = 12,
       maxBalance = 12,
@@ -55,16 +81,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: `Leave type "${name}" already exists.` }, { status: 400 });
     }
 
+    const encodedDesc = encodeDescription(description, quotaModel);
+
     const newType = await prisma.leaveType.create({
       data: {
         companyId,
         name: name.trim(),
-        description: description?.trim() || null,
+        description: encodedDesc,
         isPaid: Boolean(isPaid),
         leavePolicies: {
           create: {
             accrualRate: Number(accrualRate) || 0,
-            maxBalance: Number(maxBalance) || 0,
+            maxBalance: maxBalance !== null && maxBalance !== undefined && maxBalance !== "" ? Number(maxBalance) : null,
             carryForward: Boolean(carryForward),
             carryForwardLimit: carryForward ? Number(carryForwardLimit) || 0 : null,
             approvalLevels: 1
@@ -74,7 +102,7 @@ export async function POST(request: Request) {
       include: { leavePolicies: true }
     });
 
-    return NextResponse.json({ success: true, data: newType }, { status: 201 });
+    return NextResponse.json({ success: true, data: parseLeaveType(newType) }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating leave type:", error);
     return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });
@@ -93,7 +121,7 @@ export async function PUT(request: Request) {
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { id, name, accrualRate, maxBalance, carryForward, carryForwardLimit, isPaid, description } = body;
+    const { id, name, accrualRate, maxBalance, carryForward, carryForwardLimit, isPaid, description, quotaModel } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: "Leave type ID is required" }, { status: 400 });
@@ -122,13 +150,19 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Parse existing model if not provided
+    const existingParsed = parseLeaveType(existing);
+    const targetModel = quotaModel || existingParsed.quotaModel;
+    const targetDesc = description !== undefined ? description : existingParsed.displayDescription;
+    const encodedDesc = encodeDescription(targetDesc, targetModel);
+
     // Update leave type
     await prisma.leaveType.update({
       where: { id },
       data: {
         ...(name && name.trim() && { name: name.trim() }),
         ...(isPaid !== undefined && { isPaid: Boolean(isPaid) }),
-        ...(description !== undefined && { description: description?.trim() || null }),
+        description: encodedDesc,
       }
     });
 
@@ -138,7 +172,7 @@ export async function PUT(request: Request) {
         where: { id: existing.leavePolicies[0].id },
         data: {
           ...(accrualRate !== undefined && { accrualRate: Number(accrualRate) }),
-          ...(maxBalance !== undefined && { maxBalance: Number(maxBalance) }),
+          ...(maxBalance !== undefined && { maxBalance: maxBalance !== null && maxBalance !== "" ? Number(maxBalance) : null }),
           ...(carryForward !== undefined && { carryForward: Boolean(carryForward) }),
           ...(carryForwardLimit !== undefined && { carryForwardLimit: carryForward ? Number(carryForwardLimit) : null }),
         }
@@ -148,7 +182,7 @@ export async function PUT(request: Request) {
         data: {
           leaveTypeId: id,
           accrualRate: Number(accrualRate) || 0,
-          maxBalance: Number(maxBalance) || 0,
+          maxBalance: maxBalance !== null && maxBalance !== undefined && maxBalance !== "" ? Number(maxBalance) : null,
           carryForward: Boolean(carryForward),
           carryForwardLimit: carryForward ? Number(carryForwardLimit) : null,
         }
@@ -160,7 +194,7 @@ export async function PUT(request: Request) {
       include: { leavePolicies: true }
     });
 
-    return NextResponse.json({ success: true, data: updated });
+    return NextResponse.json({ success: true, data: parseLeaveType(updated) });
   } catch (error: any) {
     console.error("Error updating leave policy:", error);
     return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });

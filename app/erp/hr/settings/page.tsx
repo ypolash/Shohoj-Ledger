@@ -670,12 +670,12 @@ export default function HRSettingsPage() {
       maxBalance: policy?.maxBalance ? Number(policy.maxBalance) : 12,
       carryForward: Boolean(policy?.carryForward),
       carryForwardLimit: policy?.carryForwardLimit ? Number(policy.carryForwardLimit) : 0,
-      breakDurationMinutes: type.breakDurationMinutes !== undefined ? type.breakDurationMinutes : 30,
-      gracePeriodMinutes: type.gracePeriodMinutes !== undefined ? type.gracePeriodMinutes : 5,
-      fineAmount: type.fineAmount !== undefined ? type.fineAmount : 50,
+      breakDurationMinutes: type.breakDurationMinutes !== undefined && type.breakDurationMinutes !== null ? type.breakDurationMinutes : 30,
+      gracePeriodMinutes: type.gracePeriodMinutes !== undefined && type.gracePeriodMinutes !== null ? type.gracePeriodMinutes : 5,
+      fineAmount: type.fineAmount !== undefined && type.fineAmount !== null ? type.fineAmount : 50,
       fineType: type.fineType || "FIXED",
       autoFine: type.autoFine !== undefined ? type.autoFine : true,
-      maxPerDay: type.maxPerDay !== undefined ? type.maxPerDay : 2
+      maxPerDay: type.maxPerDay !== undefined && type.maxPerDay !== null ? type.maxPerDay : 2
     });
     setShowLeaveModal(true);
   };
@@ -1557,10 +1557,10 @@ export default function HRSettingsPage() {
                                   width: 'fit-content'
                                 }}>
                                   <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>av_timer</span>
-                                  Short Break ({type.breakDurationMinutes || 30}m Timer)
+                                  Short Break ({type.breakDurationMinutes !== undefined && type.breakDurationMinutes !== null ? type.breakDurationMinutes : 30}m Timer)
                                 </span>
                                 <span style={{ fontWeight: 700, fontSize: '12px', color: '#f87171' }}>
-                                  Overstay Fine: ৳{type.fineAmount || 50} <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>({type.gracePeriodMinutes || 5}m grace)</span>
+                                  Overstay Fine: ৳{type.fineAmount !== undefined && type.fineAmount !== null ? type.fineAmount : 50} <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>({type.gracePeriodMinutes !== undefined && type.gracePeriodMinutes !== null ? type.gracePeriodMinutes : 5}m grace)</span>
                                 </span>
                               </>
                             ) : model === 'MONTHLY' ? (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
+import { getActiveBreakForEmployee, parseLeaveTypeConfig } from "@/lib/hr/leaveTimer";
 
 /**
  * OPTIONS /api/ess/leave
@@ -12,7 +13,7 @@ export async function OPTIONS() {
 
 /**
  * GET /api/ess/leave
- * Returns the authenticated employee's own leave requests.
+ * Returns the authenticated employee's own leave requests, balances, and active short break timer.
  */
 export async function GET(request: Request) {
   try {
@@ -31,11 +32,13 @@ export async function GET(request: Request) {
     });
 
     const companyId = employee.companyId || "";
-    const leaveTypes: any[] = await (prisma.leaveType as any).findMany({
+    const rawLeaveTypes: any[] = await (prisma.leaveType as any).findMany({
       where: { companyId },
       include: { leavePolicies: true },
       orderBy: { createdAt: "asc" }
     });
+
+    const leaveTypes = rawLeaveTypes.map(parseLeaveTypeConfig);
 
     // Calculate dynamic balances based on company's active leave policies
     const balances = leaveTypes.map(lt => {
@@ -60,21 +63,39 @@ export async function GET(request: Request) {
         id: lt.id,
         name: lt.name,
         isPaid: lt.isPaid,
+        quotaModel: lt.quotaModel,
+        isShortBreak: lt.isShortBreak,
+        breakDurationMinutes: lt.breakDurationMinutes,
+        gracePeriodMinutes: lt.gracePeriodMinutes,
+        fineAmount: lt.fineAmount,
+        fineType: lt.fineType,
+        autoFine: lt.autoFine,
         total,
         used,
         remaining: Math.max(0, total - used)
       };
     });
 
+    const activeBreak = await getActiveBreakForEmployee(employee.id, employee.companyId);
+
     return NextResponse.json({
       success: true,
       leaves,
       balances,
+      activeBreak,
+      hasActiveBreak: Boolean(activeBreak),
       leaveTypes: leaveTypes.map(lt => ({
         id: lt.id,
         name: lt.name,
-        description: lt.description,
-        isPaid: lt.isPaid
+        description: lt.displayDescription || lt.description,
+        isPaid: lt.isPaid,
+        quotaModel: lt.quotaModel,
+        isShortBreak: lt.isShortBreak,
+        breakDurationMinutes: lt.breakDurationMinutes,
+        gracePeriodMinutes: lt.gracePeriodMinutes,
+        fineAmount: lt.fineAmount,
+        fineType: lt.fineType,
+        autoFine: lt.autoFine,
       }))
     }, { headers: ESS_CORS_HEADERS });
   } catch (error) {
@@ -89,7 +110,7 @@ export async function GET(request: Request) {
 /**
  * POST /api/ess/leave
  * Apply for leave as the authenticated employee.
- * Body: { type, startDate, endDate, reason, employeeId? }
+ * Body: { type, leaveTypeId?, startDate, endDate, reason, employeeId? }
  */
 export async function POST(request: Request) {
   try {
@@ -109,31 +130,68 @@ export async function POST(request: Request) {
       );
     }
 
-    const { type, startDate, endDate, reason } = body;
+    const { type, leaveTypeId, startDate, endDate, reason } = body;
 
-    if (!type || !startDate || !endDate || !reason) {
+    if (!type && !leaveTypeId) {
       return NextResponse.json(
-        { error: "Missing required fields: type, startDate, endDate, reason" },
+        { error: "Missing required fields: type or leaveTypeId" },
         { status: 400, headers: ESS_CORS_HEADERS }
       );
+    }
+
+    // Check if leave category is a Short Break (Timer model)
+    let targetType: any = null;
+    if (leaveTypeId) {
+      targetType = await prisma.leaveType.findFirst({
+        where: { id: leaveTypeId, companyId: employee.companyId || "" }
+      });
+    } else if (type) {
+      targetType = await prisma.leaveType.findFirst({
+        where: { name: type, companyId: employee.companyId || "" }
+      });
+    }
+
+    const parsedType = targetType ? parseLeaveTypeConfig(targetType) : null;
+    const isShortBreak = Boolean(parsedType && (parsedType.isShortBreak || parsedType.quotaModel === "SHORT_BREAK")) ||
+                         Boolean(type && type.toLowerCase().includes("break"));
+
+    let finalStartDate = startDate ? new Date(startDate) : new Date();
+    let finalEndDate = endDate ? new Date(endDate) : new Date();
+    let finalStatus = "PENDING";
+    let comments: string | null = null;
+
+    if (isShortBreak) {
+      const duration = parsedType?.breakDurationMinutes || 30;
+      finalStartDate = new Date();
+      finalEndDate = new Date(finalStartDate.getTime() + duration * 60 * 1000);
+      finalStatus = "APPROVED"; // Auto-Approved instantly
+      comments = `Auto-Approved Short Break: ${duration}m allowed (+${parsedType?.gracePeriodMinutes || 5}m grace). Overstay fine: ৳${parsedType?.fineAmount ?? 50}.`;
     }
 
     const leave = await prisma.leaveRequest.create({
       data: {
         companyId: employee.companyId,
         employeeId: employee.id,
-        type,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        reason,
-        status: "PENDING",
-        systemSource: employee.systemSource || "LEGACY",
+        leaveTypeId: targetType?.id || null,
+        type: targetType?.name || type,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        reason: reason || (isShortBreak ? "Short Break Request" : "Leave Request"),
+        status: finalStatus,
+        comments,
+        systemSource: employee.systemSource || "MOBILE",
       },
     });
 
-    console.log(`[ESS] Leave application created for employee ${employee.employeeId || employee.id} (ID: ${leave.id})`);
+    const activeBreak = isShortBreak ? await getActiveBreakForEmployee(employee.id, employee.companyId) : null;
 
-    return NextResponse.json({ success: true, leave }, { status: 201, headers: ESS_CORS_HEADERS });
+    return NextResponse.json({
+      success: true,
+      autoApproved: isShortBreak,
+      leave,
+      activeBreak,
+      hasActiveBreak: Boolean(activeBreak)
+    }, { status: 201, headers: ESS_CORS_HEADERS });
   } catch (error) {
     console.error("[ESS] Leave apply error:", error);
     return NextResponse.json(

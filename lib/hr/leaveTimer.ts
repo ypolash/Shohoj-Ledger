@@ -31,12 +31,20 @@ export function parseLeaveTypeConfig(type: any): any {
         const parsed = JSON.parse(timerMatch[1]);
         quotaModel = "SHORT_BREAK";
         isShortBreak = true;
-        breakDurationMinutes = Number(parsed.duration) || 30;
-        gracePeriodMinutes = Number(parsed.grace) || 5;
-        fineAmount = Number(parsed.fine) || 50;
+        if (parsed.duration !== undefined && parsed.duration !== null && !isNaN(Number(parsed.duration))) {
+          breakDurationMinutes = Number(parsed.duration);
+        }
+        if (parsed.grace !== undefined && parsed.grace !== null && !isNaN(Number(parsed.grace))) {
+          gracePeriodMinutes = Number(parsed.grace);
+        }
+        if (parsed.fine !== undefined && parsed.fine !== null && !isNaN(Number(parsed.fine))) {
+          fineAmount = Number(parsed.fine);
+        }
         fineType = parsed.fineType === "PER_MINUTE" ? "PER_MINUTE" : "FIXED";
         autoFine = parsed.autoFine !== false;
-        maxPerDay = Number(parsed.maxPerDay) || 2;
+        if (parsed.maxPerDay !== undefined && parsed.maxPerDay !== null && !isNaN(Number(parsed.maxPerDay))) {
+          maxPerDay = Number(parsed.maxPerDay);
+        }
         cleanDesc = timerMatch[2] || "";
       } catch {
         // fallback
@@ -86,13 +94,28 @@ export function encodeLeaveTypeConfig(
     : "";
 
   if (model === "SHORT_BREAK") {
+    const duration = timerConfig?.breakDurationMinutes !== undefined && timerConfig?.breakDurationMinutes !== "" && !isNaN(Number(timerConfig?.breakDurationMinutes))
+      ? Number(timerConfig?.breakDurationMinutes)
+      : 30;
+    const grace = timerConfig?.gracePeriodMinutes !== undefined && timerConfig?.gracePeriodMinutes !== "" && !isNaN(Number(timerConfig?.gracePeriodMinutes))
+      ? Number(timerConfig?.gracePeriodMinutes)
+      : 5;
+    const fine = timerConfig?.fineAmount !== undefined && timerConfig?.fineAmount !== "" && !isNaN(Number(timerConfig?.fineAmount))
+      ? Number(timerConfig?.fineAmount)
+      : 50;
+    const fineType = timerConfig?.fineType === "PER_MINUTE" ? "PER_MINUTE" : "FIXED";
+    const autoFine = timerConfig?.autoFine !== false;
+    const maxPerDay = timerConfig?.maxPerDay !== undefined && timerConfig?.maxPerDay !== "" && !isNaN(Number(timerConfig?.maxPerDay))
+      ? Number(timerConfig?.maxPerDay)
+      : 2;
+
     const configStr = JSON.stringify({
-      duration: Number(timerConfig?.breakDurationMinutes) || 30,
-      grace: Number(timerConfig?.gracePeriodMinutes) || 5,
-      fine: Number(timerConfig?.fineAmount) || 50,
-      fineType: timerConfig?.fineType === "PER_MINUTE" ? "PER_MINUTE" : "FIXED",
-      autoFine: timerConfig?.autoFine !== false,
-      maxPerDay: Number(timerConfig?.maxPerDay) || 2,
+      duration,
+      grace,
+      fine,
+      fineType,
+      autoFine,
+      maxPerDay,
     });
     return clean ? `[TIMER_CONFIG:${configStr}] ${clean}` : `[TIMER_CONFIG:${configStr}]`;
   }

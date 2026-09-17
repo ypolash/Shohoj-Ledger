@@ -105,6 +105,142 @@ fun HomeScreen(
                 }
             }
 
+            // Active Live Short Break Countdown Banner
+            if (uiState.activeBreak != null) {
+                val statusColor = when (uiState.activeBreakStatusColor) {
+                    "ROSE" -> Rose500
+                    "AMBER" -> Amber500
+                    else -> Emerald400
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    when (uiState.activeBreakStatusColor) {
+                                        "ROSE" -> Color(0xFF3B1219)
+                                        "AMBER" -> Color(0xFF3B280A)
+                                        else -> Color(0xFF063023)
+                                    },
+                                    Slate900
+                                )
+                            ),
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .border(1.5.dp, statusColor.copy(alpha = 0.6f), RoundedCornerShape(18.dp))
+                        .padding(18.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Timer,
+                                    contentDescription = null,
+                                    tint = statusColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = uiState.activeBreak?.type ?: "Active Short Break",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Slate50
+                                    )
+                                )
+                            }
+                            Surface(
+                                color = statusColor.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(8.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, statusColor.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = uiState.activeBreakStatusText.ifEmpty { "ACTIVE" },
+                                    color = statusColor,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = uiState.activeBreakCountdown.ifEmpty { "00:00" },
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontSize = 38.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 2.sp,
+                                    color = if (uiState.activeBreakStatusColor == "ROSE") Rose400 else Slate50
+                                )
+                            )
+                            Text(
+                                text = if (uiState.activeBreakStatusColor == "ROSE") "Overstay Countdown" else "Time Remaining",
+                                color = Slate400,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        if (uiState.activeBreakFineText != null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(statusColor.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                    .border(1.dp, statusColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                    .padding(vertical = 6.dp, horizontal = 10.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(Icons.Default.WarningAmber, contentDescription = null, tint = statusColor, modifier = Modifier.size(15.dp))
+                                    Text(
+                                        text = uiState.activeBreakFineText!!,
+                                        color = statusColor,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
+
+                        Button(
+                            onClick = { viewModel.endActiveBreak() },
+                            enabled = !uiState.isEndingBreak,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Emerald500,
+                                contentColor = Slate950
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                        ) {
+                            if (uiState.isEndingBreak) {
+                                CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                            } else {
+                                Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
+            }
+
             // Status Message Feedback Banner
             if (uiState.clockActionSuccessMessage != null) {
                 Box(

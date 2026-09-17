@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { parseLeaveTypeConfig } from "@/lib/hr/leaveTimer";
 
 export async function GET() {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
@@ -76,11 +77,12 @@ export async function GET() {
     });
 
     // 6. Leave Types & Policies (Blank for new companies until configured)
-    const leaveTypes = await prisma.leaveType.findMany({
+    const rawLeaveTypes = await prisma.leaveType.findMany({
       where: { companyId },
       include: { leavePolicies: true },
       orderBy: { createdAt: "asc" }
     });
+    const leaveTypes = rawLeaveTypes.map(parseLeaveTypeConfig);
 
     // 7. Onboarding Data Collection Mode (BASIC vs PROFESSIONAL)
     const modeSetting = await prisma.systemSetting.findUnique({

@@ -124,16 +124,21 @@ export async function POST(request: Request) {
           startDate: now,
           endDate: targetEnd,
           reason: reason || "Short Break",
-          status: "PENDING",
+          status: "APPROVED", // Instant Auto-Approved
           systemSource: "MOBILE",
-          comments: `Short break timer: ${parsedConfig.breakDurationMinutes} mins. Grace: ${parsedConfig.gracePeriodMinutes} mins. Overstay Fine: ৳${parsedConfig.fineAmount}.`
+          comments: `Auto-Approved Short break timer: ${parsedConfig.breakDurationMinutes} mins (+${parsedConfig.gracePeriodMinutes}m grace). Overstay fine: ৳${parsedConfig.fineAmount}.`
         }
       });
 
+      const activeBreak = await getActiveBreakForEmployee(employee.id, employee.companyId);
+
       return NextResponse.json({
         success: true,
-        message: "Short break request submitted to HR.",
+        message: "Short break started successfully. Countdown is now active.",
+        autoApproved: true,
         leave: newLeave,
+        activeBreak,
+        hasActiveBreak: true
       }, { status: 201, headers: ESS_CORS_HEADERS });
     }
 

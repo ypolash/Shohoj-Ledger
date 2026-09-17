@@ -66,15 +66,61 @@ export async function POST(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
+    // Check if leave category is a Short Break (Timer model)
+    const matchingLeaveType = await prisma.leaveType.findFirst({
+      where: {
+        companyId: companyIdForGuard,
+        OR: [
+          { name: data.type },
+          { id: data.leaveTypeId || "" }
+        ]
+      }
+    });
+
+    const isShortBreak = matchingLeaveType?.description?.includes("TIMER_CONFIG") ||
+                         matchingLeaveType?.description?.includes("SHORT_BREAK") ||
+                         data.type.toLowerCase().includes("break");
+
+    let finalStatus = 'PENDING';
+    let finalStartDate = new Date(data.startDate);
+    let finalEndDate = new Date(data.endDate);
+    let comments: string | null = null;
+
+    if (isShortBreak) {
+      let durationMinutes = 30;
+      let graceMinutes = 5;
+      let fineAmt = 50;
+
+      if (matchingLeaveType?.description?.includes("TIMER_CONFIG")) {
+        try {
+          const match = matchingLeaveType.description.match(/\[TIMER_CONFIG:({.*?})\]/s);
+          if (match) {
+            const cfg = JSON.parse(match[1]);
+            durationMinutes = Number(cfg.duration) || 30;
+            graceMinutes = Number(cfg.grace) || 5;
+            fineAmt = Number(cfg.fine) || 50;
+          }
+        } catch {}
+      }
+
+      const now = new Date();
+      finalStartDate = now;
+      finalEndDate = new Date(now.getTime() + durationMinutes * 60 * 1000);
+      finalStatus = 'APPROVED'; // Auto-Approved immediately without manual HR step
+      comments = `Auto-Approved Short Break: ${durationMinutes}m duration (+${graceMinutes}m grace). Overstay fine: ৳${fineAmt}.`;
+    }
+
     const leave = await prisma.leaveRequest.create({
       data: {
         companyId: companyIdForGuard,
         employeeId: data.employeeId,
+        leaveTypeId: matchingLeaveType?.id || null,
         type: data.type,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startDate: finalStartDate,
+        endDate: finalEndDate,
         reason: data.reason,
-        status: 'PENDING',
+        status: finalStatus,
+        comments,
         systemSource
       }
     });

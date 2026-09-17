@@ -14,10 +14,74 @@ export async function fetchMyTasks() {
 
   if (!employee) throw new Error("Employee not found");
 
-  return await prisma.task.findMany({
-    where: { companyId, assignedToEmployeeId: employee.employeeId },
-    orderBy: { createdAt: "desc" }
+  const [regularTasks, specialTasks, setting] = await Promise.all([
+    prisma.task.findMany({
+      where: { companyId, assignedToEmployeeId: employee.employeeId },
+      orderBy: { createdAt: "desc" }
+    }),
+    (prisma as any).taskReward.findMany({
+      where: {
+        companyId,
+        status: { in: ["OPEN", "IN_PROGRESS", "ACTIVE"] },
+        OR: [
+          { assignedToEmployeeId: null },
+          { assignedToEmployeeId: employee.id },
+          { assignedToEmployeeId: employee.employeeId },
+          ...(employee.departmentId ? [{ departmentId: employee.departmentId }] : [])
+        ]
+      },
+      include: {
+        submissions: {
+          where: { employeeId: employee.id }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+    (prisma as any).taskRewardSetting.findUnique({
+      where: { companyId }
+    })
+  ]);
+
+  const pointRate = setting ? Number(setting.pointToCashRate) : 10;
+
+  const mappedSpecial = (specialTasks || []).map((st: any) => {
+    const mySub = st.submissions && st.submissions.length > 0 ? st.submissions[0] : null;
+    let mappedStatus = "Pending";
+    if (mySub) {
+      if (mySub.status === "APPROVED") mappedStatus = "Completed";
+      else if (mySub.status === "PENDING") mappedStatus = "In Progress";
+      else mappedStatus = "Blocked";
+    }
+
+    const cashValue = st.monetaryValue ? Number(st.monetaryValue) : st.points * pointRate;
+
+    return {
+      id: st.id,
+      title: st.title,
+      description: st.description,
+      status: mappedStatus,
+      priority: st.priority || "High",
+      dueDate: st.deadline,
+      assignedToEmployeeId: st.assignedToEmployeeId || employee.employeeId,
+      createdAt: st.createdAt,
+      checklist: st.checklist,
+      isSpecialTask: true,
+      points: st.points,
+      rewardAmount: cashValue,
+      submissionStatus: mySub ? mySub.status : null,
+      maxClaims: st.maxClaims
+    };
   });
+
+  const mappedRegular = regularTasks.map((t: any) => ({
+    ...t,
+    isSpecialTask: false,
+    points: 0,
+    rewardAmount: 0,
+    submissionStatus: null
+  }));
+
+  return [...mappedSpecial, ...mappedRegular];
 }
 
 export async function updateMyTaskStatus(taskId: string, status: string) {

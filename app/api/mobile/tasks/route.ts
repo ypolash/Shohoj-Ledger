@@ -46,7 +46,7 @@ export async function GET(req: Request) {
           { id: rawEmployeeId },
         ],
       },
-      select: { id: true, employeeId: true, companyId: true, department: true },
+      select: { id: true, employeeId: true, companyId: true, department: true, departmentId: true },
     });
 
     const targetEmployeeId = emp ? emp.employeeId : rawEmployeeId;
@@ -74,6 +74,7 @@ export async function GET(req: Request) {
       createdAt: t.createdAt.toISOString(),
       checklist: normalizeChecklist(t.checklist),
       isSpecialTask: false,
+      isGolden: false,
       points: 0,
       rewardAmount: 0,
       submissionStatus: null,
@@ -85,11 +86,12 @@ export async function GET(req: Request) {
       const specialTasks = await (prisma as any).taskReward.findMany({
         where: {
           companyId,
-          status: { in: ["OPEN", "IN_PROGRESS", "COMPLETED"] },
+          status: { in: ["OPEN", "IN_PROGRESS", "ACTIVE", "COMPLETED"] },
           OR: [
             { assignedToEmployeeId: null },
             { assignedToEmployeeId: empDbId },
             { assignedToEmployeeId: targetEmployeeId },
+            ...(emp?.departmentId ? [{ departmentId: emp.departmentId }] : []),
           ],
         },
         include: {
@@ -131,9 +133,14 @@ export async function GET(req: Request) {
           createdAt: st.createdAt.toISOString(),
           checklist: normalizeChecklist(st.checklist),
           isSpecialTask: true,
+          isGolden: true,
+          backgroundColor: '#f59e0b',
+          goldenBackground: true,
+          badge: "⭐ SPECIAL BOUNTY TASK",
           points: st.points,
           rewardAmount: cashValue,
-          category: st.category,
+          bountyAmount: cashValue,
+          category: st.category || "SPECIAL_TASK",
           submissionStatus: mySub ? mySub.status : null,
           maxClaims: st.maxClaims,
         };

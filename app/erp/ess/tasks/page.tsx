@@ -108,18 +108,44 @@ export default function EssTasksPage() {
 
               return (
                 <div key={task.id} style={{ 
-                  background: 'var(--surface-card, #ffffff)', 
-                  border: '1px solid var(--border-main, #e2e8f0)', 
+                  background: task.isSpecialTask 
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 50%, rgba(15, 23, 42, 0.95) 100%)' 
+                    : 'var(--surface-card, #ffffff)', 
+                  border: task.isSpecialTask ? '1px solid rgba(245, 158, 11, 0.45)' : '1px solid var(--border-main, #e2e8f0)', 
                   borderRadius: '16px', 
                   padding: '20px',
                   display: 'flex', 
                   flexDirection: 'column', 
                   gap: '14px',
-                  boxShadow: '0 2px 8px -2px rgba(0,0,0,0.05)',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                  boxShadow: task.isSpecialTask ? '0 8px 24px rgba(245, 158, 11, 0.15)' : '0 2px 8px -2px rgba(0,0,0,0.05)',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  position: 'relative'
                 }}>
+                  {task.isSpecialTask && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'rgba(245, 158, 11, 0.22)',
+                      border: '1px solid rgba(245, 158, 11, 0.45)',
+                      padding: '6px 12px',
+                      borderRadius: '10px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      color: '#fbbf24'
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#f59e0b' }}>star</span>
+                        SPECIAL BOUNTY TASK
+                      </span>
+                      <span style={{ color: '#34d399', fontWeight: 800 }}>
+                        ৳{Number(task.rewardAmount || 0).toLocaleString()} ({task.points} pts)
+                      </span>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main, #0f172a)', wordBreak: 'break-word' }}>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: task.isSpecialTask ? '#f8fafc' : 'var(--text-main, #0f172a)', wordBreak: 'break-word' }}>
                       {task.title}
                     </h3>
                     <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
@@ -145,7 +171,7 @@ export default function EssTasksPage() {
                   </div>
                   
                   {task.description && (
-                    <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--text-secondary, #475569)', lineHeight: 1.5 }}>
+                    <p style={{ margin: 0, fontSize: '13.5px', color: task.isSpecialTask ? '#cbd5e1' : 'var(--text-secondary, #475569)', lineHeight: 1.5 }}>
                       {task.description}
                     </p>
                   )}

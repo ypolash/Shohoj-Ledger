@@ -152,11 +152,8 @@ export async function POST(request: Request) {
     let finalStartDate = startDate ? new Date(startDate) : new Date();
     let finalEndDate = endDate ? new Date(endDate) : new Date();
 
-    if (parsedType && (parsedType.isShortBreak || parsedType.quotaModel === "SHORT_BREAK")) {
-      const durationMs = (parsedType.breakDurationMinutes || 30) * 60 * 1000;
-      finalStartDate = new Date();
-      finalEndDate = new Date(Date.now() + durationMs);
-    }
+    const isShortBreak = Boolean(parsedType && (parsedType.isShortBreak || parsedType.quotaModel === "SHORT_BREAK"));
+    const finalStatus = isShortBreak ? "APPROVED" : "PENDING";
 
     const leave = await prisma.leaveRequest.create({
       data: {
@@ -166,16 +163,24 @@ export async function POST(request: Request) {
         type: targetType?.name || type,
         startDate: finalStartDate,
         endDate: finalEndDate,
-        reason: reason || (parsedType?.isShortBreak ? "Short Break Request" : "Leave Request"),
-        status: "PENDING",
+        reason: reason || (isShortBreak ? "Short Break Request" : "Leave Request"),
+        status: finalStatus,
         systemSource: employee.systemSource || "MOBILE",
-        comments: parsedType?.isShortBreak
-          ? `Short Break: ${parsedType.breakDurationMinutes}m allowed (+${parsedType.gracePeriodMinutes}m grace). Overstay fine: ৳${parsedType.fineAmount}.`
+        comments: isShortBreak
+          ? `Auto-Approved Short Break: ${parsedType?.breakDurationMinutes}m allowed (+${parsedType?.gracePeriodMinutes}m grace). Overstay fine: ৳${parsedType?.fineAmount}.`
           : null
       },
     });
 
-    return NextResponse.json({ success: true, leave }, { status: 201, headers: ESS_CORS_HEADERS });
+    const activeBreak = isShortBreak ? await getActiveBreakForEmployee(employee.id, employee.companyId) : null;
+
+    return NextResponse.json({
+      success: true,
+      autoApproved: isShortBreak,
+      leave,
+      activeBreak,
+      hasActiveBreak: Boolean(activeBreak)
+    }, { status: 201, headers: ESS_CORS_HEADERS });
   } catch (error) {
     console.error("[Mobile Leave] apply error:", error);
     return NextResponse.json(

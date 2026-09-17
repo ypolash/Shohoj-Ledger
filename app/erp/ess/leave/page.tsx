@@ -77,40 +77,143 @@ export default function EssLeavePage() {
     });
   };
 
+  const selectedTypeDetails = availableLeaveTypes.find(t => t.name === type || t.id === type);
+  const isShortBreakSelected = Boolean(
+    selectedTypeDetails?.isShortBreak ||
+    selectedTypeDetails?.quotaModel === 'SHORT_BREAK' ||
+    type.toLowerCase().includes('short break') ||
+    type.toLowerCase().includes('break')
+  );
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       <div className="glass-card" style={{ padding: 'var(--spacing-6)' }}>
-        <h2 style={{ margin: '0 0 var(--spacing-6) 0' }}>Apply for Leave</h2>
+        <h2 style={{ margin: '0 0 var(--spacing-6) 0' }}>
+          {isShortBreakSelected ? "Request Short Break (Instant Start)" : "Apply for Leave"}
+        </h2>
         <form onSubmit={handleApply} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className={styles.filtersRow}>
             <div className={styles.filterGroup}>
-              <label className="label">Leave Type</label>
+              <label className="label">Leave / Break Category</label>
               <select className="input" value={type} onChange={e => setType(e.target.value)} required>
                 {availableLeaveTypes.length > 0 ? (
                   availableLeaveTypes.map(lt => (
-                    <option key={lt.id || lt.name} value={lt.name}>{lt.name}</option>
+                    <option key={lt.id || lt.name} value={lt.name}>
+                      {lt.name} {lt.isShortBreak || lt.quotaModel === 'SHORT_BREAK' ? '(⏱️ Short Break)' : ''}
+                    </option>
                   ))
                 ) : (
                   <option value="" disabled>No leave types configured</option>
                 )}
               </select>
             </div>
-            <div className={styles.filterGroup}>
-              <label className="label">Start Date</label>
-              <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} required />
-            </div>
-            <div className={styles.filterGroup}>
-              <label className="label">End Date</label>
-              <input type="date" className="input" value={endDate} onChange={e => setEndDate(e.target.value)} required />
-            </div>
+
+            {!isShortBreakSelected && (
+              <>
+                <div className={styles.filterGroup}>
+                  <label className="label">Start Date</label>
+                  <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+                </div>
+                <div className={styles.filterGroup}>
+                  <label className="label">End Date</label>
+                  <input type="date" className="input" value={endDate} onChange={e => setEndDate(e.target.value)} required />
+                </div>
+              </>
+            )}
           </div>
+
+          {/* Short Break Details & Warning Card */}
+          {isShortBreakSelected && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.06) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>timer</span>
+                Short Break Rules & Live Countdown Telemetry
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px' }}>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)', display: 'block' }}>Duration:</span>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '14px' }}>
+                    {selectedTypeDetails?.breakDurationMinutes || 30} Minutes
+                  </strong>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)', display: 'block' }}>Grace Period:</span>
+                  <strong style={{ color: '#fbbf24', fontSize: '14px' }}>
+                    +{selectedTypeDetails?.gracePeriodMinutes || 5} Min Tolerance
+                  </strong>
+                </div>
+              </div>
+
+              {/* Overstay Fine Warning */}
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                color: '#fca5a5',
+                fontSize: '12px',
+                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px'
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#ef4444', flexShrink: 0, marginTop: '1px' }}>warning</span>
+                <div>
+                  <strong>Overstay Fine Warning:</strong> If you exceed your allocated break duration (+ grace tolerance), an automatic fine of <strong>৳{selectedTypeDetails?.fineAmount || 50}</strong> will be immediately issued to your employee salary ledger.
+                </div>
+              </div>
+
+              <div style={{ fontSize: '11.5px', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>bolt</span>
+                Instant Start: No HR approval required. Live countdown starts automatically upon clicking Request Break.
+              </div>
+            </div>
+          )}
+
           <div className={styles.filterGroup}>
-            <label className="label">Reason</label>
-            <textarea className="input" value={reason} onChange={e => setReason(e.target.value)} required style={{ minHeight: '80px', resize: 'vertical' }}></textarea>
+            <label className="label">
+              {isShortBreakSelected ? "Break Reason / Note (Optional)" : "Reason *"}
+            </label>
+            <textarea
+              className="input"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder={isShortBreakSelected ? "e.g. Lunch, tea, personal errand..." : "Detailed reason for leave..."}
+              required={!isShortBreakSelected}
+              style={{ minHeight: isShortBreakSelected ? '60px' : '80px', resize: 'vertical' }}
+            />
           </div>
-          <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }} disabled={isApplying}>
-            {isApplying ? "Submitting..." : "Submit Leave Request"}
+
+          <button
+            type="submit"
+            className="btn"
+            style={{
+              alignSelf: 'flex-start',
+              background: isShortBreakSelected ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'var(--primary)',
+              color: '#ffffff',
+              fontWeight: 700,
+              padding: '10px 20px',
+              borderRadius: '10px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            disabled={isApplying}
+          >
+            {isApplying
+              ? "Submitting..."
+              : isShortBreakSelected
+              ? "⚡ Start Short Break Now (Auto-Approved)"
+              : "Submit Leave Request"}
           </button>
         </form>
       </div>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { createLedgerEntry } from "@/lib/ledger";
 
 export async function GET(req: Request) {
   try {
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
     const { 
       projectCode, name, description, category, priority, 
       clientName, leadId, managerId, teamMemberIds, 
-      startDate, endDate, estimatedBudget, actualCost, tags 
+      startDate, endDate, estimatedBudget, actualCost, advancePayment, advancePay, tags 
     } = body;
 
     const trimmedName = typeof name === "string" ? name.trim() : "";
@@ -128,6 +129,12 @@ export async function POST(req: Request) {
       ? Number(actualCost)
       : 0;
 
+    const parsedAdvance = (advancePayment !== undefined && advancePayment !== null && advancePayment !== "" && !isNaN(Number(advancePayment)))
+      ? Math.max(0, Number(advancePayment))
+      : (advancePay !== undefined && advancePay !== null && advancePay !== "" && !isNaN(Number(advancePay)))
+      ? Math.max(0, Number(advancePay))
+      : 0;
+
     // Filter valid team members
     let validTeamMembers: { id: string }[] = [];
     if (Array.isArray(teamMemberIds) && teamMemberIds.length > 0) {
@@ -166,6 +173,47 @@ export async function POST(req: Request) {
         }
       });
 
+      // Record Advance Payment if provided
+      if (parsedAdvance > 0) {
+        await tx.projectPayment.create({
+          data: {
+            projectId: p.id,
+            amount: parsedAdvance,
+            paymentMethod: "Bank Transfer",
+            notes: "Initial advance payment received upon project creation",
+            paidToStaff: 0,
+            profit: parsedAdvance
+          }
+        });
+
+        const income = await tx.income.create({
+          data: {
+            companyId,
+            projectId: p.id,
+            category: "Project Payment",
+            source: "Advance Payment",
+            amount: parsedAdvance,
+            received: parsedAdvance,
+            paymentStatus: "PAID",
+            shareable: true,
+            description: `Advance payment received for Project "${trimmedName}" (${trimmedCode})`,
+            systemSource: "ERP"
+          }
+        });
+
+        await createLedgerEntry({
+          companyId,
+          module: "Income",
+          referenceId: income.id,
+          amount: parsedAdvance,
+          isDebit: true,
+          accountType: "Bank Transfer",
+          description: `Income Received: Project Advance Payment (${trimmedName})`,
+          createdById: session.user.id,
+          systemSource: "ERP"
+        });
+      }
+
       // Safely log activity if performing user exists in User table
       const performingUser = await tx.user.findUnique({
         where: { id: session.user.id }
@@ -181,6 +229,18 @@ export async function POST(req: Request) {
             performedById: session.user.id
           }
         });
+
+        if (parsedAdvance > 0) {
+          await tx.projectActivity.create({
+            data: {
+              companyId,
+              projectId: p.id,
+              type: "PAYMENT_RECORDED",
+              description: `Initial advance payment of ৳${parsedAdvance.toLocaleString()} recorded`,
+              performedById: session.user.id
+            }
+          });
+        }
 
         if (validManagerId) {
           await tx.projectActivity.create({

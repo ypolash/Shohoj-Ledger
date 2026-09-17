@@ -23,7 +23,7 @@ export default function ProjectListPage() {
 
   const [form, setForm] = useState({
     name: '', projectCode: '', clientName: '', priority: 'Medium', managerId: '',
-    startDate: '', endDate: '', estimatedBudget: '', actualCost: '', description: ''
+    startDate: '', endDate: '', estimatedBudget: '', advancePayment: '', description: ''
   });
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function ProjectListPage() {
           startDate: form.startDate ? form.startDate : undefined,
           endDate: form.endDate ? form.endDate : undefined,
           estimatedBudget: form.estimatedBudget ? Number(form.estimatedBudget) : undefined,
-          actualCost: form.actualCost ? Number(form.actualCost) : undefined,
+          advancePayment: form.advancePayment ? Number(form.advancePayment) : undefined,
           description: form.description.trim() || undefined
         })
       });
@@ -75,7 +75,7 @@ export default function ProjectListPage() {
       if (!res.ok) { setError(d.error || 'Failed to create project'); return; }
       setSuccess('Project created successfully!');
       setShowModal(false);
-      setForm({ name: '', projectCode: '', clientName: '', priority: 'Medium', managerId: '', startDate: '', endDate: '', estimatedBudget: '', actualCost: '', description: '' });
+      setForm({ name: '', projectCode: '', clientName: '', priority: 'Medium', managerId: '', startDate: '', endDate: '', estimatedBudget: '', advancePayment: '', description: '' });
       fetchProjects();
       setTimeout(() => setSuccess(''), 4000);
     } catch { setError('Network error'); }
@@ -343,11 +343,11 @@ export default function ProjectListPage() {
                 </div>
               </div>
 
-              {/* Section: Budget, Cost & Priority */}
+              {/* Section: Budget, Advance Pay & Priority */}
               <div className={styles.formSectionDivider}>
                 <span className={styles.formSectionLabel}>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#60a5fa' }}>payments</span>
-                  Budget, Cost & Priority
+                  Budget, Advance Pay & Priority
                 </span>
                 <div className={styles.formSectionLine} />
               </div>
@@ -368,14 +368,14 @@ export default function ProjectListPage() {
                 </div>
 
                 <div className={styles.formField}>
-                  <label className={styles.fieldLabel}>Already Incurred Cost (Actual Spend)</label>
+                  <label className={styles.fieldLabel}>Advance Pay</label>
                   <div className={styles.inputWrapper}>
                     <span className={styles.currencyPrefix}>BDT</span>
                     <input
                       type="number"
                       placeholder="e.g. 50,000 (0 if none)"
-                      value={form.actualCost}
-                      onChange={(e) => handleForm('actualCost', e.target.value)}
+                      value={form.advancePayment}
+                      onChange={(e) => handleForm('advancePayment', e.target.value)}
                       className={`${styles.fieldInput} ${styles.currencyFieldInput}`}
                     />
                   </div>

@@ -1521,6 +1521,24 @@
   border-color: #bbf7d0;
 }
 
+.lossBanner {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(185, 28, 28, 0.08) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:global(html.light) .lossBanner,
+:global(html:not(.dark)) .lossBanner {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
 .paymentHistoryItem {
   display: flex;
   justify-content: space-between;

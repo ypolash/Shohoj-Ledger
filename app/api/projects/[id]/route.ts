@@ -115,15 +115,29 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       trackChange("managerId", cleanManagerId, existingProject.managerId, "PROJECT_UPDATED");
     }
 
-    const fieldsToTrack = ["name", "description", "category", "priority", "clientName", "leadId", "estimatedBudget", "actualCost", "progress"];
+    const fieldsToTrack = ["name", "description", "category", "priority", "status", "clientName", "leadId", "estimatedBudget", "actualCost", "progress"];
     fieldsToTrack.forEach(f => {
       if (body[f] !== undefined && body[f] !== existingProject[f as keyof typeof existingProject]) {
         updateData[f] = body[f];
-        if (!activitiesToLog.find(a => a.type === "PROJECT_UPDATED")) {
-           activitiesToLog.push({ type: "PROJECT_UPDATED", description: "Project details updated" });
+        if (f === "status") {
+          activitiesToLog.push({
+            type: "PROJECT_STATUS_CHANGED",
+            description: `Project status changed from ${existingProject.status || 'Draft'} to ${body[f]}`,
+            oldValue: String(existingProject.status || ""),
+            newValue: String(body[f])
+          });
+        } else if (!activitiesToLog.find(a => a.type === "PROJECT_UPDATED")) {
+          activitiesToLog.push({ type: "PROJECT_UPDATED", description: "Project details updated" });
         }
       }
     });
+
+    // Auto-sync status and progress if marking Completed
+    if (body.status === "Completed" && body.progress === undefined && existingProject.progress !== 100) {
+      updateData.progress = 100;
+    } else if (body.progress !== undefined && Number(body.progress) === 100 && !body.status && existingProject.status !== "Completed") {
+      updateData.status = "Completed";
+    }
 
     if (body.startDate !== undefined) updateData.startDate = body.startDate ? new Date(body.startDate) : null;
     if (body.endDate !== undefined) updateData.endDate = body.endDate ? new Date(body.endDate) : null;

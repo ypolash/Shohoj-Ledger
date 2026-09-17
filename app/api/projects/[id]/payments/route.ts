@@ -61,26 +61,26 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const totalPaymentsReceived = paymentsList.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
     const clientDue = Math.max(0, budget - totalPaymentsReceived);
 
-    const projectStaff = employeesList.filter((pe: any) => pe.isProjectBased);
-    const totalStaffRate = projectStaff.reduce((sum: number, pe: any) => sum + Number(pe.rate || 0), 0);
-    const totalStaffPaid = projectStaff.reduce((sum: number, pe: any) => sum + Number(pe.paidAmount || 0), 0);
-    const totalStaffDue = Math.max(0, totalStaffRate - totalStaffPaid);
+    // Total actual expenses incurred for this project
+    const totalCost = Number(project.actualCost || 0);
 
-    const otherExpenses = expenses
-      .filter((e: any) => e.category !== "Project Staff Payout")
-      .reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0);
+    // Realized Profit = Cash Received - Actual Costs
+    const realizedProfit = totalPaymentsReceived - totalCost;
+    const isLoss = realizedProfit < 0;
+    const lossAmount = isLoss ? Math.abs(realizedProfit) : 0;
 
-    const netProfit = Math.max(0, totalPaymentsReceived - totalStaffPaid - otherExpenses);
+    // Projected Original Profit once client completes full contract payment
+    const projectedProfit = budget - totalCost;
 
     return NextResponse.json({
       budget,
       totalPaymentsReceived,
       clientDue,
-      totalStaffRate,
-      totalStaffPaid,
-      totalStaffDue,
-      otherExpenses,
-      netProfit,
+      totalCost,
+      realizedProfit,
+      isLoss,
+      lossAmount,
+      projectedProfit,
       payments: paymentsList,
       projectEmployees: employeesList,
       expenses,
@@ -111,7 +111,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     const paymentAmount = parseFloat(body.amount);
     const customCost = Math.max(0, parseFloat(body.customCost) || 0);
     const costReason = (body.costReason || "").trim();
-    const paymentMethod = body.paymentMethod || "Bank";
+    const paymentMethod = body.paymentMethod || "Bank Transfer";
     const notes = body.notes || "";
     const paymentDate = body.date ? new Date(body.date) : new Date();
 
@@ -120,171 +120,52 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     }
 
     const project: any = await (prisma.project as any).findFirst({
-      where: { id: projectId, companyId },
-      include: {
-        projectEmployees: {
-          where: { isProjectBased: true },
-          include: {
-            employee: {
-              select: { id: true, firstName: true, lastName: true }
-            }
-          }
-        }
-      }
+      where: { id: projectId, companyId }
     });
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
-    // Calculate dues for project-based employees
-    const staffWithDues = ((project.projectEmployees || []) as any[]).map((pe: any) => {
-      const rate = Number(pe.rate || 0);
-      const paid = Number(pe.paidAmount || 0);
-      const due = Math.max(0, rate - paid);
-      return { ...pe, numericRate: rate, numericPaid: paid, due };
-    }).filter((s: any) => s.due > 0);
-
-    const totalStaffDue = staffWithDues.reduce((sum: number, s: any) => sum + s.due, 0);
-
     // Run in a single atomic transaction
     const result = await prisma.$transaction(async (tx: any) => {
-      let staffPayoutTotal = 0;
-      const employeePayouts: {
-        projectEmployeeId: string;
-        employeeId: string;
-        employeeName: string;
-        payoutAmount: number;
-        remainingDue: number;
-      }[] = [];
-
-      if (totalStaffDue > 0 && paymentAmount > 0) {
-        if (paymentAmount >= totalStaffDue) {
-          // Full payment: All staff dues are completely paid
-          for (const s of staffWithDues) {
-            const payout = s.due;
-            staffPayoutTotal += payout;
-
-            await tx.projectEmployee.update({
-              where: { id: s.id },
-              data: { paidAmount: s.numericRate }
-            });
-
-            employeePayouts.push({
-              projectEmployeeId: s.id,
-              employeeId: s.employeeId,
-              employeeName: `${s.employee.firstName} ${s.employee.lastName}`,
-              payoutAmount: payout,
-              remainingDue: 0
-            });
-          }
-        } else {
-          // Partial payment: Proportional distribution
-          let allocated = 0;
-          for (let i = 0; i < staffWithDues.length; i++) {
-            const s: any = staffWithDues[i];
-            let payout = 0;
-            if (i === staffWithDues.length - 1) {
-              // Last employee receives remainder to avoid fractional cent discrepancy
-              payout = Math.max(0, Math.round((paymentAmount - allocated) * 100) / 100);
-            } else {
-              payout = Math.floor((s.due / totalStaffDue) * paymentAmount * 100) / 100;
-              allocated += payout;
-            }
-
-            staffPayoutTotal += payout;
-            const newPaid = s.numericPaid + payout;
-            const remDue = Math.max(0, s.numericRate - newPaid);
-
-            await tx.projectEmployee.update({
-              where: { id: s.id },
-              data: { paidAmount: newPaid }
-            });
-
-            employeePayouts.push({
-              projectEmployeeId: s.id,
-              employeeId: s.employeeId,
-              employeeName: `${s.employee.firstName} ${s.employee.lastName}`,
-              payoutAmount: payout,
-              remainingDue: remDue
-            });
-          }
-        }
-
-        // Save each employee payout as an Expense (Due cutting)
-        for (const ep of employeePayouts) {
-          if (ep.payoutAmount > 0) {
-            const expense = await tx.expense.create({
-              data: {
-                companyId,
-                projectId: project.id,
-                category: "Project Staff Payout",
-                amount: ep.payoutAmount,
-                paymentMethod,
-                approvalStatus: "APPROVED",
-                description: `Project "${project.name}" due cutting / payout to ${ep.employeeName}`,
-                systemSource: "ERP"
-              }
-            });
-
-            await createLedgerEntry({
-              companyId,
-              module: "Expense",
-              referenceId: expense.id,
-              amount: ep.payoutAmount,
-              isDebit: false,
-              accountType: paymentMethod,
-              description: `Expense Paid: Project Staff Payout (${ep.employeeName} - ${project.name})`,
-              createdById: session.user.id,
-              systemSource: "ERP"
-            });
-          }
-        }
-      }
-
-      // Calculate Net Profit
-      const profit = Math.max(0, paymentAmount - staffPayoutTotal);
-
-      // Save Profit as Income
-      if (profit > 0) {
-        const income = await tx.income.create({
-          data: {
-            companyId,
-            projectId: project.id,
-            category: "Project Profit",
-            source: paymentMethod,
-            amount: profit,
-            received: profit,
-            paymentStatus: "PAID",
-            shareable: true,
-            description: `Net profit from Project "${project.name}" payment`,
-            systemSource: "ERP"
-          }
-        });
-
-        await createLedgerEntry({
+      // 1. Record Client Payment as Income
+      const income = await tx.income.create({
+        data: {
           companyId,
-          module: "Income",
-          referenceId: income.id,
-          amount: profit,
-          isDebit: true,
-          accountType: paymentMethod,
-          description: `Income Received: Project Profit (${project.name})`,
-          createdById: session.user.id,
+          projectId: project.id,
+          category: "Project Payment",
+          source: paymentMethod,
+          amount: paymentAmount,
+          received: paymentAmount,
+          paymentStatus: "PAID",
+          shareable: true,
+          description: `Client payment received for Project "${project.name}"${notes ? ` (${notes})` : ''}`,
           systemSource: "ERP"
-        });
-      }
+        }
+      });
 
-      const currentBudget = Number(project.estimatedBudget || 0);
-      let updatedBudget = currentBudget;
-      const currentActualCost = Number(project.actualCost || 0);
+      await createLedgerEntry({
+        companyId,
+        module: "Income",
+        referenceId: income.id,
+        amount: paymentAmount,
+        isDebit: true,
+        accountType: paymentMethod,
+        description: `Income Received: Project Payment (${project.name})`,
+        createdById: session.user.id,
+        systemSource: "ERP"
+      });
+
+      // 2. Handle optional custom cost entered during payment
+      let currentActualCost = Number(project.actualCost || 0);
+      let updatedActualCost = currentActualCost;
 
       if (customCost > 0) {
-        updatedBudget = Math.max(0, currentBudget - customCost);
+        updatedActualCost = currentActualCost + customCost;
 
         await tx.project.update({
           where: { id: project.id },
           data: {
-            estimatedBudget: updatedBudget,
-            actualCost: currentActualCost + customCost + staffPayoutTotal
+            actualCost: updatedActualCost
           }
         });
 
@@ -298,8 +179,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             paymentMethod,
             approvalStatus: "APPROVED",
             description: costReason
-              ? `Project "${project.name}" custom cost: ${costReason} (deducted from budget)`
-              : `Project "${project.name}" custom cost deducted from budget during client payment`,
+              ? `Project "${project.name}" custom cost: ${costReason}`
+              : `Project "${project.name}" cost recorded during payment`,
             systemSource: "ERP"
           }
         });
@@ -311,43 +192,37 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           amount: customCost,
           isDebit: false,
           accountType: paymentMethod,
-          description: `Project Cost: ${costReason || 'Custom Cost'} deducted from budget (${project.name})`,
+          description: `Project Cost: ${costReason || 'Custom Cost'} (${project.name})`,
           createdById: session.user.id,
           systemSource: "ERP"
-        });
-      } else if (staffPayoutTotal > 0) {
-        await tx.project.update({
-          where: { id: project.id },
-          data: { actualCost: currentActualCost + staffPayoutTotal }
         });
       }
 
       // Format payment notes
       let formattedNotes = notes || "";
       if (customCost > 0) {
-        const costTag = `[Custom Cost: -৳${customCost.toLocaleString()}${costReason ? ` (${costReason})` : ''} • New Budget: ৳${updatedBudget.toLocaleString()}]`;
+        const costTag = `[Custom Cost: -৳${customCost.toLocaleString()}${costReason ? ` (${costReason})` : ''}]`;
         formattedNotes = formattedNotes ? `${formattedNotes} • ${costTag}` : costTag;
       }
 
-      // Record Project Payment Entry
+      // 3. Record Project Payment Entry (paidToStaff is 0, profit reflects full payment received)
       const paymentRecord = await tx.projectPayment.create({
         data: {
           projectId: project.id,
           amount: paymentAmount,
           paymentMethod,
           notes: formattedNotes || null,
-          paidToStaff: staffPayoutTotal,
-          profit,
+          paidToStaff: 0,
+          profit: paymentAmount,
           createdAt: paymentDate
         }
       });
 
-      // Activity log
-      let activityDesc = `Recorded payment of ৳${paymentAmount.toLocaleString()} (${paymentMethod}).`;
+      // 4. Activity log
+      let activityDesc = `Recorded client payment of ৳${paymentAmount.toLocaleString()} (${paymentMethod}).`;
       if (customCost > 0) {
-        activityDesc += ` Deducted custom cost of ৳${customCost.toLocaleString()} from budget (New Budget: ৳${updatedBudget.toLocaleString()}).`;
+        activityDesc += ` Added project cost of ৳${customCost.toLocaleString()} ${costReason ? `(${costReason})` : ''}.`;
       }
-      activityDesc += ` Auto-paid staff: ৳${staffPayoutTotal.toLocaleString()}, Net Profit: ৳${profit.toLocaleString()}`;
 
       await tx.projectActivity.create({
         data: {
@@ -362,17 +237,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       return {
         paymentRecord,
         customCost,
-        updatedBudget,
-        staffPayoutTotal,
-        profit,
-        employeePayouts
+        updatedActualCost
       };
     });
 
-    const costAmt = result.customCost || 0;
     return NextResponse.json({
       success: true,
-      message: costAmt > 0 ? "Payment recorded & cost deducted from budget" : "Payment processed successfully",
+      message: "Client payment recorded successfully",
       ...result
     }, { status: 201 });
   } catch (error) {

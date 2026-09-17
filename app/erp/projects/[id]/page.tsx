@@ -100,6 +100,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     clientName: '',
     category: '',
     priority: 'Medium',
+    status: 'Draft',
+    progress: '0',
     managerId: '',
     startDate: '',
     endDate: '',
@@ -139,6 +141,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           clientName: data.project.clientName || '',
           category: data.project.category || '',
           priority: data.project.priority || 'Medium',
+          status: data.project.status || 'Draft',
+          progress: data.project.progress !== undefined && data.project.progress !== null ? String(data.project.progress) : '0',
           managerId: data.project.managerId || '',
           startDate: data.project.startDate ? data.project.startDate.split('T')[0] : '',
           endDate: data.project.endDate ? data.project.endDate.split('T')[0] : '',
@@ -202,10 +206,14 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
   const handleStatusChange = async (newStatus: string) => {
     try {
+      const payload: any = { status: newStatus };
+      if (newStatus === 'Completed') {
+        payload.progress = 100;
+      }
       const res = await fetch(`/api/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         showToast(`Status updated to ${newStatus}`);
@@ -245,6 +253,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           clientName: editForm.clientName.trim() || null,
           category: editForm.category.trim() || null,
           priority: editForm.priority,
+          status: editForm.status,
+          progress: editForm.progress !== '' ? Math.min(100, Math.max(0, Number(editForm.progress))) : 0,
           managerId: editForm.managerId || null,
           startDate: editForm.startDate || null,
           endDate: editForm.endDate || null,
@@ -598,13 +608,22 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const tasks = project.tasks || [];
   const completedTasks = tasks.filter((t: any) => t.status === 'Completed').length;
   const totalTasks = tasks.length;
-  const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : project.progress || 0;
+  const taskProgress = project.status === 'Completed' ? 100 : (totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : project.progress || 0);
 
-  // Project Financials & Payout Computations
+  // Project Financials & Collections Computations
   const payments = project.payments || [];
   const projectEmployees = project.projectEmployees || [];
   const totalReceived = payments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
   const clientDue = Math.max(0, budget - totalReceived);
+
+  // Realized Cash Profit / Loss (Collected from client - Total Cost)
+  const realizedProfit = totalReceived - actualCost;
+  const isLoss = realizedProfit < 0;
+  const lossAmount = isLoss ? Math.abs(realizedProfit) : 0;
+
+  // Projected Original Profit upon full collection of contract budget
+  const projectedProfit = budget - actualCost;
+  const isProjectedLoss = projectedProfit < 0;
 
   // Project-based employees
   const projectBasedStaff = projectEmployees.filter((pe: any) => pe.isProjectBased);
@@ -638,10 +657,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     ...payments.map((p: any) => ({ ...p, _type: 'payment' })),
     ...standaloneExpenses.map((e: any) => ({ ...e, _type: 'expense' }))
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  // Profit
-  // Calculated holistically: everything received from client minus everything spent (staff payouts + custom costs)
-  const totalProfit = totalReceived - actualCost;
 
   return (
     <PageContainer>
@@ -700,8 +715,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   onChange={(e) => handleStatusChange(e.target.value)}
                   className={styles.statusSelect}
                   style={{
-                    borderColor: project.status === 'Active' ? 'rgba(16, 185, 129, 0.4)' : undefined,
-                    color: project.status === 'Active' ? '#10b981' : undefined
+                    borderColor: project.status === 'Completed' ? 'rgba(16, 185, 129, 0.6)' : project.status === 'Active' ? 'rgba(59, 130, 246, 0.4)' : undefined,
+                    color: project.status === 'Completed' ? '#34d399' : project.status === 'Active' ? '#60a5fa' : undefined,
+                    fontWeight: 700
                   }}
                 >
                   {["Draft", "Planning", "Active", "On Hold", "Completed", "Cancelled", "Archived"].map((s) => (
@@ -735,58 +751,39 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               {/* Delete Project Button */}
               <button
                 type="button"
-                onClick={() => setIsDeleteProjectModalOpen(true)}
-                className={styles.deleteBtn}
-                title="Delete Project Permanently"
+                onClick={() => setDeleteConfirmOpen(true)}
+                className={styles.deleteProjectBtn}
+                title="Delete Project"
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-                Delete Project
+                Delete
               </button>
             </div>
           </div>
 
-          <div className={styles.titleRow}>
-            <div className={styles.titleGroup}>
-              <div className={styles.tagRow}>
-                <span className={styles.codePill}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>tag</span>
-                  {project.projectCode || 'NO-CODE'}
-                </span>
-
-                <span className={`${styles.priorityPill} ${
-                  project.priority === 'Urgent' ? styles.priorityUrgent :
-                  project.priority === 'High' ? styles.priorityHigh :
-                  project.priority === 'Low' ? styles.priorityLow :
-                  styles.priorityMedium
-                }`}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                    {project.priority === 'Urgent' ? 'bolt' :
-                     project.priority === 'High' ? 'priority_high' :
-                     project.priority === 'Low' ? 'check_circle' : 'adjust'}
-                  </span>
-                  {project.priority || 'Medium'} Priority
-                </span>
-
-                {project.category && (
-                  <span style={{ fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.06)', color: '#94a3b8' }}>
-                    {project.category}
-                  </span>
-                )}
+          <div className={styles.headerBody}>
+            <div className={styles.headerLeft}>
+              <div className={styles.projectCodeBadge}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>tag</span>
+                {project.projectCode || 'PROJECT-ALPHA'}
               </div>
-
-              <h1 className={styles.projectTitle}>
-                {project.name}
-              </h1>
-
-              <div className={styles.metaRow}>
+              <h1 className={styles.projectTitle}>{project.name}</h1>
+              <div className={styles.projectMetaRow}>
                 <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa' }}>domain</span>
-                  Client: <strong>{project.clientName || 'Internal Company'}</strong>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa' }}>business</span>
+                  Client: <strong>{project.clientName || 'Internal Client'}</strong>
                 </span>
 
                 <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>person</span>
-                  Lead Manager: <strong>{project.manager ? `${project.manager.firstName} ${project.manager.lastName}` : 'Unassigned'}</strong>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#a855f7' }}>badge</span>
+                  Manager: <strong>{project.manager ? `${project.manager.firstName} ${project.manager.lastName}` : 'Unassigned'}</strong>
+                </span>
+
+                <span className={styles.metaItem}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#f59e0b' }}>flag</span>
+                  Priority: <strong style={{
+                    color: project.priority === 'Urgent' ? '#f87171' : project.priority === 'High' ? '#fbbf24' : '#f8fafc'
+                  }}>{project.priority || 'Medium'}</strong>
                 </span>
 
                 <span className={styles.metaItem}>
@@ -800,25 +797,25 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
         {/* 2. Executive 4-KPI Metric Cards */}
         <div className={styles.kpiGrid}>
-          {/* Card 1: Estimated Budget */}
+          {/* Card 1: Estimated Budget & Collections */}
           <div className={styles.kpiCard}>
             <div className={styles.kpiTop}>
               <div className={styles.kpiIconBox} style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60a5fa' }}>
                 <span className="material-symbols-outlined">payments</span>
               </div>
               <span className={styles.kpiBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
-                Allocated
+                {budget > 0 ? `${Math.round((totalReceived / budget) * 100)}% Paid` : 'Target'}
               </span>
             </div>
             <div>
-              <span className={styles.kpiLabel}>Estimated Budget</span>
+              <span className={styles.kpiLabel}>Contract Budget</span>
               <div className={styles.kpiMainValue}>
                 {formatCurrency(budget)}
               </div>
             </div>
             <div className={styles.kpiFooter}>
-              <span>Target Ceiling</span>
-              <span>100% Total</span>
+              <span>Collected: <strong style={{ color: '#34d399' }}>{formatCurrency(totalReceived)}</strong></span>
+              <span>Due: <strong style={{ color: clientDue > 0 ? '#f87171' : '#34d399' }}>{formatCurrency(clientDue)}</strong></span>
             </div>
           </div>
 
@@ -832,11 +829,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 background: burnRate > 100 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.15)',
                 color: burnRate > 100 ? '#f87171' : '#fbbf24'
               }}>
-                {burnRate}% Burned
+                {burnRate}% Cost Ratio
               </span>
             </div>
             <div>
-              <span className={styles.kpiLabel}>Actual Incurred Cost</span>
+              <span className={styles.kpiLabel}>Total Recorded Costs</span>
               {isEditingActualCost ? (
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
                   <input
@@ -872,29 +869,37 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               )}
             </div>
             <div className={styles.kpiFooter}>
-              <span>{budget > actualCost ? `Savings: ${formatCurrency(variance)}` : `Over Budget by ${formatCurrency(Math.abs(variance))}`}</span>
+              <span>{expenses.length} Expense Item(s) Recorded</span>
+              <span>Deducts from profit</span>
             </div>
           </div>
 
-          {/* Card 3: Remaining Capital Buffer */}
+          {/* Card 3: Realized Cash Profit / Loss */}
           <div className={styles.kpiCard}>
             <div className={styles.kpiTop}>
-              <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399' }}>
-                <span className="material-symbols-outlined">account_balance_wallet</span>
+              <div className={styles.kpiIconBox} style={{
+                background: isLoss ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                border: isLoss ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                color: isLoss ? '#f87171' : '#34d399'
+              }}>
+                <span className="material-symbols-outlined">{isLoss ? 'trending_down' : 'trending_up'}</span>
               </div>
-              <span className={styles.kpiBadge} style={{ background: variance >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: variance >= 0 ? '#34d399' : '#f87171' }}>
-                {variance >= 0 ? 'Positive Buffer' : 'Deficit'}
+              <span className={styles.kpiBadge} style={{
+                background: isLoss ? 'rgba(239, 68, 68, 0.18)' : 'rgba(16, 185, 129, 0.18)',
+                color: isLoss ? '#f87171' : '#34d399'
+              }}>
+                {isLoss ? '🔴 Current Loss' : '🟢 Realized Profit'}
               </span>
             </div>
             <div>
-              <span className={styles.kpiLabel}>Remaining Capital Buffer</span>
-              <div className={styles.kpiMainValue} style={{ color: variance >= 0 ? '#34d399' : '#f87171' }}>
-                {formatCurrency(variance)}
+              <span className={styles.kpiLabel}>Current Cash Position</span>
+              <div className={styles.kpiMainValue} style={{ color: isLoss ? '#f87171' : '#34d399' }}>
+                {isLoss ? `-${formatCurrency(lossAmount)}` : `+${formatCurrency(realizedProfit)}`}
               </div>
             </div>
             <div className={styles.kpiFooter}>
-              <span>{Math.max(0, 100 - burnRate)}% Available</span>
-              <span>Safe Runway</span>
+              <span>Projected: <strong style={{ color: isProjectedLoss ? '#f87171' : '#38bdf8' }}>{isProjectedLoss ? '-' : '+'}{formatCurrency(Math.abs(projectedProfit))}</strong></span>
+              <span>{clientDue === 0 ? 'Fully Collected' : 'On Full Pay'}</span>
             </div>
           </div>
 
@@ -904,8 +909,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               <div className={styles.kpiIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', color: '#c084fc' }}>
                 <span className="material-symbols-outlined">donut_large</span>
               </div>
-              <span className={styles.kpiBadge} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
-                {taskProgress}% Done
+              <span className={styles.kpiBadge} style={{
+                background: project.status === 'Completed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                color: project.status === 'Completed' ? '#34d399' : '#c084fc'
+              }}>
+                {project.status || 'Draft'}
               </span>
             </div>
             <div>
@@ -925,7 +933,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
             </div>
             <div className={styles.kpiFooter}>
               <span>{completedTasks} of {totalTasks} Tasks</span>
-              <span>Velocity</span>
+              <span>{taskProgress === 100 ? 'Completed' : 'In Progress'}</span>
             </div>
           </div>
         </div>
@@ -1063,9 +1071,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        Financials & Settlement
+                        Financials & Realized Settlement
                       </h3>
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>Live client collections, staff payouts & profit split</span>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>Real-time client payments, incurred costs & profit/loss tracking</span>
                     </div>
                   </div>
 
@@ -1078,10 +1086,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   </button>
                 </div>
 
-                {/* 3-Col KPI Grid */}
-                <div className={styles.financialGrid}>
+                {/* 4-Col KPI Grid */}
+                <div className={styles.financialGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
                   <div className={styles.financialItem}>
-                    <span className={styles.financialLabel}>Project Budget</span>
+                    <span className={styles.financialLabel}>Contract Budget</span>
                     <span className={styles.financialValue}>{formatCurrency(budget)}</span>
                     <span style={{ fontSize: '10px', color: '#64748b' }}>Target Contract</span>
                   </div>
@@ -1092,7 +1100,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       {formatCurrency(totalReceived)}
                     </span>
                     <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>
-                      {budget > 0 ? `${Math.round((totalReceived / budget) * 100)}% Collected` : 'Received'}
+                      {budget > 0 ? `${Math.round((totalReceived / budget) * 100)}% Paid` : 'Received'}
                     </span>
                   </div>
 
@@ -1110,111 +1118,107 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       {clientDue === 0 ? 'Settled' : 'Payment Due'}
                     </span>
                   </div>
+
+                  <div className={styles.financialItem}>
+                    <span className={styles.financialLabel}>Total Cost</span>
+                    <span className={styles.financialValue} style={{ color: actualCost > 0 ? '#fca5a5' : '#94a3b8' }}>
+                      {formatCurrency(actualCost)}
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#f87171', fontWeight: 600 }}>
+                      {expenses.length} Expense(s)
+                    </span>
+                  </div>
                 </div>
 
-                {/* Staff Auto-Payout & Due Section */}
-                <div className={styles.staffSection}>
-                  <div className={styles.staffHeader}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>group_work</span>
-                      Project-Based Staff Allocation ({projectBasedStaff.length})
-                    </span>
-                    <span className={styles.dueBadge} style={{
-                      background: totalStaffDue === 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                      color: totalStaffDue === 0 ? '#34d399' : '#fbbf24',
-                      border: totalStaffDue === 0 ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)'
+                {/* Profit / Loss Position Banner */}
+                <div className={isLoss ? styles.lossBanner : styles.profitBanner} style={{ marginTop: '14px' }}>
+                  <div style={{ flex: 1, minWidth: '220px' }}>
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '11px',
+                      color: isLoss ? '#fca5a5' : '#86efac',
+                      textTransform: 'uppercase',
+                      fontWeight: 800,
+                      letterSpacing: '0.5px'
                     }}>
-                      {totalStaffDue === 0 ? 'All Staff Paid' : `Staff Due: ${formatCurrency(totalStaffDue)}`}
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                        {isLoss ? 'trending_down' : 'trending_up'}
+                      </span>
+                      {isLoss ? 'Current Realized Position: Loss' : 'Current Realized Position: Profit'}
                     </span>
+                    <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
+                      Paid ({formatCurrency(totalReceived)}) - Cost ({formatCurrency(actualCost)}) = <strong style={{ color: isLoss ? '#f87171' : '#34d399' }}>{isLoss ? `-${formatCurrency(lossAmount)}` : `+${formatCurrency(realizedProfit)}`}</strong>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', lineHeight: 1.4 }}>
+                      {isLoss ? (
+                        <>
+                          You are currently at a temporary loss of <strong style={{ color: '#fca5a5' }}>{formatCurrency(lossAmount)}</strong> because expenses exceed client collections. Upon collecting the remaining <strong style={{ color: '#38bdf8' }}>{formatCurrency(clientDue)}</strong> due, your original profit will be <strong style={{ color: isProjectedLoss ? '#f87171' : '#34d399' }}>{isProjectedLoss ? '-' : '+'}{formatCurrency(Math.abs(projectedProfit))}</strong>.
+                        </>
+                      ) : clientDue > 0 ? (
+                        <>
+                          Client has <strong style={{ color: '#fbbf24' }}>{formatCurrency(clientDue)}</strong> remaining due. Upon full payment of the contract, your total original profit will reach <strong style={{ color: '#34d399' }}>+{formatCurrency(projectedProfit)}</strong>.
+                        </>
+                      ) : (
+                        <>
+                          Full contract payment of {formatCurrency(budget)} received. Original net profit of <strong style={{ color: '#34d399' }}>+{formatCurrency(realizedProfit)}</strong> completely realized.
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  {projectBasedStaff.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {projectBasedStaff.map((pe: any) => {
-                        const fee = Number(pe.rate || 0);
-                        const paid = Number(pe.paidAmount || 0);
-                        const due = Math.max(0, fee - paid);
-                        const emp = pe.employee || {};
-                        return (
-                          <div key={pe.id} className={styles.staffRow}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <div className={styles.avatarBadge} style={{ width: '28px', height: '28px', fontSize: '11px' }}>
-                                {emp.firstName?.[0] || 'E'}{emp.lastName?.[0] || ''}
-                              </div>
-                              <div>
-                                <span style={{ fontWeight: 600, color: '#f8fafc', display: 'block' }}>
-                                  {emp.firstName} {emp.lastName}
-                                </span>
-                                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                  {emp.designation || 'Staff'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div>
-                                <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>
-                                  Fee: <strong>{formatCurrency(fee)}</strong>
-                                </span>
-                                <span style={{ display: 'block', fontSize: '10px', color: paid > 0 ? '#34d399' : '#64748b' }}>
-                                  Paid: {formatCurrency(paid)}
-                                </span>
-                              </div>
-                              <span className={styles.dueBadge} style={{
-                                background: due === 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                color: due === 0 ? '#34d399' : '#f87171'
-                              }}>
-                                {due === 0 ? 'Paid' : `Due ${formatCurrency(due)}`}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', padding: '6px 0' }}>
-                      No project-based employees assigned. Assign staff with contract rates to enable automatic payout splitting.
-                    </div>
-                  )}
-                </div>
-
-                {/* Profit & Settlement Banner */}
-                <div className={styles.profitBanner}>
-                  <div>
-                    <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Accounting & Ledger Result
+                  <div style={{ textAlign: 'right', minWidth: '140px' }}>
+                    <span style={{ display: 'block', fontSize: '10px', color: isLoss ? '#f87171' : '#10b981', textTransform: 'uppercase', fontWeight: 700 }}>
+                      {isLoss ? 'Realized Cash Loss' : 'Realized Profit'}
                     </span>
-                    <span style={{ fontSize: '12px', color: '#cbd5e1' }}>
-                      Staff Due Cutting (Expenses): <strong style={{ color: '#f87171' }}>-{formatCurrency(totalStaffPaid)}</strong>
-                    </span>
-                  </div>
-
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ display: 'block', fontSize: '10px', color: totalProfit >= 0 ? '#10b981' : '#f87171', textTransform: 'uppercase', fontWeight: 700 }}>
-                      {totalProfit >= 0 ? 'Saved to Income (Profit)' : 'Project Loss'}
-                    </span>
-                    <strong style={{ fontSize: '18px', color: totalProfit >= 0 ? '#34d399' : '#f87171', fontWeight: 800 }}>
-                      {totalProfit > 0 ? '+' : ''}{formatCurrency(totalProfit)}
+                    <strong style={{ fontSize: '20px', color: isLoss ? '#f87171' : '#34d399', fontWeight: 800 }}>
+                      {isLoss ? `-${formatCurrency(lossAmount)}` : `+${formatCurrency(realizedProfit)}`}
                     </strong>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                      Target: <strong style={{ color: isProjectedLoss ? '#f87171' : '#38bdf8' }}>{isProjectedLoss ? '-' : '+'}{formatCurrency(Math.abs(projectedProfit))}</strong>
+                    </span>
                   </div>
                 </div>
 
                 {/* Add Cost Section */}
                 <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px', padding: '12px', marginTop: '16px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#fca5a5', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_change</span>
-                    Add Project Cost
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#fca5a5', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_change</span>
+                      Add Project Cost / Expense
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 500 }}>Directly deducts from profit</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input type="text" placeholder="Cost Name (e.g. Server hosting, Subcontractor)" className={styles.inputField} value={costForm.reason} onChange={(e) => setCostForm({ ...costForm, reason: e.target.value })} style={{ flex: 1, fontSize: '12px', padding: '8px 12px' }} />
-                    <input type="number" placeholder="Amount" className={styles.inputField} value={costForm.amount} onChange={(e) => setCostForm({ ...costForm, amount: e.target.value })} style={{ width: '100px', fontSize: '12px', padding: '8px 12px' }} />
-                    <button onClick={handleSaveCost} disabled={isSubmittingCost} className={styles.submitBtn} style={{ padding: '8px 16px', fontSize: '12px', background: '#ef4444', borderColor: '#ef4444', cursor: 'pointer' }}>
-                      {isSubmittingCost ? 'Saving...' : 'Save'}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      placeholder="Cost purpose (e.g. Server hosting, Subcontractor, Hardware)..."
+                      className={styles.inputField}
+                      value={costForm.reason}
+                      onChange={(e) => setCostForm({ ...costForm, reason: e.target.value })}
+                      style={{ flex: 1, minWidth: '180px', fontSize: '12px', padding: '8px 12px' }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Amount (BDT)"
+                      className={styles.inputField}
+                      value={costForm.amount}
+                      onChange={(e) => setCostForm({ ...costForm, amount: e.target.value })}
+                      style={{ width: '120px', fontSize: '12px', padding: '8px 12px' }}
+                    />
+                    <button
+                      onClick={handleSaveCost}
+                      disabled={isSubmittingCost}
+                      className={styles.submitBtn}
+                      style={{ padding: '8px 16px', fontSize: '12px', background: '#ef4444', borderColor: '#ef4444', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      {isSubmittingCost ? 'Saving...' : 'Add Cost'}
                     </button>
                   </div>
                 </div>
 
-                {/* Recent Payments Breakdown */}
+                {/* Recent Payments & Costs Breakdown */}
                 {financialHistory.length > 0 && (
                   <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -1235,9 +1239,21 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                               {record._type === 'payment' ? (
                                 <>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                    <strong style={{ color: '#f8fafc', fontSize: '13px' }}>+{formatCurrency(Number(record.amount))}</strong>
+                                    <strong style={{ color: '#34d399', fontSize: '13px' }}>+{formatCurrency(Number(record.amount))}</strong>
                                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>
                                       via {record.paymentMethod}
+                                    </span>
+                                    <span style={{
+                                      background: 'rgba(16, 185, 129, 0.12)',
+                                      color: '#34d399',
+                                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                                      borderRadius: '4px',
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      padding: '1px 5px',
+                                      letterSpacing: '0.5px'
+                                    }}>
+                                      PAYMENT
                                     </span>
                                   </div>
 
@@ -1305,11 +1321,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                               <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block' }}>
                                 {new Date(record.createdAt).toLocaleDateString()}
                               </span>
-                              {record._type === 'payment' && (
-                                <span style={{ fontSize: '10px', color: '#34d399', display: 'block', marginTop: '2px' }}>
-                                  Staff: {formatCurrency(Number(record.paidToStaff))} • Profit: {formatCurrency(Number(record.profit))}
-                                </span>
-                              )}
                               <div className={styles.historyActionGroup}>
                                 {record._type === 'payment' && (
                                   <button
@@ -1760,6 +1771,51 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Project Status</label>
+                    <select
+                      value={editForm.status || 'Draft'}
+                      onChange={(e) => {
+                        const newStatus = e.target.value;
+                        setEditForm(f => ({
+                          ...f,
+                          status: newStatus,
+                          progress: newStatus === 'Completed' ? 100 : f.progress
+                        }));
+                      }}
+                      className={styles.inputField}
+                    >
+                      <option value="Draft">Draft</option>
+                      <option value="Planning">Planning</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Review">Review</option>
+                      <option value="Completed">Completed</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Progress (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.progress ?? 0}
+                      onChange={(e) => {
+                        const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                        setEditForm(f => ({
+                          ...f,
+                          progress: val,
+                          status: val === 100 ? 'Completed' : (f.status === 'Completed' ? 'In Progress' : f.status)
+                        }));
+                      }}
+                      className={styles.inputField}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Start Date</label>
                     <input
                       type="date"
@@ -1973,7 +2029,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   />
                 </div>
 
-                {/* Custom Cost Deduction Field */}
+                {/* Custom Cost Field */}
                 <div style={{
                   padding: '12px 14px',
                   borderRadius: '10px',
@@ -1986,7 +2042,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>price_change</span>
-                      Custom Project Cost (Deducted from Budget)
+                      Project Cost / Direct Expense (Deducted from Profit)
                     </label>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>Optional</span>
                   </div>
@@ -1995,7 +2051,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="Enter cost to subtract from budget (e.g. 10000)"
+                    placeholder="Enter direct project expense (e.g. 2200)"
                     value={paymentForm.customCost}
                     onChange={(e) => setPaymentForm(f => ({ ...f, customCost: e.target.value }))}
                     className={styles.inputField}
@@ -2023,9 +2079,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     justifyContent: 'space-between',
                     paddingTop: '2px'
                   }}>
-                    <span>Budget Impact:</span>
+                    <span>Cost Impact:</span>
                     <span>
-                      {formatCurrency(budget)} - {formatCurrency(Number(paymentForm.customCost) || 0)} = <strong style={{ color: '#38bdf8' }}>{formatCurrency(Math.max(0, budget - (Number(paymentForm.customCost) || 0)))}</strong>
+                      Total Project Costs: <strong style={{ color: '#fca5a5' }}>{formatCurrency(totalCost + (Number(paymentForm.customCost) || 0))}</strong>
                     </span>
                   </div>
                 </div>
@@ -2074,37 +2130,49 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   />
                 </div>
 
-                {/* Live Distribution Preview */}
-                {(Number(paymentForm.amount) > 0 || Number(paymentForm.customCost) > 0) && (
-                  <div className={styles.previewBox}>
-                    <span style={{ fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', fontSize: '11px' }}>
-                      Automated Settlement Preview:
-                    </span>
-                    {Number(paymentForm.customCost) > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fca5a5' }}>
-                        <span>Budget Reduction (Custom Cost):</span>
-                        <strong>-{formatCurrency(Number(paymentForm.customCost))}</strong>
+                {/* Live Position Preview */}
+                {(Number(paymentForm.amount) > 0 || Number(paymentForm.customCost) > 0) && (() => {
+                  const incomingPay = Number(paymentForm.amount) || 0;
+                  const incomingCost = Number(paymentForm.customCost) || 0;
+                  const newTotalReceived = totalReceived + incomingPay;
+                  const newTotalCost = totalCost + incomingCost;
+                  const newClientDue = Math.max(0, budget - newTotalReceived);
+                  const newRealized = newTotalReceived - newTotalCost;
+                  const newProjected = budget - newTotalCost;
+                  return (
+                    <div className={styles.previewBox}>
+                      <span style={{ fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', fontSize: '11px' }}>
+                        Live Financial Impact Preview:
+                      </span>
+                      {incomingPay > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>New Revenue Received:</span>
+                          <strong style={{ color: '#34d399' }}>+{formatCurrency(incomingPay)} (Total: {formatCurrency(newTotalReceived)})</strong>
+                        </div>
+                      )}
+                      {incomingCost > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fca5a5' }}>
+                          <span>Direct Expense Added:</span>
+                          <strong>-{formatCurrency(incomingCost)} (Total Cost: {formatCurrency(newTotalCost)})</strong>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>New Realized Position:</span>
+                        <strong style={{ color: newRealized >= 0 ? '#34d399' : '#f87171' }}>
+                          {newRealized >= 0 ? `+${formatCurrency(newRealized)} (Profit)` : `-${formatCurrency(Math.abs(newRealized))} (Loss)`}
+                        </strong>
                       </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Auto-Payout to Staff Dues:</span>
-                      <strong style={{ color: '#f87171' }}>
-                        {formatCurrency(Math.min(Number(paymentForm.amount) || 0, totalStaffDue))} (Logged to Expenses)
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Net Profit Retained:</span>
-                      <strong style={{ color: '#34d399' }}>
-                        {formatCurrency(Math.max(0, (Number(paymentForm.amount) || 0) - totalStaffDue))} (Logged to Incomes)
-                      </strong>
-                    </div>
-                    {Number(paymentForm.amount) < totalStaffDue && (
-                      <div style={{ fontSize: '11px', color: '#fbbf24', marginTop: '4px' }}>
-                        ⚠ Payment is less than total staff dues ({formatCurrency(totalStaffDue)}). Unpaid dues will remain tracked as pending.
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
+                        <span>Remaining Client Due:</span>
+                        <span>{formatCurrency(newClientDue)}</span>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#38bdf8' }}>
+                        <span>Projected Total Profit (on full payment):</span>
+                        <strong>{formatCurrency(newProjected)}</strong>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
                   <button
@@ -2120,7 +2188,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     className={styles.submitBtn}
                     style={{ background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)' }}
                   >
-                    {isSubmittingPayment ? 'Processing...' : 'Save & Distribute Payment'}
+                    {isSubmittingPayment ? 'Processing...' : 'Save Payment'}
                   </button>
                 </div>
               </form>
@@ -2386,7 +2454,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>price_change</span>
-                      Custom Project Cost (Deducted from Budget)
+                      Project Cost / Direct Expense (Deducted from Profit)
                     </label>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>Optional</span>
                   </div>
@@ -2473,7 +2541,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   gap: '8px'
                 }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>info</span>
-                  <span>Saving changes will automatically re-balance staff payouts, project custom costs, and company income records.</span>
+                  <span>Saving changes will recalculate project payments, cost expenses, and realized/projected profit records.</span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>

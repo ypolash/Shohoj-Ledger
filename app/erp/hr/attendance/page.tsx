@@ -53,6 +53,48 @@ const EMPTY_NETWORK_FORM = {
   isActive: true,
 };
 
+interface DateAttendanceGroup {
+  dateKey: string;
+  formattedDate: string;
+  fullDayLabel: string;
+  isToday: boolean;
+  isYesterday: boolean;
+  records: AttendanceRecord[];
+  totalCount: number;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  halfDayCount: number;
+  earlyLeaveCount: number;
+}
+
+const getDateKey = (r: AttendanceRecord, tz: string = 'Asia/Dhaka') => {
+  if (r.date) {
+    if (typeof r.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(r.date)) {
+      return r.date.slice(0, 10);
+    }
+    const d = new Date(r.date);
+    if (!isNaN(d.getTime())) {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+      } catch {
+        return d.toISOString().slice(0, 10);
+      }
+    }
+  }
+  if (r.checkInTime) {
+    const d = new Date(r.checkInTime);
+    if (!isNaN(d.getTime())) {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+      } catch {
+        return d.toISOString().slice(0, 10);
+      }
+    }
+  }
+  return 'Unknown Date';
+};
+
 const formatDisplayTime = (val?: string | null, tz: string = 'Asia/Dhaka') => {
   if (!val || val === '—') return '—';
   const trimmed = val.trim();
@@ -98,7 +140,7 @@ const formatDisplayDate = (val?: string | null, tz: string = 'Asia/Dhaka') => {
 /**
  * ERP HR — Redesigned Attendance & Daily Shift Telemetry Hub
  * Enterprise attendance tracking with live operational metrics, multi-dimensional filters,
- * detailed check-in/out timestamps, CSV export, network geofencing status, and attendance recording modal.
+ * date-wise grouped view, detailed check-in/out timestamps, CSV export, network geofencing status, and attendance recording modal.
  */
 export default function AttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -106,6 +148,9 @@ export default function AttendancePage() {
   const [filterEmpId, setFilterEmpId] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [viewMode, setViewMode] = useState<'DATE_WISE' | 'FLAT_LIST'>('DATE_WISE');
+  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
+  const [datePreset, setDatePreset] = useState<'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
@@ -135,6 +180,25 @@ export default function AttendancePage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [attendanceToDelete, setAttendanceToDelete] = useState<AttendanceRecord | null>(null);
   const [deletingAttendanceId, setDeletingAttendanceId] = useState<string | null>(null);
+
+  const toggleDateCollapse = (dateKey: string) => {
+    setCollapsedDates(prev => ({
+      ...prev,
+      [dateKey]: !prev[dateKey]
+    }));
+  };
+
+  const collapseAllDates = () => {
+    const all: Record<string, boolean> = {};
+    dateGroups.forEach(g => {
+      all[g.dateKey] = true;
+    });
+    setCollapsedDates(all);
+  };
+
+  const expandAllDates = () => {
+    setCollapsedDates({});
+  };
 
   const handleConfirmDeleteAttendance = async () => {
     if (!attendanceToDelete) return;
@@ -306,11 +370,101 @@ export default function AttendancePage() {
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
       const matchesEmp = !filterEmpId || r.employeeId === filterEmpId;
-      const matchesDate = !filterDate || (r.date && r.date.slice(0, 10) === filterDate);
+      const rDateKey = getDateKey(r, officeTiming.timezone);
+
+      let matchesDate = true;
+      if (filterDate) {
+        matchesDate = rDateKey === filterDate;
+      } else if (datePreset === 'THIS_WEEK') {
+        const today = new Date();
+        const rDate = new Date(rDateKey);
+        const diffDays = (today.getTime() - rDate.getTime()) / (1000 * 3600 * 24);
+        matchesDate = diffDays >= 0 && diffDays <= 7;
+      } else if (datePreset === 'THIS_MONTH') {
+        const today = new Date();
+        const currentMonthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        matchesDate = rDateKey.startsWith(currentMonthPrefix);
+      }
+
       const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
       return matchesEmp && matchesDate && matchesStatus;
     });
-  }, [records, filterEmpId, filterDate, statusFilter]);
+  }, [records, filterEmpId, filterDate, datePreset, statusFilter, officeTiming.timezone]);
+
+  // Date-wise groups for hierarchical date view
+  const dateGroups = useMemo<DateAttendanceGroup[]>(() => {
+    const groupsMap = new Map<string, AttendanceRecord[]>();
+
+    // Sort filtered records chronologically descending first
+    const sorted = [...filteredRecords].sort((a, b) => {
+      const timeA = new Date(a.date || a.checkInTime || 0).getTime();
+      const timeB = new Date(b.date || b.checkInTime || 0).getTime();
+      return timeB - timeA;
+    });
+
+    sorted.forEach(r => {
+      const key = getDateKey(r, officeTiming.timezone);
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, []);
+      }
+      groupsMap.get(key)!.push(r);
+    });
+
+    const today = new Date();
+    let todayKey = '';
+    let yesterdayKey = '';
+    try {
+      todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: officeTiming.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(today);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterdayKey = new Intl.DateTimeFormat('en-CA', { timeZone: officeTiming.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(yesterday);
+    } catch {
+      todayKey = today.toISOString().slice(0, 10);
+    }
+
+    return Array.from(groupsMap.entries()).map(([dateKey, recs]) => {
+      const isToday = dateKey === todayKey;
+      const isYesterday = dateKey === yesterdayKey;
+
+      let fullDayLabel = dateKey;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        const [y, m, d] = dateKey.split('-').map(Number);
+        const parsed = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+        try {
+          fullDayLabel = parsed.toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC'
+          });
+        } catch {
+          fullDayLabel = `${d}/${m}/${y}`;
+        }
+      }
+
+      const presentCount = recs.filter(r => r.status === 'PRESENT' && (!r.lateMinutes || r.lateMinutes === 0)).length;
+      const lateCount = recs.filter(r => r.status === 'LATE' || (r.lateMinutes && r.lateMinutes > 0)).length;
+      const absentCount = recs.filter(r => r.status === 'ABSENT').length;
+      const halfDayCount = recs.filter(r => r.status === 'HALF_DAY').length;
+      const earlyLeaveCount = recs.filter(r => r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0).length;
+
+      return {
+        dateKey,
+        formattedDate: formatDisplayDate(dateKey, officeTiming.timezone),
+        fullDayLabel,
+        isToday,
+        isYesterday,
+        records: recs,
+        totalCount: recs.length,
+        presentCount,
+        lateCount,
+        absentCount,
+        halfDayCount,
+        earlyLeaveCount,
+      };
+    });
+  }, [filteredRecords, officeTiming.timezone]);
 
   // Form submission
   const handleForm = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -689,7 +843,7 @@ export default function AttendancePage() {
       <section className={styles.controlsCard}>
         <div className={styles.controlsTopRow}>
           {/* Employee Select */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '220px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>person</span>
             <select
               value={filterEmpId}
@@ -706,22 +860,76 @@ export default function AttendancePage() {
             </select>
           </div>
 
+          {/* Quick Date Presets */}
+          <div className={styles.datePresetList}>
+            <button
+              type="button"
+              onClick={() => { setDatePreset('ALL'); setFilterDate(''); }}
+              className={`${styles.datePresetBtn} ${datePreset === 'ALL' && !filterDate ? styles.datePresetBtnActive : ''}`}
+            >
+              All Dates
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const today = new Date();
+                const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: officeTiming.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(today);
+                setFilterDate(todayStr);
+                setDatePreset('TODAY');
+              }}
+              className={`${styles.datePresetBtn} ${datePreset === 'TODAY' ? styles.datePresetBtnActive : ''}`}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yestStr = new Intl.DateTimeFormat('en-CA', { timeZone: officeTiming.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(yesterday);
+                setFilterDate(yestStr);
+                setDatePreset('YESTERDAY');
+              }}
+              className={`${styles.datePresetBtn} ${datePreset === 'YESTERDAY' ? styles.datePresetBtnActive : ''}`}
+            >
+              Yesterday
+            </button>
+            <button
+              type="button"
+              onClick={() => { setFilterDate(''); setDatePreset('THIS_WEEK'); }}
+              className={`${styles.datePresetBtn} ${datePreset === 'THIS_WEEK' ? styles.datePresetBtnActive : ''}`}
+            >
+              This Week
+            </button>
+            <button
+              type="button"
+              onClick={() => { setFilterDate(''); setDatePreset('THIS_MONTH'); }}
+              className={`${styles.datePresetBtn} ${datePreset === 'THIS_MONTH' ? styles.datePresetBtnActive : ''}`}
+            >
+              This Month
+            </button>
+          </div>
+
           {/* Date Picker */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>calendar_today</span>
             <input
               type="date"
               value={filterDate}
-              onChange={e => setFilterDate(e.target.value)}
+              onChange={e => {
+                setFilterDate(e.target.value);
+                setDatePreset('CUSTOM' as any);
+              }}
               className={styles.selectDropdown}
             />
           </div>
 
-          {(filterEmpId || filterDate || statusFilter !== 'ALL') && (
+          {(filterEmpId || filterDate || statusFilter !== 'ALL' || datePreset !== 'ALL') && (
             <button
               onClick={() => {
                 setFilterEmpId('');
                 setFilterDate('');
+                setDatePreset('ALL');
                 setStatusFilter('ALL');
               }}
               className={styles.secondaryBtn}
@@ -776,10 +984,30 @@ export default function AttendancePage() {
               <span style={{ opacity: 0.7 }}>({halfDayCount})</span>
             </button>
           </div>
+
+          {/* View Mode Toggle */}
+          <div className={styles.viewModeSwitcher}>
+            <button
+              type="button"
+              onClick={() => setViewMode('DATE_WISE')}
+              className={`${styles.viewModeBtn} ${viewMode === 'DATE_WISE' ? styles.viewModeBtnActive : ''}`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_view_day</span>
+              Date-wise View
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('FLAT_LIST')}
+              className={`${styles.viewModeBtn} ${viewMode === 'FLAT_LIST' ? styles.viewModeBtnActive : ''}`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>table_rows</span>
+              Flat List
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* 4. Attendance Table / Empty State */}
+      {/* 4. Attendance Data View / Empty State */}
       {isLoading ? (
         <div className={styles.tableCard} style={{ padding: '24px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -792,11 +1020,11 @@ export default function AttendancePage() {
         <div className={styles.emptyStateBox}>
           <div className={styles.emptyStateIcon}>
             <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>
-              {filterEmpId || filterDate || statusFilter !== 'ALL' ? 'search_off' : 'fact_check'}
+              {filterEmpId || filterDate || statusFilter !== 'ALL' || datePreset !== 'ALL' ? 'search_off' : 'fact_check'}
             </span>
           </div>
 
-          {filterEmpId || filterDate || statusFilter !== 'ALL' ? (
+          {filterEmpId || filterDate || statusFilter !== 'ALL' || datePreset !== 'ALL' ? (
             <>
               <h3 className={styles.emptyStateTitle}>No Matching Attendance Records</h3>
               <p className={styles.emptyStateDesc}>
@@ -806,6 +1034,7 @@ export default function AttendancePage() {
                 onClick={() => {
                   setFilterEmpId('');
                   setFilterDate('');
+                  setDatePreset('ALL');
                   setStatusFilter('ALL');
                 }}
                 className={styles.secondaryBtn}
@@ -838,7 +1067,238 @@ export default function AttendancePage() {
             </>
           )}
         </div>
+      ) : viewMode === 'DATE_WISE' ? (
+        /* Date-wise Grouped View */
+        <div className={styles.dateGroupsContainer}>
+          {/* Action & Count Summary Bar */}
+          <div className={styles.dateGroupControlBar}>
+            <div className={styles.dateGroupCountLabel}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>event_note</span>
+              <span>Showing {dateGroups.length} Date {dateGroups.length === 1 ? 'Group' : 'Groups'} ({filteredRecords.length} Attendance Logs)</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={expandAllDates}
+                className={styles.collapseToggleAllBtn}
+                title="Expand all date cards"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>unfold_more</span>
+                Expand All
+              </button>
+              <button
+                type="button"
+                onClick={collapseAllDates}
+                className={styles.collapseToggleAllBtn}
+                title="Collapse all date cards"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>unfold_less</span>
+                Collapse All
+              </button>
+            </div>
+          </div>
+
+          {/* Date Group Cards */}
+          {dateGroups.map(group => {
+            const isCollapsed = !!collapsedDates[group.dateKey];
+
+            return (
+              <div key={group.dateKey} className={styles.dateGroupCard}>
+                {/* Date Group Header */}
+                <div
+                  className={`${styles.dateGroupHeader} ${isCollapsed ? styles.dateGroupHeaderCollapsed : ''}`}
+                  onClick={() => toggleDateCollapse(group.dateKey)}
+                >
+                  <div className={styles.dateGroupLeft}>
+                    <div className={styles.dateGroupIconBox}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>calendar_month</span>
+                    </div>
+                    <div className={styles.dateGroupTitleCol}>
+                      <div className={styles.dateGroupTitleRow}>
+                        <h3 className={styles.dateGroupTitle}>{group.fullDayLabel}</h3>
+                        {group.isToday && <span className={styles.dateBadgeToday}>Today</span>}
+                        {group.isYesterday && <span className={styles.dateBadgeYesterday}>Yesterday</span>}
+                      </div>
+                      <div className={styles.dateFormattedSub}>
+                        <span>{group.formattedDate}</span>
+                        <span>•</span>
+                        <span>{group.totalCount} Staff {group.totalCount === 1 ? 'Log' : 'Logs'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.dateGroupRight}>
+                    <div className={styles.dateMetricsRow}>
+                      <span className={`${styles.datePill} ${styles.datePillTotal}`}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>group</span>
+                        {group.totalCount} Logged
+                      </span>
+
+                      {group.presentCount > 0 && (
+                        <span className={`${styles.datePill} ${styles.datePillPresent}`}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>check_circle</span>
+                          {group.presentCount} On Time
+                        </span>
+                      )}
+
+                      {group.lateCount > 0 && (
+                        <span className={`${styles.datePill} ${styles.datePillLate}`}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>
+                          {group.lateCount} Late
+                        </span>
+                      )}
+
+                      {group.earlyLeaveCount > 0 && (
+                        <span className={`${styles.datePill} ${styles.datePillEarly}`}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>logout</span>
+                          {group.earlyLeaveCount} Early
+                        </span>
+                      )}
+
+                      {group.absentCount > 0 && (
+                        <span className={`${styles.datePill} ${styles.datePillAbsent}`}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>person_off</span>
+                          {group.absentCount} Absent
+                        </span>
+                      )}
+                    </div>
+
+                    <div className={styles.dateChevronBtn} title={isCollapsed ? 'Expand date group' : 'Collapse date group'}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                        {isCollapsed ? 'expand_more' : 'expand_less'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Table for this Date Group */}
+                {!isCollapsed && (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className={styles.dataTable}>
+                      <thead>
+                        <tr className={styles.tableHeaderRow}>
+                          <th className={styles.tableHeaderCell}>Staff Personnel</th>
+                          <th className={styles.tableHeaderCell}>Check In</th>
+                          <th className={styles.tableHeaderCell}>Check Out</th>
+                          <th className={styles.tableHeaderCell}>Late Duration</th>
+                          <th className={styles.tableHeaderCell}>Early Leave Time</th>
+                          <th className={styles.tableHeaderCell}>Status</th>
+                          <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.records.map(r => {
+                          const emp = empMap[r.employeeId];
+                          const fullName = emp ? `${emp.firstName} ${emp.lastName}` : 'Staff Personnel';
+                          const initials = emp
+                            ? `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase()
+                            : 'ST';
+
+                          const checkIn = r.checkIn || r.checkInTime || '—';
+                          const checkOut = r.checkOut || r.checkOutTime || '—';
+
+                          return (
+                            <tr key={r.id} className={styles.tableRow}>
+                              <td className={styles.tableCell}>
+                                <div className={styles.employeeProfileGroup}>
+                                  <div className={styles.empAvatar}>{initials}</div>
+                                  <div>
+                                    <div className={styles.empName}>{fullName}</div>
+                                    {emp?.employeeId && (
+                                      <span className={styles.empIdBadge}>{emp.employeeId}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className={styles.tableCell}>
+                                <span className={styles.timeBadge}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
+                                  {formatDisplayTime(checkIn, officeTiming.timezone)}
+                                </span>
+                              </td>
+
+                              <td className={styles.tableCell}>
+                                <span className={styles.timeBadge}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
+                                  {formatDisplayTime(checkOut, officeTiming.timezone)}
+                                </span>
+                              </td>
+
+                              <td className={styles.tableCell}>
+                                {r.lateMinutes && r.lateMinutes > 0 ? (
+                                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
+                                    +{r.lateMinutes} min late
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
+                                )}
+                              </td>
+
+                              <td className={styles.tableCell}>
+                                {r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
+                                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '6px', width: 'fit-content' }}>
+                                      -{r.earlyLeaveMinutes} min early
+                                    </span>
+                                    {checkOut !== '—' && (
+                                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                        Left at {formatDisplayTime(checkOut, officeTiming.timezone)}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min</span>
+                                )}
+                              </td>
+
+                              <td className={styles.tableCell}>
+                                <span className={`${styles.statusChip} ${getStatusClass(r.status)}`}>
+                                  {r.status}
+                                </span>
+                              </td>
+
+                              <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAttendanceToDelete(r);
+                                  }}
+                                  disabled={deletingAttendanceId === r.id}
+                                  title="Delete attendance record"
+                                  style={{
+                                    padding: '6px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    background: 'rgba(239, 68, 68, 0.08)',
+                                    color: '#ef4444',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                    {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
+                                  </span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : (
+        /* Flat Table View */
         <div className={styles.tableCard}>
           <div style={{ overflowX: 'auto' }}>
             <table className={styles.dataTable}>

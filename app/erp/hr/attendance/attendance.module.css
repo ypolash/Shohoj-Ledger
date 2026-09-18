@@ -1012,3 +1012,287 @@
   100% { background-position: -200% 0; }
 }
 
+/* --------------------------------------------------------------------------
+   Date-wise Attendance Grouping View
+   -------------------------------------------------------------------------- */
+.viewModeSwitcher {
+  display: inline-flex;
+  background: var(--surface-hover, #f8fafc);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--border-main, #e2e8f0);
+}
+
+.viewModeBtn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viewModeBtn:hover {
+  color: var(--text-main, #0f172a);
+}
+
+.viewModeBtnActive {
+  background: var(--surface-card, #ffffff);
+  color: #059669;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.datePresetList {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.datePresetBtn {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-card, #ffffff);
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.datePresetBtn:hover {
+  background: var(--surface-hover, #f8fafc);
+  color: var(--text-main, #0f172a);
+}
+
+.datePresetBtnActive {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.dateGroupsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dateGroupControlBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 6px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dateGroupCountLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collapseToggleAllBtn {
+  background: transparent;
+  border: 1px solid var(--border-main, #e2e8f0);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.collapseToggleAllBtn:hover {
+  background: var(--surface-hover, #f8fafc);
+  color: var(--text-main, #0f172a);
+}
+
+.dateGroupCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 18px;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.dateGroupCard:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.dateGroupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--surface-hover, #f8fafc);
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  cursor: pointer;
+  user-select: none;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.dateGroupHeader:hover {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.dateGroupHeaderCollapsed {
+  border-bottom: none;
+}
+
+.dateGroupLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dateGroupIconBox {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dateGroupTitleCol {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dateGroupTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dateGroupTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+.dateBadgeToday {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dateBadgeYesterday {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(6, 182, 212, 0.15);
+  color: #0891b2;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.dateFormattedSub {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dateGroupRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dateMetricsRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.datePill {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.datePillTotal {
+  background: var(--surface-sunken, #f1f5f9);
+  color: var(--text-main, #0f172a);
+  border: 1px solid var(--border-main, #e2e8f0);
+}
+
+.datePillPresent {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.datePillLate {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.datePillEarly {
+  background: rgba(234, 88, 12, 0.12);
+  color: #ea580c;
+}
+
+.datePillAbsent {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.dateChevronBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #64748b);
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  transition: all 0.15s ease;
+}
+
+.dateGroupHeader:hover .dateChevronBtn {
+  color: var(--text-main, #0f172a);
+  border-color: var(--text-muted, #94a3b8);
+}
+

@@ -130,9 +130,14 @@ export default function LoginPage() {
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor="password" className={styles.label}>
-                  Password
-                </label>
+                <div className={styles.passwordLabelRow}>
+                  <label htmlFor="password" className={styles.label}>
+                    Password
+                  </label>
+                  <Link href="/forgot-password" className={styles.forgotPasswordLink} id="link-forgot-password">
+                    Forgot Password?
+                  </Link>
+                </div>
                 <div className={styles.passwordWrapper}>
                   <input
                     id="password"

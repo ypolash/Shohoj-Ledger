@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 val Emerald500 = Color(0xFF10B981)
 val Emerald600 = Color(0xFF059669)
 val Emerald700 = Color(0xFF047857)
+val Emerald800 = Color(0xFF065F46)
+val Emerald900 = Color(0xFF064E3B)
 val Emerald400 = Color(0xFF34D399)
 
 // Accent Cyan

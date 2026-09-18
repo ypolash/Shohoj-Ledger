@@ -24,10 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shohoj.staff.ui.components.AppUpdateDialog
+import com.shohoj.staff.ui.components.BackgroundPermissionDialog
 import com.shohoj.staff.ui.components.ShohojBottomBar
 import com.shohoj.staff.ui.components.ShohojTopBar
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
+import com.shohoj.staff.util.BackgroundPermissionHelper
 import com.shohoj.staff.util.DateUtils
 
 @Composable
@@ -169,6 +171,170 @@ fun ProfileScreen(
                 }
             }
 
+            // Background & Notifications Settings
+            Text(
+                text = "Background & Notifications",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CardBackground, RoundedCornerShape(16.dp))
+                    .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    // Battery Optimization Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BatteryChargingFull,
+                                contentDescription = null,
+                                tint = if (uiState.isBatteryOptimizedIgnored) Emerald400 else Amber400,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "Battery Optimization",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = Slate100, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                )
+                                Text(
+                                    text = if (uiState.isBatteryOptimizedIgnored) "Unrestricted running enabled" else "Restricted (May delay alerts)",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = if (uiState.isBatteryOptimizedIgnored) Emerald400 else Amber400,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        if (!uiState.isBatteryOptimizedIgnored) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Amber500.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, Amber500.copy(alpha = 0.4f)),
+                                modifier = Modifier.clickable {
+                                    BackgroundPermissionHelper.requestIgnoreBatteryOptimization(context)
+                                    viewModel.refreshBackgroundPermissions()
+                                }
+                            ) {
+                                Text(
+                                    text = "Enable",
+                                    color = Amber400,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        } else {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Emerald500.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, Emerald500.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "Active",
+                                    color = Emerald400,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Divider(color = Slate700, thickness = 0.5.dp)
+
+                    // Persistent Background Sync Service Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sync,
+                                contentDescription = null,
+                                tint = if (uiState.isPersistentSyncEnabled) Emerald400 else Slate400,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "Live Background Sync",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = Slate100, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                )
+                                Text(
+                                    text = "Runs 24/7 background sync service for instant alerts",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = Slate400, fontSize = 11.sp)
+                                )
+                            }
+                        }
+
+                        Switch(
+                            checked = uiState.isPersistentSyncEnabled,
+                            onCheckedChange = { viewModel.togglePersistentSync(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Emerald400,
+                                checkedTrackColor = Emerald900,
+                                uncheckedThumbColor = Slate400,
+                                uncheckedTrackColor = Slate800
+                            )
+                        )
+                    }
+
+                    Divider(color = Slate700, thickness = 0.5.dp)
+
+                    // Background Settings & Test Notification Action Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = { viewModel.showBackgroundSetupDialog(true) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Slate800,
+                                contentColor = Cyan400
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Setup Guide", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Button(
+                            onClick = { viewModel.sendTestNotification() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Slate800,
+                                contentColor = Emerald400
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f).height(40.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Test Notification", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+
             // System & App Details
             Text(
                 text = "System Settings",
@@ -303,6 +469,15 @@ fun ProfileScreen(
                 },
                 onDismiss = {
                     viewModel.dismissUpdateDialog()
+                }
+            )
+        }
+
+        // Background Running Setup Dialog
+        if (uiState.showBackgroundSetupDialog) {
+            BackgroundPermissionDialog(
+                onDismiss = {
+                    viewModel.showBackgroundSetupDialog(false)
                 }
             )
         }

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.os.PowerManager
 import android.os.SystemClock
 import androidx.work.*
 import com.google.gson.Gson
@@ -13,6 +14,7 @@ import com.google.gson.reflect.TypeToken
 import com.shohoj.staff.data.api.ApiClient
 import com.shohoj.staff.data.local.SessionManager
 import com.shohoj.staff.receiver.NotificationAlarmReceiver
+import com.shohoj.staff.service.NotificationSyncForegroundService
 import com.shohoj.staff.worker.NotificationSyncWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,15 +40,24 @@ object NotificationSyncManager {
     }
 
     /**
-     * Enqueue both AlarmManager repeating wakeups and WorkManager background jobs
-     * so notifications pop up even when the app is swiped away or the phone is in doze mode.
+     * Enqueue AlarmManager repeating wakeups, WorkManager background jobs,
+     * and Persistent Foreground Sync Service (if enabled) so notifications
+     * pop up even when the app is swiped away or the phone is in doze mode.
      */
     fun scheduleBackgroundSync(context: Context) {
         try {
-            // 1. AlarmManager exact recurring alarm (every 30s)
+            val sessionManager = SessionManager(context.applicationContext)
+            if (!sessionManager.isLoggedIn) return
+
+            // 1. Start Persistent Foreground Service if enabled
+            if (sessionManager.isPersistentBackgroundSyncEnabled) {
+                NotificationSyncForegroundService.start(context.applicationContext)
+            }
+
+            // 2. AlarmManager exact recurring alarm (every 30s)
             scheduleNextAlarm(context)
 
-            // 2. WorkManager backup periodic worker (every 15 mins)
+            // 3. WorkManager backup periodic worker (every 15 mins)
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
@@ -65,7 +76,7 @@ object NotificationSyncManager {
                 periodicWorkRequest
             )
 
-            // 3. Immediate one-time worker
+            // 4. Immediate one-time worker
             val oneTimeRequest = OneTimeWorkRequestBuilder<NotificationSyncWorker>()
                 .setConstraints(constraints)
                 .build()
@@ -81,7 +92,7 @@ object NotificationSyncManager {
     }
 
     /**
-     * Schedules the next exact alarm wakeup
+     * Schedules the next exact or inexact alarm wakeup safely across all Android versions
      */
     fun scheduleNextAlarm(context: Context) {
         try {
@@ -99,7 +110,22 @@ object NotificationSyncManager {
 
             val triggerTime = SystemClock.elapsedRealtime() + ALARM_INTERVAL_MS
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                } else {
+                    // Fallback when exact alarm permission is not granted on Android 12+
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     triggerTime,
@@ -119,6 +145,9 @@ object NotificationSyncManager {
 
     fun cancelBackgroundSync(context: Context) {
         try {
+            // Stop foreground service
+            NotificationSyncForegroundService.stop(context.applicationContext)
+
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             val intent = Intent(context.applicationContext, NotificationAlarmReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(

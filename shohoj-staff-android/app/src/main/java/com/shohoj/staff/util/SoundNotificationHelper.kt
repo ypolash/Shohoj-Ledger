@@ -32,6 +32,10 @@ object SoundNotificationHelper {
     const val CHANNEL_CHAT_NAME = "Community & Chat Messages"
     const val CHANNEL_CHAT_DESC = "Instant notifications and pings for team chats and direct messages"
 
+    const val CHANNEL_PERSISTENT_SERVICE_ID = "shohoj_persistent_service_channel"
+    const val CHANNEL_PERSISTENT_SERVICE_NAME = "Background Sync Service"
+    const val CHANNEL_PERSISTENT_SERVICE_DESC = "Keeps notification synchronization alive in background"
+
     private var lastPlayTime: Long = 0L
 
     fun initNotificationChannels(context: Context) {
@@ -89,6 +93,19 @@ object SoundNotificationHelper {
                 enableLights(true)
             }
             notificationManager.createNotificationChannel(chatChannel)
+
+            // 4. Background Sync Service Channel (Silent / Low Importance)
+            val serviceChannel = NotificationChannel(
+                CHANNEL_PERSISTENT_SERVICE_ID,
+                CHANNEL_PERSISTENT_SERVICE_NAME,
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = CHANNEL_PERSISTENT_SERVICE_DESC
+                enableVibration(false)
+                setSound(null, null)
+                setShowBadge(false)
+            }
+            notificationManager.createNotificationChannel(serviceChannel)
         }
     }
 
@@ -334,6 +351,45 @@ object SoundNotificationHelper {
             val notifId = (System.currentTimeMillis() % 100000).toInt()
             notificationManager.notify(notifId, builder.build())
             playNotificationSound(context, isMention = isMention)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun sendTestNotification(context: Context) {
+        try {
+            initNotificationChannels(context)
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                9999,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(context, CHANNEL_NOTICES_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("✅ Background Notification Active!")
+                .setContentText("Shohoj Staff background synchronization and push notifications are working properly.")
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText("✅ Background Notification Active!\n\nShohoj Staff background synchronization and push notifications are working properly. You will receive real-time alerts for Tasks, Notices, and Chats even when the app is closed.")
+                )
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setAutoCancel(true)
+                .setShowWhen(true)
+                .setWhen(System.currentTimeMillis())
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(pendingIntent)
+
+            notificationManager.notify(9999, builder.build())
+            playNotificationSound(context, isMention = true)
         } catch (e: Exception) {
             e.printStackTrace()
         }

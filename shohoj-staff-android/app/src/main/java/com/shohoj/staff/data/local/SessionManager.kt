@@ -97,6 +97,14 @@ class SessionManager(context: Context) {
         get() = prefs.getBoolean(KEY_IS_LOGGED_IN, false)
         set(value) = prefs.edit().putBoolean(KEY_IS_LOGGED_IN, value).apply()
 
+    var isPersistentBackgroundSyncEnabled: Boolean
+        get() = prefs.getBoolean("key_persistent_background_sync", true)
+        set(value) = prefs.edit().putBoolean("key_persistent_background_sync", value).apply()
+
+    var hasDismissedBackgroundPermissionPrompt: Boolean
+        get() = prefs.getBoolean("key_dismissed_bg_prompt", false)
+        set(value) = prefs.edit().putBoolean("key_dismissed_bg_prompt", value).apply()
+
     fun saveEmployee(employee: EmployeeDto) {
         val json = gson.toJson(employee)
         prefs.edit()

@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+import com.shohoj.staff.service.NotificationSyncForegroundService
+import com.shohoj.staff.util.BackgroundPermissionHelper
+import com.shohoj.staff.util.SoundNotificationHelper
+
 data class ProfileUiState(
     val isLoading: Boolean = false,
     val employeeDto: EmployeeDto? = null,
@@ -23,7 +27,12 @@ data class ProfileUiState(
     val isCheckingUpdate: Boolean = false,
     val updateDialogInfo: AppUpdateInfo? = null,
     val appVersionName: String = "1.0.0",
-    val updateMessage: String? = null
+    val updateMessage: String? = null,
+    val isPersistentSyncEnabled: Boolean = true,
+    val isBatteryOptimizedIgnored: Boolean = true,
+    val canScheduleExactAlarms: Boolean = true,
+    val isNotificationGranted: Boolean = true,
+    val showBackgroundSetupDialog: Boolean = false
 )
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
@@ -38,7 +47,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         ProfileUiState(
             employeeDto = authRepo.getCurrentEmployee(),
             serverUrl = sessionManager.baseUrl,
-            appVersionName = updateRepo.getCurrentAppVersion().second
+            appVersionName = updateRepo.getCurrentAppVersion().second,
+            isPersistentSyncEnabled = sessionManager.isPersistentBackgroundSyncEnabled,
+            isBatteryOptimizedIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(app),
+            canScheduleExactAlarms = BackgroundPermissionHelper.canScheduleExactAlarms(app),
+            isNotificationGranted = BackgroundPermissionHelper.isNotificationPermissionGranted(app)
         )
     )
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -108,6 +121,39 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun downloadUpdate(downloadUrl: String) {
         updateRepo.downloadAndInstallApk(downloadUrl)
+    }
+
+    fun refreshBackgroundPermissions() {
+        _uiState.value = _uiState.value.copy(
+            isBatteryOptimizedIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(app),
+            canScheduleExactAlarms = BackgroundPermissionHelper.canScheduleExactAlarms(app),
+            isNotificationGranted = BackgroundPermissionHelper.isNotificationPermissionGranted(app),
+            isPersistentSyncEnabled = sessionManager.isPersistentBackgroundSyncEnabled
+        )
+    }
+
+    fun togglePersistentSync(enabled: Boolean) {
+        sessionManager.isPersistentBackgroundSyncEnabled = enabled
+        _uiState.value = _uiState.value.copy(isPersistentSyncEnabled = enabled)
+        if (enabled && sessionManager.isLoggedIn) {
+            NotificationSyncForegroundService.start(app)
+        } else {
+            NotificationSyncForegroundService.stop(app)
+        }
+    }
+
+    fun showBackgroundSetupDialog(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showBackgroundSetupDialog = show)
+        if (!show) {
+            refreshBackgroundPermissions()
+        }
+    }
+
+    fun sendTestNotification() {
+        SoundNotificationHelper.sendTestNotification(app)
+        _uiState.value = _uiState.value.copy(
+            updateMessage = "Test notification sent! Check notification tray."
+        )
     }
 
     fun showLogoutDialog(show: Boolean) {

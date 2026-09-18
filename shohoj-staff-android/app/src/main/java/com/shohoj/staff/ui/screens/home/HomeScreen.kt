@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shohoj.staff.ui.components.*
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
+import com.shohoj.staff.util.BackgroundPermissionHelper
 import com.shohoj.staff.util.DateUtils
 
 @Composable
@@ -32,8 +34,16 @@ fun HomeScreen(
     onNavigate: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+
+    var isBatteryIgnored by remember { mutableStateOf(BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)) }
+    var isBgBannerDismissed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isBatteryIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)
+    }
 
     val today = uiState.todayAttendance
     val isCheckedIn = today?.checkInTime != null || today?.checkIn != null
@@ -276,6 +286,65 @@ fun HomeScreen(
                             text = uiState.error!!,
                             style = MaterialTheme.typography.bodyMedium.copy(color = Rose400, fontSize = 13.sp)
                         )
+                    }
+                }
+            }
+
+            // Background Running Optimization Alert Banner (if not unrestricted)
+            if (!isBatteryIgnored && !isBgBannerDismissed) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Amber500.copy(alpha = 0.12f), shape = RoundedCornerShape(12.dp))
+                        .border(1.dp, Amber500.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Bolt, contentDescription = null, tint = Amber400, modifier = Modifier.size(18.dp))
+                            Column {
+                                Text(
+                                    text = "Background alerts restricted",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = Slate100, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+                                )
+                                Text(
+                                    text = "Enable unrestricted running for instant task pings",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = Slate400, fontSize = 11.sp)
+                                )
+                            }
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Amber500,
+                                modifier = Modifier.clickable {
+                                    BackgroundPermissionHelper.requestIgnoreBatteryOptimization(context)
+                                    isBatteryIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)
+                                }
+                            ) {
+                                Text(
+                                    text = "Fix",
+                                    color = Slate950,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = { isBgBannerDismissed = true },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Slate400, modifier = Modifier.size(14.dp))
+                            }
+                        }
                     }
                 }
             }

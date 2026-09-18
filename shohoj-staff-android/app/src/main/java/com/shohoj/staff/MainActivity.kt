@@ -18,9 +18,11 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.shohoj.staff.data.model.AppUpdateInfo
 import com.shohoj.staff.ui.components.AppUpdateDialog
+import com.shohoj.staff.ui.components.BackgroundPermissionDialog
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.navigation.ShohojNavGraph
 import com.shohoj.staff.ui.theme.ShohojStaffTheme
+import com.shohoj.staff.util.BackgroundPermissionHelper
 import com.shohoj.staff.util.NotificationSyncManager
 import kotlinx.coroutines.launch
 
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
             ShohojStaffTheme {
                 var updateDialogInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
                 var currentVersionName by remember { mutableStateOf("1.0.0") }
+                var showBackgroundPrompt by remember { mutableStateOf(false) }
 
                 val scope = rememberCoroutineScope()
 
@@ -78,6 +81,13 @@ class MainActivity : ComponentActivity() {
                     if (app.sessionManager.isLoggedIn) {
                         NotificationSyncManager.scheduleBackgroundSync(this@MainActivity)
                         app.startLiveNotificationPoller()
+
+                        // Check if background running permissions need to be requested
+                        if (!app.sessionManager.hasDismissedBackgroundPermissionPrompt &&
+                            !BackgroundPermissionHelper.isIgnoringBatteryOptimizations(this@MainActivity)
+                        ) {
+                            showBackgroundPrompt = true
+                        }
                     }
 
                     // Check for app update in background on launch
@@ -126,6 +136,16 @@ class MainActivity : ComponentActivity() {
                             },
                             onDismiss = {
                                 updateDialogInfo = null
+                            }
+                        )
+                    }
+
+                    // Background Run Permission Setup Dialog
+                    if (showBackgroundPrompt) {
+                        BackgroundPermissionDialog(
+                            onDismiss = {
+                                showBackgroundPrompt = false
+                                app.sessionManager.hasDismissedBackgroundPermissionPrompt = true
                             }
                         )
                     }

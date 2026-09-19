@@ -13,6 +13,8 @@ interface NavItem {
 const row1Nav: NavItem[] = [
   { name: 'Dashboard',    href: '/erp/hr',              icon: 'dashboard',    exact: true },
   { name: 'Employees',    href: '/erp/hr/employees',    icon: 'badge',        exact: false },
+  { name: 'Freelance',    href: '/erp/hr/freelance',    icon: 'laptop_chromebook', exact: false },
+  { name: 'Models',       href: '/erp/hr/models',       icon: 'face_3',       exact: false },
   { name: 'Members',      href: '/erp/hr/members',      icon: 'groups',       exact: false },
   { name: 'Departments',  href: '/erp/hr/departments',  icon: 'corporate_fare',exact: false },
   { name: 'Designations', href: '/erp/hr/designations', icon: 'work',         exact: false },

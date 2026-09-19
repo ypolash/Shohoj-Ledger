@@ -244,6 +244,16 @@ export default function HRDashboardPage() {
           </div>
 
           <div className={styles.headerActions}>
+            <Link href="/erp/hr/freelance" className={styles.secondaryBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>laptop_chromebook</span>
+              Freelancers
+            </Link>
+
+            <Link href="/erp/hr/models" className={styles.secondaryBtn}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>face_3</span>
+              Models
+            </Link>
+
             <Link href="/erp/hr/tasks" className={styles.secondaryBtn}>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>assignment</span>
               Tasks

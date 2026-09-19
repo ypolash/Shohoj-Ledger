@@ -1168,3 +1168,300 @@
   color: #0f172a;
 }
 
+/* Add Employee & Role Assignment Styles */
+.addEmpToggleBtn {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addEmpToggleBtn:hover {
+  background: rgba(168, 85, 247, 0.22);
+  border-color: #a855f7;
+  color: #e9d5ff;
+}
+
+.switchEmpBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.switchEmpBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.addEmpChoiceBox {
+  background: #0f172a;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.2s ease-out;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.addEmpChoiceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.choiceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 550px) {
+  .choiceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.choiceCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.choiceCard:hover {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.35);
+  transform: translateY(-1px);
+}
+
+.choiceIconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.choiceTextBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choiceTextBox strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.choiceTextBox p {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tempNotice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #fbbf24;
+}
+
+.futureNotice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #93c5fd;
+}
+
+/* Light Theme overrides for Role assignment elements */
+:global(html.light) .addEmpChoiceBox,
+:global(html:not(.dark)) .addEmpChoiceBox {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+:global(html.light) .choiceCard,
+:global(html:not(.dark)) .choiceCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .choiceCard:hover,
+:global(html:not(.dark)) .choiceCard:hover {
+  background: #f1f5f9;
+  border-color: #a855f7;
+}
+
+:global(html.light) .choiceTextBox strong,
+:global(html:not(.dark)) .choiceTextBox strong {
+  color: #0f172a;
+}
+
+:global(html.light) .choiceTextBox p,
+:global(html:not(.dark)) .choiceTextBox p {
+  color: #64748b;
+}
+
+:global(html.light) .switchEmpBtn,
+:global(html:not(.dark)) .switchEmpBtn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+:global(html.light) .switchEmpBtn:hover,
+:global(html:not(.dark)) .switchEmpBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Multiple Role Assignment Elements */
+.roleAssignmentCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.roleAssignmentCard:hover {
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+.roleCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.roleCardNumber {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.12);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.removeRoleBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.removeRoleBtn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.addRoleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px dashed rgba(168, 85, 247, 0.4);
+  border-radius: 10px;
+  color: #c084fc;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.addRoleBtn:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: #a855f7;
+  color: #e9d5ff;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+}
+
+/* Light Theme overrides for Multiple Role elements */
+:global(html.light) .roleAssignmentCard,
+:global(html:not(.dark)) .roleAssignmentCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+:global(html.light) .roleCardHeader,
+:global(html:not(.dark)) .roleCardHeader {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:global(html.light) .addRoleBtn,
+:global(html:not(.dark)) .addRoleBtn {
+  background: #f3e8ff;
+  border: 1px dashed #c084fc;
+  color: #7e22ce;
+}
+
+:global(html.light) .addRoleBtn:hover,
+:global(html:not(.dark)) .addRoleBtn:hover {
+  background: #ede9fe;
+  border-color: #9333ea;
+}
+
+

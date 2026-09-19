@@ -38,6 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           companyId: companyIdForGuard,
           name: `${lead.serviceType} for ${lead.companyName}`,
           clientName: lead.companyName,
+          clientPhone: lead.phone || null,
           status: "ACTIVE"
         }
       });

@@ -8,6 +8,19 @@ import styles from '../projects.module.css';
 
 interface Employee { id: string; firstName: string; lastName: string; }
 
+interface RoleAssignment {
+  id: string;
+  role: 'Employee' | 'Freelancer' | 'Model' | 'Custom';
+  customRoleName?: string;
+  employeeType: 'permanent' | 'temporary';
+  managerId: string;
+  temporaryEmployeeName: string;
+  freelancerName: string;
+  modelName: string;
+  notes: string;
+  showAddChoice?: boolean;
+}
+
 export default function ProjectListPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
@@ -21,9 +34,39 @@ export default function ProjectListPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const createDefaultRole = (): RoleAssignment => ({
+    id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    role: 'Employee',
+    customRoleName: '',
+    employeeType: 'permanent',
+    managerId: '',
+    temporaryEmployeeName: '',
+    freelancerName: '',
+    modelName: '',
+    notes: '',
+    showAddChoice: false,
+  });
+
+  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([createDefaultRole()]);
+
+  const handleAddRole = () => {
+    setRoleAssignments(prev => [...prev, createDefaultRole()]);
+  };
+
+  const handleRemoveRole = (id: string) => {
+    setRoleAssignments(prev => {
+      if (prev.length <= 1) return prev;
+      return prev.filter(r => r.id !== id);
+    });
+  };
+
+  const handleUpdateRole = (id: string, updates: Partial<RoleAssignment>) => {
+    setRoleAssignments(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  };
+
   const [form, setForm] = useState({
-    name: '', projectCode: '', clientName: '', priority: 'Medium', managerId: '',
-    startDate: '', endDate: '', estimatedBudget: '', advancePayment: '', description: ''
+    name: '', projectCode: '', clientName: '', clientPhone: '', priority: 'Medium',
+    startDate: '', endDate: '', expectedShootingDate: '', expectedEditingDate: '', estimatedBudget: '', advancePayment: '', description: ''
   });
 
   useEffect(() => {
@@ -55,6 +98,50 @@ export default function ProjectListPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSubmitting(true); setError(''); setSuccess('');
     try {
+      const assignmentLines: string[] = [];
+      let validManagerId: string | undefined = undefined;
+      const teamMemberIds: string[] = [];
+      const projectTags: string[] = [];
+
+      roleAssignments.forEach((ra, idx) => {
+        const rolePrefix = roleAssignments.length > 1 ? `Role #${idx + 1}` : 'Role';
+        if (ra.role === 'Employee') {
+          if (!projectTags.includes('Role:Employee')) projectTags.push('Role:Employee');
+          if (ra.employeeType === 'temporary') {
+            if (!projectTags.includes('Temp-Employee')) projectTags.push('Temp-Employee');
+            const tempName = ra.temporaryEmployeeName.trim() || 'Temporary Staff';
+            assignmentLines.push(`• ${rolePrefix}: Employee (Temporary: ${tempName})${ra.notes.trim() ? ` - Notes: ${ra.notes.trim()}` : ''}`);
+          } else {
+            if (ra.managerId?.trim()) {
+              const empId = ra.managerId.trim();
+              if (!validManagerId) validManagerId = empId;
+              if (!teamMemberIds.includes(empId)) teamMemberIds.push(empId);
+              const emp = employees.find(e => e.id === empId);
+              const empName = emp ? `${emp.firstName} ${emp.lastName}` : 'Assigned Employee';
+              assignmentLines.push(`• ${rolePrefix}: Employee (${empName})${ra.notes.trim() ? ` - Notes: ${ra.notes.trim()}` : ''}`);
+            }
+          }
+        } else if (ra.role === 'Freelancer') {
+          if (!projectTags.includes('Role:Freelancer')) projectTags.push('Role:Freelancer');
+          const fName = ra.freelancerName.trim() || 'Specialist';
+          assignmentLines.push(`• ${rolePrefix}: Freelancer (${fName})${ra.notes.trim() ? ` - Notes: ${ra.notes.trim()}` : ''}`);
+        } else if (ra.role === 'Model') {
+          if (!projectTags.includes('Role:Model')) projectTags.push('Role:Model');
+          const mName = ra.modelName.trim() || 'Talent / Agency';
+          assignmentLines.push(`• ${rolePrefix}: Model (${mName})${ra.notes.trim() ? ` - Notes: ${ra.notes.trim()}` : ''}`);
+        } else if (ra.role === 'Custom') {
+          const cRole = ra.customRoleName?.trim() || 'Custom Role';
+          if (!projectTags.includes(`Role:${cRole}`)) projectTags.push(`Role:${cRole}`);
+          assignmentLines.push(`• ${rolePrefix}: ${cRole}${ra.notes.trim() ? ` - Notes: ${ra.notes.trim()}` : ''}`);
+        }
+      });
+
+      let finalDescription = form.description.trim();
+      if (assignmentLines.length > 0) {
+        const assignmentBlock = `[Resource & Team Assignment]\n${assignmentLines.join('\n')}`;
+        finalDescription = finalDescription ? `${finalDescription}\n\n${assignmentBlock}` : assignmentBlock;
+      }
+
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,20 +149,26 @@ export default function ProjectListPage() {
           name: form.name.trim(),
           projectCode: form.projectCode.trim(),
           clientName: form.clientName.trim() || undefined,
+          clientPhone: form.clientPhone.trim() || undefined,
           priority: form.priority,
-          managerId: form.managerId?.trim() ? form.managerId.trim() : undefined,
+          managerId: validManagerId,
+          teamMemberIds: teamMemberIds.length > 0 ? teamMemberIds : undefined,
+          tags: projectTags,
           startDate: form.startDate ? form.startDate : undefined,
           endDate: form.endDate ? form.endDate : undefined,
+          expectedShootingDate: form.expectedShootingDate ? form.expectedShootingDate : undefined,
+          expectedEditingDate: form.expectedEditingDate ? form.expectedEditingDate : undefined,
           estimatedBudget: form.estimatedBudget ? Number(form.estimatedBudget) : undefined,
           advancePayment: form.advancePayment ? Number(form.advancePayment) : undefined,
-          description: form.description.trim() || undefined
+          description: finalDescription || undefined
         })
       });
       const d = await res.json();
       if (!res.ok) { setError(d.error || 'Failed to create project'); return; }
       setSuccess('Project created successfully!');
       setShowModal(false);
-      setForm({ name: '', projectCode: '', clientName: '', priority: 'Medium', managerId: '', startDate: '', endDate: '', estimatedBudget: '', advancePayment: '', description: '' });
+      setForm({ name: '', projectCode: '', clientName: '', clientPhone: '', priority: 'Medium', startDate: '', endDate: '', expectedShootingDate: '', expectedEditingDate: '', estimatedBudget: '', advancePayment: '', description: '' });
+      setRoleAssignments([createDefaultRole()]);
       fetchProjects();
       setTimeout(() => setSuccess(''), 4000);
     } catch { setError('Network error'); }
@@ -192,7 +285,15 @@ export default function ProjectListPage() {
                     >
                       <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--primary)', fontFamily: 'monospace' }}>{project.projectCode}</td>
                       <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--text-main)' }}>{project.name}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{project.clientName || '—'}</td>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
+                        <div>{project.clientName || '—'}</div>
+                        {project.clientPhone && (
+                          <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#60a5fa' }}>call</span>
+                            <span>{project.clientPhone}</span>
+                          </div>
+                        )}
+                      </td>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ width: '80px', height: '6px', backgroundColor: 'var(--surface-hover)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -323,31 +424,293 @@ export default function ProjectListPage() {
                 </div>
 
                 <div className={styles.formField}>
-                  <label className={styles.fieldLabel}>Project Lead / Manager</label>
-                  <div className={styles.selectWrapper}>
-                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>person</span>
-                    <select
-                      value={form.managerId}
-                      onChange={(e) => handleForm('managerId', e.target.value)}
-                      className={styles.fieldSelect}
-                    >
-                      <option value="">Select Project Manager...</option>
-                      {employees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.firstName} {emp.lastName}
-                        </option>
-                      ))}
-                    </select>
-                    <span className={`material-symbols-outlined ${styles.selectChevron}`}>expand_more</span>
+                  <label className={styles.fieldLabel}>Client Phone Number</label>
+                  <div className={styles.inputWrapper}>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>call</span>
+                    <input
+                      type="tel"
+                      placeholder="e.g. +880 1712-345678"
+                      value={form.clientPhone}
+                      onChange={(e) => handleForm('clientPhone', e.target.value)}
+                      className={styles.fieldInput}
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Section: Budget, Advance Pay & Priority */}
+              {/* Section: Roles & Team Assignment */}
+              <div className={styles.formSectionDivider}>
+                <span className={styles.formSectionLabel}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#c084fc' }}>groups</span>
+                  Role & Team Assignments
+                </span>
+                <div className={styles.formSectionLine} />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {roleAssignments.map((ra, index) => (
+                  <div key={ra.id} className={styles.roleAssignmentCard}>
+                    <div className={styles.roleCardHeader}>
+                      <span className={styles.roleCardNumber}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>badge</span>
+                        Role Assignment #{index + 1}
+                      </span>
+                      {roleAssignments.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRole(ra.id)}
+                          className={styles.removeRoleBtn}
+                          title="Remove this role assignment"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className={styles.formRow2}>
+                      <div className={styles.formField}>
+                        <label className={styles.fieldLabel}>Role Type</label>
+                        <div className={styles.selectWrapper}>
+                          <span className={`material-symbols-outlined ${styles.inputIcon}`}>assignment_ind</span>
+                          <select
+                            value={ra.role}
+                            onChange={(e) => {
+                              const newRole = e.target.value as any;
+                              handleUpdateRole(ra.id, {
+                                role: newRole,
+                                managerId: newRole === 'Employee' ? ra.managerId : '',
+                                employeeType: 'permanent',
+                                showAddChoice: false
+                              });
+                            }}
+                            className={styles.fieldSelect}
+                          >
+                            <option value="Employee">Employee (Internal)</option>
+                            <option value="Freelancer">Freelancer</option>
+                            <option value="Model">Model / Talent</option>
+                            <option value="Custom">Custom Role</option>
+                          </select>
+                          <span className={`material-symbols-outlined ${styles.selectChevron}`}>expand_more</span>
+                        </div>
+                      </div>
+
+                      {/* Role-Specific Details */}
+                      {ra.role === 'Custom' && (
+                        <div className={styles.formField}>
+                          <label className={styles.fieldLabel}>Custom Role Title</label>
+                          <div className={styles.inputWrapper}>
+                            <span className={`material-symbols-outlined ${styles.inputIcon}`}>label</span>
+                            <input
+                              type="text"
+                              placeholder="e.g. Drone Operator, Sound Engineer"
+                              value={ra.customRoleName || ''}
+                              onChange={(e) => handleUpdateRole(ra.id, { customRoleName: e.target.value })}
+                              className={styles.fieldInput}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {ra.role === 'Employee' && (
+                        <div className={styles.formField}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                            <label className={styles.fieldLabel}>
+                              {ra.employeeType === 'temporary' ? 'Temporary Employee' : 'Assign Employee'}
+                            </label>
+
+                            {ra.employeeType === 'permanent' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateRole(ra.id, { showAddChoice: !ra.showAddChoice })}
+                                className={styles.addEmpToggleBtn}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                  person_add
+                                </span>
+                                + Add Employee
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleUpdateRole(ra.id, { employeeType: 'permanent', temporaryEmployeeName: '', showAddChoice: false });
+                                }}
+                                className={styles.switchEmpBtn}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                  arrow_back
+                                </span>
+                                Select from Directory
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Add Employee Choice Box */}
+                          {ra.showAddChoice && ra.employeeType === 'permanent' && (
+                            <div className={styles.addEmpChoiceBox}>
+                              <div className={styles.addEmpChoiceHeader}>
+                                <span style={{ fontWeight: 600, fontSize: '12px', color: '#f8fafc' }}>
+                                  Choose Employee Type to Add
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateRole(ra.id, { showAddChoice: false })}
+                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                                </button>
+                              </div>
+
+                              <div className={styles.choiceGrid}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleUpdateRole(ra.id, { employeeType: 'temporary', managerId: '', showAddChoice: false });
+                                  }}
+                                  className={styles.choiceCard}
+                                >
+                                  <div className={styles.choiceIconBox} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>timer</span>
+                                  </div>
+                                  <div className={styles.choiceTextBox}>
+                                    <strong>Temporary Employee</strong>
+                                    <p>Project-only staff. Not saved in global employee directory.</p>
+                                  </div>
+                                </button>
+
+                                <a
+                                  href="/erp/staff-management/employees/new"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.choiceCard}
+                                  onClick={() => handleUpdateRole(ra.id, { showAddChoice: false })}
+                                >
+                                  <div className={styles.choiceIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>badge</span>
+                                  </div>
+                                  <div className={styles.choiceTextBox}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      <strong>Permanent Employee</strong>
+                                      <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#c084fc' }}>open_in_new</span>
+                                    </div>
+                                    <p>Go to permanent employee creation page in Staff Management.</p>
+                                  </div>
+                                </a>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* If Permanent: Select Employee */}
+                          {ra.employeeType === 'permanent' ? (
+                            <div className={styles.selectWrapper}>
+                              <span className={`material-symbols-outlined ${styles.inputIcon}`}>person</span>
+                              <select
+                                value={ra.managerId}
+                                onChange={(e) => handleUpdateRole(ra.id, { managerId: e.target.value })}
+                                className={styles.fieldSelect}
+                              >
+                                <option value="">Select Employee from roster...</option>
+                                {employees.map((emp) => (
+                                  <option key={emp.id} value={emp.id}>
+                                    {emp.firstName} {emp.lastName}
+                                  </option>
+                                ))}
+                              </select>
+                              <span className={`material-symbols-outlined ${styles.selectChevron}`}>expand_more</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className={styles.inputWrapper}>
+                                <span className={`material-symbols-outlined ${styles.inputIcon}`}>person_outline</span>
+                                <input
+                                  type="text"
+                                  placeholder="Enter temporary employee name (e.g. Alex Contractor)"
+                                  value={ra.temporaryEmployeeName}
+                                  onChange={(e) => handleUpdateRole(ra.id, { temporaryEmployeeName: e.target.value })}
+                                  className={styles.fieldInput}
+                                />
+                              </div>
+                              <div className={styles.tempNotice}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#fbbf24' }}>info</span>
+                                <span>Temporary employee is attached to this project only.</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {ra.role === 'Freelancer' && (
+                        <div className={styles.formField}>
+                          <label className={styles.fieldLabel}>Freelancer Specialist</label>
+                          <div className={styles.inputWrapper}>
+                            <span className={`material-symbols-outlined ${styles.inputIcon}`}>laptop_mac</span>
+                            <input
+                              type="text"
+                              placeholder="Enter freelancer name or handle (e.g. Sarah Jenkins - UI Designer)"
+                              value={ra.freelancerName}
+                              onChange={(e) => handleUpdateRole(ra.id, { freelancerName: e.target.value })}
+                              className={styles.fieldInput}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {ra.role === 'Model' && (
+                        <div className={styles.formField}>
+                          <label className={styles.fieldLabel}>Model / Talent Agency</label>
+                          <div className={styles.inputWrapper}>
+                            <span className={`material-symbols-outlined ${styles.inputIcon}`}>photo_camera</span>
+                            <input
+                              type="text"
+                              placeholder="Enter model name or agency talent (e.g. Elena Rostova - Elite Model)"
+                              value={ra.modelName}
+                              onChange={(e) => handleUpdateRole(ra.id, { modelName: e.target.value })}
+                              className={styles.fieldInput}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles.formField}>
+                      <label className={styles.fieldLabel}>
+                        Role Notes & Responsibilities
+                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 400, marginLeft: '4px' }}>
+                          (Optional notes, deliverable requirements, or instructions)
+                        </span>
+                      </label>
+                      <div className={styles.inputWrapper}>
+                        <span className={`material-symbols-outlined ${styles.inputIcon}`}>edit_note</span>
+                        <input
+                          type="text"
+                          placeholder="e.g. Lead UI sprints, milestone reviews, or video shooting operator"
+                          value={ra.notes}
+                          onChange={(e) => handleUpdateRole(ra.id, { notes: e.target.value })}
+                          className={styles.fieldInput}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* + Add Another Role Button */}
+                <button
+                  type="button"
+                  onClick={handleAddRole}
+                  className={styles.addRoleBtn}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                    group_add
+                  </span>
+                  + Add Another Role
+                </button>
+              </div>
+
+              {/* Section: Budget & Advance Pay */}
               <div className={styles.formSectionDivider}>
                 <span className={styles.formSectionLabel}>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#60a5fa' }}>payments</span>
-                  Budget, Advance Pay & Priority
+                  Budget & Advance Pay
                 </span>
                 <div className={styles.formSectionLine} />
               </div>
@@ -382,33 +745,6 @@ export default function ProjectListPage() {
                 </div>
               </div>
 
-              <div className={styles.formField}>
-                <label className={styles.fieldLabel}>Priority Level</label>
-                <div className={styles.priorityGrid}>
-                  {[
-                    { id: 'Low', icon: 'check_circle', activeClass: styles.priorityLowActive },
-                    { id: 'Medium', icon: 'adjust', activeClass: styles.priorityMediumActive },
-                    { id: 'High', icon: 'priority_high', activeClass: styles.priorityHighActive },
-                    { id: 'Urgent', icon: 'bolt', activeClass: styles.priorityUrgentActive },
-                  ].map((p) => {
-                    const isSelected = form.priority === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleForm('priority', p.id)}
-                        className={`${styles.priorityChip} ${isSelected ? p.activeClass : ''}`}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                          {p.icon}
-                        </span>
-                        {p.id}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Section: Timeline */}
               <div className={styles.formSectionDivider}>
                 <span className={styles.formSectionLabel}>
@@ -440,6 +776,34 @@ export default function ProjectListPage() {
                       type="date"
                       value={form.endDate}
                       onChange={(e) => handleForm('endDate', e.target.value)}
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.formRow2}>
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>Expected Shooting Date</label>
+                  <div className={styles.inputWrapper}>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>photo_camera</span>
+                    <input
+                      type="date"
+                      value={form.expectedShootingDate}
+                      onChange={(e) => handleForm('expectedShootingDate', e.target.value)}
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>Expected Editing Date</label>
+                  <div className={styles.inputWrapper}>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>movie_edit</span>
+                    <input
+                      type="date"
+                      value={form.expectedEditingDate}
+                      onChange={(e) => handleForm('expectedEditingDate', e.target.value)}
                       className={styles.fieldInput}
                     />
                   </div>

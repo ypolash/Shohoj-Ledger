@@ -115,7 +115,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       trackChange("managerId", cleanManagerId, existingProject.managerId, "PROJECT_UPDATED");
     }
 
-    const fieldsToTrack = ["name", "description", "category", "priority", "status", "clientName", "leadId", "estimatedBudget", "actualCost", "progress"];
+    const fieldsToTrack = ["name", "description", "category", "priority", "status", "clientName", "clientPhone", "leadId", "estimatedBudget", "actualCost", "progress"];
     fieldsToTrack.forEach(f => {
       if (body[f] !== undefined && body[f] !== existingProject[f as keyof typeof existingProject]) {
         updateData[f] = body[f];
@@ -141,6 +141,8 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
     if (body.startDate !== undefined) updateData.startDate = body.startDate ? new Date(body.startDate) : null;
     if (body.endDate !== undefined) updateData.endDate = body.endDate ? new Date(body.endDate) : null;
+    if (body.expectedShootingDate !== undefined) updateData.expectedShootingDate = body.expectedShootingDate ? new Date(body.expectedShootingDate) : null;
+    if (body.expectedEditingDate !== undefined) updateData.expectedEditingDate = body.expectedEditingDate ? new Date(body.expectedEditingDate) : null;
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.teamMemberIds !== undefined) {
       updateData.teamMembers = { set: body.teamMemberIds.map((id: string) => ({ id })) };

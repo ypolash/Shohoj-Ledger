@@ -1696,6 +1696,620 @@
   display: none;
 }
 
+/* ==========================================================================
+   7-STAGE WORKFLOW BREADCRUMBS & PROGRESS DASHBOARDS
+   ========================================================================== */
+
+.breadcrumbPipelineWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 16px 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.4);
+}
+
+.breadcrumbHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.breadcrumbTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.breadcrumbMainTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.workflowSettingsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.workflowSettingsBtn:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
+
+.breadcrumbPipeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.breadcrumbStep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.breadcrumbStep:hover:not(.breadcrumbStepLocked) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.breadcrumbStepActive {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(59, 130, 246, 0.18) 100%) !important;
+  border-color: #a855f7 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35);
+}
+
+.breadcrumbStepCompleted {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  color: #34d399 !important;
+}
+
+.breadcrumbStepLocked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.stepNumBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  flex-shrink: 0;
+}
+
+.breadcrumbStepActive .stepNumBadge {
+  background: #a855f7;
+  color: #ffffff;
+}
+
+.breadcrumbStepCompleted .stepNumBadge {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.stepChevron {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Stage Container & Cards */
+.stageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.stageBanner {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.35);
+}
+
+.stageBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stageBadgeIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+  flex-shrink: 0;
+}
+
+.stageTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.stageSubTitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 3px 0 0 0;
+}
+
+.stageGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .stageGrid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stageCard {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
+}
+
+.stageCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 12px;
+}
+
+.stageCardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.stageField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stageField label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stageInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.stageInput {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  background-color: #1a2436 !important;
+  background: #1a2436 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.stageInput:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+  background: #1e293b !important;
+}
+
+.stageInputIcon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.stageSelect {
+  width: 100%;
+  padding: 10px 34px 10px 38px;
+  background-color: #1a2436 !important;
+  background: #1a2436 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.stageSelect option {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.stageSelect:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+  background: #1e293b !important;
+}
+
+.stageTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #1a2436 !important;
+  background: #1a2436 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 13px;
+  outline: none;
+  min-height: 70px;
+  resize: vertical;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.stageTextarea:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+  background: #1e293b !important;
+}
+
+/* Warnings & Alerts */
+.warningAlert {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #fcd34d;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
+}
+
+.warningAlert strong {
+  color: #fbbf24;
+}
+
+.successBox {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #34d399;
+  font-size: 13px;
+}
+
+/* Stage Bottom Actions */
+.stageBottomActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.advanceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+}
+
+.advanceBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(147, 51, 234, 0.5);
+}
+
+.stageBackBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stageBackBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+/* Settlement Selection Cards */
+.settlementGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+@media (max-width: 650px) {
+  .settlementGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settlementCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.settlementCard:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.settlementCardActive {
+  background: rgba(168, 85, 247, 0.12) !important;
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.25);
+}
+
+.settlementCardTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settlementCardDesc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Stage 7 Celebration Banner */
+.celebrationBanner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(59, 130, 246, 0.15) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.15);
+}
+
+.celebrationIconBox {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 32px;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.celebrationActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.customerActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.customerActionBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+}
+
+.dashboardActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboardActionBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Light Mode Overrides for Workflow */
+:global(html.light) .breadcrumbPipelineWrapper,
+:global(html:not(.dark)) .breadcrumbPipelineWrapper,
+:global(html.light) .stageBanner,
+:global(html:not(.dark)) .stageBanner,
+:global(html.light) .stageCard,
+:global(html:not(.dark)) .stageCard,
+:global(html.light) .stageBottomActions,
+:global(html:not(.dark)) .stageBottomActions {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+}
+
+:global(html.light) .breadcrumbMainTitle,
+:global(html:not(.dark)) .breadcrumbMainTitle,
+:global(html.light) .stageTitle,
+:global(html:not(.dark)) .stageTitle,
+:global(html.light) .stageCardTitle,
+:global(html:not(.dark)) .stageCardTitle,
+:global(html.light) .settlementCardTitle,
+:global(html:not(.dark)) .settlementCardTitle {
+  color: #0f172a !important;
+}
+
+:global(html.light) .breadcrumbStep,
+:global(html:not(.dark)) .breadcrumbStep {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+:global(html.light) .stageInput,
+:global(html:not(.dark)) .stageInput,
+:global(html.light) .stageSelect,
+:global(html:not(.dark)) .stageSelect,
+:global(html.light) .stageTextarea,
+:global(html:not(.dark)) .stageTextarea {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:global(html.light) .stageField label,
+:global(html:not(.dark)) .stageField label {
+  color: #334155 !important;
+}
+
+:global(html.light) .dashboardActionBtn,
+:global(html:not(.dark)) .dashboardActionBtn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+
 /* Print Styles */
 @media print {
   :global(nav),

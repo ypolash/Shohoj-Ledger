@@ -125,20 +125,23 @@ model Project {
   name            String
   status          String            @default("Draft")
   clientName      String?
+  clientPhone     String?
   createdAt       DateTime          @default(now())
   companyId       String?
   actualCost      Decimal?          @default(0)
   category        String?
   description     String?
-  endDate         DateTime?
-  estimatedBudget Decimal?
-  leadId          String?
-  managerId       String?
-  priority        String?           @default("Medium")
-  progress        Int?              @default(0)
-  projectCode     String?
-  startDate       DateTime?
-  tags            String[]
+  startDate            DateTime?
+  endDate              DateTime?
+  expectedShootingDate DateTime?
+  expectedEditingDate  DateTime?
+  estimatedBudget      Decimal?
+  leadId               String?
+  managerId            String?
+  priority             String?           @default("Medium")
+  progress             Int?              @default(0)
+  projectCode          String?
+  tags                 String[]
   updatedAt       DateTime          @updatedAt
   systemSource    String            @default("LEGACY")
   clientId        String?

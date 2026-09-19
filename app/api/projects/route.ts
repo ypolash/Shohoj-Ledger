@@ -33,6 +33,7 @@ export async function GET(req: Request) {
         { name: { contains: q, mode: 'insensitive' } },
         { projectCode: { contains: q, mode: 'insensitive' } },
         { clientName: { contains: q, mode: 'insensitive' } },
+        { clientPhone: { contains: q, mode: 'insensitive' } },
         { tags: { has: q } },
       ];
     }
@@ -69,8 +70,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { 
       projectCode, name, description, category, priority, 
-      clientName, leadId, managerId, teamMemberIds, 
-      startDate, endDate, estimatedBudget, actualCost, advancePayment, advancePay, tags 
+      clientName, clientPhone, leadId, managerId, teamMemberIds, 
+      startDate, endDate, expectedShootingDate, expectedEditingDate,
+      estimatedBudget, actualCost, advancePayment, advancePay, tags 
     } = body;
 
     const trimmedName = typeof name === "string" ? name.trim() : "";
@@ -120,6 +122,8 @@ export async function POST(req: Request) {
 
     const parsedStartDate = parseDate(startDate);
     const parsedEndDate = parseDate(endDate);
+    const parsedShootingDate = parseDate(expectedShootingDate);
+    const parsedEditingDate = parseDate(expectedEditingDate);
 
     const parsedBudget = (estimatedBudget !== undefined && estimatedBudget !== null && estimatedBudget !== "" && !isNaN(Number(estimatedBudget)))
       ? Number(estimatedBudget)
@@ -159,10 +163,13 @@ export async function POST(req: Request) {
           priority: priority || "Medium",
           status: "Draft",
           clientName: clientName?.trim() || null,
+          clientPhone: clientPhone?.trim() || null,
           leadId: validLeadId,
           managerId: validManagerId,
           startDate: parsedStartDate,
           endDate: parsedEndDate,
+          expectedShootingDate: parsedShootingDate,
+          expectedEditingDate: parsedEditingDate,
           estimatedBudget: parsedBudget,
           actualCost: parsedActualCost,
           tags: Array.isArray(tags) ? tags : [],

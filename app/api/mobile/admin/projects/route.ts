@@ -74,7 +74,7 @@ export async function GET(req: Request) {
         companyName: p.clientName || p.lead?.companyName || "Internal Project",
         clientName: p.clientName || p.lead?.companyName || "Internal",
         clientContact: p.lead?.contactPerson || null,
-        clientPhone: p.lead?.phone || null,
+        clientPhone: p.clientPhone || p.lead?.phone || null,
         clientEmail: p.lead?.email || null,
         description: p.description || "",
         status: p.status,

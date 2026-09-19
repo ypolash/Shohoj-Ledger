@@ -46,6 +46,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         }
       });
 
+      const expenseDesc = costReason
+        ? `${project.name} Cost - ${costReason} ${customCost}`
+        : `${project.name} Cost ${customCost}`;
+
       // Record custom cost as a project expense
       const costExpense = await tx.expense.create({
         data: {
@@ -53,11 +57,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           projectId: project.id,
           category: "Project Custom Cost",
           amount: customCost,
-          paymentMethod: "Cash", // Defaulting to Cash or could be selectable
+          paymentMethod: "Cash",
           approvalStatus: "APPROVED",
-          description: costReason
-            ? `Project "${project.name}" custom cost: ${costReason} (deducted from profit)`
-            : `Project "${project.name}" custom cost deducted from profit`,
+          description: expenseDesc,
           systemSource: "ERP"
         }
       });
@@ -69,7 +71,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         amount: customCost,
         isDebit: false,
         accountType: "Cash",
-        description: `Project Cost: ${costReason || 'Custom Cost'} deducted from project profit (${project.name})`,
+        description: `Project Expense: ${expenseDesc}`,
         createdById: session.user.id,
         systemSource: "ERP"
       });

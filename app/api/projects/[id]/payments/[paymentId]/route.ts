@@ -43,7 +43,7 @@ export async function DELETE(
       await tx.income.deleteMany({
         where: {
           projectId: project.id,
-          category: { in: ["Project Payment", "Project Profit"] },
+          category: { in: ["Project Payment", "Project Profit", "Advance Payment", "Project Final Payment"] },
           amount: paymentAmount
         }
       });
@@ -156,10 +156,31 @@ export async function PATCH(
       }
 
       // 2. Adjust Income record
+      const lowerNotes = (newNotes || "").toLowerCase();
+      const isAdvance = lowerNotes.includes("advance");
+      const isFinal = lowerNotes.includes("settlement") || lowerNotes.includes("final") || lowerNotes.includes("completion");
+
+      let incomeLabel = "Payment";
+      if (isAdvance) {
+        incomeLabel = "Advance";
+      } else if (isFinal) {
+        incomeLabel = "Final Payment";
+      }
+
+      const cleanNotes = (newNotes || "")
+        .replace(/^\[Advance Payment\]/i, '')
+        .replace(/^\[Advance\]/i, '')
+        .replace(/^\[Full Settlement\]/i, '')
+        .replace(/^\[Partial Settlement\]/i, '')
+        .replace(/\[Custom Cost:[^\]]*\]/gi, '')
+        .trim();
+
+      const incomeDesc = `${project.name} ${incomeLabel} ${newAmount}${cleanNotes ? ` (${cleanNotes})` : ''}`;
+
       const income = await tx.income.findFirst({
         where: {
           projectId: project.id,
-          category: { in: ["Project Payment", "Project Profit"] },
+          category: { in: ["Project Payment", "Project Profit", "Advance Payment", "Project Final Payment"] },
           amount: oldAmount
         }
       });
@@ -171,7 +192,7 @@ export async function PATCH(
             amount: newAmount,
             received: newAmount,
             source: newPaymentMethod,
-            description: `Client payment received for Project "${project.name}"${newNotes ? ` (${newNotes})` : ''}`
+            description: incomeDesc
           }
         });
       }

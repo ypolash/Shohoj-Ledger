@@ -193,17 +193,19 @@ export async function POST(req: Request) {
           }
         });
 
+        const incomeDesc = `${trimmedName} Advance ${parsedAdvance}`;
+
         const income = await tx.income.create({
           data: {
             companyId,
             projectId: p.id,
-            category: "Project Payment",
-            source: "Advance Payment",
+            category: "Advance Payment",
+            source: "Bank Transfer",
             amount: parsedAdvance,
             received: parsedAdvance,
             paymentStatus: "PAID",
             shareable: true,
-            description: `Advance payment received for Project "${trimmedName}" (${trimmedCode})`,
+            description: incomeDesc,
             systemSource: "ERP"
           }
         });
@@ -215,7 +217,7 @@ export async function POST(req: Request) {
           amount: parsedAdvance,
           isDebit: true,
           accountType: "Bank Transfer",
-          description: `Income Received: Project Advance Payment (${trimmedName})`,
+          description: `Income: ${incomeDesc}`,
           createdById: session.user.id,
           systemSource: "ERP"
         });

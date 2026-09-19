@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
 import styles from './workspace.module.css';
+import RevisionChat from '@/app/erp/components/RevisionChat';
 
 interface Employee {
   id: string;
@@ -24,6 +25,56 @@ const STAGE_CONFIG: Record<string, { dot: string; bg: string }> = {
   "Review": { dot: '#c084fc', bg: 'rgba(168, 85, 247, 0.15)' },
   "Testing": { dot: '#fbbf24', bg: 'rgba(245, 158, 11, 0.15)' },
   "Completed": { dot: '#34d399', bg: 'rgba(16, 185, 129, 0.15)' },
+};
+
+const format12Hour = (time24: string): string => {
+  if (!time24) return '';
+  const [hStr, mStr] = time24.split(':');
+  let h = parseInt(hStr, 10);
+  if (isNaN(h)) return time24;
+  const m = mStr || '00';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  h = h ? h : 12;
+  const hDisplay = h < 10 ? `0${h}` : `${h}`;
+  return `${hDisplay}:${m} ${ampm}`;
+};
+
+const parseTimeRange = (rangeStr: string): { start24: string; end24: string } => {
+  if (!rangeStr) return { start24: '', end24: '' };
+  const parts = rangeStr.split('-');
+  const startPart = parts[0]?.trim() || '';
+  const endPart = parts[1]?.trim() || '';
+
+  const parseSingle = (s: string) => {
+    if (!s) return '';
+    const m = s.match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
+    if (!m) return '';
+    let h = parseInt(m[1], 10);
+    const min = m[2];
+    const ampm = m[3]?.toUpperCase();
+    if (ampm === 'PM' && h < 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return `${h.toString().padStart(2, '0')}:${min}`;
+  };
+
+  return {
+    start24: parseSingle(startPart),
+    end24: parseSingle(endPart)
+  };
+};
+
+const formatTimeRange = (start24: string, end24: string): string => {
+  if (start24 && end24) {
+    return `${format12Hour(start24)} - ${format12Hour(end24)}`;
+  }
+  if (start24) {
+    return format12Hour(start24);
+  }
+  if (end24) {
+    return format12Hour(end24);
+  }
+  return '';
 };
 
 export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id: string }> }) {
@@ -60,7 +111,27 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [isCustomerLinked, setIsCustomerLinked] = useState(false);
 
   // Stage 3 Product & Shoot Schedule & Model Assign State
-  const [productData, setProductData] = useState({
+  const [productData, setProductData] = useState<{
+    projectType: 'product' | 'service';
+    productsList: Array<{ id: string; name: string; quantity: string; condition: string; notes?: string }>;
+    received: boolean;
+    productName: string;
+    quantity: string;
+    category: string;
+    condition: string;
+    notes: string;
+    shootingDate: string;
+    shootingTime: string;
+    studioLocation: string;
+    assignedModelId: string;
+    assignedModelName: string;
+    modelRate: string;
+    modelNotes: string;
+    modelPaid?: boolean;
+    modelPaidAmount?: number;
+  }>({
+    projectType: 'product',
+    productsList: [],
     received: true,
     productName: '',
     quantity: '',
@@ -73,41 +144,70 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     assignedModelId: '',
     assignedModelName: '',
     modelRate: '',
-    modelNotes: ''
+    modelNotes: '',
+    modelPaid: false,
+    modelPaidAmount: 0
+  });
+
+  const [newProductForm, setNewProductForm] = useState({
+    name: '',
+    quantity: '',
+    condition: 'Good',
+    notes: ''
   });
 
   // Stage 4 Shooting State
-  const [shootingData, setShootingData] = useState({
+  const [shootingData, setShootingData] = useState<{
+    status: string; // 'Scheduled' | 'In Progress' | 'Wrapped'
+    shootingNotes: string;
+    rawFootageUrl: string;
+    assignedEditorId: string;
+    assignedEditorName: string;
+    editorInstructions: string;
+    expectedEditDelivery: string;
+    editorFee?: string;
+    editorPaid?: boolean;
+    editorPaidAmount?: number;
+  }>({
     status: 'Scheduled', // 'Scheduled' | 'In Progress' | 'Wrapped'
     shootingNotes: '',
     rawFootageUrl: '',
     assignedEditorId: '',
     assignedEditorName: '',
     editorInstructions: '',
-    expectedEditDelivery: ''
+    expectedEditDelivery: '',
+    editorFee: '',
+    editorPaid: false,
+    editorPaidAmount: 0
   });
 
   // Stage 5 Editing State
-  const [editingData, setEditingData] = useState({
+  const [editingData, setEditingData] = useState<{
+    status: string;
+    editorNotes: string;
+    deliverableSpecs: string;
+    workingFileUrl: string;
+    workingFiles: Array<{ id: string; label: string; url: string }>;
+  }>({
     status: 'In Progress', // 'Ingesting' | 'Rough Cut' | 'Color Grading' | 'Review Ready'
     editorNotes: '',
     deliverableSpecs: '1080x1920 (9:16) & 16:9 4K Master',
     workingFileUrl: '',
-    checklist: {
-      audioCleaned: false,
-      colorGraded: false,
-      logoWatermarked: false,
-      subtitlesAdded: false
-    }
+    workingFiles: [
+      { id: '1', label: 'Frame.io Project Link', url: '' }
+    ]
   });
 
   // Stage 6 Demo & Revision State
   const [demoData, setDemoData] = useState({
-    demoFiles: [] as { id: string; name: string; url: string; date: string }[],
+    demoFiles: [] as { id: string; name: string; url: string; date: string; note?: string; uploadedBy?: string }[],
     newDemoName: '',
     newDemoUrl: '',
     revisionCount: 0,
     revisionNotes: '',
+    freeRevisionsIncluded: 2,
+    costPerRevision: 1000,
+    isSpecialCustomerFree: false,
     approvalStatus: 'Pending Review' // 'Pending Review' | 'Revision Requested' | 'Approved'
   });
 
@@ -115,7 +215,24 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [isEditingActualCost, setIsEditingActualCost] = useState(false);
   const [actualCostInput, setActualCostInput] = useState<string>("");
 
+  // Custom Edit Amount for Model & Editor in Stage 7
+  const [isEditingModelRate, setIsEditingModelRate] = useState(false);
+  const [tempModelRate, setTempModelRate] = useState('');
+  const [isEditingEditorFee, setIsEditingEditorFee] = useState(false);
+  const [tempEditorFee, setTempEditorFee] = useState('');
+
   // Modals
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [shareModalTab, setShareModalTab] = useState<'customer' | 'editor'>('customer');
+  const [clientRevisions, setClientRevisions] = useState<any[]>([]);
+  const [revisionChat, setRevisionChat] = useState<any[]>([]);
+  const [clientReview, setClientReview] = useState<any>(null);
+  const [editorRating, setEditorRating] = useState<any>(null);
+  const [isRateEditorModalOpen, setIsRateEditorModalOpen] = useState(false);
+  const [editorRatingValue, setEditorRatingValue] = useState(5);
+  const [editorRatingFeedbackText, setEditorRatingFeedbackText] = useState('');
+  const [isSubmittingEditorRating, setIsSubmittingEditorRating] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -198,11 +315,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null);
+  const [stage3ValidationError, setStage3ValidationError] = useState<string | null>(null);
+  const [stage4ValidationError, setStage4ValidationError] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+  const showToast = (msg: string, type: 'success' | 'warning' | 'error' = 'success') => {
+    setToast({ message: msg, type });
+    setTimeout(() => setToast(null), 3500);
   };
 
   const fetchProject = useCallback(async () => {
@@ -245,10 +364,54 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 setStageNames(parsed.stageNames);
                 setCustomStageNames(parsed.stageNames);
               }
-              if (parsed.productData) setProductData(prev => ({ ...prev, ...parsed.productData }));
+              if (parsed.productData) {
+                const pData = parsed.productData;
+                if ((!pData.productsList || pData.productsList.length === 0) && pData.productName) {
+                  pData.productsList = [{
+                    id: 'legacy-1',
+                    name: pData.productName,
+                    quantity: pData.quantity || '1 item',
+                    condition: pData.condition || 'Good',
+                    notes: pData.notes || ''
+                  }];
+                }
+                setProductData(prev => ({ ...prev, ...pData }));
+              }
               if (parsed.shootingData) setShootingData(prev => ({ ...prev, ...parsed.shootingData }));
-              if (parsed.editingData) setEditingData(prev => ({ ...prev, ...parsed.editingData }));
-              if (parsed.demoData) setDemoData(prev => ({ ...prev, ...parsed.demoData }));
+              if (parsed.editingData) {
+                const eData = parsed.editingData;
+                if (!eData.workingFiles || !Array.isArray(eData.workingFiles) || eData.workingFiles.length === 0) {
+                  eData.workingFiles = eData.workingFileUrl
+                    ? [{ id: '1', label: 'Frame.io / Cloud Link', url: eData.workingFileUrl }]
+                    : [{ id: '1', label: 'Frame.io Project Link', url: '' }];
+                }
+                setEditingData(prev => ({ ...prev, ...eData }));
+              }
+              if (parsed.demoData) {
+                setDemoData(prev => ({
+                  ...prev,
+                  ...parsed.demoData,
+                  freeRevisionsIncluded: parsed.demoData.freeRevisionsIncluded !== undefined ? Number(parsed.demoData.freeRevisionsIncluded) : 2,
+                  costPerRevision: parsed.demoData.costPerRevision !== undefined ? Number(parsed.demoData.costPerRevision) : 1000,
+                  isSpecialCustomerFree: Boolean(parsed.demoData.isSpecialCustomerFree)
+                }));
+              }
+              if (parsed.revisions) setClientRevisions(parsed.revisions);
+              if (parsed.revisionChat && Array.isArray(parsed.revisionChat)) {
+                setRevisionChat(parsed.revisionChat);
+              } else if (parsed.revisions && Array.isArray(parsed.revisions)) {
+                setRevisionChat(parsed.revisions.map((r: any) => ({
+                  id: r.id || String(Date.now()),
+                  sender: 'CLIENT',
+                  senderName: r.clientName || 'Client',
+                  type: 'TEXT',
+                  text: r.note || '',
+                  timecode: r.timecode,
+                  createdAt: r.createdAt || new Date().toISOString()
+                })));
+              }
+              if (parsed.reviewData) setClientReview(parsed.reviewData);
+              if (parsed.editorRating) setEditorRating(parsed.editorRating);
             } catch (e) {
               console.error("Failed to parse workflow meta:", e);
             }
@@ -385,7 +548,11 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
         productData: productToPersist,
         shootingData: shootingToPersist,
         editingData: editingToPersist,
-        demoData: demoToPersist
+        demoData: demoToPersist,
+        revisions: clientRevisions,
+        revisionChat: revisionChat,
+        reviewData: clientReview,
+        editorRating: editorRating
       };
 
       const payload: any = {
@@ -484,6 +651,179 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     } finally {
       setIsSubmittingPayment(false);
     }
+  };
+
+  const handleSaveEditorRating = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingEditorRating(true);
+    try {
+      const res = await fetch(`/api/portal/project/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RATE_EDITOR',
+          rating: editorRatingValue,
+          feedback: editorRatingFeedbackText.trim(),
+          ratedBy: 'Studio Manager'
+        })
+      });
+      if (res.ok) {
+        const ratingObj = {
+          rating: editorRatingValue,
+          feedback: editorRatingFeedbackText.trim(),
+          ratedBy: 'Studio Manager',
+          submittedAt: new Date().toISOString()
+        };
+        setEditorRating(ratingObj);
+        setIsRateEditorModalOpen(false);
+        showToast("⭐ Editor performance rating recorded successfully!");
+        fetchProject();
+      } else {
+        showToast("Failed to save editor rating", "error");
+      }
+    } catch (err) {
+      showToast("Network error saving editor rating", "error");
+    } finally {
+      setIsSubmittingEditorRating(false);
+    }
+  };
+
+  const handleToggleModelPaid = async () => {
+    const isCurrentlyPaid = Boolean(productData.modelPaid);
+    const rate = parseFloat(String(productData.modelRate || 0)) || 0;
+    const modelName = productData.assignedModelName || 'Model Talent';
+    const action = !isCurrentlyPaid ? 'PAY' : 'UNPAY';
+
+    const updated = {
+      ...productData,
+      modelPaid: !isCurrentlyPaid,
+      modelPaidAmount: !isCurrentlyPaid ? (productData.modelPaidAmount || rate) : 0
+    };
+    setProductData(updated);
+
+    try {
+      if (rate > 0) {
+        const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "MODEL",
+            name: modelName,
+            amount: rate,
+            action
+          })
+        });
+        if (res.ok) {
+          showToast(!isCurrentlyPaid ? `✓ Model ${modelName} marked as PAID & recorded in Finance (${formatCurrency(rate)})` : `Model payment marked as Unpaid & removed from Finance`);
+        }
+      } else {
+        showToast(!isCurrentlyPaid ? `✓ Model ${modelName} marked as PAID` : `Model payment marked as Unpaid`);
+      }
+    } catch (err) {
+      console.error("Talent settlement sync error:", err);
+    }
+    await saveWorkflowState(currentStage, completedStages, { product: updated });
+    fetchProject();
+  };
+
+  const handleToggleEditorPaid = async () => {
+    const isCurrentlyPaid = Boolean(shootingData.editorPaid);
+    const fee = parseFloat(String(shootingData.editorFee || 0)) || (projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate ? parseFloat(projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate) : 0);
+    const editorName = shootingData.assignedEditorName || 'Lead Editor';
+    const action = !isCurrentlyPaid ? 'PAY' : 'UNPAY';
+
+    const updated = {
+      ...shootingData,
+      editorPaid: !isCurrentlyPaid,
+      editorPaidAmount: !isCurrentlyPaid ? (shootingData.editorPaidAmount || fee) : 0
+    };
+    setShootingData(updated);
+
+    try {
+      if (fee > 0) {
+        const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "EDITOR",
+            name: editorName,
+            amount: fee,
+            action
+          })
+        });
+        if (res.ok) {
+          showToast(!isCurrentlyPaid ? `✓ Editor ${editorName} marked as PAID & recorded in Finance (${formatCurrency(fee)})` : `Editor payment marked as Unpaid & removed from Finance`);
+        }
+      } else {
+        showToast(!isCurrentlyPaid ? `✓ Editor ${editorName} marked as PAID` : `Editor payment marked as Unpaid`);
+      }
+    } catch (err) {
+      console.error("Editor settlement sync error:", err);
+    }
+    await saveWorkflowState(currentStage, completedStages, { shooting: updated });
+    fetchProject();
+  };
+
+  const handleSaveCustomModelRate = async (newRateStr: string) => {
+    const num = Math.max(0, parseFloat(newRateStr) || 0);
+    const updated = {
+      ...productData,
+      modelRate: String(num),
+      modelPaidAmount: productData.modelPaid ? num : productData.modelPaidAmount
+    };
+    setProductData(updated);
+    setIsEditingModelRate(false);
+    showToast(`✓ Model rate updated to ${formatCurrency(num)}`);
+
+    if (productData.modelPaid && num > 0) {
+      try {
+        await fetch(`/api/projects/${projectId}/talent-settlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "MODEL",
+            name: productData.assignedModelName || "Model Talent",
+            amount: num,
+            action: "PAY"
+          })
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    await saveWorkflowState(currentStage, completedStages, { product: updated });
+    fetchProject();
+  };
+
+  const handleSaveCustomEditorFee = async (newFeeStr: string) => {
+    const num = Math.max(0, parseFloat(newFeeStr) || 0);
+    const updated = {
+      ...shootingData,
+      editorFee: String(num),
+      editorPaidAmount: shootingData.editorPaid ? num : shootingData.editorPaidAmount
+    };
+    setShootingData(updated);
+    setIsEditingEditorFee(false);
+    showToast(`✓ Editor fee updated to ${formatCurrency(num)}`);
+
+    if (shootingData.editorPaid && num > 0) {
+      try {
+        await fetch(`/api/projects/${projectId}/talent-settlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "EDITOR",
+            name: shootingData.assignedEditorName || "Lead Editor",
+            amount: num,
+            action: "PAY"
+          })
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    await saveWorkflowState(currentStage, completedStages, { shooting: updated });
+    fetchProject();
   };
 
   const handleSaveProjectDetails = async (e: React.FormEvent) => {
@@ -857,11 +1197,21 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const totalTasks = tasks.length;
   const taskProgress = project.status === 'Completed' ? 100 : (totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : project.progress || 0);
 
+  // Revision Billing computations
+  const freeRevisionsIncluded = demoData.freeRevisionsIncluded !== undefined ? Number(demoData.freeRevisionsIncluded) : 2;
+  const costPerRevision = demoData.costPerRevision !== undefined ? Number(demoData.costPerRevision) : 1000;
+  const isSpecialCustomerFree = Boolean(demoData.isSpecialCustomerFree);
+  const totalRevisionsCount = clientRevisions.length;
+  const freeRevisionsUsed = isSpecialCustomerFree ? totalRevisionsCount : Math.min(freeRevisionsIncluded, totalRevisionsCount);
+  const billableRevisionsCount = isSpecialCustomerFree ? 0 : Math.max(0, totalRevisionsCount - freeRevisionsIncluded);
+  const totalRevisionFees = billableRevisionsCount * costPerRevision;
+
   // Project Financials & Collections Computations
   const payments = project.payments || [];
   const projectEmployees = project.projectEmployees || [];
   const totalReceived = payments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
-  const clientDue = Math.max(0, budget - totalReceived);
+  const effectiveBudget = budget + totalRevisionFees;
+  const clientDue = Math.max(0, effectiveBudget - totalReceived);
 
   // Realized Cash Profit / Loss (Collected from client - Total Cost)
   const realizedProfit = totalReceived - actualCost;
@@ -909,15 +1259,15 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     <PageContainer>
       <div className={styles.workspaceWrapper}>
         {/* Toast Notification */}
-        {toastMessage && (
+        {toast && (
           <div style={{
             position: 'fixed',
             top: '24px',
             right: '24px',
             zIndex: 9999,
             background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-            border: '1px solid #a855f7',
-            boxShadow: '0 10px 25px -5px rgba(168, 85, 247, 0.4)',
+            border: `1px solid ${toast.type === 'warning' ? '#f59e0b' : toast.type === 'error' ? '#ef4444' : '#a855f7'}`,
+            boxShadow: `0 10px 25px -5px ${toast.type === 'warning' ? 'rgba(245, 158, 11, 0.4)' : toast.type === 'error' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(168, 85, 247, 0.4)'}`,
             color: '#f8fafc',
             padding: '12px 20px',
             borderRadius: '12px',
@@ -927,8 +1277,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
             alignItems: 'center',
             gap: '8px'
           }}>
-            <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '18px' }}>check_circle</span>
-            {toastMessage}
+            <span className="material-symbols-outlined" style={{
+              color: toast.type === 'warning' ? '#fbbf24' : toast.type === 'error' ? '#f87171' : '#34d399',
+              fontSize: '18px'
+            }}>
+              {toast.type === 'warning' ? 'warning' : toast.type === 'error' ? 'error' : 'check_circle'}
+            </span>
+            {toast.message}
           </div>
         )}
 
@@ -955,24 +1310,22 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
             </Link>
 
             <div className={styles.headerActionGroup}>
-              {/* Status Select */}
-              <div className={styles.statusSelectWrapper}>
-                <select
-                  value={project.status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className={styles.statusSelect}
-                  style={{
-                    borderColor: project.status === 'Completed' ? 'rgba(16, 185, 129, 0.6)' : project.status === 'Active' ? 'rgba(59, 130, 246, 0.4)' : undefined,
-                    color: project.status === 'Completed' ? '#34d399' : project.status === 'Active' ? '#60a5fa' : undefined,
-                    fontWeight: 700
-                  }}
-                >
-                  {["Draft", "Planning", "Active", "On Hold", "Completed", "Cancelled", "Archived"].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <span className={`material-symbols-outlined ${styles.statusSelectChevron}`}>expand_more</span>
-              </div>
+              {/* Customer Short Link Share Button */}
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className={styles.editBtn}
+                title="Share Customer Live Tracking Short Link"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
+                  borderColor: '#a855f7',
+                  color: '#e9d5ff',
+                  fontWeight: 700
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>share</span>
+                Customer Short Link
+              </button>
 
               {/* Edit Project Button */}
               <button
@@ -995,15 +1348,15 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 Print Report
               </button>
 
-              {/* Delete Project Button */}
+              {/* Delete Project Button (Redesigned) */}
               <button
                 type="button"
                 onClick={() => setIsDeleteProjectModalOpen(true)}
                 className={styles.deleteProjectBtn}
-                title="Delete Project"
+                title="Permanently Delete Project"
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-                Delete
+                Delete Project
               </button>
             </div>
           </div>
@@ -1016,6 +1369,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
               </div>
               <h1 className={styles.projectTitle}>{project.name}</h1>
               <div className={styles.projectMetaRow}>
+                <span className={styles.metaItem}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>info</span>
+                  Status: <strong style={{
+                    color: project.status === 'Completed' ? '#34d399' : project.status === 'Active' ? '#60a5fa' : project.status === 'Draft' ? '#c084fc' : '#fbbf24'
+                  }}>{project.status || 'Draft'}</strong>
+                </span>
+
                 <span className={styles.metaItem}>
                   <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa' }}>business</span>
                   Client: <strong>{project.clientName || 'Internal Client'}</strong>
@@ -1436,15 +1796,6 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddPaymentModalOpen(true)}
-                  className={styles.advanceBtn}
-                  style={{ padding: '8px 16px', fontSize: '13px' }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_circle</span>
-                  + Record Payment
-                </button>
               </div>
 
               {/* Financial KPI Summary */}
@@ -1473,119 +1824,171 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
               </div>
 
               <div className={styles.stageGrid2}>
-                {/* Left Card: Quick Record Advance Payment Form */}
-                <div className={styles.stageCard}>
-                  <div className={styles.stageCardHeader}>
-                    <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#34d399' }}>add_card</span>
-                      Record Client Advance Payment
-                    </h3>
+                {/* Left Card: Payment Confirmed or Advance Form */}
+                {payments.length > 0 ? (
+                  <div className={styles.stageCard}>
+                    <div className={styles.stageCardHeader}>
+                      <h3 className={styles.stageCardTitle}>
+                        <span className="material-symbols-outlined" style={{ color: '#34d399' }}>verified</span>
+                        Advance Payment Status
+                      </h3>
+                      <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 600 }}>✓ Verified</span>
+                    </div>
+
+                    <div className={styles.paymentConfirmedBox}>
+                      <div className={styles.paymentCheckCircle}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '38px', color: '#34d399', fontWeight: 700 }}>
+                          check_circle
+                        </span>
+                      </div>
+
+                      <div>
+                        <div className={styles.paymentConfirmedBadge}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>verified</span>
+                          PAYMENT CONFIRMED
+                        </div>
+                        <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', fontWeight: 700, color: '#f8fafc' }}>
+                          Advance Payment Received
+                        </h3>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', maxWidth: '340px', lineHeight: '1.5' }}>
+                          Advance payment of <strong style={{ color: '#34d399', fontSize: '14px' }}>{formatCurrency(totalReceived)}</strong> has been successfully received and credited to the project ledger.
+                        </p>
+                      </div>
+
+                      <div className={styles.paymentSummaryGrid}>
+                        <div className={styles.paymentSummaryItem}>
+                          <span>Total Collected:</span>
+                          <strong style={{ color: '#34d399' }}>{formatCurrency(totalReceived)}</strong>
+                        </div>
+                        <div className={styles.paymentSummaryItem}>
+                          <span>Primary Method:</span>
+                          <strong style={{ color: '#60a5fa' }}>{payments[0]?.paymentMethod || 'Bank Transfer'}</strong>
+                        </div>
+                        <div className={styles.paymentSummaryItem}>
+                          <span>Last Payment Date:</span>
+                          <span>{new Date(payments[0]?.createdAt || Date.now()).toLocaleDateString()}</span>
+                        </div>
+                        <div className={styles.paymentSummaryItem}>
+                          <span>Total Records:</span>
+                          <span>{payments.length} transaction(s)</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                ) : (
+                  <div className={styles.stageCard}>
+                    <div className={styles.stageCardHeader}>
+                      <h3 className={styles.stageCardTitle}>
+                        <span className="material-symbols-outlined" style={{ color: '#34d399' }}>add_card</span>
+                        Record Client Advance Payment
+                      </h3>
+                    </div>
 
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!paymentForm.amount || Number(paymentForm.amount) <= 0) return;
-                    setIsSubmittingPayment(true);
-                    try {
-                      const res = await fetch(`/api/projects/${projectId}/payments`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          amount: Number(paymentForm.amount),
-                          paymentMethod: paymentForm.paymentMethod,
-                          notes: paymentForm.notes ? `[Advance] ${paymentForm.notes}` : '[Advance Payment]',
-                          date: paymentForm.date
-                        })
-                      });
-                      if (res.ok) {
-                        showToast("Advance payment recorded successfully!");
-                        setPaymentForm({
-                          amount: '',
-                          customCost: '',
-                          costReason: '',
-                          paymentMethod: 'Bank Transfer',
-                          notes: '',
-                          date: new Date().toISOString().split('T')[0]
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!paymentForm.amount || Number(paymentForm.amount) <= 0) return;
+                      setIsSubmittingPayment(true);
+                      try {
+                        const res = await fetch(`/api/projects/${projectId}/payments`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            amount: Number(paymentForm.amount),
+                            paymentMethod: paymentForm.paymentMethod,
+                            notes: paymentForm.notes ? `[Advance] ${paymentForm.notes}` : '[Advance Payment]',
+                            date: paymentForm.date
+                          })
                         });
-                        fetchProject();
+                        if (res.ok) {
+                          showToast("Advance payment recorded successfully!");
+                          setPaymentForm({
+                            amount: '',
+                            customCost: '',
+                            costReason: '',
+                            paymentMethod: 'Bank Transfer',
+                            notes: '',
+                            date: new Date().toISOString().split('T')[0]
+                          });
+                          fetchProject();
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setIsSubmittingPayment(false);
                       }
-                    } catch (err) {
-                      console.error(err);
-                    } finally {
-                      setIsSubmittingPayment(false);
-                    }
-                  }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div className={styles.stageField}>
-                      <label>Advance Payment Amount (BDT) *</label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>payments</span>
+                    }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div className={styles.stageField}>
+                        <label>Advance Payment Amount (BDT) *</label>
+                        <div className={styles.stageInputWrapper}>
+                          <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>payments</span>
+                          <input
+                            type="number"
+                            required
+                            placeholder="e.g. 50,000"
+                            value={paymentForm.amount}
+                            onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
+                            className={styles.stageInput}
+                          />
+                        </div>
+                      </div>
+
+                      <div className={styles.stageField}>
+                        <label>Payment Channel / Method *</label>
+                        <div className={styles.stageInputWrapper}>
+                          <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>account_balance</span>
+                          <select
+                            value={paymentForm.paymentMethod}
+                            onChange={(e) => setPaymentForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                            className={styles.stageSelect}
+                          >
+                            <option value="Bank Transfer">Bank Transfer (Direct AC)</option>
+                            <option value="bKash Merchant">bKash (Merchant / Personal)</option>
+                            <option value="Nagad">Nagad Wallet</option>
+                            <option value="Cash">Cash in Hand</option>
+                            <option value="Rocket">Rocket Mobile Banking</option>
+                            <option value="Card / POS">Credit / Debit Card (POS)</option>
+                            <option value="Cheque">Bank Cheque</option>
+                          </select>
+                          <span className={`material-symbols-outlined ${styles.statusSelectChevron}`}>expand_more</span>
+                        </div>
+                      </div>
+
+                      <div className={styles.stageField}>
+                        <label>Payment Date</label>
+                        <div className={styles.stageInputWrapper}>
+                          <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>calendar_today</span>
+                          <input
+                            type="date"
+                            value={paymentForm.date}
+                            onChange={(e) => setPaymentForm(prev => ({ ...prev, date: e.target.value }))}
+                            className={styles.stageInput}
+                          />
+                        </div>
+                      </div>
+
+                      <div className={styles.stageField}>
+                        <label>Transaction Memo / Notes</label>
                         <input
-                          type="number"
-                          required
-                          placeholder="e.g. 50,000"
-                          value={paymentForm.amount}
-                          onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
+                          type="text"
+                          placeholder="e.g. 50% Advance received for styling & production"
+                          value={paymentForm.notes}
+                          onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
                           className={styles.stageInput}
+                          style={{ paddingLeft: '14px' }}
                         />
                       </div>
-                    </div>
 
-                    <div className={styles.stageField}>
-                      <label>Payment Channel / Method *</label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>account_balance</span>
-                        <select
-                          value={paymentForm.paymentMethod}
-                          onChange={(e) => setPaymentForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                          className={styles.stageSelect}
-                        >
-                          <option value="Bank Transfer">Bank Transfer (Direct AC)</option>
-                          <option value="bKash Merchant">bKash (Merchant / Personal)</option>
-                          <option value="Nagad">Nagad Wallet</option>
-                          <option value="Cash">Cash in Hand</option>
-                          <option value="Rocket">Rocket Mobile Banking</option>
-                          <option value="Card / POS">Credit / Debit Card (POS)</option>
-                          <option value="Cheque">Bank Cheque</option>
-                        </select>
-                        <span className={`material-symbols-outlined ${styles.statusSelectChevron}`}>expand_more</span>
-                      </div>
-                    </div>
-
-                    <div className={styles.stageField}>
-                      <label>Payment Date</label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>calendar_today</span>
-                        <input
-                          type="date"
-                          value={paymentForm.date}
-                          onChange={(e) => setPaymentForm(prev => ({ ...prev, date: e.target.value }))}
-                          className={styles.stageInput}
-                        />
-                      </div>
-                    </div>
-
-                    <div className={styles.stageField}>
-                      <label>Transaction Memo / Notes</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 50% Advance received for styling & production"
-                        value={paymentForm.notes}
-                        onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
-                        className={styles.stageInput}
-                        style={{ paddingLeft: '14px' }}
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isSubmittingPayment}
-                      className={styles.advanceBtn}
-                      style={{ marginTop: '6px', justifyContent: 'center' }}
-                    >
-                      {isSubmittingPayment ? 'Recording...' : 'Record Payment Receipt'}
-                    </button>
-                  </form>
-                </div>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingPayment}
+                        className={styles.advanceBtn}
+                        style={{ marginTop: '6px', justifyContent: 'center' }}
+                      >
+                        {isSubmittingPayment ? 'Recording...' : 'Record Payment Receipt'}
+                      </button>
+                    </form>
+                  </div>
+                )}
 
                 {/* Right Card: Payment Ledger History */}
                 <div className={styles.stageCard}>
@@ -1632,13 +2035,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
               </div>
 
               <div className={styles.stageBottomActions}>
-                <button
-                  type="button"
-                  onClick={() => setCurrentStage(1)}
-                  className={styles.stageBackBtn}
-                >
-                  &larr; Back to Stage 1
-                </button>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  Next step: Proceed to Product Intake & Scheduling
+                </span>
                 <button
                   type="button"
                   onClick={() => handleAdvanceStage(3)}
@@ -1657,111 +2056,257 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
             <>
               <div className={styles.stageBanner}>
                 <div className={styles.stageBannerLeft}>
-                  <div className={styles.stageBadgeIcon} style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>inventory_2</span>
+                  <div className={styles.stageBadgeIcon} style={{ background: productData.projectType === 'service' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
+                      {productData.projectType === 'service' ? 'design_services' : 'inventory_2'}
+                    </span>
                   </div>
                   <div>
-                    <h2 className={styles.stageTitle}>Stage 3: {stageNames[3] || 'Product Received'} (Inventory & Scheduling)</h2>
+                    <h2 className={styles.stageTitle}>
+                      Stage 3: {stageNames[3] || (productData.projectType === 'service' ? 'Service Planning' : 'Product Received')} ({productData.projectType === 'service' ? 'Schedule & Talent' : 'Inventory & Scheduling'})
+                    </h2>
                     <p className={styles.stageSubTitle}>
-                      Verify received products, schedule shooting date & time, and dynamically assign model talent.
+                      {productData.projectType === 'service'
+                        ? 'Schedule production dates and dynamically assign crew or model talent.'
+                        : 'Verify received products, schedule shooting date & time, and dynamically assign model talent.'}
                     </p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '12px', color: productData.received ? '#34d399' : '#fbbf24', fontWeight: 700 }}>
-                    {productData.received ? '✓ Products Verified' : 'Pending Receipt'}
+                  <span style={{ fontSize: '12px', color: productData.projectType === 'service' ? '#60a5fa' : (productData.received ? '#34d399' : '#fbbf24'), fontWeight: 700 }}>
+                    {productData.projectType === 'service' ? '⚡ Service Project' : (productData.received ? '✓ Products Verified' : 'Pending Receipt')}
                   </span>
                 </div>
               </div>
 
               <div className={styles.stageGrid2}>
-                {/* Left Card: Product Received Details */}
+                {/* Left Card: Product Received Details or Service Mode */}
                 <div className={styles.stageCard}>
                   <div className={styles.stageCardHeader}>
                     <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>package_2</span>
-                      Product Intake & Inspection
+                      <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>
+                        {productData.projectType === 'service' ? 'design_services' : 'package_2'}
+                      </span>
+                      {productData.projectType === 'service' ? 'Service Configuration' : 'Product Intake & Inspection'}
                     </h3>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#cbd5e1' }}>
-                      <input
-                        type="checkbox"
-                        checked={productData.received}
-                        onChange={(e) => {
-                          const updated = { ...productData, received: e.target.checked };
-                          setProductData(updated);
-                          saveWorkflowState(currentStage, completedStages, { product: updated });
-                        }}
-                        style={{ accentColor: '#10b981', width: '16px', height: '16px' }}
-                      />
-                      Mark Received
-                    </label>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div className={styles.stageField}>
-                      <label>Product / Collection Name</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Winter Denim & Leather Collection"
-                        value={productData.productName}
-                        onChange={(e) => {
-                          const updated = { ...productData, productName: e.target.value };
-                          setProductData(updated);
-                        }}
-                        className={styles.stageInput}
-                        style={{ paddingLeft: '14px' }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div className={styles.stageField}>
-                        <label>Quantity / SKU Count</label>
+                    {(productData.projectType || 'product') === 'product' && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#cbd5e1' }}>
                         <input
-                          type="text"
-                          placeholder="e.g. 15 Outfits"
-                          value={productData.quantity}
+                          type="checkbox"
+                          checked={productData.received}
                           onChange={(e) => {
-                            const updated = { ...productData, quantity: e.target.value };
+                            const updated = { ...productData, received: e.target.checked };
                             setProductData(updated);
+                            saveWorkflowState(currentStage, completedStages, { product: updated });
                           }}
-                          className={styles.stageInput}
-                          style={{ paddingLeft: '14px' }}
+                          style={{ accentColor: '#10b981', width: '16px', height: '16px' }}
                         />
-                      </div>
-
-                      <div className={styles.stageField}>
-                        <label>Condition Assessment</label>
-                        <select
-                          value={productData.condition}
-                          onChange={(e) => {
-                            const updated = { ...productData, condition: e.target.value };
-                            setProductData(updated);
-                          }}
-                          className={styles.stageSelect}
-                          style={{ paddingLeft: '14px' }}
-                        >
-                          <option value="Good">Good / Ready for Shoot</option>
-                          <option value="Steam Ironing Required">Steam Ironing Required</option>
-                          <option value="Fragile / Handle With Care">Fragile / Handle with Care</option>
-                          <option value="Sample Prototype">Sample Prototype</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className={styles.stageField}>
-                      <label>Intake Notes & Instructions</label>
-                      <textarea
-                        rows={2}
-                        placeholder="e.g. 10 jackets, 5 hoodies. Return hanger bags after shoot."
-                        value={productData.notes}
-                        onChange={(e) => {
-                          const updated = { ...productData, notes: e.target.value };
-                          setProductData(updated);
-                        }}
-                        className={styles.stageTextarea}
-                      />
-                    </div>
+                        Mark Received
+                      </label>
+                    )}
                   </div>
+
+                  {/* Project Type Selector: Product Based vs Service Based */}
+                  <div className={styles.projectTypeSelector}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = { ...productData, projectType: 'product' as const };
+                        setProductData(updated);
+                        saveWorkflowState(currentStage, completedStages, { product: updated });
+                      }}
+                      className={`${styles.typeBtn} ${(productData.projectType || 'product') === 'product' ? styles.typeBtnActiveProduct : ''}`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>inventory_2</span>
+                      Product Based
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = { ...productData, projectType: 'service' as const };
+                        setProductData(updated);
+                        saveWorkflowState(currentStage, completedStages, { product: updated });
+                      }}
+                      className={`${styles.typeBtn} ${productData.projectType === 'service' ? styles.typeBtnActiveService : ''}`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>design_services</span>
+                      Service Based
+                    </button>
+                  </div>
+
+                  {productData.projectType === 'service' ? (
+                    <div className={styles.serviceEmptyBox}>
+                      <div className={styles.serviceIconCircle}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>design_services</span>
+                      </div>
+                      <div>
+                        <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+                          Service Based Project Active
+                        </h4>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', maxWidth: '320px', lineHeight: '1.5' }}>
+                          No physical product intake or inventory inspection is required for this service. You can proceed directly to schedule dates and assign staff or talent on the right.
+                        </p>
+                      </div>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#34d399',
+                        background: 'rgba(52, 211, 153, 0.1)',
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(52, 211, 153, 0.25)'
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check_circle</span>
+                        Ready to Proceed
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {/* Product Entry Form */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div className={styles.stageField}>
+                          <label>Product / Collection Name *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Winter Denim & Leather Collection"
+                            value={newProductForm.name}
+                            onChange={(e) => setNewProductForm(prev => ({ ...prev, name: e.target.value }))}
+                            className={styles.stageInput}
+                            style={{ paddingLeft: '14px' }}
+                          />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div className={styles.stageField}>
+                            <label>Quantity / SKU Count</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. 15 Outfits"
+                              value={newProductForm.quantity}
+                              onChange={(e) => setNewProductForm(prev => ({ ...prev, quantity: e.target.value }))}
+                              className={styles.stageInput}
+                              style={{ paddingLeft: '14px' }}
+                            />
+                          </div>
+
+                          <div className={styles.stageField}>
+                            <label>Condition Assessment</label>
+                            <select
+                              value={newProductForm.condition}
+                              onChange={(e) => setNewProductForm(prev => ({ ...prev, condition: e.target.value }))}
+                              className={styles.stageSelect}
+                              style={{ paddingLeft: '14px' }}
+                            >
+                              <option value="Good">Good / Ready for Shoot</option>
+                              <option value="Steam Ironing Required">Steam Ironing Required</option>
+                              <option value="Fragile / Handle With Care">Fragile / Handle with Care</option>
+                              <option value="Sample Prototype">Sample Prototype</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className={styles.stageField}>
+                          <label>Intake Notes & Instructions</label>
+                          <textarea
+                            rows={2}
+                            placeholder="e.g. 10 jackets, 5 hoodies. Return hanger bags after shoot."
+                            value={newProductForm.notes}
+                            onChange={(e) => setNewProductForm(prev => ({ ...prev, notes: e.target.value }))}
+                            className={styles.stageTextarea}
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newProductForm.name.trim()) {
+                              showToast("Please enter a product name first");
+                              return;
+                            }
+                            const newProduct = {
+                              id: Date.now().toString(),
+                              name: newProductForm.name.trim(),
+                              quantity: newProductForm.quantity.trim() || '1 item',
+                              condition: newProductForm.condition || 'Good',
+                              notes: newProductForm.notes.trim()
+                            };
+                            const updatedList = [...(productData.productsList || []), newProduct];
+                            const updated = {
+                              ...productData,
+                              productsList: updatedList,
+                              productName: updatedList.map(p => p.name).join(', ')
+                            };
+                            setProductData(updated);
+                            saveWorkflowState(currentStage, completedStages, { product: updated });
+                            setNewProductForm({ name: '', quantity: '', condition: 'Good', notes: '' });
+                            showToast("Product saved successfully! You can add another.");
+                          }}
+                          className={styles.addProductBtn}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
+                          + Save Product & Add Another
+                        </button>
+                      </div>
+
+                      {/* Saved Products List */}
+                      {productData.productsList && productData.productsList.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              Saved Products ({productData.productsList.length})
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto' }}>
+                            {productData.productsList.map((p, idx) => (
+                              <div key={p.id || idx} className={styles.savedProductCard}>
+                                <div className={styles.savedProductHeader}>
+                                  <div className={styles.savedProductTitle}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fbbf24' }}>
+                                      check_circle
+                                    </span>
+                                    {p.name}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updatedList = productData.productsList.filter((_, i) => i !== idx);
+                                      const updated = {
+                                        ...productData,
+                                        productsList: updatedList,
+                                        productName: updatedList.map(item => item.name).join(', ')
+                                      };
+                                      setProductData(updated);
+                                      saveWorkflowState(currentStage, completedStages, { product: updated });
+                                      showToast("Product removed");
+                                    }}
+                                    className={styles.deleteProductBtn}
+                                    title="Delete product"
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                                  </button>
+                                </div>
+
+                                <div className={styles.savedProductTags}>
+                                  <span className={styles.productQtyBadge}>{p.quantity}</span>
+                                  <span className={styles.productConditionBadge}>{p.condition}</span>
+                                </div>
+
+                                {p.notes && (
+                                  <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
+                                    {p.notes}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Card: Shoot Schedule & Model Assignment */}
@@ -1793,20 +2338,85 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                       </div>
 
                       <div className={styles.stageField}>
-                        <label>Shooting Time Window *</label>
-                        <div className={styles.stageInputWrapper}>
-                          <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>schedule</span>
-                          <input
-                            type="text"
-                            placeholder="e.g. 10:00 AM - 04:00 PM"
-                            value={productData.shootingTime}
-                            onChange={(e) => {
-                              const updated = { ...productData, shootingTime: e.target.value };
-                              setProductData(updated);
-                              saveWorkflowState(currentStage, completedStages, { product: updated });
-                            }}
-                            className={styles.stageInput}
-                          />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <label>Shooting Time Window *</label>
+                          <span style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 600 }}>Clock Selection</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div className={styles.stageInputWrapper}>
+                              <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>schedule</span>
+                              <input
+                                type="time"
+                                title="Start Time (Clock Selection)"
+                                value={parseTimeRange(productData.shootingTime).start24}
+                                onChange={(e) => {
+                                  const cur = parseTimeRange(productData.shootingTime);
+                                  const updatedTime = formatTimeRange(e.target.value, cur.end24);
+                                  const updated = { ...productData, shootingTime: updatedTime };
+                                  setProductData(updated);
+                                  saveWorkflowState(currentStage, completedStages, { product: updated });
+                                }}
+                                className={styles.stageInput}
+                                style={{ colorScheme: 'dark', cursor: 'pointer' }}
+                              />
+                            </div>
+                            <div className={styles.stageInputWrapper}>
+                              <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>schedule</span>
+                              <input
+                                type="time"
+                                title="End Time (Clock Selection)"
+                                value={parseTimeRange(productData.shootingTime).end24}
+                                onChange={(e) => {
+                                  const cur = parseTimeRange(productData.shootingTime);
+                                  const updatedTime = formatTimeRange(cur.start24, e.target.value);
+                                  const updated = { ...productData, shootingTime: updatedTime };
+                                  setProductData(updated);
+                                  saveWorkflowState(currentStage, completedStages, { product: updated });
+                                }}
+                                className={styles.stageInput}
+                                style={{ colorScheme: 'dark', cursor: 'pointer' }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Quick Preset Buttons & Active Time Display */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                              {[
+                                { label: '10 AM - 4 PM', start: '10:00', end: '16:00' },
+                                { label: '2 PM - 8 PM', start: '14:00', end: '20:00' },
+                                { label: 'Full Day', start: '09:00', end: '18:00' },
+                              ].map((preset) => (
+                                <button
+                                  key={preset.label}
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedTime = formatTimeRange(preset.start, preset.end);
+                                    const updated = { ...productData, shootingTime: updatedTime };
+                                    setProductData(updated);
+                                    saveWorkflowState(currentStage, completedStages, { product: updated });
+                                  }}
+                                  style={{
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(255,255,255,0.12)',
+                                    color: '#cbd5e1',
+                                    fontSize: '11px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                            {productData.shootingTime && (
+                              <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 600 }}>
+                                🕒 {productData.shootingTime}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1828,23 +2438,121 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
 
                     {/* Dynamic Model Assignment */}
                     <div className={styles.stageField} style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label>Model Assignment (Dynamic & Changeable)</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          Model Assignment (Dynamic & Changeable) <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+                        </label>
                         <span style={{ fontSize: '10px', color: '#f472b6', fontWeight: 600 }}>Talent System</span>
                       </div>
+
+                      {/* Quick Model / Talent Selector Dropdown */}
+                      <div style={{ marginBottom: '8px' }}>
+                        <select
+                          value={
+                            employees.some(e => `${e.firstName} ${e.lastName}` === productData.assignedModelName)
+                              ? employees.find(e => `${e.firstName} ${e.lastName}` === productData.assignedModelName)?.id
+                              : productData.assignedModelName
+                              ? 'custom'
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') {
+                              const updated = { ...productData, assignedModelName: '', assignedModelId: '' };
+                              setProductData(updated);
+                              saveWorkflowState(currentStage, completedStages, { product: updated });
+                            } else if (val === 'custom') {
+                              // Keep current value
+                            } else {
+                              const emp = employees.find(em => em.id === val);
+                              if (emp) {
+                                const updated = {
+                                  ...productData,
+                                  assignedModelId: emp.id,
+                                  assignedModelName: `${emp.firstName} ${emp.lastName}`
+                                };
+                                setProductData(updated);
+                                setStage3ValidationError(null);
+                                saveWorkflowState(currentStage, completedStages, { product: updated });
+                              } else {
+                                const updated = {
+                                  ...productData,
+                                  assignedModelId: '',
+                                  assignedModelName: val
+                                };
+                                setProductData(updated);
+                                setStage3ValidationError(null);
+                                saveWorkflowState(currentStage, completedStages, { product: updated });
+                              }
+                            }
+                          }}
+                          className={styles.stageSelect}
+                          style={{
+                            paddingLeft: '14px',
+                            fontSize: '12px',
+                            borderColor: stage3ValidationError ? '#ef4444' : undefined,
+                            background: '#131d2e'
+                          }}
+                        >
+                          <option value="">-- Select Model / Talent or enter below --</option>
+                          {employees.length > 0 && (
+                            <optgroup label="In-House Staff & Team">
+                              {employees.map(emp => (
+                                <option key={emp.id} value={emp.id}>
+                                  {emp.firstName} {emp.lastName} {emp.designation ? `(${emp.designation})` : ''}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          <optgroup label="Preset Talent Agencies / Options">
+                            <option value="Sarah Miller - Elite Agency">Sarah Miller - Elite Agency</option>
+                            <option value="Elena Rostova - Elite Model">Elena Rostova - Elite Model</option>
+                            <option value="Freelance Fashion Model">Freelance Fashion Model</option>
+                            <option value="Commercial Talent (Agency)">Commercial Talent (Agency)</option>
+                          </optgroup>
+                          {productData.assignedModelName && (
+                            <option value="custom">Current: {productData.assignedModelName}</option>
+                          )}
+                        </select>
+                      </div>
+
                       <div className={styles.stageInputWrapper}>
                         <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>face</span>
                         <input
+                          id="stage3-model-input"
                           type="text"
                           placeholder="e.g. Sarah Miller - Elite Agency (or select/enter talent)"
                           value={productData.assignedModelName}
                           onChange={(e) => {
                             const updated = { ...productData, assignedModelName: e.target.value };
                             setProductData(updated);
+                            if (e.target.value.trim()) {
+                              setStage3ValidationError(null);
+                            }
                           }}
                           className={styles.stageInput}
+                          style={stage3ValidationError ? { borderColor: '#ef4444', boxShadow: '0 0 0 1px #ef4444' } : undefined}
                         />
                       </div>
+
+                      {stage3ValidationError && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          color: '#f87171',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          marginTop: '6px',
+                          padding: '6px 10px',
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(239, 68, 68, 0.3)'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#ef4444' }}>warning</span>
+                          {stage3ValidationError}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -1882,6 +2590,21 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               </div>
 
+              {/* Validation Warning Alert in Stage 3 */}
+              {stage3ValidationError && (
+                <div className={styles.warningAlert} style={{ marginTop: '14px', borderColor: '#ef4444', background: 'rgba(239, 68, 68, 0.14)' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ef4444', fontSize: '24px', flexShrink: 0 }}>
+                    error
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ color: '#fca5a5' }}>Model Assignment Required!</strong>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#fecaca' }}>
+                      {stage3ValidationError}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.stageBottomActions}>
                 <button
                   type="button"
@@ -1893,6 +2616,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 <button
                   type="button"
                   onClick={() => {
+                    if (!productData.assignedModelName || !productData.assignedModelName.trim()) {
+                      const errorMsg = "Model is not assigned! Please select or enter a model talent before confirming.";
+                      setStage3ValidationError(errorMsg);
+                      showToast(`⚠️ ${errorMsg}`, 'warning');
+                      const el = document.getElementById('stage3-model-input');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.focus();
+                      }
+                      return;
+                    }
+                    setStage3ValidationError(null);
                     saveWorkflowState(4, Array.from(new Set([...completedStages, 3])), { product: productData });
                     handleAdvanceStage(4);
                   }}
@@ -1952,7 +2687,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                         The shoot schedule was left unassigned in Stage 3 (Product Received). Please specify the shoot date and time below:
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px' }}>
                       <input
                         type="date"
                         value={productData.shootingDate}
@@ -1961,26 +2696,65 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                           setProductData(updated);
                           saveWorkflowState(currentStage, completedStages, { product: updated });
                         }}
-                        style={{ padding: '6px 10px', borderRadius: '8px', background: '#1e293b', border: '1px solid #fbbf24', color: '#fff', fontSize: '12px' }}
+                        style={{ padding: '6px 10px', borderRadius: '8px', background: '#1e293b', border: '1px solid #fbbf24', color: '#fff', fontSize: '12px', colorScheme: 'dark' }}
                       />
-                      <input
-                        type="text"
-                        placeholder="Time (e.g. 10:00 AM - 04:00 PM)"
-                        value={productData.shootingTime}
-                        onChange={(e) => {
-                          const updated = { ...productData, shootingTime: e.target.value };
-                          setProductData(updated);
-                          saveWorkflowState(currentStage, completedStages, { product: updated });
-                        }}
-                        style={{ padding: '6px 10px', borderRadius: '8px', background: '#1e293b', border: '1px solid #fbbf24', color: '#fff', fontSize: '12px' }}
-                      />
+
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#1e293b', padding: '3px 8px', borderRadius: '8px', border: '1px solid #fbbf24' }}>
+                        <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '16px' }}>schedule</span>
+                        <input
+                          type="time"
+                          title="Start Time (Clock Selection)"
+                          value={parseTimeRange(productData.shootingTime).start24}
+                          onChange={(e) => {
+                            const cur = parseTimeRange(productData.shootingTime);
+                            const updatedTime = formatTimeRange(e.target.value, cur.end24);
+                            const updated = { ...productData, shootingTime: updatedTime };
+                            setProductData(updated);
+                            saveWorkflowState(currentStage, completedStages, { product: updated });
+                          }}
+                          style={{
+                            padding: '3px 6px',
+                            borderRadius: '6px',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#fff',
+                            fontSize: '12px',
+                            colorScheme: 'dark',
+                            cursor: 'pointer'
+                          }}
+                        />
+                        <span style={{ color: '#fbbf24', fontSize: '11px', fontWeight: 600 }}>to</span>
+                        <input
+                          type="time"
+                          title="End Time (Clock Selection)"
+                          value={parseTimeRange(productData.shootingTime).end24}
+                          onChange={(e) => {
+                            const cur = parseTimeRange(productData.shootingTime);
+                            const updatedTime = formatTimeRange(cur.start24, e.target.value);
+                            const updated = { ...productData, shootingTime: updatedTime };
+                            setProductData(updated);
+                            saveWorkflowState(currentStage, completedStages, { product: updated });
+                          }}
+                          style={{
+                            padding: '3px 6px',
+                            borderRadius: '6px',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#fff',
+                            fontSize: '12px',
+                            colorScheme: 'dark',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => {
                           saveWorkflowState(currentStage, completedStages, { product: productData });
                           showToast("Schedule updated successfully");
                         }}
-                        style={{ padding: '6px 12px', borderRadius: '8px', background: '#fbbf24', color: '#0f172a', border: 'none', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                        style={{ padding: '6px 14px', borderRadius: '8px', background: '#fbbf24', color: '#0f172a', border: 'none', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
                       >
                         Save Schedule
                       </button>
@@ -2049,10 +2823,11 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div className={styles.stageField}>
-                      <label>Select Editor from Team</label>
+                      <label>Select Editor from Team <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span></label>
                       <div className={styles.stageInputWrapper}>
                         <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>badge</span>
                         <select
+                          id="stage4-editor-select"
                           value={shootingData.assignedEditorId}
                           onChange={(e) => {
                             const empId = e.target.value;
@@ -2060,11 +2835,15 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             const updated = {
                               ...shootingData,
                               assignedEditorId: empId,
-                              assignedEditorName: emp ? `${emp.firstName} ${emp.lastName}` : shootingData.assignedEditorName
+                              assignedEditorName: emp ? `${emp.firstName} ${emp.lastName}` : (empId === '' ? '' : shootingData.assignedEditorName)
                             };
                             setShootingData(updated);
+                            if (empId || updated.assignedEditorName?.trim()) {
+                              setStage4ValidationError(null);
+                            }
                           }}
                           className={styles.stageSelect}
+                          style={stage4ValidationError ? { borderColor: '#ef4444', boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)' } : undefined}
                         >
                           <option value="">Select in-house staff editor...</option>
                           {employees.map(emp => (
@@ -2080,15 +2859,22 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     <div className={styles.stageField}>
                       <label>Or Enter Freelance / External Editor Name</label>
                       <input
+                        id="stage4-editor-input"
                         type="text"
                         placeholder="e.g. Alex Rivera (Lead Colorist / Editor)"
                         value={shootingData.assignedEditorName}
                         onChange={(e) => {
                           const updated = { ...shootingData, assignedEditorName: e.target.value };
                           setShootingData(updated);
+                          if (e.target.value.trim() || shootingData.assignedEditorId) {
+                            setStage4ValidationError(null);
+                          }
                         }}
                         className={styles.stageInput}
-                        style={{ paddingLeft: '14px' }}
+                        style={{
+                          paddingLeft: '14px',
+                          ...(stage4ValidationError ? { borderColor: '#ef4444', boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)' } : {})
+                        }}
                       />
                     </div>
 
@@ -2123,6 +2909,21 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               </div>
 
+              {/* Validation Warning Alert in Stage 4 */}
+              {stage4ValidationError && (
+                <div className={styles.warningAlert} style={{ marginTop: '14px', borderColor: '#ef4444', background: 'rgba(239, 68, 68, 0.14)' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#ef4444', fontSize: '24px', flexShrink: 0 }}>
+                    error
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ color: '#fca5a5' }}>Editor Assignment Required!</strong>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#fecaca' }}>
+                      {stage4ValidationError}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.stageBottomActions}>
                 <button
                   type="button"
@@ -2134,6 +2935,22 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 <button
                   type="button"
                   onClick={() => {
+                    const hasEditor = Boolean(
+                      (shootingData.assignedEditorId && shootingData.assignedEditorId.trim()) ||
+                      (shootingData.assignedEditorName && shootingData.assignedEditorName.trim())
+                    );
+                    if (!hasEditor) {
+                      const errorMsg = "Editor is not assigned! Please select an in-house editor or enter an external editor before advancing to Stage 5.";
+                      setStage4ValidationError(errorMsg);
+                      showToast(`⚠️ ${errorMsg}`, 'warning');
+                      const el = document.getElementById('stage4-editor-select') || document.getElementById('stage4-editor-input');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.focus();
+                      }
+                      return;
+                    }
+                    setStage4ValidationError(null);
                     saveWorkflowState(5, Array.from(new Set([...completedStages, 4])), { shooting: shootingData });
                     handleAdvanceStage(5);
                   }}
@@ -2201,20 +3018,6 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
 
                     <div className={styles.stageField}>
-                      <label>Editor Changelog & Technical Notes</label>
-                      <textarea
-                        rows={4}
-                        placeholder="e.g. Color grade matched with brand LUT #4. Sound design enhanced with Foley effects. 4K Master export rendered."
-                        value={editingData.editorNotes}
-                        onChange={(e) => {
-                          const updated = { ...editingData, editorNotes: e.target.value };
-                          setEditingData(updated);
-                        }}
-                        className={styles.stageTextarea}
-                      />
-                    </div>
-
-                    <div className={styles.stageField}>
                       <label>Deliverable Specifications & Formats</label>
                       <input
                         type="text"
@@ -2230,78 +3033,241 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
 
                     <div className={styles.stageField}>
-                      <label>Working Project Cloud Repository (Frame.io / Dropbox)</label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>link</span>
-                        <input
-                          type="url"
-                          placeholder="e.g. https://frame.io/project/sample"
-                          value={editingData.workingFileUrl}
-                          onChange={(e) => {
-                            const updated = { ...editingData, workingFileUrl: e.target.value };
-                            setEditingData(updated);
-                          }}
-                          className={styles.stageInput}
-                        />
-                      </div>
+                      <label>Editor Changelog & Technical Notes</label>
+                      <textarea
+                        rows={4}
+                        placeholder="e.g. Color grade matched with brand LUT #4. Sound design enhanced with Foley effects. 4K Master export rendered."
+                        value={editingData.editorNotes}
+                        onChange={(e) => {
+                          const updated = { ...editingData, editorNotes: e.target.value };
+                          setEditingData(updated);
+                        }}
+                        className={styles.stageTextarea}
+                      />
                     </div>
                   </div>
                 </div>
 
-                {/* Right Card: Post-Production Quality Checklist */}
+                {/* Right Card: Working Project Cloud Repository (Multi-Links) & Editor Short Link */}
                 <div className={styles.stageCard}>
                   <div className={styles.stageCardHeader}>
                     <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#34d399' }}>checklist</span>
-                      Milestone Quality Checklist
+                      <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>folder_open</span>
+                      Working Project Cloud Repository (Frame.io / Dropbox)
                     </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentLinks = Array.isArray(editingData.workingFiles) ? editingData.workingFiles : [];
+                        const updatedLinks = [
+                          ...currentLinks,
+                          { id: String(Date.now()), label: '', url: '' }
+                        ];
+                        const updated = { ...editingData, workingFiles: updatedLinks };
+                        setEditingData(updated);
+                        saveWorkflowState(currentStage, completedStages, { editing: updated });
+                      }}
+                      className={styles.advanceBtn}
+                      style={{ padding: '4px 10px', fontSize: '11px', background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)' }}
+                    >
+                      + Add More Link
+                    </button>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    {[
-                      { key: 'audioCleaned', label: 'Audio Dialog Cleaned & Level Matched (-14 LUFS)' },
-                      { key: 'colorGraded', label: 'Color Grading & Skin Tone Calibration Finished' },
-                      { key: 'logoWatermarked', label: 'Brand Typography & Logo Overlays Applied' },
-                      { key: 'subtitlesAdded', label: 'Captions / Subtitles Synced & Checked' },
-                    ].map((item) => {
-                      const isChecked = (editingData.checklist as any)[item.key];
-                      return (
-                        <label
-                          key={item.key}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
+                      Add external repositories, Frame.io review bins, RAW asset folders, or Dropbox links for the editor:
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {(Array.isArray(editingData.workingFiles) && editingData.workingFiles.length > 0
+                        ? editingData.workingFiles
+                        : [{ id: '1', label: 'Frame.io Project Link', url: editingData.workingFileUrl || '' }]
+                      ).map((linkItem, idx) => (
+                        <div
+                          key={linkItem.id || idx}
                           style={{
+                            padding: '10px 12px',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: '10px',
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px 14px',
-                            background: isChecked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${isChecked ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.08)'}`,
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
+                            flexDirection: 'column',
+                            gap: '8px'
                           }}
                         >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const updated = {
-                                ...editingData,
-                                checklist: {
-                                  ...editingData.checklist,
-                                  [item.key]: e.target.checked
-                                }
-                              };
-                              setEditingData(updated);
-                              saveWorkflowState(currentStage, completedStages, { editing: updated });
-                            }}
-                            style={{ accentColor: '#10b981', width: '18px', height: '18px' }}
-                          />
-                          <span style={{ fontSize: '13px', color: isChecked ? '#34d399' : '#cbd5e1', fontWeight: isChecked ? 600 : 400 }}>
-                            {item.label}
-                          </span>
-                        </label>
-                      );
-                    })}
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              placeholder="Link Title (e.g. Frame.io Project Review / Dropbox)"
+                              value={linkItem.label}
+                              onChange={(e) => {
+                                const currentLinks = Array.isArray(editingData.workingFiles) && editingData.workingFiles.length > 0
+                                  ? [...editingData.workingFiles]
+                                  : [{ id: '1', label: 'Frame.io Project Link', url: editingData.workingFileUrl || '' }];
+                                currentLinks[idx] = { ...currentLinks[idx], label: e.target.value };
+                                const updated = { ...editingData, workingFiles: currentLinks };
+                                setEditingData(updated);
+                              }}
+                              className={styles.stageInput}
+                              style={{ flex: 1, paddingLeft: '10px', fontSize: '12px' }}
+                            />
+
+                            {linkItem.url && (
+                              <a
+                                href={linkItem.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(56, 189, 248, 0.15)',
+                                  color: '#38bdf8',
+                                  fontSize: '11px',
+                                  textDecoration: 'none',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                Open ↗
+                              </a>
+                            )}
+
+                            {(editingData.workingFiles?.length || 1) > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentLinks = (editingData.workingFiles || []).filter((_, i) => i !== idx);
+                                  const updated = { ...editingData, workingFiles: currentLinks };
+                                  setEditingData(updated);
+                                  saveWorkflowState(currentStage, completedStages, { editing: updated });
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Remove Link"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <div className={styles.stageInputWrapper}>
+                            <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>link</span>
+                            <input
+                              type="url"
+                              placeholder="https://frame.io/... or https://dropbox.com/..."
+                              value={linkItem.url}
+                              onChange={(e) => {
+                                const currentLinks = Array.isArray(editingData.workingFiles) && editingData.workingFiles.length > 0
+                                  ? [...editingData.workingFiles]
+                                  : [{ id: '1', label: 'Frame.io Project Link', url: editingData.workingFileUrl || '' }];
+                                currentLinks[idx] = { ...currentLinks[idx], url: e.target.value };
+                                const updated = {
+                                  ...editingData,
+                                  workingFiles: currentLinks,
+                                  workingFileUrl: currentLinks[0]?.url || ''
+                                };
+                                setEditingData(updated);
+                              }}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px' }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Dedicated Editor Short Link Box */}
+                    <div
+                      style={{
+                        marginTop: '6px',
+                        padding: '12px 14px',
+                        background: 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '12px', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#818cf8' }}>badge</span>
+                          Dedicated Editor Short Link
+                        </strong>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>For Assigned Editor</span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          readOnly
+                          value={typeof window !== 'undefined' ? `${window.location.origin}/e/${projectId}` : `/e/${projectId}`}
+                          style={{
+                            flex: 1,
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            background: '#0f172a',
+                            border: '1px solid rgba(99, 102, 241, 0.4)',
+                            color: '#e2e8f0',
+                            fontFamily: 'monospace',
+                            fontSize: '11px'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = `${window.location.origin}/e/${projectId}`;
+                            navigator.clipboard.writeText(url);
+                            showToast("🎬 Editor Short Link copied to clipboard!");
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                            color: '#fff',
+                            border: 'none',
+                            fontWeight: 700,
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Copy Link
+                        </button>
+                        <a
+                          href={`/portal/editor/${projectId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            color: '#cbd5e1',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            fontSize: '11px',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Preview ↗
+                        </a>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        💡 The editor can view instructions, open all project cloud repositories, submit completed demo cuts, and view live client revisions on this link.
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2433,8 +3399,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '20px' }}>play_circle</span>
                               <div>
-                                <strong style={{ fontSize: '13px', color: '#f8fafc' }}>{file.name}</strong>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <strong style={{ fontSize: '13px', color: '#f8fafc' }}>{file.name}</strong>
+                                  {file.uploadedBy && (
+                                    <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 600 }}>
+                                      🎬 {file.uploadedBy}
+                                    </span>
+                                  )}
+                                </div>
                                 <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>Added {file.date}</span>
+                                {file.note && (
+                                  <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic' }}>"{file.note}"</p>
+                                )}
                               </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2480,15 +3456,93 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                         </div>
                       )}
                     </div>
+
+                    {/* Revision Billing & Policy Configuration */}
+                    <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.2)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '18px' }}>receipt_long</span>
+                          <strong style={{ fontSize: '12px', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Revision Policy & Billing
+                          </strong>
+                        </div>
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#cbd5e1', cursor: 'pointer', background: isSpecialCustomerFree ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSpecialCustomerFree}
+                            onChange={(e) => {
+                              const updated = { ...demoData, isSpecialCustomerFree: e.target.checked };
+                              setDemoData(updated);
+                              saveWorkflowState(currentStage, completedStages, { demo: updated });
+                              showToast(e.target.checked ? "👑 Special Customer: Free unlimited revisions activated" : "Standard revision policy restored");
+                            }}
+                          />
+                          <span style={{ fontWeight: 600, color: isSpecialCustomerFree ? '#c084fc' : '#94a3b8' }}>👑 Special Customer (Free Unlimited Revisions)</span>
+                        </label>
+                      </div>
+
+                      {!isSpecialCustomerFree && (
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: '130px' }}>
+                            <label style={{ display: 'block', fontSize: '10px', color: '#94a3b8', marginBottom: '3px' }}>Free Revisions Included</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={demoData.freeRevisionsIncluded ?? 2}
+                              onChange={(e) => {
+                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                const updated = { ...demoData, freeRevisionsIncluded: val };
+                                setDemoData(updated);
+                                saveWorkflowState(currentStage, completedStages, { demo: updated });
+                              }}
+                              className={styles.stageInput}
+                              style={{ paddingLeft: '10px', fontSize: '12px', height: '32px' }}
+                            />
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: '150px' }}>
+                            <label style={{ display: 'block', fontSize: '10px', color: '#94a3b8', marginBottom: '3px' }}>Fee Per Extra Revision (BDT)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="100"
+                              value={demoData.costPerRevision ?? 1000}
+                              onChange={(e) => {
+                                const val = Math.max(0, parseFloat(e.target.value) || 0);
+                                const updated = { ...demoData, costPerRevision: val };
+                                setDemoData(updated);
+                                saveWorkflowState(currentStage, completedStages, { demo: updated });
+                              }}
+                              className={styles.stageInput}
+                              style={{ paddingLeft: '10px', fontSize: '12px', height: '32px' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Revision Rounds Tally Pill */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '11px', flexWrap: 'wrap', gap: '6px' }}>
+                        <span style={{ color: '#94a3b8' }}>
+                          Total Revisions: <strong style={{ color: '#f8fafc' }}>{totalRevisionsCount} rounds</strong>
+                        </span>
+                        {isSpecialCustomerFree ? (
+                          <span style={{ color: '#c084fc', fontWeight: 600 }}>👑 VIP Free Client (BDT 0)</span>
+                        ) : (
+                          <span style={{ color: billableRevisionsCount > 0 ? '#fbbf24' : '#34d399', fontWeight: 600 }}>
+                            {freeRevisionsUsed}/{freeRevisionsIncluded} Free Used • {billableRevisionsCount} Billable (+{formatCurrency(totalRevisionFees)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Right Card: Client Revisions & Approvals */}
-                <div className={styles.stageCard}>
+                {/* Right Card: Client Revision Chat & Settlement */}
+                <div className={styles.stageCard} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div className={styles.stageCardHeader}>
                     <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>published_with_changes</span>
-                      Client Revision & Feedback Log
+                      <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>forum</span>
+                      Customer Revision Chat & Approvals
                     </h3>
                     <div className={styles.statusSelectWrapper}>
                       <select
@@ -2508,40 +3562,41 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div className={styles.stageField}>
-                      <label>Revision Notes & Client Feedback</label>
-                      <textarea
-                        rows={4}
-                        placeholder="e.g. Client requested faster pacing in opening 5 seconds and color balance tweak on blue denim."
-                        value={demoData.revisionNotes}
-                        onChange={(e) => {
-                          const updated = { ...demoData, revisionNotes: e.target.value };
-                          setDemoData(updated);
-                        }}
-                        className={styles.stageTextarea}
-                      />
-                    </div>
+                  {/* Interactive Real-Time Revision Chat */}
+                  <RevisionChat
+                    projectId={projectId}
+                    currentUserRole="STUDIO"
+                    currentUserName="Studio Manager"
+                    messages={revisionChat}
+                    demoFiles={demoData.demoFiles}
+                    onRefresh={fetchProject}
+                  />
 
-                    <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Outstanding Client Due:</span>
-                      <strong style={{ fontSize: '14px', color: clientDue > 0 ? '#f87171' : '#34d399' }}>
+                  {/* Outstanding Due & Revision Policy Breakdown (Button removed per user request) */}
+                  <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Outstanding Client Due {totalRevisionFees > 0 ? `(incl. ${formatCurrency(totalRevisionFees)} revision fees)` : ''}:
+                      </span>
+                      <strong style={{ fontSize: '16px', color: clientDue > 0 ? '#f87171' : '#34d399' }}>
                         {formatCurrency(clientDue)}
                       </strong>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSettlementAmount(String(clientDue));
-                        setIsSettlementModalOpen(true);
-                      }}
-                      className={styles.advanceBtn}
-                      style={{ justifyContent: 'center', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>task_alt</span>
-                      Review Due Payment & Complete Project &rarr;
-                    </button>
+                    <div>
+                      {isSpecialCustomerFree ? (
+                        <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)', fontWeight: 600, fontSize: '11px' }}>
+                          👑 VIP Free Revisions
+                        </span>
+                      ) : billableRevisionsCount > 0 ? (
+                        <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.3)', fontWeight: 600, fontSize: '11px' }}>
+                          💳 {billableRevisionsCount} Billable Rev. (+{formatCurrency(totalRevisionFees)})
+                        </span>
+                      ) : (
+                        <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)', fontWeight: 600, fontSize: '11px' }}>
+                          ✓ Within Free Allowance ({freeRevisionsUsed}/{freeRevisionsIncluded})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2570,7 +3625,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
           )}
 
           {/* ------------------------------------------------------------------
-              STAGE 7: COMPLETE (Celebration, Customer Add & Dashboard Link)
+              STAGE 7: COMPLETE (Invoice Ledger, Model/Editor Settlements & Download Invoice)
               ------------------------------------------------------------------ */}
           {currentStage === 7 && (
             <>
@@ -2583,31 +3638,488 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     Project Successfully Completed & Delivered!
                   </h2>
                   <p style={{ fontSize: '13px', color: '#94a3b8', margin: '6px 0 0 0' }}>
-                    All 7 pipeline milestones have been fulfilled. Contract deliverables and financials are archived.
+                    All 7 pipeline milestones have been fulfilled. Contract deliverables, talent settlements, and invoices are archived.
                   </p>
                 </div>
 
-                <div className={styles.kpiGrid} style={{ width: '100%', maxWidth: '800px', marginTop: '10px' }}>
-                  <div className={styles.kpiCard}>
-                    <span className={styles.kpiLabel}>Final Contract Value</span>
-                    <div className={styles.kpiMainValue} style={{ color: '#34d399' }}>{formatCurrency(budget)}</div>
+                {/* ============================================================
+                    INVOICE-TYPE FINANCIAL BREAKDOWN CARD
+                    ============================================================ */}
+                <div style={{
+                  width: '100%',
+                  maxWidth: '840px',
+                  marginTop: '12px',
+                  padding: '20px 24px',
+                  background: 'rgba(15, 23, 42, 0.75)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '16px',
+                  backdropFilter: 'blur(16px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '22px' }}>receipt_long</span>
+                      <div>
+                        <strong style={{ fontSize: '15px', color: '#f8fafc', display: 'block' }}>Commercial Invoice & Financial Ledger</strong>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Client: {project?.clientName || 'Commercial Partner'}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsInvoiceModalOpen(true)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                        border: 'none',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+                      Download Official Tax Invoice / Receipt
+                    </button>
                   </div>
 
-                  <div className={styles.kpiCard}>
-                    <span className={styles.kpiLabel}>Total Collected Revenue</span>
-                    <div className={styles.kpiMainValue} style={{ color: '#38bdf8' }}>{formatCurrency(totalReceived)}</div>
-                  </div>
+                  {/* Financial Itemized Ledger Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                    <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Base Production Contract</span>
+                      <strong style={{ fontSize: '14px', color: '#f8fafc', marginTop: '2px', display: 'block' }}>{formatCurrency(budget)}</strong>
+                    </div>
 
-                  <div className={styles.kpiCard}>
-                    <span className={styles.kpiLabel}>Net Realized Profit</span>
-                    <div className={styles.kpiMainValue} style={{ color: isLoss ? '#f87171' : '#34d399' }}>
-                      {isLoss ? `-${formatCurrency(lossAmount)}` : `+${formatCurrency(realizedProfit)}`}
+                    <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Additional Revision Fees</span>
+                      <strong style={{ fontSize: '14px', color: totalRevisionFees > 0 ? '#fbbf24' : '#94a3b8', marginTop: '2px', display: 'block' }}>
+                        {totalRevisionFees > 0 ? `+${formatCurrency(totalRevisionFees)} (${billableRevisionsCount} rev)` : 'BDT 0 (Within Allowance)'}
+                      </strong>
+                    </div>
+
+                    <div style={{ padding: '10px 14px', background: 'rgba(56, 189, 248, 0.08)', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                      <span style={{ fontSize: '11px', color: '#38bdf8', display: 'block' }}>Total Invoiced Value</span>
+                      <strong style={{ fontSize: '14px', color: '#38bdf8', marginTop: '2px', display: 'block' }}>{formatCurrency(effectiveBudget)}</strong>
+                    </div>
+
+                    <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                      <span style={{ fontSize: '11px', color: '#34d399', display: 'block' }}>Payments Collected</span>
+                      <strong style={{ fontSize: '14px', color: '#34d399', marginTop: '2px', display: 'block' }}>{formatCurrency(totalReceived)}</strong>
+                    </div>
+
+                    <div style={{ padding: '10px 14px', background: clientDue > 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', border: clientDue > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)' }}>
+                      <span style={{ fontSize: '11px', color: clientDue > 0 ? '#f87171' : '#34d399', display: 'block' }}>Outstanding Client Due</span>
+                      <strong style={{ fontSize: '14px', color: clientDue > 0 ? '#f87171' : '#34d399', marginTop: '2px', display: 'block' }}>
+                        {clientDue > 0 ? formatCurrency(clientDue) : 'PAID & SETTLED ✓'}
+                      </strong>
                     </div>
                   </div>
                 </div>
 
-                {/* Two Main Action Buttons requested by User */}
-                <div className={styles.celebrationActions}>
+                {/* ============================================================
+                    TALENT & TEAM SETTLEMENTS GRID: MODEL & EDITOR
+                    ============================================================ */}
+                <div style={{ width: '100%', maxWidth: '840px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '12px', marginTop: '4px' }}>
+                  {/* Model Talent Settlement Card */}
+                  <div style={{
+                    padding: '16px 20px',
+                    background: 'rgba(236, 72, 153, 0.06)',
+                    border: '1px solid rgba(236, 72, 153, 0.25)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="material-symbols-outlined" style={{ color: '#f472b6', fontSize: '20px' }}>face_3</span>
+                        <div>
+                          <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Model Talent Settlement</strong>
+                          <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                            {productData.assignedModelName || 'Sarah Miller - Elite Agency'}
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        background: productData.modelPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                        color: productData.modelPaid ? '#34d399' : '#fbbf24',
+                        border: productData.modelPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                        fontSize: '11px',
+                        fontWeight: 700
+                      }}>
+                        {productData.modelPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        {isEditingModelRate ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>BDT:</span>
+                            <input
+                              type="number"
+                              value={tempModelRate}
+                              onChange={(e) => setTempModelRate(e.target.value)}
+                              placeholder="Amount"
+                              style={{
+                                width: '90px',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(0,0,0,0.5)',
+                                border: '1px solid #f472b6',
+                                color: '#f8fafc',
+                                fontSize: '12px',
+                                outline: 'none'
+                              }}
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveCustomModelRate(tempModelRate);
+                                if (e.key === 'Escape') setIsEditingModelRate(false);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveCustomModelRate(tempModelRate)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: '#ec4899',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✓ Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingModelRate(false)}
+                              style={{
+                                padding: '4px 6px',
+                                borderRadius: '6px',
+                                background: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: '#cbd5e1',
+                                fontSize: '11px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Agreed Model Rate:</span>
+                            <strong style={{ color: '#f472b6', fontSize: '14px' }}>
+                              {productData.modelRate ? formatCurrency(productData.modelRate) : 'BDT 1,000'}
+                            </strong>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTempModelRate(productData.modelRate || '1000');
+                                setIsEditingModelRate(true);
+                              }}
+                              style={{
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                background: 'rgba(244, 114, 182, 0.15)',
+                                border: '1px solid rgba(244, 114, 182, 0.35)',
+                                color: '#f472b6',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '2px'
+                              }}
+                              title="Edit Model Rate"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleToggleModelPaid}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          background: productData.modelPaid
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                          border: productData.modelPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                          color: productData.modelPaid ? '#cbd5e1' : '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                          {productData.modelPaid ? 'check_circle' : 'payments'}
+                        </span>
+                        {productData.modelPaid ? 'Paid (Click to Revert)' : 'Pay Model Fee ✓'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Editor Settlement & Performance Card */}
+                  <div style={{
+                    padding: '16px 20px',
+                    background: 'rgba(99, 102, 241, 0.06)',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
+                        <div>
+                          <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Lead Editor Settlement</strong>
+                          <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                            {shootingData.assignedEditorName || 'Niam'}
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        background: shootingData.editorPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                        color: shootingData.editorPaid ? '#34d399' : '#fbbf24',
+                        border: shootingData.editorPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                        fontSize: '11px',
+                        fontWeight: 700
+                      }}>
+                        {shootingData.editorPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        {isEditingEditorFee ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>BDT:</span>
+                            <input
+                              type="number"
+                              value={tempEditorFee}
+                              onChange={(e) => setTempEditorFee(e.target.value)}
+                              placeholder="Amount"
+                              style={{
+                                width: '90px',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(0,0,0,0.5)',
+                                border: '1px solid #818cf8',
+                                color: '#f8fafc',
+                                fontSize: '12px',
+                                outline: 'none'
+                              }}
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveCustomEditorFee(tempEditorFee);
+                                if (e.key === 'Escape') setIsEditingEditorFee(false);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveCustomEditorFee(tempEditorFee)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: '#6366f1',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✓ Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingEditorFee(false)}
+                              style={{
+                                padding: '4px 6px',
+                                borderRadius: '6px',
+                                background: 'rgba(255,255,255,0.1)',
+                                border: 'none',
+                                color: '#cbd5e1',
+                                fontSize: '11px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Editor Payment:</span>
+                            <strong style={{ color: '#818cf8', fontSize: '14px' }}>
+                              {shootingData.editorFee ? formatCurrency(shootingData.editorFee) : (projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate ? formatCurrency(projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate) : 'BDT 1,500')}
+                            </strong>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentFee = shootingData.editorFee || (projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate ? String(projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate) : '1500');
+                                setTempEditorFee(currentFee);
+                                setIsEditingEditorFee(true);
+                              }}
+                              style={{
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                background: 'rgba(129, 140, 248, 0.15)',
+                                border: '1px solid rgba(129, 140, 248, 0.35)',
+                                color: '#818cf8',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '2px'
+                              }}
+                              title="Edit Editor Fee"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={handleToggleEditorPaid}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            background: shootingData.editorPaid
+                              ? 'rgba(255, 255, 255, 0.08)'
+                              : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                            border: shootingData.editorPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                            color: shootingData.editorPaid ? '#cbd5e1' : '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                            {shootingData.editorPaid ? 'check_circle' : 'payments'}
+                          </span>
+                          {shootingData.editorPaid ? 'Paid' : 'Pay Editor ✓'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editorRating) {
+                              setEditorRatingValue(editorRating.rating || 5);
+                              setEditorRatingFeedbackText(editorRating.feedback || '');
+                            }
+                            setIsRateEditorModalOpen(true);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            border: '1px solid rgba(99, 102, 241, 0.35)',
+                            color: '#c7d2fe',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fbbf24' }}>star</span>
+                          {editorRating ? `Rated ${editorRating.rating}/5` : 'Rate'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Client Portal Submitted Rating & Review Card */}
+                {clientReview && (
+                  <div style={{
+                    width: '100%',
+                    maxWidth: '840px',
+                    marginTop: '4px',
+                    padding: '16px 20px',
+                    background: 'rgba(251, 191, 36, 0.08)',
+                    border: '1px solid rgba(251, 191, 36, 0.3)',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '18px', color: '#fbbf24' }}>
+                          {'★'.repeat(clientReview.rating || 5)}{'☆'.repeat(5 - (clientReview.rating || 5))}
+                        </span>
+                        <strong style={{ fontSize: '13px', color: '#fbbf24' }}>
+                          Client Review ({clientReview.rating || 5}/5 Stars)
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        {clientReview.submittedAt ? new Date(clientReview.submittedAt).toLocaleDateString() : 'Received'}
+                      </span>
+                    </div>
+                    {clientReview.reviewText && (
+                      <p style={{ margin: 0, fontSize: '13px', color: '#f8fafc', fontStyle: 'italic' }}>
+                        "{clientReview.reviewText}"
+                      </p>
+                    )}
+                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      Submitted by: {clientReview.clientName || project?.clientName || 'Client'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className={styles.celebrationActions} style={{ width: '100%', maxWidth: '840px', display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsInvoiceModalOpen(true)}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
+                    Download Invoice
+                  </button>
+
                   <button
                     type="button"
                     onClick={handleLinkCustomer}
@@ -3881,11 +5393,623 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     onClick={handleDeleteProject}
                     disabled={isDeletingProject}
                     className={styles.submitBtn}
-                    style={{ background: '#dc2626', borderColor: '#dc2626' }}
+                    style={{
+                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      borderColor: '#ef4444',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
                   >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                      {isDeletingProject ? 'hourglass_empty' : 'delete_forever'}
+                    </span>
                     {isDeletingProject ? 'Deleting Project...' : 'Permanently Delete Project'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: SHORT LINKS & LIVE TRACKER SHARING (CUSTOMER & EDITOR)
+            ==================================================================== */}
+        {isShareModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsShareModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '560px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  <span className="material-symbols-outlined" style={{ color: shareModalTab === 'customer' ? '#a855f7' : '#6366f1', fontSize: '22px' }}>
+                    {shareModalTab === 'customer' ? 'share' : 'badge'}
+                  </span>
+                  Share Live Tracking Links
+                </h3>
+                <button onClick={() => setIsShareModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              {/* Tab Selector */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '4px', borderRadius: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShareModalTab('customer')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    background: shareModalTab === 'customer' ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' : 'transparent',
+                    color: shareModalTab === 'customer' ? '#ffffff' : '#94a3b8',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span>
+                  Customer Link (/p/{projectId.slice(0, 8)}...)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShareModalTab('editor')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    background: shareModalTab === 'editor' ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'transparent',
+                    color: shareModalTab === 'editor' ? '#ffffff' : '#94a3b8',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>movie_edit</span>
+                  Editor Link (/e/{projectId.slice(0, 8)}...)
+                </button>
+              </div>
+
+              {/* CUSTOMER TAB CONTENT */}
+              {shareModalTab === 'customer' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '6px' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
+                    Send this short tracking link to <strong>{project?.clientName || 'your customer'}</strong>. They can view real-time production status, product inspection, financials, assigned talent & editor, download official invoices, submit demo revisions, and leave reviews without needing to login.
+                  </p>
+
+                  {/* Customer URL Box */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: '#0f172a',
+                    border: '1px solid #a855f7',
+                    borderRadius: '12px',
+                    padding: '6px 8px 6px 14px',
+                    gap: '8px'
+                  }}>
+                    <span className="material-symbols-outlined" style={{ color: '#a855f7', fontSize: '18px' }}>link</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={typeof window !== 'undefined' ? `${window.location.origin}/p/${projectId}` : `/p/${projectId}`}
+                      style={{
+                        flex: 1,
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#f8fafc',
+                        fontSize: '13px',
+                        fontFamily: 'monospace',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/p/${projectId}`;
+                        navigator.clipboard.writeText(url);
+                        showToast("🎉 Customer Short Link copied to clipboard!");
+                      }}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        background: '#a855f7',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>content_copy</span>
+                      Copy Link
+                    </button>
+                  </div>
+
+                  {/* Customer Quick Share Buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/p/${projectId}`;
+                        const msg = `Hello ${project?.clientName || ''}, here is the live tracking link for your project "${project?.name}": ${url}`;
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(37, 211, 102, 0.15)',
+                        border: '1px solid rgba(37, 211, 102, 0.4)',
+                        color: '#25d366',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
+                      Share via WhatsApp
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/p/${projectId}`;
+                        const subject = `Live Project Tracker: ${project?.name}`;
+                        const body = `Dear ${project?.clientName || 'Client'},\n\nYou can track the live progress, invoices, shooting schedule, and demo cuts for your project here:\n${url}\n\nBest regards,\nProduction Team`;
+                        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        border: '1px solid rgba(59, 130, 246, 0.4)',
+                        color: '#60a5fa',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mail</span>
+                      Share via Email
+                    </button>
+                  </div>
+
+                  {/* Preview Customer View */}
+                  <div style={{
+                    padding: '12px 14px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Current Client View</strong>
+                      <span style={{ fontSize: '11px', color: '#38bdf8' }}>
+                        Stage {currentStage}: {stageNames[currentStage]} active
+                      </span>
+                    </div>
+                    <a
+                      href={`/portal/project/${projectId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        background: 'rgba(168, 85, 247, 0.2)',
+                        border: '1px solid rgba(168, 85, 247, 0.4)',
+                        color: '#c084fc',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      Open Portal View ↗
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* EDITOR TAB CONTENT */}
+              {shareModalTab === 'editor' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '6px' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
+                    Send this dedicated workspace link to <strong>{shootingData.assignedEditorName || 'your assigned editor'}</strong>. They can view the shoot log, format specs, open cloud assets (Frame.io/Dropbox), submit completed demo cuts, and view real-time client revision requests.
+                  </p>
+
+                  {/* Editor URL Box */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: '#0f172a',
+                    border: '1px solid #6366f1',
+                    borderRadius: '12px',
+                    padding: '6px 8px 6px 14px',
+                    gap: '8px'
+                  }}>
+                    <span className="material-symbols-outlined" style={{ color: '#6366f1', fontSize: '18px' }}>link</span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={typeof window !== 'undefined' ? `${window.location.origin}/e/${projectId}` : `/e/${projectId}`}
+                      style={{
+                        flex: 1,
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#f8fafc',
+                        fontSize: '13px',
+                        fontFamily: 'monospace',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/e/${projectId}`;
+                        navigator.clipboard.writeText(url);
+                        showToast("🎬 Editor Short Link copied to clipboard!");
+                      }}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        background: '#6366f1',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>content_copy</span>
+                      Copy Link
+                    </button>
+                  </div>
+
+                  {/* Editor Quick Share Buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/e/${projectId}`;
+                        const msg = `Hi ${shootingData.assignedEditorName || 'Editor'}, here is your project workspace link for "${project?.name}": ${url}\nYou can access raw footage links, specs, submit demo cuts, and view client revisions here.`;
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(37, 211, 102, 0.15)',
+                        border: '1px solid rgba(37, 211, 102, 0.4)',
+                        color: '#25d366',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
+                      Send to Editor via WhatsApp
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/e/${projectId}`;
+                        const subject = `Post-Production Workspace: ${project?.name}`;
+                        const body = `Hi ${shootingData.assignedEditorName || 'Editor'},\n\nHere is your dedicated production link for "${project?.name}":\n${url}\n\nPlease review instructions, deliverable formats, and upload completed cuts.\n\nBest regards,\nStudio Production Team`;
+                        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        border: '1px solid rgba(99, 102, 241, 0.4)',
+                        color: '#818cf8',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mail</span>
+                      Email to Editor
+                    </button>
+                  </div>
+
+                  {/* Preview Editor View */}
+                  <div style={{
+                    padding: '12px 14px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Editor Live Portal</strong>
+                      <span style={{ fontSize: '11px', color: '#a5b4fc' }}>
+                        Assigned: {shootingData.assignedEditorName || 'Team Editor'}
+                      </span>
+                    </div>
+                    <a
+                      href={`/portal/editor/${projectId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        background: 'rgba(99, 102, 241, 0.2)',
+                        border: '1px solid rgba(99, 102, 241, 0.4)',
+                        color: '#a5b4fc',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      Open Editor Portal ↗
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: RATE ASSIGNED EDITOR PERFORMANCE
+            ==================================================================== */}
+        {isRateEditorModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsRateEditorModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '480px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>star</span>
+                  Rate Editor Performance
+                </h3>
+                <button onClick={() => setIsRateEditorModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEditorRating} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+                  Record performance score and feedback for <strong style={{ color: '#f8fafc' }}>{shootingData.assignedEditorName || 'assigned editor'}</strong>.
+                </p>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Performance Rating ({editorRatingValue}/5 Stars)
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setEditorRatingValue(star)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '28px',
+                          color: star <= editorRatingValue ? '#fbbf24' : '#475569',
+                          cursor: 'pointer',
+                          padding: '0 4px',
+                          transition: 'transform 0.15s ease'
+                        }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                    Feedback & Work Quality Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Excellent color grading speed, followed client notes accurately and delivered before deadline."
+                    value={editorRatingFeedbackText}
+                    onChange={(e) => setEditorRatingFeedbackText(e.target.value)}
+                    className={styles.inputField}
+                    style={{ minHeight: '80px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsRateEditorModalOpen(false)}
+                    className={styles.backBtn}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEditorRating}
+                    className={styles.submitBtn}
+                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', color: '#0f172a', fontWeight: 800 }}
+                  >
+                    {isSubmittingEditorRating ? 'Saving...' : 'Save Rating ✓'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: OFFICIAL PROJECT TAX INVOICE & RECEIPT
+            ==================================================================== */}
+        {isInvoiceModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsInvoiceModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '680px', background: '#ffffff', color: '#0f172a', borderRadius: '16px', padding: '30px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+              {/* Invoice Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #f1f5f9', paddingBottom: '20px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#2563eb' }}>receipt_long</span>
+                    <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: '#0f172a' }}>OFFICIAL INVOICE</h2>
+                  </div>
+                  <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                    Invoice #{project?.projectCode || project?.id?.substring(0, 8).toUpperCase()}
+                  </span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block' }}>Shohoj Ledger Studio</strong>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>Date: {new Date().toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Client & Project Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', margin: '20px 0' }}>
+                <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Billed To</span>
+                  <strong style={{ display: 'block', fontSize: '15px', color: '#0f172a', marginTop: '4px' }}>
+                    {project?.clientName || 'Client / Commercial Partner'}
+                  </strong>
+                  {project?.clientPhone && (
+                    <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                      Phone: {project.clientPhone}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Project Reference</span>
+                  <strong style={{ display: 'block', fontSize: '15px', color: '#0f172a', marginTop: '4px' }}>
+                    {project?.name}
+                  </strong>
+                  <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Status: {project?.status || 'Completed'} (Stage 7 Final Delivery)
+                  </span>
+                </div>
+              </div>
+
+              {/* Line Items Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', margin: '10px 0' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#475569' }}>Description</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#475569' }}>Quantity / Scope</th>
+                    <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#475569' }}>Amount (BDT)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '12px' }}>
+                      <strong style={{ color: '#0f172a' }}>Commercial Media Production & Shoot</strong>
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                        {productData.productName ? `Intake: ${productData.productName}` : 'Product photography, video shoot & post-production'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', color: '#475569' }}>1 Project Scope</td>
+                    <td style={{ textAlign: 'right', padding: '12px', fontWeight: 700, color: '#0f172a' }}>{formatCurrency(budget)}</td>
+                  </tr>
+
+                  {totalRevisionFees > 0 && (
+                    <tr style={{ background: '#fefce8', borderBottom: '1px solid #fef08a' }}>
+                      <td style={{ padding: '12px' }}>
+                        <strong style={{ color: '#854d0e' }}>Additional Revision Fees ({billableRevisionsCount} rounds)</strong>
+                        <div style={{ fontSize: '11px', color: '#a16207', marginTop: '2px' }}>
+                          Client revision rounds beyond {demoData.freeRevisionsIncluded ?? 2} free allowance (@ {formatCurrency(demoData.costPerRevision ?? 1000)}/round)
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px', color: '#854d0e' }}>{billableRevisionsCount} Extra Rounds</td>
+                      <td style={{ textAlign: 'right', padding: '12px', fontWeight: 700, color: '#854d0e' }}>
+                        +{formatCurrency(totalRevisionFees)}
+                      </td>
+                    </tr>
+                  )}
+
+                  {payments && payments.length > 0 && (
+                    payments.map((p: any, i: number) => (
+                      <tr key={p.id || i} style={{ background: '#f0fdf4', borderBottom: '1px solid #dcfce7' }}>
+                        <td style={{ padding: '10px 12px', color: '#16a34a' }}>
+                          ✓ Payment Received ({p.paymentMethod || 'Bank'}) {p.notes ? `- ${p.notes}` : ''}
+                        </td>
+                        <td style={{ padding: '10px 12px', color: '#16a34a', fontSize: '11px' }}>{new Date(p.createdAt || Date.now()).toLocaleDateString()}</td>
+                        <td style={{ textAlign: 'right', padding: '10px 12px', color: '#16a34a', fontWeight: 700 }}>
+                          -{formatCurrency(p.amount)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+
+              {/* Totals Box */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', margin: '16px 0', borderTop: '2px solid #e2e8f0', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '13px', color: '#475569' }}>
+                  <span>Base Contract Total:</span>
+                  <strong>{formatCurrency(budget)}</strong>
+                </div>
+                {totalRevisionFees > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '13px', color: '#854d0e' }}>
+                    <span>Revision Surcharges:</span>
+                    <strong>+{formatCurrency(totalRevisionFees)}</strong>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '13px', color: '#16a34a' }}>
+                  <span>Total Paid / Advance:</span>
+                  <strong>-{formatCurrency(totalReceived)}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '16px', fontWeight: 800, color: clientDue > 0 ? '#dc2626' : '#16a34a', borderTop: '2px solid #e2e8f0', paddingTop: '8px', marginTop: '4px' }}>
+                  <span>Outstanding Due:</span>
+                  <span>{clientDue > 0 ? formatCurrency(clientDue) : 'PAID & SETTLED (BDT 0)'}</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsInvoiceModalOpen(false)}
+                  style={{ padding: '10px 18px', borderRadius: '10px', background: '#e2e8f0', border: 'none', color: '#475569', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{ padding: '10px 22px', borderRadius: '10px', background: '#2563eb', border: 'none', color: '#ffffff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>
+                  Print / Save as PDF
+                </button>
               </div>
             </div>
           </div>

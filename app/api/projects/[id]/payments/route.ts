@@ -127,18 +127,39 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
     // Run in a single atomic transaction
     const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Record Client Payment as Income
+      // 1. Record Client Payment as Income with requested description format
+      const lowerNotes = (notes || "").toLowerCase();
+      const isAdvance = lowerNotes.includes("advance");
+      const isFinal = lowerNotes.includes("settlement") || lowerNotes.includes("final") || lowerNotes.includes("completion");
+
+      let incomeLabel = "Payment";
+      if (isAdvance) {
+        incomeLabel = "Advance";
+      } else if (isFinal) {
+        incomeLabel = "Final Payment";
+      }
+
+      const cleanNotes = (notes || "")
+        .replace(/^\[Advance Payment\]/i, '')
+        .replace(/^\[Advance\]/i, '')
+        .replace(/^\[Full Settlement\]/i, '')
+        .replace(/^\[Partial Settlement\]/i, '')
+        .trim();
+
+      // Exact format requested: (Project Name Advaced 1500)
+      const incomeDesc = `${project.name} ${incomeLabel} ${paymentAmount}${cleanNotes ? ` (${cleanNotes})` : ''}`;
+
       const income = await tx.income.create({
         data: {
           companyId,
           projectId: project.id,
-          category: "Project Payment",
+          category: isAdvance ? "Advance Payment" : isFinal ? "Project Final Payment" : "Project Payment",
           source: paymentMethod,
           amount: paymentAmount,
           received: paymentAmount,
           paymentStatus: "PAID",
           shareable: true,
-          description: `Client payment received for Project "${project.name}"${notes ? ` (${notes})` : ''}`,
+          description: incomeDesc,
           systemSource: "ERP"
         }
       });
@@ -150,7 +171,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         amount: paymentAmount,
         isDebit: true,
         accountType: paymentMethod,
-        description: `Income Received: Project Payment (${project.name})`,
+        description: `Income: ${incomeDesc}`,
         createdById: session.user.id,
         systemSource: "ERP"
       });
@@ -169,6 +190,11 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           }
         });
 
+        // Exact format requested: Project Name Cost Reason Amount
+        const expenseDesc = costReason
+          ? `${project.name} Cost - ${costReason} ${customCost}`
+          : `${project.name} Cost ${customCost}`;
+
         // Record custom cost as a project expense
         const costExpense = await tx.expense.create({
           data: {
@@ -178,9 +204,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             amount: customCost,
             paymentMethod,
             approvalStatus: "APPROVED",
-            description: costReason
-              ? `Project "${project.name}" custom cost: ${costReason}`
-              : `Project "${project.name}" cost recorded during payment`,
+            description: expenseDesc,
             systemSource: "ERP"
           }
         });
@@ -192,7 +216,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           amount: customCost,
           isDebit: false,
           accountType: paymentMethod,
-          description: `Project Cost: ${costReason || 'Custom Cost'} (${project.name})`,
+          description: `Project Expense: ${expenseDesc}`,
           createdById: session.user.id,
           systemSource: "ERP"
         });

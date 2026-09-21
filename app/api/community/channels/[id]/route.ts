@@ -170,16 +170,37 @@ export async function DELETE(
       return NextResponse.json({ error: "Channel not found" }, { status: 404 });
     }
 
-    // Prevent deleting default channels
-    if (channel.name === "general" || channel.name === "announcements") {
-      return NextResponse.json({ error: "Default channels cannot be deleted" }, { status: 400 });
+    // Prevent deleting primary general channel
+    const defaultProtected = ["general"];
+    if (defaultProtected.includes(channel.name.toLowerCase())) {
+      return NextResponse.json({ error: "The default #general channel cannot be deleted" }, { status: 400 });
+    }
+
+    // Authorization check: Must be Owner, Admin, Super Admin, or the channel creator
+    const userRoleLower = (session.user.role || "").toLowerCase();
+    const isOwnerOrAdmin =
+      session.user.loginType === "ADMIN" ||
+      userRoleLower.includes("owner") ||
+      userRoleLower.includes("admin") ||
+      session.user.platformRole === "SUPER_ADMIN";
+
+    const isCreator = channel.createdById === session.user.id;
+
+    if (!isOwnerOrAdmin && !isCreator) {
+      return NextResponse.json(
+        { error: "Only the channel creator or company administrators can delete this channel" },
+        { status: 403 }
+      );
     }
 
     await db.communityChannel.delete({
       where: { id },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: `Channel #${channel.name} has been deleted successfully`,
+    });
   } catch (error) {
     console.error("Delete channel error:", error);
     return NextResponse.json({ error: "Failed to delete channel" }, { status: 500 });

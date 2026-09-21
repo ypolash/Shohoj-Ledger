@@ -208,7 +208,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, topic, type = "CHANNEL", isPrivate = false, memberIds = [] } = body;
+    const { name, topic, type = "CHANNEL", isPrivate = false, memberIds = [], selectedMembers = [] } = body;
 
     if (!name || typeof name !== "string") {
       return NextResponse.json({ error: "Channel name is required" }, { status: 400 });
@@ -242,19 +242,45 @@ export async function POST(request: Request) {
     const userName = session.user.name || "Anonymous";
     const userRole = session.user.role || "Staff";
 
-    // Prepare members to add
-    const membersToCreate: any[] = [{ userId, userName, userRole }];
+    // Prepare members to add, starting with the creator
+    const membersToCreate: any[] = [
+      {
+        userId,
+        userName,
+        userRole,
+        userAvatar: session.user.image || null,
+      },
+    ];
 
-    // If private or specific members selected, add them
-    if (Array.isArray(memberIds)) {
-      for (const mId of memberIds) {
-        if (mId && mId !== userId && !membersToCreate.some((m) => m.userId === mId)) {
-          membersToCreate.push({
-            userId: mId,
-            userName: "Member",
-            userRole: "Member",
-          });
+    // Helper map for rich details if selectedMembers array is supplied
+    const selectedMembersMap = new Map<string, any>();
+    if (Array.isArray(selectedMembers)) {
+      for (const sm of selectedMembers) {
+        if (sm?.id) {
+          selectedMembersMap.set(sm.id, sm);
         }
+      }
+    }
+
+    // Combine all target member IDs
+    const targetMemberIds = new Set<string>();
+    if (Array.isArray(memberIds)) {
+      memberIds.forEach((id) => id && targetMemberIds.add(id));
+    }
+    if (Array.isArray(selectedMembers)) {
+      selectedMembers.forEach((sm) => sm?.id && targetMemberIds.add(sm.id));
+    }
+
+    // Add selected members
+    for (const mId of targetMemberIds) {
+      if (mId && mId !== userId && !membersToCreate.some((m) => m.userId === mId)) {
+        const memDetail = selectedMembersMap.get(mId);
+        membersToCreate.push({
+          userId: mId,
+          userName: memDetail?.name || "Member",
+          userRole: memDetail?.role || "Member",
+          userAvatar: memDetail?.avatar || null,
+        });
       }
     }
 

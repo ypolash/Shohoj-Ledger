@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import { getSession } from "@/lib/session";
@@ -22,30 +22,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File size exceeds 50MB limit" }, { status: 400 });
     }
 
-    // Check type: PDF, Image, Doc
-    const allowedTypes = [
-      'application/pdf', 
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-      'image/jpeg', 
-      'image/png', 
-      'image/gif', 
-      'image/webp'
-    ];
-    
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type. Only PDF, Images, and Word documents are allowed." }, { status: 400 });
+    const originalName = (file.name || "file").replace(/[^a-zA-Z0-9.-]/g, '_');
+    const extension = path.extname(originalName).toLowerCase();
+
+    // Map common extensions to mime types
+    const mimeMap: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+      ".bmp": "image/bmp",
+      ".ico": "image/x-icon",
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".xls": "application/vnd.ms-excel",
+      ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ".txt": "text/plain",
+      ".csv": "text/csv",
+    };
+
+    const inferredType = (file.type && file.type !== "application/octet-stream")
+      ? file.type
+      : (mimeMap[extension] || "application/octet-stream");
+
+    // Allowed if type is recognized image, document, or has valid extension
+    const isImage = inferredType.startsWith("image/") || [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".ico"].includes(extension);
+    const isDoc = inferredType.startsWith("application/") || inferredType.startsWith("text/") || [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".csv"].includes(extension);
+
+    if (!isImage && !isDoc) {
+      return NextResponse.json({ error: "Invalid file type. Only Images, PDFs, and Documents are allowed." }, { status: 400 });
     }
+
+    // Ensure upload directory exists
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Generate unique filename
+    // Generate unique filename with normalized lowercase extension
     const uniqueId = crypto.randomUUID();
-    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // sanitize filename
-    const extension = path.extname(originalName);
-    const fileName = `${uniqueId}${extension}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    const finalExt = extension || (isImage ? ".jpg" : ".bin");
+    const fileName = `${uniqueId}${finalExt}`;
     const filePath = path.join(uploadDir, fileName);
 
     await writeFile(filePath, buffer);
@@ -56,12 +77,12 @@ export async function POST(request: Request) {
       success: true, 
       fileUrl, 
       name: file.name, 
-      type: file.type,
+      type: inferredType,
       size: file.size
     });
 
   } catch (error: any) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error?.message || "Internal server error" }, { status: 500 });
   }
 }

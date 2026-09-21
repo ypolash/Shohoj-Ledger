@@ -28,11 +28,37 @@ export async function POST(request: Request) {
     const uploadDir = path.join(process.cwd(), "public", "uploads", "community");
     await mkdir(uploadDir, { recursive: true });
 
+    // Clean name and lowercase extension
+    const cleanOriginalName = (file.name || "file").replace(/[^a-zA-Z0-9.-]/g, "_");
+    const rawExt = path.extname(cleanOriginalName);
+    const extension = rawExt ? rawExt.toLowerCase() : "";
+
+    const mimeMap: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".svg": "image/svg+xml",
+      ".bmp": "image/bmp",
+      ".ico": "image/x-icon",
+      ".pdf": "application/pdf",
+      ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".xls": "application/vnd.ms-excel",
+      ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ".txt": "text/plain",
+      ".csv": "text/csv",
+    };
+
+    const inferredType = (file.type && file.type !== "application/octet-stream")
+      ? (file.type === "image/jpg" ? "image/jpeg" : file.type)
+      : (mimeMap[extension] || "application/octet-stream");
+
     // Generate clean unique filename
     const uniqueId = crypto.randomUUID();
-    const cleanOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const extension = path.extname(cleanOriginalName);
-    const fileName = `${uniqueId}${extension}`;
+    const finalExt = extension || (inferredType.startsWith("image/") ? ".jpg" : "");
+    const fileName = `${uniqueId}${finalExt}`;
     const filePath = path.join(uploadDir, fileName);
 
     const bytes = await file.arrayBuffer();
@@ -45,7 +71,7 @@ export async function POST(request: Request) {
       success: true,
       fileUrl,
       fileName: file.name,
-      fileType: file.type || "application/octet-stream",
+      fileType: inferredType,
       fileSize: file.size,
     });
   } catch (error) {

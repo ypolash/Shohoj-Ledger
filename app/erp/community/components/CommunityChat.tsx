@@ -1451,9 +1451,14 @@ export function CommunityChat() {
                                       loading="lazy"
                                       onError={(e) => {
                                         const target = e.currentTarget;
-                                        target.style.display = "none";
-                                        if (target.parentElement) {
-                                          target.parentElement.innerHTML = `<div style="padding:12px; font-size:12px; color:#94a3b8; display:flex; align-items:center; gap:6px;"><span>📷</span><span>${att.fileName || "Image"} (Preview unavailable)</span></div>`;
+                                        if (!target.dataset.retried) {
+                                          target.dataset.retried = "true";
+                                          target.src = att.fileUrl.startsWith("/") ? att.fileUrl : `/${att.fileUrl}`;
+                                        } else {
+                                          target.style.display = "none";
+                                          if (target.parentElement) {
+                                            target.parentElement.innerHTML = `<div style="padding:12px; font-size:12px; color:#94a3b8; display:flex; align-items:center; gap:6px;"><span>🖼️</span><span style="font-weight:600;">${att.fileName || "Image"}</span></div>`;
+                                          }
                                         }
                                       }}
                                     />

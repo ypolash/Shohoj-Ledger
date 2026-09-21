@@ -18,6 +18,7 @@ export default function CustomerProjectPortalPage() {
 
   // Stage 6 Client Revision Submission State
   const [isRevisionFormOpen, setIsRevisionFormOpen] = useState(false);
+  const [isChatUnlocked, setIsChatUnlocked] = useState(false);
   const [revisionTitle, setRevisionTitle] = useState('');
   const [revisionNote, setRevisionNote] = useState('');
   const [revisionTimecode, setRevisionTimecode] = useState('');
@@ -282,9 +283,29 @@ export default function CustomerProjectPortalPage() {
         </section>
 
         {/* ====================================================================
-            STAGE 4 VIEW: SHOOTING & INTAKE (Products, Financials, Model & Schedule)
+            STAGE 1-2 VIEW: PROJECT INITIALIZATION & PREPARATION
             ==================================================================== */}
-        {currentStage <= 4 && (
+        {currentStage < 3 && (
+          <div className={styles.stageHeroBanner} style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(59,130,246,0.15) 100%)', borderColor: 'rgba(99,102,241,0.3)' }}>
+            <div className={styles.stageHeroLeft}>
+              <div className={styles.stageHeroIcon} style={{ background: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>pending_actions</span>
+              </div>
+              <div className={styles.stageHeroText}>
+                <h3>Project Preparation Active • Stage {currentStage}: {stageNames[currentStage] || 'Initial Setup'}</h3>
+                <p>Contract and advance payment logged. Live product intake and shoot scheduling will activate on Stage 3.</p>
+              </div>
+            </div>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#818cf8', padding: '6px 14px', borderRadius: '10px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
+              Preparing Production
+            </span>
+          </div>
+        )}
+
+        {/* ====================================================================
+            STAGE 3-4 VIEW: SHOOTING & INTAKE (Products, Financials, Model & Schedule)
+            ==================================================================== */}
+        {(currentStage === 3 || currentStage === 4) && (
           <>
             <div className={styles.stageHeroBanner}>
               <div className={styles.stageHeroLeft}>
@@ -607,7 +628,10 @@ export default function CustomerProjectPortalPage() {
                       {!isRevisionFormOpen && (
                         <button
                           type="button"
-                          onClick={() => setIsRevisionFormOpen(true)}
+                          onClick={() => {
+                            setIsRevisionFormOpen(true);
+                            setIsChatUnlocked(true);
+                          }}
                           className={styles.actionBtnPrimary}
                           style={{ background: isNextBillable ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}
                         >
@@ -723,16 +747,92 @@ export default function CustomerProjectPortalPage() {
                 })()}
               </div>
 
-              {/* Right Card: Interactive Revision Chat */}
+              {/* Right Card: Interactive Revision Chat or Locked State */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <RevisionChat
-                  projectId={projectId}
-                  currentUserRole="CLIENT"
-                  currentUserName={project.clientName || "Customer"}
-                  messages={project.revisionChat || []}
-                  demoFiles={demoData.demoFiles || []}
-                  onRefresh={fetchProjectData}
-                />
+                {demoData.approvalStatus === 'Approved' ? (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.25) 100%)',
+                    border: '1px solid rgba(52, 211, 153, 0.3)',
+                    borderRadius: '16px',
+                    padding: '36px 24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    minHeight: '380px',
+                    gap: '12px'
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#34d399' }}>check_circle</span>
+                    <h4 style={{ margin: 0, color: '#34d399', fontSize: '18px', fontWeight: 800 }}>Master Cut Approved!</h4>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', maxWidth: '320px', lineHeight: '1.5' }}>
+                      You have approved this deliverable as final master cut. Production chat is concluded and contract settlement is ready.
+                    </p>
+                  </div>
+                ) : !isChatUnlocked ? (
+                  <div style={{
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '16px',
+                    padding: '36px 24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    minHeight: '380px',
+                    gap: '12px'
+                  }}>
+                    <div style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: 'rgba(251, 191, 36, 0.12)',
+                      border: '1px solid rgba(251, 191, 36, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fbbf24'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>lock</span>
+                    </div>
+                    <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '16px', fontWeight: 700 }}>
+                      Revision Chat Locked
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', maxWidth: '320px', lineHeight: '1.5' }}>
+                      Live chat with the production editor is locked. To submit feedback, request timecoded changes, or discuss edits, please click the button below.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsChatUnlocked(true);
+                        setIsRevisionFormOpen(true);
+                      }}
+                      className={styles.actionBtnPrimary}
+                      style={{
+                        marginTop: '8px',
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 20px',
+                        fontSize: '13px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>lock_open</span>
+                      Request Revision & Unlock Chat
+                    </button>
+                  </div>
+                ) : (
+                  <RevisionChat
+                    projectId={projectId}
+                    currentUserRole="CLIENT"
+                    currentUserName={project.clientName || "Customer"}
+                    messages={project.revisionChat || []}
+                    demoFiles={demoData.demoFiles || []}
+                    onRefresh={fetchProjectData}
+                  />
+                )}
               </div>
             </div>
           </>

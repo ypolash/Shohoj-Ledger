@@ -20,6 +20,12 @@ export default function EditorLivePortalPage() {
   const [submittingDemo, setSubmittingDemo] = useState(false);
   const [demoSuccess, setDemoSuccess] = useState<string | null>(null);
 
+  // Stage 7 Final Video Upload State (CRM Only)
+  const [finalVideoUrl, setFinalVideoUrl] = useState('');
+  const [finalVideoNotes, setFinalVideoNotes] = useState('');
+  const [submittingFinalVideo, setSubmittingFinalVideo] = useState(false);
+  const [finalVideoSuccess, setFinalVideoSuccess] = useState<string | null>(null);
+
   const fetchProjectData = useCallback(async () => {
     if (!projectId) return;
     try {
@@ -28,6 +34,9 @@ export default function EditorLivePortalPage() {
       const data = await res.json();
       if (res.ok && data?.project) {
         setProject(data.project);
+        if (data.project.finalVideoUrl) {
+          setFinalVideoUrl(data.project.finalVideoUrl);
+        }
       } else {
         setError(data.error || 'Unable to load editor workspace');
       }
@@ -41,6 +50,39 @@ export default function EditorLivePortalPage() {
   useEffect(() => {
     fetchProjectData();
   }, [fetchProjectData]);
+
+  const handleSubmitFinalVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!finalVideoUrl.trim()) {
+      alert('Please enter the final video URL');
+      return;
+    }
+
+    setSubmittingFinalVideo(true);
+    setFinalVideoSuccess(null);
+    try {
+      const res = await fetch(`/api/portal/project/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SUBMIT_FINAL_VIDEO',
+          finalVideoUrl: finalVideoUrl.trim(),
+          notes: finalVideoNotes.trim()
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFinalVideoSuccess('✓ Final master video delivery link saved! (Synced directly to CRM)');
+        fetchProjectData();
+      } else {
+        alert(data.error || 'Failed to submit final video link');
+      }
+    } catch (err) {
+      alert('Network error submitting final video link');
+    } finally {
+      setSubmittingFinalVideo(false);
+    }
+  };
 
   const handleSubmitEditorDemo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +156,13 @@ export default function EditorLivePortalPage() {
   const demoData = project.demoData || {};
   const reviewData = project.reviewData || null;
   const editorRating = project.editorRating || null;
-  const revisions = project.revisions || [];
+  // Parse Stage 4 Raw Footage multi-links or legacy string
+  const rawFootageLinks: Array<{ id: string; label: string; url: string }> =
+    Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.length > 0
+      ? shootingData.rawFootageLinks
+      : shootingData.rawFootageUrl
+      ? [{ id: '1', label: 'Raw Shoot Footage', url: shootingData.rawFootageUrl }]
+      : [];
 
   // Parse multi-links or legacy string
   const workingFiles: Array<{ id: string; label: string; url: string }> = 
@@ -123,6 +171,8 @@ export default function EditorLivePortalPage() {
       : editingData.workingFileUrl
       ? [{ id: '1', label: 'Cloud Repository', url: editingData.workingFileUrl }]
       : [];
+
+  const isMasterCutApproved = demoData.approvalStatus === 'Approved' || currentStage >= 7;
 
   return (
     <div className={styles.portalContainer}>
@@ -228,25 +278,27 @@ export default function EditorLivePortalPage() {
               <div className={styles.cardHeader}>
                 <h4 className={styles.cardTitle}>
                   <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>folder_open</span>
-                  Project Assets & Cloud Repositories ({workingFiles.filter(f => f.url).length + (shootingData.rawFootageUrl ? 1 : 0)})
+                  Project Assets & Cloud Repositories ({workingFiles.filter(f => f.url).length + rawFootageLinks.filter(f => f.url).length})
                 </h4>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {/* Raw Footage Link from Stage 4 */}
-                {shootingData.rawFootageUrl ? (
-                  <div className={styles.linkItem}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span className="material-symbols-outlined" style={{ color: '#f472b6', fontSize: '20px' }}>cloud_download</span>
-                      <div>
-                        <strong style={{ fontSize: '13px', color: '#f8fafc' }}>Raw Shoot Footage Repository</strong>
-                        <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>Camera footage & audio takes from Stage 4</span>
+                {/* Raw Footage Links from Stage 4 */}
+                {rawFootageLinks.length > 0 && rawFootageLinks.some(f => f.url) ? (
+                  rawFootageLinks.filter(f => f.url).map((rf, idx) => (
+                    <div key={rf.id || idx} className={styles.linkItem}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="material-symbols-outlined" style={{ color: '#f472b6', fontSize: '20px' }}>cloud_download</span>
+                        <div>
+                          <strong style={{ fontSize: '13px', color: '#f8fafc' }}>{rf.label || `Raw Shoot Footage #${idx + 1}`}</strong>
+                          <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>Camera footage & audio takes from Stage 4</span>
+                        </div>
                       </div>
+                      <a href={rf.url} target="_blank" rel="noopener noreferrer" className={styles.linkBtn} style={{ background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' }}>
+                        Open Raw Assets ↗
+                      </a>
                     </div>
-                    <a href={shootingData.rawFootageUrl} target="_blank" rel="noopener noreferrer" className={styles.linkBtn} style={{ background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' }}>
-                      Open Raw Assets ↗
-                    </a>
-                  </div>
+                  ))
                 ) : (
                   <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '12px', color: '#94a3b8' }}>
                     No raw footage cloud link logged yet.
@@ -276,116 +328,250 @@ export default function EditorLivePortalPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Upload Completed Demo Cut, Live Revisions & Ratings */}
+          {/* RIGHT COLUMN: Upload Completed Demo Cut, Live Revisions & Final Video Master Sync */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Share Completed Video Cut Box */}
-            <div className={styles.portalCard}>
-              <div className={styles.cardHeader}>
-                <h4 className={styles.cardTitle}>
-                  <span className="material-symbols-outlined" style={{ color: '#10b981' }}>cloud_upload</span>
-                  Share Completed Cut / Master Video Link
-                </h4>
-              </div>
-
-              <form onSubmit={handleSubmitEditorDemo} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
-                  Paste your completed video export or review link below (e.g. Frame.io, Google Drive, Dropbox, Vimeo). It will immediately sync to CRM Stage 6 and the Customer Portal.
-                </p>
-
-                {demoSuccess && (
-                  <div className={styles.successBanner}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span>
-                    <span>{demoSuccess}</span>
+            {/* MASTER CUT APPROVED STATE */}
+            {isMasterCutApproved ? (
+              <>
+                {/* Project Complete Banner */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.35) 100%)',
+                  border: '1px solid rgba(52, 211, 153, 0.4)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      border: '1px solid rgba(52, 211, 153, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#34d399',
+                      flexShrink: 0
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '30px' }}>verified</span>
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, color: '#34d399', fontSize: '18px', fontWeight: 800 }}>
+                        Master Cut Approved — Project Complete! 🎉
+                      </h3>
+                      <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.4' }}>
+                        The client has approved the final master cut. The revision chat is concluded. Please submit the final delivery video link below.
+                      </p>
+                    </div>
                   </div>
-                )}
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
-                    Demo / Export Label *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Hero Video v1.0 (Color Graded & Sound Mastered)"
-                    value={demoName}
-                    onChange={(e) => setDemoName(e.target.value)}
-                    className={styles.inputField}
-                  />
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
-                    Completed File / Video URL *
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="e.g. https://frame.io/project/review-link"
-                    value={demoUrl}
-                    onChange={(e) => setDemoUrl(e.target.value)}
-                    className={styles.inputField}
-                  />
-                </div>
+                {/* Final Video Master Delivery Link Box (CRM ONLY) */}
+                <div className={styles.portalCard} style={{ borderColor: 'rgba(56, 189, 248, 0.4)', background: 'rgba(15, 23, 42, 0.85)' }}>
+                  <div className={styles.cardHeader}>
+                    <h4 className={styles.cardTitle}>
+                      <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>cloud_done</span>
+                      Final Master Video Upload Link
+                    </h4>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700, border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                      🔒 Synced to CRM Only
+                    </span>
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
-                    Editor Technical Notes & Changelog (Optional)
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="e.g. Applied film LUT #3, dialogue cleaned, subtitles synced. Ready for client review."
-                    value={editorNotes}
-                    onChange={(e) => setEditorNotes(e.target.value)}
-                    className={styles.textareaField}
-                  />
-                </div>
+                  <form onSubmit={handleSubmitFinalVideo} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
+                      Provide the final full-resolution export link (e.g. Google Drive, Dropbox, Frame.io Master ProRes). This link is stored <strong>strictly in the internal CRM</strong> and will not be displayed on the customer link.
+                    </p>
 
-                <button
-                  type="submit"
-                  disabled={submittingDemo}
-                  className={styles.submitBtn}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                    {submittingDemo ? 'hourglass_empty' : 'send'}
-                  </span>
-                  {submittingDemo ? 'Submitting to CRM & Client...' : '🚀 Submit Cut to Review Pipeline'}
-                </button>
-              </form>
-
-              {/* Previously Shared Cuts List */}
-              {demoData.demoFiles && demoData.demoFiles.length > 0 && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                    Delivered Cuts in Pipeline ({demoData.demoFiles.length})
-                  </span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                    {demoData.demoFiles.map((file: any) => (
-                      <div key={file.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: '8px', fontSize: '12px' }}>
-                        <div>
-                          <strong style={{ color: '#f8fafc', display: 'block' }}>{file.name}</strong>
-                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>Uploaded {file.date} {file.uploadedBy ? `by ${file.uploadedBy}` : ''}</span>
-                        </div>
-                        <a href={file.url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', textDecoration: 'none', fontWeight: 600, fontSize: '11px' }}>
-                          View ↗
-                        </a>
+                    {finalVideoSuccess && (
+                      <div className={styles.successBanner} style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(52, 211, 153, 0.4)', color: '#34d399' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span>
+                        <span>{finalVideoSuccess}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                    )}
 
-            {/* Live Customer & Studio Revision Chat Thread (Stage 6) */}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <RevisionChat
-                projectId={projectId}
-                currentUserRole="EDITOR"
-                currentUserName={shootingData.assignedEditorName || "Lead Editor"}
-                messages={project.revisionChat || []}
-                demoFiles={demoData.demoFiles || []}
-                onRefresh={fetchProjectData}
-              />
-            </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                        Final Master Video Delivery URL *
+                      </label>
+                      <input
+                        type="url"
+                        required
+                        placeholder="https://drive.google.com/... or https://dropbox.com/... (Master 4K/ProRes)"
+                        value={finalVideoUrl}
+                        onChange={(e) => setFinalVideoUrl(e.target.value)}
+                        className={styles.inputField}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                        Delivery Notes / Technical Specs (Optional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g. Master ProRes 422 HQ + Clean Subtitles SRT included in folder."
+                        value={finalVideoNotes}
+                        onChange={(e) => setFinalVideoNotes(e.target.value)}
+                        className={styles.textareaField}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <button
+                        type="submit"
+                        disabled={submittingFinalVideo}
+                        className={styles.submitBtn}
+                        style={{ flex: 1, background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                          {submittingFinalVideo ? 'hourglass_empty' : 'cloud_upload'}
+                        </span>
+                        {submittingFinalVideo ? 'Saving to CRM...' : finalVideoUrl ? 'Update Final Video Delivery Link' : 'Save Final Master Delivery Link'}
+                      </button>
+
+                      {finalVideoUrl && (
+                        <a
+                          href={finalVideoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            color: '#38bdf8',
+                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            textDecoration: 'none',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Open ↗
+                        </a>
+                      )}
+                    </div>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Share Completed Video Cut Box */}
+                <div className={styles.portalCard}>
+                  <div className={styles.cardHeader}>
+                    <h4 className={styles.cardTitle}>
+                      <span className="material-symbols-outlined" style={{ color: '#10b981' }}>cloud_upload</span>
+                      Share Completed Cut / Master Video Link
+                    </h4>
+                  </div>
+
+                  <form onSubmit={handleSubmitEditorDemo} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
+                      Paste your completed video export or review link below (e.g. Frame.io, Google Drive, Dropbox, Vimeo). It will immediately sync to CRM Stage 6 and the Customer Portal.
+                    </p>
+
+                    {demoSuccess && (
+                      <div className={styles.successBanner}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span>
+                        <span>{demoSuccess}</span>
+                      </div>
+                    )}
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                        Demo / Export Label *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Hero Video v1.0 (Color Graded & Sound Mastered)"
+                        value={demoName}
+                        onChange={(e) => setDemoName(e.target.value)}
+                        className={styles.inputField}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                        Completed File / Video URL *
+                      </label>
+                      <input
+                        type="url"
+                        required
+                        placeholder="e.g. https://frame.io/project/review-link"
+                        value={demoUrl}
+                        onChange={(e) => setDemoUrl(e.target.value)}
+                        className={styles.inputField}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                        Editor Technical Notes & Changelog (Optional)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="e.g. Applied film LUT #3, dialogue cleaned, subtitles synced. Ready for client review."
+                        value={editorNotes}
+                        onChange={(e) => setEditorNotes(e.target.value)}
+                        className={styles.textareaField}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submittingDemo}
+                      className={styles.submitBtn}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                        {submittingDemo ? 'hourglass_empty' : 'send'}
+                      </span>
+                      {submittingDemo ? 'Submitting to CRM & Client...' : '🚀 Submit Cut to Review Pipeline'}
+                    </button>
+                  </form>
+
+                  {/* Previously Shared Cuts List */}
+                  {demoData.demoFiles && demoData.demoFiles.length > 0 && (
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px', marginTop: '4px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                        Delivered Cuts in Pipeline ({demoData.demoFiles.length})
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                        {demoData.demoFiles.map((file: any) => (
+                          <div key={file.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: '8px', fontSize: '12px' }}>
+                            <div>
+                              <strong style={{ color: '#f8fafc', display: 'block' }}>{file.name}</strong>
+                              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Uploaded {file.date} {file.uploadedBy ? `by ${file.uploadedBy}` : ''}</span>
+                            </div>
+                            <a href={file.url} target="_blank" rel="noopener noreferrer" style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', textDecoration: 'none', fontWeight: 600, fontSize: '11px' }}>
+                              View ↗
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Live Customer & Studio Revision Chat Thread (Stage 6) */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <RevisionChat
+                    projectId={projectId}
+                    currentUserRole="EDITOR"
+                    currentUserName={shootingData.assignedEditorName || "Lead Editor"}
+                    messages={project.revisionChat || []}
+                    demoFiles={demoData.demoFiles || []}
+                    onRefresh={fetchProjectData}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Performance Rating & Review (Stage 7 / Completion) */}
             {(reviewData || editorRating || currentStage === 7) && (

@@ -139,6 +139,7 @@ export async function GET(
         },
         reviewData: parsedMeta?.reviewData || null,
         editorRating: parsedMeta?.editorRating || null,
+        finalVideoUrl: parsedMeta?.finalVideoUrl || parsedMeta?.editingData?.finalVideoUrl || parsedMeta?.demoData?.finalVideoUrl || null,
         revisions: revisionsList,
         revisionChat: parsedMeta?.revisionChat || []
       }
@@ -360,6 +361,24 @@ export async function POST(
         feedback: feedback?.trim() || '',
         ratedBy: ratedBy?.trim() || 'Studio Team',
         submittedAt: new Date().toISOString()
+      };
+    } else if (action === 'SUBMIT_FINAL_VIDEO') {
+      const { finalVideoUrl, notes } = body;
+      if (!finalVideoUrl?.trim()) {
+        return NextResponse.json({ error: 'Final video URL is required' }, { status: 400 });
+      }
+
+      parsedMeta.finalVideoUrl = finalVideoUrl.trim();
+      parsedMeta.editingData = {
+        ...(parsedMeta.editingData || {}),
+        finalVideoUrl: finalVideoUrl.trim(),
+        finalVideoNotes: notes?.trim() || '',
+        status: 'Master Cut Delivered'
+      };
+      parsedMeta.demoData = {
+        ...(parsedMeta.demoData || {}),
+        finalVideoUrl: finalVideoUrl.trim(),
+        approvalStatus: 'Approved'
       };
     } else {
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });

@@ -114,6 +114,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [productData, setProductData] = useState<{
     projectType: 'product' | 'service';
     productsList: Array<{ id: string; name: string; quantity: string; condition: string; notes?: string }>;
+    scripts: Array<{ id: string; title: string; content?: string; url?: string }>;
     received: boolean;
     productName: string;
     quantity: string;
@@ -132,6 +133,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   }>({
     projectType: 'product',
     productsList: [],
+    scripts: [],
     received: true,
     productName: '',
     quantity: '',
@@ -156,11 +158,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     notes: ''
   });
 
+  const [newScriptForm, setNewScriptForm] = useState({
+    title: '',
+    content: '',
+    url: ''
+  });
+
   // Stage 4 Shooting State
   const [shootingData, setShootingData] = useState<{
     status: string; // 'Scheduled' | 'In Progress' | 'Wrapped'
     shootingNotes: string;
     rawFootageUrl: string;
+    rawFootageLinks: Array<{ id: string; label: string; url: string }>;
     assignedEditorId: string;
     assignedEditorName: string;
     editorInstructions: string;
@@ -172,6 +181,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     status: 'Scheduled', // 'Scheduled' | 'In Progress' | 'Wrapped'
     shootingNotes: '',
     rawFootageUrl: '',
+    rawFootageLinks: [],
     assignedEditorId: '',
     assignedEditorName: '',
     editorInstructions: '',
@@ -188,6 +198,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     deliverableSpecs: string;
     workingFileUrl: string;
     workingFiles: Array<{ id: string; label: string; url: string }>;
+    finalVideoUrl?: string;
+    finalVideoNotes?: string;
   }>({
     status: 'In Progress', // 'Ingesting' | 'Rough Cut' | 'Color Grading' | 'Review Ready'
     editorNotes: '',
@@ -195,7 +207,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     workingFileUrl: '',
     workingFiles: [
       { id: '1', label: 'Frame.io Project Link', url: '' }
-    ]
+    ],
+    finalVideoUrl: '',
+    finalVideoNotes: ''
   });
 
   // Stage 6 Demo & Revision State
@@ -366,6 +380,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
               }
               if (parsed.productData) {
                 const pData = parsed.productData;
+                if (!pData.scripts || !Array.isArray(pData.scripts)) {
+                  pData.scripts = pData.script ? [{ id: '1', title: 'Main Script', content: pData.script }] : [];
+                }
                 if ((!pData.productsList || pData.productsList.length === 0) && pData.productName) {
                   pData.productsList = [{
                     id: 'legacy-1',
@@ -377,9 +394,19 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 }
                 setProductData(prev => ({ ...prev, ...pData }));
               }
-              if (parsed.shootingData) setShootingData(prev => ({ ...prev, ...parsed.shootingData }));
+              if (parsed.shootingData) {
+                const sData = parsed.shootingData;
+                if (!sData.rawFootageLinks || !Array.isArray(sData.rawFootageLinks) || sData.rawFootageLinks.length === 0) {
+                  sData.rawFootageLinks = sData.rawFootageUrl
+                    ? [{ id: '1', label: 'Raw Shoot Footage (Cloud / NAS)', url: sData.rawFootageUrl }]
+                    : [];
+                }
+                setShootingData(prev => ({ ...prev, ...sData }));
+              }
               if (parsed.editingData) {
                 const eData = parsed.editingData;
+                const finalVid = parsed.finalVideoUrl || eData.finalVideoUrl || parsed.demoData?.finalVideoUrl || '';
+                if (finalVid) eData.finalVideoUrl = finalVid;
                 if (!eData.workingFiles || !Array.isArray(eData.workingFiles) || eData.workingFiles.length === 0) {
                   eData.workingFiles = eData.workingFileUrl
                     ? [{ id: '1', label: 'Frame.io / Cloud Link', url: eData.workingFileUrl }]
@@ -388,12 +415,15 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 setEditingData(prev => ({ ...prev, ...eData }));
               }
               if (parsed.demoData) {
+                const dData = parsed.demoData;
+                const finalVid = parsed.finalVideoUrl || parsed.editingData?.finalVideoUrl || dData.finalVideoUrl || '';
+                if (finalVid) dData.finalVideoUrl = finalVid;
                 setDemoData(prev => ({
                   ...prev,
-                  ...parsed.demoData,
-                  freeRevisionsIncluded: parsed.demoData.freeRevisionsIncluded !== undefined ? Number(parsed.demoData.freeRevisionsIncluded) : 2,
-                  costPerRevision: parsed.demoData.costPerRevision !== undefined ? Number(parsed.demoData.costPerRevision) : 1000,
-                  isSpecialCustomerFree: Boolean(parsed.demoData.isSpecialCustomerFree)
+                  ...dData,
+                  freeRevisionsIncluded: dData.freeRevisionsIncluded !== undefined ? Number(dData.freeRevisionsIncluded) : 2,
+                  costPerRevision: dData.costPerRevision !== undefined ? Number(dData.costPerRevision) : 1000,
+                  isSpecialCustomerFree: Boolean(dData.isSpecialCustomerFree)
                 }));
               }
               if (parsed.revisions) setClientRevisions(parsed.revisions);
@@ -1310,22 +1340,24 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
             </Link>
 
             <div className={styles.headerActionGroup}>
-              {/* Customer Short Link Share Button */}
-              <button
-                type="button"
-                onClick={() => setIsShareModalOpen(true)}
-                className={styles.editBtn}
-                title="Share Customer Live Tracking Short Link"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
-                  borderColor: '#a855f7',
-                  color: '#e9d5ff',
-                  fontWeight: 700
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>share</span>
-                Customer Short Link
-              </button>
+              {/* Customer Short Link Share Button (Visible only from Stage 3 and vanishes on complete) */}
+              {currentStage >= 3 && currentStage < 7 && (
+                <button
+                  type="button"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className={styles.editBtn}
+                  title="Share Customer Live Tracking Short Link"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
+                    borderColor: '#a855f7',
+                    color: '#e9d5ff',
+                    fontWeight: 700
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>share</span>
+                  Customer Short Link
+                </button>
+              )}
 
               {/* Edit Project Button */}
               <button
@@ -2590,6 +2622,187 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               </div>
 
+              {/* Creative Script & Storyboard Management Card (Multiple Scripts System) */}
+              <div className={styles.stageCard} style={{ marginTop: '16px', border: '1px solid rgba(251, 191, 36, 0.25)', background: 'rgba(251, 191, 36, 0.02)' }}>
+                <div className={styles.stageCardHeader}>
+                  <h3 className={styles.stageCardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>description</span>
+                    Creative Script & Storyboard Management (Multiple Scripts)
+                  </h3>
+                  <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 600 }}>
+                    {productData.scripts?.length || 0} Scripts Saved
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.4' }}>
+                    Add voiceover scripts, shot-by-shot storyboards, scene dialogues, or external Google Docs/Notion links for production crew and client reference.
+                  </p>
+
+                  {/* New Script Input Box */}
+                  <div style={{
+                    padding: '14px',
+                    background: 'rgba(0, 0, 0, 0.35)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
+                      <div className={styles.stageField}>
+                        <label>Script Title / Scene / Version *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Master Hook Script v1.0 / Scene 1-4 Voiceover"
+                          value={newScriptForm.title}
+                          onChange={(e) => setNewScriptForm(prev => ({ ...prev, title: e.target.value }))}
+                          className={styles.stageInput}
+                          style={{ paddingLeft: '12px' }}
+                        />
+                      </div>
+
+                      <div className={styles.stageField}>
+                        <label>Script Cloud / Document Link (Optional)</label>
+                        <div className={styles.stageInputWrapper}>
+                          <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>link</span>
+                          <input
+                            type="url"
+                            placeholder="e.g. https://docs.google.com/document/d/..."
+                            value={newScriptForm.url}
+                            onChange={(e) => setNewScriptForm(prev => ({ ...prev, url: e.target.value }))}
+                            className={styles.stageInput}
+                            style={{ fontSize: '12px' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.stageField}>
+                      <label>Script Content / Dialogue / Storyboard Notes</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Paste full script text, dialogue cues, character prompts, or voiceover lines here..."
+                        value={newScriptForm.content}
+                        onChange={(e) => setNewScriptForm(prev => ({ ...prev, content: e.target.value }))}
+                        className={styles.stageTextarea}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newScriptForm.title.trim() && !newScriptForm.content.trim() && !newScriptForm.url.trim()) {
+                          showToast("Please enter a script title or content");
+                          return;
+                        }
+                        const newScript = {
+                          id: Date.now().toString(),
+                          title: newScriptForm.title.trim() || `Script #${(productData.scripts?.length || 0) + 1}`,
+                          content: newScriptForm.content.trim(),
+                          url: newScriptForm.url.trim()
+                        };
+                        const updatedScripts = [...(productData.scripts || []), newScript];
+                        const updated = { ...productData, scripts: updatedScripts };
+                        setProductData(updated);
+                        saveWorkflowState(currentStage, completedStages, { product: updated });
+                        setNewScriptForm({ title: '', content: '', url: '' });
+                        showToast("✓ Script added successfully! You can add multiple scripts.");
+                      }}
+                      className={styles.addProductBtn}
+                      style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', alignSelf: 'flex-start' }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
+                      + Save Script & Add Another
+                    </button>
+                  </div>
+
+                  {/* Saved Scripts List */}
+                  {productData.scripts && productData.scripts.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Saved Scripts ({productData.scripts.length})
+                      </span>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '10px' }}>
+                        {productData.scripts.map((script, idx) => (
+                          <div
+                            key={script.id || idx}
+                            style={{
+                              padding: '12px 14px',
+                              background: 'rgba(0, 0, 0, 0.3)',
+                              border: '1px solid rgba(251, 191, 36, 0.2)',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fbbf24' }}>description</span>
+                                {script.title || `Script #${idx + 1}`}
+                              </strong>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {script.url && (
+                                  <a
+                                    href={script.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      padding: '3px 8px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(56, 189, 248, 0.15)',
+                                      color: '#38bdf8',
+                                      fontSize: '11px',
+                                      textDecoration: 'none',
+                                      fontWeight: 600,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '2px'
+                                    }}
+                                  >
+                                    Open Link ↗
+                                  </a>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedScripts = (productData.scripts || []).filter((_, i) => i !== idx);
+                                    const updated = { ...productData, scripts: updatedScripts };
+                                    setProductData(updated);
+                                    saveWorkflowState(currentStage, completedStages, { product: updated });
+                                    showToast("Script removed");
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#ef4444',
+                                    cursor: 'pointer',
+                                    padding: '2px',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                  title="Delete script"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {script.content && (
+                              <p style={{ margin: 0, fontSize: '12px', color: '#cbd5e1', whiteSpace: 'pre-line', maxHeight: '120px', overflowY: 'auto', background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '6px' }}>
+                                {script.content}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Validation Warning Alert in Stage 3 */}
               {stage3ValidationError && (
                 <div className={styles.warningAlert} style={{ marginTop: '14px', borderColor: '#ef4444', background: 'rgba(239, 68, 68, 0.14)' }}>
@@ -2789,19 +3002,153 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
 
                     <div className={styles.stageField}>
-                      <label>Raw Footage Storage Link (Cloud / NAS Drive)</label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>cloud_download</span>
-                        <input
-                          type="url"
-                          placeholder="e.g. https://drive.google.com/drive/folders/raw-shoot-files"
-                          value={shootingData.rawFootageUrl}
-                          onChange={(e) => {
-                            const updated = { ...shootingData, rawFootageUrl: e.target.value };
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <label>Raw Footage Storage Links (Cloud / NAS Drive)</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentLinks = Array.isArray(shootingData.rawFootageLinks) ? shootingData.rawFootageLinks : [];
+                            const updatedLinks = [
+                              ...currentLinks,
+                              { id: String(Date.now()), label: '', url: '' }
+                            ];
+                            const updated = { ...shootingData, rawFootageLinks: updatedLinks };
                             setShootingData(updated);
+                            saveWorkflowState(currentStage, completedStages, { shooting: updated });
                           }}
-                          className={styles.stageInput}
-                        />
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            background: 'rgba(244, 114, 182, 0.15)',
+                            border: '1px solid rgba(244, 114, 182, 0.35)',
+                            color: '#f472b6',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add</span>
+                          + Add Raw Link
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {(Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.length > 0
+                          ? shootingData.rawFootageLinks
+                          : [{ id: '1', label: 'Primary Raw Footage Link', url: shootingData.rawFootageUrl || '' }]
+                        ).map((rf, idx) => (
+                          <div
+                            key={rf.id || idx}
+                            style={{
+                              padding: '8px 10px',
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                placeholder="Label (e.g. Cam A 4K Card 1 / Audio Stems / NAS Backup)"
+                                value={rf.label}
+                                onChange={(e) => {
+                                  const currentLinks = Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.length > 0
+                                    ? [...shootingData.rawFootageLinks]
+                                    : [{ id: '1', label: 'Primary Raw Footage Link', url: shootingData.rawFootageUrl || '' }];
+                                  currentLinks[idx] = { ...currentLinks[idx], label: e.target.value };
+                                  const updated = {
+                                    ...shootingData,
+                                    rawFootageLinks: currentLinks,
+                                    rawFootageUrl: currentLinks[0]?.url || ''
+                                  };
+                                  setShootingData(updated);
+                                }}
+                                className={styles.stageInput}
+                                style={{ flex: 1, paddingLeft: '8px', fontSize: '12px' }}
+                              />
+
+                              {rf.url && (
+                                <a
+                                  href={rf.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(244, 114, 182, 0.15)',
+                                    color: '#f472b6',
+                                    fontSize: '11px',
+                                    textDecoration: 'none',
+                                    fontWeight: 600,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  Open ↗
+                                </a>
+                              )}
+
+                              {(shootingData.rawFootageLinks?.length || 1) > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentLinks = (shootingData.rawFootageLinks || []).filter((_, i) => i !== idx);
+                                    const updated = {
+                                      ...shootingData,
+                                      rawFootageLinks: currentLinks,
+                                      rawFootageUrl: currentLinks[0]?.url || ''
+                                    };
+                                    setShootingData(updated);
+                                    saveWorkflowState(currentStage, completedStages, { shooting: updated });
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#ef4444',
+                                    cursor: 'pointer',
+                                    padding: '2px',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                  title="Remove Link"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className={styles.stageInputWrapper}>
+                              <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>cloud_download</span>
+                              <input
+                                type="url"
+                                placeholder="https://drive.google.com/... or https://dropbox.com/... or NAS link"
+                                value={rf.url}
+                                onChange={(e) => {
+                                  const currentLinks = Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.length > 0
+                                    ? [...shootingData.rawFootageLinks]
+                                    : [{ id: '1', label: 'Primary Raw Footage Link', url: shootingData.rawFootageUrl || '' }];
+                                  currentLinks[idx] = { ...currentLinks[idx], url: e.target.value };
+                                  const updated = {
+                                    ...shootingData,
+                                    rawFootageLinks: currentLinks,
+                                    rawFootageUrl: currentLinks[0]?.url || ''
+                                  };
+                                  setShootingData(updated);
+                                }}
+                                className={styles.stageInput}
+                                style={{ fontSize: '12px' }}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
@@ -2999,6 +3346,59 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               </div>
 
+              {/* Saved Stage 4 Raw Footage Repositories Reference Banner */}
+              {((Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.filter(f => f.url).length > 0) || shootingData.rawFootageUrl) && (
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '14px 18px',
+                  background: 'rgba(236, 72, 153, 0.08)',
+                  border: '1px solid rgba(236, 72, 153, 0.25)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                    <strong style={{ fontSize: '13px', color: '#f472b6', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>cloud_download</span>
+                      Saved Stage 4 Raw Shoot Footage Repositories ({Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.filter(f => f.url).length > 0 ? shootingData.rawFootageLinks.filter(f => f.url).length : (shootingData.rawFootageUrl ? 1 : 0)})
+                    </strong>
+                    <span style={{ fontSize: '11px', color: '#cbd5e1' }}>Direct links for Editor Ingest</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {(Array.isArray(shootingData.rawFootageLinks) && shootingData.rawFootageLinks.length > 0
+                      ? shootingData.rawFootageLinks.filter(f => f.url)
+                      : shootingData.rawFootageUrl
+                      ? [{ id: '1', label: 'Primary Raw Footage', url: shootingData.rawFootageUrl }]
+                      : []
+                    ).map((rf, i) => (
+                      <a
+                        key={rf.id || i}
+                        href={rf.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(236, 72, 153, 0.15)',
+                          border: '1px solid rgba(236, 72, 153, 0.3)',
+                          color: '#fbcfe8',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#f472b6' }}>folder_zip</span>
+                        {rf.label || `Raw Footage #${i + 1}`} ↗
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className={styles.stageGrid2}>
                 {/* Left Card: Editor Notes & Format Specifications */}
                 <div className={styles.stageCard}>
@@ -3048,143 +3448,64 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
 
-                {/* Right Card: Working Project Cloud Repository (Multi-Links) & Editor Short Link */}
+                {/* Right Card: Working Project Cloud Repository & Editor Short Link */}
                 <div className={styles.stageCard}>
                   <div className={styles.stageCardHeader}>
                     <h3 className={styles.stageCardTitle}>
                       <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>folder_open</span>
                       Working Project Cloud Repository (Frame.io / Dropbox)
                     </h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const currentLinks = Array.isArray(editingData.workingFiles) ? editingData.workingFiles : [];
-                        const updatedLinks = [
-                          ...currentLinks,
-                          { id: String(Date.now()), label: '', url: '' }
-                        ];
-                        const updated = { ...editingData, workingFiles: updatedLinks };
-                        setEditingData(updated);
-                        saveWorkflowState(currentStage, completedStages, { editing: updated });
-                      }}
-                      className={styles.advanceBtn}
-                      style={{ padding: '4px 10px', fontSize: '11px', background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)' }}
-                    >
-                      + Add More Link
-                    </button>
+                    {editingData.workingFileUrl && (
+                      <a
+                        href={editingData.workingFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          background: 'rgba(56, 189, 248, 0.15)',
+                          color: '#38bdf8',
+                          fontSize: '11px',
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        Open Repository ↗
+                      </a>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-                      Add external repositories, Frame.io review bins, RAW asset folders, or Dropbox links for the editor:
+                      Working project cloud repository for the editor (e.g. Frame.io bin, Dropbox project folder, or cloud project files):
                     </p>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {(Array.isArray(editingData.workingFiles) && editingData.workingFiles.length > 0
-                        ? editingData.workingFiles
-                        : [{ id: '1', label: 'Frame.io Project Link', url: editingData.workingFileUrl || '' }]
-                      ).map((linkItem, idx) => (
-                        <div
-                          key={linkItem.id || idx}
-                          style={{
-                            padding: '10px 12px',
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px'
+                    <div className={styles.stageField}>
+                      <label>Working Project Cloud Repository Link</label>
+                      <div className={styles.stageInputWrapper}>
+                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>folder_shared</span>
+                        <input
+                          type="url"
+                          placeholder="https://frame.io/... or https://dropbox.com/..."
+                          value={editingData.workingFileUrl || (Array.isArray(editingData.workingFiles) ? editingData.workingFiles[0]?.url : '') || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const updated = {
+                              ...editingData,
+                              workingFileUrl: val,
+                              workingFiles: [{ id: '1', label: 'Working Project Cloud Repository', url: val }]
+                            };
+                            setEditingData(updated);
+                            saveWorkflowState(currentStage, completedStages, { editing: updated });
                           }}
-                        >
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <input
-                              type="text"
-                              placeholder="Link Title (e.g. Frame.io Project Review / Dropbox)"
-                              value={linkItem.label}
-                              onChange={(e) => {
-                                const currentLinks = Array.isArray(editingData.workingFiles) && editingData.workingFiles.length > 0
-                                  ? [...editingData.workingFiles]
-                                  : [{ id: '1', label: 'Frame.io Project Link', url: editingData.workingFileUrl || '' }];
-                                currentLinks[idx] = { ...currentLinks[idx], label: e.target.value };
-                                const updated = { ...editingData, workingFiles: currentLinks };
-                                setEditingData(updated);
-                              }}
-                              className={styles.stageInput}
-                              style={{ flex: 1, paddingLeft: '10px', fontSize: '12px' }}
-                            />
-
-                            {linkItem.url && (
-                              <a
-                                href={linkItem.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  padding: '6px 10px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(56, 189, 248, 0.15)',
-                                  color: '#38bdf8',
-                                  fontSize: '11px',
-                                  textDecoration: 'none',
-                                  fontWeight: 600,
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                Open ↗
-                              </a>
-                            )}
-
-                            {(editingData.workingFiles?.length || 1) > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const currentLinks = (editingData.workingFiles || []).filter((_, i) => i !== idx);
-                                  const updated = { ...editingData, workingFiles: currentLinks };
-                                  setEditingData(updated);
-                                  saveWorkflowState(currentStage, completedStages, { editing: updated });
-                                }}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#ef4444',
-                                  cursor: 'pointer',
-                                  padding: '4px',
-                                  display: 'flex',
-                                  alignItems: 'center'
-                                }}
-                                title="Remove Link"
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
-                              </button>
-                            )}
-                          </div>
-
-                          <div className={styles.stageInputWrapper}>
-                            <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>link</span>
-                            <input
-                              type="url"
-                              placeholder="https://frame.io/... or https://dropbox.com/..."
-                              value={linkItem.url}
-                              onChange={(e) => {
-                                const currentLinks = Array.isArray(editingData.workingFiles) && editingData.workingFiles.length > 0
-                                  ? [...editingData.workingFiles]
-                                  : [{ id: '1', label: 'Frame.io Project Link', url: editingData.workingFileUrl || '' }];
-                                currentLinks[idx] = { ...currentLinks[idx], url: e.target.value };
-                                const updated = {
-                                  ...editingData,
-                                  workingFiles: currentLinks,
-                                  workingFileUrl: currentLinks[0]?.url || ''
-                                };
-                                setEditingData(updated);
-                              }}
-                              className={styles.stageInput}
-                              style={{ fontSize: '12px' }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                          className={styles.stageInput}
+                          style={{ fontSize: '12px' }}
+                        />
+                      </div>
                     </div>
 
                     {/* Dedicated Editor Short Link Box */}
@@ -3324,6 +3645,52 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   Complete Project
                 </button>
               </div>
+
+              {/* Final Master Video Delivery Link Banner (Submitted by Editor) */}
+              {(editingData.finalVideoUrl || demoData.finalVideoUrl) && (
+                <div style={{
+                  marginBottom: '14px',
+                  padding: '14px 18px',
+                  background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.15) 0%, rgba(3, 105, 161, 0.25) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '10px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '26px' }}>movie</span>
+                    <div>
+                      <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>
+                        🎬 Final Master Video Delivery Link (Submitted by Editor)
+                      </strong>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>Internal CRM Asset Archive • Only visible in CRM</span>
+                    </div>
+                  </div>
+                  <a
+                    href={editingData.finalVideoUrl || demoData.finalVideoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '12px',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
+                    Open Master Video ↗
+                  </a>
+                </div>
+              )}
 
               <div className={styles.stageGrid2}>
                 {/* Left Card: Demo Files & Attachments */}
@@ -3641,6 +4008,80 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     All 7 pipeline milestones have been fulfilled. Contract deliverables, talent settlements, and invoices are archived.
                   </p>
                 </div>
+
+                {/* Final Master Video Delivery Link in Stage 7 (CRM ONLY) */}
+                {(editingData.finalVideoUrl || demoData.finalVideoUrl) && (
+                  <div style={{
+                    width: '100%',
+                    maxWidth: '840px',
+                    marginTop: '12px',
+                    padding: '16px 20px',
+                    background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.15) 0%, rgba(3, 105, 161, 0.25) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '28px' }}>movie_filter</span>
+                      <div>
+                        <strong style={{ fontSize: '14px', color: '#f8fafc', display: 'block' }}>
+                          🎬 Final Master Video Delivery Link (Submitted by Editor)
+                        </strong>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Archived Master Assets • Internal CRM Only</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(editingData.finalVideoUrl || demoData.finalVideoUrl || '');
+                          showToast("Master Video URL copied to clipboard!");
+                        }}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          color: '#e2e8f0',
+                          fontWeight: 600,
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>content_copy</span>
+                        Copy Link
+                      </button>
+                      <a
+                        href={editingData.finalVideoUrl || demoData.finalVideoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
+                        Open Final Master Video ↗
+                      </a>
+                    </div>
+                  </div>
+                )}
 
                 {/* ============================================================
                     INVOICE-TYPE FINANCIAL BREAKDOWN CARD
@@ -5483,6 +5924,64 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
                     Send this short tracking link to <strong>{project?.clientName || 'your customer'}</strong>. They can view real-time production status, product inspection, financials, assigned talent & editor, download official invoices, submit demo revisions, and leave reviews without needing to login.
                   </p>
+
+                  {/* Stage Lifecycle Notice */}
+                  {currentStage < 3 && (
+                    <div style={{
+                      padding: '10px 12px',
+                      background: 'rgba(234, 179, 8, 0.1)',
+                      border: '1px solid rgba(234, 179, 8, 0.3)',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: '#facc15'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>info</span>
+                      <span>
+                        <strong>Portal Active from Stage 3:</strong> Project is currently in <strong>Stage {currentStage}: {stageNames[currentStage]}</strong>. Visitors opening this link will see the preparation mode until Creative & Scripting begins.
+                      </span>
+                    </div>
+                  )}
+
+                  {currentStage >= 7 && (
+                    <div style={{
+                      padding: '10px 12px',
+                      background: 'rgba(34, 197, 94, 0.1)',
+                      border: '1px solid rgba(34, 197, 94, 0.3)',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: '#4ade80'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                      <span>
+                        <strong>Project Completed:</strong> Project is delivered and archived. Customer active lifecycle is complete.
+                      </span>
+                    </div>
+                  )}
+
+                  {currentStage >= 3 && currentStage < 7 && (
+                    <div style={{
+                      padding: '10px 12px',
+                      background: 'rgba(168, 85, 247, 0.1)',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: '#d8b4fe'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>rocket_launch</span>
+                      <span>
+                        <strong>Customer Portal Active:</strong> Tracking is live for <strong>Stage {currentStage}: {stageNames[currentStage]}</strong>. Revisions & demo reviews are accessible.
+                      </span>
+                    </div>
+                  )}
 
                   {/* Customer URL Box */}
                   <div style={{

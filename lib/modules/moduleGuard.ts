@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { ModuleService } from "./moduleService";
 
+const MODULE_ALIASES: Record<string, string[]> = {
+  ACCOUNTING: ["ACCOUNTING", "FINANCE"],
+  FINANCE: ["ACCOUNTING", "FINANCE"],
+  PROJECTS: ["PROJECTS", "PROJECT"],
+  PROJECT: ["PROJECTS", "PROJECT"],
+};
+
 /**
  * Validates whether a specific ERP module is enabled for a given company.
  * 
@@ -18,8 +25,12 @@ export async function requireModule(companyId: string | null, moduleKey: string)
   }
 
   const activeModules = await ModuleService.listActiveModules(companyId);
+  const upperKey = moduleKey.toUpperCase();
+  const allowedKeys = MODULE_ALIASES[upperKey] || [upperKey];
 
-  if (!activeModules.includes(moduleKey)) {
+  const hasAccess = allowedKeys.some(key => activeModules.includes(key));
+
+  if (!hasAccess) {
     return NextResponse.json(
       { error: `Forbidden: Module ${moduleKey} is not enabled for this company.` }, 
       { status: 403 }
@@ -29,3 +40,4 @@ export async function requireModule(companyId: string | null, moduleKey: string)
   // Null means the guard passed successfully.
   return null;
 }
+

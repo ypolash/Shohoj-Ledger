@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { RbacService } from "@/lib/rbac/rbacService";
+import { ModuleService } from "@/lib/modules/moduleService";
+import { moduleCache } from "@/lib/modules/moduleCache";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
@@ -20,6 +22,9 @@ async function getCompanyId() {
 export async function loadAdminData() {
   const companyId = await getCompanyId();
 
+  // Ensure all standard system modules exist and are initialized for this company
+  await ModuleService.listActiveModules(companyId);
+
   const [company, modules, users, roles, permissions] = await Promise.all([
     // Profile & Settings
     prisma.company.findUnique({
@@ -30,7 +35,8 @@ export async function loadAdminData() {
     // Modules
     prisma.companyModule.findMany({
       where: { companyId },
-      include: { module: true }
+      include: { module: true },
+      orderBy: { module: { name: 'asc' } }
     }),
 
     // Users
@@ -119,12 +125,17 @@ export async function updateSettings(data: any) {
 export async function toggleModuleAction(moduleId: string, isActive: boolean) {
   const companyId = await getCompanyId();
   
-  await prisma.companyModule.update({
+  await prisma.companyModule.upsert({
     where: { companyId_moduleId: { companyId, moduleId } },
-    data: { isActive }
+    update: { isActive },
+    create: { companyId, moduleId, isActive }
   });
 
+  // Invalidate cache immediately so new status takes effect everywhere
+  moduleCache.invalidate(companyId);
+
   revalidatePath("/erp/settings");
+  revalidatePath("/erp/settings/modules");
   return { success: true };
 }
 

@@ -30,7 +30,8 @@ export function FinanceKPICards({ data }: { data?: any }) {
     { title: 'Total Expenses', value: `৳ ${(data?.kpis?.expenses || 0).toLocaleString()}`, trend: formatTrend(data?.trends?.expenses), isGood: (data?.trends?.expenses || 0) <= 0, isUp: (data?.trends?.expenses || 0) >= 0, icon: 'receipt_long', color: 'var(--danger)' },
     { title: 'Net Profit', value: `৳ ${(data?.kpis?.profit || 0).toLocaleString()}`, trend: formatTrend(data?.trends?.profit), isGood: (data?.trends?.profit || 0) >= 0, isUp: (data?.trends?.profit || 0) >= 0, icon: 'trending_up', color: 'var(--info)' },
     { title: 'Cash Balance', value: `৳ ${(data?.kpis?.cash || 0).toLocaleString()}`, trend: 'Up to date', isGood: true, isUp: true, icon: 'payments', color: 'var(--warning)' },
-    { title: 'Outstanding Recv', value: `৳ ${(data?.kpis?.loanOutstanding || 0).toLocaleString()}`, trend: 'Pending', isGood: false, isUp: false, icon: 'move_to_inbox', color: 'var(--primary)' }
+    { title: 'Active Loans', value: `৳ ${(data?.kpis?.activeLoans || data?.kpis?.loanOutstanding || 0).toLocaleString()}`, trend: 'Scheduled', isGood: true, isUp: false, icon: 'account_balance', color: '#818cf8' },
+    { title: 'Bills Due', value: `৳ ${(data?.kpis?.billsDue || data?.kpis?.pendingBills || 0).toLocaleString()}`, trend: 'Payables', isGood: false, isUp: false, icon: 'pending_actions', color: '#f43f5e' }
   ];
 
   const renderChart = () => {
@@ -44,6 +45,8 @@ export function FinanceKPICards({ data }: { data?: any }) {
       case 'Cash Balance':
         return <CashFlowChart data={data} />;
       case 'Outstanding Recv':
+      case 'Active Loans':
+      case 'Bills Due':
         return <OutstandingWidget data={data} />;
       default:
         return null;

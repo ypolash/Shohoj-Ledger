@@ -213,16 +213,26 @@ export default function HomePage() {
               <div className={styles.stageDashboardGrid}>
                 {stageTab === "FINANCE" && (
                   <>
-                    <div className={styles.stageStatsRow}>
+                    <div className={styles.stageStatsRow} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}>
                       <div className={styles.stageStatCard}>
                         <span className={styles.statCardLabel}>TOTAL ASSETS</span>
                         <span className={styles.statCardVal}>$1,842,900</span>
                         <span className={styles.statCardTrend}>+14.8% vs last mo</span>
                       </div>
                       <div className={styles.stageStatCard}>
-                        <span className={styles.statCardLabel}>NET OPERATING REVENUE</span>
+                        <span className={styles.statCardLabel}>NET REVENUE</span>
                         <span className={styles.statCardVal}>$489,120</span>
                         <span className={styles.statCardTrend}>+8.4% automated</span>
+                      </div>
+                      <div className={styles.stageStatCard}>
+                        <span className={styles.statCardLabel} style={{ color: "#818cf8" }}>ACTIVE LOANS</span>
+                        <span className={styles.statCardVal}>$185,000</span>
+                        <span className={styles.statCardTrend} style={{ color: "#818cf8" }}>4.2% Fixed · Active</span>
+                      </div>
+                      <div className={styles.stageStatCard}>
+                        <span className={styles.statCardLabel} style={{ color: "#f87171" }}>BILLS DUE</span>
+                        <span className={styles.statCardVal}>$36,450</span>
+                        <span className={styles.statCardTrend} style={{ color: "#f87171" }}>3 Invoices Pending</span>
                       </div>
                       <div className={styles.stageStatCard}>
                         <span className={styles.statCardLabel}>DISPATCHED PAYROLL</span>
@@ -233,7 +243,7 @@ export default function HomePage() {
 
                     <div className={styles.stageChartCard}>
                       <div className={styles.chartHeader}>
-                        <span className={styles.chartTitle}>Monthly Ledger Cash Flow (Receivables vs Outlays)</span>
+                        <span className={styles.chartTitle}>Monthly Ledger Cash Flow, Loans &amp; Bill Schedules</span>
                         <span style={{ fontSize: "0.75rem", color: "#38bdf8", fontWeight: 700 }}>Real-time Audit Trail</span>
                       </div>
                       <div className={styles.stageMiniBars}>
@@ -260,6 +270,19 @@ export default function HomePage() {
                         <div className={styles.miniBarCol}>
                           <div className={styles.miniBarTrack}><div className={styles.miniBarFill} style={{ height: "100%", background: "linear-gradient(180deg, #10b981 0%, #059669 100%)" }} /></div>
                           <span className={styles.miniBarLabel}>Current</span>
+                        </div>
+                      </div>
+
+                      {/* Live Obligations Sub-feed */}
+                      <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", gap: "10px", fontSize: "0.78rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#818cf8" }}>
+                          <span>🏦 Loan Facility: <strong>$185k Principal</strong></span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#f87171" }}>
+                          <span>🧾 Vendor Bills Due: <strong>$36.45k (Next 7d)</strong></span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#34d399" }}>
+                          <span>✓ Auto-settle Enabled</span>
                         </div>
                       </div>
                     </div>
@@ -440,40 +463,56 @@ export default function HomePage() {
                   <div className={styles.moduleIconBox}><Wallet size={24} /></div>
                   <div>
                     <span className={styles.sectionPill} style={{ margin: 0 }}>Core Module</span>
-                    <h3 className={styles.moduleCardTitle}>Corporate Finance & Ledgers</h3>
+                    <h3 className={styles.moduleCardTitle}>Corporate Finance, Loans &amp; Ledgers</h3>
                   </div>
                 </div>
                 <p className={styles.moduleCardDesc}>
-                  Eliminate spreadsheet chaos with real-time double-entry general ledgers, multi-currency corporate reserves, automated bank reconciliations, and custom fiscal periods.
+                  Eliminate spreadsheet chaos with real-time double-entry general ledgers, commercial loan schedules &amp; interest tracking, automated vendor bills due &amp; accounts payable, multi-currency reserves, and instant reconciliations.
                 </p>
                 <div className={styles.moduleFeatureList}>
+                  <div className={styles.moduleFeatureItem}>
+                    <CheckCircle2 size={16} className={styles.featureCheckIcon} />
+                    <span>Commercial Loans &amp; Amortization Schedules</span>
+                  </div>
+                  <div className={styles.moduleFeatureItem}>
+                    <CheckCircle2 size={16} className={styles.featureCheckIcon} />
+                    <span>Vendor Bills Due &amp; Accounts Payable Tracking</span>
+                  </div>
                   <div className={styles.moduleFeatureItem}>
                     <CheckCircle2 size={16} className={styles.featureCheckIcon} />
                     <span>Multi-tiered Chart of Accounts</span>
                   </div>
                   <div className={styles.moduleFeatureItem}>
                     <CheckCircle2 size={16} className={styles.featureCheckIcon} />
-                    <span>Automated Tax & VAT Reporting</span>
+                    <span>Automated Tax &amp; VAT Reporting</span>
                   </div>
                   <div className={styles.moduleFeatureItem}>
                     <CheckCircle2 size={16} className={styles.featureCheckIcon} />
-                    <span>Partial & Milestone Invoicing</span>
+                    <span>Partial &amp; Milestone Invoicing</span>
                   </div>
                   <div className={styles.moduleFeatureItem}>
                     <CheckCircle2 size={16} className={styles.featureCheckIcon} />
-                    <span>Corporate Fund Transfers & Audit</span>
+                    <span>Corporate Fund Transfers &amp; Audit</span>
                   </div>
                 </div>
               </div>
 
               <div className={styles.moduleInteractivePreview}>
                 <div className={styles.previewTopBar}>
-                  <span className={styles.previewTitle}>General Ledger Settlement</span>
+                  <span className={styles.previewTitle}>General Ledger &amp; Obligations</span>
                   <span className={styles.previewBadge}>Balanced · Audit Passed</span>
                 </div>
                 <div className={styles.previewRow}>
                   <span className={styles.previewRowLabel}>Journal #JE-8902</span>
                   <span className={styles.previewRowVal}>+$18,500.00 (Customer Invoice)</span>
+                </div>
+                <div className={styles.previewRow}>
+                  <span className={styles.previewRowLabel}>Commercial Loan #LN-4091</span>
+                  <span className={styles.previewRowVal} style={{ color: "#818cf8" }}>+$185,000.00 (Active Principal)</span>
+                </div>
+                <div className={styles.previewRow}>
+                  <span className={styles.previewRowLabel}>Vendor Bill Due #INV-8821</span>
+                  <span className={styles.previewRowVal} style={{ color: "#f87171" }}>-$4,850.00 (Due in 5 Days)</span>
                 </div>
                 <div className={styles.previewRow}>
                   <span className={styles.previewRowLabel}>Payroll Run #PR-04</span>

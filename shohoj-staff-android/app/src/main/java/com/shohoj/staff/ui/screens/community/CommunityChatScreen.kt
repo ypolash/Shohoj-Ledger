@@ -33,12 +33,16 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.shohoj.staff.data.model.CommunityAttachment
 import com.shohoj.staff.data.model.CommunityMessage
 import com.shohoj.staff.data.model.DirectoryPerson
 import com.shohoj.staff.data.model.TaskItem
 import com.shohoj.staff.ui.theme.*
+import com.shohoj.staff.util.MediaUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -58,6 +62,7 @@ fun CommunityChatScreen(
     var inputText by remember { mutableStateOf("") }
     var selectedMessageForMenu by remember { mutableStateOf<CommunityMessage?>(null) }
     var showPinnedBanner by remember { mutableStateOf(true) }
+    var fullscreenImageUrl by remember { mutableStateOf<String?>(null) }
 
     // Autocomplete queries for @mentions and #tasks
     val lastWord = remember(inputText) {
@@ -141,8 +146,23 @@ fun CommunityChatScreen(
         }
     }
 
-    // Attachment Picker (Images and Documents)
+    // Attachment Picker (All Files)
     val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.uploadAndSendAttachment(
+                context = context,
+                channelId = channelId,
+                uri = it,
+                caption = inputText
+            )
+            inputText = ""
+        }
+    }
+
+    // Direct Image / Photo Gallery Picker
+    val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
@@ -329,9 +349,11 @@ fun CommunityChatScreen(
 
                             MessageBubble(
                                 message = message,
+                                baseUrl = viewModel.baseUrl,
                                 isMe = isMe,
                                 currentUserName = uiState.currentUserName,
                                 directory = uiState.staffDirectory + uiState.memberDirectory,
+                                onImageClick = { imgUrl -> fullscreenImageUrl = imgUrl },
                                 onLongClick = { selectedMessageForMenu = message },
                                 onReactionClick = { emoji ->
                                     viewModel.toggleReaction(message.id, emoji)
@@ -573,7 +595,20 @@ fun CommunityChatScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Attachment Button
+                    // Image / Photo Gallery Button
+                    IconButton(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "Send Photo",
+                            tint = Emerald400,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // Attachment Button (Documents & Files)
                     IconButton(
                         onClick = { filePickerLauncher.launch("*/*") },
                         modifier = Modifier.size(36.dp)
@@ -756,15 +791,25 @@ fun CommunityChatScreen(
             }
         )
     }
+
+    // Fullscreen Image Lightbox Viewer
+    fullscreenImageUrl?.let { imgUrl ->
+        FullscreenImageViewerDialog(
+            imageUrl = imgUrl,
+            onDismiss = { fullscreenImageUrl = null }
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MessageBubble(
     message: CommunityMessage,
+    baseUrl: String = "",
     isMe: Boolean,
     currentUserName: String,
     directory: List<DirectoryPerson> = emptyList(),
+    onImageClick: (String) -> Unit = {},
     onLongClick: () -> Unit,
     onReactionClick: (String) -> Unit
 ) {
@@ -793,6 +838,7 @@ fun MessageBubble(
     ) {
         // Sender Avatar (if from other person)
         if (!isMe) {
+            val resolvedSenderAvatar = MediaUtils.resolveMediaUrl(message.senderAvatar, baseUrl)
             Box(
                 modifier = Modifier
                     .size(34.dp)
@@ -808,10 +854,11 @@ fun MessageBubble(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (!message.senderAvatar.isNullOrBlank()) {
+                if (!resolvedSenderAvatar.isNullOrBlank()) {
                     AsyncImage(
-                        model = message.senderAvatar,
+                        model = resolvedSenderAvatar,
                         contentDescription = cleanSenderName,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
@@ -985,7 +1032,12 @@ fun MessageBubble(
 
                     // Attachments Preview
                     message.attachments.forEach { attachment ->
-                        AttachmentItemPreview(attachment = attachment, isMe = isMe)
+                        AttachmentItemPreview(
+                            attachment = attachment,
+                            baseUrl = baseUrl,
+                            isMe = isMe,
+                            onImageClick = onImageClick
+                        )
                     }
 
                     // Message Text with Highlighted @Mentions and #Tasks
@@ -1058,22 +1110,72 @@ fun MessageBubble(
 @Composable
 fun AttachmentItemPreview(
     attachment: CommunityAttachment,
-    isMe: Boolean
+    baseUrl: String = "",
+    isMe: Boolean,
+    onImageClick: (String) -> Unit = {}
 ) {
-    val isImage = attachment.fileType.startsWith("image/")
+    val isImage = MediaUtils.isImageAttachment(attachment)
+    val resolvedUrl = MediaUtils.resolveMediaUrl(attachment.fileUrl, baseUrl) ?: attachment.fileUrl
 
     if (isImage) {
+        var isImageLoading by remember { mutableStateOf(true) }
+        var isImageError by remember { mutableStateOf(false) }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 180.dp)
+                .heightIn(min = 120.dp, max = 220.dp)
                 .clip(RoundedCornerShape(8.dp))
+                .background(if (isMe) Emerald800.copy(alpha = 0.5f) else Slate800)
+                .border(
+                    1.dp,
+                    if (isMe) Emerald400.copy(alpha = 0.3f) else Slate700,
+                    RoundedCornerShape(8.dp)
+                )
+                .clickable { onImageClick(resolvedUrl) },
+            contentAlignment = Alignment.Center
         ) {
+            if (isImageLoading && !isImageError) {
+                CircularProgressIndicator(
+                    color = if (isMe) Slate100 else Emerald400,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
             AsyncImage(
-                model = attachment.fileUrl,
+                model = resolvedUrl,
                 contentDescription = attachment.fileName,
-                modifier = Modifier.fillMaxWidth()
+                contentScale = ContentScale.Crop,
+                onLoading = { isImageLoading = true; isImageError = false },
+                onSuccess = { isImageLoading = false; isImageError = false },
+                onError = { isImageLoading = false; isImageError = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp, max = 220.dp)
             )
+
+            if (isImageError) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.BrokenImage,
+                        contentDescription = "Image failed to load",
+                        tint = Slate400,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = attachment.fileName,
+                        style = MaterialTheme.typography.labelSmall.copy(color = Slate300),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     } else {
         Box(
@@ -1111,6 +1213,46 @@ fun AttachmentItemPreview(
                         )
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FullscreenImageViewerDialog(
+    imageUrl: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.95f))
+        ) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "Full Image View",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            )
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 48.dp, end = 16.dp)
+                    .background(Slate800.copy(alpha = 0.8f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = Color.White
+                )
             }
         }
     }

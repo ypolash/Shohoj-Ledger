@@ -78,6 +78,30 @@ class LeaveRepository(
         }
     }
 
+    suspend fun requestBreak(
+        leaveTypeId: String? = null,
+        reason: String = "Lunch Break"
+    ): Result<StartBreakResponse> = withContext(Dispatchers.IO) {
+        try {
+            val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
+            val request = RequestBreakRequest(
+                action = "REQUEST_BREAK",
+                leaveTypeId = leaveTypeId,
+                reason = reason,
+                employeeId = empId
+            )
+            val response = apiClient.getService().requestBreak(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val err = response.body()?.error ?: response.errorBody()?.string() ?: "Failed to start break"
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun endBreak(leaveId: String? = null): Result<EndBreakResponse> = withContext(Dispatchers.IO) {
         try {
             val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id

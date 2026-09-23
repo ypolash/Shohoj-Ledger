@@ -29,6 +29,7 @@ import com.shohoj.staff.ui.components.ShohojBottomBar
 import com.shohoj.staff.ui.components.ShohojTopBar
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
+import com.shohoj.staff.util.MediaUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -200,6 +201,7 @@ fun CommunityChannelsScreen(
                                 items(filteredChannels, key = { it.id }) { channel ->
                                     ChannelListItem(
                                         channel = channel,
+                                        baseUrl = viewModel.baseUrl,
                                         onClick = {
                                             viewModel.setActiveChannel(channel)
                                             onNavigateToChat(channel.id, channel.name, channel.type)
@@ -230,6 +232,7 @@ fun CommunityChannelsScreen(
                                 items(dmChannels, key = { it.id }) { channel ->
                                     ChannelListItem(
                                         channel = channel,
+                                        baseUrl = viewModel.baseUrl,
                                         onClick = {
                                             viewModel.setActiveChannel(channel)
                                             onNavigateToChat(channel.id, channel.name, channel.type)
@@ -351,6 +354,7 @@ fun CommunityChannelsScreen(
 @Composable
 fun ChannelListItem(
     channel: CommunityChannel,
+    baseUrl: String = "",
     onClick: () -> Unit
 ) {
     val isAnnouncement = channel.type == "ANNOUNCEMENT"
@@ -373,6 +377,7 @@ fun ChannelListItem(
             // Icon or Avatar
             if (isDm) {
                 val participant = channel.dmParticipant
+                val resolvedAvatar = MediaUtils.resolveMediaUrl(participant?.userAvatar, baseUrl)
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -382,9 +387,9 @@ fun ChannelListItem(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (!participant?.userAvatar.isNullOrBlank()) {
+                    if (!resolvedAvatar.isNullOrBlank()) {
                         AsyncImage(
-                            model = participant?.userAvatar,
+                            model = resolvedAvatar,
                             contentDescription = channel.name,
                             modifier = Modifier
                                 .size(44.dp)

@@ -78,6 +78,11 @@ interface ShohojApiService {
     ): Response<LeaveApplyResponse>
 
     @POST("api/mobile/leave/break")
+    suspend fun requestBreak(
+        @Body request: RequestBreakRequest
+    ): Response<StartBreakResponse>
+
+    @POST("api/mobile/leave/break")
     suspend fun endBreak(
         @Body request: EndBreakRequest
     ): Response<EndBreakResponse>

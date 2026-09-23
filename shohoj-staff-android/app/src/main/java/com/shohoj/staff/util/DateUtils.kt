@@ -128,4 +128,82 @@ object DateUtils {
         }
         return String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, period)
     }
+
+    fun getLunchStartMinutes(
+        dutyStartTime: String?,
+        dutyEndTime: String?,
+        isNightShift: Boolean = false
+    ): Int {
+        val startMinutes = parseTimeToMinutes(dutyStartTime, defaultMinutes = 9 * 60)
+        val endMinutes = parseTimeToMinutes(dutyEndTime, defaultMinutes = 18 * 60)
+
+        if (isNightShift) {
+            val adjustedEnd = if (endMinutes < startMinutes) endMinutes + 24 * 60 else endMinutes
+            val midpoint = (startMinutes + adjustedEnd) / 2
+            return midpoint % (24 * 60)
+        }
+
+        // Standard daytime shift: default lunch is 13:00 (01:00 PM = 780 mins)
+        val defaultLunch = 13 * 60
+        if (defaultLunch > startMinutes + 60 && defaultLunch < endMinutes - 60) {
+            return defaultLunch
+        }
+
+        // If shift doesn't encompass 13:00, use shift midpoint
+        return (startMinutes + endMinutes) / 2
+    }
+
+    fun isLunchBreakVisible(
+        dutyStartTime: String?,
+        dutyEndTime: String?,
+        isNightShift: Boolean = false,
+        calendar: Calendar = Calendar.getInstance()
+    ): Boolean {
+        val lunchStartMinutes = getLunchStartMinutes(dutyStartTime, dutyEndTime, isNightShift)
+        val lunchOpenMinutes = lunchStartMinutes - 15
+        val currentMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+
+        if (isNightShift && lunchStartMinutes < 12 * 60) {
+            return (currentMinutes >= lunchOpenMinutes && currentMinutes <= 12 * 60) ||
+                    (currentMinutes >= 20 * 60 && lunchOpenMinutes < 0)
+        }
+
+        return currentMinutes >= lunchOpenMinutes
+    }
+
+    fun getLunchTimeString(
+        dutyStartTime: String?,
+        dutyEndTime: String?,
+        isNightShift: Boolean = false
+    ): String {
+        val lunchMinutes = getLunchStartMinutes(dutyStartTime, dutyEndTime, isNightShift)
+        val hour24 = lunchMinutes / 60
+        val minute = lunchMinutes % 60
+        val period = if (hour24 >= 12) "PM" else "AM"
+        val hour12 = when {
+            hour24 == 0 -> 12
+            hour24 > 12 -> hour24 - 12
+            else -> hour24
+        }
+        return String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, period)
+    }
+
+    fun getLunchAvailableTimeString(
+        dutyStartTime: String?,
+        dutyEndTime: String?,
+        isNightShift: Boolean = false
+    ): String {
+        val lunchMinutes = getLunchStartMinutes(dutyStartTime, dutyEndTime, isNightShift)
+        var openMinutes = lunchMinutes - 15
+        if (openMinutes < 0) openMinutes += 24 * 60
+        val hour24 = openMinutes / 60
+        val minute = openMinutes % 60
+        val period = if (hour24 >= 12) "PM" else "AM"
+        val hour12 = when {
+            hour24 == 0 -> 12
+            hour24 > 12 -> hour24 - 12
+            else -> hour24
+        }
+        return String.format(Locale.getDefault(), "%02d:%02d %s", hour12, minute, period)
+    }
 }

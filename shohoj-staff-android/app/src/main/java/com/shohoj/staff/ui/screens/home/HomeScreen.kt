@@ -50,11 +50,16 @@ fun HomeScreen(
     val isCheckedOut = today?.checkOutTime != null || today?.checkOut != null
 
     val dutySchedule = uiState.dutySchedule ?: today?.dutySchedule ?: uiState.employee?.dutySchedule
+    val dutyStartTime = dutySchedule?.startTime ?: "09:00"
     val dutyEndTime = dutySchedule?.endTime ?: "20:00"
     val isNightShift = dutySchedule?.nightShift == true
     val isCheckOutVisible = DateUtils.isCheckOutVisible(dutyEndTime, isNightShift)
     val checkOutOpenTime = DateUtils.getCheckOutOpenTimeString(dutyEndTime)
     val formattedDutyEnd = DateUtils.getDutyEndTimeString(dutyEndTime)
+
+    val isLunchBreakVisible = DateUtils.isLunchBreakVisible(dutyStartTime, dutyEndTime, isNightShift)
+    val lunchStartTime = DateUtils.getLunchTimeString(dutyStartTime, dutyEndTime, isNightShift)
+    val lunchAvailableTime = DateUtils.getLunchAvailableTimeString(dutyStartTime, dutyEndTime, isNightShift)
 
     Scaffold(
         topBar = {
@@ -438,71 +443,147 @@ fun HomeScreen(
                             }
                         }
                         !isCheckedOut -> {
-                            if (isCheckOutVisible) {
-                                Button(
-                                    onClick = { viewModel.performQuickClockAction() },
-                                    enabled = !uiState.isClocking,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Rose500,
-                                        contentColor = Slate50,
-                                        disabledContainerColor = Slate800,
-                                        disabledContentColor = Slate500
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp)
-                                ) {
-                                    if (uiState.isClocking) {
-                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                // Lunch Break Action (Only when not already on active break)
+                                if (uiState.activeBreak == null) {
+                                    if (isLunchBreakVisible) {
+                                        Button(
+                                            onClick = { viewModel.requestLunchBreak() },
+                                            enabled = !uiState.isStartingBreak && !uiState.isClocking,
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Amber500,
+                                                contentColor = Slate950,
+                                                disabledContainerColor = Slate800,
+                                                disabledContentColor = Slate500
+                                            ),
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(48.dp)
+                                        ) {
+                                            if (uiState.isStartingBreak) {
+                                                CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                                            } else {
+                                                Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(text = "Start Lunch Break", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
                                     } else {
-                                        Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(text = "Clock Out", fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Slate800.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                                        .border(1.dp, Amber500.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                                        .padding(14.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(36.dp)
-                                                .background(Amber500.copy(alpha = 0.15f), CircleShape),
-                                            contentAlignment = Alignment.Center
+                                                .fillMaxWidth()
+                                                .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                                .border(1.dp, Amber500.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+                                                .padding(12.dp)
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Schedule,
-                                                contentDescription = null,
-                                                tint = Amber400,
-                                                modifier = Modifier.size(20.dp)
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .background(Amber500.copy(alpha = 0.15f), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Restaurant,
+                                                        contentDescription = null,
+                                                        tint = Amber400,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(10.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Lunch Break opens at $lunchAvailableTime",
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            color = Slate50,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            fontSize = 13.sp
+                                                        )
+                                                    )
+                                                    Text(
+                                                        text = "Available 15 min before $lunchStartTime lunch",
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            color = Slate400,
+                                                            fontSize = 11.sp
+                                                        )
+                                                    )
+                                                }
+                                            }
                                         }
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Check-out opens at $checkOutOpenTime",
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    color = Slate50,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 13.sp
+                                    }
+                                }
+
+                                // Check Out Action / Availability Notice
+                                if (isCheckOutVisible) {
+                                    Button(
+                                        onClick = { viewModel.performQuickClockAction() },
+                                        enabled = !uiState.isClocking && uiState.activeBreak == null,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Rose500,
+                                            contentColor = Slate50,
+                                            disabledContainerColor = Slate800,
+                                            disabledContentColor = Slate500
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                    ) {
+                                        if (uiState.isClocking) {
+                                            CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                                        } else {
+                                            Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = "Clock Out", fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                            .border(1.dp, Slate700, RoundedCornerShape(12.dp))
+                                            .padding(12.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .background(Slate700.copy(alpha = 0.3f), CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Schedule,
+                                                    contentDescription = null,
+                                                    tint = Slate400,
+                                                    modifier = Modifier.size(18.dp)
                                                 )
-                                            )
-                                            Text(
-                                                text = "Available 1h before duty ends ($formattedDutyEnd)",
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    color = Slate400,
-                                                    fontSize = 11.sp
+                                            }
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "Check-out opens at $checkOutOpenTime",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        color = Slate100,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontSize = 13.sp
+                                                    )
                                                 )
-                                            )
+                                                Text(
+                                                    text = "Available 1h before duty ends ($formattedDutyEnd)",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        color = Slate400,
+                                                        fontSize = 11.sp
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 }

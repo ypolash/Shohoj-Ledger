@@ -377,6 +377,9 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    val baseUrl: String
+        get() = sessionManager.baseUrl
+
     fun getEmployeeId(): String? = sessionManager.employeeId ?: sessionManager.getEmployee()?.employeeId
     fun getEmployeeDbId(): String? = sessionManager.getEmployee()?.id
     fun getSessionEmail(): String? = sessionManager.getEmployee()?.email

@@ -88,6 +88,23 @@ data class LeaveApplyResponse(
     @SerializedName("error") val error: String? = null
 )
 
+data class RequestBreakRequest(
+    @SerializedName("action") val action: String = "REQUEST_BREAK",
+    @SerializedName("leaveTypeId") val leaveTypeId: String? = null,
+    @SerializedName("reason") val reason: String = "Lunch Break",
+    @SerializedName("employeeId") val employeeId: String? = null
+)
+
+data class StartBreakResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("autoApproved") val autoApproved: Boolean = false,
+    @SerializedName("leave") val leave: LeaveItem? = null,
+    @SerializedName("activeBreak") val activeBreak: ActiveBreakInfo? = null,
+    @SerializedName("hasActiveBreak") val hasActiveBreak: Boolean = false,
+    @SerializedName("error") val error: String? = null
+)
+
 data class EndBreakRequest(
     @SerializedName("action") val action: String = "END_BREAK",
     @SerializedName("leaveId") val leaveId: String? = null,

@@ -30,6 +30,7 @@ data class HomeUiState(
     val activeBreakStatusText: String = "",
     val activeBreakStatusColor: String = "EMERALD",
     val activeBreakFineText: String? = null,
+    val isStartingBreak: Boolean = false,
     val isEndingBreak: Boolean = false,
     val currentTimeString: String = "",
     val currentDateString: String = "",
@@ -203,6 +204,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             null
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun requestLunchBreak(reason: String = "Lunch Break") {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isStartingBreak = true, error = null, clockActionSuccessMessage = null)
+            val result = leaveRepo.requestBreak(leaveTypeId = null, reason = reason)
+            result.fold(
+                onSuccess = { res ->
+                    _uiState.value = _uiState.value.copy(
+                        isStartingBreak = false,
+                        activeBreak = res.activeBreak,
+                        clockActionSuccessMessage = res.message ?: "Lunch break started successfully."
+                    )
+                    startBreakCountdownTicker(res.activeBreak)
+                    loadDashboardData()
+                },
+                onFailure = { ex ->
+                    _uiState.value = _uiState.value.copy(
+                        isStartingBreak = false,
+                        error = ex.localizedMessage ?: "Failed to start lunch break"
+                    )
+                }
+            )
         }
     }
 

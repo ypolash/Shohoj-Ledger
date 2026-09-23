@@ -97,36 +97,58 @@ export async function POST(request: Request) {
       }, { headers: ESS_CORS_HEADERS });
     }
 
-    // 2. Action: Instant Request Short Break
-    if (action === "REQUEST_BREAK" && leaveTypeId) {
-      const lt = await prisma.leaveType.findFirst({
-        where: { id: leaveTypeId, companyId: employee.companyId || "" }
-      });
-
-      if (!lt) {
-        return NextResponse.json(
-          { error: "Invalid break category." },
-          { status: 404, headers: ESS_CORS_HEADERS }
-        );
+    // 2. Action: Instant Request Short Break / Lunch Break
+    if (action === "REQUEST_BREAK") {
+      let lt: any = null;
+      if (leaveTypeId) {
+        lt = await prisma.leaveType.findFirst({
+          where: { id: leaveTypeId, companyId: employee.companyId || "" }
+        });
+      } else {
+        lt = await prisma.leaveType.findFirst({
+          where: {
+            companyId: employee.companyId || "",
+            OR: [
+              { name: { contains: "Lunch", mode: "insensitive" } },
+              { name: { contains: "Break", mode: "insensitive" } },
+              { description: { contains: "SHORT_BREAK" } },
+              { description: { contains: "TIMER_CONFIG" } },
+            ]
+          }
+        });
       }
 
-      const parsedConfig = parseLeaveTypeConfig(lt);
+      const empWithShift = await prisma.employee.findUnique({
+        where: { id: employee.id },
+        include: { workShift: true },
+      });
+
+      const shiftBreakTime = empWithShift?.workShift?.breakTime || 60;
+      const parsedConfig = lt ? parseLeaveTypeConfig(lt) : {
+        breakDurationMinutes: shiftBreakTime,
+        gracePeriodMinutes: 5,
+        fineAmount: 50,
+        fineType: "FIXED",
+        autoFine: true,
+        maxPerDay: 2,
+      };
+
       const now = new Date();
-      const durationMs = (parsedConfig.breakDurationMinutes || 30) * 60 * 1000;
+      const durationMs = (parsedConfig.breakDurationMinutes || shiftBreakTime || 60) * 60 * 1000;
       const targetEnd = new Date(now.getTime() + durationMs);
 
       const newLeave = await prisma.leaveRequest.create({
         data: {
           companyId: employee.companyId,
           employeeId: employee.id,
-          leaveTypeId: lt.id,
-          type: lt.name,
+          leaveTypeId: lt?.id || null,
+          type: lt?.name || "Lunch Break",
           startDate: now,
           endDate: targetEnd,
-          reason: reason || "Short Break",
+          reason: reason || "Lunch Break",
           status: "APPROVED", // Instant Auto-Approved
           systemSource: "MOBILE",
-          comments: `Auto-Approved Short break timer: ${parsedConfig.breakDurationMinutes} mins (+${parsedConfig.gracePeriodMinutes}m grace). Overstay fine: ৳${parsedConfig.fineAmount}.`
+          comments: `Auto-Approved Short break timer: ${parsedConfig.breakDurationMinutes} mins (+${parsedConfig.gracePeriodMinutes || 5}m grace). Overstay fine: ৳${parsedConfig.fineAmount || 0}.`
         }
       });
 
@@ -134,7 +156,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: "Short break started successfully. Countdown is now active.",
+        message: `${lt?.name || "Lunch Break"} started successfully. Countdown is now active.`,
         autoApproved: true,
         leave: newLeave,
         activeBreak,

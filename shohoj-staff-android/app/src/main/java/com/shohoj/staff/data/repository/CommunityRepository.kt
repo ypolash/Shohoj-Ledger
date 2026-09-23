@@ -3,6 +3,7 @@ package com.shohoj.staff.data.repository
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import com.shohoj.staff.data.api.ApiClient
 import com.shohoj.staff.data.model.*
 import kotlinx.coroutines.Dispatchers
@@ -169,30 +170,71 @@ class CommunityRepository(
     ): Result<CommunityUploadResponse> = withContext(Dispatchers.IO) {
         try {
             val contentResolver = context.contentResolver
-            val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
+            var mimeType = contentResolver.getType(uri)
 
             var fileName = "attachment_${System.currentTimeMillis()}"
-            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (nameIndex != -1) {
-                        fileName = cursor.getString(nameIndex)
+            try {
+                contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex != -1) {
+                            val queriedName = cursor.getString(nameIndex)
+                            if (!queriedName.isNullOrBlank()) {
+                                fileName = queriedName
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Fallback to default name if cursor query fails
+            }
+
+            // Infer or complete MIME type and file extension
+            if (mimeType.isNullOrBlank() || mimeType == "application/octet-stream") {
+                val ext = fileName.substringAfterLast('.', "").lowercase()
+                if (ext.isNotBlank()) {
+                    val guessedMime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+                    if (!guessedMime.isNullOrBlank()) {
+                        mimeType = guessedMime
                     }
                 }
             }
 
+            if (!fileName.contains(".")) {
+                val derivedExt = when {
+                    mimeType?.startsWith("image/png") == true -> ".png"
+                    mimeType?.startsWith("image/jpeg") == true || mimeType?.startsWith("image/jpg") == true -> ".jpg"
+                    mimeType?.startsWith("image/webp") == true -> ".webp"
+                    mimeType?.startsWith("image/gif") == true -> ".gif"
+                    mimeType?.startsWith("application/pdf") == true -> ".pdf"
+                    else -> ".jpg" // Default media to jpg if image
+                }
+                fileName += derivedExt
+            }
+
+            val finalMime = mimeType?.takeIf { it.isNotBlank() } ?: "application/octet-stream"
+
             val inputStream = contentResolver.openInputStream(uri)
-                ?: return@withContext Result.failure(Exception("Cannot open file stream"))
+                ?: return@withContext Result.failure(Exception("Cannot open file stream for selected item"))
             val bytes = inputStream.use { it.readBytes() }
 
-            val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+            if (bytes.isEmpty()) {
+                return@withContext Result.failure(Exception("Selected file is empty"))
+            }
+
+            val requestBody = bytes.toRequestBody(finalMime.toMediaTypeOrNull())
             val part = MultipartBody.Part.createFormData("file", fileName, requestBody)
 
             val response = apiClient.getService().uploadCommunityAttachment(part)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val uploadBody = response.body()!!
+                if (uploadBody.success) {
+                    Result.success(uploadBody)
+                } else {
+                    Result.failure(Exception(uploadBody.error ?: "Upload returned failure"))
+                }
             } else {
-                val err = response.errorBody()?.string() ?: "Failed to upload file"
+                val err = response.errorBody()?.string() ?: "Failed to upload file (HTTP ${response.code()})"
                 Result.failure(Exception(err))
             }
         } catch (e: Exception) {

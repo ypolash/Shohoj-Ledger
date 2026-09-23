@@ -1,14 +1,65 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { headers } from "next/headers";
 
 const db = prisma as any;
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-employee-id, x-employee-db-id",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
+async function resolveAuthSession() {
+  let session = await getSession();
+  if (session?.user) return session;
+
+  try {
+    const headerList = await headers();
+    const empDbId = headerList.get("x-employee-db-id");
+    const empId = headerList.get("x-employee-id");
+
+    if (empDbId || empId) {
+      const employee = await prisma.employee.findFirst({
+        where: {
+          OR: [
+            ...(empDbId ? [{ id: empDbId }] : []),
+            ...(empId ? [{ employeeId: empId }] : []),
+          ],
+        },
+      });
+
+      if (employee) {
+        return {
+          user: {
+            id: employee.id,
+            employeeId: employee.employeeId,
+            email: employee.email,
+            name: `${employee.firstName} ${employee.lastName}`.trim(),
+            loginType: "EMPLOYEE",
+            role: employee.designation || "Employee",
+            companyId: employee.companyId,
+          },
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Auth header resolution error in messages route:", err);
+  }
+
+  return null;
+}
+
 export async function GET(request: Request) {
   try {
-    const session = await getSession();
+    const session = await resolveAuthSession();
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: CORS_HEADERS });
     }
 
     const { searchParams } = new URL(request.url);
@@ -16,7 +67,7 @@ export async function GET(request: Request) {
     const since = searchParams.get("since"); // For fast incremental polling / sync
 
     if (!channelId) {
-      return NextResponse.json({ error: "channelId is required" }, { status: 400 });
+      return NextResponse.json({ error: "channelId is required" }, { status: 400, headers: CORS_HEADERS });
     }
 
     const companyId = session.user.companyId;
@@ -32,14 +83,14 @@ export async function GET(request: Request) {
     });
 
     if (!channel) {
-      return NextResponse.json({ error: "Channel not found" }, { status: 404 });
+      return NextResponse.json({ error: "Channel not found" }, { status: 404, headers: CORS_HEADERS });
     }
 
     // Access check for private / DM
     if (channel.isPrivate || channel.type === "DIRECT_MESSAGE") {
       const isMember = channel.members?.some((m: any) => m.userId === session.user.id);
       if (!isMember) {
-        return NextResponse.json({ error: "Access denied" }, { status: 403 });
+        return NextResponse.json({ error: "Access denied" }, { status: 403, headers: CORS_HEADERS });
       }
     }
 
@@ -65,32 +116,35 @@ export async function GET(request: Request) {
       take: 100,
     });
 
-    return NextResponse.json({
-      success: true,
-      messages: messages || [],
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        messages: messages || [],
+      },
+      { headers: CORS_HEADERS }
+    );
   } catch (error) {
     console.error("Fetch messages error:", error);
-    return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500, headers: CORS_HEADERS });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getSession();
+    const session = await resolveAuthSession();
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: CORS_HEADERS });
     }
 
     const body = await request.json();
     const { channelId, content, attachments = [], replyToId = null } = body;
 
     if (!channelId) {
-      return NextResponse.json({ error: "channelId is required" }, { status: 400 });
+      return NextResponse.json({ error: "channelId is required" }, { status: 400, headers: CORS_HEADERS });
     }
 
     if ((!content || !content.trim()) && attachments.length === 0) {
-      return NextResponse.json({ error: "Message must contain text or attachments" }, { status: 400 });
+      return NextResponse.json({ error: "Message must contain text or attachments" }, { status: 400, headers: CORS_HEADERS });
     }
 
     const companyId = session.user.companyId;
@@ -103,7 +157,7 @@ export async function POST(request: Request) {
     });
 
     if (!channel) {
-      return NextResponse.json({ error: "Channel not found" }, { status: 404 });
+      return NextResponse.json({ error: "Channel not found" }, { status: 404, headers: CORS_HEADERS });
     }
 
     // Check announcement posting permission (only Admins or Staff can post in announcement channels)
@@ -139,7 +193,7 @@ export async function POST(request: Request) {
     }
 
     if (channel.type === "ANNOUNCEMENT" && userType === "MEMBER") {
-      return NextResponse.json({ error: "Only staff and admins can post in announcements" }, { status: 403 });
+      return NextResponse.json({ error: "Only staff and admins can post in announcements" }, { status: 403, headers: CORS_HEADERS });
     }
 
     // Create the message with attachments
@@ -198,12 +252,15 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        message,
+      },
+      { headers: CORS_HEADERS }
+    );
   } catch (error) {
     console.error("Send message error:", error);
-    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to send message" }, { status: 500, headers: CORS_HEADERS });
   }
 }

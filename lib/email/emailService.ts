@@ -48,6 +48,9 @@ export class EmailService {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
+          connectionTimeout: 4000,
+          greetingTimeout: 3000,
+          socketTimeout: 5000,
         });
 
         const info = await transporter.sendMail({

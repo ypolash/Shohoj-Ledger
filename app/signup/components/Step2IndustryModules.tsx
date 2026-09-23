@@ -1,6 +1,24 @@
 "use client";
 
 import React from "react";
+import { 
+  Terminal, 
+  Store, 
+  Factory, 
+  Truck, 
+  HeartPulse, 
+  Building2, 
+  Layers, 
+  ArrowRight, 
+  ArrowLeft, 
+  Check, 
+  Wallet, 
+  Users, 
+  CreditCard, 
+  Package, 
+  ShoppingCart, 
+  Handshake 
+} from "lucide-react";
 
 interface Step2Props {
   formData: {
@@ -14,26 +32,23 @@ interface Step2Props {
 }
 
 const MODULES = [
-  { id: "finance", label: "Finance & Accounts", icon: "account_balance" },
-  { id: "hr", label: "HR & Attendance", icon: "badge" },
-  { id: "payroll", label: "Payroll Processing", icon: "payments" },
-  { id: "crm", label: "CRM & Sales Orders", icon: "handshake" },
-  { id: "inventory", label: "Inventory & Warehouses", icon: "inventory_2" },
-  { id: "procurement", label: "Procurement & Suppliers", icon: "shopping_cart" }
+  { id: "finance", label: "Finance & Accounts", icon: <Wallet size={18} /> },
+  { id: "hr", label: "HR & Attendance", icon: <Users size={18} /> },
+  { id: "payroll", label: "Payroll Processing", icon: <CreditCard size={18} /> },
+  { id: "crm", label: "CRM & Sales Orders", icon: <Handshake size={18} /> },
+  { id: "inventory", label: "Inventory & Warehouses", icon: <Package size={18} /> },
+  { id: "procurement", label: "Procurement & Suppliers", icon: <ShoppingCart size={18} /> }
 ];
 
 const INDUSTRY_TEMPLATES = [
-  { id: "it", name: "IT & Software", icon: "terminal", desc: "Engineering & Sprints" },
-  { id: "retail", name: "Retail & E-Commerce", icon: "storefront", desc: "POS, Orders & Stock" },
-  { id: "manufacturing", name: "Manufacturing", icon: "factory", desc: "Plant & Production" },
-  { id: "wholesale", name: "Wholesale & Logistics", icon: "local_shipping", desc: "Supply Chain & Fleet" },
-  { id: "healthcare", name: "Healthcare & Pharma", icon: "medical_services", desc: "Clinical & Dispensing" },
-  { id: "consulting", name: "Consulting Services", icon: "business_center", desc: "Advisory & Billing" }
+  { id: "it", name: "IT & Software Agency", desc: "Sprints, Milestones & Engineering", icon: <Terminal size={20} /> },
+  { id: "retail", name: "Retail & E-Commerce", desc: "POS, Cart Orders & Fast Dispatch", icon: <Store size={20} /> },
+  { id: "manufacturing", name: "Manufacturing & Plant", desc: "BOM, Assembly & Batch Control", icon: <Factory size={20} /> },
+  { id: "wholesale", name: "Wholesale & Logistics", desc: "Warehouses, Fleet & Distributions", icon: <Truck size={20} /> },
+  { id: "healthcare", name: "Healthcare & Pharma", desc: "Clinical Ledgers & Inventory Safety", icon: <HeartPulse size={20} /> },
+  { id: "consulting", name: "Consulting & Professional", desc: "Retainers, Billable Hours & Audits", icon: <Building2 size={20} /> }
 ];
 
-/**
- * Step 2: Industry Template & Modules (Theme 2: Pastel Sky Blue #bce0fd)
- */
 export function Step2IndustryModules({ formData, errors, updateForm, onBack, onNext }: Step2Props) {
   const handleModuleToggle = (modId: string) => {
     const current = formData.selectedModules;
@@ -45,26 +60,16 @@ export function Step2IndustryModules({ formData, errors, updateForm, onBack, onN
   };
 
   return (
-    <div
-      style={{
-        background: "rgba(255, 255, 255, 0.04)",
-        backdropFilter: "blur(24px)",
-        border: "1px solid rgba(255, 255, 255, 0.12)",
-        borderRadius: "24px",
-        padding: "40px",
-        width: "100%",
-        maxWidth: "680px",
-        boxShadow: "0 25px 60px rgba(0, 0, 0, 0.6)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "24px",
-        color: "#ffffff"
-      }}
-    >
+    <div style={cardContainerStyle}>
+      {/* Top emerald glow line */}
+      <div style={topGlowLine} />
+
       {/* Industry Presets Grid */}
       <div>
-        <label style={labelDark}>Industry Template Preset</label>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: "10px" }}>
+        <label style={labelStyle}>
+          Industry Template Preset <span style={{ color: "#6ee7b7" }}>· Auto-provisions Chart of Accounts</span>
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "12px" }}>
           {INDUSTRY_TEMPLATES.map((tmpl) => {
             const isSelected = formData.industryTemplate === tmpl.id;
             return (
@@ -72,24 +77,40 @@ export function Step2IndustryModules({ formData, errors, updateForm, onBack, onN
                 key={tmpl.id}
                 onClick={() => updateForm("industryTemplate", tmpl.id)}
                 style={{
-                  padding: "14px",
-                  borderRadius: "14px",
-                  cursor: "pointer",
-                  border: isSelected ? "2px solid #6ee7b7" : "1px solid rgba(255, 255, 255, 0.12)",
-                  background: isSelected ? "rgba(110, 231, 183, 0.15)" : "rgba(0, 0, 0, 0.25)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                  transition: "all 0.2s ease"
+                  ...templateCardStyle,
+                  borderColor: isSelected ? "#10b981" : "rgba(255, 255, 255, 0.1)",
+                  background: isSelected ? "rgba(16, 185, 129, 0.14)" : "rgba(0, 0, 0, 0.3)",
+                  boxShadow: isSelected ? "0 8px 24px -4px rgba(16, 185, 129, 0.3)" : "none",
+                  transform: isSelected ? "translateY(-2px)" : "none"
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "22px", color: isSelected ? "#6ee7b7" : "#94a3b8" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: isSelected ? "rgba(16, 185, 129, 0.25)" : "rgba(255, 255, 255, 0.06)",
+                    color: isSelected ? "#34d399" : "#94a3b8",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
                     {tmpl.icon}
-                  </span>
-                  <div style={{ fontWeight: 700, fontSize: "13px", color: "#ffffff" }}>{tmpl.name}</div>
+                  </div>
+                  {isSelected && (
+                    <div style={checkBadgeStyle}>
+                      <Check size={12} color="#06101e" />
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: "11px", color: "#94a3b8", paddingLeft: "30px" }}>{tmpl.desc}</div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: "0.9rem", color: isSelected ? "#6ee7b7" : "#ffffff" }}>
+                    {tmpl.name}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "3px", lineHeight: 1.35 }}>
+                    {tmpl.desc}
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -98,101 +119,180 @@ export function Step2IndustryModules({ formData, errors, updateForm, onBack, onN
 
       {/* Enabled Modules Selection */}
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <label style={labelDark}>Enabled ERP Modules ({formData.selectedModules.length})</label>
-          {errors.selectedModules && <span style={{ fontSize: "12px", color: "#ef4444" }}>{errors.selectedModules}</span>}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+          <label style={labelStyle}>
+            Active ERP Modules ({formData.selectedModules.length} selected)
+          </label>
+          {errors.selectedModules && <span style={{ fontSize: "0.8rem", color: "#f87171", fontWeight: 600 }}>{errors.selectedModules}</span>}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "12px" }}>
           {MODULES.map((mod) => {
             const isChecked = formData.selectedModules.includes(mod.id);
             return (
-              <label
+              <div
                 key={mod.id}
                 onClick={() => handleModuleToggle(mod.id)}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "10px",
-                  padding: "12px 14px",
-                  borderRadius: "12px",
+                  justifyContent: "space-between",
+                  padding: "14px 16px",
+                  borderRadius: "14px",
                   cursor: "pointer",
-                  background: isChecked ? "rgba(110, 231, 183, 0.15)" : "rgba(0, 0, 0, 0.25)",
-                  border: isChecked ? "1.5px solid #6ee7b7" : "1px solid rgba(255, 255, 255, 0.12)",
-                  fontSize: "13px",
+                  background: isChecked ? "rgba(16, 185, 129, 0.12)" : "rgba(0, 0, 0, 0.3)",
+                  border: isChecked ? "1.5px solid #10b981" : "1px solid rgba(255, 255, 255, 0.1)",
+                  fontSize: "0.88rem",
                   fontWeight: 600,
                   color: "#ffffff",
                   userSelect: "none",
                   transition: "all 0.2s ease"
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => {}}
-                  style={{ width: "16px", height: "16px", accentColor: "#6ee7b7" }}
-                />
-                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: isChecked ? "#6ee7b7" : "#94a3b8" }}>
-                  {mod.icon}
-                </span>
-                {mod.label}
-              </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ color: isChecked ? "#34d399" : "#94a3b8" }}>
+                    {mod.icon}
+                  </div>
+                  <span>{mod.label}</span>
+                </div>
+                <div style={{
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "6px",
+                  border: isChecked ? "none" : "1.5px solid rgba(255,255,255,0.3)",
+                  background: isChecked ? "#10b981" : "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s"
+                }}>
+                  {isChecked && <Check size={14} color="#06101e" />}
+                </div>
+              </div>
             );
           })}
         </div>
       </div>
 
       {/* Navigation Footer */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+      <div style={footerStyle}>
         <button
           type="button"
           onClick={onBack}
-          style={{
-            background: "rgba(255, 255, 255, 0.05)",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            padding: "11px 22px",
-            borderRadius: "12px",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-            transition: "all 0.2s ease"
-          }}
+          style={secondaryButtonStyle}
         >
-          Back
+          <ArrowLeft size={16} />
+          <span>Back</span>
         </button>
         <button
           type="button"
           onClick={onNext}
-          style={{
-            background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-            color: "#ffffff",
-            border: "none",
-            padding: "12px 28px",
-            borderRadius: "12px",
-            fontSize: "14px",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            boxShadow: "0 10px 25px -5px rgba(5, 150, 105, 0.5)",
-            transition: "all 0.2s ease"
-          }}
+          style={primaryButtonStyle}
         >
-          Continue
-          <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>arrow_forward</span>
+          <span>Continue to Security</span>
+          <ArrowRight size={16} />
         </button>
       </div>
     </div>
   );
 }
 
-const labelDark: React.CSSProperties = {
+/* Styles */
+const cardContainerStyle: React.CSSProperties = {
+  position: "relative",
+  background: "rgba(15, 23, 42, 0.75)",
+  backdropFilter: "blur(24px)",
+  WebkitBackdropFilter: "blur(24px)",
+  border: "1px solid rgba(255, 255, 255, 0.12)",
+  borderRadius: "28px",
+  padding: "36px 32px",
+  width: "100%",
+  maxWidth: "100%",
+  margin: "0",
+  boxShadow: "0 30px 70px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(16, 185, 129, 0.08)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "26px",
+  color: "#ffffff",
+  overflow: "hidden"
+};
+
+const topGlowLine: React.CSSProperties = {
+  position: "absolute",
+  top: 0,
+  left: "10%",
+  right: "10%",
+  height: "2px",
+  background: "linear-gradient(90deg, transparent, #10b981, #6ee7b7, transparent)",
+  boxShadow: "0 0 15px #10b981"
+};
+
+const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "12px",
-  fontWeight: 600,
+  fontSize: "0.75rem",
+  fontWeight: 700,
   color: "#cbd5e1",
-  marginBottom: "6px",
+  marginBottom: "10px",
   textTransform: "uppercase",
-  letterSpacing: "0.05em"
+  letterSpacing: "0.08em"
+};
+
+const templateCardStyle: React.CSSProperties = {
+  padding: "16px",
+  borderRadius: "16px",
+  cursor: "pointer",
+  border: "1.5px solid rgba(255, 255, 255, 0.1)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+  userSelect: "none"
+};
+
+const checkBadgeStyle: React.CSSProperties = {
+  width: "20px",
+  height: "20px",
+  borderRadius: "50%",
+  background: "#10b981",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center"
+};
+
+const footerStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  paddingTop: "16px",
+  borderTop: "1px solid rgba(255, 255, 255, 0.08)"
+};
+
+const secondaryButtonStyle: React.CSSProperties = {
+  background: "rgba(255, 255, 255, 0.05)",
+  color: "#ffffff",
+  border: "1px solid rgba(255, 255, 255, 0.15)",
+  padding: "12px 22px",
+  borderRadius: "14px",
+  fontSize: "0.92rem",
+  fontWeight: 600,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  transition: "all 0.2s ease"
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+  color: "#ffffff",
+  border: "none",
+  padding: "13px 28px",
+  borderRadius: "14px",
+  fontSize: "0.95rem",
+  fontWeight: 700,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  boxShadow: "0 10px 25px -4px rgba(16, 185, 129, 0.45)",
+  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
 };

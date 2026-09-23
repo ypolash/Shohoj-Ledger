@@ -35,14 +35,29 @@ export async function POST(request: Request) {
     
     await createSession(sessionPayload);
 
+    // Dispatch email verification OTP & token
+    let verificationInfo = null;
+    try {
+      const { sendVerificationEmail } = await import("@/lib/auth/emailVerification");
+      verificationInfo = await sendVerificationEmail(
+        newCompany.owner.email,
+        newCompany.owner.id,
+        newCompany.owner.name
+      );
+    } catch (vErr) {
+      console.warn("Failed to dispatch verification email during signup:", vErr);
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Company and owner account successfully provisioned.",
+      message: "Company and owner account successfully provisioned. Verification code dispatched.",
       data: {
         companyId: newCompany.company.id,
         companyName: newCompany.company.name,
         ownerId: newCompany.owner.id,
-        ownerEmail: newCompany.owner.email
+        ownerEmail: newCompany.owner.email,
+        verificationCode: verificationInfo?.code,
+        verificationUrl: `/verify-email?token=${verificationInfo?.token}&email=${encodeURIComponent(newCompany.owner.email)}`
       }
     }, { status: 201 });
 

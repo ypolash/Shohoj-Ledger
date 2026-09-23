@@ -3,17 +3,55 @@
 import { useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
-import { ColorStepIndicator } from "./components/ColorStepIndicator";
+import { Canvas3DBackground } from "./components/Canvas3DBackground";
 import { Step1CompanyProfile } from "./components/Step1CompanyProfile";
 import { Step2IndustryModules } from "./components/Step2IndustryModules";
 import { Step3AdminSecurity } from "./components/Step3AdminSecurity";
 import { Step4ReviewLaunch } from "./components/Step4ReviewLaunch";
+import { 
+  Building2, 
+  Layers, 
+  ShieldCheck, 
+  Rocket, 
+  CheckCircle2, 
+  AlertCircle,
+  ArrowRight,
+  Shield,
+  Database,
+  Lock
+} from "lucide-react";
 
-/**
- * Onboarding 2.0 (4-Color Animated Sliding Wizard)
- * Features 4 distinct color themes inspired by the reference image
- * with smooth horizontal slide-left animations between steps.
- */
+const STEP_META = [
+  {
+    step: 1,
+    tag: "Phase 01 · Identity",
+    title: "Company Identity",
+    subtitle: "Define your corporate organization name, brand mark, and primary business operational model.",
+    icon: <Building2 size={16} />
+  },
+  {
+    step: 2,
+    tag: "Phase 02 · Architecture",
+    title: "Industry & ERP Modules",
+    subtitle: "Select your industry template preset and tailor active ERP feature modules for your business.",
+    icon: <Layers size={16} />
+  },
+  {
+    step: 3,
+    tag: "Phase 03 · Security",
+    title: "Root Governance & Security",
+    subtitle: "Establish the root administrator account and cryptographic security credentials.",
+    icon: <ShieldCheck size={16} />
+  },
+  {
+    step: 4,
+    tag: "Phase 04 · Launchpad",
+    title: "Review & Cloud Launch",
+    subtitle: "Verify your architecture configuration and trigger tenant database schema provisioning.",
+    icon: <Rocket size={16} />
+  }
+];
+
 export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +59,12 @@ export default function SignupPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [isSuccess, setIsSuccess] = useState(false);
-  const [successData, setSuccessData] = useState<{ companyName: string; ownerEmail: string } | null>(null);
+  const [successData, setSuccessData] = useState<{ 
+    companyName: string; 
+    ownerEmail: string;
+    verificationCode?: string;
+    verificationUrl?: string;
+  } | null>(null);
 
   // Unified Form State
   const [formData, setFormData] = useState({
@@ -134,7 +177,9 @@ export default function SignupPage() {
 
       setSuccessData({
         companyName: data.data?.companyName || formData.companyName,
-        ownerEmail: data.data?.ownerEmail || formData.ownerEmail
+        ownerEmail: data.data?.ownerEmail || formData.ownerEmail,
+        verificationCode: data.data?.verificationCode,
+        verificationUrl: data.data?.verificationUrl,
       });
       setIsSuccess(true);
     } catch (err: any) {
@@ -144,143 +189,162 @@ export default function SignupPage() {
     }
   };
 
+  const activeMeta = STEP_META[currentStep - 1];
+
   return (
     <main className={styles.viewport}>
+      {/* Dynamic 3D Perspective WebGL Canvas */}
+      <Canvas3DBackground currentStep={currentStep} />
+
+      {/* Ambient Glow Lights */}
+      <div className={styles.glowTopLeft} />
+      <div className={styles.glowBottomRight} />
+
       {/* Floating Error Alert */}
       {apiError && (
         <div className={styles.errorBanner}>
-          <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>error</span>
+          <AlertCircle size={18} />
           <span>{apiError}</span>
         </div>
       )}
 
-      {/* Panel 1 */}
-      <div className={`${styles.accordionPanel} ${styles.bg1} ${currentStep === 1 ? styles.active : ""}`}>
-        {currentStep > 1 ? (
-          <div className={styles.completedText} style={{ color: "rgba(56, 189, 248, 0.4)" }}>COMPLETE</div>
-        ) : (
-          <div className={styles.unexpandedIndicator}>
-            <div className={styles.circleNumber}>1</div>
-          </div>
-        )}
-        <div className={styles.panelContent}>
-          <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
-            <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#e2e8f0", background: "rgba(255, 255, 255, 0.15)" }}>
-                Step 1 of 4 · Identity
-              </span>
+      {/* 2-Column Split Onboarding Grid */}
+      <div className={styles.onboardingGrid}>
+        
+        {/* LEFT COLUMN: Mission Control, Phase Info & Stepper Deck */}
+        <aside className={styles.leftSidebar}>
+          {/* Phase Information Showcase */}
+          <div className={styles.stageHeaderCard}>
+            <div className={styles.stageBadge}>
+              {activeMeta.icon}
+              <span>{activeMeta.tag}</span>
             </div>
-            <Step1CompanyProfile
-              formData={formData}
-              errors={fieldErrors}
-              updateForm={updateForm}
-              onNext={handleNext}
-            />
+            <h1 className={styles.stageTitle}>{activeMeta.title}</h1>
+            <p className={styles.stageSubtitle}>{activeMeta.subtitle}</p>
+
+            <div className={styles.telemetryBadge}>
+              <span className={styles.telemetryDot} />
+              <span>Autonomous Node · Live</span>
+            </div>
           </div>
-        </div>
+
+          {/* Vertical Stepper Deck */}
+          <div className={styles.verticalStepper}>
+            {STEP_META.map((item) => {
+              const isActive = currentStep === item.step;
+              const isCompleted = currentStep > item.step;
+
+              return (
+                <div
+                  key={item.step}
+                  onClick={() => {
+                    if (item.step < currentStep) {
+                      setCurrentStep(item.step);
+                    } else if (item.step === currentStep + 1 && validateStep(currentStep)) {
+                      setCurrentStep(item.step);
+                    }
+                  }}
+                  className={`${styles.stepDeckPill} ${isActive ? styles.stepPillActive : ""} ${isCompleted ? styles.stepPillCompleted : ""}`}
+                >
+                  <div className={styles.stepPillNumber}>
+                    {isCompleted ? <CheckCircle2 size={16} color="#06101e" /> : item.step}
+                  </div>
+                  <div className={styles.stepPillMeta}>
+                    <span className={styles.stepPillTag}>Phase 0{item.step}</span>
+                    <span className={styles.stepPillTitle}>{item.title}</span>
+                  </div>
+                  {isActive && <div className={styles.stepActiveShimmer} />}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Enterprise Security Highlights */}
+          <div className={styles.securityHighlights}>
+            <div className={styles.highlightItem}>
+              <span className={styles.highlightIcon}><Shield size={14} /></span>
+              <span>AES-256 Cloud Encrypted Multi-Tenant Storage</span>
+            </div>
+            <div className={styles.highlightItem}>
+              <span className={styles.highlightIcon}><Database size={14} /></span>
+              <span>Automated PostgreSQL Schema & Role Isolation</span>
+            </div>
+            <div className={styles.highlightItem}>
+              <span className={styles.highlightIcon}><Lock size={14} /></span>
+              <span>Cryptographic OTP Email Verification Active</span>
+            </div>
+          </div>
+        </aside>
+
+        {/* RIGHT COLUMN: Active Field Form Stage */}
+        <section className={styles.rightStage}>
+          <div className={styles.cardStage3D} key={currentStep}>
+            {currentStep === 1 && (
+              <Step1CompanyProfile
+                formData={formData}
+                errors={fieldErrors}
+                updateForm={updateForm}
+                onNext={handleNext}
+              />
+            )}
+
+            {currentStep === 2 && (
+              <Step2IndustryModules
+                formData={formData}
+                errors={fieldErrors}
+                updateForm={updateForm}
+                onBack={handleBack}
+                onNext={handleNext}
+              />
+            )}
+
+            {currentStep === 3 && (
+              <Step3AdminSecurity
+                formData={formData}
+                errors={fieldErrors}
+                updateForm={updateForm}
+                onBack={handleBack}
+                onNext={handleNext}
+              />
+            )}
+
+            {currentStep === 4 && (
+              <Step4ReviewLaunch
+                formData={formData}
+                isLoading={isLoading}
+                onBack={handleBack}
+                onSubmit={handleSubmit}
+              />
+            )}
+          </div>
+        </section>
+
       </div>
 
-      {/* Panel 2 */}
-      <div className={`${styles.accordionPanel} ${styles.bg2} ${currentStep === 2 ? styles.active : ""}`}>
-        {currentStep > 2 ? (
-          <div className={styles.completedText} style={{ color: "rgba(110, 231, 183, 0.4)" }}>COMPLETE</div>
-        ) : (
-          <div className={styles.unexpandedIndicator}>
-            <div className={styles.circleNumber}>2</div>
-          </div>
-        )}
-        <div className={styles.panelContent}>
-          <div className={styles.formWrapper} style={{ maxWidth: "680px" }}>
-            <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#6ee7b7", background: "rgba(110, 231, 183, 0.15)" }}>
-                Step 2 of 4 · Architecture
-              </span>
-            </div>
-            <Step2IndustryModules
-              formData={formData}
-              errors={fieldErrors}
-              updateForm={updateForm}
-              onBack={handleBack}
-              onNext={handleNext}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Panel 3 */}
-      <div className={`${styles.accordionPanel} ${styles.bg3} ${currentStep === 3 ? styles.active : ""}`}>
-        {currentStep > 3 ? (
-          <div className={styles.completedText} style={{ color: "rgba(253, 164, 175, 0.4)" }}>COMPLETE</div>
-        ) : (
-          <div className={styles.unexpandedIndicator}>
-            <div className={styles.circleNumber}>3</div>
-          </div>
-        )}
-        <div className={styles.panelContent}>
-          <div className={styles.formWrapper} style={{ maxWidth: "620px" }}>
-            <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#fda4af", background: "rgba(253, 164, 175, 0.15)" }}>
-                Step 3 of 4 · Security
-              </span>
-            </div>
-            <Step3AdminSecurity
-              formData={formData}
-              errors={fieldErrors}
-              updateForm={updateForm}
-              onBack={handleBack}
-              onNext={handleNext}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Panel 4 */}
-      <div className={`${styles.accordionPanel} ${styles.bg4} ${currentStep === 4 ? styles.active : ""}`}>
-        {currentStep > 4 ? (
-          <div className={styles.completedText} style={{ color: "rgba(147, 197, 253, 0.4)" }}>COMPLETE</div>
-        ) : (
-          <div className={styles.unexpandedIndicator}>
-            <div className={styles.circleNumber}>4</div>
-          </div>
-        )}
-        <div className={styles.panelContent}>
-          <div className={styles.formWrapper} style={{ maxWidth: "640px" }}>
-            <div className={styles.panelTitleStatic}>
-              <span className={styles.stepBadge} style={{ color: "#93c5fd", background: "rgba(147, 197, 253, 0.15)" }}>
-                Step 4 of 4 · Verification
-              </span>
-            </div>
-            <Step4ReviewLaunch
-              formData={formData}
-              isLoading={isLoading}
-              onBack={handleBack}
-              onSubmit={handleSubmit}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Success Modal Overlay */}
+      {/* Success Modal 3D Overlay */}
       {isSuccess && successData && (
         <div className={styles.successOverlay}>
           <div className={styles.successCard}>
-            <div className={styles.checkIconLarge} />
-            <h2 style={{ margin: "0 0 8px 0", fontSize: "24px", fontWeight: 700 }}>Workspace Ready!</h2>
-            <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#94a3b8" }}>
-              Enterprise database and modules provisioned successfully.
+            <div className={styles.checkIconLarge}>
+              <CheckCircle2 size={42} />
+            </div>
+            <h2 style={{ margin: "0 0 8px 0", fontSize: "1.75rem", fontWeight: 800 }}>Workspace Ready!</h2>
+            <p style={{ margin: "0 0 24px 0", fontSize: "0.92rem", color: "#94a3b8" }}>
+              Enterprise multi-tenant schema and selected modules provisioned successfully.
             </p>
 
             <div
               style={{
-                background: "rgba(0, 0, 0, 0.3)",
-                borderRadius: "14px",
-                padding: "16px",
+                background: "rgba(0, 0, 0, 0.4)",
+                borderRadius: "18px",
+                padding: "20px",
                 textAlign: "left",
                 marginBottom: "24px",
                 display: "flex",
                 flexDirection: "column",
-                gap: "8px",
-                fontSize: "13px"
+                gap: "10px",
+                fontSize: "0.9rem",
+                border: "1px solid rgba(255, 255, 255, 0.1)"
               }}
             >
               <div>
@@ -288,42 +352,76 @@ export default function SignupPage() {
                 <strong style={{ color: "#ffffff" }}>{successData.companyName}</strong>
               </div>
               <div>
-                <span style={{ color: "#94a3b8" }}>Admin Login:</span>{" "}
+                <span style={{ color: "#94a3b8" }}>Root Admin Login:</span>{" "}
                 <strong style={{ color: "#ffffff" }}>{successData.ownerEmail}</strong>
               </div>
+              {successData.verificationCode && (
+                <div style={{ marginTop: "6px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <span style={{ color: "#94a3b8" }}>Email Verification OTP:</span>{" "}
+                  <strong style={{ color: "#38bdf8", letterSpacing: "3px", fontFamily: "monospace", fontSize: "1.05rem" }}>
+                    {successData.verificationCode}
+                  </strong>
+                </div>
+              )}
             </div>
 
-            <div style={{ display: "flex", gap: "12px" }}>
-              <Link
-                href="/login"
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  borderRadius: "12px",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  color: "#ffffff",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                  fontSize: "14px"
-                }}
-              >
-                Go to Login
-              </Link>
-              <Link
-                href="/erp"
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
-                  color: "#ffffff",
-                  textDecoration: "none",
-                  fontWeight: 700,
-                  fontSize: "14px"
-                }}
-              >
-                Open ERP
-              </Link>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {successData.verificationUrl && (
+                <Link
+                  href={successData.verificationUrl}
+                  style={{
+                    padding: "14px",
+                    borderRadius: "14px",
+                    background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
+                    color: "#06101e",
+                    textDecoration: "none",
+                    fontWeight: 800,
+                    fontSize: "0.95rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    boxShadow: "0 10px 25px rgba(0, 242, 254, 0.4)"
+                  }}
+                >
+                  <span>Verify Email Address Now</span>
+                  <ArrowRight size={16} />
+                </Link>
+              )}
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <Link
+                  href="/login"
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    borderRadius: "14px",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    color: "#ffffff",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  Go to Login
+                </Link>
+                <Link
+                  href="/erp"
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    borderRadius: "14px",
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    color: "#ffffff",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  Open ERP
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -198,6 +198,24 @@ function ResetPasswordContent() {
                 </p>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
+                  {/* If email is not in URL, allow typing email */}
+                  {!emailParam && !token && (
+                    <div className={styles.formGroup}>
+                      <label htmlFor="email" className={styles.label}>
+                        Registered Email or Employee ID
+                      </label>
+                      <input
+                        id="email"
+                        type="text"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={styles.input}
+                        placeholder="user@shohojsolution.com or EMP-101"
+                        required
+                      />
+                    </div>
+                  )}
+
                   {/* If no token was in URL, show code input */}
                   {!token && (
                     <div className={styles.formGroup}>

@@ -116,15 +116,15 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className={styles.form}>
               <div className={styles.formGroup}>
                 <label htmlFor="email" className={styles.label}>
-                  Email Address
+                  Email or Employee ID
                 </label>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={styles.input}
-                  placeholder="Enter Your Email..."
+                  placeholder="e.g. user@shohojsolution.com or EMP-101"
                   required
                 />
               </div>

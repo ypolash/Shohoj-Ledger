@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { EmailService } from "@/lib/email/emailService";
 
 export interface ResetRequestResult {
   success: boolean;
@@ -10,6 +11,7 @@ export interface ResetRequestResult {
   code?: string;
   userName?: string;
   accountType?: "USER" | "EMPLOYEE";
+  isEmailVerified?: boolean;
 }
 
 export interface VerifyTokenResult {
@@ -19,6 +21,7 @@ export interface VerifyTokenResult {
   userName?: string;
   accountType?: "USER" | "EMPLOYEE";
   userId?: string;
+  companyId?: string | null;
 }
 
 export interface ResetPasswordResult {
@@ -56,19 +59,24 @@ export async function requestPasswordReset(identifier: string): Promise<ResetReq
   let targetUserId = "";
   let targetEmail = "";
   let targetName = "";
+  let targetCompanyId: string | null = null;
+  let isEmailVerified = false;
 
   if (user) {
     targetType = "USER";
     targetUserId = user.id;
     targetEmail = user.email;
     targetName = user.name || "User";
+    targetCompanyId = user.companyId || null;
+    isEmailVerified = user.emailVerified;
   } else {
-    // Check in Employee table
+    // Check in Employee table (by email, employeeId, or phone)
     const employee = await prisma.employee.findFirst({
       where: {
         OR: [
           { email: { equals: cleanId, mode: "insensitive" } },
           { employeeId: { equals: identifier.trim(), mode: "insensitive" } },
+          { phone: { equals: identifier.trim(), mode: "insensitive" } },
         ],
       },
     });
@@ -78,8 +86,16 @@ export async function requestPasswordReset(identifier: string): Promise<ResetReq
       targetUserId = employee.id;
       targetEmail = employee.email;
       targetName = `${employee.firstName} ${employee.lastName}`.trim();
+      targetCompanyId = employee.companyId || null;
+
+      // Check linked user for verification status
+      if (employee.userId) {
+        const linkedUser = await prisma.user.findUnique({ where: { id: employee.userId } });
+        if (linkedUser) {
+          isEmailVerified = linkedUser.emailVerified;
+        }
+      }
     } else {
-      // Return a safe message to avoid leaking user existence, but inform UI
       return {
         success: false,
         message: "No account found matching this email address or Employee ID. Please check and try again.",
@@ -111,6 +127,7 @@ export async function requestPasswordReset(identifier: string): Promise<ResetReq
     email: targetEmail,
     userName: targetName,
     targetType,
+    companyId: targetCompanyId,
   };
 
   await prisma.verification.create({
@@ -121,17 +138,31 @@ export async function requestPasswordReset(identifier: string): Promise<ResetReq
     },
   });
 
-  // Log in server console
+  const resetUrl = `/reset-password?token=${token}&email=${encodeURIComponent(targetEmail)}`;
+
+  // Dispatch email with reset code & link
+  try {
+    await EmailService.sendPasswordResetEmail({
+      to: targetEmail,
+      userName: targetName,
+      code,
+      resetUrl,
+    });
+  } catch (mErr) {
+    console.warn("Could not dispatch password reset email via transport:", mErr);
+  }
+
   console.log(`[AUTH] Password reset requested for ${targetEmail}. Code: ${code}, Token: ${token.slice(0, 10)}...`);
 
   return {
     success: true,
-    message: "Password reset instructions and verification code have been generated.",
+    message: `Password reset instructions and verification code have been dispatched to ${targetEmail}.`,
     email: targetEmail,
     token,
     code,
     userName: targetName,
     accountType: targetType,
+    isEmailVerified,
   };
 }
 
@@ -149,7 +180,6 @@ export async function verifyResetTokenOrCode({
 }): Promise<VerifyTokenResult> {
   const now = new Date();
 
-  // If email is provided, lookup by specific identifier
   let records = [];
   if (email) {
     const identifierKey = `password-reset:${email.trim().toLowerCase()}`;
@@ -183,21 +213,22 @@ export async function verifyResetTokenOrCode({
           userName: payload.userName,
           accountType: payload.targetType,
           userId: payload.userId,
+          companyId: payload.companyId,
         };
       }
-    } catch (err) {
+    } catch {
       continue;
     }
   }
 
   return {
     valid: false,
-    message: "This password reset link or code is invalid, expired, or has already been used.",
+    message: "This password reset link or 6-digit code is invalid, expired, or has already been used.",
   };
 }
 
 /**
- * 3. Reset Password and update Account or Employee
+ * 3. Reset Password and synchronize Account & Employee credentials
  */
 export async function executePasswordReset({
   token,
@@ -226,15 +257,29 @@ export async function executePasswordReset({
     };
   }
 
+  const targetEmail = verification.email.toLowerCase();
+
   // Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  if (verification.accountType === "USER") {
-    // Check if account entry exists
-    const existingAccount = await prisma.account.findFirst({
-      where: { userId: verification.userId },
+  // 1. Sync User / Account table
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: targetEmail, mode: "insensitive" } },
+    include: { accounts: true },
+  });
+
+  if (user) {
+    // Mark email as verified since OTP was confirmed via this email address
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        updatedAt: new Date(),
+      },
     });
 
+    // Update or create Account password
+    const existingAccount = user.accounts?.find((a) => a.password) || user.accounts?.[0];
     if (existingAccount) {
       await prisma.account.update({
         where: { id: existingAccount.id },
@@ -244,19 +289,31 @@ export async function executePasswordReset({
         },
       });
     } else {
-      // Create new account entry with credentials
       await prisma.account.create({
         data: {
-          userId: verification.userId,
-          accountId: verification.userId,
-          providerId: "credential",
+          userId: user.id,
+          accountId: user.email,
+          providerId: "credentials",
           password: hashedPassword,
         },
       });
     }
-  } else if (verification.accountType === "EMPLOYEE") {
+  }
+
+  // 2. Sync Employee table (by email or userId)
+  const employee = await prisma.employee.findFirst({
+    where: {
+      OR: [
+        { email: { equals: targetEmail, mode: "insensitive" } },
+        ...(user ? [{ userId: user.id }] : []),
+        { id: verification.userId },
+      ],
+    },
+  });
+
+  if (employee) {
     await prisma.employee.update({
-      where: { id: verification.userId },
+      where: { id: employee.id },
       data: {
         password: hashedPassword,
         updatedAt: new Date(),
@@ -264,8 +321,8 @@ export async function executePasswordReset({
     });
   }
 
-  // Clean up used verification tokens
-  const identifierKey = `password-reset:${verification.email.toLowerCase()}`;
+  // 3. Clean up consumed verification tokens for this user
+  const identifierKey = `password-reset:${targetEmail}`;
   try {
     await prisma.verification.deleteMany({
       where: { identifier: identifierKey },
@@ -274,7 +331,36 @@ export async function executePasswordReset({
     console.warn("Could not delete consumed verification record:", e);
   }
 
-  console.log(`[AUTH] Password successfully reset for ${verification.email} (${verification.accountType})`);
+  // 4. Send Confirmation Security Email
+  try {
+    await EmailService.sendPasswordResetConfirmationEmail({
+      to: targetEmail,
+      userName: verification.userName || "Valued User",
+    });
+  } catch (e) {
+    console.warn("Could not send confirmation email:", e);
+  }
+
+  // 5. In-App Notification if user exists
+  if (user && user.companyId) {
+    try {
+      await prisma.notification.create({
+        data: {
+          companyId: user.companyId,
+          userId: user.id,
+          category: "SYSTEM",
+          title: "Password Updated",
+          message: "Your account password was successfully updated via password recovery.",
+          priority: "HIGH",
+          channel: "IN_APP",
+        },
+      });
+    } catch (nErr) {
+      console.warn("Could not create security in-app notification:", nErr);
+    }
+  }
+
+  console.log(`[AUTH] Password successfully reset and synchronized for ${targetEmail}`);
 
   return {
     success: true,

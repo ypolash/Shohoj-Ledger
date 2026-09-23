@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { RevenueTrendChart } from './RevenueTrendChart';
 import { ExpenseTrendChart } from './ExpenseTrendChart';
 import { IncomeExpenseChart } from './IncomeExpenseChart';
@@ -18,7 +19,18 @@ interface KPI {
 }
 
 export function FinanceKPICards({ data }: { data?: any }) {
+  const router = useRouter();
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+
+  const handleCardClick = (title: string) => {
+    if (title === 'Active Loans') {
+      router.push('/erp/finance/loans');
+    } else if (title === 'Bills Due') {
+      router.push('/erp/finance/bills');
+    } else {
+      setSelectedCard(title);
+    }
+  };
 
   const formatTrend = (val: number) => {
     if (val === undefined || val === null) return '0%';
@@ -60,7 +72,7 @@ export function FinanceKPICards({ data }: { data?: any }) {
           <div 
             key={idx} 
             className="glass-card hover-bg-surface-hover" 
-            onClick={() => setSelectedCard(kpi.title)}
+            onClick={() => handleCardClick(kpi.title)}
             style={{ 
               padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '12px', 
               borderLeft: `4px solid ${kpi.color}`, cursor: 'pointer', transition: 'all 0.2s'

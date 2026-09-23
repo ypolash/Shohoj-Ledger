@@ -10,7 +10,7 @@ export function FinanceQuickActions() {
     { label: 'Create Income', icon: 'add_circle', color: 'var(--success)', path: '/erp/finance/income' },
     { label: 'Create Expense', icon: 'remove_circle', color: 'var(--danger)', path: '/erp/finance/expenses' },
     { label: 'Loans', icon: 'account_balance', color: '#818cf8', path: '/erp/finance/loans' },
-    { label: 'Bills Due', icon: 'pending_actions', color: '#f43f5e', path: '/erp/finance/expenses' },
+    { label: 'Bills Due', icon: 'pending_actions', color: '#f43f5e', path: '/erp/finance/bills' },
     { label: 'Advance', icon: 'payments', color: 'var(--warning)', path: '/erp/finance/advances' },
     { label: 'Settlement', icon: 'receipt_long', color: 'var(--primary)', path: '/erp/finance/settlements' },
     { label: 'Export Report', icon: 'download', color: 'var(--text-main)', path: '/erp/finance/reports' }

@@ -204,6 +204,8 @@
 }
 
 .heroAnnouncement {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -239,6 +241,8 @@
 }
 
 .heroTitle {
+  position: relative;
+  z-index: 2;
   font-size: 4.4rem;
   font-weight: 800;
   line-height: 1.08;
@@ -256,6 +260,8 @@
 }
 
 .heroSubtitle {
+  position: relative;
+  z-index: 2;
   font-size: 1.25rem;
   color: #94a3b8;
   max-width: 780px;
@@ -264,6 +270,8 @@
 }
 
 .heroCtaGroup {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;

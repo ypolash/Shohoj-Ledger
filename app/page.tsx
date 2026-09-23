@@ -30,6 +30,7 @@ import {
   Activity,
   DollarSign
 } from "lucide-react";
+import { Hero3DCanvas } from "./components/Hero3DCanvas";
 import styles from "./page.module.css";
 
 export default function HomePage() {
@@ -103,6 +104,9 @@ export default function HomePage() {
 
       {/* ================= 2. HERO SECTION WITH 3D STAGE ================= */}
       <section className={styles.hero}>
+        {/* Dynamic 3D Interactive WebGL/Canvas Animation */}
+        <Hero3DCanvas />
+
         <div className={styles.heroAnnouncement}>
           <span className={styles.sparkleDot} />
           <span>⚡ Next-Gen Autonomous Enterprise ERP · v2.5.0</span>

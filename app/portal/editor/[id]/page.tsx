@@ -1,19 +1,29 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import styles from './editor-portal.module.css';
 import RevisionChat from '@/app/erp/components/RevisionChat';
 
 export default function EditorLivePortalPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const projectId = (params?.id as string) || '';
+  const editorParam = searchParams?.get('editor') || '';
 
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Editor Demo Upload State
+  const [selectedDeliverableId, setSelectedDeliverableId] = useState<string>('ALL');
+  const [selectedEditorFilter, setSelectedEditorFilter] = useState<string>(editorParam || 'ALL');
+  const [activeDeliverableSubmitId, setActiveDeliverableSubmitId] = useState<string | null>(null);
+  const [deliverableDemoUrl, setDeliverableDemoUrl] = useState('');
+  const [deliverableNotes, setDeliverableNotes] = useState('');
+  const [submittingDeliverableDemo, setSubmittingDeliverableDemo] = useState(false);
+  const [deliverableSuccessMsg, setDeliverableSuccessMsg] = useState<{ [id: string]: string }>({});
+
   const [demoName, setDemoName] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
   const [editorNotes, setEditorNotes] = useState('');
@@ -25,6 +35,16 @@ export default function EditorLivePortalPage() {
   const [finalVideoNotes, setFinalVideoNotes] = useState('');
   const [submittingFinalVideo, setSubmittingFinalVideo] = useState(false);
   const [finalVideoSuccess, setFinalVideoSuccess] = useState<string | null>(null);
+
+  // Script Copy State
+  const [copiedScriptId, setCopiedScriptId] = useState<string | null>(null);
+
+  const handleCopyScript = (id: string, text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedScriptId(id);
+    setTimeout(() => setCopiedScriptId(null), 2000);
+  };
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId) return;
@@ -50,6 +70,50 @@ export default function EditorLivePortalPage() {
   useEffect(() => {
     fetchProjectData();
   }, [fetchProjectData]);
+
+  const handleSubmitDeliverableDemo = async (deliverableId: string, e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deliverableDemoUrl.trim()) {
+      alert('Please enter a valid demo / cut URL');
+      return;
+    }
+
+    setSubmittingDeliverableDemo(true);
+    try {
+      const res = await fetch(`/api/portal/project/${projectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SUBMIT_VIDEO_DEMO',
+          deliverableId,
+          demoUrl: deliverableDemoUrl.trim(),
+          notes: deliverableNotes.trim(),
+          status: 'Review Ready'
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDeliverableSuccessMsg(prev => ({ ...prev, [deliverableId]: '✓ Cut submitted for review!' }));
+        setActiveDeliverableSubmitId(null);
+        setDeliverableDemoUrl('');
+        setDeliverableNotes('');
+        fetchProjectData();
+        setTimeout(() => {
+          setDeliverableSuccessMsg(prev => {
+            const copy = { ...prev };
+            delete copy[deliverableId];
+            return copy;
+          });
+        }, 4000);
+      } else {
+        alert(data.error || 'Failed to submit deliverable cut');
+      }
+    } catch (err) {
+      alert('Network error submitting video deliverable cut');
+    } finally {
+      setSubmittingDeliverableDemo(false);
+    }
+  };
 
   const handleSubmitFinalVideo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +158,21 @@ export default function EditorLivePortalPage() {
     setSubmittingDemo(true);
     setDemoSuccess(null);
     try {
+      // If a specific deliverable is selected, also sync to that deliverable
+      if (selectedDeliverableId && selectedDeliverableId !== 'ALL') {
+        await fetch(`/api/portal/project/${projectId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'SUBMIT_VIDEO_DEMO',
+            deliverableId: selectedDeliverableId,
+            demoUrl: demoUrl.trim(),
+            notes: editorNotes.trim(),
+            status: 'Review Ready'
+          })
+        });
+      }
+
       const res = await fetch(`/api/portal/project/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,6 +253,44 @@ export default function EditorLivePortalPage() {
 
   const isMasterCutApproved = demoData.approvalStatus === 'Approved' || currentStage >= 7;
 
+  const scriptsList: Array<{ id: string; title: string; content?: string; url?: string }> =
+    Array.isArray(productData.scripts) && productData.scripts.length > 0
+      ? productData.scripts
+      : productData.script
+      ? [{ id: '1', title: 'Main Creative Script', content: productData.script }]
+      : [];
+
+  const videoDeliverables: Array<{
+    id: string;
+    title: string;
+    aspectRatio: string;
+    assignedEditorId?: string;
+    assignedEditorName?: string;
+    editorFee?: string;
+    editorPaid?: boolean;
+    editorPaidAmount?: number;
+    editorInstructions?: string;
+    rawFootageUrl?: string;
+    workingFileUrl?: string;
+    demoUrl?: string;
+    finalVideoUrl?: string;
+    status?: string;
+    notes?: string;
+    dueDate?: string;
+  }> = (Array.isArray(editingData.videoDeliverables) && editingData.videoDeliverables.length > 0)
+    ? editingData.videoDeliverables
+    : (Array.isArray(project.videoDeliverables) && project.videoDeliverables.length > 0)
+    ? project.videoDeliverables
+    : [];
+
+  const uniqueEditors = Array.from(
+    new Set(videoDeliverables.map(v => v.assignedEditorName?.trim()).filter(Boolean))
+  ) as string[];
+
+  const filteredDeliverables = selectedEditorFilter === 'ALL'
+    ? videoDeliverables
+    : videoDeliverables.filter(v => v.assignedEditorName?.trim().toLowerCase() === selectedEditorFilter.trim().toLowerCase());
+
   return (
     <div className={styles.portalContainer}>
       <div className={styles.portalInner}>
@@ -192,7 +309,7 @@ export default function EditorLivePortalPage() {
 
             <div className={styles.editorBadge}>
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>badge</span>
-              Assigned Editor: <strong style={{ color: '#ffffff' }}>{shootingData.assignedEditorName || 'Lead Editor'}</strong>
+              Assigned Editor: <strong style={{ color: '#ffffff' }}>{editorParam || shootingData.assignedEditorName || 'Lead Editor'}</strong>
             </div>
           </div>
 
@@ -233,9 +350,212 @@ export default function EditorLivePortalPage() {
           </span>
         </div>
 
+        {/* MULTI-VIDEO DELIVERABLES & MULTI-EDITOR ASSIGNMENT MATRIX */}
+        {videoDeliverables.length > 0 && (
+          <div className={styles.deliverablesSection}>
+            <div className={styles.deliverablesHeaderBar}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#818cf8' }}>video_library</span>
+                  Assigned Video Deliverables ({videoDeliverables.length} Videos)
+                </h3>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                  Filter by assigned editor to view your individual cuts, requirements, assets, and submit review demos.
+                </p>
+              </div>
+
+              {/* Editor Filter Tabs */}
+              {uniqueEditors.length > 1 && (
+                <div className={styles.deliverableFilterTabs}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEditorFilter('ALL')}
+                    className={`${styles.deliverableTabBtn} ${selectedEditorFilter === 'ALL' ? styles.deliverableTabBtnActive : ''}`}
+                  >
+                    All Deliverables ({videoDeliverables.length})
+                  </button>
+                  {uniqueEditors.map((edName) => {
+                    const count = videoDeliverables.filter(v => v.assignedEditorName?.trim().toLowerCase() === edName.toLowerCase()).length;
+                    return (
+                      <button
+                        key={edName}
+                        type="button"
+                        onClick={() => setSelectedEditorFilter(edName)}
+                        className={`${styles.deliverableTabBtn} ${selectedEditorFilter === edName ? styles.deliverableTabBtnActive : ''}`}
+                      >
+                        👤 {edName} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Deliverables Cards Grid */}
+            <div className={styles.deliverablesGrid}>
+              {filteredDeliverables.map((deliv, index) => {
+                const status = deliv.status || 'Assigned';
+                const statusClass = 
+                  status === 'Approved' ? styles.statusApproved :
+                  status === 'Completed' ? styles.statusCompleted :
+                  status === 'Review Ready' ? styles.statusReviewReady :
+                  status === 'In Progress' ? styles.statusInProgress :
+                  styles.statusAssigned;
+
+                const isFormOpen = activeDeliverableSubmitId === deliv.id;
+
+                return (
+                  <div key={deliv.id || index} className={styles.deliverableCard}>
+                    <div className={styles.deliverableTop}>
+                      <div className={styles.deliverableTitleGroup}>
+                        <span className={styles.deliverableTitle}>
+                          <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '18px' }}>movie</span>
+                          {deliv.title || `Video #${index + 1}`}
+                        </span>
+                        <span className={styles.aspectBadge}>
+                          📐 {deliv.aspectRatio || '9:16 Reel'}
+                        </span>
+                      </div>
+                      <span className={`${styles.statusBadge} ${statusClass}`}>
+                        {status}
+                      </span>
+                    </div>
+
+                    <div className={styles.deliverableMetaRow}>
+                      <span style={{ color: '#94a3b8' }}>
+                        Editor: <strong style={{ color: '#f8fafc' }}>{deliv.assignedEditorName || 'Unassigned'}</strong>
+                      </span>
+                      {deliv.editorFee && (
+                        <span className={styles.editorFeeTag}>
+                          Fee: {deliv.editorFee} BDT {deliv.editorPaid ? '✓ (Paid)' : ''}
+                        </span>
+                      )}
+                    </div>
+
+                    {deliv.editorInstructions && (
+                      <div className={styles.deliverableInstructions}>
+                        <strong style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', color: '#a5b4fc', marginBottom: '2px' }}>
+                          Custom Instructions:
+                        </strong>
+                        {deliv.editorInstructions}
+                      </div>
+                    )}
+
+                    {/* Links row */}
+                    <div className={styles.deliverableLinks}>
+                      {deliv.rawFootageUrl && (
+                        <a href={deliv.rawFootageUrl} target="_blank" rel="noopener noreferrer" className={styles.deliverableLinkBtn} style={{ background: 'rgba(236,72,153,0.15)', color: '#f472b6', borderColor: 'rgba(236,72,153,0.3)' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>download</span>
+                          Raw Assets ↗
+                        </a>
+                      )}
+                      {deliv.workingFileUrl && (
+                        <a href={deliv.workingFileUrl} target="_blank" rel="noopener noreferrer" className={styles.deliverableLinkBtn}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>folder</span>
+                          Bin / Project ↗
+                        </a>
+                      )}
+                      {deliv.demoUrl && (
+                        <a href={deliv.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.deliverableLinkBtn} style={{ background: 'rgba(56,189,248,0.15)', color: '#38bdf8', borderColor: 'rgba(56,189,248,0.3)' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>play_circle</span>
+                          Review Cut ↗
+                        </a>
+                      )}
+                      {deliv.finalVideoUrl && (
+                        <a href={deliv.finalVideoUrl} target="_blank" rel="noopener noreferrer" className={styles.deliverableLinkBtn} style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', borderColor: 'rgba(16,185,129,0.3)' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
+                          Master ↗
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Success message */}
+                    {deliverableSuccessMsg[deliv.id] && (
+                      <div style={{ padding: '6px 10px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#34d399', fontSize: '11px', fontWeight: 600 }}>
+                        {deliverableSuccessMsg[deliv.id]}
+                      </div>
+                    )}
+
+                    {/* Quick demo submit trigger or inline form */}
+                    {!isFormOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveDeliverableSubmitId(deliv.id);
+                          setDeliverableDemoUrl(deliv.demoUrl || '');
+                          setDeliverableNotes(deliv.notes || '');
+                        }}
+                        style={{
+                          padding: '7px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          color: '#cbd5e1',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          marginTop: 'auto'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#38bdf8' }}>cloud_upload</span>
+                        {deliv.demoUrl ? 'Update Review Cut URL' : '+ Submit Cut for This Video'}
+                      </button>
+                    ) : (
+                      <form onSubmit={(e) => handleSubmitDeliverableDemo(deliv.id, e)} className={styles.quickSubmitBox}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>
+                            Submit Demo Cut: {deliv.title}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setActiveDeliverableSubmitId(null)}
+                            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', padding: '0 4px' }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://frame.io/... or Google Drive demo URL"
+                          value={deliverableDemoUrl}
+                          onChange={(e) => setDeliverableDemoUrl(e.target.value)}
+                          className={styles.inputField}
+                          style={{ fontSize: '12px', padding: '6px 10px' }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Notes e.g. Color graded, hook cut v1.2"
+                          value={deliverableNotes}
+                          onChange={(e) => setDeliverableNotes(e.target.value)}
+                          className={styles.inputField}
+                          style={{ fontSize: '12px', padding: '6px 10px' }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={submittingDeliverableDemo}
+                          className={styles.submitBtn}
+                          style={{ padding: '7px 12px', fontSize: '12px' }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>send</span>
+                          {submittingDeliverableDemo ? 'Submitting...' : 'Upload & Sync Cut'}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 2-Column Core Layout */}
         <div className={styles.portalGrid2}>
-          {/* LEFT COLUMN: Specifications, Raw Assets & Working Repositories */}
+          {/* LEFT COLUMN: Specifications, Scripts, Raw Assets & Working Repositories */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Deliverable Specifications Card */}
             <div className={styles.portalCard}>
@@ -272,6 +592,73 @@ export default function EditorLivePortalPage() {
                 )}
               </div>
             </div>
+
+            {/* Creative Scripts & Storyboards Card (Stage 3) */}
+            {scriptsList.length > 0 && (
+              <div className={styles.portalCard} style={{ borderColor: 'rgba(251, 191, 36, 0.3)' }}>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.cardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>description</span>
+                    Creative Scripts & Storyboards ({scriptsList.length})
+                  </h4>
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24', fontWeight: 700, border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                    Stage 3 Scripts
+                  </span>
+                </div>
+
+                <div className={styles.scriptsGrid}>
+                  {scriptsList.map((script, idx) => (
+                    <div key={script.id || idx} className={styles.scriptItemCard}>
+                      <div className={styles.scriptHeader}>
+                        <div className={styles.scriptTitle}>
+                          <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '16px' }}>
+                            article
+                          </span>
+                          <span>{script.title || `Script #${idx + 1}`}</span>
+                        </div>
+
+                        <div className={styles.scriptActions}>
+                          {script.url && (
+                            <a
+                              href={script.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.scriptLinkBtn}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>open_in_new</span>
+                              Open Doc ↗
+                            </a>
+                          )}
+                          {script.content && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyScript(script.id || String(idx), script.content || '')}
+                              className={styles.scriptCopyBtn}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                                {copiedScriptId === (script.id || String(idx)) ? 'check' : 'content_copy'}
+                              </span>
+                              {copiedScriptId === (script.id || String(idx)) ? 'Copied' : 'Copy'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {script.content ? (
+                        <div className={styles.scriptContentBox}>
+                          {script.content}
+                        </div>
+                      ) : script.url ? (
+                        <div className={styles.scriptContentEmpty}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#38bdf8' }}>link</span>
+                          <span>Cloud document attached. Click <strong>Open Doc ↗</strong> above.</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Raw Assets & Cloud Repositories Multi-Links Card */}
             <div className={styles.portalCard}>
@@ -483,6 +870,33 @@ export default function EditorLivePortalPage() {
                       </div>
                     )}
 
+                    {videoDeliverables.length > 0 && (
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
+                          Target Deliverable Video (Optional Sync)
+                        </label>
+                        <select
+                          value={selectedDeliverableId}
+                          onChange={(e) => {
+                            setSelectedDeliverableId(e.target.value);
+                            const found = videoDeliverables.find(v => v.id === e.target.value);
+                            if (found && !demoName) {
+                              setDemoName(`${found.title} (${found.aspectRatio || '9:16'}) - Cut v1.0`);
+                            }
+                          }}
+                          className={styles.inputField}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <option value="ALL">Entire Project / Master Review Cut</option>
+                          {videoDeliverables.map((v, i) => (
+                            <option key={v.id || i} value={v.id}>
+                              {v.title} ({v.aspectRatio || '9:16'}) — Editor: {v.assignedEditorName || 'Unassigned'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div>
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
                         Demo / Export Label *
@@ -564,9 +978,11 @@ export default function EditorLivePortalPage() {
                   <RevisionChat
                     projectId={projectId}
                     currentUserRole="EDITOR"
-                    currentUserName={shootingData.assignedEditorName || "Lead Editor"}
+                    currentUserName={editorParam || shootingData.assignedEditorName || "Lead Editor"}
+                    currentEditorName={editorParam || shootingData.assignedEditorName}
                     messages={project.revisionChat || []}
                     demoFiles={demoData.demoFiles || []}
+                    videoDeliverables={videoDeliverables}
                     onRefresh={fetchProjectData}
                   />
                 </div>

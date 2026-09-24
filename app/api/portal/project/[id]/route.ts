@@ -78,6 +78,50 @@ export async function GET(
     const totalPaid = project.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     const due = Math.max(0, effectiveBudget - totalPaid);
 
+    // Normalize productData with scripts array fallback
+    const rawProductData = parsedMeta?.productData ? { ...parsedMeta.productData } : null;
+    let normalizedProductData = null;
+    if (rawProductData) {
+      let scriptsList = Array.isArray(rawProductData.scripts) ? [...rawProductData.scripts] : [];
+      if (scriptsList.length === 0 && rawProductData.script) {
+        scriptsList = [{ id: '1', title: 'Main Creative Script', content: rawProductData.script }];
+      }
+      normalizedProductData = {
+        ...rawProductData,
+        scripts: scriptsList
+      };
+    }
+
+    // Normalize Multi-Video Deliverables
+    const rawEditingData = parsedMeta?.editingData ? { ...parsedMeta.editingData } : {};
+    const rawShootingData = parsedMeta?.shootingData ? { ...parsedMeta.shootingData } : {};
+    let videoDeliverables = Array.isArray(parsedMeta?.videoDeliverables) && parsedMeta.videoDeliverables.length > 0
+      ? parsedMeta.videoDeliverables
+      : Array.isArray(rawEditingData.videoDeliverables) && rawEditingData.videoDeliverables.length > 0
+      ? rawEditingData.videoDeliverables
+      : Array.isArray(rawShootingData.videoDeliverables) && rawShootingData.videoDeliverables.length > 0
+      ? rawShootingData.videoDeliverables
+      : [];
+
+    if (videoDeliverables.length === 0 && (rawShootingData.assignedEditorName || rawEditingData.deliverableSpecs)) {
+      videoDeliverables = [{
+        id: 'vid-1',
+        title: 'Video 1: Master Commercial Cut',
+        aspectRatio: rawEditingData.deliverableSpecs || '1080x1920 (9:16 Reels) + 4K ProRes Master',
+        assignedEditorId: rawShootingData.assignedEditorId || '',
+        assignedEditorName: rawShootingData.assignedEditorName || 'Lead Editor',
+        editorFee: rawShootingData.editorFee || '',
+        editorPaid: Boolean(rawShootingData.editorPaid),
+        editorPaidAmount: rawShootingData.editorPaidAmount || 0,
+        editorInstructions: rawShootingData.editorInstructions || '',
+        rawFootageUrl: rawShootingData.rawFootageUrl || '',
+        workingFileUrl: rawEditingData.workingFileUrl || '',
+        status: rawEditingData.status || 'In Progress',
+        demoUrl: (demoData.demoFiles && demoData.demoFiles[0]?.url) || '',
+        finalVideoUrl: parsedMeta?.finalVideoUrl || rawEditingData.finalVideoUrl || ''
+      }];
+    }
+
     return NextResponse.json({
       project: {
         id: project.id,
@@ -115,9 +159,13 @@ export async function GET(
           6: "Demo",
           7: "Complete"
         },
-        productData: parsedMeta?.productData || null,
+        productData: normalizedProductData,
         shootingData: parsedMeta?.shootingData || null,
-        editingData: parsedMeta?.editingData || null,
+        editingData: {
+          ...rawEditingData,
+          videoDeliverables
+        },
+        videoDeliverables,
         demoData: {
           ...demoData,
           freeRevisionsIncluded,
@@ -211,7 +259,7 @@ export async function POST(
     const isSpecialCustomerFree = Boolean(demoData.isSpecialCustomerFree);
 
     if (action === 'SEND_CHAT_MESSAGE') {
-      const { sender, senderName, type, text, imageUrl, audioUrl, audioDuration, timecode } = body;
+      const { sender, senderName, type, text, imageUrl, audioUrl, audioDuration, timecode, targetDeliverableId, targetDeliverableTitle, targetEditorName } = body;
       if (!text?.trim() && !imageUrl && !audioUrl) {
         return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 });
       }
@@ -226,6 +274,9 @@ export async function POST(
         audioUrl: audioUrl || '',
         audioDuration: audioDuration || 0,
         timecode: timecode?.trim() || '',
+        targetDeliverableId: targetDeliverableId || undefined,
+        targetDeliverableTitle: targetDeliverableTitle || undefined,
+        targetEditorName: targetEditorName || undefined,
         createdAt: new Date().toISOString()
       };
 
@@ -241,7 +292,7 @@ export async function POST(
         };
       }
     } else if (action === 'SUBMIT_REVISION') {
-      const { revisionNote, title, clientName, timecode } = body;
+      const { revisionNote, title, clientName, timecode, targetDeliverableId, targetDeliverableTitle, targetEditorName } = body;
       if (!revisionNote || !revisionNote.trim()) {
         return NextResponse.json({ error: 'Revision note cannot be empty' }, { status: 400 });
       }
@@ -258,6 +309,9 @@ export async function POST(
         note: revisionNote.trim(),
         clientName: clientName?.trim() || project.clientName || 'Client',
         timecode: timecode?.trim() || '',
+        targetDeliverableId: targetDeliverableId || undefined,
+        targetDeliverableTitle: targetDeliverableTitle || undefined,
+        targetEditorName: targetEditorName || undefined,
         isBillable,
         cost,
         createdAt: new Date().toISOString(),
@@ -273,13 +327,18 @@ export async function POST(
         ? `💳 Billable Fee: BDT ${cost}` 
         : `✓ Free Included (${roundNumber}/${freeRevisionsIncluded})`;
 
+      const deliverableTag = targetDeliverableTitle ? ` • 🎬 ${targetDeliverableTitle}` : '';
+
       const chatMsg = {
         id: String(Date.now()),
         sender: 'CLIENT',
         senderName: clientName?.trim() || project.clientName || 'Client',
         type: 'TEXT',
-        text: `[📋 Revision Round #${roundNumber} • ${chatBadge}]\n${revisionNote.trim()}`,
+        text: `[📋 Revision Round #${roundNumber}${deliverableTag} • ${chatBadge}]\n${revisionNote.trim()}`,
         timecode: timecode?.trim() || '',
+        targetDeliverableId: targetDeliverableId || undefined,
+        targetDeliverableTitle: targetDeliverableTitle || undefined,
+        targetEditorName: targetEditorName || undefined,
         createdAt: new Date().toISOString()
       };
       const existingChat = Array.isArray(parsedMeta.revisionChat) ? parsedMeta.revisionChat : [];
@@ -293,7 +352,7 @@ export async function POST(
         freeRevisionsIncluded,
         costPerRevision,
         isSpecialCustomerFree,
-        revisionNotes: `[Revision #${roundNumber} - ${new Date().toLocaleDateString()} (${chatBadge})]: ${revisionNote.trim()}${parsedMeta.demoData?.revisionNotes ? `\n\n${parsedMeta.demoData.revisionNotes}` : ''}`
+        revisionNotes: `[Revision #${roundNumber}${deliverableTag} - ${new Date().toLocaleDateString()} (${chatBadge})]: ${revisionNote.trim()}${parsedMeta.demoData?.revisionNotes ? `\n\n${parsedMeta.demoData.revisionNotes}` : ''}`
       };
     } else if (action === 'UPDATE_REVISION_POLICY') {
       const { freeRevisionsIncluded: freeInc, costPerRevision: costPer, isSpecialCustomerFree: isVip } = body;
@@ -302,6 +361,78 @@ export async function POST(
         freeRevisionsIncluded: Number(freeInc ?? freeRevisionsIncluded),
         costPerRevision: Number(costPer ?? costPerRevision),
         isSpecialCustomerFree: Boolean(isVip)
+      };
+    } else if (action === 'SUBMIT_VIDEO_DEMO') {
+      const { videoId, demoName, demoUrl, editorNotes, editorName } = body;
+      if (!demoUrl?.trim()) {
+        return NextResponse.json({ error: 'Demo URL is required' }, { status: 400 });
+      }
+
+      let vList = Array.isArray(parsedMeta.videoDeliverables) 
+        ? [...parsedMeta.videoDeliverables]
+        : Array.isArray(parsedMeta.editingData?.videoDeliverables)
+        ? [...parsedMeta.editingData.videoDeliverables]
+        : [];
+
+      vList = vList.map((v: any) => {
+        if (v.id === videoId || (!videoId && vList.length === 1)) {
+          return {
+            ...v,
+            demoUrl: demoUrl.trim(),
+            status: 'Review Ready',
+            notes: editorNotes?.trim() ? editorNotes.trim() : v.notes
+          };
+        }
+        return v;
+      });
+
+      parsedMeta.videoDeliverables = vList;
+      parsedMeta.editingData = {
+        ...(parsedMeta.editingData || {}),
+        videoDeliverables: vList,
+        status: 'Review Ready'
+      };
+
+      const newDemoFile = {
+        id: String(Date.now()),
+        name: demoName?.trim() || `Demo Cut (${editorName || 'Editor'})`,
+        url: demoUrl.trim(),
+        note: editorNotes?.trim() || '',
+        date: new Date().toLocaleDateString(),
+        uploadedBy: editorName?.trim() || 'Lead Editor'
+      };
+
+      const existingDemoFiles = Array.isArray(parsedMeta.demoData?.demoFiles) ? parsedMeta.demoData.demoFiles : [];
+      parsedMeta.demoData = {
+        ...(parsedMeta.demoData || {}),
+        demoFiles: [...existingDemoFiles, newDemoFile],
+        approvalStatus: 'Pending Review'
+      };
+    } else if (action === 'UPDATE_VIDEO_DELIVERABLE') {
+      const { videoId, status, demoUrl, finalVideoUrl, notes } = body;
+      let vList = Array.isArray(parsedMeta.videoDeliverables) 
+        ? [...parsedMeta.videoDeliverables]
+        : Array.isArray(parsedMeta.editingData?.videoDeliverables)
+        ? [...parsedMeta.editingData.videoDeliverables]
+        : [];
+
+      vList = vList.map((v: any) => {
+        if (v.id === videoId) {
+          return {
+            ...v,
+            ...(status ? { status } : {}),
+            ...(demoUrl !== undefined ? { demoUrl } : {}),
+            ...(finalVideoUrl !== undefined ? { finalVideoUrl } : {}),
+            ...(notes !== undefined ? { notes } : {})
+          };
+        }
+        return v;
+      });
+
+      parsedMeta.videoDeliverables = vList;
+      parsedMeta.editingData = {
+        ...(parsedMeta.editingData || {}),
+        videoDeliverables: vList
       };
     } else if (action === 'SUBMIT_EDITOR_DEMO') {
       const { demoName, demoUrl, editorNotes, editorName } = body;

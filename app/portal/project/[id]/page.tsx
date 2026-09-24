@@ -19,6 +19,7 @@ export default function CustomerProjectPortalPage() {
   // Stage 6 Client Revision Submission State
   const [isRevisionFormOpen, setIsRevisionFormOpen] = useState(false);
   const [isChatUnlocked, setIsChatUnlocked] = useState(false);
+  const [revisionDeliverableId, setRevisionDeliverableId] = useState<string>('ALL');
   const [revisionTitle, setRevisionTitle] = useState('');
   const [revisionNote, setRevisionNote] = useState('');
   const [revisionTimecode, setRevisionTimecode] = useState('');
@@ -30,6 +31,17 @@ export default function CustomerProjectPortalPage() {
   const [reviewText, setReviewText] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+
+  // Script Copy & Expansion State
+  const [copiedScriptId, setCopiedScriptId] = useState<string | null>(null);
+  const [isScriptExpanded, setIsScriptExpanded] = useState<boolean>(true);
+
+  const handleCopyScript = (id: string, text: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedScriptId(id);
+    setTimeout(() => setCopiedScriptId(null), 2000);
+  };
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId) return;
@@ -63,6 +75,8 @@ export default function CustomerProjectPortalPage() {
     setSubmittingRevision(true);
     setRevisionSuccess(null);
     try {
+      const targetDeliv = videoDeliverables.find(v => v.id === revisionDeliverableId);
+
       const res = await fetch(`/api/portal/project/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,6 +85,9 @@ export default function CustomerProjectPortalPage() {
           title: revisionTitle.trim(),
           revisionNote: revisionNote.trim(),
           timecode: revisionTimecode.trim(),
+          targetDeliverableId: targetDeliv?.id,
+          targetDeliverableTitle: targetDeliv ? `${targetDeliv.title} (${targetDeliv.aspectRatio || '9:16'})` : undefined,
+          targetEditorName: targetDeliv?.assignedEditorName,
           clientName: project?.clientName
         })
       });
@@ -80,6 +97,7 @@ export default function CustomerProjectPortalPage() {
         setRevisionTitle('');
         setRevisionNote('');
         setRevisionTimecode('');
+        setRevisionDeliverableId('ALL');
         setIsRevisionFormOpen(false);
         fetchProjectData();
       } else {
@@ -181,6 +199,33 @@ export default function CustomerProjectPortalPage() {
   const demoData = project.demoData || {};
   const reviewData = project.reviewData || null;
   const revisions = project.revisions || [];
+
+  const videoDeliverables: Array<{
+    id: string;
+    title: string;
+    aspectRatio: string;
+    assignedEditorId?: string;
+    assignedEditorName?: string;
+    editorFee?: string;
+    rawFootageUrl?: string;
+    workingFileUrl?: string;
+    demoUrl?: string;
+    finalVideoUrl?: string;
+    status?: string;
+    notes?: string;
+    dueDate?: string;
+  }> = (Array.isArray(editingData?.videoDeliverables) && editingData.videoDeliverables.length > 0)
+    ? editingData.videoDeliverables
+    : (Array.isArray(project?.videoDeliverables) && project.videoDeliverables.length > 0)
+    ? project.videoDeliverables
+    : [];
+
+  const scriptsList: Array<{ id: string; title: string; content?: string; url?: string }> =
+    Array.isArray(productData?.scripts) && productData.scripts.length > 0
+      ? productData.scripts
+      : productData?.script
+      ? [{ id: '1', title: 'Main Creative Script', content: productData.script }]
+      : [];
 
   return (
     <div className={styles.portalContainer}>
@@ -303,22 +348,49 @@ export default function CustomerProjectPortalPage() {
         )}
 
         {/* ====================================================================
-            STAGE 3-4 VIEW: SHOOTING & INTAKE (Products, Financials, Model & Schedule)
+            STAGE 3-4 VIEW: INTAKE, CREATIVE SCRIPTING, TALENT & SHOOTING
             ==================================================================== */}
         {(currentStage === 3 || currentStage === 4) && (
           <>
-            <div className={styles.stageHeroBanner}>
+            <div className={styles.stageHeroBanner} style={{
+              background: currentStage === 3 
+                ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%)'
+                : 'linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(190, 24, 93, 0.25) 100%)',
+              borderColor: currentStage === 3 ? 'rgba(245, 158, 11, 0.35)' : 'rgba(236, 72, 153, 0.35)'
+            }}>
               <div className={styles.stageHeroLeft}>
-                <div className={styles.stageHeroIcon} style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>photo_camera</span>
+                <div className={styles.stageHeroIcon} style={{
+                  background: currentStage === 3
+                    ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                    : 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)'
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>
+                    {currentStage === 3 ? 'description' : 'photo_camera'}
+                  </span>
                 </div>
                 <div className={styles.stageHeroText}>
-                  <h3>Stage 4: {stageNames[4] || 'Shooting & Production Execution'}</h3>
-                  <p>Product received, talent assigned, and studio shooting schedule active.</p>
+                  <h3>
+                    Stage {currentStage}: {stageNames[currentStage] || (currentStage === 3 ? (productData.projectType === 'service' ? 'Service Planning & Scripting' : 'Product Intake & Scripting') : 'Shooting & Production Execution')}
+                  </h3>
+                  <p>
+                    {currentStage === 3
+                      ? 'Product intake verified, creative script & storyboard prepared, talent assigned, and shooting schedule active.'
+                      : 'Product received, creative script locked, model on set, and live studio shooting underway.'}
+                  </p>
                 </div>
               </div>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#f472b6', padding: '6px 14px', borderRadius: '10px', background: 'rgba(236,72,153,0.15)', border: '1px solid rgba(236,72,153,0.3)' }}>
-                {shootingData.status || 'Shooting Scheduled'}
+              <span style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: currentStage === 3 ? '#fbbf24' : '#f472b6',
+                padding: '6px 14px',
+                borderRadius: '10px',
+                background: currentStage === 3 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(236, 72, 153, 0.15)',
+                border: currentStage === 3 ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(236, 72, 153, 0.35)'
+              }}>
+                {currentStage === 3 
+                  ? (productData.projectType === 'service' ? '⚡ Service & Script Active' : (productData.received ? '✓ Products & Script Active' : 'Scripting & Intake'))
+                  : (shootingData.status || 'Shooting Scheduled')}
               </span>
             </div>
 
@@ -327,13 +399,22 @@ export default function CustomerProjectPortalPage() {
               <div className={styles.portalCard}>
                 <div className={styles.cardHeader}>
                   <h4 className={styles.cardTitle}>
-                    <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>inventory_2</span>
-                    Product Intake & Inspection Status
+                    <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>
+                      {productData.projectType === 'service' ? 'design_services' : 'inventory_2'}
+                    </span>
+                    {productData.projectType === 'service' ? 'Service Plan & Configuration' : 'Product Intake & Inspection'}
                   </h4>
-                  <span style={{ fontSize: '12px', color: '#34d399', fontWeight: 700 }}>✓ Verified</span>
+                  <span style={{ fontSize: '12px', color: '#34d399', fontWeight: 700 }}>
+                    {productData.projectType === 'service' ? '⚡ Service Ready' : '✓ Verified'}
+                  </span>
                 </div>
 
-                {productData.productsList && productData.productsList.length > 0 ? (
+                {productData.projectType === 'service' ? (
+                  <div style={{ padding: '12px 14px', background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '10px', fontSize: '13px', color: '#93c5fd' }}>
+                    <strong style={{ display: 'block', color: '#60a5fa', marginBottom: '4px' }}>Service Based Project</strong>
+                    No physical product intake required. Production schedule, script, and talent assignments are configured below.
+                  </div>
+                ) : productData.productsList && productData.productsList.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {productData.productsList.map((p: any, idx: number) => (
                       <div key={p.id || idx} className={styles.productItemCard}>
@@ -413,6 +494,107 @@ export default function CustomerProjectPortalPage() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Creative Scripts & Storyboards Card (Stage 3) */}
+            <div className={styles.portalCard} style={{ marginTop: '4px', borderColor: 'rgba(251, 191, 36, 0.3)', background: 'rgba(30, 41, 59, 0.7)' }}>
+              <div className={styles.cardHeader}>
+                <h4 className={styles.cardTitle}>
+                  <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>description</span>
+                  Creative Scripts & Storyboards ({scriptsList.length})
+                </h4>
+                <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.3)', fontWeight: 700 }}>
+                  {scriptsList.length > 0 ? '✓ Script Live' : 'Drafting'}
+                </span>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', lineHeight: '1.5' }}>
+                Official production voiceover scripts, dialogue cues, shot-by-shot storyboards, and cloud document links approved for this shoot.
+              </p>
+
+              {scriptsList.length > 0 ? (
+                <div className={styles.scriptsGrid}>
+                  {scriptsList.map((script, idx) => (
+                    <div key={script.id || idx} className={styles.scriptItemCard}>
+                      <div className={styles.scriptHeader}>
+                        <div className={styles.scriptTitle}>
+                          <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '18px' }}>
+                            article
+                          </span>
+                          <span>{script.title || `Script #${idx + 1}`}</span>
+                        </div>
+
+                        <div className={styles.scriptActions}>
+                          {script.url && (
+                            <a
+                              href={script.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.scriptLinkBtn}
+                              title="Open cloud document in new tab"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>open_in_new</span>
+                              Open Cloud Doc ↗
+                            </a>
+                          )}
+                          {script.content && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyScript(script.id || String(idx), script.content || '')}
+                              className={styles.scriptCopyBtn}
+                              title="Copy script text"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                {copiedScriptId === (script.id || String(idx)) ? 'check' : 'content_copy'}
+                              </span>
+                              {copiedScriptId === (script.id || String(idx)) ? 'Copied!' : 'Copy'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {script.content ? (
+                        <div className={styles.scriptContentBox}>
+                          {script.content}
+                        </div>
+                      ) : script.url ? (
+                        <div className={styles.scriptContentEmpty}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#38bdf8' }}>link</span>
+                          <span>Cloud document attached. Click <strong>Open Cloud Doc ↗</strong> above to read online.</span>
+                        </div>
+                      ) : (
+                        <div className={styles.scriptContentEmpty}>
+                          <span>No script text entered yet.</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{
+                  padding: '24px 20px',
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  border: '1px dashed rgba(251, 191, 36, 0.25)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  gap: '8px',
+                  color: '#94a3b8'
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '30px', color: '#fbbf24' }}>
+                    edit_note
+                  </span>
+                  <strong style={{ color: '#f8fafc', fontSize: '13px' }}>
+                    Creative Scripts in Progress
+                  </strong>
+                  <p style={{ margin: 0, fontSize: '12px', maxWidth: '400px', lineHeight: '1.4' }}>
+                    Scene scripts, dialogues, and storyboard documents are currently being drafted by our creative director. They will appear here automatically once logged.
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -510,6 +692,69 @@ export default function CustomerProjectPortalPage() {
                 </div>
               </div>
             </div>
+
+            {/* Stage 5 Multi-Video Deliverables Showcase */}
+            {videoDeliverables.length > 0 && (
+              <div className={styles.portalCard} style={{ marginTop: '16px', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.cardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#c084fc' }}>video_library</span>
+                    Project Video Deliverables & Formats ({videoDeliverables.length} Videos)
+                  </h4>
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontWeight: 700, border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+                    In Post-Production
+                  </span>
+                </div>
+
+                <div className={styles.clientDeliverablesGrid}>
+                  {videoDeliverables.map((v, i) => {
+                    const status = v.status || 'Assigned';
+                    const statusClass = 
+                      status === 'Approved' ? styles.statusApproved :
+                      status === 'Completed' ? styles.statusCompleted :
+                      status === 'Review Ready' ? styles.statusReviewReady :
+                      status === 'In Progress' ? styles.statusInProgress :
+                      styles.statusAssigned;
+
+                    return (
+                      <div key={v.id || i} className={styles.clientDeliverableCard}>
+                        <div className={styles.clientDeliverableTop}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <span className={styles.clientDeliverableTitle}>
+                              <span className="material-symbols-outlined" style={{ color: '#a855f7', fontSize: '18px' }}>movie</span>
+                              {v.title || `Video #${i + 1}`}
+                            </span>
+                            <span className={styles.aspectRatioTag}>
+                              📐 {v.aspectRatio || '9:16 Reel'}
+                            </span>
+                          </div>
+                          <span className={`${styles.clientStatusBadge} ${statusClass}`}>
+                            {status}
+                          </span>
+                        </div>
+
+                        {v.notes && (
+                          <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
+                            {v.notes}
+                          </p>
+                        )}
+
+                        {v.demoUrl ? (
+                          <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
+                            Watch Demo Cut ↗
+                          </a>
+                        ) : (
+                          <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
+                            🎬 Editing underway by production team
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -532,6 +777,69 @@ export default function CustomerProjectPortalPage() {
                 {demoData.approvalStatus || 'Pending Client Review'}
               </span>
             </div>
+
+            {/* Stage 6 Video Deliverables Review Matrix */}
+            {videoDeliverables.length > 0 && (
+              <div className={styles.portalCard} style={{ borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.cardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>video_library</span>
+                    Video Deliverables Cuts ({videoDeliverables.length} Videos)
+                  </h4>
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700, border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                    Review Pipeline
+                  </span>
+                </div>
+
+                <div className={styles.clientDeliverablesGrid}>
+                  {videoDeliverables.map((v, i) => {
+                    const status = v.status || 'Assigned';
+                    const statusClass = 
+                      status === 'Approved' ? styles.statusApproved :
+                      status === 'Completed' ? styles.statusCompleted :
+                      status === 'Review Ready' ? styles.statusReviewReady :
+                      status === 'In Progress' ? styles.statusInProgress :
+                      styles.statusAssigned;
+
+                    return (
+                      <div key={v.id || i} className={styles.clientDeliverableCard}>
+                        <div className={styles.clientDeliverableTop}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <span className={styles.clientDeliverableTitle}>
+                              <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '18px' }}>movie</span>
+                              {v.title || `Video #${i + 1}`}
+                            </span>
+                            <span className={styles.aspectRatioTag}>
+                              📐 {v.aspectRatio || '9:16 Reel'}
+                            </span>
+                          </div>
+                          <span className={`${styles.clientStatusBadge} ${statusClass}`}>
+                            {status}
+                          </span>
+                        </div>
+
+                        {v.notes && (
+                          <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
+                            {v.notes}
+                          </p>
+                        )}
+
+                        {v.demoUrl ? (
+                          <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
+                            Watch Review Cut ↗
+                          </a>
+                        ) : (
+                          <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
+                            🎬 Cut rendering in progress
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className={styles.portalGrid2}>
               {/* Left Card: Attached Demo Preview Files & Multiple Revisions System */}
@@ -652,6 +960,28 @@ export default function CustomerProjectPortalPage() {
                             </span>
                           </div>
 
+                          {/* Deliverable Selector if multiple deliverables exist */}
+                          {videoDeliverables.length > 0 && (
+                            <div>
+                              <label style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
+                                Target Video Deliverable:
+                              </label>
+                              <select
+                                value={revisionDeliverableId}
+                                onChange={(e) => setRevisionDeliverableId(e.target.value)}
+                                className={styles.portalInput}
+                                style={{ width: '100%', cursor: 'pointer', background: 'rgba(15, 23, 42, 0.8)' }}
+                              >
+                                <option value="ALL">🎬 Entire Project / All Deliverables</option>
+                                {videoDeliverables.map((v, idx) => (
+                                  <option key={v.id || idx} value={v.id}>
+                                    🎬 {v.title || `Video #${idx + 1}`} ({v.aspectRatio || '9:16'})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
                           <input
                             type="text"
                             placeholder="Revision Topic / Scope (e.g. Intro pacing and color tint)"
@@ -735,6 +1065,12 @@ export default function CustomerProjectPortalPage() {
                                       {isVip ? '👑 VIP Free' : isBill ? `💳 Billable (+${formatCurrency(rev.cost || costPerRev)})` : '✓ Free Included'}
                                     </span>
                                   </div>
+                                  {rev.targetDeliverableTitle && (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '4px', fontSize: '10px', color: '#a5b4fc', marginBottom: '4px' }}>
+                                      <span>🎬</span>
+                                      <span>{rev.targetDeliverableTitle}</span>
+                                    </div>
+                                  )}
                                   <p style={{ margin: '2px 0 0 0', color: '#f8fafc', fontSize: '12px' }}>{rev.note}</p>
                                 </div>
                               );
@@ -830,6 +1166,7 @@ export default function CustomerProjectPortalPage() {
                     currentUserName={project.clientName || "Customer"}
                     messages={project.revisionChat || []}
                     demoFiles={demoData.demoFiles || []}
+                    videoDeliverables={videoDeliverables}
                     onRefresh={fetchProjectData}
                   />
                 )}
@@ -957,7 +1294,133 @@ export default function CustomerProjectPortalPage() {
                 </form>
               </div>
             </div>
+
+            {/* Stage 7 Completed Deliverables Showcase */}
+            {videoDeliverables.length > 0 && (
+              <div className={styles.portalCard} style={{ marginTop: '16px', borderColor: 'rgba(16, 185, 129, 0.35)' }}>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.cardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#34d399' }}>check_circle</span>
+                    Delivered Master Videos ({videoDeliverables.length} Videos)
+                  </h4>
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700, border: '1px solid rgba(16, 185, 129, 0.35)' }}>
+                    ✓ Production Complete
+                  </span>
+                </div>
+
+                <div className={styles.clientDeliverablesGrid}>
+                  {videoDeliverables.map((v, i) => (
+                    <div key={v.id || i} className={styles.clientDeliverableCard}>
+                      <div className={styles.clientDeliverableTop}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <span className={styles.clientDeliverableTitle}>
+                            <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '18px' }}>movie</span>
+                            {v.title || `Video #${i + 1}`}
+                          </span>
+                          <span className={styles.aspectRatioTag}>
+                            📐 {v.aspectRatio || '9:16 Reel'}
+                          </span>
+                        </div>
+                        <span className={`${styles.clientStatusBadge} ${styles.statusApproved}`}>
+                          {v.status || 'Approved'}
+                        </span>
+                      </div>
+
+                      {v.notes && (
+                        <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
+                          {v.notes}
+                        </p>
+                      )}
+
+                      {v.demoUrl && (
+                        <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
+                          Watch Deliverable ↗
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
+        )}
+
+        {/* ====================================================================
+            STAGE 5-7 VIEW: STAGE 3 SCRIPT & STORYBOARD REFERENCE
+            ==================================================================== */}
+        {currentStage >= 5 && scriptsList.length > 0 && (
+          <div className={styles.portalCard} style={{ borderColor: 'rgba(251, 191, 36, 0.25)', background: 'rgba(30, 41, 59, 0.55)' }}>
+            <div
+              className={styles.cardHeader}
+              style={{ cursor: 'pointer', userSelect: 'none', paddingBottom: isScriptExpanded ? '12px' : 0, borderBottom: isScriptExpanded ? '1px solid rgba(255, 255, 255, 0.08)' : 'none' }}
+              onClick={() => setIsScriptExpanded(!isScriptExpanded)}
+            >
+              <h4 className={styles.cardTitle}>
+                <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>description</span>
+                Stage 3 Approved Scripts & Storyboards ({scriptsList.length})
+              </h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 600 }}>
+                  {isScriptExpanded ? 'Hide Scripts' : 'View Scripts'}
+                </span>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#fbbf24', transition: 'transform 0.2s ease', transform: isScriptExpanded ? 'rotate(180deg)' : 'none' }}>
+                  expand_more
+                </span>
+              </div>
+            </div>
+
+            {isScriptExpanded && (
+              <div className={styles.scriptsGrid} style={{ marginTop: '6px' }}>
+                {scriptsList.map((script, idx) => (
+                  <div key={script.id || idx} className={styles.scriptItemCard}>
+                    <div className={styles.scriptHeader}>
+                      <div className={styles.scriptTitle}>
+                        <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '18px' }}>
+                          article
+                        </span>
+                        <span>{script.title || `Script #${idx + 1}`}</span>
+                      </div>
+
+                      <div className={styles.scriptActions}>
+                        {script.url && (
+                          <a
+                            href={script.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.scriptLinkBtn}
+                            title="Open cloud document in new tab"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>open_in_new</span>
+                            Open Cloud Doc ↗
+                          </a>
+                        )}
+                        {script.content && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyScript(script.id || String(idx), script.content || '')}
+                            className={styles.scriptCopyBtn}
+                            title="Copy script text"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                              {copiedScriptId === (script.id || String(idx)) ? 'check' : 'content_copy'}
+                            </span>
+                            {copiedScriptId === (script.id || String(idx)) ? 'Copied!' : 'Copy'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {script.content && (
+                      <div className={styles.scriptContentBox}>
+                        {script.content}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

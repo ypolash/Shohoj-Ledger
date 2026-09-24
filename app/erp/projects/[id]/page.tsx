@@ -17,6 +17,25 @@ interface Employee {
   basicSalary?: number | string;
 }
 
+export interface VideoDeliverable {
+  id: string;
+  title: string;
+  aspectRatio: string;
+  assignedEditorId: string;
+  assignedEditorName: string;
+  editorFee: string;
+  editorPaid?: boolean;
+  editorPaidAmount?: number;
+  editorInstructions?: string;
+  rawFootageUrl?: string;
+  workingFileUrl?: string;
+  demoUrl?: string;
+  finalVideoUrl?: string;
+  status: 'Assigned' | 'In Progress' | 'Review Ready' | 'Approved' | 'Completed';
+  notes?: string;
+  dueDate?: string;
+}
+
 const TASK_STAGES = ["To Do", "In Progress", "Review", "Testing", "Completed"];
 
 const STAGE_CONFIG: Record<string, { dot: string; bg: string }> = {
@@ -200,6 +219,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     workingFiles: Array<{ id: string; label: string; url: string }>;
     finalVideoUrl?: string;
     finalVideoNotes?: string;
+    videoDeliverables: VideoDeliverable[];
   }>({
     status: 'In Progress', // 'Ingesting' | 'Rough Cut' | 'Color Grading' | 'Review Ready'
     editorNotes: '',
@@ -209,12 +229,27 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       { id: '1', label: 'Frame.io Project Link', url: '' }
     ],
     finalVideoUrl: '',
-    finalVideoNotes: ''
+    finalVideoNotes: '',
+    videoDeliverables: []
   });
 
+  const [stage5EditorFilter, setStage5EditorFilter] = useState<string>('ALL');
+
   // Stage 6 Demo & Revision State
-  const [demoData, setDemoData] = useState({
-    demoFiles: [] as { id: string; name: string; url: string; date: string; note?: string; uploadedBy?: string }[],
+  const [demoData, setDemoData] = useState<{
+    demoFiles: { id: string; name: string; url: string; date: string; note?: string; uploadedBy?: string }[];
+    newDemoName: string;
+    newDemoUrl: string;
+    revisionCount: number;
+    revisionNotes: string;
+    freeRevisionsIncluded: number;
+    costPerRevision: number;
+    isSpecialCustomerFree: boolean;
+    approvalStatus: string;
+    finalVideoUrl?: string;
+    finalVideoNotes?: string;
+  }>({
+    demoFiles: [],
     newDemoName: '',
     newDemoUrl: '',
     revisionCount: 0,
@@ -222,7 +257,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     freeRevisionsIncluded: 2,
     costPerRevision: 1000,
     isSpecialCustomerFree: false,
-    approvalStatus: 'Pending Review' // 'Pending Review' | 'Revision Requested' | 'Approved'
+    approvalStatus: 'Pending Review', // 'Pending Review' | 'Revision Requested' | 'Approved'
+    finalVideoUrl: '',
+    finalVideoNotes: ''
   });
 
   // Inline Quick Actual Cost Edit
@@ -403,8 +440,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 }
                 setShootingData(prev => ({ ...prev, ...sData }));
               }
-              if (parsed.editingData) {
-                const eData = parsed.editingData;
+              if (parsed.editingData || parsed.videoDeliverables || parsed.shootingData) {
+                const eData = parsed.editingData || {};
+                const sData = parsed.shootingData || {};
                 const finalVid = parsed.finalVideoUrl || eData.finalVideoUrl || parsed.demoData?.finalVideoUrl || '';
                 if (finalVid) eData.finalVideoUrl = finalVid;
                 if (!eData.workingFiles || !Array.isArray(eData.workingFiles) || eData.workingFiles.length === 0) {
@@ -412,6 +450,33 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     ? [{ id: '1', label: 'Frame.io / Cloud Link', url: eData.workingFileUrl }]
                     : [{ id: '1', label: 'Frame.io Project Link', url: '' }];
                 }
+
+                let deliverables: VideoDeliverable[] = [];
+                if (Array.isArray(parsed.videoDeliverables) && parsed.videoDeliverables.length > 0) {
+                  deliverables = parsed.videoDeliverables;
+                } else if (Array.isArray(eData.videoDeliverables) && eData.videoDeliverables.length > 0) {
+                  deliverables = eData.videoDeliverables;
+                } else if (Array.isArray(sData.videoDeliverables) && sData.videoDeliverables.length > 0) {
+                  deliverables = sData.videoDeliverables;
+                } else if (sData.assignedEditorName || eData.deliverableSpecs) {
+                  deliverables = [{
+                    id: 'vid-1',
+                    title: 'Video 1: Master Commercial Cut',
+                    aspectRatio: eData.deliverableSpecs || '16:9 Landscape (4K Master)',
+                    assignedEditorId: sData.assignedEditorId || '',
+                    assignedEditorName: sData.assignedEditorName || 'Lead Editor',
+                    editorFee: sData.editorFee || '',
+                    editorPaid: Boolean(sData.editorPaid),
+                    editorPaidAmount: sData.editorPaidAmount || 0,
+                    editorInstructions: sData.editorInstructions || '',
+                    rawFootageUrl: sData.rawFootageUrl || '',
+                    workingFileUrl: eData.workingFileUrl || '',
+                    demoUrl: (parsed.demoData?.demoFiles && parsed.demoData.demoFiles[0]?.url) || '',
+                    finalVideoUrl: parsed.finalVideoUrl || eData.finalVideoUrl || '',
+                    status: (eData.status as any) || 'In Progress'
+                  }];
+                }
+                eData.videoDeliverables = deliverables;
                 setEditingData(prev => ({ ...prev, ...eData }));
               }
               if (parsed.demoData) {
@@ -567,9 +632,21 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       const completedToPersist = targetCompleted ?? completedStages;
       const namesToPersist = customData?.names ?? stageNames;
       const productToPersist = customData?.product ?? productData;
-      const shootingToPersist = customData?.shooting ?? shootingData;
-      const editingToPersist = customData?.editing ?? editingData;
+      const shootingToPersist = customData?.shooting ? { ...customData.shooting } : { ...shootingData };
+      const editingToPersist = customData?.editing ? { ...customData.editing } : { ...editingData };
       const demoToPersist = customData?.demo ?? demoData;
+
+      // Synchronize assigned editors across deliverables to shootingData if multiple
+      const assignedEditorsList = Array.from(
+        new Set(
+          (editingToPersist.videoDeliverables || [])
+            .map(v => v.assignedEditorName?.trim())
+            .filter(Boolean)
+        )
+      );
+      if (assignedEditorsList.length > 0) {
+        shootingToPersist.assignedEditorName = assignedEditorsList.join(', ');
+      }
 
       const workflowMeta = {
         currentStage: stageToPersist,
@@ -578,6 +655,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
         productData: productToPersist,
         shootingData: shootingToPersist,
         editingData: editingToPersist,
+        videoDeliverables: editingToPersist.videoDeliverables || [],
         demoData: demoToPersist,
         revisions: clientRevisions,
         revisionChat: revisionChat,
@@ -854,6 +932,188 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     }
     await saveWorkflowState(currentStage, completedStages, { shooting: updated });
     fetchProject();
+  };
+
+  // Multi-Video Deliverables & Multi-Editor Assignment Helpers
+  const handleAddVideoDeliverable = (
+    title?: string,
+    aspectRatio?: string,
+    assignedEditorName?: string,
+    assignedEditorId?: string
+  ) => {
+    const currentList = editingData.videoDeliverables || [];
+    const nextIdx = currentList.length + 1;
+    const defaultAspectRatio = nextIdx === 1 ? '16:9 Landscape (4K Master)' : '9:16 Vertical (1080x1920)';
+    const newDeliverable: VideoDeliverable = {
+      id: `vid-${Date.now()}-${nextIdx}`,
+      title: title || `Video ${nextIdx}: ${nextIdx === 1 ? 'Hero Commercial Cut' : `Social Promo Cut #${nextIdx}`}`,
+      aspectRatio: aspectRatio || defaultAspectRatio,
+      assignedEditorId: assignedEditorId || shootingData.assignedEditorId || '',
+      assignedEditorName: assignedEditorName || shootingData.assignedEditorName || '',
+      editorFee: '1500',
+      editorPaid: false,
+      editorPaidAmount: 0,
+      editorInstructions: '',
+      rawFootageUrl: shootingData.rawFootageUrl || '',
+      workingFileUrl: '',
+      demoUrl: '',
+      finalVideoUrl: '',
+      status: 'Assigned'
+    };
+    const updatedList = [...currentList, newDeliverable];
+    const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+    setEditingData(updatedEditing);
+    saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    showToast(`Added ${newDeliverable.title}`);
+  };
+
+  const handleBatchAddPresetVideos = (targetCount: number = 5) => {
+    const presets = [
+      { title: 'Video 1: Hero Commercial Cut', aspectRatio: '16:9 Landscape (4K Master)' },
+      { title: 'Video 2: Instagram / FB Story Reel', aspectRatio: '9:16 Vertical (1080x1920)' },
+      { title: 'Video 3: Product Highlight Cut', aspectRatio: '1:1 Square (1080x1080 Feed)' },
+      { title: 'Video 4: TikTok / Shorts Fast Promo', aspectRatio: '9:16 Vertical (1080x1920)' },
+      { title: 'Video 5: Lookbook / Behind The Scenes', aspectRatio: '9:16 Vertical (1080x1920)' }
+    ];
+
+    const currentList = [...(editingData.videoDeliverables || [])];
+    const newItems: VideoDeliverable[] = [];
+
+    presets.slice(0, targetCount).forEach((preset, i) => {
+      if (!currentList[i]) {
+        newItems.push({
+          id: `vid-${Date.now()}-${i + 1}`,
+          title: preset.title,
+          aspectRatio: preset.aspectRatio,
+          assignedEditorId: '',
+          assignedEditorName: '',
+          editorFee: '1500',
+          editorPaid: false,
+          editorPaidAmount: 0,
+          editorInstructions: '',
+          rawFootageUrl: shootingData.rawFootageUrl || '',
+          workingFileUrl: '',
+          demoUrl: '',
+          finalVideoUrl: '',
+          status: 'Assigned'
+        });
+      }
+    });
+
+    const updatedList = [...currentList, ...newItems];
+    const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+    setEditingData(updatedEditing);
+    saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    showToast(`⚡ Configured ${updatedList.length} Video Deliverables Pipeline!`);
+  };
+
+  const handleUpdateVideoDeliverable = (vidId: string, updates: Partial<VideoDeliverable>) => {
+    const currentList = editingData.videoDeliverables || [];
+    const updatedList = currentList.map(v => {
+      if (v.id === vidId) {
+        return { ...v, ...updates };
+      }
+      return v;
+    });
+    const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+    setEditingData(updatedEditing);
+    saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+  };
+
+  const handleDeleteVideoDeliverable = (vidId: string) => {
+    const currentList = editingData.videoDeliverables || [];
+    if (currentList.length <= 1) {
+      showToast("At least 1 video deliverable is required in the pipeline", "warning");
+      return;
+    }
+    const updatedList = currentList.filter(v => v.id !== vidId);
+    const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+    setEditingData(updatedEditing);
+    saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    showToast("Video deliverable removed");
+  };
+
+  const handleToggleDeliverableEditorPaid = async (vidId: string) => {
+    const currentList = editingData.videoDeliverables || [];
+    const item = currentList.find(v => v.id === vidId);
+    if (!item) return;
+
+    const isCurrentlyPaid = Boolean(item.editorPaid);
+    const fee = parseFloat(String(item.editorFee || 0)) || 0;
+    const editorName = item.assignedEditorName || 'Assigned Editor';
+    const action = !isCurrentlyPaid ? 'PAY' : 'UNPAY';
+
+    const updatedList = currentList.map(v => {
+      if (v.id === vidId) {
+        return {
+          ...v,
+          editorPaid: !isCurrentlyPaid,
+          editorPaidAmount: !isCurrentlyPaid ? (v.editorPaidAmount || fee) : 0
+        };
+      }
+      return v;
+    });
+
+    const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+    setEditingData(updatedEditing);
+
+    try {
+      if (fee > 0) {
+        const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "EDITOR",
+            name: `${editorName} (${item.title})`,
+            amount: fee,
+            action
+          })
+        });
+        if (res.ok) {
+          showToast(!isCurrentlyPaid ? `✓ ${editorName} for ${item.title} marked as PAID (${formatCurrency(fee)})` : `Payment marked as Unpaid`);
+        }
+      } else {
+        showToast(!isCurrentlyPaid ? `✓ ${editorName} marked as PAID` : `Payment marked as Unpaid`);
+      }
+    } catch (err) {
+      console.error("Talent settlement sync error:", err);
+    }
+
+    await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    fetchProject();
+  };
+
+  const getAssignedEditorsSummary = () => {
+    const deliverables = editingData.videoDeliverables || [];
+    const map: Record<string, { key: string; name: string; count: number; videoTitles: string[]; totalFee: number; allPaid: boolean; somePaid: boolean; deliverableIds: string[] }> = {};
+
+    deliverables.forEach(d => {
+      const key = d.assignedEditorName?.trim() || d.assignedEditorId || 'Unassigned';
+      if (!map[key]) {
+        map[key] = {
+          key,
+          name: d.assignedEditorName?.trim() || (d.assignedEditorId ? employees.find(e => e.id === d.assignedEditorId)?.firstName || 'Assigned Editor' : 'Unassigned Editor'),
+          count: 0,
+          videoTitles: [],
+          totalFee: 0,
+          allPaid: true,
+          somePaid: false,
+          deliverableIds: []
+        };
+      }
+      map[key].count += 1;
+      map[key].videoTitles.push(d.title);
+      map[key].deliverableIds.push(d.id);
+      const fee = parseFloat(String(d.editorFee || 0)) || 0;
+      map[key].totalFee += fee;
+      if (!d.editorPaid) {
+        map[key].allPaid = false;
+      } else {
+        map[key].somePaid = true;
+      }
+    });
+
+    return Object.values(map);
   };
 
   const handleSaveProjectDetails = async (e: React.FormEvent) => {
@@ -3159,102 +3419,389 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
 
-                {/* Right Card: Assign Editor System */}
-                <div className={styles.stageCard}>
-                  <div className={styles.stageCardHeader}>
-                    <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#60a5fa' }}>person_pin</span>
-                      Assign Video / Photo Editor
-                    </h3>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div className={styles.stageField}>
-                      <label>Select Editor from Team <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span></label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>badge</span>
-                        <select
-                          id="stage4-editor-select"
-                          value={shootingData.assignedEditorId}
-                          onChange={(e) => {
-                            const empId = e.target.value;
-                            const emp = employees.find(em => em.id === empId);
-                            const updated = {
-                              ...shootingData,
-                              assignedEditorId: empId,
-                              assignedEditorName: emp ? `${emp.firstName} ${emp.lastName}` : (empId === '' ? '' : shootingData.assignedEditorName)
-                            };
-                            setShootingData(updated);
-                            if (empId || updated.assignedEditorName?.trim()) {
-                              setStage4ValidationError(null);
-                            }
-                          }}
-                          className={styles.stageSelect}
-                          style={stage4ValidationError ? { borderColor: '#ef4444', boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)' } : undefined}
-                        >
-                          <option value="">Select in-house staff editor...</option>
-                          {employees.map(emp => (
-                            <option key={emp.id} value={emp.id}>
-                              {emp.firstName} {emp.lastName} {emp.designation ? `(${emp.designation})` : ''}
-                            </option>
-                          ))}
-                        </select>
-                        <span className={`material-symbols-outlined ${styles.statusSelectChevron}`}>expand_more</span>
+                {/* Right Card: Multi-Video Deliverables & Multi-Editor Assignment Matrix */}
+                <div className={styles.stageCard} style={{ gridColumn: '1 / -1' }}>
+                  <div className={styles.deliverablesHeaderBar}>
+                    <div className={styles.deliverablesTitleGroup}>
+                      <div className={styles.stageBadgeIcon} style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', width: '36px', height: '36px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>video_library</span>
+                      </div>
+                      <div>
+                        <h3 className={styles.deliverablesTitle}>
+                          Multi-Video Deliverables & Editor Assignments ({editingData.videoDeliverables?.length || 0} Videos)
+                        </h3>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                          Assign distinct in-house staff or freelance editors to specific video deliverables (e.g. 5 videos to 3 different editors).
+                        </span>
                       </div>
                     </div>
 
-                    <div className={styles.stageField}>
-                      <label>Or Enter Freelance / External Editor Name</label>
-                      <input
-                        id="stage4-editor-input"
-                        type="text"
-                        placeholder="e.g. Alex Rivera (Lead Colorist / Editor)"
-                        value={shootingData.assignedEditorName}
-                        onChange={(e) => {
-                          const updated = { ...shootingData, assignedEditorName: e.target.value };
-                          setShootingData(updated);
-                          if (e.target.value.trim() || shootingData.assignedEditorId) {
-                            setStage4ValidationError(null);
-                          }
-                        }}
-                        className={styles.stageInput}
-                        style={{
-                          paddingLeft: '14px',
-                          ...(stage4ValidationError ? { borderColor: '#ef4444', boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.2)' } : {})
-                        }}
-                      />
+                    <div className={styles.deliverablesActions}>
+                      <button
+                        type="button"
+                        onClick={() => handleBatchAddPresetVideos(5)}
+                        className={styles.batchPresetBtn}
+                        title="Quick setup 5 standard deliverables: Hero 16:9, Reel 9:16, Square 1:1, Story 9:16, Lookbook 9:16"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bolt</span>
+                        ⚡ 1-Click Setup 5 Videos Preset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddVideoDeliverable()}
+                        className={styles.addDeliverableBtn}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+                        + Add Video Deliverable
+                      </button>
                     </div>
+                  </div>
 
-                    <div className={styles.stageField}>
-                      <label>Editor Handover Instructions</label>
-                      <textarea
-                        rows={3}
-                        placeholder="e.g. Export 1x 60s Brand Hero Video (16:9 4K) and 4x 15s IG Reels with color grade."
-                        value={shootingData.editorInstructions}
-                        onChange={(e) => {
-                          const updated = { ...shootingData, editorInstructions: e.target.value };
-                          setShootingData(updated);
-                        }}
-                        className={styles.stageTextarea}
-                      />
+                  {/* Summary of Assigned Editors */}
+                  {getAssignedEditorsSummary().length > 0 && (
+                    <div className={styles.editorsSummaryBar}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#818cf8' }}>group</span>
+                        Assigned Editors Workload:
+                      </span>
+                      {getAssignedEditorsSummary().map((summary, sIdx) => (
+                        <div key={summary.key || sIdx} className={styles.editorSummaryChip}>
+                          <span>👤 <strong>{summary.name}</strong></span>
+                          <span style={{ background: 'rgba(255,255,255,0.12)', padding: '1px 6px', borderRadius: '10px', fontSize: '11px' }}>
+                            {summary.count} {summary.count === 1 ? 'video' : 'videos'}
+                          </span>
+                          {summary.totalFee > 0 && (
+                            <span style={{ color: '#a5b4fc', fontSize: '11px' }}>
+                              ({formatCurrency(summary.totalFee)})
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
+                  )}
 
-                    <div className={styles.stageField}>
-                      <label>Expected Edit Delivery Date</label>
-                      <input
-                        type="date"
-                        value={shootingData.expectedEditDelivery}
-                        onChange={(e) => {
-                          const updated = { ...shootingData, expectedEditDelivery: e.target.value };
-                          setShootingData(updated);
-                        }}
-                        className={styles.stageInput}
-                        style={{ paddingLeft: '14px' }}
-                      />
-                    </div>
+                  {/* Video Deliverables List */}
+                  <div className={styles.deliverablesGrid}>
+                    {(editingData.videoDeliverables || []).map((deliv, idx) => (
+                      <div key={deliv.id || idx} className={styles.deliverableCard}>
+                        <div className={styles.deliverableCardHeader}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
+                            <span className={styles.deliverableNumberBadge}>#{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={deliv.title}
+                              placeholder={`Video ${idx + 1} Title (e.g. Hero Brand Cut / Reel Promo)`}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { title: e.target.value })}
+                              className={styles.stageInput}
+                              style={{ fontWeight: 700, fontSize: '13px', flex: 1, paddingLeft: '10px' }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            {/* Aspect Ratio Selector */}
+                            <select
+                              value={deliv.aspectRatio}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { aspectRatio: e.target.value })}
+                              className={styles.stageSelect}
+                              style={{ fontSize: '12px', padding: '6px 10px', width: 'auto' }}
+                            >
+                              <option value="16:9 Landscape (4K Master)">16:9 Landscape (4K Master)</option>
+                              <option value="9:16 Vertical (1080x1920 Reel/Shorts)">9:16 Vertical (1080x1920 Reel/TikTok)</option>
+                              <option value="1:1 Square (1080x1080 Feed)">1:1 Square (1080x1080 Feed)</option>
+                              <option value="4:5 Portrait (1080x1350 Instagram)">4:5 Portrait (1080x1350 Instagram)</option>
+                              <option value="Custom Ratio / Multi-Format">Custom Ratio / Multi-Format</option>
+                            </select>
+
+                            {/* Status Selector */}
+                            <select
+                              value={deliv.status || 'Assigned'}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { status: e.target.value as any })}
+                              className={styles.stageSelect}
+                              style={{
+                                fontSize: '12px',
+                                padding: '6px 10px',
+                                width: 'auto',
+                                color: deliv.status === 'Completed' || deliv.status === 'Approved' ? '#34d399' : deliv.status === 'Review Ready' ? '#38bdf8' : '#cbd5e1'
+                              }}
+                            >
+                              <option value="Assigned">Assigned</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Review Ready">Review Ready</option>
+                              <option value="Approved">Approved</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+
+                            {(editingData.videoDeliverables?.length || 0) > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteVideoDeliverable(deliv.id)}
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.12)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: '#f87171',
+                                  borderRadius: '6px',
+                                  padding: '5px 8px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Remove Deliverable"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Deliverable Editor Assignment Row */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                          {/* In-House Staff Editor Picker */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px' }}>
+                              Assigned Editor (In-House Staff)
+                            </label>
+                            <select
+                              value={deliv.assignedEditorId}
+                              onChange={(e) => {
+                                const empId = e.target.value;
+                                const emp = employees.find(em => em.id === empId);
+                                handleUpdateVideoDeliverable(deliv.id, {
+                                  assignedEditorId: empId,
+                                  assignedEditorName: emp ? `${emp.firstName} ${emp.lastName}` : (empId === '' ? '' : deliv.assignedEditorName)
+                                });
+                                if (empId || deliv.assignedEditorName?.trim()) {
+                                  setStage4ValidationError(null);
+                                }
+                              }}
+                              className={styles.stageSelect}
+                              style={{ fontSize: '12px', paddingLeft: '8px' }}
+                            >
+                              <option value="">Select in-house staff editor...</option>
+                              {employees.map(emp => (
+                                <option key={emp.id} value={emp.id}>
+                                  {emp.firstName} {emp.lastName} {emp.designation ? `(${emp.designation})` : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* External / Freelance Editor Name */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px' }}>
+                              Or Freelance Editor Name
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Alex (Colorist) or Rahim Editor"
+                              value={deliv.assignedEditorName}
+                              onChange={(e) => {
+                                handleUpdateVideoDeliverable(deliv.id, { assignedEditorName: e.target.value });
+                                if (e.target.value.trim() || deliv.assignedEditorId) {
+                                  setStage4ValidationError(null);
+                                }
+                              }}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px' }}
+                            />
+                          </div>
+
+                          {/* Editor Fee per video */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px' }}>
+                              Editor Fee for this Video (BDT)
+                            </label>
+                            <input
+                              type="number"
+                              placeholder="1500"
+                              value={deliv.editorFee}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { editorFee: e.target.value })}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px' }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Video Specific Instructions */}
+                        <div className={styles.stageField}>
+                          <label style={{ fontSize: '11px' }}>
+                            Specific Edit Directions / Creative Cut Notes for {deliv.assignedEditorName || 'Assigned Editor'}
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Cut dynamic fast-paced 15s hook, sync beat drops at 0:03 and 0:08, add bold captions."
+                            value={deliv.editorInstructions || ''}
+                            onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { editorInstructions: e.target.value })}
+                            className={styles.stageInput}
+                            style={{ fontSize: '12px', paddingLeft: '8px' }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
+
+              {/* Assigned Editor Direct Portal Short Links Preview */}
+              {(() => {
+                const editorSummaries = getAssignedEditorsSummary().filter(s => s.name && s.name !== 'Unassigned Editor');
+                if (editorSummaries.length === 0) return null;
+                return (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '16px 18px',
+                    background: 'rgba(99, 102, 241, 0.07)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>share_location</span>
+                        <div>
+                          <strong style={{ fontSize: '13px', color: '#f8fafc' }}>
+                            Generated Distinct Editor Access Links ({editorSummaries.length} {editorSummaries.length === 1 ? 'Editor' : 'Editors'})
+                          </strong>
+                          <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>
+                            Each editor gets a personalized short link that filters only their assigned video deliverables.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShareModalTab('editor');
+                          setIsShareModalOpen(true);
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(99, 102, 241, 0.2)',
+                          border: '1px solid rgba(99, 102, 241, 0.4)',
+                          color: '#c7d2fe',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>send</span>
+                        Share Hub
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+                      {editorSummaries.map((sum) => {
+                        const editorUrl = typeof window !== 'undefined'
+                          ? `${window.location.origin}/e/${projectId}?editor=${encodeURIComponent(sum.name)}`
+                          : `/e/${projectId}?editor=${encodeURIComponent(sum.name)}`;
+
+                        return (
+                          <div
+                            key={sum.key}
+                            style={{
+                              padding: '10px 12px',
+                              background: 'rgba(15, 23, 42, 0.8)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ fontSize: '12px', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span>
+                                {sum.name}
+                              </strong>
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(99, 102, 241, 0.2)', color: '#c7d2fe' }}>
+                                {sum.count} {sum.count === 1 ? 'Video' : 'Videos'}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: '11px', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              🎬 {sum.videoTitles.join(', ')}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(editorUrl);
+                                  showToast(`🎬 Direct link for ${sum.name} copied!`);
+                                }}
+                                style={{
+                                  flex: 1,
+                                  padding: '6px 8px',
+                                  borderRadius: '6px',
+                                  background: '#6366f1',
+                                  color: '#fff',
+                                  border: 'none',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>content_copy</span>
+                                Copy Link
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const msg = `Hi ${sum.name}, here is your video editing link for "${project?.name}": ${editorUrl}\nAssigned deliverables: ${sum.videoTitles.join(', ')}`;
+                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                                }}
+                                style={{
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(37, 211, 102, 0.15)',
+                                  border: '1px solid rgba(37, 211, 102, 0.4)',
+                                  color: '#25d366',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                                title="Share on WhatsApp"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chat</span>
+                              </button>
+                              <a
+                                href={`/portal/editor/${projectId}?editor=${encodeURIComponent(sum.name)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  padding: '6px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(255,255,255,0.06)',
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                  color: '#cbd5e1',
+                                  fontSize: '11px',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Preview Portal"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>open_in_new</span>
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Validation Warning Alert in Stage 4 */}
               {stage4ValidationError && (
@@ -3282,23 +3829,22 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 <button
                   type="button"
                   onClick={() => {
-                    const hasEditor = Boolean(
-                      (shootingData.assignedEditorId && shootingData.assignedEditorId.trim()) ||
-                      (shootingData.assignedEditorName && shootingData.assignedEditorName.trim())
-                    );
-                    if (!hasEditor) {
-                      const errorMsg = "Editor is not assigned! Please select an in-house editor or enter an external editor before advancing to Stage 5.";
+                    const deliverables = editingData.videoDeliverables || [];
+                    const unassigned = deliverables.filter(d => !d.assignedEditorId && !d.assignedEditorName?.trim());
+                    if (deliverables.length > 0 && unassigned.length > 0) {
+                      const errorMsg = `${unassigned.length} video deliverable(s) are missing an assigned editor! Please assign an editor to all videos before advancing.`;
                       setStage4ValidationError(errorMsg);
                       showToast(`⚠️ ${errorMsg}`, 'warning');
-                      const el = document.getElementById('stage4-editor-select') || document.getElementById('stage4-editor-input');
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        el.focus();
-                      }
+                      return;
+                    }
+                    if (deliverables.length === 0 && !shootingData.assignedEditorName?.trim() && !shootingData.assignedEditorId) {
+                      const errorMsg = "Editor is not assigned! Please add at least 1 video deliverable with an assigned editor before advancing.";
+                      setStage4ValidationError(errorMsg);
+                      showToast(`⚠️ ${errorMsg}`, 'warning');
                       return;
                     }
                     setStage4ValidationError(null);
-                    saveWorkflowState(5, Array.from(new Set([...completedStages, 4])), { shooting: shootingData });
+                    saveWorkflowState(5, Array.from(new Set([...completedStages, 4])), { shooting: shootingData, editing: editingData });
                     handleAdvanceStage(5);
                   }}
                   className={styles.advanceBtn}
@@ -3399,21 +3945,222 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               )}
 
+              {/* Multi-Video Deliverables Post-Production Matrix in Stage 5 */}
+              <div className={styles.stageCard} style={{ marginBottom: '16px' }}>
+                <div className={styles.deliverablesHeaderBar}>
+                  <div className={styles.deliverablesTitleGroup}>
+                    <div className={styles.stageBadgeIcon} style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', width: '36px', height: '36px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>movie_filter</span>
+                    </div>
+                    <div>
+                      <h3 className={styles.deliverablesTitle}>
+                        Multi-Video Deliverables Post-Production Matrix ({editingData.videoDeliverables?.length || 0} Videos)
+                      </h3>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        Track working project bins, review cuts, and final master deliverables per video deliverable.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={styles.deliverablesActions}>
+                    <button
+                      type="button"
+                      onClick={() => handleBatchAddPresetVideos(5)}
+                      className={styles.batchPresetBtn}
+                      title="Quick setup 5 standard deliverables: Hero 16:9, Reel 9:16, Square 1:1, Story 9:16, Lookbook 9:16"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>bolt</span>
+                      ⚡ 1-Click Setup 5 Videos Preset
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddVideoDeliverable()}
+                      className={styles.addDeliverableBtn}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+                      + Add Video Deliverable
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter by Assigned Editor Tabs */}
+                {getAssignedEditorsSummary().length > 1 && (
+                  <div className={styles.deliverableFilterTabs} style={{ marginTop: '12px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setStage5EditorFilter('ALL')}
+                      className={`${styles.deliverableFilterTab} ${stage5EditorFilter === 'ALL' ? styles.deliverableFilterTabActive : ''}`}
+                    >
+                      All Videos ({editingData.videoDeliverables?.length || 0})
+                    </button>
+                    {getAssignedEditorsSummary().map(sum => (
+                      <button
+                        key={sum.key}
+                        type="button"
+                        onClick={() => setStage5EditorFilter(sum.name)}
+                        className={`${styles.deliverableFilterTab} ${stage5EditorFilter === sum.name ? styles.deliverableFilterTabActive : ''}`}
+                      >
+                        👤 {sum.name} ({sum.count})
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Deliverables Post-Production Grid */}
+                <div className={styles.deliverablesGrid} style={{ marginTop: '14px' }}>
+                  {(editingData.videoDeliverables || [])
+                    .filter(d => stage5EditorFilter === 'ALL' || d.assignedEditorName === stage5EditorFilter || (!d.assignedEditorName && stage5EditorFilter === 'Unassigned Editor'))
+                    .map((deliv, idx) => (
+                      <div key={deliv.id || idx} className={styles.deliverableCard} style={{ background: 'rgba(15, 23, 42, 0.8)', borderColor: 'rgba(99, 102, 241, 0.25)' }}>
+                        <div className={styles.deliverableCardHeader}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <span className={styles.deliverableNumberBadge}>#{idx + 1}</span>
+                            <strong style={{ fontSize: '14px', color: '#f8fafc' }}>{deliv.title}</strong>
+                            <span className={styles.aspectRatioBadge}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>crop</span>
+                              {deliv.aspectRatio}
+                            </span>
+                            <span className={styles.editorPill}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>badge</span>
+                              Editor: {deliv.assignedEditorName || 'Unassigned'} {deliv.editorFee ? `(${formatCurrency(deliv.editorFee)})` : ''}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <select
+                              value={deliv.status || 'In Progress'}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { status: e.target.value as any })}
+                              className={styles.stageSelect}
+                              style={{
+                                fontSize: '12px',
+                                padding: '6px 10px',
+                                width: 'auto',
+                                color: deliv.status === 'Completed' || deliv.status === 'Approved' ? '#34d399' : deliv.status === 'Review Ready' ? '#38bdf8' : '#cbd5e1'
+                              }}
+                            >
+                              <option value="Assigned">Assigned</option>
+                              <option value="In Progress">In Progress (Cutting)</option>
+                              <option value="Review Ready">Review Ready (Demo)</option>
+                              <option value="Approved">Approved</option>
+                              <option value="Completed">Completed Master</option>
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = `${window.location.origin}/e/${projectId}`;
+                                navigator.clipboard.writeText(url);
+                                showToast(`Copied Editor Portal Link for ${deliv.assignedEditorName || 'Editor'}`);
+                              }}
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                background: 'rgba(99, 102, 241, 0.15)',
+                                border: '1px solid rgba(99, 102, 241, 0.35)',
+                                color: '#a5b4fc',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>badge</span>
+                              Editor Link
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Deliverable File Links & Demo Cut */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                          {/* Working Project Link */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span>Working Bin / Frame.io Link</span>
+                              {deliv.workingFileUrl && (
+                                <a href={deliv.workingFileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontSize: '11px', fontWeight: 600 }}>
+                                  Open ↗
+                                </a>
+                              )}
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://frame.io/... or https://dropbox.com/..."
+                              value={deliv.workingFileUrl || ''}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { workingFileUrl: e.target.value })}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px' }}
+                            />
+                          </div>
+
+                          {/* Demo Review Cut URL */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#38bdf8' }}>🎬 Demo Cut Video URL (For Review)</span>
+                              {deliv.demoUrl && (
+                                <a href={deliv.demoUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', textDecoration: 'none', fontSize: '11px', fontWeight: 700 }}>
+                                  Watch Demo ↗
+                                </a>
+                              )}
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://drive.google.com/... or https://frame.io/demo..."
+                              value={deliv.demoUrl || ''}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { demoUrl: e.target.value, status: e.target.value ? 'Review Ready' : deliv.status })}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px', borderColor: deliv.demoUrl ? 'rgba(56, 189, 248, 0.5)' : undefined }}
+                            />
+                          </div>
+
+                          {/* Final 4K Master Video URL */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#34d399' }}>✓ Final Master Video URL (ProRes / 4K)</span>
+                              {deliv.finalVideoUrl && (
+                                <a href={deliv.finalVideoUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#34d399', textDecoration: 'none', fontSize: '11px', fontWeight: 700 }}>
+                                  Open Master ↗
+                                </a>
+                              )}
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://drive.google.com/... (ProRes 422 Master)"
+                              value={deliv.finalVideoUrl || ''}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { finalVideoUrl: e.target.value, status: e.target.value ? 'Completed' : deliv.status })}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px', borderColor: deliv.finalVideoUrl ? 'rgba(52, 211, 153, 0.5)' : undefined }}
+                            />
+                          </div>
+                        </div>
+
+                        {deliv.editorInstructions && (
+                          <div style={{ padding: '8px 12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', fontSize: '11px', color: '#cbd5e1' }}>
+                            <strong style={{ color: '#818cf8' }}>Directions: </strong>
+                            {deliv.editorInstructions}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+
               <div className={styles.stageGrid2}>
                 {/* Left Card: Editor Notes & Format Specifications */}
                 <div className={styles.stageCard}>
                   <div className={styles.stageCardHeader}>
                     <h3 className={styles.stageCardTitle}>
                       <span className="material-symbols-outlined" style={{ color: '#818cf8' }}>edit_note</span>
-                      Editor Notes & Project Deliverable Specs
+                      Editor Notes & Global Deliverable Specs
                     </h3>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ padding: '10px 14px', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '10px', fontSize: '12px', color: '#c7d2fe' }}>
-                      <span>Assigned Editor: <strong style={{ color: '#ffffff' }}>{shootingData.assignedEditorName || 'Lead Editor'}</strong></span>
+                      <span>Assigned Editors: <strong style={{ color: '#ffffff' }}>{shootingData.assignedEditorName || 'Lead Editors'}</strong></span>
                       <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#a5b4fc' }}>
-                        Instructions: {shootingData.editorInstructions || 'General deliverables cut.'}
+                        Total Deliverables: {editingData.videoDeliverables?.length || 1} video deliverables configured
                       </span>
                     </div>
 
@@ -3526,7 +4273,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                           <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#818cf8' }}>badge</span>
                           Dedicated Editor Short Link
                         </strong>
-                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>For Assigned Editor</span>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>For Assigned Editors</span>
                       </div>
 
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -3586,7 +4333,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                         </a>
                       </div>
                       <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                        💡 The editor can view instructions, open all project cloud repositories, submit completed demo cuts, and view live client revisions on this link.
+                        💡 Assigned editors can view specific video assignments, download raw footage, submit completed demo cuts, and view live client revisions on this link.
                       </span>
                     </div>
                   </div>
@@ -3936,6 +4683,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     currentUserName="Studio Manager"
                     messages={revisionChat}
                     demoFiles={demoData.demoFiles}
+                    videoDeliverables={editingData.videoDeliverables || []}
                     onRefresh={fetchProject}
                   />
 
@@ -4318,185 +5066,187 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
                   </div>
 
-                  {/* Editor Settlement & Performance Card */}
-                  <div style={{
-                    padding: '16px 20px',
-                    background: 'rgba(99, 102, 241, 0.06)',
-                    border: '1px solid rgba(99, 102, 241, 0.25)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
-                        <div>
-                          <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Lead Editor Settlement</strong>
-                          <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                            {shootingData.assignedEditorName || 'Niam'}
-                          </span>
-                        </div>
-                      </div>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        background: shootingData.editorPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                        color: shootingData.editorPaid ? '#34d399' : '#fbbf24',
-                        border: shootingData.editorPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
-                        fontSize: '11px',
-                        fontWeight: 700
-                      }}>
-                        {shootingData.editorPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
-                      </span>
-                    </div>
+                  {/* Multi-Editor Settlements & Performance Cards */}
+                  {getAssignedEditorsSummary().length > 0 ? (
+                    getAssignedEditorsSummary().map((summary, eIdx) => {
+                      const isAllPaid = summary.allPaid;
+                      return (
+                        <div
+                          key={summary.key || eIdx}
+                          style={{
+                            padding: '16px 20px',
+                            background: 'rgba(99, 102, 241, 0.06)',
+                            border: '1px solid rgba(99, 102, 241, 0.25)',
+                            borderRadius: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
+                              <div>
+                                <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>
+                                  Editor Settlement: {summary.name}
+                                </strong>
+                                <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                                  Assigned to: {summary.videoTitles.join(', ')} ({summary.count} {summary.count === 1 ? 'video' : 'videos'})
+                                </span>
+                              </div>
+                            </div>
+                            <span style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              background: isAllPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                              color: isAllPaid ? '#34d399' : '#fbbf24',
+                              border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                              fontSize: '11px',
+                              fontWeight: 700
+                            }}>
+                              {isAllPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
+                            </span>
+                          </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                      <div>
-                        {isEditingEditorFee ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>BDT:</span>
-                            <input
-                              type="number"
-                              value={tempEditorFee}
-                              onChange={(e) => setTempEditorFee(e.target.value)}
-                              placeholder="Amount"
-                              style={{
-                                width: '90px',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                background: 'rgba(0,0,0,0.5)',
-                                border: '1px solid #818cf8',
-                                color: '#f8fafc',
-                                fontSize: '12px',
-                                outline: 'none'
-                              }}
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveCustomEditorFee(tempEditorFee);
-                                if (e.key === 'Escape') setIsEditingEditorFee(false);
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleSaveCustomEditorFee(tempEditorFee)}
-                              style={{
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                background: '#6366f1',
-                                border: 'none',
-                                color: '#fff',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              ✓ Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setIsEditingEditorFee(false)}
-                              style={{
-                                padding: '4px 6px',
-                                borderRadius: '6px',
-                                background: 'rgba(255,255,255,0.1)',
-                                border: 'none',
-                                color: '#cbd5e1',
-                                fontSize: '11px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              ✕
-                            </button>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Total Deliverable Fee:</span>
+                              <strong style={{ color: '#818cf8', fontSize: '14px' }}>
+                                {formatCurrency(summary.totalFee)}
+                              </strong>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const action = isAllPaid ? 'UNPAY' : 'PAY';
+                                  const updatedList = (editingData.videoDeliverables || []).map(v => {
+                                    if (summary.deliverableIds.includes(v.id)) {
+                                      return {
+                                        ...v,
+                                        editorPaid: !isAllPaid,
+                                        editorPaidAmount: !isAllPaid ? (parseFloat(String(v.editorFee || 0)) || 0) : 0
+                                      };
+                                    }
+                                    return v;
+                                  });
+                                  const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+                                  setEditingData(updatedEditing);
+
+                                  try {
+                                    if (summary.totalFee > 0) {
+                                      await fetch(`/api/projects/${projectId}/talent-settlement`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          type: "EDITOR",
+                                          name: `${summary.name} (${summary.count} videos)`,
+                                          amount: summary.totalFee,
+                                          action
+                                        })
+                                      });
+                                    }
+                                    showToast(!isAllPaid ? `✓ ${summary.name} marked as PAID & recorded in Finance` : `${summary.name} marked as Unpaid`);
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
+                                  await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+                                  fetchProject();
+                                }}
+                                style={{
+                                  padding: '8px 14px',
+                                  borderRadius: '8px',
+                                  background: isAllPaid
+                                    ? 'rgba(255, 255, 255, 0.08)'
+                                    : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                  border: isAllPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                                  color: isAllPaid ? '#cbd5e1' : '#ffffff',
+                                  fontWeight: 700,
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                  {isAllPaid ? 'check_circle' : 'payments'}
+                                </span>
+                                {isAllPaid ? 'Paid (Click to Revert)' : `Pay ${summary.name} Fee ✓`}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (editorRating) {
+                                    setEditorRatingValue(editorRating.rating || 5);
+                                    setEditorRatingFeedbackText(editorRating.feedback || '');
+                                  }
+                                  setIsRateEditorModalOpen(true);
+                                }}
+                                style={{
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  background: 'rgba(99, 102, 241, 0.15)',
+                                  border: '1px solid rgba(99, 102, 241, 0.35)',
+                                  color: '#c7d2fe',
+                                  fontWeight: 600,
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fbbf24' }}>star</span>
+                                {editorRating ? `Rated ${editorRating.rating}/5` : 'Rate'}
+                              </button>
+                            </div>
                           </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Editor Payment:</span>
-                            <strong style={{ color: '#818cf8', fontSize: '14px' }}>
-                              {shootingData.editorFee ? formatCurrency(shootingData.editorFee) : (projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate ? formatCurrency(projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate) : 'BDT 1,500')}
-                            </strong>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const currentFee = shootingData.editorFee || (projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate ? String(projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate) : '1500');
-                                setTempEditorFee(currentFee);
-                                setIsEditingEditorFee(true);
-                              }}
-                              style={{
-                                padding: '2px 7px',
-                                borderRadius: '6px',
-                                background: 'rgba(129, 140, 248, 0.15)',
-                                border: '1px solid rgba(129, 140, 248, 0.35)',
-                                color: '#818cf8',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '2px'
-                              }}
-                              title="Edit Editor Fee"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
-                              Edit
-                            </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{
+                      padding: '16px 20px',
+                      background: 'rgba(99, 102, 241, 0.06)',
+                      border: '1px solid rgba(99, 102, 241, 0.25)',
+                      borderRadius: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
+                          <div>
+                            <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Lead Editor Settlement</strong>
+                            <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                              {shootingData.assignedEditorName || 'Lead Editor'}
+                            </span>
                           </div>
-                        )}
+                        </div>
+                        <span style={{
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: shootingData.editorPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                          color: shootingData.editorPaid ? '#34d399' : '#fbbf24',
+                          border: shootingData.editorPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                          fontSize: '11px',
+                          fontWeight: 700
+                        }}>
+                          {shootingData.editorPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
+                        </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          type="button"
-                          onClick={handleToggleEditorPaid}
-                          style={{
-                            padding: '8px 14px',
-                            borderRadius: '8px',
-                            background: shootingData.editorPaid
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                            border: shootingData.editorPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
-                            color: shootingData.editorPaid ? '#cbd5e1' : '#ffffff',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            {shootingData.editorPaid ? 'check_circle' : 'payments'}
-                          </span>
-                          {shootingData.editorPaid ? 'Paid' : 'Pay Editor ✓'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (editorRating) {
-                              setEditorRatingValue(editorRating.rating || 5);
-                              setEditorRatingFeedbackText(editorRating.feedback || '');
-                            }
-                            setIsRateEditorModalOpen(true);
-                          }}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            background: 'rgba(99, 102, 241, 0.15)',
-                            border: '1px solid rgba(99, 102, 241, 0.35)',
-                            color: '#c7d2fe',
-                            fontWeight: 600,
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fbbf24' }}>star</span>
-                          {editorRating ? `Rated ${editorRating.rating}/5` : 'Rate'}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px' }}>
+                        <span style={{ color: '#94a3b8' }}>Editor Payment: <strong style={{ color: '#818cf8' }}>{formatCurrency(shootingData.editorFee || 1500)}</strong></span>
+                        <button type="button" onClick={handleToggleEditorPaid} style={{ padding: '8px 16px', borderRadius: '8px', background: shootingData.editorPaid ? 'rgba(255, 255, 255, 0.08)' : '#6366f1', color: '#fff', border: 'none', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
+                          {shootingData.editorPaid ? 'Paid' : 'Pay Editor Fee ✓'}
                         </button>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Client Portal Submitted Rating & Review Card */}
@@ -6131,158 +6881,218 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
               )}
 
               {/* EDITOR TAB CONTENT */}
-              {shareModalTab === 'editor' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '6px' }}>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
-                    Send this dedicated workspace link to <strong>{shootingData.assignedEditorName || 'your assigned editor'}</strong>. They can view the shoot log, format specs, open cloud assets (Frame.io/Dropbox), submit completed demo cuts, and view real-time client revision requests.
-                  </p>
+              {shareModalTab === 'editor' && (() => {
+                const editorSummaries = getAssignedEditorsSummary().filter(s => s.name && s.name !== 'Unassigned Editor');
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '6px' }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
+                      Send dedicated workspace links to your assigned video editor(s). Each link automatically filters and personalizes the editor portal for their assigned deliverables.
+                    </p>
 
-                  {/* Editor URL Box */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#0f172a',
-                    border: '1px solid #6366f1',
-                    borderRadius: '12px',
-                    padding: '6px 8px 6px 14px',
-                    gap: '8px'
-                  }}>
-                    <span className="material-symbols-outlined" style={{ color: '#6366f1', fontSize: '18px' }}>link</span>
-                    <input
-                      type="text"
-                      readOnly
-                      value={typeof window !== 'undefined' ? `${window.location.origin}/e/${projectId}` : `/e/${projectId}`}
-                      style={{
-                        flex: 1,
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#f8fafc',
-                        fontSize: '13px',
-                        fontFamily: 'monospace',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = `${window.location.origin}/e/${projectId}`;
-                        navigator.clipboard.writeText(url);
-                        showToast("🎬 Editor Short Link copied to clipboard!");
-                      }}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: '8px',
-                        background: '#6366f1',
-                        color: '#fff',
-                        border: 'none',
-                        fontWeight: 700,
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>content_copy</span>
-                      Copy Link
-                    </button>
-                  </div>
+                    {/* Individual Editor Direct Links if multiple or single assigned */}
+                    {editorSummaries.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ fontSize: '12px', color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            🎯 Individual Editor Direct Links ({editorSummaries.length} {editorSummaries.length === 1 ? 'Editor' : 'Editors'} Assigned)
+                          </strong>
+                        </div>
 
-                  {/* Editor Quick Share Buttons */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = `${window.location.origin}/e/${projectId}`;
-                        const msg = `Hi ${shootingData.assignedEditorName || 'Editor'}, here is your project workspace link for "${project?.name}": ${url}\nYou can access raw footage links, specs, submit demo cuts, and view client revisions here.`;
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-                      }}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        background: 'rgba(37, 211, 102, 0.15)',
-                        border: '1px solid rgba(37, 211, 102, 0.4)',
-                        color: '#25d366',
-                        fontWeight: 700,
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
-                      Send to Editor via WhatsApp
-                    </button>
+                        {editorSummaries.map((summary) => {
+                          const editorDirectUrl = typeof window !== 'undefined'
+                            ? `${window.location.origin}/e/${projectId}?editor=${encodeURIComponent(summary.name)}`
+                            : `/e/${projectId}?editor=${encodeURIComponent(summary.name)}`;
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = `${window.location.origin}/e/${projectId}`;
-                        const subject = `Post-Production Workspace: ${project?.name}`;
-                        const body = `Hi ${shootingData.assignedEditorName || 'Editor'},\n\nHere is your dedicated production link for "${project?.name}":\n${url}\n\nPlease review instructions, deliverable formats, and upload completed cuts.\n\nBest regards,\nStudio Production Team`;
-                        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
-                      }}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        background: 'rgba(99, 102, 241, 0.15)',
-                        border: '1px solid rgba(99, 102, 241, 0.4)',
-                        color: '#818cf8',
-                        fontWeight: 700,
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>mail</span>
-                      Email to Editor
-                    </button>
-                  </div>
+                          return (
+                            <div
+                              key={summary.key}
+                              style={{
+                                padding: '12px 14px',
+                                background: 'rgba(99, 102, 241, 0.08)',
+                                border: '1px solid rgba(99, 102, 241, 0.3)',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px', fontWeight: 700 }}>
+                                    {summary.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <strong style={{ fontSize: '13px', color: '#f8fafc' }}>{summary.name}</strong>
+                                    <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '6px' }}>
+                                      • {summary.count} {summary.count === 1 ? 'video' : 'videos'} ({summary.videoTitles.join(', ')})
+                                    </span>
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(99, 102, 241, 0.2)', color: '#c7d2fe', border: '1px solid rgba(99, 102, 241, 0.4)' }}>
+                                  Personalized Link
+                                </span>
+                              </div>
 
-                  {/* Preview Editor View */}
-                  <div style={{
-                    padding: '12px 14px',
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <div>
-                      <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Editor Live Portal</strong>
-                      <span style={{ fontSize: '11px', color: '#a5b4fc' }}>
-                        Assigned: {shootingData.assignedEditorName || 'Team Editor'}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: '#0f172a',
+                                border: '1px solid rgba(99, 102, 241, 0.4)',
+                                borderRadius: '10px',
+                                padding: '4px 6px 4px 10px',
+                                gap: '6px'
+                              }}>
+                                <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '16px' }}>link</span>
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={editorDirectUrl}
+                                  style={{
+                                    flex: 1,
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#f8fafc',
+                                    fontSize: '12px',
+                                    fontFamily: 'monospace',
+                                    outline: 'none'
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(editorDirectUrl);
+                                    showToast(`🎬 Direct link for ${summary.name} copied!`);
+                                  }}
+                                  style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    background: '#6366f1',
+                                    color: '#fff',
+                                    border: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>content_copy</span>
+                                  Copy
+                                </button>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const msg = `Hi ${summary.name}, here is your personalized video editing workspace for "${project?.name}": ${editorDirectUrl}\nAssigned deliverables: ${summary.videoTitles.join(', ')}.\nYou can upload cuts, download raw footage, and review notes here.`;
+                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(37, 211, 102, 0.12)',
+                                    border: '1px solid rgba(37, 211, 102, 0.3)',
+                                    color: '#25d366',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>chat</span>
+                                  WhatsApp to {summary.name}
+                                </button>
+                                <a
+                                  href={`/portal/editor/${projectId}?editor=${encodeURIComponent(summary.name)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    color: '#cbd5e1',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  Open as {summary.name} ↗
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* General / Fallback Editor URL Box */}
+                    <div style={{ borderTop: editorSummaries.length > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingTop: editorSummaries.length > 0 ? '12px' : '0' }}>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                        {editorSummaries.length > 0 ? '🌐 General / Team Editor Link (Shows All Videos):' : '🎬 General Editor Workspace Link:'}
                       </span>
-                    </div>
-                    <a
-                      href={`/portal/editor/${projectId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        background: 'rgba(99, 102, 241, 0.2)',
-                        border: '1px solid rgba(99, 102, 241, 0.4)',
-                        color: '#a5b4fc',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        display: 'inline-flex',
+                      <div style={{
+                        display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      Open Editor Portal ↗
-                    </a>
+                        background: '#0f172a',
+                        border: '1px solid #6366f1',
+                        borderRadius: '12px',
+                        padding: '6px 8px 6px 14px',
+                        gap: '8px'
+                      }}>
+                        <span className="material-symbols-outlined" style={{ color: '#6366f1', fontSize: '18px' }}>link</span>
+                        <input
+                          type="text"
+                          readOnly
+                          value={typeof window !== 'undefined' ? `${window.location.origin}/e/${projectId}` : `/e/${projectId}`}
+                          style={{
+                            flex: 1,
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#f8fafc',
+                            fontSize: '13px',
+                            fontFamily: 'monospace',
+                            outline: 'none'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = `${window.location.origin}/e/${projectId}`;
+                            navigator.clipboard.writeText(url);
+                            showToast("🎬 General Editor Short Link copied to clipboard!");
+                          }}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            background: '#6366f1',
+                            color: '#fff',
+                            border: 'none',
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>content_copy</span>
+                          Copy Link
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         )}

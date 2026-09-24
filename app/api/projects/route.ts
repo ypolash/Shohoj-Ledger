@@ -153,7 +153,7 @@ export async function POST(req: Request) {
     }
 
     const newProject = await prisma.$transaction(async (tx) => {
-      const p = await tx.project.create({
+      const p = await (tx.project as any).create({
         data: {
           companyId,
           projectCode: trimmedCode,
@@ -173,12 +173,45 @@ export async function POST(req: Request) {
           estimatedBudget: parsedBudget,
           actualCost: parsedActualCost,
           tags: Array.isArray(tags) ? tags : [],
-          systemSource,
-          teamMembers: {
-            connect: validTeamMembers
-          }
+          systemSource
         }
       });
+
+      if (validTeamMembers.length > 0) {
+        await (tx.project as any).update({
+          where: { id: p.id },
+          data: {
+            teamMembers: {
+              connect: validTeamMembers
+            }
+          }
+        });
+
+        for (const member of validTeamMembers) {
+          const emp = await tx.employee.findUnique({
+            where: { id: member.id },
+            select: { employmentType: true, basicSalary: true }
+          });
+          const isProjectBased = emp?.employmentType === "Project-Based";
+          const rate = isProjectBased ? Number(emp?.basicSalary || 0) : 0;
+          await tx.projectEmployee.upsert({
+            where: {
+              projectId_employeeId: {
+                projectId: p.id,
+                employeeId: member.id
+              }
+            },
+            update: {},
+            create: {
+              projectId: p.id,
+              employeeId: member.id,
+              rate,
+              paidAmount: 0,
+              isProjectBased
+            }
+          });
+        }
+      }
 
       // Record Advance Payment if provided
       if (parsedAdvance > 0) {

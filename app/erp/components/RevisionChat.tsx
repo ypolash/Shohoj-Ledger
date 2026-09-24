@@ -7,6 +7,9 @@ export interface ChatMessage {
   id: string;
   sender: 'CLIENT' | 'STUDIO' | 'EDITOR';
   senderName: string;
+  targetDeliverableId?: string;
+  targetDeliverableTitle?: string;
+  targetEditorName?: string;
   type: 'TEXT' | 'IMAGE' | 'VOICE';
   text?: string;
   imageUrl?: string;
@@ -22,6 +25,8 @@ interface RevisionChatProps {
   currentUserName: string;
   messages: ChatMessage[];
   demoFiles?: Array<{ id: string; name: string; url: string; date: string; note?: string; uploadedBy?: string }>;
+  videoDeliverables?: Array<{ id: string; title: string; aspectRatio?: string; assignedEditorName?: string }>;
+  currentEditorName?: string;
   onRefresh?: () => void;
 }
 
@@ -31,10 +36,13 @@ export default function RevisionChat({
   currentUserName,
   messages = [],
   demoFiles = [],
+  videoDeliverables = [],
+  currentEditorName,
   onRefresh
 }: RevisionChatProps) {
   const [text, setText] = useState('');
   const [timecode, setTimecode] = useState('');
+  const [selectedDeliverableId, setSelectedDeliverableId] = useState<string>('ALL');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -163,12 +171,17 @@ export default function RevisionChat({
 
     setIsSubmitting(true);
     try {
+      const targetDeliv = (videoDeliverables || []).find(v => v.id === selectedDeliverableId);
+
       const payload: any = {
         action: 'SEND_CHAT_MESSAGE',
         sender: currentUserRole,
         senderName: currentUserName,
         text: text.trim(),
         timecode: timecode.trim(),
+        targetDeliverableId: targetDeliv?.id || undefined,
+        targetDeliverableTitle: targetDeliv ? `${targetDeliv.title} (${targetDeliv.aspectRatio || '9:16'})` : undefined,
+        targetEditorName: targetDeliv?.assignedEditorName || undefined,
         imageUrl: selectedImage || '',
         audioUrl: recordedAudio?.url || '',
         audioDuration: recordedAudio?.duration || 0,
@@ -199,6 +212,25 @@ export default function RevisionChat({
     }
   };
 
+  // Sender display resolver: Anonymize internal staff names for client
+  const getDisplaySenderInfo = (msg: ChatMessage) => {
+    if (currentUserRole === 'CLIENT') {
+      if (msg.sender === 'CLIENT') {
+        return { name: msg.senderName || 'You (Client)', avatar: '👤', color: '#34d399' };
+      }
+      // Customer sees all studio/editor messages from "Studio Production Team" without exposing individual staff names
+      return { name: 'Studio Production Team', avatar: '🏢', color: '#a855f7' };
+    }
+    // For Studio (Admin) or Editor: show real identities
+    if (msg.sender === 'CLIENT') {
+      return { name: `${msg.senderName || 'Customer'} (Client)`, avatar: '👤', color: '#34d399' };
+    }
+    if (msg.sender === 'EDITOR') {
+      return { name: `🎬 ${msg.senderName || 'Editor'} (Editor)`, avatar: '🎬', color: '#38bdf8' };
+    }
+    return { name: `🏢 ${msg.senderName || 'Studio Manager'} (Admin)`, avatar: '🏢', color: '#c084fc' };
+  };
+
   // Find latest editor-shared cut
   const latestCut = demoFiles && demoFiles.length > 0 ? demoFiles[demoFiles.length - 1] : null;
 
@@ -222,7 +254,7 @@ export default function RevisionChat({
         </div>
         <div className={styles.liveBadge}>
           <span className={styles.liveDot}></span>
-          Client • Studio • Editor
+          {currentUserRole === 'CLIENT' ? 'Studio Direct Sync' : 'Client • Studio • Editor'}
         </div>
       </div>
 
@@ -235,7 +267,7 @@ export default function RevisionChat({
             </span>
             <span>
               <strong>Latest Demo Cut:</strong> {latestCut.name}{' '}
-              {latestCut.uploadedBy ? `(${latestCut.uploadedBy})` : ''}
+              {latestCut.uploadedBy && currentUserRole !== 'CLIENT' ? `(${latestCut.uploadedBy})` : ''}
             </span>
           </div>
           <a
@@ -267,6 +299,13 @@ export default function RevisionChat({
             const isSelf = msg.sender === currentUserRole;
             const isClient = msg.sender === 'CLIENT';
             const isEditor = msg.sender === 'EDITOR';
+            const senderInfo = getDisplaySenderInfo(msg);
+
+            const isAssignedToThisEditor =
+              currentUserRole === 'EDITOR' &&
+              Boolean(msg.targetEditorName) &&
+              Boolean(currentUserName || currentEditorName) &&
+              (msg.targetEditorName || '').trim().toLowerCase() === (currentUserName || currentEditorName || '').trim().toLowerCase();
 
             return (
               <div
@@ -277,22 +316,22 @@ export default function RevisionChat({
                 <div
                   className={styles.msgAvatar}
                   style={{
-                    background: isClient
+                    background: senderInfo.avatar === '👤'
                       ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                      : isEditor
+                      : senderInfo.avatar === '🎬'
                       ? 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
                       : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)'
                   }}
-                  title={`${msg.senderName} (${msg.sender})`}
+                  title={senderInfo.name}
                 >
-                  {isClient ? '👤' : isEditor ? '🎬' : '🏢'}
+                  {senderInfo.avatar}
                 </div>
 
                 {/* Content Block */}
                 <div className={styles.msgContentBlock}>
                   <div className={styles.msgMetaHeader} style={{ justifyContent: isSelf ? 'flex-end' : 'flex-start' }}>
-                    <strong style={{ color: isClient ? '#34d399' : isEditor ? '#38bdf8' : '#c084fc' }}>
-                      {msg.senderName || msg.sender}
+                    <strong style={{ color: senderInfo.color }}>
+                      {senderInfo.name}
                     </strong>
                     <span>•</span>
                     <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -304,6 +343,21 @@ export default function RevisionChat({
                       isClient ? styles.bubbleClient : isEditor ? styles.bubbleEditor : styles.bubbleStudio
                     }`}
                   >
+                    {/* Deliverable Scope Tag Pill */}
+                    {msg.targetDeliverableTitle && (
+                      <div className={styles.deliverableTagPill}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>movie</span>
+                        Video: {msg.targetDeliverableTitle}
+                      </div>
+                    )}
+
+                    {/* Assigned to You Badge for Editor */}
+                    {isAssignedToThisEditor && (
+                      <div className={styles.assignedToYouBadge}>
+                        ⭐ Deliverable Assigned to You
+                      </div>
+                    )}
+
                     {/* Timecode Pill */}
                     {msg.timecode && (
                       <div className={styles.timecodePill}>
@@ -352,6 +406,28 @@ export default function RevisionChat({
 
       {/* Input Bar */}
       <form onSubmit={handleSendMessage} className={styles.chatInputArea}>
+        {/* Deliverable Scope Selector */}
+        {videoDeliverables && videoDeliverables.length > 0 && (
+          <div className={styles.deliverableScopeBar}>
+            <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#818cf8' }}>movie</span>
+              Scope:
+            </span>
+            <select
+              value={selectedDeliverableId}
+              onChange={(e) => setSelectedDeliverableId(e.target.value)}
+              className={styles.deliverableScopeSelect}
+            >
+              <option value="ALL">All Videos / Entire Project (General)</option>
+              {videoDeliverables.map((v, i) => (
+                <option key={v.id || i} value={v.id}>
+                  {v.title} ({v.aspectRatio || '9:16'}) {v.assignedEditorName && currentUserRole !== 'CLIENT' ? `— Editor: ${v.assignedEditorName}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Image Attachment Preview */}
         {selectedImage && (
           <div className={styles.previewBar}>
@@ -458,7 +534,7 @@ export default function RevisionChat({
             {/* Message Text Input */}
             <input
               type="text"
-              placeholder="Type revision notes..."
+              placeholder={currentUserRole === 'CLIENT' ? 'Type revision note to studio team...' : 'Type message / feedback...'}
               value={text}
               onChange={(e) => setText(e.target.value)}
               className={styles.textInput}
@@ -486,3 +562,4 @@ export default function RevisionChat({
     </div>
   );
 }
+

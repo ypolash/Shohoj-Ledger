@@ -58,6 +58,14 @@ export const CRM_FEATURES: FeatureDefinition[] = [
     href: "/erp/crm/sales-orders",
   },
   {
+    key: "crm_follow_ups",
+    name: "Follow-Ups & Appointments",
+    description: "Schedule, track, and manage customer follow-ups and appointment bookings.",
+    category: "CRM",
+    icon: "event_upcoming",
+    href: "/erp/crm/follow-ups",
+  },
+  {
     key: "crm_reports",
     name: "CRM Analytics & Reports",
     description: "Detailed sales rep performance reports, activity calendar, and conversion rate analytics.",

@@ -18,6 +18,7 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/erp/crm", icon: "dashboard", featureKey: "crm_dashboard", exact: true },
   { name: "Customers", href: "/erp/crm/customers", icon: "person_search", featureKey: "crm_customers", exact: false },
+  { name: "Follow Ups", href: "/erp/crm/follow-ups", icon: "event_upcoming", featureKey: "crm_follow_ups", exact: false },
   { name: "Leads", href: "/erp/crm/leads", icon: "view_kanban", featureKey: "crm_leads", exact: false },
   { name: "Opportunities", href: "/erp/crm/opportunities", icon: "trending_up", featureKey: "crm_opportunities", exact: false },
   { name: "Quotations", href: "/erp/crm/quotations", icon: "request_quote", featureKey: "crm_quotations", exact: false },

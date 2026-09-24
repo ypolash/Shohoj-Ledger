@@ -474,6 +474,7 @@ export default function CustomerDetailPage() {
       >
         {[
           { id: 'overview', label: 'Overview', icon: 'space_dashboard' },
+          { id: 'followups', label: 'Follow-ups & Appts', icon: 'event_upcoming' },
           { id: 'orders', label: 'Orders & Sales', icon: 'shopping_bag' },
           { id: 'financials', label: 'Financials & Invoices', icon: 'receipt_long' },
           { id: 'contacts', label: `Contacts (${(customer.contacts || []).length})`, icon: 'group' },
@@ -693,6 +694,13 @@ export default function CustomerDetailPage() {
             </div>
 
           </div>
+        </div>
+      )}
+
+      {/* TAB: FOLLOW-UPS & APPOINTMENTS (Full Width) */}
+      {activeTab === 'followups' && (
+        <div style={{ width: '100%', background: 'var(--surface-main)', border: '1px solid var(--border-main)', borderRadius: '16px', padding: '24px', boxShadow: 'var(--shadow-sm)' }}>
+          <CustomerActivities customer={customer} />
         </div>
       )}
 

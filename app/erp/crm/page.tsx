@@ -30,10 +30,12 @@ ChartJS.register(
 
 export default function CRMDashboardPage() {
   const [data, setData] = useState<any>(null);
+  const [followUpData, setFollowUpData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchStats();
+    fetchFollowUps();
   }, []);
 
   const fetchStats = async () => {
@@ -51,6 +53,18 @@ export default function CRMDashboardPage() {
     }
   };
 
+  const fetchFollowUps = async () => {
+    try {
+      const res = await fetch(`/api/crm/follow-ups?take=5`);
+      if (res.ok) {
+        const json = await res.json();
+        setFollowUpData(json);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const formatCurrency = (val: string | number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -61,6 +75,8 @@ export default function CRMDashboardPage() {
 
   const metrics = data?.metrics || {};
   const charts = data?.charts || {};
+  const followUpCounts = followUpData?.counts || { today: 0, upcoming: 0, overdue: 0 };
+  const upcomingFollowUps = followUpData?.data || [];
 
   const sortedMonths = Object.keys(charts.monthlyLeads || {}).sort();
 
@@ -91,13 +107,36 @@ export default function CRMDashboardPage() {
       >
         <div>
           <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 700, color: 'var(--text-main)' }}>
-            CRM & Lead Management
+            CRM & Sales Overview
           </h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
-            Track leads, analyze pipeline, and manage customer sales relationships.
+            Track leads, appointments, customer follow-ups, and sales pipeline.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link
+            href="/erp/crm/follow-ups"
+            className="btn hover-lift"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '9px 16px',
+              borderRadius: '10px',
+              fontSize: '13px',
+              fontWeight: 600,
+              background: 'var(--surface-card)',
+              border: '1px solid var(--border-main)',
+              color: 'var(--text-main)',
+              textDecoration: 'none',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#8b5cf6' }}>
+              event_upcoming
+            </span>
+            <span>Follow-Ups ({followUpCounts.today + followUpCounts.upcoming})</span>
+          </Link>
+
           <Link
             href="/erp/crm/leads"
             className="btn btn-primary hover-lift"
@@ -124,12 +163,12 @@ export default function CRMDashboardPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--spacing-5)' }}>
           {[
-            { label: 'Total Leads', value: metrics.totalLeads, color: 'var(--primary)', glow: 'primary' },
-            { label: 'New Leads', value: metrics.newLeads, color: 'var(--text-main)', glow: 'accent' },
-            { label: 'Qualified Leads', value: metrics.qualifiedLeads, color: 'var(--warning)', glow: 'warning' },
-            { label: 'Won Leads', value: metrics.wonLeads, color: 'var(--success)', glow: 'success' },
-            { label: 'Lost Leads', value: metrics.lostLeads, color: 'var(--danger)', glow: 'danger' },
-            { label: 'Conversion Rate', value: `${metrics.conversionRate || 0}%`, color: 'var(--success)', glow: 'success' },
+            { label: "Today's Appointments", value: followUpCounts.today, color: '#3b82f6', glow: 'primary' },
+            { label: 'Upcoming Later', value: followUpCounts.upcoming, color: '#8b5cf6', glow: 'accent' },
+            { label: 'Overdue Follow-ups', value: followUpCounts.overdue, color: '#ef4444', glow: 'danger' },
+            { label: 'Total Leads', value: metrics.totalLeads || 0, color: 'var(--text-main)', glow: 'accent' },
+            { label: 'Qualified Leads', value: metrics.qualifiedLeads || 0, color: 'var(--warning)', glow: 'warning' },
+            { label: 'Won Leads', value: metrics.wonLeads || 0, color: 'var(--success)', glow: 'success' },
             { label: 'Pipeline Value', value: formatCurrency(metrics.pipelineValue), color: 'var(--warning)', glow: 'warning' },
             { label: 'Total Sales (Won)', value: formatCurrency(metrics.wonValue), color: 'var(--success)', glow: 'success' },
           ].map((kpi, idx) => (
@@ -196,6 +235,78 @@ export default function CRMDashboardPage() {
               ) : (
                 <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px', fontSize: '14px' }}>
                   No deals closed yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
+              <h2 style={{ fontSize: '16px', margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="material-symbols-outlined" style={{ color: '#8b5cf6', fontSize: '20px' }}>
+                  event_upcoming
+                </span>
+                Upcoming Appointments & Follow-Ups
+              </h2>
+              <Link
+                href="/erp/crm/follow-ups"
+                style={{ fontSize: '12px', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}
+              >
+                View All →
+              </Link>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {upcomingFollowUps.length > 0 ? (
+                upcomingFollowUps.map((item: any) => (
+                  <div
+                    key={item.id}
+                    className="hover-lift"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      backgroundColor: 'var(--surface-hover)',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-main)',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.title}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>👤 {item.customer?.name}</span>
+                        <span>·</span>
+                        <span>{new Date(item.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/erp/crm/follow-ups"
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: 'var(--primary-glow)',
+                        color: 'var(--primary)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Follow Up
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '24px 0', fontSize: '13px' }}>
+                  No upcoming follow-ups scheduled.{' '}
+                  <Link href="/erp/crm/follow-ups" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                    Book an appointment
+                  </Link>
                 </div>
               )}
             </div>

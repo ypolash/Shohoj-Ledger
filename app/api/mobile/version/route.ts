@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         '🧪 In-app test notification & background diagnostics'
       ],
       downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.0.apk`,
-      fileSize: '19.2 MB',
+      fileSize: '12.6 MB',
       isForceUpdate: false,
       publishedAt: '2026-09-24T01:40:00Z'
     });

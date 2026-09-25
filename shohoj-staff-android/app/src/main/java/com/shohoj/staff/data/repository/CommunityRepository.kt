@@ -120,10 +120,18 @@ class CommunityRepository(
             val response = apiClient.getService().createOrGetDirectMessage(
                 CreateDirectMessageRequest(targetUserId, targetUserName, targetUserRole)
             )
-            if (response.isSuccessful && response.body()?.channel != null) {
-                Result.success(response.body()!!.channel!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null && (body.channel != null || !body.channelId.isNullOrBlank())) {
+                val channel = body.channel ?: CommunityChannel(
+                    id = body.channelId ?: "",
+                    name = targetUserName,
+                    type = "DIRECT_MESSAGE",
+                    isPrivate = true,
+                    topic = "Direct message with $targetUserName"
+                )
+                Result.success(channel)
             } else {
-                val err = response.errorBody()?.string() ?: "Failed to start direct message"
+                val err = response.errorBody()?.string() ?: body?.error ?: "Failed to start direct message"
                 Result.failure(Exception(err))
             }
         } catch (e: Exception) {

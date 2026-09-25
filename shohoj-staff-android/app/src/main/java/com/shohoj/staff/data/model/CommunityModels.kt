@@ -123,8 +123,17 @@ data class DirectoryPerson(
 data class CommunityDirectoryResponse(
     @SerializedName("success") val success: Boolean = true,
     @SerializedName("currentUser") val currentUser: CurrentUserProfile? = null,
+    @SerializedName("admins") val admins: List<DirectoryPerson> = emptyList(),
     @SerializedName("staff") val staff: List<DirectoryPerson> = emptyList(),
     @SerializedName("members") val members: List<DirectoryPerson> = emptyList(),
+    @SerializedName("error") val error: String? = null
+)
+
+data class CreateDirectMessageResponse(
+    @SerializedName("success") val success: Boolean = true,
+    @SerializedName("channelId") val channelId: String? = null,
+    @SerializedName("isNew") val isNew: Boolean = false,
+    @SerializedName("channel") val channel: CommunityChannel? = null,
     @SerializedName("error") val error: String? = null
 )
 

@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 data class CommunityUiState(
     val isLoadingChannels: Boolean = false,
     val isLoadingMessages: Boolean = false,
+    val isLoadingDirectory: Boolean = false,
     val channels: List<CommunityChannel> = emptyList(),
     val activeChannel: CommunityChannel? = null,
     val messages: List<CommunityMessage> = emptyList(),
@@ -129,16 +130,26 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun loadMembers() {
+    fun loadMembers(force: Boolean = false) {
         viewModelScope.launch {
+            if (_uiState.value.staffDirectory.isEmpty() || force) {
+                _uiState.value = _uiState.value.copy(isLoadingDirectory = true, error = null)
+            }
             val result = repo.getMembers()
             result.onSuccess { dir ->
+                val combinedStaff = (dir.admins + dir.staff).distinctBy { it.id }
                 _uiState.value = _uiState.value.copy(
-                    staffDirectory = dir.staff,
+                    isLoadingDirectory = false,
+                    staffDirectory = combinedStaff,
                     memberDirectory = dir.members,
                     currentUserId = dir.currentUser?.id ?: _uiState.value.currentUserId,
                     currentUserName = dir.currentUser?.name ?: _uiState.value.currentUserName,
                     currentUserEmail = dir.currentUser?.email ?: _uiState.value.currentUserEmail
+                )
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(
+                    isLoadingDirectory = false,
+                    error = if (_uiState.value.staffDirectory.isEmpty()) (err.localizedMessage ?: "Failed to load directory") else null
                 )
             }
         }

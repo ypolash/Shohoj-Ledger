@@ -41,6 +41,7 @@ fun ShohojTopBar(
                         )
                     )
                 )
+                .statusBarsPadding()
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(

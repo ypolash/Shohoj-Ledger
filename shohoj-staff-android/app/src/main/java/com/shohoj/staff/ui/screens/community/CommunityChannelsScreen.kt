@@ -41,16 +41,23 @@ fun CommunityChannelsScreen(
     viewModel: CommunityViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedTab by remember { mutableStateOf(0) } // 0 = Channels & Announcements, 1 = Direct Messages, 2 = Directory
+    var selectedTab by remember { mutableStateOf(0) } // 0 = Channels, 1 = Direct Messages, 2 = Directory
     var searchQuery by remember { mutableStateOf("") }
     var showNewDmSheet by remember { mutableStateOf(false) }
     var showCreateChannelDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadChannels()
+        viewModel.loadMembers()
         while (isActive) {
             delay(5000)
             viewModel.loadChannelsSilently()
+        }
+    }
+
+    LaunchedEffect(selectedTab) {
+        if (selectedTab == 2 && uiState.staffDirectory.isEmpty()) {
+            viewModel.loadMembers(force = false)
         }
     }
 
@@ -125,44 +132,78 @@ fun CommunityChannelsScreen(
                 },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900,
+                    focusedContainerColor = Slate900.copy(alpha = 0.8f),
+                    unfocusedContainerColor = Slate900.copy(alpha = 0.8f),
                     focusedBorderColor = Emerald500,
                     unfocusedBorderColor = CardBorder,
                     focusedTextColor = Slate50,
                     unfocusedTextColor = Slate50
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp)
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Tab Selector Chips
+            // Tab Selector Chips with Badges & Dynamic Colors
+            val channelsUnread = uiState.channels.filter { it.type != "DIRECT_MESSAGE" }.sumOf { it.unreadCount }
+            val dmUnread = uiState.channels.filter { it.type == "DIRECT_MESSAGE" }.sumOf { it.unreadCount }
+            val totalPeople = (uiState.staffDirectory + uiState.memberDirectory).distinctBy { it.id }.size
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val tabs = listOf("Channels", "Direct Messages", "Directory")
-                tabs.forEachIndexed { index, title ->
+                val tabs = listOf(
+                    Triple("Channels", channelsUnread, Icons.Default.Forum),
+                    Triple("Direct Messages", dmUnread, Icons.Default.Chat),
+                    Triple("Directory", totalPeople, Icons.Default.People)
+                )
+
+                tabs.forEachIndexed { index, (title, badgeCount, _) ->
                     val isSelected = selectedTab == index
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable { selectedTab = index },
                         color = if (isSelected) Emerald500 else Slate900,
                         border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
                     ) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) Slate950 else Slate300
-                            ),
+                        Row(
                             modifier = Modifier
-                                .padding(vertical = 10.dp)
-                                .wrapContentWidth(Alignment.CenterHorizontally)
-                        )
+                                .padding(vertical = 10.dp, horizontal = 4.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 11.5.sp,
+                                    color = if (isSelected) Slate950 else Slate300
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (index < 2 && badgeCount > 0) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Surface(
+                                    color = if (isSelected) Slate950 else Emerald500,
+                                    shape = CircleShape
+                                ) {
+                                    Text(
+                                        text = if (badgeCount > 99) "99+" else badgeCount.toString(),
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = if (isSelected) Emerald400 else Slate950,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 9.sp
+                                        ),
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -170,7 +211,7 @@ fun CommunityChannelsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Main Content Area based on Selected Tab
-            if (uiState.isLoadingChannels) {
+            if (uiState.isLoadingChannels && selectedTab != 2) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -191,7 +232,9 @@ fun CommunityChannelsScreen(
                         if (filteredChannels.isEmpty()) {
                             EmptyStateNotice(
                                 title = "No channels found",
-                                subtitle = "Create a new channel or refine your search"
+                                subtitle = "Create a new channel or refine your search",
+                                actionLabel = "Create Channel",
+                                onActionClick = { showCreateChannelDialog = true }
                             )
                         } else {
                             LazyColumn(
@@ -222,7 +265,9 @@ fun CommunityChannelsScreen(
                         if (dmChannels.isEmpty()) {
                             EmptyStateNotice(
                                 title = "No direct messages yet",
-                                subtitle = "Tap the + button below or check Directory to start a 1-on-1 chat"
+                                subtitle = "Tap the + button below or select a colleague from Directory",
+                                actionLabel = "Browse Directory",
+                                onActionClick = { selectedTab = 2 }
                             )
                         } else {
                             LazyColumn(
@@ -245,34 +290,55 @@ fun CommunityChannelsScreen(
 
                     2 -> {
                         // Staff & Member Directory
-                        val allPersons = (uiState.staffDirectory + uiState.memberDirectory).distinctBy { it.id }
-                        val filteredPersons = allPersons.filter {
-                            searchQuery.isBlank() ||
-                            it.name.contains(searchQuery, ignoreCase = true) ||
-                            (it.department?.contains(searchQuery, ignoreCase = true) == true) ||
-                            it.role.contains(searchQuery, ignoreCase = true)
-                        }
-
-                        if (filteredPersons.isEmpty()) {
-                            EmptyStateNotice(
-                                title = "No members found",
-                                subtitle = "No colleagues matched your search query"
-                            )
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                        if (uiState.isLoadingDirectory) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
                             ) {
-                                items(filteredPersons, key = { it.id }) { person ->
-                                    DirectoryPersonItem(
-                                        person = person,
-                                        onClick = {
-                                            viewModel.startDirectMessage(person) { dmChannel ->
-                                                viewModel.setActiveChannel(dmChannel)
-                                                onNavigateToChat(dmChannel.id, dmChannel.name, dmChannel.type)
-                                            }
-                                        }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(color = Emerald500, modifier = Modifier.size(32.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        "Loading directory...",
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = Slate400)
                                     )
+                                }
+                            }
+                        } else {
+                            val allPersons = (uiState.staffDirectory + uiState.memberDirectory).distinctBy { it.id }
+                            val filteredPersons = allPersons.filter {
+                                searchQuery.isBlank() ||
+                                it.name.contains(searchQuery, ignoreCase = true) ||
+                                (it.department?.contains(searchQuery, ignoreCase = true) == true) ||
+                                it.role.contains(searchQuery, ignoreCase = true) ||
+                                (it.email?.contains(searchQuery, ignoreCase = true) == true)
+                            }
+
+                            if (filteredPersons.isEmpty()) {
+                                EmptyStateNotice(
+                                    title = if (allPersons.isEmpty()) "No team members found" else "No matches found",
+                                    subtitle = if (allPersons.isEmpty()) "Tap refresh to sync company colleagues" else "Try searching with a different name or role",
+                                    actionLabel = "Refresh Directory",
+                                    onActionClick = { viewModel.loadMembers(force = true) }
+                                )
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    items(filteredPersons, key = { it.id }) { person ->
+                                        DirectoryPersonItem(
+                                            person = person,
+                                            onClick = {
+                                                viewModel.startDirectMessage(person) { dmChannel ->
+                                                    viewModel.setActiveChannel(dmChannel)
+                                                    onNavigateToChat(dmChannel.id, dmChannel.name, dmChannel.type)
+                                                }
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -526,28 +592,32 @@ fun DirectoryPersonItem(
     person: DirectoryPerson,
     onClick: () -> Unit
 ) {
+    val isStaff = person.type == "STAFF" || person.type == "ADMIN"
+    val isLeadership = person.type == "ADMIN" || person.role.contains("Admin", ignoreCase = true) || person.role.contains("Owner", ignoreCase = true)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(Slate900)
-            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+            .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .padding(12.dp)
+            .padding(14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Initials Avatar
+            // Initials Avatar with Vibrant Gradient
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
-                            if (person.type == "STAFF") listOf(Emerald600, Cyan500)
+                            if (isLeadership) listOf(Amber500, Purple500)
+                            else if (isStaff) listOf(Emerald500, Cyan500)
                             else listOf(Indigo500, Purple500)
                         )
                     ),
@@ -555,7 +625,7 @@ fun DirectoryPersonItem(
             ) {
                 Text(
                     text = person.name.take(2).uppercase(),
-                    style = MaterialTheme.typography.titleSmall.copy(
+                    style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -563,25 +633,74 @@ fun DirectoryPersonItem(
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = person.name,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Slate50
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = person.name,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Slate50
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                )
+                    if (isLeadership) {
+                        Surface(
+                            color = Amber500.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = "LEADERSHIP",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Amber400,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
                 Text(
-                    text = "${person.role} ${person.department?.let { "• $it" } ?: ""}".trim(),
-                    style = MaterialTheme.typography.bodySmall.copy(color = Slate400)
+                    text = "${person.role}${if (!person.department.isNullOrBlank()) " • ${person.department}" else ""}",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Slate400),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
-            Icon(
-                imageVector = Icons.Default.ChatBubbleOutline,
-                contentDescription = "Chat",
-                tint = Emerald400,
-                modifier = Modifier.size(20.dp)
-            )
+            // Chat Action Button Pill
+            Surface(
+                color = Emerald500.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Emerald500.copy(alpha = 0.3f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = "Chat",
+                        tint = Emerald400,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Chat",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Emerald400,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+            }
         }
     }
 }
@@ -690,12 +809,14 @@ fun CreateChannelDialog(
 @Composable
 fun EmptyStateNotice(
     title: String,
-    subtitle: String
+    subtitle: String,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 48.dp),
+            .padding(vertical = 40.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -703,7 +824,7 @@ fun EmptyStateNotice(
                 imageVector = Icons.Default.Forum,
                 contentDescription = null,
                 tint = Slate600,
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(52.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -716,8 +837,23 @@ fun EmptyStateNotice(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall.copy(color = Slate500)
+                style = MaterialTheme.typography.bodySmall.copy(color = Slate500),
+                modifier = Modifier.padding(horizontal = 32.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
+            if (actionLabel != null && onActionClick != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onActionClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Emerald500,
+                        contentColor = Slate950
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(text = actionLabel, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            }
         }
     }
 }

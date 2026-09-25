@@ -156,7 +156,7 @@ interface ShohojApiService {
     @POST("api/community/direct-messages")
     suspend fun createOrGetDirectMessage(
         @Body request: CreateDirectMessageRequest
-    ): Response<ChannelDetailResponse>
+    ): Response<CreateDirectMessageResponse>
 
     @POST("api/community/messages/{id}/reactions")
     suspend fun toggleMessageReaction(

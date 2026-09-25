@@ -37,14 +37,34 @@ export async function POST(request: Request) {
           { members: { some: { userId: targetUserId } } },
         ],
       },
-      select: { id: true },
+      include: {
+        members: true,
+      },
     });
 
     if (existingDmChannels.length > 0) {
+      const ch = existingDmChannels[0];
+      const otherMember = ch.members?.find((m: any) => m.userId !== currentUserId) || ch.members?.[0];
       return NextResponse.json({
         success: true,
-        channelId: existingDmChannels[0].id,
+        channelId: ch.id,
         isNew: false,
+        channel: {
+          id: ch.id,
+          name: targetUserName || otherMember?.userName || "Direct Message",
+          rawName: ch.name,
+          topic: ch.topic,
+          type: ch.type,
+          isPrivate: ch.isPrivate,
+          createdAt: ch.createdAt,
+          updatedAt: ch.updatedAt,
+          memberCount: ch.members?.length || 2,
+          messageCount: 0,
+          unreadCount: 0,
+          hasUnread: false,
+          dmParticipant: otherMember || null,
+          members: ch.members || [],
+        },
       });
     }
 
@@ -74,12 +94,33 @@ export async function POST(request: Request) {
           ],
         },
       },
+      include: {
+        members: true,
+      },
     });
+
+    const otherMember = newChannel.members?.find((m: any) => m.userId !== currentUserId) || newChannel.members?.[0];
 
     return NextResponse.json({
       success: true,
       channelId: newChannel.id,
       isNew: true,
+      channel: {
+        id: newChannel.id,
+        name: targetUserName || otherMember?.userName || "Direct Message",
+        rawName: newChannel.name,
+        topic: newChannel.topic,
+        type: newChannel.type,
+        isPrivate: newChannel.isPrivate,
+        createdAt: newChannel.createdAt,
+        updatedAt: newChannel.updatedAt,
+        memberCount: 2,
+        messageCount: 0,
+        unreadCount: 0,
+        hasUnread: false,
+        dmParticipant: otherMember || null,
+        members: newChannel.members || [],
+      },
     });
   } catch (error) {
     console.error("Initiate DM error:", error);

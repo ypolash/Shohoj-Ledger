@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -49,7 +50,90 @@ fun TaskScreen(
         topBar = {
             ShohojTopBar(
                 title = "My Tasks & Bounties",
-                subtitle = "Assigned duties & special incentives"
+                subtitle = "Assigned duties & special incentives",
+                contentBelow = {
+                    val filterOptions = listOf("ALL", "Special Task ⭐", "Pending", "In Progress", "Completed")
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filterOptions) { status ->
+                            val isSelected = uiState.filterStatus == status
+                            val isSpecialFilter = status.startsWith("Special")
+                            val count = when (status) {
+                                "ALL" -> uiState.tasks.size
+                                "Special Task ⭐" -> specialTasksCount
+                                else -> uiState.tasks.count { !it.isSpecialTask && it.status.equals(status, ignoreCase = true) }
+                            }
+
+                            val chipBg = when {
+                                isSelected && isSpecialFilter -> Brush.horizontalGradient(listOf(Color(0xFFF59E0B), Color(0xFFD97706)))
+                                isSelected -> Brush.horizontalGradient(listOf(Emerald500, Cyan500))
+                                isSpecialFilter -> Brush.horizontalGradient(listOf(Color(0xFF2A1C04), Color(0xFF1E1505)))
+                                else -> Brush.horizontalGradient(listOf(Slate900, Slate800))
+                            }
+
+                            val chipBorder = when {
+                                isSelected && isSpecialFilter -> Color(0xFFFBBF24)
+                                isSelected -> Emerald400
+                                isSpecialFilter -> Color(0xFFB45309).copy(alpha = 0.6f)
+                                else -> Slate700.copy(alpha = 0.6f)
+                            }
+
+                            val textColor = when {
+                                isSelected -> Slate950
+                                isSpecialFilter -> Amber300
+                                else -> Slate300
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(chipBg)
+                                    .border(1.dp, chipBorder, RoundedCornerShape(12.dp))
+                                    .clickable { viewModel.setFilter(status) }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = status,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected || isSpecialFilter) FontWeight.Bold else FontWeight.Medium,
+                                        color = textColor,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                    if (count > 0) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(
+                                                    if (isSelected) Slate950.copy(alpha = 0.2f) else if (isSpecialFilter) Amber500.copy(alpha = 0.25f) else Slate800
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = count.toString(),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isSelected) Slate950 else if (isSpecialFilter) Amber400 else Slate400,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             )
         },
         bottomBar = {
@@ -68,46 +152,6 @@ fun TaskScreen(
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Top Bar Filter Chips (Includes "Special Task ⭐")
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val filterOptions = listOf("ALL", "Special Task ⭐", "Pending", "In Progress", "Completed")
-                    filterOptions.forEach { status ->
-                        val isSelected = uiState.filterStatus == status
-                        val isSpecialFilter = status.startsWith("Special")
-
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.setFilter(status) },
-                            label = {
-                                Text(
-                                    text = if (isSpecialFilter && specialTasksCount > 0) "$status ($specialTasksCount)" else status,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected || isSpecialFilter) FontWeight.Bold else FontWeight.Normal
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = if (isSpecialFilter) Amber500 else Emerald500,
-                                selectedLabelColor = Slate950,
-                                containerColor = if (isSpecialFilter) Color(0xFF3B2805) else Slate800,
-                                labelColor = if (isSpecialFilter) Amber400 else Slate300
-                            ),
-                            border = if (isSpecialFilter && !isSelected) {
-                                FilterChipDefaults.filterChipBorder(
-                                    borderColor = Amber500.copy(alpha = 0.5f),
-                                    enabled = true,
-                                    selected = false
-                                )
-                            } else null
-                        )
-                    }
-                }
-            }
 
             // Status message
             if (uiState.successMessage != null) {

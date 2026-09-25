@@ -4,6 +4,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
+import {
+  ArrowLeft,
+  Share2,
+  Pencil,
+  Printer,
+  Trash2,
+  Hash,
+  Building2,
+  Phone,
+  UserCheck,
+  Flag,
+  Calendar,
+  Copy,
+  Check
+} from 'lucide-react';
 import styles from './workspace.module.css';
 import RevisionChat from '@/app/erp/components/RevisionChat';
 
@@ -128,6 +143,35 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [settlementMethod, setSettlementMethod] = useState('Bank Transfer');
   const [settlementNotes, setSettlementNotes] = useState('');
   const [isCustomerLinked, setIsCustomerLinked] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleCopyCode = (codeText: string) => {
+    if (!codeText) return;
+    navigator.clipboard.writeText(codeText);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const getDeliveryInfo = (dateVal?: string) => {
+    if (!dateVal) return { formatted: 'Unscheduled', badge: null, badgeColor: '#94a3b8' };
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return { formatted: dateVal, badge: null, badgeColor: '#94a3b8' };
+    const formatted = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(d);
+    target.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) {
+      return { formatted, badge: `${Math.abs(diffDays)}d Overdue`, badgeColor: '#f87171' };
+    } else if (diffDays === 0) {
+      return { formatted, badge: 'Due Today', badgeColor: '#fbbf24' };
+    } else if (diffDays === 1) {
+      return { formatted, badge: 'Due Tomorrow', badgeColor: '#38bdf8' };
+    } else {
+      return { formatted, badge: `${diffDays}d left`, badgeColor: '#34d399' };
+    }
+  };
 
   // Stage 3 Product & Shoot Schedule & Model Assign State
   const [productData, setProductData] = useState<{
@@ -1592,113 +1636,195 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
         </div>
 
         {/* 1. Hero Navigation & Command Header */}
-        <div className={styles.heroHeader}>
-          <div className={styles.navRow}>
-            <Link href="/erp/projects" className={styles.backBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_back</span>
-              Portfolio
-            </Link>
+        {(() => {
+          const managerName = project?.manager ? `${project.manager.firstName || ''} ${project.manager.lastName || ''}`.trim() || 'Unassigned' : 'Unassigned';
+          const managerInitials = project?.manager ? `${project.manager.firstName?.[0] || ''}${project.manager.lastName?.[0] || ''}`.toUpperCase() : '';
+          const delivery = getDeliveryInfo(project?.endDate);
+          const statusColor = project?.status === 'Completed' ? '#34d399' : project?.status === 'Active' ? '#38bdf8' : project?.status === 'Draft' ? '#c084fc' : '#fbbf24';
+          const priorityColor = project?.priority === 'Urgent' ? '#f87171' : project?.priority === 'High' ? '#fb923c' : project?.priority === 'Low' ? '#34d399' : '#fbbf24';
 
-            <div className={styles.headerActionGroup}>
-              {/* Customer Short Link Share Button (Visible only from Stage 3 and vanishes on complete) */}
-              {currentStage >= 3 && currentStage < 7 && (
-                <button
-                  type="button"
-                  onClick={() => setIsShareModalOpen(true)}
-                  className={styles.editBtn}
-                  title="Share Customer Live Tracking Short Link"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
-                    borderColor: '#a855f7',
-                    color: '#e9d5ff',
-                    fontWeight: 700
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>share</span>
-                  Customer Short Link
-                </button>
-              )}
+          return (
+            <div className={styles.heroHeader}>
+              <div className={styles.navRow}>
+                <Link href="/erp/projects" className={styles.backBtn}>
+                  <ArrowLeft size={15} />
+                  <span>Portfolio</span>
+                </Link>
 
-              {/* Edit Project Button */}
-              <button
-                onClick={() => setIsEditModalOpen(true)}
-                className={styles.editBtn}
-                title="Edit Project Parameters"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-                Edit Project
-              </button>
+                <div className={styles.headerActionGroup}>
+                  {/* Customer Short Link Share Button */}
+                  {currentStage >= 3 && currentStage < 7 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsShareModalOpen(true)}
+                      className={styles.shareBtn}
+                      title="Share Customer Live Tracking Short Link"
+                    >
+                      <Share2 size={15} />
+                      <span>Customer Short Link</span>
+                    </button>
+                  )}
 
-              {/* Print Project Report Button */}
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className={styles.printBtn}
-                title="Print Project Report"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
-                Print Report
-              </button>
+                  {/* Edit Project Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className={styles.editBtn}
+                    title="Edit Project Parameters"
+                  >
+                    <Pencil size={15} />
+                    <span>Edit Project</span>
+                  </button>
 
-              {/* Delete Project Button (Redesigned) */}
-              <button
-                type="button"
-                onClick={() => setIsDeleteProjectModalOpen(true)}
-                className={styles.deleteProjectBtn}
-                title="Permanently Delete Project"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-                Delete Project
-              </button>
-            </div>
-          </div>
+                  {/* Print Project Report Button */}
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className={styles.printBtn}
+                    title="Print Project Report"
+                  >
+                    <Printer size={15} />
+                    <span>Print Report</span>
+                  </button>
 
-          <div className={styles.headerBody}>
-            <div className={styles.headerLeft}>
-              <div className={styles.projectCodeBadge}>
-                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>tag</span>
-                {project.projectCode || 'PROJECT-ALPHA'}
+                  {/* Delete Project Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteProjectModalOpen(true)}
+                    className={styles.deleteProjectBtn}
+                    title="Permanently Delete Project"
+                  >
+                    <Trash2 size={15} />
+                    <span>Delete Project</span>
+                  </button>
+                </div>
               </div>
-              <h1 className={styles.projectTitle}>{project.name}</h1>
-              <div className={styles.projectMetaRow}>
-                <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#c084fc' }}>info</span>
-                  Status: <strong style={{
-                    color: project.status === 'Completed' ? '#34d399' : project.status === 'Active' ? '#60a5fa' : project.status === 'Draft' ? '#c084fc' : '#fbbf24'
-                  }}>{project.status || 'Draft'}</strong>
-                </span>
 
-                <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa' }}>business</span>
-                  Client: <strong>{project.clientName || 'Internal Client'}</strong>
-                  {project.clientPhone && (
-                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: '2px', marginLeft: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '12px', color: '#60a5fa' }}>call</span>
-                      {project.clientPhone}
+              <div className={styles.headerMainSection}>
+                <div className={styles.projectCodeRow}>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyCode(project.projectCode || 'PROJECT-ALPHA')}
+                    className={styles.projectCodeBadge}
+                    title="Click to copy project code"
+                  >
+                    <Hash size={13} className={styles.codeHashIcon} />
+                    <span>{project.projectCode || 'PROJECT-ALPHA'}</span>
+                    {copiedCode ? (
+                      <span className={styles.copiedIndicator}>
+                        <Check size={12} /> Copied
+                      </span>
+                    ) : (
+                      <Copy size={12} className={styles.copyIcon} />
+                    )}
+                  </button>
+                </div>
+
+                <h1 className={styles.projectTitle}>{project.name}</h1>
+              </div>
+
+              <div className={styles.metaChipsGrid}>
+                {/* Status Chip */}
+                <div className={styles.metaChip}>
+                  <span className={styles.metaChipIconWrapper} style={{
+                    background: `${statusColor}1f`,
+                    color: statusColor
+                  }}>
+                    <span className={styles.statusPulseDot} style={{
+                      background: statusColor,
+                      color: statusColor
+                    }} />
+                  </span>
+                  <div className={styles.metaChipContent}>
+                    <span className={styles.metaChipLabel}>Status</span>
+                    <span className={styles.metaChipValue} style={{ color: statusColor }}>
+                      {project.status || 'Draft'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Client Chip */}
+                <div className={styles.metaChip}>
+                  <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+                    <Building2 size={16} />
+                  </span>
+                  <div className={styles.metaChipContent}>
+                    <span className={styles.metaChipLabel}>Client</span>
+                    <div className={styles.metaClientValueRow}>
+                      <span className={styles.metaChipValue}>{project.clientName || 'Internal Client'}</span>
+                      {project.clientPhone && (
+                        <a
+                          href={`tel:${project.clientPhone}`}
+                          className={styles.clientPhonePill}
+                          title={`Call ${project.clientPhone}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Phone size={11} />
+                          <span>{project.clientPhone}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Project Manager Chip */}
+                <div className={styles.metaChip}>
+                  {managerInitials ? (
+                    <span className={styles.managerAvatarBadge}>
+                      {managerInitials}
+                    </span>
+                  ) : (
+                    <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
+                      <UserCheck size={16} />
                     </span>
                   )}
-                </span>
+                  <div className={styles.metaChipContent}>
+                    <span className={styles.metaChipLabel}>Manager</span>
+                    <span className={styles.metaChipValue}>{managerName}</span>
+                  </div>
+                </div>
 
-                <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#a855f7' }}>badge</span>
-                  Manager: <strong>{project.manager ? `${project.manager.firstName || ''} ${project.manager.lastName || ''}`.trim() || 'Unassigned' : 'Unassigned'}</strong>
-                </span>
+                {/* Priority Chip */}
+                <div className={styles.metaChip}>
+                  <span className={styles.metaChipIconWrapper} style={{
+                    background: `${priorityColor}1f`,
+                    color: priorityColor
+                  }}>
+                    <Flag size={15} />
+                  </span>
+                  <div className={styles.metaChipContent}>
+                    <span className={styles.metaChipLabel}>Priority</span>
+                    <span className={styles.metaChipValue} style={{ color: priorityColor }}>
+                      {project.priority || 'Medium'}
+                    </span>
+                  </div>
+                </div>
 
-                <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#f59e0b' }}>flag</span>
-                  Priority: <strong style={{
-                    color: project.priority === 'Urgent' ? '#f87171' : project.priority === 'High' ? '#fbbf24' : '#f8fafc'
-                  }}>{project.priority || 'Medium'}</strong>
-                </span>
-
-                <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#34d399' }}>calendar_today</span>
-                  Target Delivery: <strong>{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Unscheduled'}</strong>
-                </span>
+                {/* Target Delivery Chip */}
+                <div className={styles.metaChip}>
+                  <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                    <Calendar size={15} />
+                  </span>
+                  <div className={styles.metaChipContent}>
+                    <span className={styles.metaChipLabel}>Target Delivery</span>
+                    <div className={styles.metaDeliveryValueRow}>
+                      <span className={styles.metaChipValue}>{delivery.formatted}</span>
+                      {delivery.badge && (
+                        <span className={styles.deliveryBadge} style={{
+                          color: delivery.badgeColor,
+                          borderColor: `${delivery.badgeColor}40`,
+                          background: `${delivery.badgeColor}18`
+                        }}>
+                          {delivery.badge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* 2. Executive 4-KPI Metric Cards */}
         <div className={styles.kpiGrid}>

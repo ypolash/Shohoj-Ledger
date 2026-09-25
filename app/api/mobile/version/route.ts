@@ -18,24 +18,24 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 26,
-      versionName: '1.6.1',
+      versionCode: 27,
+      versionName: '1.6.2',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.6.1 Available',
+      title: 'Shohoj Staff v1.6.2 Available',
       releaseNotes: [
+        '✨ Clean login fields with explicit placeholders ("Enter employee ID" & "Enter password")',
         '✨ Redesigned Executive Top Bar & glowing brand logo',
         '⚡ Smooth horizontally scrollable task filter pills with live counters',
         '☕ Dynamic Lunch Break on Check-In with 15-minute prior availability & live countdown',
         '🖼️ Fullscreen image viewer and attachment uploads in Community Chat',
         '⚡ Unrestricted background running & battery optimization exemption support',
         '🔔 Instant real-time notifications for Tasks, Announcements & Community Chat',
-        '⏰ Exact alarm wakeups & persistent 24/7 background sync service',
-        '🚀 Xiaomi, Samsung, Vivo, OPPO, Realme autostart support & setup guide'
+        '⏰ Exact alarm wakeups & persistent 24/7 background sync service'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.1.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.2.apk`,
       fileSize: '12.6 MB',
       isForceUpdate: false,
-      publishedAt: '2026-09-26T00:35:00Z'
+      publishedAt: '2026-09-26T01:04:00Z'
     });
   }
 

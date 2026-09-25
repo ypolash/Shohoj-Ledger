@@ -116,7 +116,7 @@ fun LoginScreen(
                             value = uiState.employeeId,
                             onValueChange = { viewModel.onEmployeeIdChange(it) },
                             label = { Text("Employee ID") },
-                            placeholder = { Text("EMP-1001", color = Slate500) },
+                            placeholder = { Text("Enter employee ID", color = Slate500) },
                             leadingIcon = {
                                 Icon(Icons.Default.Badge, contentDescription = null, tint = Emerald400)
                             },
@@ -146,7 +146,7 @@ fun LoginScreen(
                             value = uiState.password,
                             onValueChange = { viewModel.onPasswordChange(it) },
                             label = { Text("Password") },
-                            placeholder = { Text("••••••••", color = Slate500) },
+                            placeholder = { Text("Enter password", color = Slate500) },
                             leadingIcon = {
                                 Icon(Icons.Default.Lock, contentDescription = null, tint = Emerald400)
                             },

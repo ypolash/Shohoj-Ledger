@@ -168,6 +168,14 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [partialPayMethod, setPartialPayMethod] = useState<string>('Bank Transfer');
   const [isSubmittingPartialPay, setIsSubmittingPartialPay] = useState<boolean>(false);
 
+  // Return Product Modal State
+  const [isReturnProductModalOpen, setIsReturnProductModalOpen] = useState<boolean>(false);
+  const [returnModalMethod, setReturnModalMethod] = useState<string>('In-Person Handover');
+  const [returnModalDate, setReturnModalDate] = useState<string>('');
+  const [returnModalNotes, setReturnModalNotes] = useState<string>('');
+  const [returnModalReceiver, setReturnModalReceiver] = useState<string>('');
+  const [isSavingProductReturn, setIsSavingProductReturn] = useState<boolean>(false);
+
   const handleCopyCode = (codeText: string) => {
     if (!codeText) return;
     navigator.clipboard.writeText(codeText);
@@ -216,6 +224,11 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     modelNotes: string;
     modelPaid?: boolean;
     modelPaidAmount?: number;
+    productReturned?: boolean;
+    productReturnDate?: string;
+    productReturnMethod?: string;
+    productReturnNotes?: string;
+    productReturnReceiver?: string;
   }>({
     projectType: 'product',
     productsList: [],
@@ -234,7 +247,12 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     modelRate: '',
     modelNotes: '',
     modelPaid: false,
-    modelPaidAmount: 0
+    modelPaidAmount: 0,
+    productReturned: false,
+    productReturnDate: '',
+    productReturnMethod: 'In-Person Handover',
+    productReturnNotes: '',
+    productReturnReceiver: ''
   });
 
   const [newProductForm, setNewProductForm] = useState({
@@ -810,6 +828,57 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const handleLinkCustomer = () => {
     setIsCustomerLinked(true);
     showToast(`🎉 Project linked to Customer: ${project?.clientName || 'Client'}`);
+  };
+
+  const handleOpenReturnProductModal = () => {
+    setReturnModalMethod(productData.productReturnMethod || 'In-Person Handover');
+    setReturnModalDate(productData.productReturnDate || new Date().toISOString().split('T')[0]);
+    setReturnModalNotes(productData.productReturnNotes || '');
+    setReturnModalReceiver(productData.productReturnReceiver || project?.clientName || '');
+    setIsReturnProductModalOpen(true);
+  };
+
+  const handleConfirmProductReturn = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSavingProductReturn(true);
+    try {
+      const updatedProduct = {
+        ...productData,
+        productReturned: true,
+        productReturnDate: returnModalDate || new Date().toISOString().split('T')[0],
+        productReturnMethod: returnModalMethod || 'In-Person Handover',
+        productReturnNotes: returnModalNotes.trim(),
+        productReturnReceiver: returnModalReceiver.trim() || project?.clientName || 'Client'
+      };
+      setProductData(updatedProduct);
+      setIsReturnProductModalOpen(false);
+      showToast("📦 Physical product marked as returned to client!");
+      await saveWorkflowState(currentStage, completedStages, { product: updatedProduct });
+    } catch (err) {
+      console.error(err);
+      showToast("Error updating product return status");
+    } finally {
+      setIsSavingProductReturn(false);
+    }
+  };
+
+  const handleRevertProductReturn = async () => {
+    setIsSavingProductReturn(true);
+    try {
+      const updatedProduct = {
+        ...productData,
+        productReturned: false
+      };
+      setProductData(updatedProduct);
+      setIsReturnProductModalOpen(false);
+      showToast("Product return status reverted.");
+      await saveWorkflowState(currentStage, completedStages, { product: updatedProduct });
+    } catch (err) {
+      console.error(err);
+      showToast("Error reverting product return status");
+    } finally {
+      setIsSavingProductReturn(false);
+    }
   };
 
   const handleExecuteSettlement = async () => {
@@ -5895,6 +5964,17 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
 
                   <button
                     type="button"
+                    onClick={handleOpenReturnProductModal}
+                    className={productData.productReturned ? styles.returnProductBtnSuccess : styles.returnProductBtn}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                      {productData.productReturned ? 'assignment_turned_in' : 'assignment_return'}
+                    </span>
+                    {productData.productReturned ? 'Product Returned ✓' : 'Return Product'}
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => router.push('/erp/projects')}
                     className={styles.dashboardActionBtn}
                   >
@@ -8075,6 +8155,218 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
                     {isSubmittingPartialPay ? 'Recording...' : `Confirm Payment (${formatCurrency(parseFloat(partialPayInputAmount) || 0)}) ✓`}
                   </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* ====================================================================
+            MODAL: RETURN PRODUCT (PHYSICAL INVENTORY DISPATCH/HANDOVER)
+            ==================================================================== */}
+        {isReturnProductModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsReturnProductModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '560px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  <span className="material-symbols-outlined" style={{ color: productData.productReturned ? '#10b981' : '#f59e0b', fontSize: '22px' }}>
+                    {productData.productReturned ? 'assignment_turned_in' : 'assignment_return'}
+                  </span>
+                  {productData.productReturned ? 'Product Return Details' : 'Return Product to Client'}
+                </h3>
+                <button onClick={() => setIsReturnProductModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              {/* Status Banner if already returned */}
+              {productData.productReturned && (
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px'
+                }}>
+                  <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '24px', marginTop: '2px' }}>check_circle</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: '#34d399', marginBottom: '2px' }}>
+                      Product Officially Returned ✓
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                      Handed over on <strong>{productData.productReturnDate || 'N/A'}</strong> via <strong>{productData.productReturnMethod || 'In-Person Handover'}</strong> to <strong>{productData.productReturnReceiver || project?.clientName || 'Client'}</strong>.
+                      {productData.productReturnNotes && (
+                        <div style={{ marginTop: '4px', fontStyle: 'italic', color: '#94a3b8' }}>
+                          Note / Tracking: "{productData.productReturnNotes}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Products List Summary */}
+              {productData.productsList && productData.productsList.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                    📦 Physical Items from Project:
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '130px', overflowY: 'auto' }}>
+                    {productData.productsList.map((prod, idx) => (
+                      <div
+                        key={prod.id || idx}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)'
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{prod.name}</span>
+                          {prod.notes && <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '8px' }}>({prod.notes})</span>}
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd' }}>
+                            Qty: {prod.quantity}
+                          </span>
+                          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.2)', color: '#86efac' }}>
+                            {prod.condition}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleConfirmProductReturn} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Return Date <span style={{ color: '#f87171' }}>*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={returnModalDate}
+                      onChange={(e) => setReturnModalDate(e.target.value)}
+                      className={styles.stageInput}
+                      style={{ width: '100%', paddingLeft: '10px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Return / Delivery Method <span style={{ color: '#f87171' }}>*</span>
+                    </label>
+                    <select
+                      value={returnModalMethod}
+                      onChange={(e) => setReturnModalMethod(e.target.value)}
+                      className={styles.stageSelect}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="In-Person Handover">In-Person Handover (Studio/Office)</option>
+                      <option value="Steadfast Courier">Steadfast Courier</option>
+                      <option value="Pathao Courier">Pathao Courier</option>
+                      <option value="RedX Courier">RedX Courier</option>
+                      <option value="Paperfly">Paperfly</option>
+                      <option value="Sundarban Courier">Sundarban Courier</option>
+                      <option value="Client Self-Pickup">Client Self-Pickup</option>
+                      <option value="Other Delivery Service">Other Delivery Service</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                    Received By / Contact Person
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={`e.g. ${project?.clientName || 'Client Name'} / Representative`}
+                    value={returnModalReceiver}
+                    onChange={(e) => setReturnModalReceiver(e.target.value)}
+                    className={styles.stageInput}
+                    style={{ width: '100%', paddingLeft: '12px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                    Courier Tracking # / Dispatch Notes / Remarks
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Tracking #STEAD-98234, returned with all original accessories."
+                    value={returnModalNotes}
+                    onChange={(e) => setReturnModalNotes(e.target.value)}
+                    className={styles.stageTextarea}
+                    style={{ width: '100%', padding: '10px 12px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px' }}>
+                  {productData.productReturned ? (
+                    <button
+                      type="button"
+                      onClick={handleRevertProductReturn}
+                      disabled={isSavingProductReturn}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#f87171',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Revert Return Status
+                    </button>
+                  ) : (
+                    <div></div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsReturnProductModalOpen(false)}
+                      className={styles.stageBackBtn}
+                      style={{ fontSize: '12px', padding: '8px 14px' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingProductReturn}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '10px',
+                        background: productData.productReturned ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        border: 'none',
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: productData.productReturned ? '0 4px 14px rgba(16, 185, 129, 0.4)' : '0 4px 14px rgba(245, 158, 11, 0.4)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                        {productData.productReturned ? 'save' : 'check'}
+                      </span>
+                      {isSavingProductReturn ? 'Saving...' : productData.productReturned ? 'Update Return Info' : 'Confirm Return'}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

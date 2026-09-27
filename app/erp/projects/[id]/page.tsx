@@ -145,6 +145,29 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [isCustomerLinked, setIsCustomerLinked] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  // Partial Payment Settlement Modal State
+  const [partialPayModal, setPartialPayModal] = useState<{
+    isOpen: boolean;
+    type: 'MODEL' | 'EDITOR';
+    title: string;
+    talentName: string;
+    totalFee: number;
+    paidSoFar: number;
+    remainingDue: number;
+    deliverableIds?: string[];
+  }>({
+    isOpen: false,
+    type: 'MODEL',
+    title: '',
+    talentName: '',
+    totalFee: 0,
+    paidSoFar: 0,
+    remainingDue: 0
+  });
+  const [partialPayInputAmount, setPartialPayInputAmount] = useState<string>('');
+  const [partialPayMethod, setPartialPayMethod] = useState<string>('Bank Transfer');
+  const [isSubmittingPartialPay, setIsSubmittingPartialPay] = useState<boolean>(false);
+
   const handleCopyCode = (codeText: string) => {
     if (!codeText) return;
     navigator.clipboard.writeText(codeText);
@@ -865,36 +888,312 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     }
   };
 
-  const handleToggleModelPaid = async () => {
-    const isCurrentlyPaid = Boolean(productData.modelPaid);
-    const rate = parseFloat(String(productData.modelRate || 0)) || 0;
-    const modelName = productData.assignedModelName || 'Model Talent';
-    const action = !isCurrentlyPaid ? 'PAY' : 'UNPAY';
+  const handleOpenModelPartialPay = () => {
+    const totalRate = parseFloat(String(productData.modelRate || 0)) || 1000;
+    const paidSoFar = productData.modelPaidAmount !== undefined ? (parseFloat(String(productData.modelPaidAmount)) || 0) : (productData.modelPaid ? totalRate : 0);
+    const remainingDue = Math.max(0, totalRate - paidSoFar);
 
+    setPartialPayModal({
+      isOpen: true,
+      type: 'MODEL',
+      title: 'Model Talent Partial Payment',
+      talentName: productData.assignedModelName || 'Model Talent',
+      totalFee: totalRate,
+      paidSoFar,
+      remainingDue
+    });
+    setPartialPayInputAmount(remainingDue > 0 ? String(remainingDue) : '');
+    setPartialPayMethod('Bank Transfer');
+  };
+
+  const handleOpenEditorPartialPay = (summary: { name: string; totalFee: number; totalPaid: number; remainingDue: number; deliverableIds: string[] }) => {
+    setPartialPayModal({
+      isOpen: true,
+      type: 'EDITOR',
+      title: `Editor Partial Payment: ${summary.name}`,
+      talentName: summary.name,
+      totalFee: summary.totalFee,
+      paidSoFar: summary.totalPaid,
+      remainingDue: summary.remainingDue,
+      deliverableIds: summary.deliverableIds
+    });
+    setPartialPayInputAmount(summary.remainingDue > 0 ? String(summary.remainingDue) : '');
+    setPartialPayMethod('Bank Transfer');
+  };
+
+  const handleOpenLeadEditorPartialPay = () => {
+    const totalFee = parseFloat(String(shootingData.editorFee || 0)) || 1500;
+    const paidSoFar = shootingData.editorPaidAmount !== undefined ? (parseFloat(String(shootingData.editorPaidAmount)) || 0) : (shootingData.editorPaid ? totalFee : 0);
+    const remainingDue = Math.max(0, totalFee - paidSoFar);
+
+    setPartialPayModal({
+      isOpen: true,
+      type: 'EDITOR',
+      title: `Lead Editor Partial Payment: ${shootingData.assignedEditorName || 'Lead Editor'}`,
+      talentName: shootingData.assignedEditorName || 'Lead Editor',
+      totalFee,
+      paidSoFar,
+      remainingDue
+    });
+    setPartialPayInputAmount(remainingDue > 0 ? String(remainingDue) : '');
+    setPartialPayMethod('Bank Transfer');
+  };
+
+  const handleConfirmPartialPayment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const amountToPay = Math.max(0, parseFloat(partialPayInputAmount) || 0);
+    if (amountToPay <= 0) {
+      showToast("Please enter a valid payment amount", "error");
+      return;
+    }
+
+    setIsSubmittingPartialPay(true);
+    try {
+      if (partialPayModal.type === 'MODEL') {
+        const totalRate = partialPayModal.totalFee;
+        const newPaidAmount = Math.min(totalRate, partialPayModal.paidSoFar + amountToPay);
+        const isFull = newPaidAmount >= totalRate;
+
+        const updated = {
+          ...productData,
+          modelPaid: isFull,
+          modelPaidAmount: newPaidAmount
+        };
+        setProductData(updated);
+
+        const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "MODEL",
+            name: partialPayModal.talentName,
+            amount: amountToPay,
+            action: "PARTIAL_PAY",
+            paymentMethod: partialPayMethod,
+            isPartial: !isFull
+          })
+        });
+
+        if (res.ok) {
+          showToast(`✓ Paid ${formatCurrency(amountToPay)} to ${partialPayModal.talentName} (${isFull ? 'Fully Settled' : 'Partial'})`);
+        }
+        await saveWorkflowState(currentStage, completedStages, { product: updated });
+        fetchProject();
+      } else if (partialPayModal.type === 'EDITOR') {
+        if (partialPayModal.deliverableIds && partialPayModal.deliverableIds.length > 0) {
+          let remainingToAllocate = amountToPay;
+          const updatedDeliverables = (editingData.videoDeliverables || []).map(v => {
+            if (partialPayModal.deliverableIds!.includes(v.id)) {
+              const fee = parseFloat(String(v.editorFee || 0)) || 0;
+              const currentPaid = v.editorPaidAmount !== undefined ? (parseFloat(String(v.editorPaidAmount)) || 0) : (v.editorPaid ? fee : 0);
+              const due = Math.max(0, fee - currentPaid);
+              if (due > 0 && remainingToAllocate > 0) {
+                const allocate = Math.min(due, remainingToAllocate);
+                remainingToAllocate -= allocate;
+                const newPaid = currentPaid + allocate;
+                return {
+                  ...v,
+                  editorPaidAmount: newPaid,
+                  editorPaid: newPaid >= fee
+                };
+              }
+            }
+            return v;
+          });
+
+          const updatedEditing = { ...editingData, videoDeliverables: updatedDeliverables };
+          setEditingData(updatedEditing);
+
+          const totalFee = partialPayModal.totalFee;
+          const newTotalPaid = partialPayModal.paidSoFar + amountToPay;
+          const isFull = newTotalPaid >= totalFee;
+
+          const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "EDITOR",
+              name: partialPayModal.talentName,
+              amount: amountToPay,
+              action: "PARTIAL_PAY",
+              paymentMethod: partialPayMethod,
+              isPartial: !isFull
+            })
+          });
+
+          if (res.ok) {
+            showToast(`✓ Paid ${formatCurrency(amountToPay)} to ${partialPayModal.talentName} (${isFull ? 'Fully Settled' : 'Partial'})`);
+          }
+          await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+          fetchProject();
+        } else {
+          // Single lead editor
+          const totalFee = partialPayModal.totalFee;
+          const newPaidAmount = Math.min(totalFee, partialPayModal.paidSoFar + amountToPay);
+          const isFull = newPaidAmount >= totalFee;
+
+          const updatedShooting = {
+            ...shootingData,
+            editorPaid: isFull,
+            editorPaidAmount: newPaidAmount
+          };
+          setShootingData(updatedShooting);
+
+          const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "EDITOR",
+              name: partialPayModal.talentName,
+              amount: amountToPay,
+              action: "PARTIAL_PAY",
+              paymentMethod: partialPayMethod,
+              isPartial: !isFull
+            })
+          });
+
+          if (res.ok) {
+            showToast(`✓ Paid ${formatCurrency(amountToPay)} to ${partialPayModal.talentName} (${isFull ? 'Fully Settled' : 'Partial'})`);
+          }
+          await saveWorkflowState(currentStage, completedStages, { shooting: updatedShooting });
+          fetchProject();
+        }
+      }
+
+      setPartialPayModal(prev => ({ ...prev, isOpen: false }));
+      setPartialPayInputAmount('');
+    } catch (err) {
+      console.error(err);
+      showToast("Error recording partial payment", "error");
+    } finally {
+      setIsSubmittingPartialPay(false);
+    }
+  };
+
+  const handleResetModelPayment = async () => {
+    if (!confirm(`Are you sure you want to reset and revert all recorded payments for Model Talent?`)) return;
     const updated = {
       ...productData,
-      modelPaid: !isCurrentlyPaid,
-      modelPaidAmount: !isCurrentlyPaid ? (productData.modelPaidAmount || rate) : 0
+      modelPaid: false,
+      modelPaidAmount: 0
+    };
+    setProductData(updated);
+    try {
+      await fetch(`/api/projects/${projectId}/talent-settlement`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "MODEL",
+          name: productData.assignedModelName || 'Model Talent',
+          amount: 0,
+          action: "RESET"
+        })
+      });
+      showToast("Model payment reset & reverted from Finance");
+    } catch (e) {
+      console.error(e);
+    }
+    await saveWorkflowState(currentStage, completedStages, { product: updated });
+    fetchProject();
+  };
+
+  const handleResetEditorPayment = async (summary: { name: string; deliverableIds: string[] }) => {
+    if (!confirm(`Are you sure you want to reset all recorded payments for ${summary.name}?`)) return;
+    const updatedDeliverables = (editingData.videoDeliverables || []).map(v => {
+      if (summary.deliverableIds.includes(v.id)) {
+        return {
+          ...v,
+          editorPaid: false,
+          editorPaidAmount: 0
+        };
+      }
+      return v;
+    });
+    const updatedEditing = { ...editingData, videoDeliverables: updatedDeliverables };
+    setEditingData(updatedEditing);
+    try {
+      await fetch(`/api/projects/${projectId}/talent-settlement`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "EDITOR",
+          name: summary.name,
+          amount: 0,
+          action: "RESET"
+        })
+      });
+      showToast(`${summary.name} payments reset & reverted from Finance`);
+    } catch (e) {
+      console.error(e);
+    }
+    await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    fetchProject();
+  };
+
+  const handleResetLeadEditorPayment = async () => {
+    if (!confirm(`Are you sure you want to reset all recorded payments for ${shootingData.assignedEditorName || 'Lead Editor'}?`)) return;
+    const updatedShooting = {
+      ...shootingData,
+      editorPaid: false,
+      editorPaidAmount: 0
+    };
+    setShootingData(updatedShooting);
+    try {
+      await fetch(`/api/projects/${projectId}/talent-settlement`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "EDITOR",
+          name: shootingData.assignedEditorName || 'Lead Editor',
+          amount: 0,
+          action: "RESET"
+        })
+      });
+      showToast("Lead editor payment reset & reverted from Finance");
+    } catch (e) {
+      console.error(e);
+    }
+    await saveWorkflowState(currentStage, completedStages, { shooting: updatedShooting });
+    fetchProject();
+  };
+
+  const handleToggleModelPaid = async () => {
+    const rate = parseFloat(String(productData.modelRate || 0)) || 0;
+    const paidSoFar = productData.modelPaidAmount !== undefined ? (parseFloat(String(productData.modelPaidAmount)) || 0) : (productData.modelPaid ? rate : 0);
+    const isCurrentlyPaid = Boolean(productData.modelPaid) || (rate > 0 && paidSoFar >= rate);
+    const modelName = productData.assignedModelName || 'Model Talent';
+
+    if (isCurrentlyPaid) {
+      await handleResetModelPayment();
+      return;
+    }
+
+    const remainingDue = Math.max(0, rate - paidSoFar);
+    const updated = {
+      ...productData,
+      modelPaid: true,
+      modelPaidAmount: rate
     };
     setProductData(updated);
 
     try {
-      if (rate > 0) {
+      if (remainingDue > 0) {
         const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             type: "MODEL",
             name: modelName,
-            amount: rate,
-            action
+            amount: remainingDue,
+            action: "PAY",
+            paymentMethod: "Bank Transfer"
           })
         });
         if (res.ok) {
-          showToast(!isCurrentlyPaid ? `✓ Model ${modelName} marked as PAID & recorded in Finance (${formatCurrency(rate)})` : `Model payment marked as Unpaid & removed from Finance`);
+          showToast(`✓ Model ${modelName} marked as fully PAID (${formatCurrency(rate)})`);
         }
       } else {
-        showToast(!isCurrentlyPaid ? `✓ Model ${modelName} marked as PAID` : `Model payment marked as Unpaid`);
+        showToast(`✓ Model ${modelName} marked as PAID`);
       }
     } catch (err) {
       console.error("Talent settlement sync error:", err);
@@ -904,35 +1203,42 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   };
 
   const handleToggleEditorPaid = async () => {
-    const isCurrentlyPaid = Boolean(shootingData.editorPaid);
     const fee = parseFloat(String(shootingData.editorFee || 0)) || (projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate ? parseFloat(projectBasedStaff.find((pe: any) => pe.employeeId === shootingData.assignedEditorId)?.rate) : 0);
+    const paidSoFar = shootingData.editorPaidAmount !== undefined ? (parseFloat(String(shootingData.editorPaidAmount)) || 0) : (shootingData.editorPaid ? fee : 0);
+    const isCurrentlyPaid = Boolean(shootingData.editorPaid) || (fee > 0 && paidSoFar >= fee);
     const editorName = shootingData.assignedEditorName || 'Lead Editor';
-    const action = !isCurrentlyPaid ? 'PAY' : 'UNPAY';
 
+    if (isCurrentlyPaid) {
+      await handleResetLeadEditorPayment();
+      return;
+    }
+
+    const remainingDue = Math.max(0, fee - paidSoFar);
     const updated = {
       ...shootingData,
-      editorPaid: !isCurrentlyPaid,
-      editorPaidAmount: !isCurrentlyPaid ? (shootingData.editorPaidAmount || fee) : 0
+      editorPaid: true,
+      editorPaidAmount: fee
     };
     setShootingData(updated);
 
     try {
-      if (fee > 0) {
+      if (remainingDue > 0) {
         const res = await fetch(`/api/projects/${projectId}/talent-settlement`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             type: "EDITOR",
             name: editorName,
-            amount: fee,
-            action
+            amount: remainingDue,
+            action: "PAY",
+            paymentMethod: "Bank Transfer"
           })
         });
         if (res.ok) {
-          showToast(!isCurrentlyPaid ? `✓ Editor ${editorName} marked as PAID & recorded in Finance (${formatCurrency(fee)})` : `Editor payment marked as Unpaid & removed from Finance`);
+          showToast(`✓ Editor ${editorName} marked as fully PAID (${formatCurrency(fee)})`);
         }
       } else {
-        showToast(!isCurrentlyPaid ? `✓ Editor ${editorName} marked as PAID` : `Editor payment marked as Unpaid`);
+        showToast(`✓ Editor ${editorName} marked as PAID`);
       }
     } catch (err) {
       console.error("Editor settlement sync error:", err);
@@ -1161,7 +1467,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
 
   const getAssignedEditorsSummary = () => {
     const deliverables = editingData.videoDeliverables || [];
-    const map: Record<string, { key: string; name: string; count: number; videoTitles: string[]; totalFee: number; allPaid: boolean; somePaid: boolean; deliverableIds: string[] }> = {};
+    const map: Record<string, { key: string; name: string; count: number; videoTitles: string[]; totalFee: number; totalPaid: number; remainingDue: number; allPaid: boolean; somePaid: boolean; deliverableIds: string[] }> = {};
 
     deliverables.forEach(d => {
       const key = d.assignedEditorName?.trim() || d.assignedEditorId || 'Unassigned';
@@ -1172,6 +1478,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
           count: 0,
           videoTitles: [],
           totalFee: 0,
+          totalPaid: 0,
+          remainingDue: 0,
           allPaid: true,
           somePaid: false,
           deliverableIds: []
@@ -1181,11 +1489,21 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       map[key].videoTitles.push(d.title);
       map[key].deliverableIds.push(d.id);
       const fee = parseFloat(String(d.editorFee || 0)) || 0;
+      const paid = d.editorPaidAmount !== undefined ? (parseFloat(String(d.editorPaidAmount)) || 0) : (d.editorPaid ? fee : 0);
       map[key].totalFee += fee;
-      if (!d.editorPaid) {
+      map[key].totalPaid += paid;
+      if (!d.editorPaid && paid < fee) {
         map[key].allPaid = false;
-      } else {
+      }
+      if (d.editorPaid || paid > 0) {
         map[key].somePaid = true;
+      }
+    });
+
+    Object.values(map).forEach(s => {
+      s.remainingDue = Math.max(0, s.totalFee - s.totalPaid);
+      if (s.totalFee > 0 && s.totalPaid >= s.totalFee) {
+        s.allPaid = true;
       }
     });
 
@@ -4977,160 +5295,236 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     ============================================================ */}
                 <div style={{ width: '100%', maxWidth: '840px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '12px', marginTop: '4px' }}>
                   {/* Model Talent Settlement Card */}
-                  <div style={{
-                    padding: '16px 20px',
-                    background: 'rgba(236, 72, 153, 0.06)',
-                    border: '1px solid rgba(236, 72, 153, 0.25)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="material-symbols-outlined" style={{ color: '#f472b6', fontSize: '20px' }}>face_3</span>
-                        <div>
-                          <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Model Talent Settlement</strong>
-                          <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                            {productData.assignedModelName || 'Sarah Miller - Elite Agency'}
+                  {(() => {
+                    const totalRate = parseFloat(String(productData.modelRate || 0)) || 1000;
+                    const paidSoFar = productData.modelPaidAmount !== undefined ? (parseFloat(String(productData.modelPaidAmount)) || 0) : (productData.modelPaid ? totalRate : 0);
+                    const remainingDue = Math.max(0, totalRate - paidSoFar);
+                    const isFullyPaid = Boolean(productData.modelPaid) || (totalRate > 0 && paidSoFar >= totalRate);
+                    const isPartiallyPaid = !isFullyPaid && paidSoFar > 0;
+                    const percentPaid = totalRate > 0 ? Math.min(100, Math.round((paidSoFar / totalRate) * 100)) : 0;
+
+                    return (
+                      <div style={{
+                        padding: '16px 20px',
+                        background: 'rgba(236, 72, 153, 0.06)',
+                        border: '1px solid rgba(236, 72, 153, 0.25)',
+                        borderRadius: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="material-symbols-outlined" style={{ color: '#f472b6', fontSize: '20px' }}>face_3</span>
+                            <div>
+                              <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Model Talent Settlement</strong>
+                              <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                                {productData.assignedModelName || 'Sarah Miller - Elite Agency'}
+                              </span>
+                            </div>
+                          </div>
+                          <span style={{
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            background: isFullyPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                            color: isFullyPaid ? '#34d399' : isPartiallyPaid ? '#fbbf24' : '#f87171',
+                            border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.4)' : isPartiallyPaid ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
+                            fontSize: '11px',
+                            fontWeight: 700
+                          }}>
+                            {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Due: ${formatCurrency(remainingDue)})` : '⏳ PAYMENT DUE'}
                           </span>
                         </div>
-                      </div>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        background: productData.modelPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                        color: productData.modelPaid ? '#34d399' : '#fbbf24',
-                        border: productData.modelPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
-                        fontSize: '11px',
-                        fontWeight: 700
-                      }}>
-                        {productData.modelPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
-                      </span>
-                    </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                      <div>
-                        {isEditingModelRate ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>BDT:</span>
-                            <input
-                              type="number"
-                              value={tempModelRate}
-                              onChange={(e) => setTempModelRate(e.target.value)}
-                              placeholder="Amount"
-                              style={{
-                                width: '90px',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                background: 'rgba(0,0,0,0.5)',
-                                border: '1px solid #f472b6',
-                                color: '#f8fafc',
-                                fontSize: '12px',
-                                outline: 'none'
-                              }}
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveCustomModelRate(tempModelRate);
-                                if (e.key === 'Escape') setIsEditingModelRate(false);
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleSaveCustomModelRate(tempModelRate)}
-                              style={{
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                background: '#ec4899',
-                                border: 'none',
-                                color: '#fff',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              ✓ Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setIsEditingModelRate(false)}
-                              style={{
-                                padding: '4px 6px',
-                                borderRadius: '6px',
-                                background: 'rgba(255,255,255,0.1)',
-                                border: 'none',
-                                color: '#cbd5e1',
-                                fontSize: '11px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Agreed Model Rate:</span>
-                            <strong style={{ color: '#f472b6', fontSize: '14px' }}>
-                              {productData.modelRate ? formatCurrency(productData.modelRate) : 'BDT 1,000'}
-                            </strong>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setTempModelRate(productData.modelRate || '1000');
-                                setIsEditingModelRate(true);
-                              }}
-                              style={{
-                                padding: '2px 7px',
-                                borderRadius: '6px',
-                                background: 'rgba(244, 114, 182, 0.15)',
-                                border: '1px solid rgba(244, 114, 182, 0.35)',
-                                color: '#f472b6',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '2px'
-                              }}
-                              title="Edit Model Rate"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
-                              Edit
-                            </button>
+                        {/* Progress Bar if partially paid */}
+                        {paidSoFar > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
+                              <span>Paid: <strong style={{ color: '#34d399' }}>{formatCurrency(paidSoFar)}</strong></span>
+                              <span>Due: <strong style={{ color: remainingDue > 0 ? '#fbbf24' : '#34d399' }}>{formatCurrency(remainingDue)}</strong></span>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: `${percentPaid}%`, height: '100%', background: isFullyPaid ? '#10b981' : 'linear-gradient(90deg, #f59e0b, #ec4899)', borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
+                            </div>
                           </div>
                         )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                          <div>
+                            {isEditingModelRate ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>BDT:</span>
+                                <input
+                                  type="number"
+                                  value={tempModelRate}
+                                  onChange={(e) => setTempModelRate(e.target.value)}
+                                  placeholder="Amount"
+                                  style={{
+                                    width: '90px',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(0,0,0,0.5)',
+                                    border: '1px solid #f472b6',
+                                    color: '#f8fafc',
+                                    fontSize: '12px',
+                                    outline: 'none'
+                                  }}
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveCustomModelRate(tempModelRate);
+                                    if (e.key === 'Escape') setIsEditingModelRate(false);
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveCustomModelRate(tempModelRate)}
+                                  style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: '#ec4899',
+                                    border: 'none',
+                                    color: '#fff',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ✓ Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsEditingModelRate(false)}
+                                  style={{
+                                    padding: '4px 6px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: 'none',
+                                    color: '#cbd5e1',
+                                    fontSize: '11px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Agreed Model Rate:</span>
+                                <strong style={{ color: '#f472b6', fontSize: '14px' }}>
+                                  {formatCurrency(totalRate)}
+                                </strong>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTempModelRate(String(totalRate));
+                                    setIsEditingModelRate(true);
+                                  }}
+                                  style={{
+                                    padding: '2px 7px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(244, 114, 182, 0.15)',
+                                    border: '1px solid rgba(244, 114, 182, 0.35)',
+                                    color: '#f472b6',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '2px'
+                                  }}
+                                  title="Edit Model Rate"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
+                                  Edit
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {!isFullyPaid && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={handleToggleModelPaid}
+                                  style={{
+                                    padding: '7px 12px',
+                                    borderRadius: '8px',
+                                    background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                                    border: 'none',
+                                    color: '#ffffff',
+                                    fontWeight: 700,
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    boxShadow: '0 2px 8px rgba(236, 72, 153, 0.35)'
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
+                                  Pay Full ({formatCurrency(remainingDue)})
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={handleOpenModelPartialPay}
+                                  style={{
+                                    padding: '7px 12px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(236, 72, 153, 0.15)',
+                                    border: '1px solid rgba(236, 72, 153, 0.4)',
+                                    color: '#f472b6',
+                                    fontWeight: 700,
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>toll</span>
+                                  + Partial Pay
+                                </button>
+                              </>
+                            )}
+
+                            {paidSoFar > 0 && (
+                              <button
+                                type="button"
+                                onClick={handleResetModelPayment}
+                                style={{
+                                  padding: '7px 10px',
+                                  borderRadius: '8px',
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                  color: '#cbd5e1',
+                                  fontWeight: 600,
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}
+                                title="Reset / Revert Model Payment"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>restart_alt</span>
+                                Reset
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleToggleModelPaid}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          background: productData.modelPaid
-                            ? 'rgba(255, 255, 255, 0.08)'
-                            : 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
-                          border: productData.modelPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
-                          color: productData.modelPaid ? '#cbd5e1' : '#ffffff',
-                          fontWeight: 700,
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                          {productData.modelPaid ? 'check_circle' : 'payments'}
-                        </span>
-                        {productData.modelPaid ? 'Paid (Click to Revert)' : 'Pay Model Fee ✓'}
-                      </button>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   {/* Multi-Editor Settlements & Performance Cards */}
                   {getAssignedEditorsSummary().length > 0 ? (
                     getAssignedEditorsSummary().map((summary, eIdx) => {
                       const isAllPaid = summary.allPaid;
+                      const isPartiallyPaid = !isAllPaid && summary.totalPaid > 0;
+                      const percentPaid = summary.totalFee > 0 ? Math.min(100, Math.round((summary.totalPaid / summary.totalFee) * 100)) : 0;
+
                       return (
                         <div
                           key={summary.key || eIdx}
@@ -5141,7 +5535,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             borderRadius: '16px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '10px'
+                            gap: '12px'
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -5159,15 +5553,28 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             <span style={{
                               padding: '3px 8px',
                               borderRadius: '6px',
-                              background: isAllPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                              color: isAllPaid ? '#34d399' : '#fbbf24',
-                              border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
+                              background: isAllPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                              color: isAllPaid ? '#34d399' : isPartiallyPaid ? '#fbbf24' : '#f87171',
+                              border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.4)' : isPartiallyPaid ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
                               fontSize: '11px',
                               fontWeight: 700
                             }}>
-                              {isAllPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
+                              {isAllPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Due: ${formatCurrency(summary.remainingDue)})` : '⏳ PAYMENT DUE'}
                             </span>
                           </div>
+
+                          {/* Progress Bar if partially paid */}
+                          {summary.totalPaid > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
+                                <span>Paid: <strong style={{ color: '#34d399' }}>{formatCurrency(summary.totalPaid)}</strong></span>
+                                <span>Due: <strong style={{ color: summary.remainingDue > 0 ? '#fbbf24' : '#34d399' }}>{formatCurrency(summary.remainingDue)}</strong></span>
+                              </div>
+                              <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ width: `${percentPaid}%`, height: '100%', background: isAllPaid ? '#10b981' : 'linear-gradient(90deg, #f59e0b, #818cf8)', borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
+                              </div>
+                            </div>
+                          )}
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -5177,65 +5584,88 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                               </strong>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const action = isAllPaid ? 'UNPAY' : 'PAY';
-                                  const updatedList = (editingData.videoDeliverables || []).map(v => {
-                                    if (summary.deliverableIds.includes(v.id)) {
-                                      return {
-                                        ...v,
-                                        editorPaid: !isAllPaid,
-                                        editorPaidAmount: !isAllPaid ? (parseFloat(String(v.editorFee || 0)) || 0) : 0
-                                      };
-                                    }
-                                    return v;
-                                  });
-                                  const updatedEditing = { ...editingData, videoDeliverables: updatedList };
-                                  setEditingData(updatedEditing);
-
-                                  try {
-                                    if (summary.totalFee > 0) {
-                                      await fetch(`/api/projects/${projectId}/talent-settlement`, {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                          type: "EDITOR",
-                                          name: `${summary.name} (${summary.count} videos)`,
-                                          amount: summary.totalFee,
-                                          action
-                                        })
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {!isAllPaid && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const remainingToPay = summary.remainingDue;
+                                      const updatedList = (editingData.videoDeliverables || []).map(v => {
+                                        if (summary.deliverableIds.includes(v.id)) {
+                                          const fee = parseFloat(String(v.editorFee || 0)) || 0;
+                                          return {
+                                            ...v,
+                                            editorPaid: true,
+                                            editorPaidAmount: fee
+                                          };
+                                        }
+                                        return v;
                                       });
-                                    }
-                                    showToast(!isAllPaid ? `✓ ${summary.name} marked as PAID & recorded in Finance` : `${summary.name} marked as Unpaid`);
-                                  } catch (e) {
-                                    console.error(e);
-                                  }
-                                  await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
-                                  fetchProject();
-                                }}
-                                style={{
-                                  padding: '8px 14px',
-                                  borderRadius: '8px',
-                                  background: isAllPaid
-                                    ? 'rgba(255, 255, 255, 0.08)'
-                                    : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                                  border: isAllPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
-                                  color: isAllPaid ? '#cbd5e1' : '#ffffff',
-                                  fontWeight: 700,
-                                  fontSize: '12px',
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                  {isAllPaid ? 'check_circle' : 'payments'}
-                                </span>
-                                {isAllPaid ? 'Paid (Click to Revert)' : `Pay ${summary.name} Fee ✓`}
-                              </button>
+                                      const updatedEditing = { ...editingData, videoDeliverables: updatedList };
+                                      setEditingData(updatedEditing);
+
+                                      try {
+                                        if (remainingToPay > 0) {
+                                          await fetch(`/api/projects/${projectId}/talent-settlement`, {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({
+                                              type: "EDITOR",
+                                              name: `${summary.name} (${summary.count} videos)`,
+                                              amount: remainingToPay,
+                                              action: "PAY"
+                                            })
+                                          });
+                                        }
+                                        showToast(`✓ ${summary.name} marked as fully PAID (${formatCurrency(summary.totalFee)})`);
+                                      } catch (e) {
+                                        console.error(e);
+                                      }
+                                      await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+                                      fetchProject();
+                                    }}
+                                    style={{
+                                      padding: '7px 12px',
+                                      borderRadius: '8px',
+                                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                      border: 'none',
+                                      color: '#ffffff',
+                                      fontWeight: 700,
+                                      fontSize: '11px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)'
+                                    }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
+                                    Pay Full ({formatCurrency(summary.remainingDue)})
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditorPartialPay(summary)}
+                                    style={{
+                                      padding: '7px 12px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(99, 102, 241, 0.15)',
+                                      border: '1px solid rgba(99, 102, 241, 0.4)',
+                                      color: '#c7d2fe',
+                                      fontWeight: 700,
+                                      fontSize: '11px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>toll</span>
+                                    + Partial Pay
+                                  </button>
+                                </>
+                              )}
 
                               <button
                                 type="button"
@@ -5247,66 +5677,146 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                                   setIsRateEditorModalOpen(true);
                                 }}
                                 style={{
-                                  padding: '8px 12px',
+                                  padding: '7px 10px',
                                   borderRadius: '8px',
-                                  background: 'rgba(99, 102, 241, 0.15)',
-                                  border: '1px solid rgba(99, 102, 241, 0.35)',
+                                  background: 'rgba(99, 102, 241, 0.12)',
+                                  border: '1px solid rgba(99, 102, 241, 0.3)',
                                   color: '#c7d2fe',
                                   fontWeight: 600,
-                                  fontSize: '12px',
+                                  fontSize: '11px',
                                   cursor: 'pointer',
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '4px'
+                                  gap: '3px'
                                 }}
                               >
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fbbf24' }}>star</span>
-                                {editorRating ? `Rated ${editorRating.rating}/5` : 'Rate'}
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#fbbf24' }}>star</span>
+                                {editorRating ? `${editorRating.rating}/5` : 'Rate'}
                               </button>
+
+                              {summary.totalPaid > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleResetEditorPayment(summary)}
+                                  style={{
+                                    padding: '7px 10px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                                    color: '#cbd5e1',
+                                    fontWeight: 600,
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                  title="Reset / Revert Editor Payment"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>restart_alt</span>
+                                  Reset
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <div style={{
-                      padding: '16px 20px',
-                      background: 'rgba(99, 102, 241, 0.06)',
-                      border: '1px solid rgba(99, 102, 241, 0.25)',
-                      borderRadius: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
-                          <div>
-                            <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Lead Editor Settlement</strong>
-                            <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                              {shootingData.assignedEditorName || 'Lead Editor'}
+                    /* Fallback Lead Editor Card */
+                    (() => {
+                      const totalFee = parseFloat(String(shootingData.editorFee || 0)) || 1500;
+                      const paidSoFar = shootingData.editorPaidAmount !== undefined ? (parseFloat(String(shootingData.editorPaidAmount)) || 0) : (shootingData.editorPaid ? totalFee : 0);
+                      const remainingDue = Math.max(0, totalFee - paidSoFar);
+                      const isFullyPaid = Boolean(shootingData.editorPaid) || (totalFee > 0 && paidSoFar >= totalFee);
+                      const isPartiallyPaid = !isFullyPaid && paidSoFar > 0;
+                      const percentPaid = totalFee > 0 ? Math.min(100, Math.round((paidSoFar / totalFee) * 100)) : 0;
+
+                      return (
+                        <div style={{
+                          padding: '16px 20px',
+                          background: 'rgba(99, 102, 241, 0.06)',
+                          border: '1px solid rgba(99, 102, 241, 0.25)',
+                          borderRadius: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
+                              <div>
+                                <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Lead Editor Settlement</strong>
+                                <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                                  {shootingData.assignedEditorName || 'Lead Editor'}
+                                </span>
+                              </div>
+                            </div>
+                            <span style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              background: isFullyPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.15)',
+                              color: isFullyPaid ? '#34d399' : isPartiallyPaid ? '#fbbf24' : '#f87171',
+                              border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.4)' : isPartiallyPaid ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
+                              fontSize: '11px',
+                              fontWeight: 700
+                            }}>
+                              {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Due: ${formatCurrency(remainingDue)})` : '⏳ PAYMENT DUE'}
                             </span>
                           </div>
+
+                          {paidSoFar > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
+                                <span>Paid: <strong style={{ color: '#34d399' }}>{formatCurrency(paidSoFar)}</strong></span>
+                                <span>Due: <strong style={{ color: remainingDue > 0 ? '#fbbf24' : '#34d399' }}>{formatCurrency(remainingDue)}</strong></span>
+                              </div>
+                              <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ width: `${percentPaid}%`, height: '100%', background: isFullyPaid ? '#10b981' : 'linear-gradient(90deg, #f59e0b, #818cf8)', borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                            <span style={{ color: '#94a3b8' }}>Editor Payment: <strong style={{ color: '#818cf8' }}>{formatCurrency(totalFee)}</strong></span>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {!isFullyPaid && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={handleToggleEditorPaid}
+                                    style={{ padding: '7px 12px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', color: '#fff', border: 'none', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
+                                    Pay Full ({formatCurrency(remainingDue)})
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={handleOpenLeadEditorPartialPay}
+                                    style={{ padding: '7px 12px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.4)', color: '#c7d2fe', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>toll</span>
+                                    + Partial Pay
+                                  </button>
+                                </>
+                              )}
+
+                              {paidSoFar > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={handleResetLeadEditorPayment}
+                                  style={{ padding: '7px 10px', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#cbd5e1', fontWeight: 600, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>restart_alt</span>
+                                  Reset
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <span style={{
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          background: shootingData.editorPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                          color: shootingData.editorPaid ? '#34d399' : '#fbbf24',
-                          border: shootingData.editorPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(245, 158, 11, 0.4)',
-                          fontSize: '11px',
-                          fontWeight: 700
-                        }}>
-                          {shootingData.editorPaid ? '✓ PAID & SETTLED' : '⏳ PAYMENT DUE'}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px' }}>
-                        <span style={{ color: '#94a3b8' }}>Editor Payment: <strong style={{ color: '#818cf8' }}>{formatCurrency(shootingData.editorFee || 1500)}</strong></span>
-                        <button type="button" onClick={handleToggleEditorPaid} style={{ padding: '8px 16px', borderRadius: '8px', background: shootingData.editorPaid ? 'rgba(255, 255, 255, 0.08)' : '#6366f1', color: '#fff', border: 'none', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
-                          {shootingData.editorPaid ? 'Paid' : 'Pay Editor Fee ✓'}
-                        </button>
-                      </div>
-                    </div>
+                      );
+                    })()
                   )}
                 </div>
 
@@ -7381,6 +7891,192 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   Print / Save as PDF
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: TALENT / EDITOR PARTIAL PAYMENT SETTLEMENT
+            ==================================================================== */}
+        {partialPayModal.isOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setPartialPayModal(prev => ({ ...prev, isOpen: false })); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '500px', background: '#0f172a', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '18px', padding: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
+              <div className={styles.modalHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '14px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: partialPayModal.type === 'MODEL' ? '#f472b6' : '#818cf8', fontSize: '24px' }}>
+                    {partialPayModal.type === 'MODEL' ? 'face_3' : 'badge'}
+                  </span>
+                  <h3 className={styles.modalTitle} style={{ margin: 0, fontSize: '16px', color: '#f8fafc', fontWeight: 800 }}>
+                    {partialPayModal.title}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPartialPayModal(prev => ({ ...prev, isOpen: false }))}
+                  className={styles.closeBtn}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmPartialPayment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Balance Summary Card */}
+                <div style={{ padding: '14px 16px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Total Fee</span>
+                    <strong style={{ fontSize: '14px', color: '#f8fafc', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.totalFee)}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Paid So Far</span>
+                    <strong style={{ fontSize: '14px', color: '#34d399', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.paidSoFar)}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Remaining Due</span>
+                    <strong style={{ fontSize: '14px', color: '#fbbf24', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.remainingDue)}</strong>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+                    Quick Preset Amounts:
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {[
+                      { label: '25%', amount: Math.round(partialPayModal.remainingDue * 0.25) },
+                      { label: '50%', amount: Math.round(partialPayModal.remainingDue * 0.5) },
+                      { label: '75%', amount: Math.round(partialPayModal.remainingDue * 0.75) },
+                      { label: `Full Due (${formatCurrency(partialPayModal.remainingDue)})`, amount: partialPayModal.remainingDue }
+                    ].map((preset, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => setPartialPayInputAmount(String(preset.amount))}
+                        style={{
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          background: String(preset.amount) === String(partialPayInputAmount) ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.06)',
+                          border: String(preset.amount) === String(partialPayInputAmount) ? '1px solid #818cf8' : '1px solid rgba(255, 255, 255, 0.12)',
+                          color: String(preset.amount) === String(partialPayInputAmount) ? '#c7d2fe' : '#94a3b8',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Amount Input */}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+                    Payment Amount to Pay Now (BDT) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={partialPayModal.remainingDue}
+                    required
+                    placeholder="Enter amount (e.g. 500)"
+                    value={partialPayInputAmount}
+                    onChange={(e) => setPartialPayInputAmount(e.target.value)}
+                    className={styles.stageInput}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '10px',
+                      color: '#f8fafc',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      outline: 'none'
+                    }}
+                    autoFocus
+                  />
+                  {parseFloat(partialPayInputAmount) > partialPayModal.remainingDue && (
+                    <span style={{ fontSize: '11px', color: '#f87171', marginTop: '4px', display: 'block' }}>
+                      Warning: Amount exceeds remaining due of {formatCurrency(partialPayModal.remainingDue)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+                    Payment Method Channel
+                  </label>
+                  <select
+                    value={partialPayMethod}
+                    onChange={(e) => setPartialPayMethod(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      background: 'rgba(15, 23, 42, 0.9)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '10px',
+                      color: '#f8fafc',
+                      fontSize: '13px',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="bKash Merchant">bKash</option>
+                    <option value="Nagad">Nagad</option>
+                    <option value="Cash">Cash in Hand</option>
+                    <option value="Card / POS">Card / POS</option>
+                    <option value="Cheque">Cheque</option>
+                  </select>
+                </div>
+
+                {/* Modal Bottom Actions */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPartialPayModal(prev => ({ ...prev, isOpen: false }))}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#cbd5e1',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingPartialPay || !partialPayInputAmount || parseFloat(partialPayInputAmount) <= 0}
+                    style={{
+                      padding: '9px 20px',
+                      borderRadius: '10px',
+                      background: partialPayModal.type === 'MODEL'
+                        ? 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'
+                        : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
+                      opacity: (isSubmittingPartialPay || !partialPayInputAmount || parseFloat(partialPayInputAmount) <= 0) ? 0.5 : 1
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
+                    {isSubmittingPartialPay ? 'Recording...' : `Confirm Payment (${formatCurrency(parseFloat(partialPayInputAmount) || 0)}) ✓`}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

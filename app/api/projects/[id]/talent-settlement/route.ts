@@ -22,13 +22,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     if (rbacGuard) return rbacGuard;
 
     const body = await req.json();
-    const { type, name, amount, action, paymentMethod = "Bank Transfer" } = body;
+    const { type, name, amount, action, paymentMethod = "Bank Transfer", isPartial = false } = body;
     const talentAmount = Math.max(0, parseFloat(amount) || 0);
     const talentName = (name || "").trim();
     const talentType = type === "MODEL" ? "MODEL" : "EDITOR";
-    const isPay = action === "PAY";
+    const isPay = action === "PAY" || action === "PARTIAL_PAY";
 
-    if (talentAmount <= 0) {
+    if (isPay && talentAmount <= 0) {
       return NextResponse.json({ error: "Invalid settlement amount" }, { status: 400 });
     }
 
@@ -39,93 +39,91 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
     const category = talentType === "MODEL" ? "Model Fee" : "Editor Fee";
-    // Exact requested format: (Like oroject name Model 800) / (Project Name Editor 1500)
     const description = talentType === "MODEL"
-      ? `${project.name} Model ${talentAmount}`
-      : `${project.name} Editor ${talentAmount}`;
+      ? `${project.name} Model ${talentAmount}${isPartial ? ' (Partial)' : ''}`
+      : `${project.name} Editor ${talentAmount}${isPartial ? ' (Partial)' : ''}`;
 
     const result = await prisma.$transaction(async (tx: any) => {
       const currentActualCost = Number(project.actualCost || 0);
 
       if (isPay) {
-        // 1. Check if an expense already exists for this talent/project to avoid duplicates
-        const existingExpense = await tx.expense.findFirst({
-          where: {
-            projectId: project.id,
+        // Create an Expense record for this payment
+        const expenseRecord = await tx.expense.create({
+          data: {
             companyId,
+            projectId: project.id,
             category,
-            amount: talentAmount
+            amount: talentAmount,
+            paymentMethod,
+            approvalStatus: "APPROVED",
+            description,
+            systemSource: "ERP"
           }
         });
 
-        let expenseRecord = existingExpense;
-        if (!existingExpense) {
-          expenseRecord = await tx.expense.create({
-            data: {
-              companyId,
-              projectId: project.id,
-              category,
-              amount: talentAmount,
-              paymentMethod,
-              approvalStatus: "APPROVED",
-              description,
-              systemSource: "ERP"
-            }
-          });
+        await createLedgerEntry({
+          companyId,
+          module: "Expense",
+          referenceId: expenseRecord.id,
+          amount: talentAmount,
+          isDebit: false,
+          accountType: paymentMethod,
+          description: `Project Expense: ${description}`,
+          createdById: session.user.id,
+          systemSource: "ERP"
+        });
 
-          await createLedgerEntry({
-            companyId,
-            module: "Expense",
-            referenceId: expenseRecord.id,
-            amount: talentAmount,
-            isDebit: false,
-            accountType: paymentMethod,
-            description: `Project Expense: ${description}`,
-            createdById: session.user.id,
-            systemSource: "ERP"
-          });
+        // Update project actualCost
+        await tx.project.update({
+          where: { id: project.id },
+          data: {
+            actualCost: currentActualCost + talentAmount
+          }
+        });
 
-          // Update project actualCost
-          await tx.project.update({
-            where: { id: project.id },
-            data: {
-              actualCost: currentActualCost + talentAmount
-            }
-          });
-        }
-
-        // 2. Activity log
+        // Activity log
         await tx.projectActivity.create({
           data: {
             companyId,
             projectId: project.id,
             type: "TALENT_PAID",
-            description: `Settled ${talentType.toLowerCase()} payment for ${talentName || talentType}: ৳${talentAmount.toLocaleString()} (${paymentMethod}).`,
+            description: `Recorded ${isPartial ? 'partial' : 'full'} ${talentType.toLowerCase()} payment for ${talentName || talentType}: ৳${talentAmount.toLocaleString()} via ${paymentMethod}.`,
             performedById: session.user.id
           }
         });
 
-        return { expense: expenseRecord, actualCost: currentActualCost + (existingExpense ? 0 : talentAmount) };
+        return { expense: expenseRecord, actualCost: currentActualCost + talentAmount };
       } else {
-        // UNPAY: Revert expense and actualCost
-        const existingExpense = await tx.expense.findFirst({
+        // UNPAY / RESET: Revert expenses for this category on this project
+        const expenses = await tx.expense.findMany({
           where: {
             projectId: project.id,
             companyId,
-            category,
-            amount: talentAmount
+            category
           }
         });
 
-        if (existingExpense) {
-          await tx.expense.delete({
-            where: { id: existingExpense.id }
-          });
+        let totalReverted = 0;
+        if (talentAmount > 0) {
+          // Revert matching expense or up to talentAmount
+          const targetExpense = expenses.find((e: any) => Number(e.amount) === talentAmount) || expenses[expenses.length - 1];
+          if (targetExpense) {
+            totalReverted = Number(targetExpense.amount);
+            await tx.expense.delete({ where: { id: targetExpense.id } });
+          }
+        } else {
+          // Revert all expenses in this category
+          for (const exp of expenses) {
+            totalReverted += Number(exp.amount);
+            await tx.expense.delete({ where: { id: exp.id } });
+          }
+        }
 
+        if (totalReverted > 0) {
           await tx.project.update({
             where: { id: project.id },
             data: {
-              actualCost: Math.max(0, currentActualCost - talentAmount)
+              actualCost: Math.max(0, currentActualCost - totalReverted)
             }
           });
         }
@@ -136,12 +134,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
             companyId,
             projectId: project.id,
             type: "TALENT_UNPAID",
-            description: `Reverted ${talentType.toLowerCase()} payment for ${talentName || talentType} (৳${talentAmount.toLocaleString()}).`,
+            description: `Reverted ${talentType.toLowerCase()} payment for ${talentName || talentType} (৳${totalReverted.toLocaleString()}).`,
             performedById: session.user.id
           }
         });
 
-        return { actualCost: Math.max(0, currentActualCost - talentAmount) };
+        return { actualCost: Math.max(0, currentActualCost - totalReverted), totalReverted };
       }
     });
 

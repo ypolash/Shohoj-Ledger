@@ -157,8 +157,16 @@ export default function StaffPortalPage() {
       })
       .catch(() => {});
 
-    // 7. Fetch Products for Product Management
-    fetchProductsData('', 'ALL');
+    // 7. Fetch Products for Product Management only if user is Product Manager
+    const isPM = Boolean(
+      currentEmp?.designation?.toLowerCase().includes('product') ||
+      currentEmp?.role?.toLowerCase().includes('product') ||
+      currentEmp?.department?.toLowerCase().includes('product') ||
+      (currentEmp?.department?.toLowerCase().includes('production') && currentEmp?.designation?.toLowerCase().includes('manager'))
+    );
+    if (isPM) {
+      fetchProductsData('', 'ALL');
+    }
   }, [employeeId, leaveType, fetchProductsData]);
 
   const handleOpenStaffReturnModal = (pItem: any) => {
@@ -405,12 +413,45 @@ export default function StaffPortalPage() {
 
   const emp = employees.find(e => e.employeeId === employeeId) || { firstName: 'Employee', employeeId, designation: 'Staff' };
 
+  const isProductManager = Boolean(
+    emp?.designation?.toLowerCase().includes('product') ||
+    emp?.role?.toLowerCase().includes('product') ||
+    emp?.department?.toLowerCase().includes('product') ||
+    (emp?.department?.toLowerCase().includes('production') && emp?.designation?.toLowerCase().includes('manager'))
+  );
+
+  useEffect(() => {
+    if (!isProductManager && activeTab === 'PRODUCTS') {
+      setActiveTab('ATTENDANCE');
+    }
+  }, [isProductManager, activeTab]);
+
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#f8fafc', padding: '32px 20px' }}>
       <div style={{ maxWidth: '1060px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
-            <h1 style={{ fontSize: '26px', fontWeight: 'bold', margin: '0 0 6px 0' }}>Welcome, {emp.firstName}!</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
+              <h1 style={{ fontSize: '26px', fontWeight: 'bold', margin: 0 }}>Welcome, {emp.firstName}!</h1>
+              {isProductManager && (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '11.5px',
+                  fontWeight: 800,
+                  padding: '3px 10px',
+                  borderRadius: '999px',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%)',
+                  color: '#fbbf24',
+                  border: '1px solid rgba(245, 158, 11, 0.45)',
+                  boxShadow: '0 2px 10px rgba(245, 158, 11, 0.2)'
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>inventory_2</span>
+                  Product Manager
+                </span>
+              )}
+            </div>
             <span style={{ color: '#94a3b8' }}>{emp.designation} • {emp.employeeId}</span>
           </div>
           <button onClick={() => setIsAuthenticated(false)} className="btn" style={{ background: 'rgba(255,255,255,0.1)' }}>Logout</button>
@@ -553,7 +594,13 @@ export default function StaffPortalPage() {
           {[
             { id: 'ATTENDANCE', label: 'ATTENDANCE', icon: 'schedule' },
             { id: 'TASKS', label: 'TASKS', icon: 'star' },
-            { id: 'PRODUCTS', label: 'PRODUCT MANAGEMENT', icon: 'inventory_2', badge: (productStats.inStudio || 0) + (productStats.readyForReturn || 0) },
+            ...(isProductManager ? [{
+              id: 'PRODUCTS',
+              label: 'PRODUCT MANAGEMENT',
+              icon: 'inventory_2',
+              badge: (productStats.inStudio || 0) + (productStats.readyForReturn || 0),
+              isSpecialRole: true
+            }] : []),
             { id: 'LEAVES', label: 'LEAVES', icon: 'event_busy' },
             { id: 'PAYROLL', label: 'PAYROLL', icon: 'payments' }
           ].map(tab => (
@@ -569,9 +616,15 @@ export default function StaffPortalPage() {
                 fontSize: '13.5px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                background: activeTab === tab.id ? 'rgba(59,130,246,0.15)' : 'transparent',
-                color: activeTab === tab.id ? '#60a5fa' : '#94a3b8',
-                border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.4)' : '1px solid transparent',
+                background: activeTab === tab.id
+                  ? (tab.id === 'PRODUCTS' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%)' : 'rgba(59,130,246,0.15)')
+                  : (tab.id === 'PRODUCTS' ? 'rgba(245, 158, 11, 0.08)' : 'transparent'),
+                color: activeTab === tab.id
+                  ? (tab.id === 'PRODUCTS' ? '#fbbf24' : '#60a5fa')
+                  : (tab.id === 'PRODUCTS' ? '#f59e0b' : '#94a3b8'),
+                border: activeTab === tab.id
+                  ? (tab.id === 'PRODUCTS' ? '1px solid rgba(245, 158, 11, 0.6)' : '1px solid rgba(59,130,246,0.4)')
+                  : (tab.id === 'PRODUCTS' ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid transparent'),
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
@@ -586,7 +639,7 @@ export default function StaffPortalPage() {
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 800,
-                  background: 'rgba(245, 158, 11, 0.2)',
+                  background: 'rgba(245, 158, 11, 0.25)',
                   color: '#fbbf24',
                   padding: '2px 7px',
                   borderRadius: '10px',
@@ -747,8 +800,8 @@ export default function StaffPortalPage() {
             </div>
           )}
 
-          {/* TAB 3: PRODUCT MANAGEMENT */}
-          {activeTab === 'PRODUCTS' && (
+          {/* TAB 3: PRODUCT MANAGEMENT (ONLY FOR PRODUCT MANAGERS) */}
+          {activeTab === 'PRODUCTS' && isProductManager && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Product KPIs */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
@@ -1341,7 +1394,7 @@ export default function StaffPortalPage() {
         </div>
 
         {/* MODAL: STAFF RETURN PRODUCT HANDOVER */}
-        {returnModalProduct && (
+        {isProductManager && returnModalProduct && (
           <div style={{
             position: 'fixed',
             inset: 0,

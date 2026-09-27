@@ -225,7 +225,17 @@ export default function EmployeesPageClient() {
       if (isEditMode && selectedEmployee) {
         res = await updateEmployee(selectedEmployee.id, payload);
       } else {
-        res = await createEmployee(payload);
+        try {
+          res = await createEmployee(payload);
+        } catch (actionErr) {
+          console.warn("Server action failed, using API endpoint fallback:", actionErr);
+          const apiRes = await fetch('/api/employees', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          res = await apiRes.json();
+        }
       }
       
       if (res && res.error) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileAdmin, CORS_HEADERS } from "@/lib/auth/mobileAdminGuard";
+import { getNowInTimezone } from "@/lib/attendance";
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
@@ -13,10 +14,9 @@ export async function GET() {
   const { companyId, user } = guard;
 
   try {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const endOfDay = new Date(today);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    const { todayDateOnly } = getNowInTimezone();
+    const today = todayDateOnly;
+    const endOfDay = new Date(todayDateOnly.getTime() + (24 * 60 * 60 * 1000) - 1);
 
     // 1. Employees & Attendance metrics
     const [totalActiveEmployees, todayAttendances, leaveRequestsToday] = await Promise.all([

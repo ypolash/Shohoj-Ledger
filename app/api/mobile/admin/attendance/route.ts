@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileAdmin, CORS_HEADERS } from "@/lib/auth/mobileAdminGuard";
+import { getNowInTimezone } from "@/lib/attendance";
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
@@ -17,12 +18,17 @@ export async function GET(req: Request) {
     const dateParam = url.searchParams.get("date");
     const statusFilter = url.searchParams.get("status")?.trim();
 
-    const targetDate = dateParam ? new Date(dateParam) : new Date();
-    const startOfDay = new Date(targetDate);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(targetDate);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    let startOfDay: Date;
+    let endOfDay: Date;
+    if (dateParam) {
+      const [y, m, d] = dateParam.split("T")[0].split("-").map(Number);
+      startOfDay = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+      endOfDay = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
+    } else {
+      const { todayDateOnly } = getNowInTimezone();
+      startOfDay = todayDateOnly;
+      endOfDay = new Date(todayDateOnly.getTime() + (24 * 60 * 60 * 1000) - 1);
+    }
 
     // Fetch active employees
     const allEmployees = await prisma.employee.findMany({

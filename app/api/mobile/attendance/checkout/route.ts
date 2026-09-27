@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { validateAttendanceRequest, getAttendanceConfig } from "../utils";
-import { calculateEarlyLeaveStatus } from "@/lib/attendance";
+import { calculateEarlyLeaveStatus, getNowInTimezone } from "@/lib/attendance";
 
 export async function POST(req: Request) {
   try {
@@ -36,14 +36,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const serverTime = new Date();
-    const dhakaTimeString = serverTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
-    const currentDhakaTime = new Date(dhakaTimeString);
-    
-    const dateStr = currentDhakaTime.getFullYear() + "-" +
-                    String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
-                    String(currentDhakaTime.getDate()).padStart(2, '0');
-    const today = new Date(dateStr);
+    const { now: serverTime, todayDateOnly: today } = getNowInTimezone();
 
     const existingAttendance = await prisma.attendance.findFirst({
       where: {

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
+import { getNowInTimezone } from "@/lib/attendance";
 
 async function verifyAccess(permission: string) {
   const session = await getSession();
@@ -17,14 +18,19 @@ async function verifyAccess(permission: string) {
 // Used for displaying the daily attendance roster
 export async function fetchAttendance(dateStr?: string) {
   const { companyId } = await verifyAccess("VIEW_ATTENDANCE");
-  const targetDate = dateStr ? new Date(dateStr) : new Date();
   
-  // Set to start of day for comparison
-  const startOfDay = new Date(targetDate);
-  startOfDay.setUTCHours(0,0,0,0);
-  
-  const endOfDay = new Date(targetDate);
-  endOfDay.setUTCHours(23,59,59,999);
+  let startOfDay: Date;
+  let endOfDay: Date;
+
+  if (dateStr) {
+    const [y, m, d] = dateStr.split("T")[0].split("-").map(Number);
+    startOfDay = new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+    endOfDay = new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
+  } else {
+    const { todayDateOnly } = getNowInTimezone();
+    startOfDay = todayDateOnly;
+    endOfDay = new Date(todayDateOnly.getTime() + (24 * 60 * 60 * 1000) - 1);
+  }
 
   return await prisma.attendance.findMany({
     where: {
@@ -71,9 +77,12 @@ export async function attendanceHistory(employeeId: string, limit: number = 30) 
 export async function attendanceSummary(employeeId?: string, monthOffset: number = 0) {
   const { companyId } = await verifyAccess("VIEW_ATTENDANCE");
   
-  const today = new Date();
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() - monthOffset + 1, 0);
+  const { now } = getNowInTimezone();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() - monthOffset;
+  
+  const startOfMonth = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+  const endOfMonth = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
 
   const whereClause: any = {
     companyId,
@@ -105,15 +114,14 @@ export async function attendanceSummary(employeeId?: string, monthOffset: number
 export async function attendanceStatistics() {
   const { companyId } = await verifyAccess("VIEW_ATTENDANCE");
   
-  const today = new Date();
-  today.setUTCHours(0,0,0,0);
-  const endOfDay = new Date(today);
-  endOfDay.setUTCHours(23,59,59,999);
+  const { todayDateOnly } = getNowInTimezone();
+  const startOfDay = todayDateOnly;
+  const endOfDay = new Date(todayDateOnly.getTime() + (24 * 60 * 60 * 1000) - 1);
 
   const [totalEmployees, todayRecords] = await Promise.all([
     prisma.employee.count({ where: { companyId, status: "ACTIVE" } }),
     prisma.attendance.findMany({
-      where: { companyId, systemSource: { in: ["ERP", "LEGACY", "APP"] }, date: { gte: today, lte: endOfDay } }
+      where: { companyId, systemSource: { in: ["ERP", "LEGACY", "APP"] }, date: { gte: startOfDay, lte: endOfDay } }
     })
   ]);
 
@@ -129,6 +137,6 @@ export async function attendanceStatistics() {
     present: stats.present,
     late: stats.late,
     absent: stats.absent,
-    unmarked: totalEmployees - (stats.present + stats.late + stats.absent)
+    unmarked: Math.max(0, totalEmployees - (stats.present + stats.late + stats.absent))
   };
 }

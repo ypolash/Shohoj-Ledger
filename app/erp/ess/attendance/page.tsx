@@ -139,9 +139,9 @@ export default function EssAttendancePage() {
               <tbody>
                 {history.map(record => (
                   <tr key={record.id}>
-                    <td>{new Date(record.date).toLocaleDateString()}</td>
-                    <td>{record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString() : '-'}</td>
-                    <td>{record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : '-'}</td>
+                    <td>{new Date(record.date).toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka', month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td>{record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}</td>
+                    <td>{record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka', hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}</td>
                     <td>{record.totalWorkingMinutes ? `${(record.totalWorkingMinutes / 60).toFixed(1)} hrs` : '-'}</td>
                     <td style={{ textAlign: 'center' }}>
                       <span className={`${styles.badge} ${getStatusBadgeClass(record.status)}`}>

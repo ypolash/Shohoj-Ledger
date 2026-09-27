@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calculateAttendanceStatus, calculateEarlyLeaveStatus } from "@/lib/attendance";
+import { calculateAttendanceStatus, calculateEarlyLeaveStatus, getNowInTimezone } from "@/lib/attendance";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
 
 /**
@@ -31,14 +31,13 @@ export async function GET(request: Request) {
       take: limit,
     });
 
-    // Check if clocked in today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Check if clocked in today in company timezone
+    const { todayDateOnly } = getNowInTimezone();
     const todayRecord = await prisma.attendance.findFirst({
       where: {
         companyId: employee.companyId,
         employeeId: employee.id,
-        date: { gte: today },
+        date: { gte: todayDateOnly },
       },
     });
 
@@ -135,14 +134,13 @@ export async function POST(request: Request) {
     }
     // -------------------------------------
 
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const { now, todayDateOnly } = getNowInTimezone();
 
     const todayRecord = await prisma.attendance.findFirst({
       where: {
         companyId: employee.companyId,
         employeeId: employee.id,
-        date: { gte: todayStart },
+        date: { gte: todayDateOnly },
       },
     });
 
@@ -171,7 +169,7 @@ export async function POST(request: Request) {
         create: {
           companyId: employee.companyId,
           employeeId: employee.id,
-          date: todayStart,
+          date: todayDateOnly,
           checkInTime: now,
           checkInLocation: locationString,
           status: calc.status,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getNowInTimezone } from "@/lib/attendance";
 
 export async function GET(req: Request) {
   try {
@@ -40,24 +41,16 @@ export async function GET(req: Request) {
       );
     }
 
-    const serverTime = new Date();
-    const dhakaTimeString = serverTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
-    const currentDhakaTime = new Date(dhakaTimeString);
-
-    const dateStr = currentDhakaTime.getFullYear() + "-" +
-                    String(currentDhakaTime.getMonth() + 1).padStart(2, '0') + "-" + 
-                    String(currentDhakaTime.getDate()).padStart(2, '0');
-    const today = new Date(dateStr);
+    const { now: serverTime, todayDateOnly: today } = getNowInTimezone();
     const utcDateStr = serverTime.toISOString().split("T")[0];
-    const utcToday = new Date(utcDateStr);
+    const utcToday = new Date(`${utcDateStr}T00:00:00.000Z`);
 
-    const isFriday = currentDhakaTime.getDay() === 5;
+    const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Dhaka", weekday: "short" }).format(serverTime);
+    const isFriday = dayOfWeek === "Fri";
 
     // Look for today's attendance matching either Dhaka date, UTC date, or today's timestamp range
-    const startOfServerDay = new Date(serverTime);
-    startOfServerDay.setHours(0, 0, 0, 0);
-    const endOfServerDay = new Date(serverTime);
-    endOfServerDay.setHours(23, 59, 59, 999);
+    const startOfServerDay = today;
+    const endOfServerDay = new Date(today.getTime() + (24 * 60 * 60 * 1000) - 1);
 
     const attendance = await prisma.attendance.findFirst({
       where: {

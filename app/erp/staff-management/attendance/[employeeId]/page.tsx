@@ -82,18 +82,18 @@ export default function EmployeeAttendancePage() {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric'
+      month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Dhaka'
     });
   };
 
   const formatDay = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' });
+    return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Dhaka' });
   };
 
   const formatTime = (timeStr: string | null) => {
     if (!timeStr) return '--:--';
     return new Date(timeStr).toLocaleTimeString('en-US', {
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Dhaka'
     });
   };
   

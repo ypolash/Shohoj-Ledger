@@ -8,6 +8,29 @@ export interface AttendanceCalculationResult {
 }
 
 /**
+ * Returns current timestamp and date-only (midnight UTC representation of local day)
+ * in the designated timezone (defaults to Asia/Dhaka).
+ */
+export function getNowInTimezone(timezone: string = "Asia/Dhaka") {
+  const now = new Date();
+  let targetTz = timezone;
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: targetTz });
+  } catch {
+    targetTz = "Asia/Dhaka";
+  }
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: targetTz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const dateStr = fmt.format(now); // "YYYY-MM-DD"
+  const todayDateOnly = new Date(`${dateStr}T00:00:00.000Z`);
+  return { now, todayDateOnly, dateStr };
+}
+
+/**
  * Parses time strings in various formats (e.g. "09:30", "9:30 AM", "13:45", "09:30:00")
  * into total minutes from midnight.
  */
@@ -221,48 +244,6 @@ export async function calculateAttendanceStatus(
   const shiftStartMinutes = parseTimeToMinutes(shiftStartStr);
   const startHour = Math.floor(shiftStartMinutes / 60);
 
-  const utcHour = checkInTime.getUTCHours();
-  const utcMin = checkInTime.getUTCMinutes();
-
-  let normalizedCheckInTime: Date | undefined = undefined;
-
-  // Intelligently resolve legacy or unadjusted timestamps for daytime shifts (e.g. starting 07:00 - 12:00)
-  if (!isNightShift && startHour >= 7 && startHour <= 12) {
-    let corrected = false;
-    let targetHour = checkInHour;
-    let targetMin = checkInMin;
-
-    // Case 1: Raw 24h wall-clock was saved directly as UTC (e.g. 13:21:00.000Z), turning local Dhaka time into 19:21 (after office hours)
-    if (utcHour >= 12 && utcHour <= 20 && checkInHour >= 18) {
-      targetHour = utcHour;
-      targetMin = utcMin;
-      corrected = true;
-    }
-    // Case 2: 12h clock was entered without PM (e.g. 01:21 instead of 13:21).
-    // In local time, 1..6 AM is outside office hours. For a daytime shift, 1..6 is 1 PM to 6 PM (13..18)
-    else if (checkInHour >= 1 && checkInHour <= 6) {
-      targetHour = checkInHour + 12;
-      corrected = true;
-    }
-    // Case 3: 12h clock 01:xx was saved as UTC on UTC server, which in Dhaka (+6) turned into 07:xx AM
-    // For a shift starting at 09:30, 01:xx UTC (07:xx AM) was intended as 01:xx PM (13:xx Dhaka)
-    else if (utcHour >= 1 && utcHour <= 6 && checkInHour === utcHour + 6 && checkInHour < startHour) {
-      targetHour = utcHour + 12;
-      corrected = true;
-    }
-
-    if (corrected) {
-      checkInHour = targetHour;
-      checkInMin = targetMin;
-      const dateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
-      const timeStr = `${String(checkInHour).padStart(2, '0')}:${String(checkInMin).padStart(2, '0')}`;
-      const reParsed = parseDateTimeInTimezone(dateStr, timeStr, timezone);
-      if (reParsed) {
-        normalizedCheckInTime = reParsed;
-      }
-    }
-  }
-
   let checkInMinutes = checkInHour * 60 + checkInMin;
 
   // Handle night shifts spanning past midnight (e.g. starting at 22:00 and checkIn is 00:30)
@@ -389,37 +370,6 @@ export async function calculateEarlyLeaveStatus(
   // 5. Parse Shift End Minutes
   let shiftEndMinutes = parseTimeToMinutes(shiftEndStr);
   const endHour = Math.floor(shiftEndMinutes / 60);
-
-  const utcHour = checkOutTime.getUTCHours();
-  const utcMin = checkOutTime.getUTCMinutes();
-  let normalizedCheckOutTime: Date | undefined = undefined;
-
-  // Resolve 12h or unadjusted timestamps for check-out
-  if (!isNightShift && endHour >= 14 && endHour <= 22) {
-    let corrected = false;
-    let targetHour = checkOutHour;
-    let targetMin = checkOutMin;
-
-    if (checkOutHour >= 1 && checkOutHour <= 9) {
-      targetHour = checkOutHour + 12;
-      corrected = true;
-    } else if (utcHour >= 12 && utcHour <= 22 && checkOutHour >= 21) {
-      targetHour = utcHour;
-      targetMin = utcMin;
-      corrected = true;
-    }
-
-    if (corrected) {
-      checkOutHour = targetHour;
-      checkOutMin = targetMin;
-      const dateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
-      const timeStr = `${String(checkOutHour).padStart(2, '0')}:${String(checkOutMin).padStart(2, '0')}`;
-      const reParsed = parseDateTimeInTimezone(dateStr, timeStr, timezone);
-      if (reParsed) {
-        normalizedCheckOutTime = reParsed;
-      }
-    }
-  }
 
   let checkOutMinutes = checkOutHour * 60 + checkOutMin;
 

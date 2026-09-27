@@ -289,7 +289,13 @@ export default function EditorLivePortalPage() {
     new Set(videoDeliverables.map(v => v.assignedEditorName?.trim()).filter(Boolean))
   ) as string[];
 
-  const filteredDeliverables = selectedEditorFilter === 'ALL'
+  // If ?editor=Name is in the URL, lock the view to that editor only.
+  // This prevents editors from seeing each other's deliverables on their shared short link.
+  const isLockedToEditor = Boolean(editorParam);
+
+  const filteredDeliverables = isLockedToEditor
+    ? videoDeliverables.filter(v => v.assignedEditorName?.trim().toLowerCase() === editorParam.trim().toLowerCase())
+    : selectedEditorFilter === 'ALL'
     ? videoDeliverables
     : videoDeliverables.filter(v => v.assignedEditorName?.trim().toLowerCase() === selectedEditorFilter.trim().toLowerCase());
 
@@ -359,15 +365,19 @@ export default function EditorLivePortalPage() {
               <div>
                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span className="material-symbols-outlined" style={{ color: '#818cf8' }}>video_library</span>
-                  Assigned Video Deliverables ({videoDeliverables.length} Videos)
+                  {isLockedToEditor
+                    ? `Your Assigned Deliverables (${filteredDeliverables.length} Videos)`
+                    : `Assigned Video Deliverables (${videoDeliverables.length} Videos)`}
                 </h3>
                 <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
-                  Filter by assigned editor to view your individual cuts, requirements, assets, and submit review demos.
+                  {isLockedToEditor
+                    ? `Showing deliverables assigned to you (${editorParam}). Review assets and submit review cuts below.`
+                    : 'Filter by assigned editor to view individual cuts, requirements, assets, and submit review demos.'}
                 </p>
               </div>
 
-              {/* Editor Filter Tabs */}
-              {uniqueEditors.length > 1 && (
+              {/* Editor Filter Tabs — only shown when NO specific editor is locked via URL */}
+              {!isLockedToEditor && uniqueEditors.length > 1 && (
                 <div className={styles.deliverableFilterTabs}>
                   <button
                     type="button"

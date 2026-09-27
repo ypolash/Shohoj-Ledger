@@ -43,9 +43,7 @@ export default function RevisionChat({
   const [text, setText] = useState('');
   const [timecode, setTimecode] = useState('');
   const [selectedDeliverableId, setSelectedDeliverableId] = useState<string>('ALL');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   // Audio Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -55,31 +53,12 @@ export default function RevisionChat({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollBottomRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
     scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, selectedImage, recordedAudio]);
-
-  // Image Selection Handler (Strictly Image, No Video)
-  const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('Only image attachments are allowed (no video files).');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setSelectedImage(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+  }, [messages.length, recordedAudio]);
 
   // Start Voice Recording
   const startVoiceRecording = async () => {
@@ -167,7 +146,7 @@ export default function RevisionChat({
   // Send Message
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!text.trim() && !selectedImage && !recordedAudio) return;
+    if (!text.trim() && !recordedAudio) return;
 
     setIsSubmitting(true);
     try {
@@ -182,10 +161,9 @@ export default function RevisionChat({
         targetDeliverableId: targetDeliv?.id || undefined,
         targetDeliverableTitle: targetDeliv ? `${targetDeliv.title} (${targetDeliv.aspectRatio || '9:16'})` : undefined,
         targetEditorName: targetDeliv?.assignedEditorName || undefined,
-        imageUrl: selectedImage || '',
         audioUrl: recordedAudio?.url || '',
         audioDuration: recordedAudio?.duration || 0,
-        type: recordedAudio ? 'VOICE' : selectedImage ? 'IMAGE' : 'TEXT'
+        type: recordedAudio ? 'VOICE' : 'TEXT'
       };
 
       const res = await fetch(`/api/portal/project/${projectId}`, {
@@ -197,7 +175,6 @@ export default function RevisionChat({
       if (res.ok) {
         setText('');
         setTimecode('');
-        setSelectedImage(null);
         setRecordedAudio(null);
         if (onRefresh) onRefresh();
       } else {
@@ -291,7 +268,7 @@ export default function RevisionChat({
             </span>
             <strong>No revision messages yet</strong>
             <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-              Send a text message, screenshot / image, or voice note to discuss revision requests.
+              Send a text message or voice note to discuss revision requests.
             </p>
           </div>
         ) : (
@@ -366,16 +343,6 @@ export default function RevisionChat({
                       </div>
                     )}
 
-                    {/* Image Attachment */}
-                    {msg.imageUrl && (
-                      <img
-                        src={msg.imageUrl}
-                        alt="Revision Attachment"
-                        className={styles.chatImageAttachment}
-                        onClick={() => setExpandedImage(msg.imageUrl || null)}
-                      />
-                    )}
-
                     {/* Audio / Voice Note */}
                     {msg.audioUrl && (
                       <div className={styles.audioPlayerWidget}>
@@ -428,23 +395,6 @@ export default function RevisionChat({
           </div>
         )}
 
-        {/* Image Attachment Preview */}
-        {selectedImage && (
-          <div className={styles.previewBar}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src={selectedImage} alt="Preview" className={styles.previewThumb} />
-              <span style={{ color: '#cbd5e1' }}>Image attached (Ready to send)</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSelectedImage(null)}
-              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
-            </button>
-          </div>
-        )}
-
         {/* Recorded Audio Preview */}
         {recordedAudio && (
           <div className={styles.previewBar}>
@@ -492,25 +442,6 @@ export default function RevisionChat({
         {/* Controls Row */}
         {!isRecording && (
           <div className={styles.inputControlsRow}>
-            {/* Hidden image input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleImagePick}
-            />
-
-            {/* Attach Image Button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={styles.actionIconBtn}
-              title="Attach Screenshot / Image Reference"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>image</span>
-            </button>
-
             {/* Record Voice Note Button */}
             <button
               type="button"
@@ -543,7 +474,7 @@ export default function RevisionChat({
             {/* Send Button */}
             <button
               type="submit"
-              disabled={isSubmitting || (!text.trim() && !selectedImage && !recordedAudio)}
+              disabled={isSubmitting || (!text.trim() && !recordedAudio)}
               className={styles.sendBtn}
               title="Send Revision Message"
             >
@@ -552,13 +483,6 @@ export default function RevisionChat({
           </div>
         )}
       </form>
-
-      {/* Expanded Image Modal */}
-      {expandedImage && (
-        <div className={styles.imageModalOverlay} onClick={() => setExpandedImage(null)}>
-          <img src={expandedImage} alt="Expanded Attachment" className={styles.modalImg} />
-        </div>
-      )}
     </div>
   );
 }

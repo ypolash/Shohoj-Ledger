@@ -222,20 +222,6 @@
   width: fit-content;
 }
 
-/* Image Attachment inside Bubble */
-.chatImageAttachment {
-  max-width: 240px;
-  max-height: 180px;
-  border-radius: 8px;
-  cursor: pointer;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.2s ease;
-}
-
-.chatImageAttachment:hover {
-  transform: scale(1.02);
-}
 
 /* Audio Player */
 .audioPlayerWidget {
@@ -276,12 +262,7 @@
   font-size: 12px;
 }
 
-.previewThumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  object-fit: cover;
-}
+
 
 /* Recording Bar */
 .recordingBar {
@@ -384,25 +365,7 @@
   cursor: not-allowed;
 }
 
-/* Image Modal */
-.imageModalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-  cursor: zoom-out;
-}
 
-.modalImg {
-  max-width: 90vw;
-  max-height: 90vh;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-}
 
 /* Deliverable Scope Selector & Message Tags */
 .deliverableScopeBar {

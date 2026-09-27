@@ -494,7 +494,7 @@ export async function POST(
         submittedAt: new Date().toISOString()
       };
     } else if (action === 'SUBMIT_FINAL_VIDEO') {
-      const { finalVideoUrl, notes } = body;
+      const { finalVideoUrl, notes, label, deliverableId, editorName } = body;
       if (!finalVideoUrl?.trim()) {
         return NextResponse.json({ error: 'Final video URL is required' }, { status: 400 });
       }
@@ -508,9 +508,32 @@ export async function POST(
       };
       parsedMeta.demoData = {
         ...(parsedMeta.demoData || {}),
-        finalVideoUrl: finalVideoUrl.trim(),
-        approvalStatus: 'Approved'
+        finalVideoUrl: finalVideoUrl.trim()
       };
+
+      if (deliverableId && deliverableId !== 'ALL') {
+        let vList = Array.isArray(parsedMeta.videoDeliverables) 
+          ? [...parsedMeta.videoDeliverables]
+          : Array.isArray(parsedMeta.editingData?.videoDeliverables)
+          ? [...parsedMeta.editingData.videoDeliverables]
+          : [];
+        vList = vList.map((v: any) => {
+          if (v.id === deliverableId) {
+            return {
+              ...v,
+              finalVideoUrl: finalVideoUrl.trim(),
+              status: 'Completed',
+              notes: notes?.trim() ? notes.trim() : v.notes
+            };
+          }
+          return v;
+        });
+        parsedMeta.videoDeliverables = vList;
+        parsedMeta.editingData = {
+          ...(parsedMeta.editingData || {}),
+          videoDeliverables: vList
+        };
+      }
     } else {
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }

@@ -4353,196 +4353,50 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               </div>
 
-              <div className={styles.stageGrid2}>
-                {/* Left Card: Editor Notes & Format Specifications */}
-                <div className={styles.stageCard}>
-                  <div className={styles.stageCardHeader}>
-                    <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#818cf8' }}>edit_note</span>
-                      Editor Notes & Global Deliverable Specs
-                    </h3>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ padding: '10px 14px', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '10px', fontSize: '12px', color: '#c7d2fe' }}>
-                      <span>Assigned Editors: <strong style={{ color: '#ffffff' }}>{shootingData.assignedEditorName || 'Lead Editors'}</strong></span>
-                      <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#a5b4fc' }}>
-                        Total Deliverables: {editingData.videoDeliverables?.length || 1} video deliverables configured
-                      </span>
-                    </div>
-
-                    <div className={styles.stageField}>
-                      <label>Deliverable Specifications & Formats</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 1080x1920 60fps MP4 (Reels) + 3840x2160 ProRes 422 (Master)"
-                        value={editingData.deliverableSpecs}
-                        onChange={(e) => {
-                          const updated = { ...editingData, deliverableSpecs: e.target.value };
-                          setEditingData(updated);
-                        }}
-                        className={styles.stageInput}
-                        style={{ paddingLeft: '14px' }}
-                      />
-                    </div>
-
-                    <div className={styles.stageField}>
-                      <label>Editor Changelog & Technical Notes</label>
-                      <textarea
-                        rows={4}
-                        placeholder="e.g. Color grade matched with brand LUT #4. Sound design enhanced with Foley effects. 4K Master export rendered."
-                        value={editingData.editorNotes}
-                        onChange={(e) => {
-                          const updated = { ...editingData, editorNotes: e.target.value };
-                          setEditingData(updated);
-                        }}
-                        className={styles.stageTextarea}
-                      />
-                    </div>
-                  </div>
+              {/* Editor Notes & Format Specifications */}
+              <div className={styles.stageCard}>
+                <div className={styles.stageCardHeader}>
+                  <h3 className={styles.stageCardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#818cf8' }}>edit_note</span>
+                    Editor Notes & Global Deliverable Specs
+                  </h3>
                 </div>
 
-                {/* Right Card: Working Project Cloud Repository & Editor Short Link */}
-                <div className={styles.stageCard}>
-                  <div className={styles.stageCardHeader}>
-                    <h3 className={styles.stageCardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>folder_open</span>
-                      Working Project Cloud Repository (Frame.io / Dropbox)
-                    </h3>
-                    {editingData.workingFileUrl && (
-                      <a
-                        href={editingData.workingFileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '4px 10px',
-                          borderRadius: '6px',
-                          background: 'rgba(56, 189, 248, 0.15)',
-                          color: '#38bdf8',
-                          fontSize: '11px',
-                          textDecoration: 'none',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        Open Repository ↗
-                      </a>
-                    )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ padding: '10px 14px', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '10px', fontSize: '12px', color: '#c7d2fe' }}>
+                    <span>Assigned Editors: <strong style={{ color: '#ffffff' }}>{shootingData.assignedEditorName || 'Lead Editors'}</strong></span>
+                    <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#a5b4fc' }}>
+                      Total Deliverables: {editingData.videoDeliverables?.length || 1} video deliverables configured
+                    </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-                      Working project cloud repository for the editor (e.g. Frame.io bin, Dropbox project folder, or cloud project files):
-                    </p>
-
-                    <div className={styles.stageField}>
-                      <label>Working Project Cloud Repository Link</label>
-                      <div className={styles.stageInputWrapper}>
-                        <span className={`material-symbols-outlined ${styles.stageInputIcon}`}>folder_shared</span>
-                        <input
-                          type="url"
-                          placeholder="https://frame.io/... or https://dropbox.com/..."
-                          value={editingData.workingFileUrl || (Array.isArray(editingData.workingFiles) ? editingData.workingFiles[0]?.url : '') || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const updated = {
-                              ...editingData,
-                              workingFileUrl: val,
-                              workingFiles: [{ id: '1', label: 'Working Project Cloud Repository', url: val }]
-                            };
-                            setEditingData(updated);
-                            saveWorkflowState(currentStage, completedStages, { editing: updated });
-                          }}
-                          className={styles.stageInput}
-                          style={{ fontSize: '12px' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Dedicated Editor Short Link Box */}
-                    <div
-                      style={{
-                        marginTop: '6px',
-                        padding: '12px 14px',
-                        background: 'rgba(99, 102, 241, 0.08)',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px'
+                  <div className={styles.stageField}>
+                    <label>Deliverable Specifications & Formats</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1080x1920 60fps MP4 (Reels) + 3840x2160 ProRes 422 (Master)"
+                      value={editingData.deliverableSpecs}
+                      onChange={(e) => {
+                        const updated = { ...editingData, deliverableSpecs: e.target.value };
+                        setEditingData(updated);
                       }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong style={{ fontSize: '12px', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#818cf8' }}>badge</span>
-                          Dedicated Editor Short Link
-                        </strong>
-                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>For Assigned Editors</span>
-                      </div>
+                      className={styles.stageInput}
+                      style={{ paddingLeft: '14px' }}
+                    />
+                  </div>
 
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          readOnly
-                          value={typeof window !== 'undefined' ? `${window.location.origin}/e/${projectId}` : `/e/${projectId}`}
-                          style={{
-                            flex: 1,
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            background: '#0f172a',
-                            border: '1px solid rgba(99, 102, 241, 0.4)',
-                            color: '#e2e8f0',
-                            fontFamily: 'monospace',
-                            fontSize: '11px'
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const url = `${window.location.origin}/e/${projectId}`;
-                            navigator.clipboard.writeText(url);
-                            showToast("🎬 Editor Short Link copied to clipboard!");
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                            color: '#fff',
-                            border: 'none',
-                            fontWeight: 700,
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          Copy Link
-                        </button>
-                        <a
-                          href={`/portal/editor/${projectId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            background: 'rgba(255, 255, 255, 0.06)',
-                            color: '#cbd5e1',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            fontSize: '11px',
-                            textDecoration: 'none',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          Preview ↗
-                        </a>
-                      </div>
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                        💡 Assigned editors can view specific video assignments, download raw footage, submit completed demo cuts, and view live client revisions on this link.
-                      </span>
-                    </div>
+                  <div className={styles.stageField}>
+                    <label>Editor Changelog & Technical Notes</label>
+                    <textarea
+                      rows={4}
+                      placeholder="e.g. Color grade matched with brand LUT #4. Sound design enhanced with Foley effects. 4K Master export rendered."
+                      value={editingData.editorNotes}
+                      onChange={(e) => {
+                        const updated = { ...editingData, editorNotes: e.target.value };
+                        setEditingData(updated);
+                      }}
+                      className={styles.stageTextarea}
+                    />
                   </div>
                 </div>
               </div>

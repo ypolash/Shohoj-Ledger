@@ -174,6 +174,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [returnModalDate, setReturnModalDate] = useState<string>('');
   const [returnModalNotes, setReturnModalNotes] = useState<string>('');
   const [returnModalReceiver, setReturnModalReceiver] = useState<string>('');
+  const [returnModalManagerId, setReturnModalManagerId] = useState<string>('');
+  const [returnModalManagerName, setReturnModalManagerName] = useState<string>('');
   const [isSavingProductReturn, setIsSavingProductReturn] = useState<boolean>(false);
 
   const handleCopyCode = (codeText: string) => {
@@ -224,6 +226,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     modelNotes: string;
     modelPaid?: boolean;
     modelPaidAmount?: number;
+    assignedProductManagerId?: string;
+    assignedProductManagerName?: string;
     productReturned?: boolean;
     productReturnDate?: string;
     productReturnMethod?: string;
@@ -248,6 +252,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     modelNotes: '',
     modelPaid: false,
     modelPaidAmount: 0,
+    assignedProductManagerId: '',
+    assignedProductManagerName: '',
     productReturned: false,
     productReturnDate: '',
     productReturnMethod: 'In-Person Handover',
@@ -831,10 +837,20 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   };
 
   const handleOpenReturnProductModal = () => {
+    // Auto-detect designated Product Manager if none assigned yet
+    const designatedProductManager = employees.find(e => 
+      e.designation?.toLowerCase().includes('product') || 
+      e.designation?.toLowerCase().includes('inventory')
+    );
+    const initialManagerId = productData.assignedProductManagerId || (designatedProductManager ? designatedProductManager.id : (project?.manager?.id || ''));
+    const initialManagerName = productData.assignedProductManagerName || (designatedProductManager ? `${designatedProductManager.firstName} ${designatedProductManager.lastName}` : (project?.manager ? `${project.manager.firstName} ${project.manager.lastName}` : ''));
+
     setReturnModalMethod(productData.productReturnMethod || 'In-Person Handover');
     setReturnModalDate(productData.productReturnDate || new Date().toISOString().split('T')[0]);
     setReturnModalNotes(productData.productReturnNotes || '');
     setReturnModalReceiver(productData.productReturnReceiver || project?.clientName || '');
+    setReturnModalManagerId(initialManagerId);
+    setReturnModalManagerName(initialManagerName);
     setIsReturnProductModalOpen(true);
   };
 
@@ -842,17 +858,38 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     if (e) e.preventDefault();
     setIsSavingProductReturn(true);
     try {
+      // Find final product manager name
+      let finalManagerId = returnModalManagerId || productData.assignedProductManagerId;
+      let finalManagerName = returnModalManagerName || productData.assignedProductManagerName;
+
+      if (!finalManagerName && finalManagerId) {
+        const found = employees.find(emp => emp.id === finalManagerId);
+        if (found) finalManagerName = `${found.firstName} ${found.lastName}`;
+      }
+      if (!finalManagerName) {
+        const autoPM = employees.find(emp => emp.designation?.toLowerCase().includes('product'));
+        if (autoPM) {
+          finalManagerId = autoPM.id;
+          finalManagerName = `${autoPM.firstName} ${autoPM.lastName}`;
+        } else if (project?.manager) {
+          finalManagerId = project.manager.id;
+          finalManagerName = `${project.manager.firstName} ${project.manager.lastName}`;
+        }
+      }
+
       const updatedProduct = {
         ...productData,
         productReturned: true,
         productReturnDate: returnModalDate || new Date().toISOString().split('T')[0],
         productReturnMethod: returnModalMethod || 'In-Person Handover',
         productReturnNotes: returnModalNotes.trim(),
-        productReturnReceiver: returnModalReceiver.trim() || project?.clientName || 'Client'
+        productReturnReceiver: returnModalReceiver.trim() || project?.clientName || 'Client',
+        assignedProductManagerId: finalManagerId || '',
+        assignedProductManagerName: finalManagerName || ''
       };
       setProductData(updatedProduct);
       setIsReturnProductModalOpen(false);
-      showToast("📦 Physical product marked as returned to client!");
+      showToast(`📦 Product returned & assigned to Product Manager: ${finalManagerName || 'Product Lead'}`);
       await saveWorkflowState(currentStage, completedStages, { product: updatedProduct });
     } catch (err) {
       console.error(err);
@@ -2970,6 +3007,51 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                       Service Based
                     </button>
                   </div>
+
+                  {/* Designated Product Manager Assignment */}
+                  {(productData.projectType || 'product') === 'product' && (
+                    <div style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      background: 'rgba(59, 130, 246, 0.08)',
+                      border: '1px solid rgba(59, 130, 246, 0.2)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 700, color: '#93c5fd', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa' }}>manage_accounts</span>
+                          Assigned Product Manager
+                        </label>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Inventory & Return Lead</span>
+                      </div>
+                      <select
+                        value={productData.assignedProductManagerId || ''}
+                        onChange={(e) => {
+                          const empId = e.target.value;
+                          const selEmp = employees.find(emp => emp.id === empId);
+                          const updated = {
+                            ...productData,
+                            assignedProductManagerId: empId,
+                            assignedProductManagerName: selEmp ? `${selEmp.firstName} ${selEmp.lastName}` : ''
+                          };
+                          setProductData(updated);
+                          saveWorkflowState(currentStage, completedStages, { product: updated });
+                          showToast(`Product Manager: ${updated.assignedProductManagerName || 'Unassigned'}`);
+                        }}
+                        className={styles.stageSelect}
+                        style={{ width: '100%', fontSize: '12.5px' }}
+                      >
+                        <option value="">-- Select Employee as Product Manager --</option>
+                        {employees.map(e => (
+                          <option key={e.id} value={e.id}>
+                            {e.firstName} {e.lastName} {e.designation ? `(${e.designation})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {productData.projectType === 'service' ? (
                     <div className={styles.serviceEmptyBox}>
@@ -8197,6 +8279,11 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
                     <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
                       Handed over on <strong>{productData.productReturnDate || 'N/A'}</strong> via <strong>{productData.productReturnMethod || 'In-Person Handover'}</strong> to <strong>{productData.productReturnReceiver || project?.clientName || 'Client'}</strong>.
+                      {productData.assignedProductManagerName && (
+                        <div>
+                          Handover Supervised By: <strong style={{ color: '#93c5fd' }}>{productData.assignedProductManagerName} (Product Manager)</strong>
+                        </div>
+                      )}
                       {productData.productReturnNotes && (
                         <div style={{ marginTop: '4px', fontStyle: 'italic', color: '#94a3b8' }}>
                           Note / Tracking: "{productData.productReturnNotes}"
@@ -8283,18 +8370,44 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
-                    Received By / Contact Person
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={`e.g. ${project?.clientName || 'Client Name'} / Representative`}
-                    value={returnModalReceiver}
-                    onChange={(e) => setReturnModalReceiver(e.target.value)}
-                    className={styles.stageInput}
-                    style={{ width: '100%', paddingLeft: '12px' }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Received By / Contact Person
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={`e.g. ${project?.clientName || 'Client Name'} / Representative`}
+                      value={returnModalReceiver}
+                      onChange={(e) => setReturnModalReceiver(e.target.value)}
+                      className={styles.stageInput}
+                      style={{ width: '100%', paddingLeft: '12px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Product Manager Sign-off & Lead
+                    </label>
+                    <select
+                      value={returnModalManagerId}
+                      onChange={(e) => {
+                        const mId = e.target.value;
+                        setReturnModalManagerId(mId);
+                        const sel = employees.find(emp => emp.id === mId);
+                        setReturnModalManagerName(sel ? `${sel.firstName} ${sel.lastName}` : '');
+                      }}
+                      className={styles.stageSelect}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">-- Auto-Assign Product Manager --</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.firstName} {emp.lastName} {emp.designation ? `(${emp.designation})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>

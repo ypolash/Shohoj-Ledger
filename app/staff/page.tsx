@@ -19,8 +19,23 @@ export default function StaffPortalPage() {
   const [leaves, setLeaves] = useState<any[]>([]);
   const [payroll, setPayroll] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'TASKS' | 'LEAVES' | 'PAYROLL'>('ATTENDANCE');
+  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'TASKS' | 'PRODUCTS' | 'LEAVES' | 'PAYROLL'>('ATTENDANCE');
   const [dutySchedule, setDutySchedule] = useState<any>(null);
+
+  // Product Management State
+  const [products, setProducts] = useState<any[]>([]);
+  const [productStats, setProductStats] = useState({ total: 0, inStudio: 0, readyForReturn: 0, returned: 0, pendingReceipt: 0 });
+  const [productFilter, setProductFilter] = useState<'ALL' | 'IN_STUDIO' | 'READY_FOR_RETURN' | 'RETURNED' | 'PENDING_RECEIPT'>('ALL');
+  const [productSearch, setProductSearch] = useState('');
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+  // Return Handover Modal in Staff App
+  const [returnModalProduct, setReturnModalProduct] = useState<any>(null);
+  const [staffReturnMethod, setStaffReturnMethod] = useState('In-Person Handover');
+  const [staffReturnDate, setStaffReturnDate] = useState('');
+  const [staffReturnReceiver, setStaffReturnReceiver] = useState('');
+  const [staffReturnNotes, setStaffReturnNotes] = useState('');
+  const [isSubmittingStaffReturn, setIsSubmittingStaffReturn] = useState(false);
 
   // Active Live Break Timer State
   const [activeBreak, setActiveBreak] = useState<any>(null);
@@ -33,6 +48,22 @@ export default function StaffPortalPage() {
   const [leaveEnd, setLeaveEnd] = useState('');
   const [leaveReason, setLeaveReason] = useState('');
   const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+
+  const fetchProductsData = useCallback(async (searchQuery = '', status = 'ALL') => {
+    setIsLoadingProducts(true);
+    try {
+      const res = await fetch(`/api/staff/products?search=${encodeURIComponent(searchQuery)}&status=${status}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.products)) {
+        setProducts(data.products);
+        if (data.stats) setProductStats(data.stats);
+      }
+    } catch (e) {
+      console.error("Failed to fetch products for staff", e);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/employees')
@@ -125,7 +156,101 @@ export default function StaffPortalPage() {
         }
       })
       .catch(() => {});
-  }, [employeeId, leaveType]);
+
+    // 7. Fetch Products for Product Management
+    fetchProductsData('', 'ALL');
+  }, [employeeId, leaveType, fetchProductsData]);
+
+  const handleOpenStaffReturnModal = (pItem: any) => {
+    setReturnModalProduct(pItem);
+    setStaffReturnMethod(pItem.productReturnMethod || 'In-Person Handover');
+    setStaffReturnDate(pItem.productReturnDate || new Date().toISOString().split('T')[0]);
+    setStaffReturnReceiver(pItem.productReturnReceiver || pItem.clientName || '');
+    setStaffReturnNotes(pItem.productReturnNotes || '');
+  };
+
+  const handleConfirmStaffReturn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!returnModalProduct) return;
+    setIsSubmittingStaffReturn(true);
+    const emp = employees.find(e => e.employeeId === employeeId);
+    try {
+      const res = await fetch('/api/staff/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: returnModalProduct.projectId,
+          action: 'RETURN',
+          managerId: emp?.id,
+          managerName: emp ? `${emp.firstName} ${emp.lastName}` : undefined,
+          returnData: {
+            returnDate: staffReturnDate,
+            returnMethod: staffReturnMethod,
+            returnReceiver: staffReturnReceiver,
+            returnNotes: staffReturnNotes
+          }
+        })
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        alert("📦 Product marked as returned to client!");
+        setReturnModalProduct(null);
+        fetchProductsData(productSearch, productFilter);
+      } else {
+        alert(json.error || "Failed to update return status");
+      }
+    } catch {
+      alert("Network error while processing return");
+    } finally {
+      setIsSubmittingStaffReturn(false);
+    }
+  };
+
+  const handleQuickReceiveProduct = async (projectId: string) => {
+    const emp = employees.find(e => e.employeeId === employeeId);
+    try {
+      const res = await fetch('/api/staff/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          action: 'RECEIVE',
+          managerId: emp?.id,
+          managerName: emp ? `${emp.firstName} ${emp.lastName}` : undefined
+        })
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        alert("✓ Product marked as received and verified!");
+        fetchProductsData(productSearch, productFilter);
+      } else {
+        alert(json.error || "Failed to update status");
+      }
+    } catch {
+      alert("Network error while updating status");
+    }
+  };
+
+  const handleRevertStaffReturn = async (projectId: string) => {
+    try {
+      const res = await fetch('/api/staff/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          action: 'REVERT_RETURN'
+        })
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        alert("Return status reverted.");
+        setReturnModalProduct(null);
+        fetchProductsData(productSearch, productFilter);
+      }
+    } catch {
+      alert("Error reverting status");
+    }
+  };
 
   // Live timer tick for active break
   useEffect(() => {
@@ -424,28 +549,52 @@ export default function StaffPortalPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px' }}>
-          {(['ATTENDANCE', 'TASKS', 'LEAVES', 'PAYROLL'] as const).map(tab => (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px', flexWrap: 'wrap' }}>
+          {[
+            { id: 'ATTENDANCE', label: 'ATTENDANCE', icon: 'schedule' },
+            { id: 'TASKS', label: 'TASKS', icon: 'star' },
+            { id: 'PRODUCTS', label: 'PRODUCT MANAGEMENT', icon: 'inventory_2', badge: (productStats.inStudio || 0) + (productStats.readyForReturn || 0) },
+            { id: 'LEAVES', label: 'LEAVES', icon: 'event_busy' },
+            { id: 'PAYROLL', label: 'PAYROLL', icon: 'payments' }
+          ].map(tab => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                if (tab.id === 'PRODUCTS') fetchProductsData(productSearch, productFilter);
+              }}
               style={{
                 padding: '8px 18px',
                 borderRadius: '10px',
                 fontSize: '13.5px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                background: activeTab === tab ? 'rgba(59,130,246,0.15)' : 'transparent',
-                color: activeTab === tab ? '#60a5fa' : '#94a3b8',
-                border: activeTab === tab ? '1px solid rgba(59,130,246,0.4)' : '1px solid transparent',
+                background: activeTab === tab.id ? 'rgba(59,130,246,0.15)' : 'transparent',
+                color: activeTab === tab.id ? '#60a5fa' : '#94a3b8',
+                border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.4)' : '1px solid transparent',
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px'
               }}
             >
-              {tab === 'TASKS' && <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#fbbf24' }}>star</span>}
-              {tab}
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: tab.id === 'TASKS' ? '#fbbf24' : tab.id === 'PRODUCTS' ? '#f59e0b' : 'inherit' }}>
+                {tab.icon}
+              </span>
+              {tab.label}
+              {Boolean(tab.badge && tab.badge > 0) && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  color: '#fbbf24',
+                  padding: '2px 7px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(245, 158, 11, 0.4)'
+                }}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -598,7 +747,392 @@ export default function StaffPortalPage() {
             </div>
           )}
 
-          {/* TAB 3: LEAVES & SHORT BREAK */}
+          {/* TAB 3: PRODUCT MANAGEMENT */}
+          {activeTab === 'PRODUCTS' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Product KPIs */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
+                <div style={{ padding: '18px', borderRadius: '14px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>inventory_2</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Projects Tracked</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#f8fafc' }}>{productStats.total}</div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '18px', borderRadius: '14px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.25)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>videocam</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>In Studio / Production</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#38bdf8' }}>{productStats.inStudio}</div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '18px', borderRadius: '14px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>assignment_return</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ready for Return</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#fbbf24' }}>{productStats.readyForReturn}</div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '18px', borderRadius: '14px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>check_circle</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Returned to Client</div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: '#34d399' }}>{productStats.returned}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter & Search Bar */}
+              <div className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'ALL', label: 'All Items' },
+                    { id: 'IN_STUDIO', label: 'In Studio' },
+                    { id: 'READY_FOR_RETURN', label: 'Ready for Return' },
+                    { id: 'RETURNED', label: 'Returned ✓' },
+                    { id: 'PENDING_RECEIPT', label: 'Pending Receipt' }
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => {
+                        setProductFilter(f.id as any);
+                        fetchProductsData(productSearch, f.id);
+                      }}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        background: productFilter === f.id ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                        color: productFilter === f.id ? '#60a5fa' : '#94a3b8',
+                        border: productFilter === f.id ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)'
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: '1', maxWidth: '320px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search project, client, or item..."
+                    value={productSearch}
+                    onChange={(e) => {
+                      setProductSearch(e.target.value);
+                      fetchProductsData(e.target.value, productFilter);
+                    }}
+                    className="input"
+                    style={{ fontSize: '12px', padding: '8px 12px' }}
+                  />
+                  <button
+                    onClick={() => fetchProductsData(productSearch, productFilter)}
+                    className="btn"
+                    style={{ padding: '8px 12px', background: 'rgba(255, 255, 255, 0.08)' }}
+                    title="Refresh List"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Products Inventory List */}
+              {isLoadingProducts ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                  Loading product inventory...
+                </div>
+              ) : products.length === 0 ? (
+                <div className="glass-card" style={{ textAlign: 'center', padding: '50px 20px', borderRadius: '16px', color: '#94a3b8' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '52px', color: '#64748b', marginBottom: '10px' }}>package_2</span>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#f8fafc' }}>No Product Inventory Found</h3>
+                  <p style={{ margin: 0, fontSize: '13px' }}>No projects currently match this filter criteria.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '18px' }}>
+                  {products.map((pItem: any) => {
+                    const isReturned = pItem.productReturned;
+                    const isReadyForReturn = pItem.productStatus === 'READY_FOR_RETURN';
+                    const isCurrentStaffAssigned = (emp?.id && pItem.assignedProductManagerId === emp.id) || 
+                                                   (emp?.firstName && pItem.assignedProductManagerName?.includes(emp.firstName));
+
+                    return (
+                      <div
+                        key={pItem.projectId}
+                        style={{
+                          background: 'rgba(30, 41, 59, 0.7)',
+                          border: isReturned
+                            ? '1px solid rgba(16, 185, 129, 0.35)'
+                            : isReadyForReturn
+                            ? '1px solid rgba(245, 158, 11, 0.45)'
+                            : '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          boxShadow: isReadyForReturn ? '0 8px 24px rgba(245, 158, 11, 0.12)' : '0 4px 16px rgba(0,0,0,0.25)',
+                          position: 'relative'
+                        }}
+                      >
+                        {/* Top Card Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd' }}>
+                                {pItem.projectCode}
+                              </span>
+                              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                Stage #{pItem.currentStage}
+                              </span>
+                            </div>
+                            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>
+                              {pItem.projectName}
+                            </h3>
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
+                              Client: <strong style={{ color: '#cbd5e1' }}>{pItem.clientName}</strong> {pItem.clientPhone && `(${pItem.clientPhone})`}
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: isReturned
+                              ? 'rgba(16, 185, 129, 0.2)'
+                              : isReadyForReturn
+                              ? 'rgba(245, 158, 11, 0.2)'
+                              : pItem.received
+                              ? 'rgba(56, 189, 248, 0.2)'
+                              : 'rgba(148, 163, 184, 0.2)',
+                            color: isReturned
+                              ? '#34d399'
+                              : isReadyForReturn
+                              ? '#fbbf24'
+                              : pItem.received
+                              ? '#38bdf8'
+                              : '#cbd5e1',
+                            border: isReturned
+                              ? '1px solid rgba(16, 185, 129, 0.4)'
+                              : isReadyForReturn
+                              ? '1px solid rgba(245, 158, 11, 0.4)'
+                              : '1px solid rgba(255, 255, 255, 0.1)'
+                          }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                              {isReturned ? 'check_circle' : isReadyForReturn ? 'assignment_return' : pItem.received ? 'shelves' : 'pending'}
+                            </span>
+                            {isReturned ? 'Returned ✓' : isReadyForReturn ? 'Ready for Return' : pItem.received ? 'In Studio' : 'Pending Receipt'}
+                          </span>
+                        </div>
+
+                        {/* Physical Inventory Items Box */}
+                        <div style={{
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          borderRadius: '10px',
+                          padding: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Physical Items ({pItem.productsList?.length || 0}):
+                          </div>
+                          {pItem.productsList && pItem.productsList.length > 0 ? (
+                            pItem.productsList.map((prod: any, idx: number) => (
+                              <div
+                                key={prod.id || idx}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  fontSize: '12px',
+                                  padding: '4px 0',
+                                  borderBottom: idx < pItem.productsList.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none'
+                                }}
+                              >
+                                <span style={{ color: '#f8fafc', fontWeight: 600 }}>{prod.name}</span>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd' }}>
+                                    Qty: {prod.quantity}
+                                  </span>
+                                  <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.2)', color: '#86efac' }}>
+                                    {prod.condition}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
+                              No specific item breakdown provided
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Product Manager & Shoot Info */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '11.5px', color: '#94a3b8' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: isCurrentStaffAssigned ? '#fbbf24' : '#60a5fa' }}>manage_accounts</span>
+                            <span>
+                              Manager: <strong style={{ color: isCurrentStaffAssigned ? '#fbbf24' : '#cbd5e1' }}>
+                                {pItem.assignedProductManagerName || 'Unassigned'}
+                              </strong>
+                              {isCurrentStaffAssigned && <span style={{ color: '#fbbf24', marginLeft: '4px' }}>(You)</span>}
+                            </span>
+                          </div>
+
+                          {pItem.shootingDate && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#38bdf8' }}>calendar_today</span>
+                              <span>Shoot: {pItem.shootingDate}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Return Log Info (if Returned) */}
+                        {isReturned && (
+                          <div style={{
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                            fontSize: '11.5px',
+                            color: '#cbd5e1'
+                          }}>
+                            <div>
+                              Returned on <strong>{pItem.productReturnDate || 'N/A'}</strong> via <strong>{pItem.productReturnMethod || 'In-Person Handover'}</strong>
+                            </div>
+                            {pItem.productReturnReceiver && (
+                              <div style={{ marginTop: '2px' }}>
+                                Receiver: <strong>{pItem.productReturnReceiver}</strong>
+                              </div>
+                            )}
+                            {pItem.productReturnNotes && (
+                              <div style={{ marginTop: '2px', fontStyle: 'italic', color: '#94a3b8' }}>
+                                Note / Tracking: "{pItem.productReturnNotes}"
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                          {!pItem.received && (
+                            <button
+                              onClick={() => handleQuickReceiveProduct(pItem.projectId)}
+                              style={{
+                                flex: 1,
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                border: 'none',
+                                color: '#ffffff',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>shelves</span>
+                              Mark Received
+                            </button>
+                          )}
+
+                          {!isReturned ? (
+                            <button
+                              onClick={() => handleOpenStaffReturnModal(pItem)}
+                              style={{
+                                flex: 1,
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                background: isReadyForReturn
+                                  ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                                  : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                border: 'none',
+                                color: '#ffffff',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                boxShadow: isReadyForReturn ? '0 4px 12px rgba(245, 158, 11, 0.35)' : 'none'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>assignment_return</span>
+                              Return / Dispatch Product
+                            </button>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                              <button
+                                onClick={() => handleOpenStaffReturnModal(pItem)}
+                                style={{
+                                  flex: 1,
+                                  padding: '8px 10px',
+                                  borderRadius: '8px',
+                                  background: 'rgba(16, 185, 129, 0.15)',
+                                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                                  color: '#34d399',
+                                  fontSize: '11.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span>
+                                Edit Handover Details
+                              </button>
+
+                              <button
+                                onClick={() => handleRevertStaffReturn(pItem.projectId)}
+                                style={{
+                                  padding: '8px 10px',
+                                  borderRadius: '8px',
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                                  color: '#f87171',
+                                  fontSize: '11.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                                title="Revert to Pending Return"
+                              >
+                                Undo
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: LEAVES & SHORT BREAK */}
           {activeTab === 'LEAVES' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
               <div className="glass-card" style={{ padding: '24px', borderRadius: '16px' }}>
@@ -785,7 +1319,7 @@ export default function StaffPortalPage() {
             </div>
           )}
 
-          {/* TAB 4: PAYROLL */}
+          {/* TAB 5: PAYROLL */}
           {activeTab === 'PAYROLL' && (
             <div className="glass-card" style={{ padding: '24px', borderRadius: '16px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>My Salary & Payslips</h2>
@@ -805,6 +1339,154 @@ export default function StaffPortalPage() {
             </div>
           )}
         </div>
+
+        {/* MODAL: STAFF RETURN PRODUCT HANDOVER */}
+        {returnModalProduct && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              width: '100%',
+              maxWidth: '540px',
+              padding: '24px',
+              borderRadius: '16px',
+              background: '#1e293b',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#f59e0b' }}>assignment_return</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#f8fafc' }}>
+                      Dispatch / Return Product
+                    </h3>
+                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                      {returnModalProduct.projectCode} • {returnModalProduct.projectName}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setReturnModalProduct(null)}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '20px' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Items List */}
+              {returnModalProduct.productsList && returnModalProduct.productsList.length > 0 && (
+                <div style={{ marginBottom: '16px', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.3)' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>ITEMS BEING RETURNED:</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '100px', overflowY: 'auto' }}>
+                    {returnModalProduct.productsList.map((prod: any, idx: number) => (
+                      <div key={prod.id || idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#f8fafc' }}>
+                        <span>{prod.name}</span>
+                        <span style={{ color: '#93c5fd' }}>Qty: {prod.quantity} ({prod.condition})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleConfirmStaffReturn} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>Return Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={staffReturnDate}
+                      onChange={e => setStaffReturnDate(e.target.value)}
+                      className="input"
+                      style={{ fontSize: '12px' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>Delivery / Handover Method *</label>
+                    <select
+                      value={staffReturnMethod}
+                      onChange={e => setStaffReturnMethod(e.target.value)}
+                      className="input"
+                      style={{ fontSize: '12px' }}
+                    >
+                      <option value="In-Person Handover">In-Person Handover (Studio/Office)</option>
+                      <option value="Steadfast Courier">Steadfast Courier</option>
+                      <option value="Pathao Courier">Pathao Courier</option>
+                      <option value="RedX Courier">RedX Courier</option>
+                      <option value="Paperfly">Paperfly</option>
+                      <option value="Sundarban Courier">Sundarban Courier</option>
+                      <option value="Client Self-Pickup">Client Self-Pickup</option>
+                      <option value="Other Delivery Service">Other Delivery Service</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>Received By / Contact Person</label>
+                  <input
+                    type="text"
+                    placeholder={`e.g. ${returnModalProduct.clientName} / Representative`}
+                    value={staffReturnReceiver}
+                    onChange={e => setStaffReturnReceiver(e.target.value)}
+                    className="input"
+                    style={{ fontSize: '12px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>Courier Tracking # / Dispatch Notes</label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Courier tracking code, condition upon return, recipient acknowledgment..."
+                    value={staffReturnNotes}
+                    onChange={e => setStaffReturnNotes(e.target.value)}
+                    className="input"
+                    style={{ fontSize: '12px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setReturnModalProduct(null)}
+                    className="btn"
+                    style={{ background: 'rgba(255,255,255,0.08)', padding: '8px 16px', fontSize: '12px' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingStaffReturn}
+                    className="btn btn-primary"
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      border: 'none',
+                      padding: '8px 20px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
+                    {isSubmittingStaffReturn ? 'Saving...' : 'Confirm Return ✓'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

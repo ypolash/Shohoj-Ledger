@@ -3891,7 +3891,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                         </div>
 
                         {/* Deliverable Editor Assignment Row */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
                           {/* In-House Staff Editor Picker */}
                           <div className={styles.stageField}>
                             <label style={{ fontSize: '11px' }}>
@@ -3952,6 +3952,31 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                               placeholder="1500"
                               value={deliv.editorFee}
                               onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { editorFee: e.target.value })}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px' }}
+                            />
+                          </div>
+
+                          {/* Shared Drive / Raw Assets Link */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span>Drive Link / Shared Footage URL</span>
+                              {deliv.rawFootageUrl && (
+                                <a
+                                  href={deliv.rawFootageUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: '#38bdf8', textDecoration: 'none', fontSize: '11px', fontWeight: 600 }}
+                                >
+                                  Open ↗
+                                </a>
+                              )}
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://drive.google.com/..."
+                              value={deliv.rawFootageUrl || ''}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { rawFootageUrl: e.target.value })}
                               className={styles.stageInput}
                               style={{ fontSize: '12px', paddingLeft: '8px' }}
                             />
@@ -4235,7 +4260,27 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                         </div>
 
                         {/* Deliverable File Links & Demo Cut */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                          {/* Raw Footage / Drive Link */}
+                          <div className={styles.stageField}>
+                            <label style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#f472b6' }}>Drive / Raw Footage URL</span>
+                              {deliv.rawFootageUrl && (
+                                <a href={deliv.rawFootageUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#f472b6', textDecoration: 'none', fontSize: '11px', fontWeight: 600 }}>
+                                  Open ↗
+                                </a>
+                              )}
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://drive.google.com/..."
+                              value={deliv.rawFootageUrl || ''}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { rawFootageUrl: e.target.value })}
+                              className={styles.stageInput}
+                              style={{ fontSize: '12px', paddingLeft: '8px' }}
+                            />
+                          </div>
+
                           {/* Working Project Link */}
                           <div className={styles.stageField}>
                             <label style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

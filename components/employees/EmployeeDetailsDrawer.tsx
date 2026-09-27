@@ -21,15 +21,38 @@ export function EmployeeDetailsDrawer(props: any) { const { selectedEmployee, se
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
                 <div style={{ 
                   width: '80px', height: '80px', borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                  background: (selectedEmployee.designation?.toLowerCase().includes('product'))
+                    ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                    : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '28px', fontWeight: 'bold', color: '#fff',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  boxShadow: (selectedEmployee.designation?.toLowerCase().includes('product'))
+                    ? '0 0 20px rgba(245, 158, 11, 0.4)'
+                    : 'none'
                 }}>
                   {getAvatarInitials ? getAvatarInitials(selectedEmployee.firstName, selectedEmployee.lastName) : `${selectedEmployee.firstName?.[0] || ''}${selectedEmployee.lastName?.[0] || ''}`.toUpperCase()}
                 </div>
                 <div>
-                  <h2 style={{ margin: '0 0 4px 0', fontSize: '20px' }}>{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <h2 style={{ margin: '0 0 4px 0', fontSize: '20px' }}>{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>
+                    {selectedEmployee.designation?.toLowerCase().includes('product') && (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '999px',
+                        background: 'rgba(245, 158, 11, 0.18)',
+                        color: '#f59e0b',
+                        border: '1px solid rgba(245, 158, 11, 0.35)'
+                      }}>
+                        📦 Product Manager
+                      </span>
+                    )}
+                  </div>
                   <div style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '14px', marginBottom: '8px' }}>
                     {selectedEmployee.designation} {selectedEmployee.department && `• ${selectedEmployee.department}`}
                   </div>

@@ -746,6 +746,96 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
                   </select>
                 </div>
               </div>
+
+              {/* Product Manager Quick Role Card for Basic Mode */}
+              <div style={{
+                marginTop: '12px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                background: (formData.designation?.toLowerCase().includes('product'))
+                  ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 100%)'
+                  : 'rgba(255, 255, 255, 0.03)',
+                border: (formData.designation?.toLowerCase().includes('product'))
+                  ? '1px solid rgba(245, 158, 11, 0.4)'
+                  : '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => {
+                const isCurrentlyPM = formData.designation?.toLowerCase().includes('product');
+                if (isCurrentlyPM) {
+                  setFormData({
+                    ...formData,
+                    designation: '',
+                    designationId: ''
+                  });
+                } else {
+                  const pmDesig = designations.find(d => d.name.toLowerCase().includes('product'));
+                  const prodDept = departments.find(d => d.name.toLowerCase().includes('product') || d.name.toLowerCase().includes('production'));
+                  setFormData({
+                    ...formData,
+                    designation: pmDesig?.name || 'Product Manager',
+                    designationId: pmDesig?.id || '',
+                    department: formData.department || prodDept?.name || 'Production',
+                    departmentId: formData.departmentId || prodDept?.id || ''
+                  });
+                }
+              }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: (formData.designation?.toLowerCase().includes('product'))
+                      ? 'rgba(245, 158, 11, 0.25)'
+                      : 'rgba(255, 255, 255, 0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: (formData.designation?.toLowerCase().includes('product')) ? '#fbbf24' : '#94a3b8',
+                    fontSize: '20px'
+                  }}>
+                    <span className="material-symbols-outlined">inventory_2</span>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#f8fafc' }}>
+                        Assign as Product Manager
+                      </span>
+                      {(formData.designation?.toLowerCase().includes('product')) && (
+                        <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 7px', borderRadius: '10px', background: '#f59e0b', color: '#000000' }}>
+                          ACTIVE ROLE
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '11.5px', color: '#94a3b8', lineHeight: 1.3 }}>
+                      Grants <strong>Product Management</strong> portal on this employee's Staff App.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '5px',
+                  border: (formData.designation?.toLowerCase().includes('product')) ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                  background: (formData.designation?.toLowerCase().includes('product')) ? '#f59e0b' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#000',
+                  fontWeight: 900,
+                  fontSize: '13px',
+                  flexShrink: 0
+                }}>
+                  {(formData.designation?.toLowerCase().includes('product')) && '✓'}
+                </div>
+              </div>
             </div>
           )}
 
@@ -951,6 +1041,99 @@ export default function EmployeeNewClient({ isMember = false }: { isMember?: boo
                         <option key={d.id} value={d.id}>{d.name}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                {/* Product Manager Quick Role Card */}
+                <div style={{
+                  gridColumn: '1 / -1',
+                  padding: '14px 18px',
+                  borderRadius: '12px',
+                  background: (formData.designation?.toLowerCase().includes('product'))
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 100%)'
+                    : 'rgba(255, 255, 255, 0.03)',
+                  border: (formData.designation?.toLowerCase().includes('product'))
+                    ? '1px solid rgba(245, 158, 11, 0.4)'
+                    : '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: (formData.designation?.toLowerCase().includes('product'))
+                    ? '0 4px 16px rgba(245, 158, 11, 0.15)'
+                    : 'none'
+                }}
+                onClick={() => {
+                  const isCurrentlyPM = formData.designation?.toLowerCase().includes('product');
+                  if (isCurrentlyPM) {
+                    setFormData({
+                      ...formData,
+                      designation: '',
+                      designationId: ''
+                    });
+                  } else {
+                    const pmDesig = designations.find(d => d.name.toLowerCase().includes('product'));
+                    const prodDept = departments.find(d => d.name.toLowerCase().includes('product') || d.name.toLowerCase().includes('production'));
+                    setFormData({
+                      ...formData,
+                      designation: pmDesig?.name || 'Product Manager',
+                      designationId: pmDesig?.id || '',
+                      department: formData.department || prodDept?.name || 'Production',
+                      departmentId: formData.departmentId || prodDept?.id || ''
+                    });
+                  }
+                }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: (formData.designation?.toLowerCase().includes('product'))
+                        ? 'rgba(245, 158, 11, 0.25)'
+                        : 'rgba(255, 255, 255, 0.06)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: (formData.designation?.toLowerCase().includes('product')) ? '#fbbf24' : '#94a3b8',
+                      fontSize: '22px'
+                    }}>
+                      <span className="material-symbols-outlined">inventory_2</span>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>
+                          Assign as Product Manager
+                        </span>
+                        {(formData.designation?.toLowerCase().includes('product')) && (
+                          <span style={{ fontSize: '10.5px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px', background: '#f59e0b', color: '#000000' }}>
+                            ACTIVE ROLE
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#94a3b8', maxWidth: '520px', lineHeight: 1.4 }}>
+                        Enables the <strong>Product Management</strong> feature on this employee's Staff App to inspect incoming products, oversee shoot inventories, and dispatch physical returns.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '6px',
+                    border: (formData.designation?.toLowerCase().includes('product')) ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                    background: (formData.designation?.toLowerCase().includes('product')) ? '#f59e0b' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#000',
+                    fontWeight: 900,
+                    fontSize: '14px',
+                    flexShrink: 0
+                  }}>
+                    {(formData.designation?.toLowerCase().includes('product')) && '✓'}
                   </div>
                 </div>
 

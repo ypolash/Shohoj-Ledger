@@ -1,7 +1,6 @@
 "use client";
 import { EmployeeDetailsDrawer } from "./EmployeeDetailsDrawer";
 
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from "@/app/erp/income/page.module.css";
@@ -419,17 +418,55 @@ export default function EmployeesPageClient() {
                       <td>
                         <div style={{ 
                           width: '32px', height: '32px', borderRadius: '50%', 
-                          background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                          background: (emp.designation?.toLowerCase().includes('product'))
+                            ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                            : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '12px', fontWeight: 'bold', color: '#fff'
                         }}>
                           {getInitials(emp.firstName, emp.lastName)}
                         </div>
                       </td>
-                      <td style={{ fontWeight: 500 }}>{emp.firstName} {emp.lastName}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 500 }}>{emp.firstName} {emp.lastName}</span>
+                          {emp.designation?.toLowerCase().includes('product') && (
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '6px',
+                              background: 'rgba(245, 158, 11, 0.18)',
+                              color: '#f59e0b',
+                              border: '1px solid rgba(245, 158, 11, 0.35)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '2px'
+                            }}>
+                              📦 PM
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{emp.employeeId}</td>
                       <td style={{ color: 'var(--text-muted)' }}>{emp.department || '-'}</td>
-                      <td>{emp.designation}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{emp.designation}</span>
+                          {emp.designation?.toLowerCase().includes('product') && (
+                            <span style={{
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                              background: '#f59e0b',
+                              color: '#000'
+                            }}>
+                              PRODUCT
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>
                         <div style={{ fontSize: '12px' }}>{emp.phone || '-'}</div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{emp.email}</div>
@@ -553,6 +590,97 @@ export default function EmployeesPageClient() {
                 <div className={styles.formGroup}>
                   <label className="label">Department</label>
                   <input type="text" className="input" value={newEmployee.department} onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})} />
+                </div>
+              </div>
+
+              {/* Product Manager Quick Role Card */}
+              <div 
+                style={{
+                  marginBottom: 'var(--spacing-4)',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  background: (newEmployee.designation?.toLowerCase().includes('product'))
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 100%)'
+                    : 'rgba(255, 255, 255, 0.03)',
+                  border: (newEmployee.designation?.toLowerCase().includes('product'))
+                    ? '1px solid rgba(245, 158, 11, 0.4)'
+                    : '1px solid rgba(255, 255, 255, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onClick={() => {
+                  const isCurrentlyPM = newEmployee.designation?.toLowerCase().includes('product');
+                  if (isCurrentlyPM) {
+                    setNewEmployee({
+                      ...newEmployee,
+                      designation: '',
+                      designationId: ''
+                    });
+                  } else {
+                    const pmDesig = designations.find(d => d.name.toLowerCase().includes('product'));
+                    const prodDept = departments.find(d => d.name.toLowerCase().includes('product') || d.name.toLowerCase().includes('production'));
+                    setNewEmployee({
+                      ...newEmployee,
+                      designation: pmDesig?.name || 'Product Manager',
+                      designationId: pmDesig?.id || '',
+                      department: newEmployee.department || prodDept?.name || 'Production',
+                      departmentId: newEmployee.departmentId || prodDept?.id || ''
+                    });
+                  }
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '8px',
+                    background: (newEmployee.designation?.toLowerCase().includes('product'))
+                      ? 'rgba(245, 158, 11, 0.25)'
+                      : 'rgba(255, 255, 255, 0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: (newEmployee.designation?.toLowerCase().includes('product')) ? '#fbbf24' : '#94a3b8',
+                    fontSize: '18px'
+                  }}>
+                    <span className="material-symbols-outlined">inventory_2</span>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                        Assign as Product Manager
+                      </span>
+                      {(newEmployee.designation?.toLowerCase().includes('product')) && (
+                        <span style={{ fontSize: '9.5px', fontWeight: 800, padding: '1px 6px', borderRadius: '8px', background: '#f59e0b', color: '#000000' }}>
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      Unlocks <strong>Product Management</strong> portal on this employee's Staff App
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '4px',
+                  border: (newEmployee.designation?.toLowerCase().includes('product')) ? 'none' : '2px solid rgba(255, 255, 255, 0.3)',
+                  background: (newEmployee.designation?.toLowerCase().includes('product')) ? '#f59e0b' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#000',
+                  fontWeight: 900,
+                  fontSize: '12px',
+                  flexShrink: 0
+                }}>
+                  {(newEmployee.designation?.toLowerCase().includes('product')) && '✓'}
                 </div>
               </div>
 

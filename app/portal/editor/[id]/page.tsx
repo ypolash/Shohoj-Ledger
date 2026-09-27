@@ -46,10 +46,12 @@ export default function EditorLivePortalPage() {
     setTimeout(() => setCopiedScriptId(null), 2000);
   };
 
-  const fetchProjectData = useCallback(async () => {
+  const fetchProjectData = useCallback(async (isInitial: boolean = false) => {
     if (!projectId) return;
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      }
       const res = await fetch(`/api/portal/project/${projectId}`);
       const data = await res.json();
       if (res.ok && data?.project) {
@@ -68,7 +70,7 @@ export default function EditorLivePortalPage() {
   }, [projectId]);
 
   useEffect(() => {
-    fetchProjectData();
+    fetchProjectData(true);
   }, [fetchProjectData]);
 
   const handleSubmitDeliverableDemo = async (deliverableId: string, e: React.FormEvent) => {
@@ -201,7 +203,7 @@ export default function EditorLivePortalPage() {
     }
   };
 
-  if (loading) {
+  if (loading && !project) {
     return (
       <div className={styles.portalContainer} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: '#94a3b8' }}>

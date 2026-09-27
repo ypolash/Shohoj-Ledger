@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageContainer } from '@/components/layout/PageContainer/PageContainer';
@@ -419,9 +419,11 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     setTimeout(() => setToast(null), 3500);
   };
 
-  const fetchProject = useCallback(async () => {
+  const fetchProject = useCallback(async (isInitial: boolean = false) => {
     if (!projectId) return;
-    setIsLoading(true);
+    if (isInitial) {
+      setIsLoading(true);
+    }
     setApiError(null);
     try {
       const res = await fetch(`/api/projects/${projectId}`);
@@ -591,7 +593,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   }, []);
 
   useEffect(() => {
-    fetchProject();
+    fetchProject(true);
     fetchEmployees();
   }, [fetchProject, fetchEmployees]);
 
@@ -659,7 +661,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     }
   };
 
-  const saveWorkflowState = async (
+  const saveWorkflowState = useCallback(async (
     targetStage?: number,
     targetCompleted?: number[],
     customData?: {
@@ -736,12 +738,35 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       });
 
       if (res.ok) {
-        fetchProject();
+        setProject((prev: any) => prev ? { ...prev, ...payload } : prev);
       }
     } catch (e) {
       console.error("Failed to save workflow state:", e);
     }
-  };
+  }, [projectId, currentStage, completedStages, stageNames, productData, shootingData, editingData, demoData, clientRevisions, revisionChat, clientReview, editorRating, project]);
+
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedSaveWorkflow = useCallback((
+    customData?: {
+      product?: typeof productData;
+      shooting?: typeof shootingData;
+      editing?: typeof editingData;
+      demo?: typeof demoData;
+      names?: typeof stageNames;
+    },
+    targetStage?: number,
+    targetCompleted?: number[],
+    extraProjectPayload?: any,
+    delay: number = 500
+  ) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      saveWorkflowState(targetStage, targetCompleted, customData, extraProjectPayload);
+    }, delay);
+  }, [saveWorkflowState]);
 
   const handleAdvanceStage = async (nextStage: number) => {
     const updatedCompleted = Array.from(new Set([...completedStages, currentStage]));
@@ -1051,7 +1076,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     showToast(`⚡ Configured ${updatedList.length} Video Deliverables Pipeline!`);
   };
 
-  const handleUpdateVideoDeliverable = (vidId: string, updates: Partial<VideoDeliverable>) => {
+  const handleUpdateVideoDeliverable = (vidId: string, updates: Partial<VideoDeliverable>, immediate: boolean = false) => {
     const currentList = editingData.videoDeliverables || [];
     const updatedList = currentList.map(v => {
       if (v.id === vidId) {
@@ -1061,7 +1086,14 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     });
     const updatedEditing = { ...editingData, videoDeliverables: updatedList };
     setEditingData(updatedEditing);
-    saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    if (immediate) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
+    } else {
+      debouncedSaveWorkflow({ editing: updatedEditing });
+    }
   };
 
   const handleDeleteVideoDeliverable = (vidId: string) => {
@@ -1482,7 +1514,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !project) {
     return (
       <PageContainer>
         <div style={{ textAlign: "center", padding: "100px 20px", color: '#94a3b8' }}>
@@ -3545,6 +3577,185 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
 
+                {/* Upper Right Card: Generated Distinct Editor Access Links */}
+                {(() => {
+                  const editorSummaries = getAssignedEditorsSummary().filter(s => s.name && s.name !== 'Unassigned Editor');
+                  return (
+                    <div className={styles.stageCard}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div className={styles.stageBadgeIcon} style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', width: '32px', height: '32px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>share_location</span>
+                          </div>
+                          <div>
+                            <h3 className={styles.stageCardTitle} style={{ fontSize: '13px', margin: 0 }}>
+                              Generated Distinct Editor Access Links {editorSummaries.length > 0 ? `(${editorSummaries.length} ${editorSummaries.length === 1 ? 'Editor' : 'Editors'})` : ''}
+                            </h3>
+                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                              Personalized links filtering each editor's deliverables.
+                            </span>
+                          </div>
+                        </div>
+
+                        {editorSummaries.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShareModalTab('editor');
+                              setIsShareModalOpen(true);
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: '8px',
+                              background: 'rgba(99, 102, 241, 0.2)',
+                              border: '1px solid rgba(99, 102, 241, 0.4)',
+                              color: '#c7d2fe',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>send</span>
+                            Share Hub
+                          </button>
+                        )}
+                      </div>
+
+                      {editorSummaries.length === 0 ? (
+                        <div style={{
+                          padding: '24px 16px',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          borderRadius: '12px',
+                          border: '1px dashed rgba(255, 255, 255, 0.1)',
+                          textAlign: 'center',
+                          color: '#64748b',
+                          fontSize: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px',
+                          justifyContent: 'center',
+                          flex: 1,
+                          minHeight: '160px'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#6366f1' }}>badge</span>
+                          <span>Assign an editor to any deliverable below to generate their direct portal access link.</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '280px' }}>
+                          {editorSummaries.map((sum) => {
+                            const editorUrl = typeof window !== 'undefined'
+                              ? `${window.location.origin}/e/${projectId}?editor=${encodeURIComponent(sum.name)}`
+                              : `/e/${projectId}?editor=${encodeURIComponent(sum.name)}`;
+
+                            return (
+                              <div
+                                key={sum.key}
+                                style={{
+                                  padding: '8px 10px',
+                                  background: 'rgba(15, 23, 42, 0.8)',
+                                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                                  borderRadius: '10px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '6px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <strong style={{ fontSize: '12px', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
+                                    {sum.name}
+                                  </strong>
+                                  <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(99, 102, 241, 0.2)', color: '#c7d2fe' }}>
+                                    {sum.count} {sum.count === 1 ? 'Video' : 'Videos'}
+                                  </span>
+                                </div>
+
+                                <div style={{ fontSize: '11px', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  🎬 {sum.videoTitles.join(', ')}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(editorUrl);
+                                      showToast(`🎬 Direct link for ${sum.name} copied!`);
+                                    }}
+                                    style={{
+                                      flex: 1,
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      background: '#6366f1',
+                                      color: '#fff',
+                                      border: 'none',
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>content_copy</span>
+                                    Copy Link
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const msg = `Hi ${sum.name}, here is your video editing link for "${project?.name}": ${editorUrl}\nAssigned deliverables: ${sum.videoTitles.join(', ')}`;
+                                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                                    }}
+                                    style={{
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(37, 211, 102, 0.15)',
+                                      border: '1px solid rgba(37, 211, 102, 0.4)',
+                                      color: '#25d366',
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="Share on WhatsApp"
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chat</span>
+                                  </button>
+                                  <a
+                                    href={`/portal/editor/${projectId}?editor=${encodeURIComponent(sum.name)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      background: 'rgba(255,255,255,0.06)',
+                                      border: '1px solid rgba(255,255,255,0.1)',
+                                      color: '#cbd5e1',
+                                      fontSize: '11px',
+                                      textDecoration: 'none',
+                                      display: 'inline-flex',
+                                      alignItems: 'center'
+                                    }}
+                                    title="Preview Portal"
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>open_in_new</span>
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Right Card: Multi-Video Deliverables & Multi-Editor Assignment Matrix */}
                 <div className={styles.stageCard} style={{ gridColumn: '1 / -1' }}>
                   <div className={styles.deliverablesHeaderBar}>
@@ -3627,7 +3838,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             {/* Aspect Ratio Selector */}
                             <select
                               value={deliv.aspectRatio}
-                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { aspectRatio: e.target.value })}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { aspectRatio: e.target.value }, true)}
                               className={styles.stageSelect}
                               style={{ fontSize: '12px', padding: '6px 10px', width: 'auto' }}
                             >
@@ -3641,7 +3852,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             {/* Status Selector */}
                             <select
                               value={deliv.status || 'Assigned'}
-                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { status: e.target.value as any })}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { status: e.target.value as any }, true)}
                               className={styles.stageSelect}
                               style={{
                                 fontSize: '12px',
@@ -3694,7 +3905,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                                 handleUpdateVideoDeliverable(deliv.id, {
                                   assignedEditorId: empId,
                                   assignedEditorName: emp ? `${emp.firstName} ${emp.lastName}` : (empId === '' ? '' : deliv.assignedEditorName)
-                                });
+                                }, true);
                                 if (empId || deliv.assignedEditorName?.trim()) {
                                   setStage4ValidationError(null);
                                 }
@@ -3746,188 +3957,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             />
                           </div>
                         </div>
-
-                        {/* Video Specific Instructions */}
-                        <div className={styles.stageField}>
-                          <label style={{ fontSize: '11px' }}>
-                            Specific Edit Directions / Creative Cut Notes for {deliv.assignedEditorName || 'Assigned Editor'}
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Cut dynamic fast-paced 15s hook, sync beat drops at 0:03 and 0:08, add bold captions."
-                            value={deliv.editorInstructions || ''}
-                            onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { editorInstructions: e.target.value })}
-                            className={styles.stageInput}
-                            style={{ fontSize: '12px', paddingLeft: '8px' }}
-                          />
-                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Assigned Editor Direct Portal Short Links Preview */}
-              {(() => {
-                const editorSummaries = getAssignedEditorsSummary().filter(s => s.name && s.name !== 'Unassigned Editor');
-                if (editorSummaries.length === 0) return null;
-                return (
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '16px 18px',
-                    background: 'rgba(99, 102, 241, 0.07)',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                    borderRadius: '14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>share_location</span>
-                        <div>
-                          <strong style={{ fontSize: '13px', color: '#f8fafc' }}>
-                            Generated Distinct Editor Access Links ({editorSummaries.length} {editorSummaries.length === 1 ? 'Editor' : 'Editors'})
-                          </strong>
-                          <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>
-                            Each editor gets a personalized short link that filters only their assigned video deliverables.
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShareModalTab('editor');
-                          setIsShareModalOpen(true);
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          background: 'rgba(99, 102, 241, 0.2)',
-                          border: '1px solid rgba(99, 102, 241, 0.4)',
-                          color: '#c7d2fe',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>send</span>
-                        Share Hub
-                      </button>
-                    </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
-                      {editorSummaries.map((sum) => {
-                        const editorUrl = typeof window !== 'undefined'
-                          ? `${window.location.origin}/e/${projectId}?editor=${encodeURIComponent(sum.name)}`
-                          : `/e/${projectId}?editor=${encodeURIComponent(sum.name)}`;
-
-                        return (
-                          <div
-                            key={sum.key}
-                            style={{
-                              padding: '10px 12px',
-                              background: 'rgba(15, 23, 42, 0.8)',
-                              border: '1px solid rgba(255, 255, 255, 0.08)',
-                              borderRadius: '10px',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '8px'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ fontSize: '12px', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span>
-                                {sum.name}
-                              </strong>
-                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(99, 102, 241, 0.2)', color: '#c7d2fe' }}>
-                                {sum.count} {sum.count === 1 ? 'Video' : 'Videos'}
-                              </span>
-                            </div>
-
-                            <div style={{ fontSize: '11px', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              🎬 {sum.videoTitles.join(', ')}
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(editorUrl);
-                                  showToast(`🎬 Direct link for ${sum.name} copied!`);
-                                }}
-                                style={{
-                                  flex: 1,
-                                  padding: '6px 8px',
-                                  borderRadius: '6px',
-                                  background: '#6366f1',
-                                  color: '#fff',
-                                  border: 'none',
-                                  fontSize: '11px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '4px'
-                                }}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>content_copy</span>
-                                Copy Link
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const msg = `Hi ${sum.name}, here is your video editing link for "${project?.name}": ${editorUrl}\nAssigned deliverables: ${sum.videoTitles.join(', ')}`;
-                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-                                }}
-                                style={{
-                                  padding: '6px 10px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(37, 211, 102, 0.15)',
-                                  border: '1px solid rgba(37, 211, 102, 0.4)',
-                                  color: '#25d366',
-                                  fontSize: '11px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                                title="Share on WhatsApp"
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chat</span>
-                              </button>
-                              <a
-                                href={`/portal/editor/${projectId}?editor=${encodeURIComponent(sum.name)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  padding: '6px 8px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(255,255,255,0.06)',
-                                  border: '1px solid rgba(255,255,255,0.1)',
-                                  color: '#cbd5e1',
-                                  fontSize: '11px',
-                                  textDecoration: 'none',
-                                  display: 'inline-flex',
-                                  alignItems: 'center'
-                                }}
-                                title="Preview Portal"
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>open_in_new</span>
-                              </a>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
 
               {/* Validation Warning Alert in Stage 4 */}
               {stage4ValidationError && (
@@ -4155,7 +4191,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                             <select
                               value={deliv.status || 'In Progress'}
-                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { status: e.target.value as any })}
+                              onChange={(e) => handleUpdateVideoDeliverable(deliv.id, { status: e.target.value as any }, true)}
                               className={styles.stageSelect}
                               style={{
                                 fontSize: '12px',

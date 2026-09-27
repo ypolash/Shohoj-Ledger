@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     }
   }
 
-  // 2. If explicit version provided (e.g., '1.5.8' or 'v1.5.8'), check it
+  // 2. If explicit version provided (e.g., '1.6.4' or 'v1.6.4'), check it
   if (!targetPath && requestedVersion) {
     const cleanVersion = requestedVersion.replace(/^v/, '');
     const versionCandidate = path.join(downloadsDir, `shohoj-staff-v${cleanVersion}.apk`);
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
   // 3. Fallback resolution cascade to newest available APK
   if (!targetPath) {
     const candidates = [
+      path.join(downloadsDir, 'shohoj-staff-v1.6.4.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.3.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.2.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.1.apk'),

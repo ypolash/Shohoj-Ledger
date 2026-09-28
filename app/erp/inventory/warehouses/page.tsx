@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { InventoryDataTable, InventoryColumn } from '../components/InventoryDataTable';
+import invStyles from '../inventory.module.css';
 
 /** Warehouse record from API */
 interface Warehouse {
@@ -146,17 +147,41 @@ export default function WarehousesPage() {
   ];
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, color: 'var(--text-main)' }}>Warehouses & Storage</h1>
+    <div className={invStyles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
+            Warehouses &amp; Storage
+            <span className={invStyles.titleBadge}>{warehouses.length} Storage Sites</span>
+          </h1>
         </div>
-        <button className="btn btn-primary hover-lift" onClick={() => { setShowModal(true); setError(''); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          Add Warehouse
-        </button>
-      </div>
+
+        <div className={invStyles.headerActions}>
+          <button 
+            className={invStyles.headerIconBtn}
+            onClick={fetchWarehouses}
+            title="Refresh warehouses"
+            aria-label="Refresh warehouses"
+            disabled={isLoading}
+          >
+            <span className={`material-symbols-outlined ${isLoading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
+          </button>
+
+          <button 
+            className={`${invStyles.headerIconBtn} ${invStyles.headerIconBtnPrimary}`} 
+            onClick={() => { setShowModal(true); setError(''); }}
+            title="Add Warehouse"
+            aria-label="Add Warehouse"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
+          </button>
+        </div>
+      </header>
 
       {successMsg && (
         <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success, #10b981)', border: '1px solid var(--success)', fontSize: '14px' }}>

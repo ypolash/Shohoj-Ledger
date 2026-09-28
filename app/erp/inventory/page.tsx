@@ -3,21 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ProductModal from './components/ProductModal';
-import styles from './components/InventoryDashboard.module.css';
-import { 
-  Boxes, 
-  Warehouse, 
-  AlertTriangle, 
-  AlertOctagon, 
-  BadgeDollarSign, 
-  Plus, 
-  RefreshCw, 
-  ArrowUpRight, 
-  ArrowRight, 
-  Package, 
-  CheckCircle2, 
-  Tag
-} from 'lucide-react';
+import styles from './inventory.module.css';
 
 const AVATAR_GRADIENTS = [
   'linear-gradient(135deg, #3b82f6, #1d4ed8)',
@@ -71,45 +57,50 @@ export default function InventoryDashboardPage() {
       label: 'Total Products',
       value: kpis.totalProducts ?? 0,
       badge: 'Active Catalog',
-      icon: <Boxes size={22} />,
+      icon: 'inventory_2',
       color: 'var(--primary)',
-      gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+      iconBg: 'rgba(37, 99, 235, 0.12)',
+      iconColor: '#3b82f6',
       href: '/erp/inventory/products'
     },
     {
       label: 'Warehouses',
       value: kpis.totalWarehouses ?? 0,
       badge: 'Storage Sites',
-      icon: <Warehouse size={22} />,
+      icon: 'warehouse',
       color: '#8b5cf6',
-      gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+      iconBg: 'rgba(139, 92, 246, 0.12)',
+      iconColor: '#8b5cf6',
       href: '/erp/inventory/warehouses'
     },
     {
       label: 'Low Stock Alert',
       value: kpis.lowStockCount ?? 0,
       badge: (kpis.lowStockCount || 0) > 0 ? 'Requires Reorder' : 'Optimal',
-      icon: <AlertTriangle size={22} />,
+      icon: 'warning',
       color: '#f59e0b',
-      gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      iconBg: 'rgba(245, 158, 11, 0.12)',
+      iconColor: '#f59e0b',
       href: '/erp/inventory/stock'
     },
     {
       label: 'Out of Stock',
       value: kpis.outOfStockCount ?? 0,
       badge: (kpis.outOfStockCount || 0) > 0 ? 'Action Needed' : 'Zero Stockouts',
-      icon: <AlertOctagon size={22} />,
+      icon: 'cancel',
       color: '#ef4444',
-      gradient: 'linear-gradient(135deg, #ef4444, #dc2626)',
+      iconBg: 'rgba(239, 68, 68, 0.12)',
+      iconColor: '#ef4444',
       href: '/erp/inventory/stock'
     },
     {
       label: 'Inventory Asset Value',
       value: isLoading ? '—' : formatCurrency(kpis.inventoryValue),
       badge: 'Capital Assets',
-      icon: <BadgeDollarSign size={22} />,
+      icon: 'attach_money',
       color: '#10b981',
-      gradient: 'linear-gradient(135deg, #10b981, #047857)',
+      iconBg: 'rgba(16, 185, 129, 0.12)',
+      iconColor: '#10b981',
       href: '/erp/inventory/reports'
     }
   ];
@@ -132,77 +123,127 @@ export default function InventoryDashboardPage() {
   };
 
   return (
-    <div className={styles.dashboardContainer}>
-      
-      {/* Top Header & Actions */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>Inventory Hub & Asset Overview</h1>
-          <p>Real-time stock valuation, catalog health, and supplier procurement metrics.</p>
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Inventory Hub &amp; Asset Overview
+            <span className={styles.titleBadge}>
+              {kpis.totalProducts !== undefined ? `${kpis.totalProducts} Products` : 'Catalog'}
+            </span>
+          </h1>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={styles.headerActions}>
           <button 
             onClick={handleRefreshClick}
-            className={styles.btnSecondary}
+            className={styles.headerIconBtn}
             title="Refresh Inventory Dashboard"
+            aria-label="Refresh Inventory Dashboard"
+            disabled={isLoading}
           >
-            <RefreshCw 
-              size={16} 
-              style={{ 
-                animation: isRefreshing ? 'spin 0.6s linear infinite' : 'none' 
-              }} 
-            />
-            <span>Refresh</span>
+            <span 
+              className={`material-symbols-outlined ${isRefreshing || isLoading ? styles.spinning : ''}`}
+              style={{ fontSize: '20px' }}
+            >
+              refresh
+            </span>
           </button>
 
           <button 
             onClick={() => setShowModal(true)}
-            className={styles.btnPrimary}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Register New Product"
+            aria-label="Register New Product"
           >
-            <Plus size={18} />
-            <span>Create Product</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Success Notification */}
       {successMsg && (
-        <div className={styles.successBanner}>
-          <CheckCircle2 size={18} />
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: '12px',
+          background: 'rgba(16, 185, 129, 0.12)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          color: '#10b981',
+          fontSize: '13px',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* KPI Cards Grid */}
+      {/* KPI Metric Cards */}
       <div className={styles.kpiGrid}>
         {kpiCards.map((kpi) => (
           <Link 
             key={kpi.label}
             href={kpi.href}
             className={styles.kpiCard}
-            style={{ ['--card-glow-color' as any]: kpi.color }}
           >
-            <div className={styles.kpiCardHeader}>
-              <div className={styles.kpiIconWrapper} style={{ background: kpi.gradient }}>
-                {kpi.icon}
+            <div className={styles.kpiTopRow}>
+              <div 
+                className={styles.kpiIconBox} 
+                style={{ background: kpi.iconBg, color: kpi.iconColor }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                  {kpi.icon}
+                </span>
               </div>
-              <span className={styles.kpiBadge} style={{ color: kpi.color, borderColor: `${kpi.color}40`, background: `${kpi.color}15` }}>
+              <span 
+                style={{ 
+                  fontSize: '11px', 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.04em',
+                  padding: '3px 8px',
+                  borderRadius: '9999px',
+                  color: kpi.color, 
+                  borderColor: `${kpi.color}30`, 
+                  background: `${kpi.color}15`,
+                  border: `1px solid ${kpi.color}30`
+                }}
+              >
                 {kpi.badge}
               </span>
             </div>
 
-            <div className={styles.kpiContent}>
-              <span className={styles.kpiLabel}>{kpi.label}</span>
-              <span className={styles.kpiValue} style={{ color: kpi.color }}>
+            <div>
+              <div className={styles.kpiLabel}>{kpi.label}</div>
+              <div className={styles.kpiValue} style={{ color: kpi.color }}>
                 {isLoading ? <span style={{ opacity: 0.4 }}>···</span> : kpi.value}
-              </span>
+              </div>
             </div>
 
-            <div className={styles.kpiFooter}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              fontSize: '12px', 
+              color: 'var(--text-muted)',
+              paddingTop: '8px',
+              borderTop: '1px solid var(--border-main)'
+            }}>
               <span>View details</span>
-              <span className={styles.kpiLinkText}>
-                Explore <ArrowRight size={13} />
+              <span style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '2px', 
+                color: 'var(--primary)', 
+                fontWeight: 600 
+              }}>
+                Explore
+                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>arrow_forward</span>
               </span>
             </div>
           </Link>
@@ -213,12 +254,14 @@ export default function InventoryDashboardPage() {
       <div className={styles.panel}>
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>
-            <Package size={18} color="var(--primary)" />
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>
+              inventory_2
+            </span>
             Recent Catalog Additions
           </h2>
           <Link href="/erp/inventory/products" className={styles.panelViewAll}>
             <span>View All Products</span>
-            <ArrowUpRight size={15} />
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_outward</span>
           </Link>
         </div>
 
@@ -226,7 +269,7 @@ export default function InventoryDashboardPage() {
           <table className={styles.table}>
             <thead className={styles.thead}>
               <tr>
-                <th className={styles.th}>Product & SKU</th>
+                <th className={styles.th}>Product &amp; SKU</th>
                 <th className={styles.th}>Category</th>
                 <th className={styles.th}>Selling Price</th>
                 <th className={styles.th}>Added On</th>
@@ -248,7 +291,9 @@ export default function InventoryDashboardPage() {
                   <td colSpan={4}>
                     <div className={styles.emptyState}>
                       <div className={styles.emptyIconWrapper}>
-                        <Boxes size={32} />
+                        <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>
+                          inventory_2
+                        </span>
                       </div>
                       <h3 className={styles.emptyTitle}>No Products Registered Yet</h3>
                       <p className={styles.emptyDesc}>
@@ -256,9 +301,20 @@ export default function InventoryDashboardPage() {
                       </p>
                       <button
                         onClick={() => setShowModal(true)}
-                        className={styles.btnPrimary}
+                        className={styles.headerIconBtnPrimary}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 16px',
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          textDecoration: 'none'
+                        }}
                       >
-                        <Plus size={16} />
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
                         <span>Register First Product</span>
                       </button>
                     </div>
@@ -290,21 +346,21 @@ export default function InventoryDashboardPage() {
                       {/* Category */}
                       <td className={styles.td}>
                         <span className={styles.categoryBadge}>
-                          <Tag size={12} />
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>label</span>
                           {categoryName}
                         </span>
                       </td>
 
                       {/* Selling Price */}
                       <td className={styles.td}>
-                        <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '13px' }}>
                           {formatCurrency(sellingPrice)}
                         </span>
                       </td>
 
                       {/* Created At */}
                       <td className={styles.td}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                           {new Date(product.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                         </span>
                       </td>
@@ -327,13 +383,6 @@ export default function InventoryDashboardPage() {
           fetchDashboard();
         }}
       />
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}} />
     </div>
   );
 }

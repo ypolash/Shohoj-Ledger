@@ -24,6 +24,7 @@ import {
 import ProductModal from '../components/ProductModal';
 import BulkProductUploadModal from '../components/BulkProductUploadModal';
 import styles from './ProductsPage.module.css';
+import invStyles from '../inventory.module.css';
 
 /** Product record from API */
 interface Product {
@@ -353,53 +354,64 @@ export default function ProductsPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header Section */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
-            Products
-            <span className={styles.titleBadge}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
+            Products Catalog
+            <span className={invStyles.titleBadge}>
               {products.length} {products.length === 1 ? 'Product' : 'Products'}
             </span>
           </h1>
-          <p>Search, manage stock levels, view SKUs, and update product pricing.</p>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={invStyles.headerActions}>
           <button 
-            className={styles.refreshBtn} 
+            className={invStyles.headerIconBtn} 
             onClick={handleRefresh} 
             title="Refresh catalog data"
+            aria-label="Refresh catalog data"
+            disabled={isLoading}
           >
-            <RefreshCw size={16} className={isRefreshing ? styles.spinAnimation : ''} />
+            <span className={`material-symbols-outlined ${isRefreshing || isLoading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary} 
+            className={invStyles.headerIconBtn} 
             onClick={() => handleExportExcel(filteredProducts)}
             title="Export current view to Excel"
+            aria-label="Export to Excel"
           >
-            <Download size={15} />
-            Export Excel
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              download
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary} 
+            className={invStyles.headerIconBtn} 
             onClick={() => setIsBulkUploadOpen(true)}
+            title="Bulk Upload CSV/Excel"
+            aria-label="Bulk Upload CSV/Excel"
           >
-            <Upload size={15} />
-            Bulk Upload
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              upload_file
+            </span>
           </button>
 
           <button 
-            className={styles.btnPrimary} 
+            className={`${invStyles.headerIconBtn} ${invStyles.headerIconBtnPrimary}`} 
             onClick={() => { setEditingId(null); setShowModal(true); }}
+            title="Add Product"
+            aria-label="Add Product"
           >
-            <Plus size={16} />
-            Add Product
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Success Banner */}
       {successMsg && (

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useUI } from '@/lib/contexts/UIContext';
 import styles from './InventorySettings.module.css';
+import invStyles from '../inventory.module.css';
 
 export default function InventorySettingsPage() {
   const { setPageTitleOverride } = useUI();
@@ -88,16 +89,15 @@ export default function InventorySettingsPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
             Inventory Settings
-            <span className={styles.titleBadge}>Module Configuration</span>
+            <span className={invStyles.titleBadge}>Module Configuration</span>
           </h1>
-          <p>Configure stock valuation methods, multi-warehouse routing, and global product attributes.</p>
         </div>
-      </div>
+      </header>
 
       {saveBanner && (
         <div style={{

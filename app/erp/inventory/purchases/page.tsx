@@ -23,6 +23,7 @@ import NewPurchaseModal from "./components/NewPurchaseModal";
 import PurchaseDetailDrawer from "./components/PurchaseDetailDrawer";
 import PurchaseInvoiceModal from "./components/PurchaseInvoiceModal";
 import styles from "./PurchasesPage.module.css";
+import invStyles from "../inventory.module.css";
 
 export default function PurchasesPage() {
   const router = useRouter();
@@ -95,52 +96,62 @@ export default function PurchasesPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
             Purchases Hub
-            <span className={styles.titleBadge}>{purchases.length} Orders</span>
+            <span className={invStyles.titleBadge}>{purchases.length} Purchases</span>
           </h1>
-          <p>Manage supplier procurements, track expense recognition, and disburse purchase dues.</p>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={invStyles.headerActions}>
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleRefresh}
             title="Refresh purchases list"
+            aria-label="Refresh purchases list"
+            disabled={isLoading}
           >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span className={`material-symbols-outlined ${isRefreshing || isLoading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleExportCSV}
             title="Export CSV"
+            aria-label="Export CSV"
           >
-            <Download size={15} />
-            <span>Export</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              download
+            </span>
           </button>
 
           <button
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={() => router.push("/erp/inventory/products")}
+            title="View Products Catalog"
+            aria-label="View Products Catalog"
           >
-            <Package size={15} />
-            <span>Products</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              inventory_2
+            </span>
           </button>
 
           <button
-            className={styles.btnPrimary}
+            className={`${invStyles.headerIconBtn} ${invStyles.headerIconBtnPrimary}`}
             onClick={() => router.push("/erp/inventory/purchases/new")}
+            title="New Purchase Order"
+            aria-label="New Purchase Order"
           >
-            <Plus size={16} />
-            <span>New Purchase</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Success Alert Banner */}
       {successMsg && (

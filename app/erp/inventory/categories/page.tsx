@@ -23,6 +23,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import styles from './CategoriesPage.module.css';
+import invStyles from '../inventory.module.css';
 
 /** Category record from API */
 interface Category {
@@ -177,40 +178,51 @@ export default function CategoriesPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
             Product Categories
-            <span className={styles.titleBadge}>{totalCategories} Total</span>
+            <span className={invStyles.titleBadge}>{totalCategories} Categories</span>
           </h1>
-          <p>Organize and structure your inventory catalog into parent and sub-categories.</p>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={invStyles.headerActions}>
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleRefresh}
             title="Refresh list"
+            aria-label="Refresh list"
+            disabled={isLoading}
           >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span className={`material-symbols-outlined ${isRefreshing || isLoading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={() => openAddModal()}
+            title="Quick Add Category"
+            aria-label="Quick Add Category"
           >
-            <FolderPlus size={15} />
-            <span>Quick Add</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              create_new_folder
+            </span>
           </button>
 
-          <Link href="/erp/inventory/categories/new" className={styles.btnPrimary}>
-            <Plus size={16} />
-            <span>Add Category</span>
+          <Link 
+            href="/erp/inventory/categories/new" 
+            className={`${invStyles.headerIconBtn} ${invStyles.headerIconBtnPrimary}`}
+            title="Add Category"
+            aria-label="Add Category"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* Success Alert Banner */}
       {successMsg && (

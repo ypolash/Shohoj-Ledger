@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import styles from './OrdersPage.module.css';
+import invStyles from '../inventory.module.css';
 
 export default function InventoryOrdersPage() {
   const router = useRouter();
@@ -169,49 +170,62 @@ export default function InventoryOrdersPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
             Inventory Orders
-            <span className={styles.titleBadge}>{totalOrders} Orders</span>
+            <span className={invStyles.titleBadge}>{totalOrders} Orders</span>
           </h1>
-          <p>Track sales fulfillment orders, stock dispatches, and customer order statuses.</p>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={invStyles.headerActions}>
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleRefresh}
             title="Refresh order records"
+            aria-label="Refresh order records"
+            disabled={loading}
           >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span className={`material-symbols-outlined ${isRefreshing || loading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={() => setImportModalOpen(true)}
+            title="Import Orders"
+            aria-label="Import Orders"
           >
-            <UploadCloud size={15} />
-            <span>Import</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              cloud_upload
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleExportCSV}
             title="Export CSV"
+            aria-label="Export CSV"
           >
-            <Download size={15} />
-            <span>Export</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              download
+            </span>
           </button>
 
-          <Link href="/erp/inventory/orders/new" className={styles.btnPrimary}>
-            <Plus size={16} />
-            <span>Create Order</span>
+          <Link 
+            href="/erp/inventory/orders/new" 
+            className={`${invStyles.headerIconBtn} ${invStyles.headerIconBtnPrimary}`}
+            title="Create Order"
+            aria-label="Create Order"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* Toolbar & Filters */}
       <div className={styles.toolbarCard}>

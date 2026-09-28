@@ -16,6 +16,7 @@ import {
   X 
 } from "lucide-react";
 import styles from "./PaymentsPage.module.css";
+import invStyles from "../inventory.module.css";
 
 export default function PaymentsPage() {
   const [activeTab, setActiveTab] = useState<"due" | "paid">("due");
@@ -148,27 +149,29 @@ export default function PaymentsPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
             Supplier Payments
-            <span className={styles.titleBadge}>{duePurchases.length} Dues Pending</span>
+            <span className={invStyles.titleBadge}>{duePurchases.length} Dues Pending</span>
           </h1>
-          <p>Disburse payments against purchase orders, settle accounts payable, and track ledger receipts.</p>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={invStyles.headerActions}>
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleRefresh}
             title="Refresh payment balances"
+            aria-label="Refresh payment balances"
+            disabled={isLoading}
           >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span className={`material-symbols-outlined ${isRefreshing || isLoading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
           </button>
         </div>
-      </div>
+      </header>
 
       {actionMsg && (
         <div style={{

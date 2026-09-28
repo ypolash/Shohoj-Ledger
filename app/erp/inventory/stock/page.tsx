@@ -22,6 +22,7 @@ import {
   X 
 } from 'lucide-react';
 import styles from './StockControl.module.css';
+import invStyles from '../inventory.module.css';
 
 /** Product record */
 interface Product {
@@ -217,40 +218,51 @@ export default function StockControlPage() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
-      <div className={styles.headerWrapper}>
-        <div className={styles.titleGroup}>
-          <h1>
+      {/* 1. Executive Minimalist Header */}
+      <header className={invStyles.headerCard}>
+        <div className={invStyles.headerTitleGroup}>
+          <h1 className={invStyles.pageTitle}>
             Stock Control
-            <span className={styles.titleBadge}>{totalItems} Products</span>
+            <span className={invStyles.titleBadge}>{totalItems} Products</span>
           </h1>
-          <p>Monitor real-time inventory balances, stock-outs, adjustments, and valuations.</p>
         </div>
 
-        <div className={styles.actionGroup}>
+        <div className={invStyles.headerActions}>
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={handleRefresh}
             title="Refresh stock levels"
+            aria-label="Refresh stock levels"
+            disabled={isLoading}
           >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span className={`material-symbols-outlined ${isRefreshing || isLoading ? invStyles.spinning : ''}`} style={{ fontSize: '20px' }}>
+              refresh
+            </span>
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={invStyles.headerIconBtn}
             onClick={() => openModal('IN')}
+            title="Quick Adjust"
+            aria-label="Quick Adjust"
           >
-            <Sliders size={15} />
-            <span>Quick Adjust</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              tune
+            </span>
           </button>
 
-          <Link href="/erp/inventory/stock/adjust" className={styles.btnPrimary}>
-            <Plus size={16} />
-            <span>Record Movement</span>
+          <Link 
+            href="/erp/inventory/stock/adjust" 
+            className={`${invStyles.headerIconBtn} ${invStyles.headerIconBtnPrimary}`}
+            title="Record Movement"
+            aria-label="Record Movement"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              add
+            </span>
           </Link>
         </div>
-      </div>
+      </header>
 
       {/* Success Alert Banner */}
       {successMsg && (

@@ -505,19 +505,21 @@ export default function HRTasksPage() {
       <div className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <div className={styles.titleGroup}>
-            <div className={styles.liveBadgeRow}>
-              <div className={styles.livePulseDot} />
-              <span className={styles.liveBadgeText}>Workforce Task Dispatch</span>
-            </div>
             <h1 className={styles.pageTitle}>
-              <span className="material-symbols-outlined" style={{ color: "#3b82f6", fontSize: "30px" }}>
+              <span className="material-symbols-outlined" style={{ color: "#3b82f6", fontSize: "26px" }}>
                 assignment
               </span>
               Task Dispatch &amp; Staff Assignments
+              <span style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                background: "rgba(59, 130, 246, 0.1)",
+                color: "#2563eb",
+                border: "1px solid rgba(59, 130, 246, 0.2)"
+              }}>{metrics.total} Tasks</span>
             </h1>
-            <p className={styles.pageSubtitle}>
-              Assign tasks directly to staff by Employee ID with real-time sync to the Shohoj Staff mobile app.
-            </p>
           </div>
 
           <div className={styles.headerActions}>
@@ -527,78 +529,17 @@ export default function HRTasksPage() {
                 setNewTodoText("");
                 setIsAssignModalOpen(true);
               }}
-              className={styles.primaryBtn}
+              className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+              title="Assign New Task"
+              aria-label="Assign New Task"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
                 add_task
               </span>
-              Assign New Task
             </button>
           </div>
         </div>
 
-        {/* Metrics Bar */}
-        <div className={styles.metricsGrid}>
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(59, 130, 246, 0.12)", color: "#2563eb" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                assignment
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Total Tasks</span>
-              <span className={styles.metricValue}>{metrics.total}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(245, 158, 11, 0.12)", color: "#d97706" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                pending_actions
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Pending</span>
-              <span className={styles.metricValue}>{metrics.pending}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(37, 99, 235, 0.12)", color: "#1d4ed8" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                sync
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>In Progress</span>
-              <span className={styles.metricValue}>{metrics.inProgress}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(16, 185, 129, 0.12)", color: "#059669" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                task_alt
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Completed</span>
-              <span className={styles.metricValue}>{metrics.completed}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(239, 68, 68, 0.12)", color: "#dc2626" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                priority_high
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Urgent / High</span>
-              <span className={styles.metricValue}>{metrics.highPriority}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Toolbar & Filters */}

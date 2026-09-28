@@ -309,19 +309,21 @@ export default function HRNoticesPage() {
       <div className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <div className={styles.titleGroup}>
-            <div className={styles.liveBadgeRow}>
-              <div className={styles.livePulseDot} />
-              <span className={styles.liveBadgeText}>Live Staff Broadcasts</span>
-            </div>
             <h1 className={styles.pageTitle}>
-              <span className="material-symbols-outlined" style={{ color: "#10b981", fontSize: "30px" }}>
+              <span className="material-symbols-outlined" style={{ color: "#10b981", fontSize: "26px" }}>
                 campaign
               </span>
               Company Notices &amp; Staff Broadcasts
+              <span style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                background: "rgba(16, 185, 129, 0.1)",
+                color: "#059669",
+                border: "1px solid rgba(16, 185, 129, 0.2)"
+              }}>{metrics.total} Notices</span>
             </h1>
-            <p className={styles.pageSubtitle}>
-              Broadcast circulars, general notices, and urgent bulletins to all staff with instant sync to the Staff Mobile App.
-            </p>
           </div>
 
           <div className={styles.headerActions}>
@@ -330,66 +332,17 @@ export default function HRNoticesPage() {
                 setNoticeForm(EMPTY_NOTICE_FORM);
                 setIsPublishModalOpen(true);
               }}
-              className={styles.primaryBtn}
+              className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+              title="Publish New Notice"
+              aria-label="Publish New Notice"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
                 send
               </span>
-              Publish New Notice
             </button>
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className={styles.metricsGrid}>
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(16, 185, 129, 0.12)", color: "#059669" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                campaign
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Total Notices</span>
-              <span className={styles.metricValue}>{metrics.total}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(59, 130, 246, 0.12)", color: "#2563eb" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                broadcast_on_personal
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Active Broadcasts</span>
-              <span className={styles.metricValue}>{metrics.active}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(239, 68, 68, 0.12)", color: "#dc2626" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                priority_high
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Urgent Notices</span>
-              <span className={styles.metricValue}>{metrics.urgent}</span>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIconWrap} style={{ background: "rgba(147, 51, 234, 0.12)", color: "#7c3aed" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "22px" }}>
-                groups
-              </span>
-            </div>
-            <div className={styles.metricInfo}>
-              <span className={styles.metricLabel}>Staff Reached</span>
-              <span className={styles.metricValue}>{metrics.staffCount}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Toolbar & Filters */}

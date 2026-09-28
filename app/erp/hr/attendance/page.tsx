@@ -576,68 +576,51 @@ export default function AttendancePage() {
       {/* 1. Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Live Attendance Tracking • Real-time Telemetry</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            Attendance Tracking & Shifts
+            Attendance Tracking &amp; Shifts
             <span className={styles.titleBadge}>{records.length} Logs</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Monitor daily clock-in compliance, track late arrivals, log working hours, and manage shift schedules.
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-            <span style={{ fontSize: '12px', background: 'var(--surface-sunken)', border: '1px solid var(--border-main)', padding: '4px 10px', borderRadius: '20px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '15px', color: 'var(--primary)' }}>schedule</span>
-              Office Shift: <strong style={{ color: 'var(--text-main)' }}>{officeTiming.shiftStart} - {officeTiming.shiftEnd}</strong> (+{officeTiming.gracePeriod}m grace)
-            </span>
-            <span style={{ fontSize: '12px', background: 'var(--surface-sunken)', border: '1px solid var(--border-main)', padding: '4px 10px', borderRadius: '20px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#059669' }}>public</span>
-              Timezone: <strong style={{ color: 'var(--text-main)' }}>{officeTiming.timezone} (GMT+6)</strong>
-            </span>
-          </div>
         </div>
 
         <div className={styles.headerActions}>
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={records.length === 0}
-            title="Download CSV Log"
+            title="Export CSV Log"
+            aria-label="Export CSV Log"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => loadData(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Attendance Logs"
+            aria-label="Refresh Attendance Logs"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
           <button
             onClick={handleRecalculateLate}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isRecalculating}
-            title="Recalculate Late Durations for past 60 days"
+            title="Recalculate Late Durations (past 60 days)"
+            aria-label="Recalculate Late Durations"
           >
             <span
               className={`material-symbols-outlined ${isRecalculating ? styles.spinning : ''}`}
-              style={{ fontSize: '18px', color: '#f59e0b' }}
+              style={{ fontSize: '20px', color: '#f59e0b' }}
             >
               schedule
             </span>
-            <span>{isRecalculating ? 'Calculating...' : 'Recalculate Late'}</span>
           </button>
 
           <button
@@ -646,16 +629,16 @@ export default function AttendancePage() {
               setNetworkSuccess('');
               setShowNetworkModal(true);
             }}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             title="Configure Allowed Office Wi-Fi / Networks"
+            aria-label="Configure Allowed Office Wi-Fi / Networks"
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: '18px', color: isNetworkConfigured ? '#059669' : '#d97706' }}
+              style={{ fontSize: '20px', color: isNetworkConfigured ? '#059669' : '#d97706' }}
             >
               {isNetworkConfigured ? 'wifi_lock' : 'wifi_off'}
             </span>
-            <span>Network Settings</span>
           </button>
 
           <button
@@ -667,10 +650,11 @@ export default function AttendancePage() {
               setError('');
               setShowModal(true);
             }}
-            className={styles.primaryBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Record Attendance"
+            aria-label="Record Attendance"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-            Record Attendance
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           </button>
         </div>
       </header>
@@ -746,98 +730,6 @@ export default function AttendancePage() {
         )
       )}
 
-      {/* 3. Operational Workforce KPI Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Attendance Rate */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>how_to_reg</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Today
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Attendance Rate</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '60px' }} /> : `${attendanceRate}%`}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>{todayPresent} of {totalEmps} Staff Present</span>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>Active</span>
-          </div>
-        </div>
-
-        {/* Present on Time */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(37, 99, 235, 0.12)', color: '#2563eb' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>check_circle</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              On Time
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Present On Time</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : presentCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>All Logged Attendances</span>
-            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Punctual</span>
-          </div>
-        </div>
-
-        {/* Late Arrivals */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>schedule</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${lateCount > 0 ? styles.trendWarning : styles.trendPositive}`}>
-              {lateCount > 0 ? 'Delayed' : 'Clear'}
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Late Clock-ins</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : lateCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Recorded Tardy Minutes</span>
-            <span>{lateCount} Incidents</span>
-          </div>
-        </div>
-
-        {/* Absences / Exceptions */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>person_off</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${absentCount > 0 ? styles.trendDanger : styles.trendNeutral}`}>
-              Exceptions
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Absences & Leaves</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : absentCount + halfDayCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>{absentCount} Absent · {halfDayCount} Half Day</span>
-            <Link href="/erp/hr/leaves" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-              Leaves →
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Filter & Controls Bar */}
       <section className={styles.controlsCard}>

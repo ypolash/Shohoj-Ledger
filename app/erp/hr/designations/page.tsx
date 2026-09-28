@@ -166,43 +166,36 @@ export default function DesignationsPage() {
       {/* 1. Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Live Job Architecture • Organizational Hierarchy</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            Designations & Job Roles
-            <span className={styles.titleBadge}>{totalCount} Roles Configured</span>
+            Designations &amp; Job Roles
+            <span className={styles.titleBadge}>{totalCount} Roles</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Define corporate job titles, salary grades, seniority tiers, and staff allocations across all departments.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={designations.length === 0}
-            title="Download CSV"
+            title="Export CSV"
+            aria-label="Export CSV"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => fetchDesignations(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Designations"
+            aria-label="Refresh Designations"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
           <button
@@ -211,10 +204,11 @@ export default function DesignationsPage() {
               setError('');
               setShowModal(true);
             }}
-            className={styles.primaryBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Add Designation"
+            aria-label="Add Designation"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-            Add Designation
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           </button>
         </div>
       </header>
@@ -227,99 +221,6 @@ export default function DesignationsPage() {
         </div>
       )}
 
-      {/* 2. Operational Workforce KPI Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Total Roles */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>work</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>done_all</span>
-              {activeCount} Active
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Total Job Titles</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : totalCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Configured Roles</span>
-            <span>{inactiveCount} Inactive</span>
-          </div>
-        </div>
-
-        {/* Assigned Staff */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(37, 99, 235, 0.12)', color: '#2563eb' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>badge</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Allocated
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Assigned Personnel</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : totalAssignedStaff}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Staff in Designated Roles</span>
-            <Link href="/erp/hr/employees" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-              Roster →
-            </Link>
-          </div>
-        </div>
-
-        {/* Pay Grades */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>stairs</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
-              Pay Bands
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Career Grades</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : uniqueGrades.length}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Structured Salary Tiers</span>
-            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Standardized</span>
-          </div>
-        </div>
-
-        {/* Seniority Levels */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>military_tech</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Hierarchy
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Seniority Tiers</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : uniqueLevels.length}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Distinct Competency Levels</span>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>Defined</span>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Filter & Controls Bar */}
       <section className={styles.controlsCard}>

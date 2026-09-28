@@ -107,17 +107,6 @@ export default function PayrollPage() {
 
       {successMsg && <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid var(--success)', fontSize: '14px' }}>✓ {successMsg}</div>}
 
-      {/* Summary KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 'var(--spacing-4)' }}>
-        {summaryKpis.map(kpi => (
-          <div key={kpi.label} className="glass-panel" style={{ padding: '20px', borderRadius: '14px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '8px' }}>{kpi.label}</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: kpi.color }}>
-              {isLoading ? <span style={{ opacity: 0.4 }}>···</span> : kpi.value}
-            </div>
-          </div>
-        ))}
-      </div>
 
       {/* Payroll Table */}
       <div className="glass-panel" style={{ borderRadius: '16px', overflow: 'hidden' }}>

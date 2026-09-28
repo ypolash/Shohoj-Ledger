@@ -348,43 +348,36 @@ export default function FinesPage() {
       {/* 1. Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Disciplinary Governance • Deductions & Penalties</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            Disciplinary Fines & Deductions
+            Disciplinary Fines &amp; Deductions
             <span className={styles.titleBadge}>{totalCount} Penalties</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Enforce organizational discipline, track payroll salary deductions, review policy violations, and manage pending or waived employee penalties.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={fines.length === 0}
-            title="Download CSV"
+            title="Export CSV"
+            aria-label="Export CSV"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => fetchData(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Fines"
+            aria-label="Refresh Fines"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
           <button
@@ -393,10 +386,11 @@ export default function FinesPage() {
               setError('');
               setShowModal(true);
             }}
-            className={styles.primaryBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Assign Penalty"
+            aria-label="Assign Penalty"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>gavel</span>
-            Assign Penalty
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>gavel</span>
           </button>
         </div>
       </header>
@@ -409,98 +403,6 @@ export default function FinesPage() {
         </div>
       )}
 
-      {/* 2. Operational KPI Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Total Penalties Recorded */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(244, 63, 94, 0.12)', color: '#f43f5e' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>account_balance_wallet</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendDanger}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>gavel</span>
-              {totalCount} Total
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Gross Penalty Volume</span>
-            <span className={styles.kpiValue}>{formatBDT(totalGrossAmount)}</span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>All recorded penalties</span>
-            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{employees.length} Staff</span>
-          </div>
-        </div>
-
-        {/* Pending Deductions */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#d97706' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>pending_actions</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${pendingCount > 0 ? styles.trendWarning : styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
-                {pendingCount > 0 ? 'schedule' : 'check'}
-              </span>
-              {pendingCount > 0 ? `${pendingCount} Pending` : 'All Settled'}
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Pending Deductions</span>
-            <span className={styles.kpiValue} style={{ color: pendingCount > 0 ? '#d97706' : undefined }}>
-              {formatBDT(pendingAmount)}
-            </span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Awaiting next payroll run</span>
-            <span style={{ fontWeight: 700, color: pendingCount > 0 ? '#d97706' : '#10b981' }}>
-              {pendingCount} Queued
-            </span>
-          </div>
-        </div>
-
-        {/* Deducted via Payroll */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>price_check</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-              Settled
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Deducted in Payroll</span>
-            <span className={styles.kpiValue}>{formatBDT(deductedAmount)}</span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Recovered via salary deduction</span>
-            <span style={{ fontWeight: 600, color: '#059669' }}>{deductedCount} Settled</span>
-          </div>
-        </div>
-
-        {/* Waived / Cancelled */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(100, 116, 139, 0.12)', color: '#64748b' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>money_off</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>block</span>
-              {cancelledCount} Waived
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Waived Penalties</span>
-            <span className={styles.kpiValue}>{formatBDT(cancelledAmount)}</span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Cancelled by management</span>
-            <span style={{ fontWeight: 600 }}>Archived</span>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Collapsible Disciplinary Policy Standards */}
       <section className={styles.policyCard}>

@@ -423,23 +423,33 @@ export default function TaskRewardsPage() {
       <div className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <div className={styles.titleGroup}>
-            <div className={styles.liveBadgeRow}>
-              <span className={styles.livePulseDot} />
-              <span className={styles.liveBadgeText}>HR Performance & Extra Income Hub</span>
-            </div>
             <h1 className={styles.pageTitle}>
               <span className={`material-symbols-outlined ${styles.titleIcon}`}>military_tech</span>
-              Task Rewards & Incentives
+              Task Rewards &amp; Incentives
+              <span style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                background: "rgba(245, 158, 11, 0.1)",
+                color: "#f59e0b",
+                border: "1px solid rgba(245, 158, 11, 0.2)"
+              }}>{stats?.activeTasks ?? tasks.length} Active</span>
             </h1>
-            <p className={styles.pageSubtitle}>
-              Create special bounties and extra tasks for employees with checkbox subtasks. Employees earn reward points for completed tasks,
-              which convert directly into cash bonuses disbursed immediately (Cash/MFS) or added to payroll.
-            </p>
           </div>
 
           <div className={styles.headerActions}>
             <button
-              className={styles.btnPrimary}
+              className={styles.headerIconBtn}
+              onClick={() => setActiveTab("settings")}
+              title={`Points Rate Settings (1 pt = ৳${settings.pointToCashRate})`}
+              aria-label="Points Rate Settings"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
+            </button>
+
+            <button
+              className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
               onClick={() => {
                 setEditingTask(null);
                 setFormData({
@@ -456,66 +466,14 @@ export default function TaskRewardsPage() {
                 });
                 setIsCreateModalOpen(true);
               }}
+              title="Create Special Task"
+              aria-label="Create Special Task"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>add_task</span>
-              Create Special Task
-            </button>
-            <button
-              className={styles.btnSecondary}
-              onClick={() => setActiveTab("settings")}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>tune</span>
-              Points Rate (1 pt = ৳{settings.pointToCashRate})
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>add_task</span>
             </button>
           </div>
         </div>
 
-        {/* KPI Metrics */}
-        <div className={styles.kpiGrid}>
-          <div className={styles.kpiCard}>
-            <div className={`${styles.kpiIconWrapper} ${styles.kpiAmber}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>military_tech</span>
-            </div>
-            <div className={styles.kpiInfo}>
-              <span className={styles.kpiLabel}>Active Special Tasks</span>
-              <span className={styles.kpiValue}>{stats?.activeTasksCount || tasks.filter((t) => t.status === "OPEN").length}</span>
-              <span className={styles.kpiSub}>Open bounties for staff</span>
-            </div>
-          </div>
-
-          <div className={styles.kpiCard}>
-            <div className={`${styles.kpiIconWrapper} ${styles.kpiBlue}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>pending_actions</span>
-            </div>
-            <div className={styles.kpiInfo}>
-              <span className={styles.kpiLabel}>Pending Reviews</span>
-              <span className={styles.kpiValue}>{stats?.pendingSubmissionsCount || pendingSubmissions.length}</span>
-              <span className={styles.kpiSub}>Claims awaiting HR approval</span>
-            </div>
-          </div>
-
-          <div className={styles.kpiCard}>
-            <div className={`${styles.kpiIconWrapper} ${styles.kpiPurple}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>stars</span>
-            </div>
-            <div className={styles.kpiInfo}>
-              <span className={styles.kpiLabel}>Total Points Distributed</span>
-              <span className={styles.kpiValue}>{stats?.totalPointsEarned || 0} pts</span>
-              <span className={styles.kpiSub}>Outstanding: {stats?.totalPointsOutstanding || 0} pts</span>
-            </div>
-          </div>
-
-          <div className={styles.kpiCard}>
-            <div className={`${styles.kpiIconWrapper} ${styles.kpiGreen}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>payments</span>
-            </div>
-            <div className={styles.kpiInfo}>
-              <span className={styles.kpiLabel}>Extra Income Disbursed</span>
-              <span className={styles.kpiValue}>৳ {(stats?.totalDisbursedCash || 0).toLocaleString()}</span>
-              <span className={styles.kpiSub}>Cash & Payroll bonuses paid</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Tabs Navigation */}

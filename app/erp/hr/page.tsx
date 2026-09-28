@@ -226,174 +226,90 @@ export default function HRDashboardPage() {
 
   return (
     <div className={styles.container}>
-      {/* 1. Executive Command Header */}
+      {/* 1. Minimal Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <div className={styles.titleGroup}>
-            <div className={styles.liveBadgeRow}>
-              <div className={styles.livePulseDot} />
-              <span className={styles.liveBadgeText}>HR Operations Live • Telemetry Sync</span>
-            </div>
             <h1 className={styles.pageTitle}>
-              HR & Payroll Command Center
+              HR &amp; Payroll Command Center
               <span className={styles.statusChip}>Enterprise Hub</span>
             </h1>
-            <p className={styles.pageSubtitle}>
-              Workforce telemetry, department staffing distributions, live attendance, leave approvals, and payroll readiness.
-            </p>
           </div>
 
           <div className={styles.headerActions}>
-            <Link href="/erp/hr/freelance" className={styles.secondaryBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>laptop_chromebook</span>
-              Freelancers
+            {/* Data Intake Mode Indicator / Settings Link */}
+            <Link
+              href="/erp/settings/onboarding"
+              className={styles.headerIconBtn}
+              title={`Data Intake: ${onboardingMode === 'BASIC' ? 'Basic Mode (7 Fields)' : 'Professional Mode (Enterprise Dossier)'} - Click to configure`}
+              aria-label="Configure Data Intake Mode"
+              style={{
+                background: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.14)' : 'rgba(37, 99, 235, 0.14)',
+                color: onboardingMode === 'BASIC' ? '#f59e0b' : '#2563eb',
+                borderColor: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(37, 99, 235, 0.35)'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
+              </span>
             </Link>
 
-            <Link href="/erp/hr/models" className={styles.secondaryBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>face_3</span>
-              Models
+            <Link href="/erp/hr/freelance" className={styles.headerIconBtn} title="Freelance Staff" aria-label="Freelance Staff">
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>laptop_chromebook</span>
             </Link>
 
-            <Link href="/erp/hr/tasks" className={styles.secondaryBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>assignment</span>
-              Tasks
+            <Link href="/erp/hr/models" className={styles.headerIconBtn} title="Models & Talent" aria-label="Models & Talent">
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>face_3</span>
             </Link>
 
-            <Link href="/erp/hr/notices" className={styles.secondaryBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>campaign</span>
-              Notices
+            <Link href="/erp/hr/tasks" className={styles.headerIconBtn} title="Employee Tasks" aria-label="Employee Tasks">
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>assignment</span>
             </Link>
 
-            <Link href="/erp/hr/employees/new" className={styles.primaryBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-              Add Employee
+            <Link href="/erp/hr/notices" className={styles.headerIconBtn} title="Notice Board" aria-label="Notice Board">
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>campaign</span>
             </Link>
 
-            <Link href="/erp/hr/attendance" className={styles.secondaryBtn}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>fact_check</span>
-              Record Attendance
+            <Link href="/erp/hr/attendance" className={styles.headerIconBtn} title="Record Attendance" aria-label="Record Attendance">
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>fact_check</span>
             </Link>
 
             <button
               onClick={() => loadAll(true)}
-              className={styles.syncBtn}
+              className={styles.headerIconBtn}
               disabled={isSyncing}
               title="Refresh Live Metrics"
+              aria-label="Refresh Live Metrics"
             >
               <span
                 className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-                style={{ fontSize: '18px' }}
+                style={{ fontSize: '20px' }}
               >
                 refresh
               </span>
-              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
             </button>
+
+            <Link
+              href="/erp/hr/employees/new"
+              className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+              title={`Add Employee (${onboardingMode === 'BASIC' ? 'Basic' : 'Pro'})`}
+              aria-label={`Add Employee (${onboardingMode === 'BASIC' ? 'Basic' : 'Pro'})`}
+              style={{
+                background: onboardingMode === 'BASIC'
+                  ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                  : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                boxShadow: onboardingMode === 'BASIC'
+                  ? '0 4px 14px rgba(245, 158, 11, 0.35)'
+                  : '0 4px 14px rgba(37, 99, 235, 0.35)'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                {onboardingMode === 'BASIC' ? 'bolt' : 'person_add'}
+              </span>
+            </Link>
           </div>
         </div>
       </header>
-
-      {/* 2. Active Data Intake System Indicator & Settings Router */}
-      <Link
-        href="/erp/settings/onboarding"
-        style={{ textDecoration: 'none' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '14px',
-            padding: '16px 24px',
-            borderRadius: '18px',
-            background: onboardingMode === 'BASIC'
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)'
-              : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%)',
-            border: onboardingMode === 'BASIC'
-              ? '1.5px solid rgba(245, 158, 11, 0.3)'
-              : '1.5px solid rgba(37, 99, 235, 0.3)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-          className="hover-lift"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '14px',
-                background: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(37, 99, 235, 0.18)',
-                color: onboardingMode === 'BASIC' ? '#f59e0b' : 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>
-                {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
-              </span>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
-                  Select your active data intake system:
-                </span>
-                
-                {/* Active Indicator Badge */}
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 14px',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    background: onboardingMode === 'BASIC' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                    color: '#ffffff',
-                    boxShadow: onboardingMode === 'BASIC' ? '0 2px 10px rgba(245, 158, 11, 0.4)' : '0 2px 10px rgba(37, 99, 235, 0.4)',
-                    letterSpacing: '0.01em'
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                    {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
-                  </span>
-                  <span>{onboardingMode === 'BASIC' ? 'Basic Mode (7 Fields Active)' : 'Professional Mode (Enterprise Dossier Active)'}</span>
-                </span>
-              </div>
-
-              <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                {onboardingMode === 'BASIC'
-                  ? 'Collecting 7 minimal fields: Full Name, Phone, Email, Address, Salary, Join Date, Staff PIN. Click to switch or configure in Settings.'
-                  : 'Collecting complete enterprise records: Personal, Demographics, Education, Experience, Banking, Nominees. Click to switch or configure in Settings.'}
-              </p>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              borderRadius: '12px',
-              background: 'var(--surface-card)',
-              border: '1px solid var(--border-main)',
-              color: onboardingMode === 'BASIC' ? '#d97706' : 'var(--primary)',
-              fontSize: '13px',
-              fontWeight: 700,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-            }}
-          >
-            <span>Configure in Settings</span>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
-          </div>
-        </div>
-      </Link>
 
 
       {/* 3. Operational KPI Metrics Grid */}
@@ -530,28 +446,6 @@ export default function HRDashboardPage() {
           </div>
         </div>
 
-        {/* Compliance & Health */}
-        <div className={`${styles.kpiCard} ${styles.kpiGlowRose}`}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(244, 63, 94, 0.12)', color: '#f43f5e' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>shield</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-              Compliant
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Workforce Health</span>
-            <div className={styles.kpiValue}>100%</div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Sanctions & Deductions: 0</span>
-            <Link href="/erp/hr/fines" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-              Audit →
-            </Link>
-          </div>
-        </div>
       </section>
 
       {/* 4. Two-Column Interactive Command Grid */}

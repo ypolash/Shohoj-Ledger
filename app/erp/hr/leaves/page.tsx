@@ -370,43 +370,36 @@ export default function LeavesPage() {
       {/* 1. Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Leave Telemetry • Time-Off & PTO Hub</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            Leave Requests & Absence Management
+            Leave Requests &amp; Absence Management
             <span className={styles.titleBadge}>{totalCount} Applications</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Review employee leave requests, track absence intervals, execute instant approvals or rejections, and monitor operational workforce availability.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={leaves.length === 0}
-            title="Download CSV"
+            title="Export CSV"
+            aria-label="Export CSV"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => loadData(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Leave Records"
+            aria-label="Refresh Leave Records"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
           <button
@@ -415,10 +408,11 @@ export default function LeavesPage() {
               setError('');
               setShowModal(true);
             }}
-            className={styles.primaryBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Submit Leave Request"
+            aria-label="Submit Leave Request"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-            Submit Leave Request
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           </button>
         </div>
       </header>
@@ -431,98 +425,6 @@ export default function LeavesPage() {
         </div>
       )}
 
-      {/* 2. KPI Telemetry Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Total Applications */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#4f46e5' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>event_note</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>history</span>
-              All-Time
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Total Applications</span>
-            <span className={styles.kpiValue}>{totalCount}</span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Recorded in system</span>
-            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{employees.length} Staff</span>
-          </div>
-        </div>
-
-        {/* Pending Approvals */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#d97706' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>pending_actions</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${pendingCount > 0 ? styles.trendWarning : styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
-                {pendingCount > 0 ? 'priority_high' : 'check'}
-              </span>
-              {pendingCount > 0 ? 'Action Required' : 'All Clear'}
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Pending Approvals</span>
-            <span className={styles.kpiValue} style={{ color: pendingCount > 0 ? '#d97706' : undefined }}>
-              {pendingCount}
-            </span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Awaiting executive review</span>
-            <span style={{ fontWeight: 700, color: pendingCount > 0 ? '#d97706' : '#10b981' }}>
-              {pendingCount > 0 ? `${pendingCount} Urgent` : '0 Pending'}
-            </span>
-          </div>
-        </div>
-
-        {/* Approved Leaves */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>verified</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>trending_up</span>
-              {approvalRate}% Ratio
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Approved Leaves</span>
-            <span className={styles.kpiValue}>{approvedCount}</span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Authorized time-off</span>
-            <span style={{ fontWeight: 600, color: '#059669' }}>Active & Past</span>
-          </div>
-        </div>
-
-        {/* Rejected / Exceptions */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>cancel</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${rejectedCount > 0 ? styles.trendDanger : styles.trendNeutral}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>block</span>
-              {rejectedCount} Denied
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Rejected Requests</span>
-            <span className={styles.kpiValue}>{rejectedCount}</span>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Declined applications</span>
-            <span style={{ fontWeight: 600 }}>Archived</span>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Controls & Filter Bar */}
       <section className={styles.controlsCard}>

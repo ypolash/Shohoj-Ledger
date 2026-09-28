@@ -184,17 +184,19 @@ export default function ModelsPage() {
       {/* Header Card */}
       <div className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <span className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Workforce • Talent Directory</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            <span className="material-symbols-outlined" style={{ color: '#ec4899', fontSize: '28px' }}>face_3</span>
-            Model Talents & Cast
+            <span className="material-symbols-outlined" style={{ color: '#ec4899', fontSize: '26px' }}>face_3</span>
+            Model Talents &amp; Cast
+            <span style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              padding: '3px 10px',
+              borderRadius: '9999px',
+              background: 'rgba(236, 72, 153, 0.1)',
+              color: '#ec4899',
+              border: '1px solid rgba(236, 72, 153, 0.2)'
+            }}>{stats.total} Registered</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Manage models, casting profiles, day shoot rates, comp cards, and shoot bookings.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
@@ -205,56 +207,15 @@ export default function ModelsPage() {
               setIsEditing(false);
               setShowModal(true);
             }}
-            className={styles.addBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Add Model"
+            aria-label="Add Model"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-            + Add Model
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person_add</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899' }}>
-            <span className="material-symbols-outlined">face_3</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Total Models</span>
-            <div className={styles.kpiValue}>{stats.total}</div>
-          </div>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-            <span className="material-symbols-outlined">check_circle</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Available For Booking</span>
-            <div className={styles.kpiValue} style={{ color: '#34d399' }}>{stats.active}</div>
-          </div>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
-            <span className="material-symbols-outlined">hub</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Agencies & Reps</span>
-            <div className={styles.kpiValue} style={{ color: '#c084fc' }}>{stats.agenciesCount}</div>
-          </div>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
-            <span className="material-symbols-outlined">payments</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Average Shoot Rate</span>
-            <div className={styles.kpiValue} style={{ color: '#fbbf24' }}>{formatCurrency(stats.avgRate)}</div>
-          </div>
-        </div>
-      </div>
 
       {/* Search & Filter Toolbar */}
       <div className={styles.toolbarCard}>

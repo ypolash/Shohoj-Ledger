@@ -175,43 +175,36 @@ export default function DepartmentsPage() {
       {/* 1. Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Live Department Structure • Organization Units</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            Departments & Organization Units
+            Departments &amp; Organization Units
             <span className={styles.titleBadge}>{totalCount} Divisions</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Configure corporate divisions, monitor headcount allocations, track department leadership, and organize functional teams.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={departments.length === 0}
-            title="Download CSV"
+            title="Export CSV"
+            aria-label="Export CSV"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => fetchDepts(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Departments"
+            aria-label="Refresh Departments"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
           <button
@@ -220,10 +213,11 @@ export default function DepartmentsPage() {
               setError('');
               setShowModal(true);
             }}
-            className={styles.primaryBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Add Department"
+            aria-label="Add Department"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-            Add Department
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
           </button>
         </div>
       </header>
@@ -236,101 +230,6 @@ export default function DepartmentsPage() {
         </div>
       )}
 
-      {/* 2. Operational Workforce KPI Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Total Divisions */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>corporate_fare</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>domain</span>
-              {activeCount} Active
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Total Divisions</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : totalCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Configured Departments</span>
-            <span>{inactiveCount} Inactive</span>
-          </div>
-        </div>
-
-        {/* Staff Allocated */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(37, 99, 235, 0.12)', color: '#2563eb' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>badge</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Assigned
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Allocated Staff</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : totalAllocatedStaff}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Personnel Across Divisions</span>
-            <Link href="/erp/hr/employees" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-              Roster →
-            </Link>
-          </div>
-        </div>
-
-        {/* Leadership Coverage */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>supervisor_account</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${deptsWithHOD === totalCount && totalCount > 0 ? styles.trendPositive : styles.trendNeutral}`}>
-              {totalCount > 0 ? `${Math.round((deptsWithHOD / totalCount) * 100)}% Assigned` : '0%'}
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Leadership (HOD)</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? (
-                <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} />
-              ) : (
-                `${deptsWithHOD} / ${totalCount}`
-              )}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Heads of Department</span>
-            <span>{totalCount - deptsWithHOD} Vacant</span>
-          </div>
-        </div>
-
-        {/* Operational Standing */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>shield</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Operational
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Department Health</span>
-            <div className={styles.kpiValue}>100%</div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>All Core Divisions Active</span>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>Healthy</span>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Filter & Controls Bar */}
       <section className={styles.controlsCard}>

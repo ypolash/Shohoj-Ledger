@@ -214,48 +214,45 @@ export default function MembersPage() {
       {/* 1. Executive Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Live Membership Roster • HR Operations</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            Members & Associates Directory
+            Members &amp; Associates Directory
             <span className={styles.titleBadge}>{totalCount} Enrolled</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Manage auxiliary personnel, operational associates, volunteers, and collaborative partners.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={members.length === 0}
-            title="Download CSV Roster"
+            title="Export CSV Roster"
+            aria-label="Export CSV Roster"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => fetchMembers(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Member Data"
+            aria-label="Refresh Member Data"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
-          <button onClick={openAddModal} className={styles.primaryBtn}>
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-            Add Member
+          <button
+            onClick={openAddModal}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Add Member"
+            aria-label="Add Member"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person_add</span>
           </button>
         </div>
       </header>
@@ -268,97 +265,6 @@ export default function MembersPage() {
         </div>
       )}
 
-      {/* 2. Operational Workforce KPI Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Total Enrolled */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>groups</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>how_to_reg</span>
-              {totalCount > 0 ? `${Math.round((activeCount / totalCount) * 100)}% Active` : '0%'}
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Total Enrolled</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : totalCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Active: {activeCount}</span>
-            <span>Inactive: {inactiveCount}</span>
-          </div>
-        </div>
-
-        {/* Active Members */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>verified_user</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Active
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Active Members</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : activeCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Operational Standings</span>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>Good</span>
-          </div>
-        </div>
-
-        {/* Roles Represented */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#2563eb' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>assignment_ind</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
-              Categorized
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Roles & Capacities</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : uniqueRoles.length}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Distinct Classifications</span>
-            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>Active</span>
-          </div>
-        </div>
-
-        {/* Network Inactive */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(100, 116, 139, 0.12)', color: '#64748b' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>person_off</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
-              Standby
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Dormant / Inactive</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : inactiveCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Past or Pending Roster</span>
-            <span>{totalCount > 0 ? `${Math.round((inactiveCount / totalCount) * 100)}%` : '0%'}</span>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Filter & Controls Bar */}
       <section className={styles.controlsCard}>

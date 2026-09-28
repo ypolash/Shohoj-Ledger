@@ -287,24 +287,7 @@ export default function EmployeesPage() {
   const activeCount = employees.filter(e => (e.status || 'ACTIVE') === 'ACTIVE').length;
   const onLeaveCount = employees.filter(e => e.status === 'ON_LEAVE').length;
   const terminatedCount = employees.filter(e => e.status === 'TERMINATED').length;
-  const projectBasedCount = employees.filter(e => e.employmentType === 'Project-Based').length;
-  const salariedCount = totalCount - projectBasedCount;
 
-  const totalMonthlyPayroll = useMemo(() => {
-    return employees
-      .filter(emp => emp.employmentType !== 'Project-Based')
-      .reduce((sum, emp) => sum + (Number(emp.basicSalary) || 0), 0);
-  }, [employees]);
-
-  const avgSalary = salariedCount > 0 ? Math.round(totalMonthlyPayroll / salariedCount) : 0;
-
-  // Department coverage
-  const representedDepts = useMemo(() => {
-    const set = new Set(
-      employees.map(e => e.departmentRef?.name || e.department).filter(Boolean)
-    );
-    return set.size;
-  }, [employees]);
 
   // Multi-dimensional filtering
   const filteredEmployees = useMemo(() => {
@@ -389,276 +372,79 @@ export default function EmployeesPage() {
 
   return (
     <div className={styles.container}>
-      {/* 1. Executive Header */}
+      {/* 1. Minimal Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <div className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Live Directory • Master Roster</span>
-          </div>
-
           <h1 className={styles.pageTitle}>
             Employee Directory &amp; Workforce
             <span className={styles.titleBadge}>{totalCount} Registered</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Manage staff profiles, departmental allocations, job designations, and salary compensation.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
+          {/* Data Intake Mode Indicator / Settings Link */}
+          <Link
+            href="/erp/settings/onboarding"
+            className={styles.headerIconBtn}
+            title={`Data Intake: ${onboardingMode === 'BASIC' ? 'Basic Mode (7 Fields)' : 'Professional Mode (Enterprise Dossier)'} - Click to configure`}
+            aria-label="Configure Data Intake Mode"
+            style={{
+              background: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.14)' : 'rgba(37, 99, 235, 0.14)',
+              color: onboardingMode === 'BASIC' ? '#f59e0b' : '#2563eb',
+              borderColor: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(37, 99, 235, 0.35)'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+              {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
+            </span>
+          </Link>
+
           <button
             onClick={handleExportCSV}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={employees.length === 0}
-            title="Download CSV Roster"
+            title="Export CSV Roster"
+            aria-label="Export CSV Roster"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-            Export CSV
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
 
           <button
             onClick={() => loadAll(true)}
-            className={styles.secondaryBtn}
+            className={styles.headerIconBtn}
             disabled={isSyncing}
             title="Refresh Employee Data"
+            aria-label="Refresh Employee Data"
           >
             <span
               className={`material-symbols-outlined ${isSyncing ? styles.spinning : ''}`}
-              style={{ fontSize: '18px' }}
+              style={{ fontSize: '20px' }}
             >
               refresh
             </span>
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
           </button>
 
           <Link
             href="/erp/hr/employees/new"
-            className={styles.primaryBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title={`Add Employee (${onboardingMode === 'BASIC' ? 'Basic' : 'Pro'})`}
+            aria-label={`Add Employee (${onboardingMode === 'BASIC' ? 'Basic' : 'Pro'})`}
             style={{
               background: onboardingMode === 'BASIC'
                 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-                : undefined,
+                : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
               boxShadow: onboardingMode === 'BASIC'
                 ? '0 4px 14px rgba(245, 158, 11, 0.35)'
-                : undefined
+                : '0 4px 14px rgba(37, 99, 235, 0.35)'
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
               {onboardingMode === 'BASIC' ? 'bolt' : 'person_add'}
             </span>
-            <span>Add Employee ({onboardingMode === 'BASIC' ? 'Basic' : 'Pro'})</span>
           </Link>
         </div>
       </header>
 
-      {/* 2. Active Data Intake System Indicator & Settings Router */}
-      <Link
-        href="/erp/settings/onboarding"
-        style={{ textDecoration: 'none' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '14px',
-            padding: '16px 24px',
-            borderRadius: '18px',
-            background: onboardingMode === 'BASIC'
-              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)'
-              : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%)',
-            border: onboardingMode === 'BASIC'
-              ? '1.5px solid rgba(245, 158, 11, 0.3)'
-              : '1.5px solid rgba(37, 99, 235, 0.3)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.03)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-          className="hover-lift"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '14px',
-                background: onboardingMode === 'BASIC' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(37, 99, 235, 0.18)',
-                color: onboardingMode === 'BASIC' ? '#f59e0b' : 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>
-                {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
-              </span>
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
-                  Select your active data intake system:
-                </span>
-                
-                {/* Active Indicator Badge */}
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 14px',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    background: onboardingMode === 'BASIC' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                    color: '#ffffff',
-                    boxShadow: onboardingMode === 'BASIC' ? '0 2px 10px rgba(245, 158, 11, 0.4)' : '0 2px 10px rgba(37, 99, 235, 0.4)',
-                    letterSpacing: '0.01em'
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                    {onboardingMode === 'BASIC' ? 'bolt' : 'workspace_premium'}
-                  </span>
-                  <span>{onboardingMode === 'BASIC' ? 'Basic Mode (7 Fields Active)' : 'Professional Mode (Enterprise Dossier Active)'}</span>
-                </span>
-              </div>
-
-              <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                {onboardingMode === 'BASIC'
-                  ? 'Collecting 7 minimal fields: Full Name, Phone, Email, Address, Salary, Join Date, Staff PIN. Click to switch or configure in Settings.'
-                  : 'Collecting complete enterprise records: Personal, Demographics, Education, Experience, Banking, Nominees. Click to switch or configure in Settings.'}
-              </p>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              borderRadius: '12px',
-              background: 'var(--surface-card)',
-              border: '1px solid var(--border-main)',
-              color: onboardingMode === 'BASIC' ? '#d97706' : 'var(--primary)',
-              fontSize: '13px',
-              fontWeight: 700,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
-            }}
-          >
-            <span>Configure in Settings</span>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
-          </div>
-        </div>
-      </Link>
-
-      {/* 3. Workforce KPI Metric Cards */}
-      <section className={styles.kpiGrid}>
-        {/* Total Workforce */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(37, 99, 235, 0.12)', color: '#2563eb' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>badge</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>group</span>
-              {totalCount > 0 ? `${Math.round((activeCount / totalCount) * 100)}% Active` : '0%'}
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Total Personnel</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : totalCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Active Staff: {activeCount}</span>
-            <span>Inactive: {totalCount - activeCount}</span>
-          </div>
-        </div>
-
-        {/* Active Staff */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>how_to_reg</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-              Operational
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Active Workforce</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} /> : activeCount}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>On Leave: {onLeaveCount}</span>
-            <span>Terminated: {terminatedCount}</span>
-          </div>
-        </div>
-
-        {/* Department Spread */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>corporate_fare</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendNeutral}`}>
-              {departments.length} Available
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Department Spread</span>
-            <div className={styles.kpiValue}>
-              {isLoading ? (
-                <div className={styles.skeleton} style={{ height: '30px', width: '50px' }} />
-              ) : (
-                `${representedDepts} / ${departments.length || 5}`
-              )}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Divisions Represented</span>
-            <Link href="/erp/hr/departments" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-              Depts →
-            </Link>
-          </div>
-        </div>
-
-        {/* Monthly Payroll Base */}
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconBox} style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>account_balance_wallet</span>
-            </div>
-            <span className={`${styles.kpiTrendBadge} ${styles.trendPositive}`}>
-              Fixed Monthly
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Base Payroll Liability</span>
-            <div className={styles.kpiValue} style={{ fontSize: '20px' }}>
-              {isLoading ? (
-                <div className={styles.skeleton} style={{ height: '30px', width: '100px' }} />
-              ) : (
-                formatCurrency(totalMonthlyPayroll)
-              )}
-            </div>
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>{salariedCount} Salaried · {projectBasedCount} Project</span>
-            <Link href="/erp/payroll" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
-              Payroll →
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* 3. Filter & Controls Bar */}
       <section className={styles.controlsCard}>

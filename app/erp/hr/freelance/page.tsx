@@ -180,17 +180,19 @@ export default function FreelancePage() {
       {/* Header Card */}
       <div className={styles.headerCard}>
         <div className={styles.headerTitleGroup}>
-          <div className={styles.liveBadgeRow}>
-            <span className={styles.livePulseDot} />
-            <span className={styles.liveBadgeText}>Workforce • Creative Talent Network</span>
-          </div>
           <h1 className={styles.pageTitle}>
-            <span className="material-symbols-outlined" style={{ color: '#3b82f6', fontSize: '28px' }}>laptop_chromebook</span>
-            Freelance Talents & Contractors
+            <span className="material-symbols-outlined" style={{ color: '#3b82f6', fontSize: '26px' }}>laptop_chromebook</span>
+            Freelance Talents &amp; Contractors
+            <span style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              padding: '3px 10px',
+              borderRadius: '9999px',
+              background: 'rgba(37, 99, 235, 0.1)',
+              color: 'var(--primary, #2563eb)',
+              border: '1px solid rgba(37, 99, 235, 0.2)'
+            }}>{stats.total} Registered</span>
           </h1>
-          <p className={styles.pageSubtitle}>
-            Manage freelance video editors, motion graphic artists, colorists, and project-based creative staff.
-          </p>
         </div>
 
         <div className={styles.headerActions}>
@@ -201,56 +203,15 @@ export default function FreelancePage() {
               setIsEditing(false);
               setShowModal(true);
             }}
-            className={styles.addBtn}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Add Freelancer"
+            aria-label="Add Freelancer"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-            + Add Freelancer
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person_add</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
-            <span className="material-symbols-outlined">engineering</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Total Freelancers</span>
-            <div className={styles.kpiValue}>{stats.total}</div>
-          </div>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
-            <span className="material-symbols-outlined">check_circle</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Available Talents</span>
-            <div className={styles.kpiValue} style={{ color: '#34d399' }}>{stats.active}</div>
-          </div>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
-            <span className="material-symbols-outlined">work</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>On Live Projects</span>
-            <div className={styles.kpiValue} style={{ color: '#fbbf24' }}>{stats.busy}</div>
-          </div>
-        </div>
-
-        <div className={styles.kpiCard}>
-          <div className={styles.kpiIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
-            <span className="material-symbols-outlined">payments</span>
-          </div>
-          <div>
-            <span className={styles.kpiLabel}>Average Project Rate</span>
-            <div className={styles.kpiValue} style={{ color: '#c084fc' }}>{formatCurrency(stats.avgRate)}</div>
-          </div>
-        </div>
-      </div>
 
       {/* Search & Filter Toolbar */}
       <div className={styles.toolbarCard}>

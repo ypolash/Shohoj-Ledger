@@ -780,83 +780,34 @@ export default function HRSettingsPage() {
       <div className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <div className={styles.titleGroup}>
-            <div className={styles.liveBadgeRow}>
-              <span className={styles.livePulseDot} />
-              <span className={styles.categoryTag}>HR & Workforce Governance</span>
-            </div>
-            <h1 className={styles.pageTitle}>HR & Operational Settings</h1>
-            <p className={styles.subtitle}>
-              Configure master office time, daily work shifts, geofencing, punch penalty slabs, and annual leave quotas.
-            </p>
+            <h1 className={styles.pageTitle}>HR &amp; Operational Settings</h1>
           </div>
 
           <div className={styles.headerActions}>
             <button
               onClick={fetchSettings}
-              className={styles.secondaryBtn}
-              title="Refresh settings from server"
+              className={styles.headerIconBtn}
+              title="Refresh Settings from Server"
+              aria-label="Refresh Settings"
               disabled={isLoading || isSaving}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>sync</span>
-              Refresh
+              <span className={`material-symbols-outlined ${isLoading ? styles.spinning : ''}`} style={{ fontSize: "20px" }}>sync</span>
             </button>
 
             <button
               onClick={handleSaveSettings}
-              className={styles.primaryBtn}
+              className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+              title={isSaving ? "Saving Settings..." : "Save All Configurations"}
+              aria-label="Save All Configurations"
               disabled={isLoading || isSaving}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
                 {isSaving ? "hourglass_empty" : "save"}
               </span>
-              {isSaving ? "Saving Settings..." : "Save All Configurations"}
             </button>
           </div>
         </div>
 
-        {/* Live Operational Schedule Telemetry Box */}
-        <div className={styles.telemetryBox}>
-          <div className={styles.telemetryLeft}>
-            <span className={`material-symbols-outlined ${styles.telemetryIcon}`}>schedule</span>
-            <div>
-              <div className={styles.telemetryTextTitle}>
-                Active Office Schedule: {formatTimeDisplay(attendanceConfig.shiftStart)} &ndash; {formatTimeDisplay(attendanceConfig.shiftEnd)}
-              </div>
-              <div className={styles.telemetryTextDesc}>
-                {attendanceConfig.gracePeriod} min check-in grace period &bull; {companySetting.workingDays?.length || 5} Working Days / Week &bull; Weekly Off: {companySetting.weeklyHolidays?.join(", ") || "Friday"}
-              </div>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <span className={`${styles.badge} ${attendanceConfig.fridayOff ? styles.badgeActive : styles.badgeInactive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-                {attendanceConfig.fridayOff ? "verified" : "cancel"}
-              </span>
-              Friday Off: {attendanceConfig.fridayOff ? "Yes" : "No"}
-            </span>
-            <span className={`${styles.badge} ${attendanceConfig.enablePunishmentDeduction ? styles.badgeActive : styles.badgeInactive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-                {attendanceConfig.enablePunishmentDeduction ? "gavel" : "info"}
-              </span>
-              Late Deductions: {attendanceConfig.enablePunishmentDeduction ? "Active" : "Disabled"}
-            </span>
-            <span
-              className={`${styles.badge} ${onboardingMode === "PROFESSIONAL" ? styles.badgeActive : ""}`}
-              style={{
-                background: onboardingMode === "BASIC" ? "rgba(245, 158, 11, 0.12)" : undefined,
-                color: onboardingMode === "BASIC" ? "#f59e0b" : undefined,
-                borderColor: onboardingMode === "BASIC" ? "rgba(245, 158, 11, 0.35)" : undefined,
-                fontWeight: 700
-              }}
-              title="Current employee onboarding system mode"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-                {onboardingMode === "BASIC" ? "bolt" : "workspace_premium"}
-              </span>
-              Intake Mode: {onboardingMode === "BASIC" ? "Basic (7 Fields)" : "Professional"}
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Alerts */}

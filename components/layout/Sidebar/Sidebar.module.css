@@ -30,17 +30,6 @@
   transform: translateX(0);
 }
 
-.brand {
-  height: 64px;
-  display: flex;
-  align-items: center;
-  padding: 0 var(--space-4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  gap: var(--space-3);
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 .logoMark {
   width: 32px;
   height: 32px;
@@ -54,14 +43,7 @@
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
   box-shadow: 0 0 15px var(--primary-glow);
-}
-
-.brandName {
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
-  color: var(--text-main);
-  opacity: 1;
-  animation: fadeIn var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .navContainer {
@@ -159,6 +141,227 @@
   to { opacity: 1; }
 }
 
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Bottom Brand / Profile Footer */
+.sidebarFooter {
+  position: relative;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-main);
+  background-color: var(--surface-main);
+  flex-shrink: 0;
+}
+
+.bottomBrandButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.bottomBrandButton:hover {
+  background-color: var(--surface-hover);
+}
+
+.bottomBrandActive {
+  background-color: var(--surface-hover);
+  border-color: var(--border-main);
+}
+
+.brandInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.brandName {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.brandSubtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.brandChevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.bottomBrandActive .brandChevron {
+  transform: rotate(180deg);
+  color: var(--text-main);
+}
+
+/* Profile Popover Flyout */
+.profileFlyout {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 8px;
+  right: 8px;
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  padding: var(--space-2);
+  animation: popIn var(--transition-fast);
+}
+
+.flyoutCollapsed {
+  left: calc(100% + 12px);
+  right: auto;
+  bottom: 0px;
+  width: 240px;
+}
+
+.flyoutHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-3) var(--space-2);
+}
+
+.flyoutAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--primary);
+  border: 1px solid var(--border-main);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.flyoutUserInfo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.flyoutUserName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flyoutUserEmail {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flyoutRoleBadge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.flyoutDivider {
+  height: 1px;
+  background-color: var(--border-main);
+  margin: var(--space-1) 0;
+}
+
+.flyoutItems {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flyoutItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-main);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.flyoutItem:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.flyoutItemIcon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.flyoutItem:hover .flyoutItemIcon {
+  color: var(--primary);
+}
+
+.dangerItem {
+  color: var(--danger);
+}
+
+.dangerItem:hover {
+  background-color: var(--danger-glow);
+  color: var(--danger);
+}
+
+.dangerItem .flyoutItemIcon {
+  color: var(--danger);
+}
+
 /* Center icons when collapsed */
 .collapsed .navItem {
   justify-content: center;
@@ -171,7 +374,7 @@
 .collapsed .navItem.active::before {
   content: '';
   position: absolute;
-  left: -8px; /* Assuming container padding is 16px */
+  left: -8px;
   top: 50%;
   transform: translateY(-50%);
   height: 20px;
@@ -182,7 +385,13 @@
 .collapsed .navContainer {
   padding: var(--space-4) var(--space-2);
 }
-.collapsed .brand {
+.collapsed .sidebarFooter {
+  padding: var(--space-2) var(--space-2);
+  display: flex;
   justify-content: center;
-  padding: 0;
 }
+.collapsed .bottomBrandButton {
+  justify-content: center;
+  padding: var(--space-2) 0;
+}
+

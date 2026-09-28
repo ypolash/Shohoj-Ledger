@@ -67,6 +67,21 @@ export default function EmployeesPage() {
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Employee Details Modal State
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const handleRowClick = (emp: Employee) => {
+    setSelectedEmployee(emp);
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 1500);
+  };
+
   // Custom Duty Modal State
   const [dutyModalEmployee, setDutyModalEmployee] = useState<Employee | null>(null);
   const [dutyStartTime, setDutyStartTime] = useState('09:30');
@@ -359,10 +374,6 @@ export default function EmployeesPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handleRowClick = (emp: Employee) => {
-    router.push(`/erp/hr/employees/${emp.id}`);
   };
 
   const getStatusClass = (status?: string) => {
@@ -1599,6 +1610,583 @@ export default function EmployeesPage() {
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 8. Executive Employee Quick Details Glass Modal */}
+      {selectedEmployee && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(3, 7, 18, 0.72)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1050,
+            padding: '20px',
+            animation: 'fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+          onClick={() => setSelectedEmployee(null)}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(180deg, #111827 0%, #0b0f19 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 30px 80px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              color: '#f8fafc'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Top Luminous Glow Bar */}
+            <div style={{
+              height: '4px',
+              width: '100%',
+              background: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+              flexShrink: 0
+            }} />
+
+            {/* Ambient Background Glow Effect */}
+            <div style={{
+              position: 'absolute',
+              top: '-60px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '380px',
+              height: '180px',
+              background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.22) 0%, rgba(59, 130, 246, 0.08) 50%, transparent 80%)',
+              pointerEvents: 'none'
+            }} />
+
+            {/* Hero Profile Stage */}
+            <div style={{
+              padding: '24px 26px 18px',
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              {/* Header Top Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    background: selectedEmployee.status === 'TERMINATED'
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : selectedEmployee.status === 'ON_LEAVE'
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : 'rgba(16, 185, 129, 0.15)',
+                    color: selectedEmployee.status === 'TERMINATED'
+                      ? '#f87171'
+                      : selectedEmployee.status === 'ON_LEAVE'
+                      ? '#fbbf24'
+                      : '#34d399',
+                    border: `1px solid ${
+                      selectedEmployee.status === 'TERMINATED'
+                        ? 'rgba(239, 68, 68, 0.3)'
+                        : selectedEmployee.status === 'ON_LEAVE'
+                        ? 'rgba(245, 158, 11, 0.3)'
+                        : 'rgba(16, 185, 129, 0.3)'
+                    }`
+                  }}>
+                    <span style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: selectedEmployee.status === 'TERMINATED'
+                        ? '#f87171'
+                        : selectedEmployee.status === 'ON_LEAVE'
+                        ? '#fbbf24'
+                        : '#34d399',
+                      boxShadow: `0 0 8px ${
+                        selectedEmployee.status === 'TERMINATED'
+                          ? '#f87171'
+                          : selectedEmployee.status === 'ON_LEAVE'
+                          ? '#fbbf24'
+                          : '#34d399'
+                      }`
+                    }} />
+                    {selectedEmployee.status || 'ACTIVE'}
+                  </span>
+
+                  {selectedEmployee.employeeId && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(selectedEmployee.employeeId || '', 'id')}
+                      title="Click to copy Employee ID"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontFamily: 'monospace',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        padding: '3px 9px',
+                        borderRadius: '6px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: copiedField === 'id' ? '#34d399' : '#94a3b8',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
+                        {copiedField === 'id' ? 'check' : 'tag'}
+                      </span>
+                      {selectedEmployee.employeeId}
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedEmployee(null)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Close"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                </button>
+              </div>
+
+              {/* Avatar + Main Info Identity */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  position: 'relative',
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '20px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '22px',
+                  boxShadow: '0 10px 25px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35)',
+                  flexShrink: 0
+                }}>
+                  {`${selectedEmployee.firstName?.[0] || ''}${selectedEmployee.lastName?.[0] || ''}`.toUpperCase() || 'EM'}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                  <h2 style={{
+                    margin: 0,
+                    fontSize: '21px',
+                    fontWeight: 800,
+                    color: '#ffffff',
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.2
+                  }}>
+                    {selectedEmployee.firstName} {selectedEmployee.lastName}
+                  </h2>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '3px 10px',
+                      borderRadius: '8px',
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      color: '#a5b4fc',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      border: '1px solid rgba(99, 102, 241, 0.25)'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>work</span>
+                      {selectedEmployee.designationRef?.name || selectedEmployee.designation || 'Staff'}
+                    </span>
+
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '3px 10px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: '#cbd5e1',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#38bdf8' }}>corporate_fare</span>
+                      {selectedEmployee.departmentRef?.name || selectedEmployee.department || 'Unassigned'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{
+              padding: '0 24px 22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              {/* 3-Tile KPI Metric Badges */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '10px'
+              }}>
+                {/* Tile 1: Salary */}
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(16, 185, 129, 0.06)',
+                  border: '1px solid rgba(16, 185, 129, 0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#34d399',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>payments</span>
+                    {selectedEmployee.employmentType === 'Project-Based' ? 'Rate' : 'Base Salary'}
+                  </span>
+                  <div style={{ fontSize: '15.5px', fontWeight: 800, color: '#ffffff' }}>
+                    {formatCurrency(selectedEmployee.basicSalary || 0)}
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
+                    {selectedEmployee.employmentType === 'Project-Based' ? 'Per Project' : 'Monthly'}
+                  </span>
+                </div>
+
+                {/* Tile 2: Duty Shift */}
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.08)' : 'rgba(59, 130, 246, 0.06)',
+                  border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.25)' : 'rgba(59, 130, 246, 0.2)'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#818cf8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>
+                    Duty Shift
+                  </span>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff' }}>
+                    {selectedEmployee.workShift ? `${selectedEmployee.workShift.startTime} - ${selectedEmployee.workShift.endTime}` : '09:30 - 18:00'}
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: selectedEmployee.workShift ? '#34d399' : '#94a3b8' }}>
+                    {selectedEmployee.workShift ? 'Custom Duty' : 'Default (09:30)'}
+                  </span>
+                </div>
+
+                {/* Tile 3: Contract */}
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(245, 158, 11, 0.06)',
+                  border: '1px solid rgba(245, 158, 11, 0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#fbbf24',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>badge</span>
+                    Contract
+                  </span>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff' }}>
+                    {selectedEmployee.employmentType || 'Full-Time'}
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
+                    {selectedEmployee.joinDate ? `Joined ${new Date(selectedEmployee.joinDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}` : 'Active Staff'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Direct Communication Channels */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '16px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b' }}>
+                  CONTACT &amp; COMMUNICATION
+                </span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {/* Email Channel */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.04)',
+                    minWidth: 0
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa', flexShrink: 0 }}>mail</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Official Email</div>
+                        <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={selectedEmployee.email}>
+                          {selectedEmployee.email}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(selectedEmployee.email, 'email')}
+                      title="Copy Email"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: copiedField === 'email' ? '#34d399' : '#64748b',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                        {copiedField === 'email' ? 'check' : 'content_copy'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Phone Channel */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.04)',
+                    minWidth: 0
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#34d399', flexShrink: 0 }}>call</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>Phone Number</div>
+                        <div style={{ fontSize: '11.5px', fontWeight: 600, color: selectedEmployee.phone ? '#f8fafc' : '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedEmployee.phone || 'Not Provided'}
+                        </div>
+                      </div>
+                    </div>
+                    {selectedEmployee.phone && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(selectedEmployee.phone || '', 'phone')}
+                        title="Copy Phone"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: copiedField === 'phone' ? '#34d399' : '#64748b',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                          {copiedField === 'phone' ? 'check' : 'content_copy'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Duty & Shift Telemetry Bar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)'}`
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#34d399' }}>sensors</span>
+                  <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 500 }}>
+                    Active Shift: <strong style={{ color: '#ffffff' }}>{selectedEmployee.workShift ? `${selectedEmployee.workShift.startTime} - ${selectedEmployee.workShift.endTime}` : '09:30 - 18:00'}</strong>
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    Grace: <strong style={{ color: '#f8fafc' }}>{selectedEmployee.workShift?.gracePeriod ?? 15}m</strong>
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    Break: <strong style={{ color: '#f8fafc' }}>{selectedEmployee.workShift?.breakTime ?? 60}m</strong>
+                  </span>
+                  <span style={{
+                    fontSize: '10.5px',
+                    fontWeight: 600,
+                    color: selectedEmployee.workShift?.nightShift ? '#f59e0b' : '#38bdf8'
+                  }}>
+                    {selectedEmployee.workShift?.nightShift ? '🌙 Night' : '☀️ Day'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar Footer */}
+            <div style={{
+              padding: '14px 24px 18px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              background: 'rgba(0, 0, 0, 0.2)',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const emp = selectedEmployee;
+                  setSelectedEmployee(null);
+                  setEmployeeToDelete(emp);
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.22)',
+                  color: '#f87171',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
+                Delete
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const emp = selectedEmployee;
+                    setSelectedEmployee(null);
+                    handleOpenCustomDuty(emp);
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                    border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    color: selectedEmployee.workShift ? '#a5b4fc' : '#e2e8f0',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                    {selectedEmployee.workShift ? 'schedule' : 'more_time'}
+                  </span>
+                  Custom Duty
+                </button>
+
+                <Link
+                  href={`/erp/hr/employees/${selectedEmployee.id}`}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>open_in_new</span>
+                  Open Full Profile
+                </Link>
               </div>
             </div>
           </div>

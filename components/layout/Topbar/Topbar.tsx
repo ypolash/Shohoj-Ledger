@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useUI } from '@/lib/contexts/UIContext';
 import styles from './Topbar.module.css';
 import { 
@@ -11,15 +10,8 @@ import {
   Moon, 
   Sun, 
   Monitor,
-  Check,
-  UserCircle,
-  Settings,
-  LogOut,
-  User,
   Menu,
   Shield,
-  Headphones,
-  ArrowLeft
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Dropdown } from '@/components/ui/Dropdown/Dropdown';
@@ -32,7 +24,6 @@ export function Topbar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -64,16 +55,6 @@ export function Topbar() {
     };
     fetchNotifications();
   }, [pathname]);
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-    } catch (e) {
-      console.error('Logout error', e);
-      router.push('/login');
-    }
-  };
 
   // Basic breadcrumb generation based on pathname
   const paths = pathname.split('/').filter(Boolean);
@@ -204,28 +185,6 @@ export function Topbar() {
                       { label: 'View all notifications', onClick: () => window.location.href = '/erp/notifications' }
                     ]
               }
-            />
-
-            <Dropdown 
-              align="right"
-              trigger={
-                <button className={styles.profileButton} aria-label="Profile Menu" title="Profile Settings">
-                  <UserCircle size={24} />
-                </button>
-              }
-              items={[
-                ...(currentUser?.platformRole === 'SUPER_ADMIN' ? [
-                  { label: 'Super Admin Portal', icon: <Shield size={16} />, onClick: () => window.location.href = '/super-admin' },
-                ] : []),
-                { 
-                  label: 'Customer Support', 
-                  icon: <Headphones size={16} />, 
-                  onClick: () => window.location.href = currentUser?.platformRole === 'SUPER_ADMIN' ? '/super-admin/support' : '/erp/support' 
-                },
-                { label: 'My Profile', icon: <User size={16} />, onClick: () => window.location.href = '/erp/settings/profile' },
-                { label: 'Account Settings', icon: <Settings size={16} />, onClick: () => window.location.href = '/erp/settings' },
-                { label: 'Sign Out', icon: <LogOut size={16} />, danger: true, onClick: handleLogout }
-              ]}
             />
           </div>
         </div>

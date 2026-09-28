@@ -17,7 +17,10 @@ import {
   Flag,
   Calendar,
   Copy,
-  Check
+  Check,
+  MoreVertical,
+  Info,
+  X
 } from 'lucide-react';
 import styles from './workspace.module.css';
 import RevisionChat from '@/app/erp/components/RevisionChat';
@@ -144,6 +147,23 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [settlementNotes, setSettlementNotes] = useState('');
   const [isCustomerLinked, setIsCustomerLinked] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [isActionsDropdownOpen, setIsActionsDropdownOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const actionsDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(event.target as Node)) {
+        setIsActionsDropdownOpen(false);
+      }
+    };
+    if (isActionsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isActionsDropdownOpen]);
 
   // Partial Payment Settlement Modal State
   const [partialPayModal, setPartialPayModal] = useState<{
@@ -493,7 +513,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
           expectedEditingDate: data.project.expectedEditingDate ? data.project.expectedEditingDate.split('T')[0] : '',
           estimatedBudget: data.project.estimatedBudget ? String(data.project.estimatedBudget) : '',
           actualCost: data.project.actualCost ? String(data.project.actualCost) : '',
-          description: data.project.description || ''
+          description: (data.project.description || '').replace(/\[\[WORKFLOW_META_V1:[\s\S]*?\]\]/g, '').trim()
         });
 
         // Parse Workflow Metadata from Description if present
@@ -1637,7 +1657,14 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
           expectedShootingDate: editForm.expectedShootingDate || null,
           expectedEditingDate: editForm.expectedEditingDate || null,
           estimatedBudget: editForm.estimatedBudget ? Number(editForm.estimatedBudget) : null,
-          description: editForm.description.trim() || null
+          description: (() => {
+            let desc = editForm.description.trim();
+            const metaTagMatch = (project?.description || '').match(/\[\[WORKFLOW_META_V1:[\s\S]*?\]\]/);
+            if (metaTagMatch) {
+              return desc ? `${desc}\n\n${metaTagMatch[0]}` : metaTagMatch[0];
+            }
+            return desc || null;
+          })()
         })
       });
       if (res.ok) {
@@ -2091,336 +2118,116 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
           </div>
         </div>
 
-        {/* 1. Hero Navigation & Command Header */}
-        {(() => {
-          const managerName = project?.manager ? `${project.manager.firstName || ''} ${project.manager.lastName || ''}`.trim() || 'Unassigned' : 'Unassigned';
-          const managerInitials = project?.manager ? `${project.manager.firstName?.[0] || ''}${project.manager.lastName?.[0] || ''}`.toUpperCase() : '';
-          const delivery = getDeliveryInfo(project?.endDate);
-          const statusColor = project?.status === 'Completed' ? '#34d399' : project?.status === 'Active' ? '#38bdf8' : project?.status === 'Draft' ? '#c084fc' : '#fbbf24';
-          const priorityColor = project?.priority === 'Urgent' ? '#f87171' : project?.priority === 'High' ? '#fb923c' : project?.priority === 'Low' ? '#34d399' : '#fbbf24';
+        {/* 1. Minimalist Top Command Bar */}
+        <div className={styles.minimalHeader}>
+          <div className={styles.minimalHeaderLeft}>
+            <Link href="/erp/projects" className={styles.backBtn} title="Return to Projects Portfolio">
+              <ArrowLeft size={16} />
+              <span>Portfolio</span>
+            </Link>
 
-          return (
-            <div className={styles.heroHeader}>
-              <div className={styles.navRow}>
-                <Link href="/erp/projects" className={styles.backBtn}>
-                  <ArrowLeft size={15} />
-                  <span>Portfolio</span>
-                </Link>
+            {project?.projectCode && (
+              <button
+                type="button"
+                onClick={() => handleCopyCode(project.projectCode || '')}
+                className={styles.projectCodeBadge}
+                title="Click to copy project code"
+              >
+                <Hash size={12} className={styles.codeHashIcon} />
+                <span>{project.projectCode}</span>
+                {copiedCode ? (
+                  <span className={styles.copiedIndicator}>
+                    <Check size={11} />
+                  </span>
+                ) : (
+                  <Copy size={11} className={styles.copyIcon} />
+                )}
+              </button>
+            )}
 
-                <div className={styles.headerActionGroup}>
-                  {/* Customer Short Link Share Button */}
+            <h1 className={styles.minimalProjectTitle}>{project.name}</h1>
+          </div>
+
+          <div className={styles.minimalHeaderRight}>
+            {/* Edit Project Button (Icon Only) */}
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className={styles.iconActionBtn}
+              title="Edit Project"
+              aria-label="Edit Project"
+            >
+              <Pencil size={16} />
+            </button>
+
+            {/* 3-Dot More Actions Menu */}
+            <div className={styles.dropdownWrapper} ref={actionsDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsActionsDropdownOpen((prev) => !prev)}
+                className={`${styles.iconActionBtn} ${isActionsDropdownOpen ? styles.iconActionBtnActive : ''}`}
+                title="More Options"
+                aria-label="More Options"
+                aria-expanded={isActionsDropdownOpen}
+              >
+                <MoreVertical size={16} />
+              </button>
+
+              {isActionsDropdownOpen && (
+                <div className={styles.actionsDropdownMenu}>
+                  <button
+                    type="button"
+                    className={styles.dropdownMenuItem}
+                    onClick={() => {
+                      setIsActionsDropdownOpen(false);
+                      setIsDetailsModalOpen(true);
+                    }}
+                  >
+                    <Info size={15} className={styles.dropdownMenuIcon} />
+                    <span>Details</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.dropdownMenuItem}
+                    onClick={() => {
+                      setIsActionsDropdownOpen(false);
+                      window.print();
+                    }}
+                  >
+                    <Printer size={15} className={styles.dropdownMenuIcon} />
+                    <span>Print Report</span>
+                  </button>
+
                   {currentStage >= 3 && currentStage < 7 && (
                     <button
                       type="button"
-                      onClick={() => setIsShareModalOpen(true)}
-                      className={styles.shareBtn}
-                      title="Share Customer Live Tracking Short Link"
+                      className={styles.dropdownMenuItem}
+                      onClick={() => {
+                        setIsActionsDropdownOpen(false);
+                        setIsShareModalOpen(true);
+                      }}
                     >
-                      <Share2 size={15} />
+                      <Share2 size={15} className={styles.dropdownMenuIcon} />
                       <span>Customer Short Link</span>
                     </button>
                   )}
 
-                  {/* Edit Project Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsEditModalOpen(true)}
-                    className={styles.editBtn}
-                    title="Edit Project Parameters"
-                  >
-                    <Pencil size={15} />
-                    <span>Edit Project</span>
-                  </button>
+                  <div className={styles.dropdownMenuDivider} />
 
-                  {/* Print Project Report Button */}
                   <button
                     type="button"
-                    onClick={() => window.print()}
-                    className={styles.printBtn}
-                    title="Print Project Report"
+                    className={`${styles.dropdownMenuItem} ${styles.dropdownMenuItemDanger}`}
+                    onClick={() => {
+                      setIsActionsDropdownOpen(false);
+                      setIsDeleteProjectModalOpen(true);
+                    }}
                   >
-                    <Printer size={15} />
-                    <span>Print Report</span>
-                  </button>
-
-                  {/* Delete Project Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteProjectModalOpen(true)}
-                    className={styles.deleteProjectBtn}
-                    title="Permanently Delete Project"
-                  >
-                    <Trash2 size={15} />
+                    <Trash2 size={15} className={styles.dropdownMenuIcon} />
                     <span>Delete Project</span>
                   </button>
                 </div>
-              </div>
-
-              <div className={styles.headerMainSection}>
-                <div className={styles.projectCodeRow}>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyCode(project.projectCode || 'PROJECT-ALPHA')}
-                    className={styles.projectCodeBadge}
-                    title="Click to copy project code"
-                  >
-                    <Hash size={13} className={styles.codeHashIcon} />
-                    <span>{project.projectCode || 'PROJECT-ALPHA'}</span>
-                    {copiedCode ? (
-                      <span className={styles.copiedIndicator}>
-                        <Check size={12} /> Copied
-                      </span>
-                    ) : (
-                      <Copy size={12} className={styles.copyIcon} />
-                    )}
-                  </button>
-                </div>
-
-                <h1 className={styles.projectTitle}>{project.name}</h1>
-              </div>
-
-              <div className={styles.metaChipsGrid}>
-                {/* Status Chip */}
-                <div className={styles.metaChip}>
-                  <span className={styles.metaChipIconWrapper} style={{
-                    background: `${statusColor}1f`,
-                    color: statusColor
-                  }}>
-                    <span className={styles.statusPulseDot} style={{
-                      background: statusColor,
-                      color: statusColor
-                    }} />
-                  </span>
-                  <div className={styles.metaChipContent}>
-                    <span className={styles.metaChipLabel}>Status</span>
-                    <span className={styles.metaChipValue} style={{ color: statusColor }}>
-                      {project.status || 'Draft'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Client Chip */}
-                <div className={styles.metaChip}>
-                  <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
-                    <Building2 size={16} />
-                  </span>
-                  <div className={styles.metaChipContent}>
-                    <span className={styles.metaChipLabel}>Client</span>
-                    <div className={styles.metaClientValueRow}>
-                      <span className={styles.metaChipValue}>{project.clientName || 'Internal Client'}</span>
-                      {project.clientPhone && (
-                        <a
-                          href={`tel:${project.clientPhone}`}
-                          className={styles.clientPhonePill}
-                          title={`Call ${project.clientPhone}`}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Phone size={11} />
-                          <span>{project.clientPhone}</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Project Manager Chip */}
-                <div className={styles.metaChip}>
-                  {managerInitials ? (
-                    <span className={styles.managerAvatarBadge}>
-                      {managerInitials}
-                    </span>
-                  ) : (
-                    <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
-                      <UserCheck size={16} />
-                    </span>
-                  )}
-                  <div className={styles.metaChipContent}>
-                    <span className={styles.metaChipLabel}>Manager</span>
-                    <span className={styles.metaChipValue}>{managerName}</span>
-                  </div>
-                </div>
-
-                {/* Priority Chip */}
-                <div className={styles.metaChip}>
-                  <span className={styles.metaChipIconWrapper} style={{
-                    background: `${priorityColor}1f`,
-                    color: priorityColor
-                  }}>
-                    <Flag size={15} />
-                  </span>
-                  <div className={styles.metaChipContent}>
-                    <span className={styles.metaChipLabel}>Priority</span>
-                    <span className={styles.metaChipValue} style={{ color: priorityColor }}>
-                      {project.priority || 'Medium'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Target Delivery Chip */}
-                <div className={styles.metaChip}>
-                  <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
-                    <Calendar size={15} />
-                  </span>
-                  <div className={styles.metaChipContent}>
-                    <span className={styles.metaChipLabel}>Target Delivery</span>
-                    <div className={styles.metaDeliveryValueRow}>
-                      <span className={styles.metaChipValue}>{delivery.formatted}</span>
-                      {delivery.badge && (
-                        <span className={styles.deliveryBadge} style={{
-                          color: delivery.badgeColor,
-                          borderColor: `${delivery.badgeColor}40`,
-                          background: `${delivery.badgeColor}18`
-                        }}>
-                          {delivery.badge}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* 2. Executive 4-KPI Metric Cards */}
-        <div className={styles.kpiGrid}>
-          {/* Card 1: Estimated Budget & Collections */}
-          <div className={styles.kpiCard}>
-            <div className={styles.kpiTop}>
-              <div className={styles.kpiIconBox} style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60a5fa' }}>
-                <span className="material-symbols-outlined">payments</span>
-              </div>
-              <span className={styles.kpiBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa' }}>
-                {budget > 0 ? `${Math.round((totalReceived / budget) * 100)}% Paid` : 'Target'}
-              </span>
-            </div>
-            <div>
-              <span className={styles.kpiLabel}>Contract Budget</span>
-              <div className={styles.kpiMainValue}>
-                {formatCurrency(budget)}
-              </div>
-            </div>
-            <div className={styles.kpiFooter}>
-              <span>Collected: <strong style={{ color: '#34d399' }}>{formatCurrency(totalReceived)}</strong></span>
-              <span>Due: <strong style={{ color: clientDue > 0 ? '#f87171' : '#34d399' }}>{formatCurrency(clientDue)}</strong></span>
-            </div>
-          </div>
-
-          {/* Card 2: Actual Cost (with inline edit) */}
-          <div className={styles.kpiCard}>
-            <div className={styles.kpiTop}>
-              <div className={styles.kpiIconBox} style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171' }}>
-                <span className="material-symbols-outlined">receipt_long</span>
-              </div>
-              <span className={styles.kpiBadge} style={{
-                background: burnRate > 100 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.15)',
-                color: burnRate > 100 ? '#f87171' : '#fbbf24'
-              }}>
-                {burnRate}% Cost Ratio
-              </span>
-            </div>
-            <div>
-              <span className={styles.kpiLabel}>Total Recorded Costs</span>
-              {isEditingActualCost ? (
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
-                  <input
-                    type="number"
-                    value={actualCostInput}
-                    onChange={(e) => setActualCostInput(e.target.value)}
-                    className={styles.actualCostInput}
-                  />
-                  <button
-                    onClick={handleUpdateActualCost}
-                    style={{ padding: '4px 8px', borderRadius: '6px', background: '#9333ea', color: '#fff', border: 'none', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setIsEditingActualCost(false)}
-                    style={{ padding: '4px 6px', borderRadius: '6px', background: 'rgba(100,116,139,0.2)', color: 'var(--text-muted, #94a3b8)', border: 'none', fontSize: '11px', cursor: 'pointer' }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                <div className={styles.kpiMainValue} style={{ color: burnRate > 100 ? '#ef4444' : undefined }}>
-                  <span>{formatCurrency(actualCost)}</span>
-                  <button
-                    onClick={() => { setIsEditingActualCost(true); setActualCostInput(String(actualCost)); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', padding: '4px' }}
-                    title="Edit Actual Cost"
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-                  </button>
-                </div>
               )}
-            </div>
-            <div className={styles.kpiFooter}>
-              <span>{expenses.length} Expense Item(s) Recorded</span>
-              <span>Deducts from profit</span>
-            </div>
-          </div>
-
-          {/* Card 3: Realized Cash Profit / Loss */}
-          <div className={styles.kpiCard}>
-            <div className={styles.kpiTop}>
-              <div className={styles.kpiIconBox} style={{
-                background: isLoss ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                border: isLoss ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                color: isLoss ? '#f87171' : '#34d399'
-              }}>
-                <span className="material-symbols-outlined">{isLoss ? 'trending_down' : 'trending_up'}</span>
-              </div>
-              <span className={styles.kpiBadge} style={{
-                background: isLoss ? 'rgba(239, 68, 68, 0.18)' : 'rgba(16, 185, 129, 0.18)',
-                color: isLoss ? '#f87171' : '#34d399'
-              }}>
-                {isLoss ? '🔴 Current Loss' : '🟢 Realized Profit'}
-              </span>
-            </div>
-            <div>
-              <span className={styles.kpiLabel}>Current Cash Position</span>
-              <div className={styles.kpiMainValue} style={{ color: isLoss ? '#f87171' : '#34d399' }}>
-                {isLoss ? `-${formatCurrency(lossAmount)}` : `+${formatCurrency(realizedProfit)}`}
-              </div>
-            </div>
-            <div className={styles.kpiFooter}>
-              <span>Projected: <strong style={{ color: isProjectedLoss ? '#f87171' : '#38bdf8' }}>{isProjectedLoss ? '-' : '+'}{formatCurrency(Math.abs(projectedProfit))}</strong></span>
-              <span>{clientDue === 0 ? 'Fully Collected' : 'On Full Pay'}</span>
-            </div>
-          </div>
-
-          {/* Card 4: Milestone Velocity & Progress */}
-          <div className={styles.kpiCard}>
-            <div className={styles.kpiTop}>
-              <div className={styles.kpiIconBox} style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', color: '#c084fc' }}>
-                <span className="material-symbols-outlined">donut_large</span>
-              </div>
-              <span className={styles.kpiBadge} style={{
-                background: project.status === 'Completed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(168, 85, 247, 0.15)',
-                color: project.status === 'Completed' ? '#34d399' : '#c084fc'
-              }}>
-                {project.status || 'Draft'}
-              </span>
-            </div>
-            <div>
-              <span className={styles.kpiLabel}>Overall Progress</span>
-              <div className={styles.kpiMainValue}>
-                {taskProgress}%
-              </div>
-            </div>
-            <div className={styles.progressBar}>
-              <div
-                className={styles.progressFill}
-                style={{
-                  width: `${Math.min(taskProgress, 100)}%`,
-                  background: taskProgress === 100 ? '#10b981' : 'linear-gradient(90deg, #9333ea, #3b82f6)'
-                }}
-              />
-            </div>
-            <div className={styles.kpiFooter}>
-              <span>{completedTasks} of {totalTasks} Tasks</span>
-              <span>{taskProgress === 100 ? 'Completed' : 'In Progress'}</span>
             </div>
           </div>
         </div>
@@ -7260,6 +7067,278 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     style={{ background: '#ef4444', borderColor: '#ef4444' }}
                   >
                     {isDeletingItem ? 'Deleting...' : 'Yes, Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            MODAL: PROJECT DETAILS
+            ==================================================================== */}
+        {isDetailsModalOpen && project && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsDetailsModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '640px' }}>
+              <div className={styles.modalHeader}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(168, 85, 247, 0.15)',
+                    border: '1px solid rgba(168, 85, 247, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#c084fc'
+                  }}>
+                    <Info size={18} />
+                  </div>
+                  <div>
+                    <h3 className={styles.modalTitle}>Project Details</h3>
+                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                      Overview & metadata specifications
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => setIsDetailsModalOpen(false)} className={styles.closeBtn} title="Close">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '4px' }}>
+                {/* Project Header Info */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '14px 18px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '14px',
+                  flexWrap: 'wrap',
+                  gap: '10px'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Project Name</span>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#f8fafc', marginTop: '2px' }}>{project.name}</div>
+                  </div>
+
+                  {project.projectCode && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCode(project.projectCode || '')}
+                      className={styles.projectCodeBadge}
+                      title="Click to copy project code"
+                    >
+                      <Hash size={13} className={styles.codeHashIcon} />
+                      <span>{project.projectCode}</span>
+                      {copiedCode ? (
+                        <span className={styles.copiedIndicator}>
+                          <Check size={12} /> Copied
+                        </span>
+                      ) : (
+                        <Copy size={12} className={styles.copyIcon} />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Details Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                  {/* Status */}
+                  {(() => {
+                    const statusColor = project?.status === 'Completed' ? '#34d399' : project?.status === 'Active' ? '#38bdf8' : project?.status === 'Draft' ? '#c084fc' : '#fbbf24';
+                    return (
+                      <div className={styles.metaChip} style={{ width: '100%' }}>
+                        <span className={styles.metaChipIconWrapper} style={{
+                          background: `${statusColor}1f`,
+                          color: statusColor
+                        }}>
+                          <span className={styles.statusPulseDot} style={{
+                            background: statusColor,
+                            color: statusColor
+                          }} />
+                        </span>
+                        <div className={styles.metaChipContent}>
+                          <span className={styles.metaChipLabel}>Status</span>
+                          <span className={styles.metaChipValue} style={{ color: statusColor }}>
+                            {project.status || 'Draft'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Priority */}
+                  {(() => {
+                    const priorityColor = project?.priority === 'Urgent' ? '#f87171' : project?.priority === 'High' ? '#fb923c' : project?.priority === 'Low' ? '#34d399' : '#fbbf24';
+                    return (
+                      <div className={styles.metaChip} style={{ width: '100%' }}>
+                        <span className={styles.metaChipIconWrapper} style={{
+                          background: `${priorityColor}1f`,
+                          color: priorityColor
+                        }}>
+                          <Flag size={15} />
+                        </span>
+                        <div className={styles.metaChipContent}>
+                          <span className={styles.metaChipLabel}>Priority</span>
+                          <span className={styles.metaChipValue} style={{ color: priorityColor }}>
+                            {project.priority || 'Medium'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Client */}
+                  <div className={styles.metaChip} style={{ width: '100%' }}>
+                    <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+                      <Building2 size={16} />
+                    </span>
+                    <div className={styles.metaChipContent}>
+                      <span className={styles.metaChipLabel}>Client</span>
+                      <div className={styles.metaClientValueRow}>
+                        <span className={styles.metaChipValue}>{project.clientName || 'Internal Client'}</span>
+                        {project.clientPhone && (
+                          <a
+                            href={`tel:${project.clientPhone}`}
+                            className={styles.clientPhonePill}
+                            title={`Call ${project.clientPhone}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Phone size={11} />
+                            <span>{project.clientPhone}</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Manager */}
+                  {(() => {
+                    const managerName = project?.manager ? `${project.manager.firstName || ''} ${project.manager.lastName || ''}`.trim() || 'Unassigned' : 'Unassigned';
+                    const managerInitials = project?.manager ? `${project.manager.firstName?.[0] || ''}${project.manager.lastName?.[0] || ''}`.toUpperCase() : '';
+                    return (
+                      <div className={styles.metaChip} style={{ width: '100%' }}>
+                        {managerInitials ? (
+                          <span className={styles.managerAvatarBadge}>
+                            {managerInitials}
+                          </span>
+                        ) : (
+                          <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc' }}>
+                            <UserCheck size={16} />
+                          </span>
+                        )}
+                        <div className={styles.metaChipContent}>
+                          <span className={styles.metaChipLabel}>Manager</span>
+                          <span className={styles.metaChipValue}>{managerName}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Target Delivery */}
+                  {(() => {
+                    const delivery = getDeliveryInfo(project?.endDate);
+                    return (
+                      <div className={styles.metaChip} style={{ width: '100%' }}>
+                        <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                          <Calendar size={15} />
+                        </span>
+                        <div className={styles.metaChipContent}>
+                          <span className={styles.metaChipLabel}>Target Delivery</span>
+                          <div className={styles.metaDeliveryValueRow}>
+                            <span className={styles.metaChipValue}>{delivery.formatted}</span>
+                            {delivery.badge && (
+                              <span className={styles.deliveryBadge} style={{
+                                color: delivery.badgeColor,
+                                borderColor: `${delivery.badgeColor}40`,
+                                background: `${delivery.badgeColor}18`
+                              }}>
+                                {delivery.badge}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Category */}
+                  {project.category && (
+                    <div className={styles.metaChip} style={{ width: '100%' }}>
+                      <span className={styles.metaChipIconWrapper} style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>category</span>
+                      </span>
+                      <div className={styles.metaChipContent}>
+                        <span className={styles.metaChipLabel}>Category</span>
+                        <span className={styles.metaChipValue}>{project.category}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dates Range */}
+                {(project.startDate || project.endDate) && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    fontSize: '12px',
+                    color: '#94a3b8'
+                  }}>
+                    <div>Start Date: <strong style={{ color: '#e2e8f0' }}>{project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A'}</strong></div>
+                    <div>Due Date: <strong style={{ color: '#e2e8f0' }}>{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}</strong></div>
+                  </div>
+                )}
+
+                {/* Description / Notes */}
+                {(() => {
+                  const cleanDesc = (project.description || '').replace(/\[\[WORKFLOW_META_V1:[\s\S]*?\]\]/g, '').trim();
+                  if (!cleanDesc) return null;
+                  return (
+                    <div style={{
+                      padding: '14px 16px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description / Notes</span>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                        {cleanDesc}
+                      </p>
+                    </div>
+                  );
+                })()}
+
+                {/* Modal Actions */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px', paddingTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDetailsModalOpen(false);
+                      setIsEditModalOpen(true);
+                    }}
+                    className={styles.editBtn}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Pencil size={14} />
+                    <span>Edit Project</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailsModalOpen(false)}
+                    className={styles.backBtn}
+                  >
+                    Close
                   </button>
                 </div>
               </div>

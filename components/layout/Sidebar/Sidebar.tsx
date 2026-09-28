@@ -35,6 +35,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
 
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/erp' },
+    { name: 'Projects', icon: Folder, href: '/erp/projects' },
     { name: 'Community', icon: MessageSquare, href: '/erp/community' },
     { name: 'CRM', icon: Users, href: '/erp/crm' },
     { name: 'Orders', icon: ShoppingCart, href: '/erp/orders' },
@@ -42,7 +43,6 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     { name: 'Inventory', icon: Box, href: '/erp/inventory' },
     { name: 'HR', icon: Briefcase, href: '/erp/hr' },
     { name: 'Payroll', icon: CreditCard, href: '/erp/payroll' },
-    { name: 'Projects', icon: Folder, href: '/erp/projects' },
     { name: 'Marketing', icon: Megaphone, href: '/erp/marketing' },
     { name: 'Reports', icon: BarChart2, href: '/erp/reports' },
   ].filter(item => {

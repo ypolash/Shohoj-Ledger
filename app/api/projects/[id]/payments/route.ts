@@ -146,15 +146,16 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         .replace(/^\[Partial Settlement\]/i, '')
         .trim();
 
-      // Exact format requested: (Project Name Advaced 1500)
-      const incomeDesc = `${project.name} ${incomeLabel} ${paymentAmount}${cleanNotes ? ` (${cleanNotes})` : ''}`;
+      const formattedAmount = Number(paymentAmount).toLocaleString('en-US');
+      // Exact format requested: "<Project Name>: <Amount> Advance" or "<Project Name>: <Amount> Final Payment"
+      const incomeDesc = `${project.name}: ${formattedAmount} ${incomeLabel}${cleanNotes ? ` (${cleanNotes})` : ''}`;
 
       const income = await tx.income.create({
         data: {
           companyId,
           projectId: project.id,
           category: isAdvance ? "Advance Payment" : isFinal ? "Project Final Payment" : "Project Payment",
-          source: paymentMethod,
+          source: project.clientName || project.name,
           amount: paymentAmount,
           received: paymentAmount,
           paymentStatus: "PAID",
@@ -190,17 +191,17 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           }
         });
 
-        // Exact format requested: Project Name Cost Reason Amount
+        const formattedCost = Number(customCost).toLocaleString('en-US');
         const expenseDesc = costReason
-          ? `${project.name} Cost - ${costReason} ${customCost}`
-          : `${project.name} Cost ${customCost}`;
+          ? `${project.name}: ${costReason} - ${formattedCost}`
+          : `${project.name}: Project Expense - ${formattedCost}`;
 
         // Record custom cost as a project expense
         const costExpense = await tx.expense.create({
           data: {
             companyId,
             projectId: project.id,
-            category: "Project Custom Cost",
+            category: "Project Expense",
             amount: customCost,
             paymentMethod,
             approvalStatus: "APPROVED",

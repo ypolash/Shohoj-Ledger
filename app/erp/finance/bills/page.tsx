@@ -230,7 +230,7 @@ export default function BillsDuePage() {
           </button>
           <div>
             <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Receipt size={26} color="#f43f5e" />
+              <Receipt size={26} color="#2563eb" />
               <span>Bills Due &amp; Accounts Payable</span>
             </h1>
             <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
@@ -243,9 +243,9 @@ export default function BillsDuePage() {
           <button 
             onClick={() => setIsNewBillOpen(true)}
             style={{ 
-              padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', 
+              padding: '10px 20px', borderRadius: '10px', background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', 
               border: 'none', color: 'white', fontSize: '13px', fontWeight: 700, cursor: 'pointer', 
-              display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(244, 63, 94, 0.35)' 
+              display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)' 
             }}
           >
             <Plus size={16} />
@@ -256,14 +256,14 @@ export default function BillsDuePage() {
 
       {/* KPI Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-        <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #f43f5e' }}>
+        <div className="glass-card" style={{ padding: '20px', borderRadius: '14px', borderLeft: '4px solid #2563eb' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Bills Due</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(37, 99, 235, 0.15)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Receipt size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, color: '#f43f5e' }}>৳ {kpis.totalDue.toLocaleString()}</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: '#2563eb' }}>৳ {kpis.totalDue.toLocaleString()}</div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Across pending vendor invoices</div>
         </div>
 

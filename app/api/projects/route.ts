@@ -226,14 +226,15 @@ export async function POST(req: Request) {
           }
         });
 
-        const incomeDesc = `${trimmedName} Advance ${parsedAdvance}`;
+        const formattedAdvance = Number(parsedAdvance).toLocaleString('en-US');
+        const incomeDesc = `${trimmedName}: ${formattedAdvance} Advance`;
 
         const income = await tx.income.create({
           data: {
             companyId,
             projectId: p.id,
             category: "Advance Payment",
-            source: "Bank Transfer",
+            source: trimmedName,
             amount: parsedAdvance,
             received: parsedAdvance,
             paymentStatus: "PAID",

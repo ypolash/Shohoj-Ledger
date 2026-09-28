@@ -107,7 +107,7 @@ export function ExpenseCard({ expense, onDelete, onQuickView }: ExpenseCardProps
                   lineHeight: 1.2
                 }}
               >
-                {expense.category || 'General Expense'}
+                {expense.description || expense.category || 'General Expense'}
               </Link>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
@@ -129,7 +129,7 @@ export function ExpenseCard({ expense, onDelete, onQuickView }: ExpenseCardProps
                   alignItems: 'center',
                   gap: '3px'
                 }}>
-                  {expense.paymentMethod || 'Bank Transfer'}
+                  {expense.category}
                 </span>
               </div>
             </div>
@@ -141,11 +141,11 @@ export function ExpenseCard({ expense, onDelete, onQuickView }: ExpenseCardProps
             fontSize: '0.7rem', 
             fontWeight: 700, 
             textTransform: 'uppercase',
-            background: status === 'APPROVED' ? 'rgba(16, 185, 129, 0.12)' : status === 'PENDING' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-            color: status === 'APPROVED' ? '#10b981' : status === 'PENDING' ? '#f59e0b' : '#ef4444',
-            border: `1px solid ${status === 'APPROVED' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`
+            background: status === 'APPROVED' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(37, 99, 235, 0.12)',
+            color: status === 'APPROVED' ? '#10b981' : '#2563eb',
+            border: `1px solid ${status === 'APPROVED' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(37, 99, 235, 0.25)'}`
           }}>
-            {status}
+            {status === 'APPROVED' ? 'PAID' : 'BILL DUE'}
           </span>
         </div>
 
@@ -155,11 +155,9 @@ export function ExpenseCard({ expense, onDelete, onQuickView }: ExpenseCardProps
             <Calendar size={13} />
             <span>{new Date(expense.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
           </div>
-          {expense.description && (
-            <p style={{ margin: '2px 0 0', color: 'var(--text-main)', fontSize: '0.825rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {expense.description}
-            </p>
-          )}
+          <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+            Method: {expense.paymentMethod || 'Bank Transfer'}
+          </div>
         </div>
       </div>
 

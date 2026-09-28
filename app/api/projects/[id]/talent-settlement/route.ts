@@ -39,9 +39,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
     const category = talentType === "MODEL" ? "Model Fee" : "Editor Fee";
+    const formattedTalentAmount = Number(talentAmount).toLocaleString('en-US');
     const description = talentType === "MODEL"
-      ? `${project.name} Model ${talentAmount}${isPartial ? ' (Partial)' : ''}`
-      : `${project.name} Editor ${talentAmount}${isPartial ? ' (Partial)' : ''}`;
+      ? `${project.name}: Model Fee - ${formattedTalentAmount}${talentName ? ` (${talentName})` : ''}${isPartial ? ' (Partial)' : ''}`
+      : `${project.name}: Editor Fee - ${formattedTalentAmount}${talentName ? ` (${talentName})` : ''}${isPartial ? ' (Partial)' : ''}`;
 
     const result = await prisma.$transaction(async (tx: any) => {
       const currentActualCost = Number(project.actualCost || 0);

@@ -127,17 +127,20 @@ export async function PATCH(
           }
         });
 
+        const formattedCost = Number(newCustomCost).toLocaleString('en-US');
+        const expenseDesc = newCostReason
+          ? `${project.name}: ${newCostReason} - ${formattedCost}`
+          : `${project.name}: Project Expense - ${formattedCost}`;
+
         const costExpense = await tx.expense.create({
           data: {
             companyId,
             projectId: project.id,
-            category: "Project Custom Cost",
+            category: "Project Expense",
             amount: newCustomCost,
             paymentMethod: newPaymentMethod,
             approvalStatus: "APPROVED",
-            description: newCostReason
-              ? `Project "${project.name}" custom cost: ${newCostReason}`
-              : `Project "${project.name}" cost recorded with payment`,
+            description: expenseDesc,
             systemSource: "ERP"
           }
         });
@@ -149,7 +152,7 @@ export async function PATCH(
           amount: newCustomCost,
           isDebit: false,
           accountType: newPaymentMethod,
-          description: `Project Cost: ${newCostReason || 'Custom Cost'} (${project.name})`,
+          description: `Project Expense: ${expenseDesc}`,
           createdById: session.user.id,
           systemSource: "ERP"
         });
@@ -175,7 +178,8 @@ export async function PATCH(
         .replace(/\[Custom Cost:[^\]]*\]/gi, '')
         .trim();
 
-      const incomeDesc = `${project.name} ${incomeLabel} ${newAmount}${cleanNotes ? ` (${cleanNotes})` : ''}`;
+      const formattedAmount = Number(newAmount).toLocaleString('en-US');
+      const incomeDesc = `${project.name}: ${formattedAmount} ${incomeLabel}${cleanNotes ? ` (${cleanNotes})` : ''}`;
 
       const income = await tx.income.findFirst({
         where: {
@@ -191,7 +195,7 @@ export async function PATCH(
           data: {
             amount: newAmount,
             received: newAmount,
-            source: newPaymentMethod,
+            source: project.clientName || project.name,
             description: incomeDesc
           }
         });

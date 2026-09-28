@@ -116,8 +116,8 @@ export function IncomeSummary({
           </div>
 
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Balance Due</div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '4px', color: due > 0 ? 'var(--warning, #f59e0b)' : 'var(--success, #10b981)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Bill Due (Receivable)</div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '4px', color: due > 0 ? '#ef4444' : 'var(--success, #10b981)' }}>
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(due)}
             </div>
           </div>
@@ -258,7 +258,7 @@ export function IncomeSummary({
         </div>
       </div>
 
-      {/* 3. Pending Receivables / Due */}
+      {/* 3. Pending Receivables / Bill Due */}
       <div 
         onClick={() => onFilterClick && onFilterClick('due')}
         className="glass-card" 
@@ -269,7 +269,7 @@ export function IncomeSummary({
           flexDirection: 'column', 
           gap: '12px',
           background: 'var(--surface-main)',
-          border: activeFilter === 'due' ? '2px solid var(--warning)' : '1px solid var(--border-main)',
+          border: activeFilter === 'due' ? '2px solid #ef4444' : '1px solid var(--border-main)',
           cursor: onFilterClick ? 'pointer' : 'default',
           position: 'relative',
           overflow: 'hidden',
@@ -278,36 +278,36 @@ export function IncomeSummary({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Receivables (Due)
+            Bill Due (Receivable)
           </span>
           <div style={{
             width: '40px',
             height: '40px',
             borderRadius: '10px',
-            background: 'rgba(245, 158, 11, 0.12)',
-            color: '#f59e0b',
+            background: 'rgba(239, 68, 68, 0.12)',
+            color: '#ef4444',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 6px rgba(245, 158, 11, 0.15)'
+            boxShadow: '0 2px 6px rgba(239, 68, 68, 0.15)'
           }}>
             <Clock size={20} />
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '-0.02em' }}>
+          <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#ef4444', letterSpacing: '-0.02em' }}>
             {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(due)}
           </span>
           <span style={{
             fontSize: '0.75rem',
             fontWeight: 600,
-            color: '#f59e0b',
-            background: 'rgba(245, 158, 11, 0.12)',
+            color: '#ef4444',
+            background: 'rgba(239, 68, 68, 0.12)',
             padding: '2px 8px',
             borderRadius: '9999px'
           }}>
-            Outstanding
+            Bill Due
           </span>
         </div>
       </div>

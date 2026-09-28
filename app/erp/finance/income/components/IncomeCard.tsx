@@ -110,7 +110,7 @@ export function IncomeCard({ income, onDelete, onQuickView }: IncomeCardProps) {
                   lineHeight: 1.2
                 }}
               >
-                {income.source || 'General Revenue'}
+                {income.description || income.source || 'General Revenue'}
               </Link>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
@@ -158,9 +158,9 @@ export function IncomeCard({ income, onDelete, onQuickView }: IncomeCardProps) {
             <Calendar size={13} />
             <span>{new Date(income.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
           </div>
-          {income.description && (
-            <p style={{ margin: '2px 0 0', color: 'var(--text-main)', fontSize: '0.825rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {income.description}
+          {income.source && income.description && income.source !== income.description && (
+            <p style={{ margin: '2px 0 0', color: 'var(--text-muted)', fontSize: '0.825rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Source: {income.source}
             </p>
           )}
         </div>
@@ -185,7 +185,7 @@ export function IncomeCard({ income, onDelete, onQuickView }: IncomeCardProps) {
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.725rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
           <span>Total: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(totalAmount)}</span>
           {dueAmount > 0 ? (
-            <span style={{ color: 'var(--warning, #f59e0b)', fontWeight: 600 }}>Due: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(dueAmount)}</span>
+            <span style={{ color: '#ef4444', fontWeight: 700 }}>Bill Due: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(dueAmount)}</span>
           ) : (
             <span style={{ color: 'var(--success, #10b981)', fontWeight: 600 }}>100% Settled</span>
           )}

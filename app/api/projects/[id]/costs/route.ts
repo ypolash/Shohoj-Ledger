@@ -46,16 +46,17 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         }
       });
 
+      const formattedCost = Number(customCost).toLocaleString('en-US');
       const expenseDesc = costReason
-        ? `${project.name} Cost - ${costReason} ${customCost}`
-        : `${project.name} Cost ${customCost}`;
+        ? `${project.name}: ${costReason} - ${formattedCost}`
+        : `${project.name}: Project Expense - ${formattedCost}`;
 
       // Record custom cost as a project expense
       const costExpense = await tx.expense.create({
         data: {
           companyId,
           projectId: project.id,
-          category: "Project Custom Cost",
+          category: "Project Expense",
           amount: customCost,
           paymentMethod: "Cash",
           approvalStatus: "APPROVED",

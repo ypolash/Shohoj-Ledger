@@ -165,8 +165,8 @@ export default function ExpensesPage() {
             <div className={styles.metricValue} style={{ color: 'var(--success)' }}>{formatCurrency(totalPaid)}</div>
           </div>
           <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-            <div className={styles.metricTitle}>Unpaid Amount</div>
-            <div className={styles.metricValue} style={{ color: 'var(--warning)' }}>{formatCurrency(totalUnpaid)}</div>
+            <div className={styles.metricTitle}>Bill Due (Payable)</div>
+            <div className={styles.metricValue} style={{ color: '#2563eb' }}>{formatCurrency(totalUnpaid)}</div>
           </div>
           <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
             <div className={styles.metricTitle}>This Month Expenses</div>
@@ -190,7 +190,7 @@ export default function ExpensesPage() {
               <input 
                 type="text" 
                 className="input" 
-                placeholder="Search by vendor or description..." 
+                placeholder="Search by project, vendor or description..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -226,11 +226,10 @@ export default function ExpensesPage() {
                 <tr>
                   <th>Date</th>
                   <th>Category</th>
-                  <th>Vendor / Payee</th>
-                  <th>Description</th>
+                  <th>Description / Project</th>
                   <th style={{ textAlign: 'right' }}>Total Amount</th>
                   <th style={{ textAlign: 'right' }}>Paid Amount</th>
-                  <th style={{ textAlign: 'right' }}>Due Amount</th>
+                  <th style={{ textAlign: 'right' }}>Bill Due</th>
                   <th style={{ textAlign: 'center' }}>Method</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -238,7 +237,7 @@ export default function ExpensesPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={10} style={{ textAlign: 'center' }}>Loading...</td></tr>
+                  <tr><td colSpan={9} style={{ textAlign: 'center' }}>Loading...</td></tr>
                 ) : paginatedExpenses.length > 0 ? (
                   paginatedExpenses.map((exp) => {
                     const total = parseFloat(exp.amount);
@@ -249,13 +248,18 @@ export default function ExpensesPage() {
                       <tr key={exp.id}>
                         <td>{new Date(exp.createdAt).toLocaleDateString()}</td>
                         <td style={{ fontWeight: 500 }}>{exp.category}</td>
-                        <td>{exp.description?.substring(0, 20) || '-'}</td>
-                        <td style={{ color: "var(--text-muted)", fontSize: "0.8rem", maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                           {exp.description || '-'}
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(total)}</td>
                         <td style={{ textAlign: 'right', color: paid > 0 ? 'var(--success)' : 'inherit' }}>{formatCurrency(paid)}</td>
-                        <td style={{ textAlign: 'right', color: due > 0 ? 'var(--warning)' : 'inherit' }}>{formatCurrency(due)}</td>
+                        <td style={{ textAlign: 'right', color: due > 0 ? '#2563eb' : 'inherit', fontWeight: due > 0 ? 700 : 400 }}>
+                          {due > 0 ? (
+                            <span style={{ color: '#2563eb' }}>{formatCurrency(due)}</span>
+                          ) : (
+                            formatCurrency(0)
+                          )}
+                        </td>
                         <td style={{ textAlign: 'center', fontSize: '0.8rem' }}>{exp.paymentMethod.replace('_', ' ')}</td>
                         <td style={{ textAlign: 'center' }}>{getStatusBadge(exp.approvalStatus)}</td>
                         <td>

@@ -437,11 +437,11 @@ export function ExpenseTable({
                         </div>
                         <div className={styles.payeeDetails}>
                           <span className={styles.payeeName}>
-                            {exp.category || 'General Expense'}
+                            {exp.description || exp.category || 'General Expense'}
                           </span>
-                          {exp.description && (
-                            <span className={styles.payeeMemo} title={exp.description}>
-                              {exp.description}
+                          {exp.description && exp.category && (
+                            <span className={styles.payeeMemo} title={exp.category}>
+                              {exp.category}
                             </span>
                           )}
                         </div>
@@ -466,9 +466,9 @@ export function ExpenseTable({
 
                     {/* Status Pill */}
                     <td className={styles.td}>
-                      <span className={`${styles.statusBadge} ${getStatusClass(status)}`}>
-                        <span className={styles.statusDot} />
-                        {status}
+                      <span className={`${styles.statusBadge} ${getStatusClass(status)}`} style={status === 'PENDING' || status === 'UNPAID' ? { background: 'rgba(37, 99, 235, 0.12)', color: '#2563eb', borderColor: 'rgba(37, 99, 235, 0.25)' } : {}}>
+                        <span className={styles.statusDot} style={status === 'PENDING' || status === 'UNPAID' ? { background: '#2563eb' } : {}} />
+                        {status === 'PENDING' || status === 'UNPAID' ? 'BILL DUE' : status}
                       </span>
                     </td>
 

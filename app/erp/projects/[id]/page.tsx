@@ -2496,10 +2496,10 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
 
                 <div className={styles.kpiCard}>
-                  <span className={styles.kpiLabel}>Remaining Client Due</span>
-                  <div className={styles.kpiMainValue} style={{ color: clientDue > 0 ? '#f87171' : '#34d399' }}>{formatCurrency(clientDue)}</div>
-                  <span style={{ fontSize: '11px', color: clientDue === 0 ? '#34d399' : '#f87171', fontWeight: 600 }}>
-                    {clientDue === 0 ? '✓ Fully Settled' : 'Payment Balance Due'}
+                  <span className={styles.kpiLabel}>Bill Due (Receivable)</span>
+                  <div className={styles.kpiMainValue} style={{ color: clientDue > 0 ? '#ef4444' : '#34d399' }}>{formatCurrency(clientDue)}</div>
+                  <span style={{ fontSize: '11px', color: clientDue === 0 ? '#34d399' : '#ef4444', fontWeight: 600 }}>
+                    {clientDue === 0 ? '✓ Fully Settled' : 'Bill Due (Receivable)'}
                   </span>
                 </div>
               </div>
@@ -5028,9 +5028,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                     <div>
                       <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Outstanding Client Due {totalRevisionFees > 0 ? `(incl. ${formatCurrency(totalRevisionFees)} revision fees)` : ''}:
+                        Bill Due (Receivable) {totalRevisionFees > 0 ? `(incl. ${formatCurrency(totalRevisionFees)} revision fees)` : ''}:
                       </span>
-                      <strong style={{ fontSize: '16px', color: clientDue > 0 ? '#f87171' : '#34d399' }}>
+                      <strong style={{ fontSize: '16px', color: clientDue > 0 ? '#ef4444' : '#34d399' }}>
                         {formatCurrency(clientDue)}
                       </strong>
                     </div>
@@ -5240,8 +5240,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </div>
 
                     <div style={{ padding: '10px 14px', background: clientDue > 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', border: clientDue > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)' }}>
-                      <span style={{ fontSize: '11px', color: clientDue > 0 ? '#f87171' : '#34d399', display: 'block' }}>Outstanding Client Due</span>
-                      <strong style={{ fontSize: '14px', color: clientDue > 0 ? '#f87171' : '#34d399', marginTop: '2px', display: 'block' }}>
+                      <span style={{ fontSize: '11px', color: clientDue > 0 ? '#ef4444' : '#34d399', display: 'block' }}>Bill Due (Receivable)</span>
+                      <strong style={{ fontSize: '14px', color: clientDue > 0 ? '#ef4444' : '#34d399', marginTop: '2px', display: 'block' }}>
                         {clientDue > 0 ? formatCurrency(clientDue) : 'PAID & SETTLED ✓'}
                       </strong>
                     </div>
@@ -5284,13 +5284,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                           <span style={{
                             padding: '3px 8px',
                             borderRadius: '6px',
-                            background: isFullyPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.15)',
-                            color: isFullyPaid ? '#34d399' : isPartiallyPaid ? '#fbbf24' : '#f87171',
-                            border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.4)' : isPartiallyPaid ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
+                            background: isFullyPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.15)',
+                            color: isFullyPaid ? '#34d399' : '#3b82f6',
+                            border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(37, 99, 235, 0.35)',
                             fontSize: '11px',
                             fontWeight: 700
                           }}>
-                            {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Due: ${formatCurrency(remainingDue)})` : '⏳ PAYMENT DUE'}
+                            {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Bill Due: ${formatCurrency(remainingDue)})` : '⏳ BILL DUE'}
                           </span>
                         </div>
 
@@ -5511,13 +5511,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                             <span style={{
                               padding: '3px 8px',
                               borderRadius: '6px',
-                              background: isAllPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.15)',
-                              color: isAllPaid ? '#34d399' : isPartiallyPaid ? '#fbbf24' : '#f87171',
-                              border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.4)' : isPartiallyPaid ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
+                              background: isAllPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.15)',
+                              color: isAllPaid ? '#34d399' : '#3b82f6',
+                              border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(37, 99, 235, 0.35)',
                               fontSize: '11px',
                               fontWeight: 700
                             }}>
-                              {isAllPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Due: ${formatCurrency(summary.remainingDue)})` : '⏳ PAYMENT DUE'}
+                              {isAllPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Bill Due: ${formatCurrency(summary.remainingDue)})` : '⏳ BILL DUE'}
                             </span>
                           </div>
 
@@ -5967,8 +5967,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     <strong style={{ fontSize: '14px', color: '#34d399' }}>{formatCurrency(totalReceived)}</strong>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>Remaining Due</span>
-                    <strong style={{ fontSize: '16px', color: clientDue > 0 ? '#f87171' : '#34d399' }}>{formatCurrency(clientDue)}</strong>
+                    <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8' }}>Bill Due (Receivable)</span>
+                    <strong style={{ fontSize: '16px', color: clientDue > 0 ? '#ef4444' : '#34d399' }}>{formatCurrency(clientDue)}</strong>
                   </div>
                 </div>
 
@@ -6455,7 +6455,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 }}>
                   <span>Budget: <strong style={{ color: '#f8fafc' }}>{formatCurrency(budget)}</strong></span>
                   <span>Received: <strong style={{ color: '#34d399' }}>{formatCurrency(totalReceived)}</strong></span>
-                  <span>Current Due: <strong style={{ color: '#f87171' }}>{formatCurrency(clientDue)}</strong></span>
+                  <span>Bill Due: <strong style={{ color: '#ef4444' }}>{formatCurrency(clientDue)}</strong></span>
                 </div>
 
                 <div>

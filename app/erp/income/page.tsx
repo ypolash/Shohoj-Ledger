@@ -272,8 +272,8 @@ export default function IncomePage() {
               <div className={styles.metricValue} style={{ color: 'var(--success)' }}>{formatCurrency(totalReceived)}</div>
             </div>
             <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
-              <div className={styles.metricTitle}>Pending / Due</div>
-              <div className={styles.metricValue} style={{ color: 'var(--warning)' }}>{formatCurrency(totalPending)}</div>
+              <div className={styles.metricTitle}>Bill Due (Receivable)</div>
+              <div className={styles.metricValue} style={{ color: 'var(--danger, #ef4444)' }}>{formatCurrency(totalPending)}</div>
             </div>
             <div className="glass-card" style={{ padding: 'var(--spacing-4)' }}>
               <div className={styles.metricTitle}>This Month</div>
@@ -298,7 +298,7 @@ export default function IncomePage() {
                 <input 
                   type="text" 
                   className="input" 
-                  placeholder="Search by source or category..." 
+                  placeholder="Search by source, project or category..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -334,10 +334,10 @@ export default function IncomePage() {
                   <tr>
                     <th>Date</th>
                     <th>Category</th>
-                    <th>Source</th>
+                    <th>Source / Description</th>
                     <th style={{ textAlign: 'right' }}>Total Amount</th>
                     <th style={{ textAlign: 'right' }}>Received</th>
-                    <th style={{ textAlign: 'right' }}>Due</th>
+                    <th style={{ textAlign: 'right' }}>Bill Due</th>
                     <th style={{ textAlign: 'center' }}>Shareable</th>
                     <th style={{ textAlign: 'center' }}>Status</th>
                     <th style={{ textAlign: 'right' }}>Actions</th>
@@ -351,15 +351,27 @@ export default function IncomePage() {
                       const total = parseFloat(inc.amount);
                       const receivedAmount = parseFloat(inc.received);
                       const due = total - receivedAmount;
+                      const titleDisplay = inc.description || inc.source || '-';
                       
                       return (
                         <tr key={inc.id}>
                           <td>{new Date(inc.createdAt).toLocaleDateString()}</td>
                           <td style={{ fontWeight: 500 }}>{inc.category}</td>
-                          <td>{inc.source || '-'}</td>
+                          <td>
+                            <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{titleDisplay}</div>
+                            {inc.description && inc.source && inc.description !== inc.source && (
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{inc.source}</div>
+                            )}
+                          </td>
                           <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(total)}</td>
                           <td style={{ textAlign: 'right', color: 'var(--success)' }}>{formatCurrency(receivedAmount)}</td>
-                          <td style={{ textAlign: 'right', color: due > 0 ? 'var(--warning)' : 'inherit' }}>{formatCurrency(due)}</td>
+                          <td style={{ textAlign: 'right', color: due > 0 ? '#ef4444' : 'inherit', fontWeight: due > 0 ? 700 : 400 }}>
+                            {due > 0 ? (
+                              <span style={{ color: '#ef4444' }}>{formatCurrency(due)}</span>
+                            ) : (
+                              formatCurrency(0)
+                            )}
+                          </td>
                           <td style={{ textAlign: 'center' }}>
                             {inc.shareable ? (
                               <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '18px' }}>check_circle</span>

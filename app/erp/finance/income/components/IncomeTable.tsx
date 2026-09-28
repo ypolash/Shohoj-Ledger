@@ -443,11 +443,11 @@ export function IncomeTable({
                         </div>
                         <div className={styles.sourceDetails}>
                           <span className={styles.sourceName}>
-                            {inc.source || 'General Revenue'}
+                            {inc.description || inc.source || 'General Revenue'}
                           </span>
-                          {inc.description && (
-                            <span className={styles.sourceMemo} title={inc.description}>
-                              {inc.description}
+                          {inc.description && inc.source && inc.description !== inc.source && (
+                            <span className={styles.sourceMemo} title={inc.source}>
+                              {inc.source}
                             </span>
                           )}
                         </div>
@@ -470,7 +470,7 @@ export function IncomeTable({
                         <div className={styles.amountMeta}>
                           <span>Total: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(totalAmount)}</span>
                           {dueAmount > 0 && (
-                            <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Due: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(dueAmount)}</span>
+                            <span style={{ color: '#ef4444', fontWeight: 700 }}>Bill Due: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(dueAmount)}</span>
                           )}
                         </div>
                         <div className={styles.collectionBarTrack}>

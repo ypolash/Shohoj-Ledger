@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 
+import styles from '../../crm.module.css';
+
 interface LeadToolbarProps {
   leads?: any[];
   onRefresh?: () => void;
@@ -52,68 +54,35 @@ export function LeadToolbar({ leads = [], onRefresh }: LeadToolbarProps) {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+    <div className={styles.headerActions}>
       <button 
         onClick={handleExport}
-        disabled={exporting}
-        style={{
-          padding: '10px 16px',
-          background: 'var(--surface-main)',
-          border: '1px solid var(--border-main)',
-          borderRadius: '8px',
-          color: 'var(--text-main)',
-          fontSize: '13px',
-          fontWeight: 500,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          cursor: exporting ? 'not-allowed' : 'pointer',
-          boxShadow: 'var(--shadow-sm)',
-          opacity: exporting ? 0.7 : 1
-        }}
-        title="Export Filtered Leads to CSV"
+        disabled={exporting || leads.length === 0}
+        className={styles.headerIconBtn}
+        title="Export CSV"
+        aria-label="Export CSV"
       >
-        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>
+        <span className={`material-symbols-outlined ${exporting ? styles.spinning : ''}`} style={{ fontSize: '20px' }}>
           {exporting ? 'progress_activity' : 'download'}
         </span>
-        {exporting ? 'Exporting...' : 'Export'}
       </button>
 
-      <button style={{
-        padding: '10px 16px',
-        background: 'var(--surface-main)',
-        border: '1px solid var(--border-main)',
-        borderRadius: '8px',
-        color: 'var(--text-main)',
-        fontSize: '13px',
-        fontWeight: 500,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        cursor: 'pointer',
-        boxShadow: 'var(--shadow-sm)'
-      }} onClick={onRefresh} title="Refresh Leads List">
-        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
+      <button 
+        onClick={onRefresh} 
+        className={styles.headerIconBtn}
+        title="Refresh Leads"
+        aria-label="Refresh Leads"
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>refresh</span>
       </button>
 
-      <Link href="/erp/crm/leads/create" style={{ textDecoration: 'none' }}>
-        <button style={{
-          padding: '10px 20px',
-          background: 'var(--primary)',
-          border: '1px solid var(--primary-700)',
-          borderRadius: '8px',
-          color: 'white',
-          fontSize: '14px',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          cursor: 'pointer',
-          boxShadow: 'var(--shadow-md)'
-        }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-          New Lead
-        </button>
+      <Link 
+        href="/erp/crm/leads/create" 
+        className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+        title="New Lead"
+        aria-label="New Lead"
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
       </Link>
     </div>
   );

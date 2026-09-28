@@ -12,6 +12,8 @@ import { SalesOrderToolbar } from "./components/SalesOrderToolbar";
 import { SalesOrderEmptyState } from "./components/SalesOrderEmptyState";
 import { SalesOrderLoading } from "./components/SalesOrderLoading";
 
+import styles from '../crm.module.css';
+
 export default function SalesOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,20 +60,52 @@ export default function SalesOrdersPage() {
     }
   };
 
-  return (
-    <PageContainer>
-      <PageHeader 
-        title="Sales Orders" 
-        description="Manage confirmed customer orders, track payments and shipments."
-      />
+  const handleExport = () => {
+    if (orders.length === 0) {
+      alert("No sales orders to export.");
+      return;
+    }
+    const headers = ["Order Number", "Customer", "Date", "Status", "Payment", "Shipment", "Total Amount"];
+    const rows = orders.map(o => [
+      `"${o.orderNumber || o.id || ''}"`,
+      `"${(o.customer?.name || o.customerName || '').replace(/"/g, '""')}"`,
+      `"${new Date(o.createdAt || o.orderDate).toLocaleDateString()}"`,
+      `"${o.status || ''}"`,
+      `"${o.paymentStatus || ''}"`,
+      `"${o.shipmentStatus || ''}"`,
+      `"${o.totalAmount || o.total || 0}"`
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sales_orders_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <SalesOrderSearch onSearch={(q) => setFilters(prev => ({ ...prev, query: q }))} />
-          <SalesOrderToolbar onRefresh={fetchOrders} />
+  return (
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Sales Orders
+            <span className={styles.titleBadge}>{orders.length} Orders</span>
+          </h1>
         </div>
 
-        <SalesOrderFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
+        <div className={styles.headerActions}>
+          <SalesOrderToolbar onRefresh={fetchOrders} onExport={handleExport} />
+        </div>
+      </header>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+          <SalesOrderSearch onSearch={(q) => setFilters(prev => ({ ...prev, query: q }))} />
+          <SalesOrderFilters onFilterChange={(newFilter) => setFilters(prev => ({ ...prev, ...newFilter }))} />
+        </div>
 
         {loading ? (
           <SalesOrderLoading />
@@ -81,6 +115,6 @@ export default function SalesOrdersPage() {
           <SalesOrderTable orders={orders} onDelete={handleDelete} />
         )}
       </div>
-    </PageContainer>
+    </div>
   );
 }

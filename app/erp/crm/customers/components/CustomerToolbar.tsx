@@ -11,11 +11,10 @@ import {
   LayoutGrid, 
   Sliders, 
   X, 
-  Save, 
-  Edit2, 
-  Trash2,
-  FileSpreadsheet
+  Edit2,
+  Trash2
 } from 'lucide-react';
+import styles from '../../crm.module.css';
 
 interface CustomerToolbarProps {
   onRefresh?: () => void;
@@ -180,145 +179,53 @@ export function CustomerToolbar({
     }
   };
 
-  const actionBtnStyle: React.CSSProperties = {
-    padding: '9px 14px',
-    background: 'var(--surface-main)',
-    border: '1px solid var(--border-main)',
-    borderRadius: '8px',
-    color: 'var(--text-main)',
-    fontSize: '0.85rem',
-    fontWeight: 500,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    cursor: 'pointer',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-    transition: 'all 0.15s ease'
-  };
-
   return (
     <>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-        
-        {/* View Mode Switcher */}
-        {onViewModeChange && (
-          <div style={{
-            display: 'inline-flex',
-            background: 'var(--surface-hover)',
-            borderRadius: '8px',
-            padding: '3px',
-            border: '1px solid var(--border-main)'
-          }}>
-            <button
-              onClick={() => onViewModeChange('table')}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
-                background: viewMode === 'table' ? 'var(--surface-main)' : 'transparent',
-                border: 'none',
-                color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-              title="Table View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => onViewModeChange('grid')}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '6px',
-                background: viewMode === 'grid' ? 'var(--surface-main)' : 'transparent',
-                border: 'none',
-                color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* Density Switcher with Fixed Width (Table mode only) */}
-        {viewMode === 'table' && onDensityChange && (
-          <button
-            onClick={() => onDensityChange(density === 'comfortable' ? 'compact' : 'comfortable')}
-            style={{
-              ...actionBtnStyle,
-              width: '126px',
-              justifyContent: 'center'
-            }}
-            title={`Toggle Table Density (Currently: ${density})`}
-          >
-            <Sliders size={15} color="var(--text-muted)" />
-            <span style={{ fontSize: '0.8rem' }}>{density === 'comfortable' ? 'Comfortable' : 'Compact'}</span>
-          </button>
-        )}
-
+      <div className={styles.headerActions}>
         {/* Reference Discounts Button */}
         <button 
           onClick={() => setShowRefModal(true)}
-          style={actionBtnStyle}
-          title="Manage Customer Discounts & References"
+          className={styles.headerIconBtn}
+          title="Customer Discounts & References"
+          aria-label="Customer Discounts & References"
         >
-          <BadgePercent size={16} color="var(--primary)" />
-          <span>Discounts</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--primary)' }}>percent</span>
         </button>
 
         {/* Export Button */}
         <button 
           onClick={handleExport}
-          style={actionBtnStyle}
-          title="Export CSV list"
+          className={styles.headerIconBtn}
+          disabled={customers.length === 0}
+          title="Export CSV"
+          aria-label="Export CSV"
         >
-          <Download size={16} />
-          <span>Export</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
         </button>
 
         {/* Refresh Button */}
         <button 
           onClick={handleRefreshClick}
+          className={styles.headerIconBtn}
           title="Refresh Customer List"
-          style={{
-            ...actionBtnStyle,
-            padding: '9px 12px'
-          }}
+          aria-label="Refresh Customer List"
         >
-          <RefreshCw 
-            size={16} 
-            style={{ 
-              animation: isRefreshing ? 'spin 0.6s linear infinite' : 'none' 
-            }} 
-          />
+          <span 
+            className={`material-symbols-outlined ${isRefreshing ? styles.spinning : ''}`} 
+            style={{ fontSize: '20px' }}
+          >
+            refresh
+          </span>
         </button>
 
         {/* Primary CTA: New Customer */}
-        <Link href="/erp/crm/customers/new" style={{ textDecoration: 'none' }}>
-          <button style={{
-            padding: '9px 18px',
-            background: 'var(--primary)',
-            border: '1px solid var(--primary-700, #1d4ed8)',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px var(--primary-glow)',
-            transition: 'all 0.15s ease'
-          }}>
-            <Plus size={18} />
-            <span>New Customer</span>
-          </button>
+        <Link 
+          href="/erp/crm/customers/new" 
+          className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+          title="New Customer"
+          aria-label="New Customer"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
         </Link>
       </div>
 

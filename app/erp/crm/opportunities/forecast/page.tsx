@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import Link from 'next/link';
+import styles from '../../crm.module.css';
 
 // Modular Components
 import { OpportunityForecast } from "../components/OpportunityForecast";
@@ -32,20 +32,67 @@ export default function OpportunitiesForecastPage() {
     fetchOpportunities();
   }, []);
 
-  return (
-    <PageContainer>
-      <PageHeader 
-        title="Revenue Forecast" 
-        description="Predict future revenue based on expected close dates and probability."
-      />
+  const getViewStyle = (active: boolean) => ({
+    padding: '6px 12px',
+    background: active ? 'var(--surface-card, #ffffff)' : 'transparent',
+    color: active ? 'var(--primary)' : 'var(--text-muted)',
+    border: 'none',
+    borderRadius: '6px',
+    fontWeight: 600,
+    fontSize: '12px',
+    textDecoration: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+  });
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
+  return (
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Revenue &amp; Deal Forecast
+            <span className={styles.titleBadge}>{opportunities.length} Deals</span>
+          </h1>
+        </div>
+
+        <div className={styles.headerActions}>
           <OpportunityToolbar currentView="forecast" onRefresh={fetchOpportunities} />
+        </div>
+      </header>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '14px' }}>
+          <div style={{
+            display: 'inline-flex',
+            background: 'var(--surface-hover)',
+            borderRadius: '8px',
+            padding: '3px',
+            border: '1px solid var(--border-main)'
+          }}>
+            <Link href="/erp/crm/opportunities" style={getViewStyle(false)}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>table_rows</span>
+              <span>List</span>
+            </Link>
+            <Link href="/erp/crm/opportunities/kanban" style={getViewStyle(false)}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>view_kanban</span>
+              <span>Kanban</span>
+            </Link>
+            <Link href="/erp/crm/opportunities/pipeline" style={getViewStyle(false)}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>conversion_path</span>
+              <span>Pipeline</span>
+            </Link>
+            <Link href="/erp/crm/opportunities/forecast" style={getViewStyle(true)}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>monitoring</span>
+              <span>Forecast</span>
+            </Link>
+          </div>
         </div>
 
         {loading ? <OpportunityLoading /> : <OpportunityForecast opportunities={opportunities} />}
       </div>
-    </PageContainer>
+    </div>
   );
 }

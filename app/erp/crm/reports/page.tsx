@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import styles from '../crm.module.css';
 
 // Modular Components
 import { CRMReportCards } from "./components/CRMReportCards";
@@ -17,14 +16,20 @@ export default function CRMReportsDashboardPage() {
   const [loading] = useState(false);
 
   return (
-    <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <PageHeader 
-          title="CRM Dashboard" 
-          description="Executive overview of pipeline, revenue, and activities."
-        />
-        <DateRangePicker />
-      </div>
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            CRM Analytics &amp; Reports
+            <span className={styles.titleBadge}>Live Analytics</span>
+          </h1>
+        </div>
+
+        <div className={styles.headerActions}>
+          <DateRangePicker />
+        </div>
+      </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
@@ -58,6 +63,6 @@ export default function CRMReportsDashboardPage() {
         </div>
 
       </div>
-    </PageContainer>
+    </div>
   );
 }

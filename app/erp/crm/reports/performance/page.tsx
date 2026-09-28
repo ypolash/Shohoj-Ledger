@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import styles from '../../crm.module.css';
 
 // Modular Components
 import { SalesLeaderboard } from "../components/SalesLeaderboard";
@@ -12,21 +11,26 @@ import { DateRangePicker } from "../components/DateRangePicker";
 
 export default function CRMPerformanceAnalyticsPage() {
   return (
-    <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <PageHeader 
-          title="Team Performance" 
-          description="Track salesperson metrics, activity volume, and leaderboards."
-        />
-        <DateRangePicker />
-      </div>
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Team Performance Analytics
+            <span className={styles.titleBadge}>Sales Leaderboard</span>
+          </h1>
+        </div>
+
+        <div className={styles.headerActions}>
+          <DateRangePicker />
+        </div>
+      </header>
 
       <div style={{ marginBottom: '24px' }}>
         <ReportFilters />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
           <div style={{ gridColumn: 'span 1' }}>
             <SalesLeaderboard />
@@ -35,8 +39,7 @@ export default function CRMPerformanceAnalyticsPage() {
             <PerformanceTable />
           </div>
         </div>
-
       </div>
-    </PageContainer>
+    </div>
   );
 }

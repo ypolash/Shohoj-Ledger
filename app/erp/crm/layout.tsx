@@ -19,8 +19,6 @@ const navigation: NavItem[] = [
   { name: "Leads", href: "/erp/crm/leads", icon: "view_kanban", exact: false },
   { name: "Opportunities", href: "/erp/crm/opportunities", icon: "trending_up", exact: false },
   { name: "Quotations", href: "/erp/crm/quotations", icon: "request_quote", exact: false },
-  { name: "Sales Orders", href: "/erp/crm/sales-orders", icon: "shopping_cart", exact: false, matchAlso: "/erp/crm/orders" },
-  { name: "Reports", href: "/erp/crm/reports", icon: "analytics", exact: false },
 ];
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {

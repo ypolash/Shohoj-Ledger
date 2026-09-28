@@ -28,6 +28,8 @@ ChartJS.register(
   Legend
 );
 
+import styles from './crm.module.css';
+
 export default function CRMDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [followUpData, setFollowUpData] = useState<any>(null);
@@ -93,71 +95,60 @@ export default function CRMDashboardPage() {
   };
 
   return (
-    <div className="animate-fade-in w-full" style={{ padding: '0 0 var(--spacing-6) 0' }}>
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-          marginBottom: 'var(--spacing-6)',
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 700, color: 'var(--text-main)' }}>
-            CRM & Sales Overview
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            CRM &amp; Sales Overview
+            <span className={styles.titleBadge}>
+              {metrics.totalLeads ? `${metrics.totalLeads} Leads` : 'Pipeline'}
+            </span>
           </h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
-            Track leads, appointments, customer follow-ups, and sales pipeline.
-          </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+
+        <div className={styles.headerActions}>
           <Link
             href="/erp/crm/follow-ups"
-            className="btn hover-lift"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '9px 16px',
-              borderRadius: '10px',
-              fontSize: '13px',
-              fontWeight: 600,
-              background: 'var(--surface-card)',
-              border: '1px solid var(--border-main)',
-              color: 'var(--text-main)',
-              textDecoration: 'none',
-            }}
+            className={styles.headerIconBtn}
+            title={`Follow-Ups (${followUpCounts.today + followUpCounts.upcoming} scheduled)`}
+            aria-label="Follow-Ups"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#8b5cf6' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#8b5cf6' }}>
               event_upcoming
             </span>
-            <span>Follow-Ups ({followUpCounts.today + followUpCounts.upcoming})</span>
           </Link>
+
+          <button
+            onClick={() => {
+              fetchStats();
+              fetchFollowUps();
+            }}
+            className={styles.headerIconBtn}
+            title="Refresh Overview"
+            aria-label="Refresh Overview"
+            disabled={isLoading}
+          >
+            <span
+              className={`material-symbols-outlined ${isLoading ? styles.spinning : ''}`}
+              style={{ fontSize: '20px' }}
+            >
+              refresh
+            </span>
+          </button>
 
           <Link
             href="/erp/crm/leads"
-            className="btn btn-primary hover-lift"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '9px 16px',
-              borderRadius: '10px',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="View Pipeline / Leads"
+            aria-label="View Pipeline / Leads"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
               view_kanban
             </span>
-            <span>View Pipeline</span>
           </Link>
         </div>
-      </div>
+      </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
         {/* KPI Cards */}

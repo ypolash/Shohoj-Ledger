@@ -18,6 +18,8 @@ import { LeadProgress } from "./components/LeadProgress";
 import { Drawer } from "@/components/ui/Drawer/Drawer";
 import Link from "next/link";
 
+import styles from "../crm.module.css";
+
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'board'>('table');
@@ -86,34 +88,68 @@ export default function LeadsPage() {
   const selectedLead = leads.find(l => l.id === selectedLeadId);
 
   return (
-    <PageContainer>
-      <PageHeader 
-        title="Lead Management" 
-        description="Manage your enterprise sales pipeline and prospect interactions."
-      />
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Lead Management
+            <span className={styles.titleBadge}>{leads.length} Leads</span>
+          </h1>
+        </div>
+
+        <div className={styles.headerActions}>
+          <LeadToolbar leads={leads} onRefresh={fetchLeads} />
+        </div>
+      </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
           <LeadSearch onSearch={(q) => setFilters(prev => ({ ...prev, search: q }))} />
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ display: 'flex', background: 'var(--surface-hover)', borderRadius: '8px', padding: '4px', border: '1px solid var(--border-light)' }}>
-              <button 
-                onClick={() => setViewMode('table')}
-                style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: viewMode === 'table' ? 'var(--primary-glow)' : 'transparent', color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>table_rows</span>
-                Table
-              </button>
-              <button 
-                onClick={() => setViewMode('board')}
-                style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: viewMode === 'board' ? 'var(--primary-glow)' : 'transparent', color: viewMode === 'board' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>view_kanban</span>
-                Board
-              </button>
-            </div>
-            <LeadToolbar leads={leads} onRefresh={fetchLeads} />
+          <div style={{
+            display: 'inline-flex',
+            background: 'var(--surface-hover)',
+            borderRadius: '8px',
+            padding: '3px',
+            border: '1px solid var(--border-main)'
+          }}>
+            <button 
+              onClick={() => setViewMode('table')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: 'none',
+                background: viewMode === 'table' ? 'var(--surface-card, #ffffff)' : 'transparent',
+                color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-muted)',
+                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Table View"
+              aria-label="Table View"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
+            </button>
+            <button 
+              onClick={() => setViewMode('board')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: 'none',
+                background: viewMode === 'board' ? 'var(--surface-card, #ffffff)' : 'transparent',
+                color: viewMode === 'board' ? 'var(--primary)' : 'var(--text-muted)',
+                boxShadow: viewMode === 'board' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Board View"
+              aria-label="Board View"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>view_kanban</span>
+            </button>
           </div>
         </div>
 
@@ -272,6 +308,6 @@ export default function LeadsPage() {
           </div>
         )}
       </Drawer>
-    </PageContainer>
+    </div>
   );
 }

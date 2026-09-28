@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import styles from '../../crm.module.css';
 
 // Modular Components
 import { RevenueChart } from "../components/RevenueChart";
@@ -14,24 +13,27 @@ import { ExportToolbar } from "../components/ExportToolbar";
 
 export default function CRMSalesAnalyticsPage() {
   return (
-    <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <PageHeader 
-          title="Sales Analytics" 
-          description="Detailed analysis of win rates, funnel conversions, and revenue."
-        />
-        <div style={{ display: 'flex', gap: '12px' }}>
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Sales Analytics
+            <span className={styles.titleBadge}>Revenue Trends</span>
+          </h1>
+        </div>
+
+        <div className={styles.headerActions}>
           <DateRangePicker />
           <ExportToolbar />
         </div>
-      </div>
+      </header>
 
       <div style={{ marginBottom: '24px' }}>
         <ReportFilters />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <RevenueChart />
@@ -46,8 +48,7 @@ export default function CRMSalesAnalyticsPage() {
             <ConversionChart />
           </div>
         </div>
-
       </div>
-    </PageContainer>
+    </div>
   );
 }

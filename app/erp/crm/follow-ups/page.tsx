@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import styles from "../crm.module.css";
 
 interface CustomerSummary {
   id: string;
@@ -383,180 +382,49 @@ export default function FollowUpsPage() {
   };
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-            <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "var(--primary)" }}>
-              event_upcoming
-            </span>
-            <h1 style={{ margin: 0, fontSize: "26px", fontWeight: 800, color: "var(--text-main)", letterSpacing: "-0.02em" }}>
-              Follow-Ups & Appointments
-            </h1>
-          </div>
-          <p style={{ margin: 0, fontSize: "14px", color: "var(--text-muted)" }}>
-            Manage scheduled meetings, client calls, and prospective customers who appointed you for later.
-          </p>
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Follow-Ups &amp; Appointments
+            <span className={styles.titleBadge}>{counts.total} Appointments</span>
+          </h1>
         </div>
 
-        {/* Action Button */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            onClick={fetchFollowUps}
+            className={styles.headerIconBtn}
+            disabled={loading}
+            title="Refresh Appointments"
+            aria-label="Refresh Appointments"
+          >
+            <span
+              className={`material-symbols-outlined ${loading ? styles.spinning : ""}`}
+              style={{ fontSize: "20px" }}
+            >
+              refresh
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
               setIsNewCustomer(true);
               setShowCreateModal(true);
             }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 20px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-700, #1d4ed8) 100%)",
-              color: "#ffffff",
-              fontSize: "14px",
-              fontWeight: 700,
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 4px 14px var(--primary-glow)",
-              transition: "all 0.2s ease",
-            }}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnPrimary}`}
+            title="Book Appointment / Follow-up"
+            aria-label="Book Appointment / Follow-up"
           >
             <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-              add_circle
+              add
             </span>
-            <span>+ Book Appointment / Follow-up</span>
           </button>
         </div>
-      </div>
-
-      {/* KPI Stats Cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "16px",
-          marginBottom: "24px",
-        }}
-      >
-        {/* Today */}
-        <div
-          onClick={() => setActiveTab("TODAY")}
-          style={{
-            background: activeTab === "TODAY" ? "var(--primary-glow)" : "var(--surface-main)",
-            border: activeTab === "TODAY" ? "2px solid var(--primary)" : "1px solid var(--border-main)",
-            borderRadius: "16px",
-            padding: "20px",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-sm)",
-            transition: "all 0.2s ease",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-              Today's Appts
-            </span>
-            <span className="material-symbols-outlined" style={{ color: "#3b82f6", fontSize: "22px" }}>
-              today
-            </span>
-          </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#3b82f6" }}>
-            {counts.today}
-          </div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Scheduled for today
-          </div>
-        </div>
-
-        {/* Upcoming */}
-        <div
-          onClick={() => setActiveTab("UPCOMING")}
-          style={{
-            background: activeTab === "UPCOMING" ? "rgba(139, 92, 246, 0.1)" : "var(--surface-main)",
-            border: activeTab === "UPCOMING" ? "2px solid #8b5cf6" : "1px solid var(--border-main)",
-            borderRadius: "16px",
-            padding: "20px",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-sm)",
-            transition: "all 0.2s ease",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-              Upcoming Later
-            </span>
-            <span className="material-symbols-outlined" style={{ color: "#8b5cf6", fontSize: "22px" }}>
-              upcoming
-            </span>
-          </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#8b5cf6" }}>
-            {counts.upcoming}
-          </div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Appointed future dates
-          </div>
-        </div>
-
-        {/* Overdue */}
-        <div
-          onClick={() => setActiveTab("OVERDUE")}
-          style={{
-            background: activeTab === "OVERDUE" ? "rgba(239, 68, 68, 0.1)" : "var(--surface-main)",
-            border: activeTab === "OVERDUE" ? "2px solid #ef4444" : "1px solid var(--border-main)",
-            borderRadius: "16px",
-            padding: "20px",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-sm)",
-            transition: "all 0.2s ease",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-              Pending / Overdue
-            </span>
-            <span className="material-symbols-outlined" style={{ color: "#ef4444", fontSize: "22px" }}>
-              notification_important
-            </span>
-          </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#ef4444" }}>
-            {counts.overdue}
-          </div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Requires immediate contact
-          </div>
-        </div>
-
-        {/* Completed */}
-        <div
-          onClick={() => setActiveTab("COMPLETED")}
-          style={{
-            background: activeTab === "COMPLETED" ? "rgba(34, 197, 94, 0.1)" : "var(--surface-main)",
-            border: activeTab === "COMPLETED" ? "2px solid #22c55e" : "1px solid var(--border-main)",
-            borderRadius: "16px",
-            padding: "20px",
-            cursor: "pointer",
-            boxShadow: "var(--shadow-sm)",
-            transition: "all 0.2s ease",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-              Completed
-            </span>
-            <span className="material-symbols-outlined" style={{ color: "#22c55e", fontSize: "22px" }}>
-              check_circle
-            </span>
-          </div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "#22c55e" }}>
-            {counts.completed}
-          </div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Followed up & logged
-          </div>
-        </div>
-      </div>
+      </header>
 
       {/* Tabs, Search & Filters Bar */}
       <div
@@ -2235,6 +2103,6 @@ export default function FollowUpsPage() {
           </div>
         </div>
       )}
-    </PageContainer>
+    </div>
   );
 }

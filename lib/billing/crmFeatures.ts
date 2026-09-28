@@ -50,28 +50,12 @@ export const CRM_FEATURES: FeatureDefinition[] = [
     href: "/erp/crm/quotations",
   },
   {
-    key: "crm_sales_orders",
-    name: "Sales Orders & Fulfillment",
-    description: "Process confirmed sales orders, fulfillment tracking, and invoice generation.",
-    category: "CRM",
-    icon: "shopping_cart",
-    href: "/erp/crm/sales-orders",
-  },
-  {
     key: "crm_follow_ups",
     name: "Follow-Ups & Appointments",
     description: "Schedule, track, and manage customer follow-ups and appointment bookings.",
     category: "CRM",
     icon: "event_upcoming",
     href: "/erp/crm/follow-ups",
-  },
-  {
-    key: "crm_reports",
-    name: "CRM Analytics & Reports",
-    description: "Detailed sales rep performance reports, activity calendar, and conversion rate analytics.",
-    category: "CRM",
-    icon: "analytics",
-    href: "/erp/crm/reports",
   },
 ];
 

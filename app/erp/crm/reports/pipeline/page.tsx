@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader/PageHeader";
+import styles from '../../crm.module.css';
 
 // Modular Components
 import { PipelineChart } from "../components/PipelineChart";
@@ -20,21 +19,26 @@ export default function CRMPipelineAnalyticsPage() {
   ];
 
   return (
-    <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <PageHeader 
-          title="Pipeline & Forecast" 
-          description="Analyze active opportunities and projected revenue."
-        />
-        <DateRangePicker />
-      </div>
+    <div className={styles.container}>
+      {/* 1. Executive Minimalist Header */}
+      <header className={styles.headerCard}>
+        <div className={styles.headerTitleGroup}>
+          <h1 className={styles.pageTitle}>
+            Pipeline &amp; Forecast Analytics
+            <span className={styles.titleBadge}>Projections</span>
+          </h1>
+        </div>
+
+        <div className={styles.headerActions}>
+          <DateRangePicker />
+        </div>
+      </header>
 
       <div style={{ marginBottom: '24px' }}>
         <ReportFilters />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        
         <CRMReportCards kpis={pipelineKPIs} />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
@@ -45,8 +49,7 @@ export default function CRMPipelineAnalyticsPage() {
             <ForecastChart />
           </div>
         </div>
-
       </div>
-    </PageContainer>
+    </div>
   );
 }

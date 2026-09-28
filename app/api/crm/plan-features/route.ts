@@ -42,14 +42,14 @@ export async function GET(req: Request) {
     });
 
     if (!subscription || !subscription.plan) {
-      // If no subscription record exists yet, provide default CRM features for initial trial/onboarding
-      const defaultFeatures = ["crm_dashboard", "crm_customers", "crm_leads"];
+      // Provide full CRM access by default
+      const allKeys = ALL_AVAILABLE_FEATURES.map((f) => f.key);
       return NextResponse.json({
         isSuperAdmin: false,
-        planName: "Free Trial / Starter",
-        status: "TRIAL",
-        features: defaultFeatures,
-        allowedFeatureKeys: defaultFeatures,
+        planName: "Active Plan",
+        status: "ACTIVE",
+        features: allKeys,
+        allowedFeatureKeys: allKeys,
       });
     }
 

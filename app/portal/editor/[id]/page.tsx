@@ -853,7 +853,7 @@ export default function EditorLivePortalPage() {
                       </div>
                     )}
 
-                    {videoDeliverables.length > 0 && (
+                    {filteredDeliverables.length > 0 && (
                       <div>
                         <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
                           Target Deliverable Video (Optional Sync)
@@ -862,7 +862,7 @@ export default function EditorLivePortalPage() {
                           value={selectedDeliverableId}
                           onChange={(e) => {
                             setSelectedDeliverableId(e.target.value);
-                            const found = videoDeliverables.find(v => v.id === e.target.value);
+                            const found = filteredDeliverables.find(v => v.id === e.target.value);
                             if (found && !demoName) {
                               setDemoName(`${found.title} (${found.aspectRatio || '9:16'}) - Review Cut`);
                             }
@@ -871,7 +871,7 @@ export default function EditorLivePortalPage() {
                           style={{ cursor: 'pointer' }}
                         >
                           <option value="ALL">Entire Project / Master Review Cut</option>
-                          {videoDeliverables.map((v, i) => (
+                          {filteredDeliverables.map((v, i) => (
                             <option key={v.id || i} value={v.id}>
                               {v.title} ({v.aspectRatio || '9:16'}) — Editor: {v.assignedEditorName || 'Unassigned'}
                             </option>
@@ -983,7 +983,7 @@ export default function EditorLivePortalPage() {
                       </div>
                     )}
 
-                    {videoDeliverables.length > 0 && (
+                    {filteredDeliverables.length > 0 && (
                       <div>
                         <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '4px' }}>
                           Target Deliverable Video (Optional Sync)
@@ -995,7 +995,7 @@ export default function EditorLivePortalPage() {
                           style={{ cursor: 'pointer' }}
                         >
                           <option value="ALL">Entire Project / Master Delivery Link</option>
-                          {videoDeliverables.map((v, i) => (
+                          {filteredDeliverables.map((v, i) => (
                             <option key={v.id || i} value={v.id}>
                               {v.title} ({v.aspectRatio || '9:16'}) — Editor: {v.assignedEditorName || 'Unassigned'}
                             </option>
@@ -1071,13 +1071,13 @@ export default function EditorLivePortalPage() {
                   </form>
 
                   {/* Delivered Deliverables Master List */}
-                  {videoDeliverables.some(v => v.finalVideoUrl) && (
+                  {filteredDeliverables.some(v => v.finalVideoUrl) && (
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px', marginTop: '4px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
                         Delivered Video Deliverable Masters
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {videoDeliverables.filter(v => v.finalVideoUrl).map((v) => (
+                        {filteredDeliverables.filter(v => v.finalVideoUrl).map((v) => (
                           <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.25)', borderRadius: '8px', fontSize: '12px' }}>
                             <div>
                               <strong style={{ color: '#f8fafc', display: 'block' }}>{v.title}</strong>
@@ -1104,7 +1104,7 @@ export default function EditorLivePortalPage() {
                 currentEditorName={editorParam || shootingData.assignedEditorName}
                 messages={project.revisionChat || []}
                 demoFiles={demoData.demoFiles || []}
-                videoDeliverables={videoDeliverables}
+                videoDeliverables={filteredDeliverables}
                 onRefresh={fetchProjectData}
               />
             </div>

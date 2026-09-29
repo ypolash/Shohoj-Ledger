@@ -743,9 +743,25 @@
   transition: all 0.2s ease;
 }
 
+.input option {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
 .input:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
   background: var(--surface-hover, rgba(255, 255, 255, 0.08));
+}
+
+.noScrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.noScrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 

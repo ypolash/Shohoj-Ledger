@@ -39,15 +39,29 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: "Employee not found or unauthorized" }, { status: 404 });
     }
 
-    // Validate relational IDs if present
-    if (data.departmentId) {
-      const dept = await prisma.department.findFirst({ where: { id: data.departmentId, companyId } });
+    // Validate and resolve relational IDs if present
+    let resolvedDepartmentId = data.departmentId || null;
+    let resolvedDepartmentName = data.department || null;
+    if (resolvedDepartmentId) {
+      const dept = await prisma.department.findFirst({ where: { id: resolvedDepartmentId, companyId } });
       if (!dept) return NextResponse.json({ error: 'Invalid department or cross-tenant reference' }, { status: 403 });
+      resolvedDepartmentName = dept.name;
+    } else if (resolvedDepartmentName) {
+      const dept = await prisma.department.findFirst({ where: { name: resolvedDepartmentName, companyId } });
+      if (dept) resolvedDepartmentId = dept.id;
     }
-    if (data.designationId) {
-      const desig = await prisma.designation.findFirst({ where: { id: data.designationId, companyId } });
+
+    let resolvedDesignationId = data.designationId || null;
+    let resolvedDesignationName = data.designation || null;
+    if (resolvedDesignationId) {
+      const desig = await prisma.designation.findFirst({ where: { id: resolvedDesignationId, companyId } });
       if (!desig) return NextResponse.json({ error: 'Invalid designation or cross-tenant reference' }, { status: 403 });
+      resolvedDesignationName = desig.name;
+    } else if (resolvedDesignationName) {
+      const desig = await prisma.designation.findFirst({ where: { name: resolvedDesignationName, companyId } });
+      if (desig) resolvedDesignationId = desig.id;
     }
+
     if (data.reportingManagerId) {
       const mgr = await prisma.employee.findFirst({ where: { id: data.reportingManagerId, companyId } });
       if (!mgr) return NextResponse.json({ error: 'Invalid manager or cross-tenant reference' }, { status: 403 });
@@ -60,22 +74,44 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         lastName: data.lastName,
         email: data.email,
         phone: data.phone,
-        designation: data.designation,
-        department: data.department,
-        basicSalary: data.basicSalary,
+        designation: resolvedDesignationName || data.designation,
+        department: resolvedDepartmentName || data.department,
+        basicSalary: data.basicSalary !== undefined ? Number(data.basicSalary) || 0 : undefined,
         
-        // New organization fields
-        departmentId: data.departmentId || null,
-        designationId: data.designationId || null,
+        // Organization fields
+        departmentId: resolvedDepartmentId,
+        designationId: resolvedDesignationId,
         reportingManagerId: data.reportingManagerId || null,
         employmentType: data.employmentType || null,
         location: data.location || null,
         shift: data.shift || null,
-        employmentStatus: data.employmentStatus || undefined,
+        status: data.status || undefined,
+        employmentStatus: data.employmentStatus || data.status || undefined,
       }
     });
 
-    return NextResponse.json(employee);
+    // Handle photo / avatar profile update
+    const photoUrl = data.photo ?? data.avatar;
+    if (photoUrl !== undefined) {
+      await prisma.employeeProfile.upsert({
+        where: { employeeId: actualId },
+        update: { photo: photoUrl },
+        create: { employeeId: actualId, photo: photoUrl }
+      });
+    }
+
+    const updatedEmployee = await prisma.employee.findUnique({
+      where: { id: actualId },
+      include: {
+        departmentRef: true,
+        designationRef: true,
+        reportingManager: true,
+        workShift: true,
+        profile: true,
+      }
+    });
+
+    return NextResponse.json(JSON.parse(JSON.stringify(updatedEmployee || employee)));
   } catch (error: any) {
     console.error("Error updating employee:", error);
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 });

@@ -14,6 +14,8 @@ interface Employee {
   phone?: string;
   designation?: string;
   department?: string;
+  departmentId?: string | null;
+  designationId?: string | null;
   basicSalary?: number | string;
   employmentType?: string;
   status?: string;
@@ -29,8 +31,13 @@ interface Employee {
     breakTime: number;
     nightShift: boolean;
   } | null;
-  departmentRef?: { name: string };
-  designationRef?: { name: string };
+  departmentRef?: { id?: string; name: string };
+  designationRef?: { id?: string; name: string };
+  profile?: {
+    photo?: string | null;
+  } | null;
+  photo?: string | null;
+  avatar?: string | null;
 }
 
 interface Department {
@@ -69,10 +76,14 @@ export default function EmployeesPage() {
 
   // Employee Details Modal State
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [modalActiveTab, setModalActiveTab] = useState<'about' | 'availability' | 'experience' | 'payroll'>('about');
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleRowClick = (emp: Employee) => {
     setSelectedEmployee(emp);
+    setModalActiveTab('about');
+    setIsBioExpanded(false);
   };
 
   const handleCopy = (text: string, field: string) => {
@@ -80,6 +91,149 @@ export default function EmployeesPage() {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 1500);
+  };
+
+  // Edit Profile Modal State
+  const [editModalEmployee, setEditModalEmployee] = useState<Employee | null>(null);
+  const [editPhoto, setEditPhoto] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editDesignation, setEditDesignation] = useState('');
+  const [editDesignationId, setEditDesignationId] = useState('');
+  const [editIsCustomDesig, setEditIsCustomDesig] = useState(false);
+  const [editDepartment, setEditDepartment] = useState('');
+  const [editDepartmentId, setEditDepartmentId] = useState('');
+  const [editIsCustomDept, setEditIsCustomDept] = useState(false);
+  const [editBasicSalary, setEditBasicSalary] = useState<string | number>('');
+  const [editEmploymentType, setEditEmploymentType] = useState('Full-Time');
+  const [editStatus, setEditStatus] = useState('ACTIVE');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editFeedback, setEditFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleOpenEditModal = (emp: Employee) => {
+    setEditModalEmployee(emp);
+    setEditPhoto(emp.profile?.photo || emp.photo || emp.avatar || '');
+    setEditFirstName(emp.firstName || '');
+    setEditLastName(emp.lastName || '');
+    setEditEmail(emp.email || '');
+    setEditPhone(emp.phone || '');
+
+    const currentDesig = emp.designationRef?.name || emp.designation || '';
+    setEditDesignation(currentDesig);
+    setEditDesignationId(emp.designationId || emp.designationRef?.id || '');
+    setEditIsCustomDesig(false);
+
+    const currentDept = emp.departmentRef?.name || emp.department || '';
+    setEditDepartment(currentDept);
+    setEditDepartmentId(emp.departmentId || emp.departmentRef?.id || '');
+    setEditIsCustomDept(false);
+
+    setEditBasicSalary(emp.basicSalary ?? '');
+    setEditEmploymentType(emp.employmentType || 'Full-Time');
+    setEditStatus(emp.status || 'ACTIVE');
+    setEditFeedback(null);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setEditFeedback({ type: 'error', message: 'Image file size must be less than 5MB' });
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setEditFeedback(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.fileUrl) {
+        throw new Error(data.error || 'Failed to upload photo');
+      }
+      setEditPhoto(data.fileUrl);
+      setEditFeedback({ type: 'success', message: 'Profile photo uploaded!' });
+    } catch (err: any) {
+      setEditFeedback({ type: 'error', message: err.message || 'Error uploading photo' });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleSaveEdit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editModalEmployee) return;
+    setIsSavingEdit(true);
+    setEditFeedback(null);
+    try {
+      const res = await fetch(`/api/employees/${editModalEmployee.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: editFirstName,
+          lastName: editLastName,
+          email: editEmail,
+          phone: editPhone,
+          designation: editDesignation,
+          designationId: editDesignationId || undefined,
+          department: editDepartment,
+          departmentId: editDepartmentId || undefined,
+          basicSalary: Number(editBasicSalary) || 0,
+          employmentType: editEmploymentType,
+          status: editStatus,
+          photo: editPhoto,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update employee profile.');
+      }
+
+      const updatedEmpData: Partial<Employee> = {
+        firstName: editFirstName,
+        lastName: editLastName,
+        email: editEmail,
+        phone: editPhone,
+        designation: editDesignation,
+        department: editDepartment,
+        departmentRef: data.departmentRef || (editDepartment ? { id: data.departmentId || editDepartmentId, name: editDepartment } : undefined),
+        designationRef: data.designationRef || (editDesignation ? { id: data.designationId || editDesignationId, name: editDesignation } : undefined),
+        basicSalary: Number(editBasicSalary) || 0,
+        employmentType: editEmploymentType,
+        status: editStatus,
+        profile: {
+          photo: editPhoto,
+        },
+        photo: editPhoto,
+      };
+
+      setEmployees(prev =>
+        prev.map(e => (e.id === editModalEmployee.id ? { ...e, ...updatedEmpData } : e))
+      );
+
+      if (selectedEmployee?.id === editModalEmployee.id) {
+        setSelectedEmployee(prev => (prev ? { ...prev, ...updatedEmpData } : null));
+      }
+
+      setEditFeedback({ type: 'success', message: 'Employee profile updated successfully!' });
+      setTimeout(() => {
+        setEditModalEmployee(null);
+        setEditFeedback(null);
+      }, 1000);
+    } catch (err: any) {
+      setEditFeedback({ type: 'error', message: err.message || 'Error updating employee profile' });
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   // Custom Duty Modal State
@@ -646,7 +800,17 @@ export default function EmployeesPage() {
                   >
                     <td className={styles.tableCell}>
                       <div className={styles.employeeProfileGroup}>
-                        <div className={styles.empAvatar}>{initials}</div>
+                        <div className={styles.empAvatar} style={{ overflow: 'hidden' }}>
+                          {emp.profile?.photo || emp.photo || emp.avatar ? (
+                            <img
+                              src={emp.profile?.photo || emp.photo || emp.avatar || ''}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            initials
+                          )}
+                        </div>
                         <div>
                           <div className={styles.empName}>
                             {emp.firstName} {emp.lastName}
@@ -763,8 +927,12 @@ export default function EmployeesPage() {
                           Custom Duty
                         </button>
 
-                        <Link
-                          href={`/erp/hr/employees/${emp.id}`}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditModal(emp);
+                          }}
                           title="Edit Profile"
                           style={{
                             display: 'inline-flex',
@@ -776,13 +944,13 @@ export default function EmployeesPage() {
                             color: 'var(--primary)',
                             fontSize: '12px',
                             fontWeight: 600,
-                            textDecoration: 'none',
-                            border: '1px solid rgba(37, 99, 235, 0.2)'
+                            border: '1px solid rgba(37, 99, 235, 0.2)',
+                            cursor: 'pointer'
                           }}
                         >
                           <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
                           Edit
-                        </Link>
+                        </button>
 
                         <button
                           type="button"
@@ -833,7 +1001,17 @@ export default function EmployeesPage() {
               >
                 <div className={styles.cardTopRow}>
                   <div className={styles.employeeProfileGroup}>
-                    <div className={styles.empAvatar}>{initials}</div>
+                    <div className={styles.empAvatar} style={{ overflow: 'hidden' }}>
+                      {emp.profile?.photo || emp.photo || emp.avatar ? (
+                        <img
+                          src={emp.profile?.photo || emp.photo || emp.avatar || ''}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        initials
+                      )}
+                    </div>
                     <div className={styles.cardMainInfo}>
                       <span className={styles.empName}>{emp.firstName} {emp.lastName}</span>
                       <span className={styles.cardRole}>{desigName}</span>
@@ -924,8 +1102,12 @@ export default function EmployeesPage() {
                       Duty
                     </button>
 
-                    <Link
-                      href={`/erp/hr/employees/${emp.id}`}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditModal(emp);
+                      }}
                       style={{
                         padding: '5px 8px',
                         borderRadius: '6px',
@@ -936,14 +1118,14 @@ export default function EmployeesPage() {
                         gap: '2px',
                         fontSize: '12px',
                         fontWeight: 600,
-                        textDecoration: 'none',
-                        border: '1px solid rgba(37, 99, 235, 0.2)'
+                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                        cursor: 'pointer'
                       }}
                       title="Edit Profile"
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
                       Edit
-                    </Link>
+                    </button>
 
                     <button
                       type="button"
@@ -1401,529 +1583,622 @@ export default function EmployeesPage() {
           </div>
         </div>
       )}
-      {/* 8. Executive Employee Quick Details Glass Modal */}
-      {selectedEmployee && (
+      {/* 8. Edit Employee Profile Glass Modal Popup */}
+      {editModalEmployee && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(3, 7, 18, 0.72)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            background: 'rgba(3, 6, 12, 0.85)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1050,
-            padding: '20px',
+            zIndex: 1060,
+            padding: '16px',
             animation: 'fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
-          onClick={() => setSelectedEmployee(null)}
+          onClick={() => !isSavingEdit && setEditModalEmployee(null)}
         >
           <div
+            className={styles.noScrollbar}
             style={{
-              background: 'linear-gradient(180deg, #111827 0%, #0b0f19 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: 'linear-gradient(180deg, #131722 0%, #0a0d14 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '24px',
               width: '100%',
-              maxWidth: '560px',
+              maxWidth: '520px',
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '0 30px 80px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18)',
+              overflowX: 'hidden',
+              padding: '24px',
+              boxShadow: '0 30px 90px -10px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
               display: 'flex',
               flexDirection: 'column',
+              gap: '18px',
               position: 'relative',
               color: '#f8fafc'
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Top Luminous Glow Bar */}
-            <div style={{
-              height: '4px',
-              width: '100%',
-              background: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
-              flexShrink: 0
-            }} />
-
-            {/* Ambient Background Glow Effect */}
-            <div style={{
-              position: 'absolute',
-              top: '-60px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '380px',
-              height: '180px',
-              background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.22) 0%, rgba(59, 130, 246, 0.08) 50%, transparent 80%)',
-              pointerEvents: 'none'
-            }} />
-
-            {/* Hero Profile Stage */}
-            <div style={{
-              padding: '24px 26px 18px',
-              position: 'relative',
-              zIndex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              {/* Header Top Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    padding: '3px 10px',
-                    borderRadius: '20px',
-                    background: selectedEmployee.status === 'TERMINATED'
-                      ? 'rgba(239, 68, 68, 0.15)'
-                      : selectedEmployee.status === 'ON_LEAVE'
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : 'rgba(16, 185, 129, 0.15)',
-                    color: selectedEmployee.status === 'TERMINATED'
-                      ? '#f87171'
-                      : selectedEmployee.status === 'ON_LEAVE'
-                      ? '#fbbf24'
-                      : '#34d399',
-                    border: `1px solid ${
-                      selectedEmployee.status === 'TERMINATED'
-                        ? 'rgba(239, 68, 68, 0.3)'
-                        : selectedEmployee.status === 'ON_LEAVE'
-                        ? 'rgba(245, 158, 11, 0.3)'
-                        : 'rgba(16, 185, 129, 0.3)'
-                    }`
-                  }}>
-                    <span style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      background: selectedEmployee.status === 'TERMINATED'
-                        ? '#f87171'
-                        : selectedEmployee.status === 'ON_LEAVE'
-                        ? '#fbbf24'
-                        : '#34d399',
-                      boxShadow: `0 0 8px ${
-                        selectedEmployee.status === 'TERMINATED'
-                          ? '#f87171'
-                          : selectedEmployee.status === 'ON_LEAVE'
-                          ? '#fbbf24'
-                          : '#34d399'
-                      }`
-                    }} />
-                    {selectedEmployee.status || 'ACTIVE'}
-                  </span>
-
-                  {selectedEmployee.employeeId && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(selectedEmployee.employeeId || '', 'id')}
-                      title="Click to copy Employee ID"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        fontFamily: 'monospace',
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        padding: '3px 9px',
-                        borderRadius: '6px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        color: copiedField === 'id' ? '#34d399' : '#94a3b8',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
-                        {copiedField === 'id' ? 'check' : 'tag'}
-                      </span>
-                      {selectedEmployee.employeeId}
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedEmployee(null)}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  title="Close"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-                </button>
-              </div>
-
-              {/* Avatar + Main Info Identity */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
-                  position: 'relative',
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '20px',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
-                  color: '#ffffff',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: 'rgba(37, 99, 235, 0.16)',
+                  border: '1px solid rgba(37, 99, 235, 0.3)',
+                  color: '#60a5fa',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '22px',
-                  boxShadow: '0 10px 25px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35)',
                   flexShrink: 0
                 }}>
-                  {`${selectedEmployee.firstName?.[0] || ''}${selectedEmployee.lastName?.[0] || ''}`.toUpperCase() || 'EM'}
+                  <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>edit</span>
                 </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
-                  <h2 style={{
-                    margin: 0,
-                    fontSize: '21px',
-                    fontWeight: 800,
-                    color: '#ffffff',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.2
-                  }}>
-                    {selectedEmployee.firstName} {selectedEmployee.lastName}
-                  </h2>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '3px 10px',
-                      borderRadius: '8px',
-                      background: 'rgba(99, 102, 241, 0.15)',
-                      color: '#a5b4fc',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      border: '1px solid rgba(99, 102, 241, 0.25)'
-                    }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>work</span>
-                      {selectedEmployee.designationRef?.name || selectedEmployee.designation || 'Staff'}
-                    </span>
-
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '3px 10px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      color: '#cbd5e1',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      border: '1px solid rgba(255, 255, 255, 0.08)'
-                    }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#38bdf8' }}>corporate_fare</span>
-                      {selectedEmployee.departmentRef?.name || selectedEmployee.department || 'Unassigned'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{
-              padding: '0 24px 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              position: 'relative',
-              zIndex: 1
-            }}>
-              {/* 3-Tile KPI Metric Badges */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '10px'
-              }}>
-                {/* Tile 1: Salary */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: '14px',
-                  background: 'rgba(16, 185, 129, 0.06)',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: '#34d399',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>payments</span>
-                    {selectedEmployee.employmentType === 'Project-Based' ? 'Rate' : 'Base Salary'}
-                  </span>
-                  <div style={{ fontSize: '15.5px', fontWeight: 800, color: '#ffffff' }}>
-                    {formatCurrency(selectedEmployee.basicSalary || 0)}
-                  </div>
-                  <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
-                    {selectedEmployee.employmentType === 'Project-Based' ? 'Per Project' : 'Monthly'}
-                  </span>
-                </div>
-
-                {/* Tile 2: Duty Shift */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: '14px',
-                  background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.08)' : 'rgba(59, 130, 246, 0.06)',
-                  border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.25)' : 'rgba(59, 130, 246, 0.2)'}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: '#818cf8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>
-                    Duty Shift
-                  </span>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff' }}>
-                    {selectedEmployee.workShift ? `${selectedEmployee.workShift.startTime} - ${selectedEmployee.workShift.endTime}` : '09:30 - 18:00'}
-                  </div>
-                  <span style={{ fontSize: '10.5px', color: selectedEmployee.workShift ? '#34d399' : '#94a3b8' }}>
-                    {selectedEmployee.workShift ? 'Custom Duty' : 'Default (09:30)'}
-                  </span>
-                </div>
-
-                {/* Tile 3: Contract */}
-                <div style={{
-                  padding: '12px 14px',
-                  borderRadius: '14px',
-                  background: 'rgba(245, 158, 11, 0.06)',
-                  border: '1px solid rgba(245, 158, 11, 0.2)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px'
-                }}>
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: '#fbbf24',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>badge</span>
-                    Contract
-                  </span>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#ffffff' }}>
-                    {selectedEmployee.employmentType || 'Full-Time'}
-                  </div>
-                  <span style={{ fontSize: '10.5px', color: '#94a3b8' }}>
-                    {selectedEmployee.joinDate ? `Joined ${new Date(selectedEmployee.joinDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}` : 'Active Staff'}
-                  </span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
+                    Edit Employee Profile
+                  </h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                    {editModalEmployee.firstName} {editModalEmployee.lastName} ({editModalEmployee.employeeId || 'Staff'})
+                  </p>
                 </div>
               </div>
 
-              {/* Direct Communication Channels */}
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                borderRadius: '16px',
-                padding: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px'
-              }}>
-                <span style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b' }}>
-                  CONTACT &amp; COMMUNICATION
-                </span>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {/* Email Channel */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    background: 'rgba(0, 0, 0, 0.2)',
-                    border: '1px solid rgba(255, 255, 255, 0.04)',
-                    minWidth: 0
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#60a5fa', flexShrink: 0 }}>mail</span>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '10px', color: '#64748b' }}>Official Email</div>
-                        <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={selectedEmployee.email}>
-                          {selectedEmployee.email}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(selectedEmployee.email, 'email')}
-                      title="Copy Email"
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: copiedField === 'email' ? '#34d399' : '#64748b',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                        {copiedField === 'email' ? 'check' : 'content_copy'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* Phone Channel */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    background: 'rgba(0, 0, 0, 0.2)',
-                    border: '1px solid rgba(255, 255, 255, 0.04)',
-                    minWidth: 0
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#34d399', flexShrink: 0 }}>call</span>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '10px', color: '#64748b' }}>Phone Number</div>
-                        <div style={{ fontSize: '11.5px', fontWeight: 600, color: selectedEmployee.phone ? '#f8fafc' : '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {selectedEmployee.phone || 'Not Provided'}
-                        </div>
-                      </div>
-                    </div>
-                    {selectedEmployee.phone && (
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(selectedEmployee.phone || '', 'phone')}
-                        title="Copy Phone"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: copiedField === 'phone' ? '#34d399' : '#64748b',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                          {copiedField === 'phone' ? 'check' : 'content_copy'}
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Duty & Shift Telemetry Bar */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)'}`
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#34d399' }}>sensors</span>
-                  <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 500 }}>
-                    Active Shift: <strong style={{ color: '#ffffff' }}>{selectedEmployee.workShift ? `${selectedEmployee.workShift.startTime} - ${selectedEmployee.workShift.endTime}` : '09:30 - 18:00'}</strong>
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    Grace: <strong style={{ color: '#f8fafc' }}>{selectedEmployee.workShift?.gracePeriod ?? 15}m</strong>
-                  </span>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    Break: <strong style={{ color: '#f8fafc' }}>{selectedEmployee.workShift?.breakTime ?? 60}m</strong>
-                  </span>
-                  <span style={{
-                    fontSize: '10.5px',
-                    fontWeight: 600,
-                    color: selectedEmployee.workShift?.nightShift ? '#f59e0b' : '#38bdf8'
-                  }}>
-                    {selectedEmployee.workShift?.nightShift ? '🌙 Night' : '☀️ Day'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Bar Footer */}
-            <div style={{
-              padding: '14px 24px 18px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              background: 'rgba(0, 0, 0, 0.2)',
-              position: 'relative',
-              zIndex: 1
-            }}>
               <button
                 type="button"
-                onClick={() => {
-                  const emp = selectedEmployee;
-                  setSelectedEmployee(null);
-                  setEmployeeToDelete(emp);
-                }}
+                onClick={() => setEditModalEmployee(null)}
                 style={{
-                  padding: '8px 14px',
-                  borderRadius: '10px',
-                  background: 'rgba(239, 68, 68, 0.08)',
-                  border: '1px solid rgba(239, 68, 68, 0.22)',
-                  color: '#f87171',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.07)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: '#94a3b8',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
-                Delete
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+            </div>
+
+            {/* Feedback Message */}
+            {editFeedback && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: editFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                border: `1px solid ${editFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                color: editFeedback.type === 'success' ? '#34d399' : '#f87171',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                  {editFeedback.type === 'success' ? 'check_circle' : 'error'}
+                </span>
+                {editFeedback.message}
+              </div>
+            )}
+
+            {/* Edit Form */}
+            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Profile Photo Uploader Card */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.07)',
+                borderRadius: '16px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '14px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Avatar Preview */}
+                  <div style={{
+                    position: 'relative',
+                    width: '58px',
+                    height: '58px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)'
+                  }}>
+                    {editPhoto ? (
+                      <img
+                        src={editPhoto}
+                        alt="Profile Preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: 900,
+                        background: 'linear-gradient(135deg, #ffffff 0%, #94a3b8 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                      }}>
+                        {`${editFirstName?.[0] || ''}${editLastName?.[0] || ''}`.toUpperCase() || 'EM'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', display: 'block' }}>
+                      Profile Photo
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      {isUploadingPhoto ? 'Uploading image...' : 'PNG, JPG or WEBP (Max 5MB)'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '10px',
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38bdf8',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: isUploadingPhoto ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                      {isUploadingPhoto ? 'progress_activity' : 'photo_camera'}
+                    </span>
+                    {editPhoto ? 'Change Photo' : 'Upload Photo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      disabled={isUploadingPhoto}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+
+                  {editPhoto && (
+                    <button
+                      type="button"
+                      onClick={() => setEditPhoto('')}
+                      title="Remove Photo"
+                      style={{
+                        padding: '7px 10px',
+                        borderRadius: '10px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        color: '#f87171',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Name fields */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFirstName}
+                    onChange={e => setEditFirstName(e.target.value)}
+                    className={styles.input}
+                    placeholder="First Name"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editLastName}
+                    onChange={e => setEditLastName(e.target.value)}
+                    className={styles.input}
+                    placeholder="Last Name"
+                  />
+                </div>
+              </div>
+
+              {/* Contact fields */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                    Official Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={editEmail}
+                    onChange={e => setEditEmail(e.target.value)}
+                    className={styles.input}
+                    placeholder="employee@company.com"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={e => setEditPhone(e.target.value)}
+                    className={styles.input}
+                    placeholder="01XXXXXXXXX"
+                  />
+                </div>
+              </div>
+
+              {/* Role & Department */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {/* Designation */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>
+                      Designation
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditIsCustomDesig(!editIsCustomDesig)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#38bdf8',
+                        fontSize: '10.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      {editIsCustomDesig ? '← Select List' : '+ Custom'}
+                    </button>
+                  </div>
+                  {editIsCustomDesig ? (
+                    <input
+                      type="text"
+                      required
+                      value={editDesignation}
+                      onChange={e => {
+                        setEditDesignation(e.target.value);
+                        setEditDesignationId('');
+                      }}
+                      className={styles.input}
+                      placeholder="e.g. Lead Designer"
+                    />
+                  ) : (
+                    <select
+                      value={editDesignation}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setEditDesignation(val);
+                        const match = designations.find(d => d.name === val);
+                        setEditDesignationId(match ? match.id : '');
+                      }}
+                      className={styles.input}
+                      required
+                    >
+                      <option value="">-- Select Designation --</option>
+                      {editDesignation && !designations.some(d => d.name === editDesignation) && (
+                        <option value={editDesignation}>{editDesignation} (Current)</option>
+                      )}
+                      {designations.map(d => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Department */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>
+                      Department
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEditIsCustomDept(!editIsCustomDept)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#38bdf8',
+                        fontSize: '10.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      {editIsCustomDept ? '← Select List' : '+ Custom'}
+                    </button>
+                  </div>
+                  {editIsCustomDept ? (
+                    <input
+                      type="text"
+                      required
+                      value={editDepartment}
+                      onChange={e => {
+                        setEditDepartment(e.target.value);
+                        setEditDepartmentId('');
+                      }}
+                      className={styles.input}
+                      placeholder="e.g. Engineering"
+                    />
+                  ) : (
+                    <select
+                      value={editDepartment}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setEditDepartment(val);
+                        const match = departments.find(d => d.name === val);
+                        setEditDepartmentId(match ? match.id : '');
+                      }}
+                      className={styles.input}
+                      required
+                    >
+                      <option value="">-- Select Department --</option>
+                      {editDepartment && !departments.some(d => d.name === editDepartment) && (
+                        <option value={editDepartment}>{editDepartment} (Current)</option>
+                      )}
+                      {departments.map(d => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* Salary & Employment Type */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                    Basic Salary / Rate (BDT)
+                  </label>
+                  <input
+                    type="number"
+                    value={editBasicSalary}
+                    onChange={e => setEditBasicSalary(e.target.value)}
+                    className={styles.input}
+                    placeholder="50000"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                    Employment Contract
+                  </label>
+                  <select
+                    value={editEmploymentType}
+                    onChange={e => setEditEmploymentType(e.target.value)}
+                    className={styles.input}
+                  >
+                    <option value="Full-Time">Full-Time</option>
+                    <option value="Part-Time">Part-Time</option>
+                    <option value="Project-Based">Project-Based</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Intern">Intern</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Employment Status */}
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#94a3b8', marginBottom: '5px' }}>
+                  Workforce Status
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={e => setEditStatus(e.target.value)}
+                  className={styles.input}
+                >
+                  <option value="ACTIVE">ACTIVE (Working)</option>
+                  <option value="ON_LEAVE">ON_LEAVE (Leave / Vacation)</option>
+                  <option value="TERMINATED">TERMINATED (Inactive / Exited)</option>
+                </select>
+              </div>
+
+              {/* Form Action Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditModalEmployee(null)}
+                  disabled={isSavingEdit}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#e2e8f0',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)'
+                  }}
+                >
+                  {isSavingEdit ? (
+                    <>
+                      <span className={`material-symbols-outlined ${styles.spinning}`} style={{ fontSize: '16px' }}>progress_activity</span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 9. Executive Employee Quick Details Card Modal (Redesigned to Modern Dark Aesthetic) */}
+      {selectedEmployee && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(3, 6, 12, 0.82)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1050,
+            padding: '16px',
+            animation: 'fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+          onClick={() => setSelectedEmployee(null)}
+        >
+          <div
+            className={styles.noScrollbar}
+            style={{
+              background: 'linear-gradient(180deg, #11141e 0%, #080a10 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '28px',
+              width: '100%',
+              maxWidth: '440px',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              boxShadow: '0 30px 90px -15px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              color: '#f8fafc',
+              padding: '22px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Ambient Background Glow */}
+            <div style={{
+              position: 'absolute',
+              top: '-40px',
+              right: '-40px',
+              width: '260px',
+              height: '260px',
+              background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              filter: 'blur(20px)'
+            }} />
+
+            {/* Top Navigation Row */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '18px',
+              position: 'relative',
+              zIndex: 2,
+              flexShrink: 0
+            }}>
+              {/* Left: Circular Back / Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedEmployee(null)}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.07)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: '#e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Back / Close"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_left</span>
               </button>
 
+              {/* Right: Circular Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Edit Profile Action Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const emp = selectedEmployee;
+                    handleOpenEditModal(emp);
+                  }}
+                  title="Edit Profile"
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: 'rgba(37, 99, 235, 0.15)',
+                    border: '1px solid rgba(37, 99, 235, 0.35)',
+                    color: '#60a5fa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                </button>
+
+                {/* Custom Duty Sparkle Action */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1931,49 +2206,801 @@ export default function EmployeesPage() {
                     setSelectedEmployee(null);
                     handleOpenCustomDuty(emp);
                   }}
+                  title="Configure Custom Duty Shift"
                   style={{
-                    padding: '8px 14px',
-                    borderRadius: '10px',
-                    background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-                    border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.18)' : 'rgba(255, 255, 255, 0.07)',
+                    border: `1px solid ${selectedEmployee.workShift ? 'rgba(99, 102, 241, 0.35)' : 'rgba(255, 255, 255, 0.08)'}`,
                     color: selectedEmployee.workShift ? '#a5b4fc' : '#e2e8f0',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
-                    {selectedEmployee.workShift ? 'schedule' : 'more_time'}
-                  </span>
-                  Custom Duty
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>auto_awesome</span>
                 </button>
 
-                <Link
-                  href={`/erp/hr/employees/${selectedEmployee.id}`}
+                {/* ID Tag / Copy ID Button */}
+                {selectedEmployee.employeeId && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(selectedEmployee.employeeId || '', 'id')}
+                    title={`Click to copy ID: ${selectedEmployee.employeeId}`}
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      background: copiedField === 'id' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.07)',
+                      border: `1px solid ${copiedField === 'id' ? 'rgba(16, 185, 129, 0.35)' : 'rgba(255, 255, 255, 0.08)'}`,
+                      color: copiedField === 'id' ? '#34d399' : '#e2e8f0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>
+                      {copiedField === 'id' ? 'check' : 'tag'}
+                    </span>
+                  </button>
+                )}
+
+                {/* Delete Employee Icon Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const emp = selectedEmployee;
+                    setSelectedEmployee(null);
+                    setEmployeeToDelete(emp);
+                  }}
+                  title="Delete Employee"
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: '10px',
-                    background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
-                    color: '#ffffff',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    textDecoration: 'none',
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.22)',
+                    color: '#f87171',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                    justifyContent: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>open_in_new</span>
-                  Open Full Profile
-                </Link>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                </button>
               </div>
+            </div>
+
+            {/* Hero Profile Identity Section (Two-Column Layout) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              marginBottom: '16px',
+              position: 'relative',
+              zIndex: 2,
+              flexShrink: 0
+            }}>
+              {/* Left Column: Subtitle, Full Name, Rate / Salary */}
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#94a3b8',
+                  letterSpacing: '0.02em',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {selectedEmployee.designationRef?.name || selectedEmployee.designation || 'Staff'}
+                  {' • '}
+                  {selectedEmployee.departmentRef?.name || selectedEmployee.department || 'Operations'}
+                </span>
+
+                <h2 style={{
+                  margin: '4px 0 6px',
+                  fontSize: '23px',
+                  fontWeight: 800,
+                  color: '#ffffff',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {selectedEmployee.firstName} {selectedEmployee.lastName}
+                </h2>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginTop: '2px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.01em' }}>
+                    {formatCurrency(selectedEmployee.basicSalary || 0)}
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>
+                    {selectedEmployee.employmentType === 'Project-Based' ? '/session' : '/month'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Right Column: Avatar Portrait Card */}
+              <div style={{
+                position: 'relative',
+                width: '110px',
+                height: '130px',
+                borderRadius: '22px',
+                background: 'linear-gradient(145deg, #1c2438 0%, #0d121e 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                overflow: 'hidden'
+              }}>
+                {selectedEmployee.profile?.photo || selectedEmployee.photo || selectedEmployee.avatar ? (
+                  <img
+                    src={selectedEmployee.profile?.photo || selectedEmployee.photo || selectedEmployee.avatar || ''}
+                    alt={`${selectedEmployee.firstName} ${selectedEmployee.lastName}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      position: 'absolute',
+                      inset: 0
+                    }}
+                  />
+                ) : (
+                  <>
+                    {/* Inner Glow Aura */}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'radial-gradient(circle at 50% 45%, rgba(99, 102, 241, 0.35) 0%, transparent 75%)',
+                      pointerEvents: 'none'
+                    }} />
+
+                    {/* Avatar Initials Badge */}
+                    <div style={{
+                      fontSize: '28px',
+                      fontWeight: 900,
+                      background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      letterSpacing: '1px',
+                      zIndex: 1
+                    }}>
+                      {`${selectedEmployee.firstName?.[0] || ''}${selectedEmployee.lastName?.[0] || ''}`.toUpperCase() || 'EM'}
+                    </div>
+                  </>
+                )}
+
+                {/* Status Indicator Chip */}
+                <div style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 7px',
+                  borderRadius: '10px',
+                  background: 'rgba(0, 0, 0, 0.65)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  backdropFilter: 'blur(4px)',
+                  zIndex: 2
+                }}>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: selectedEmployee.status === 'TERMINATED'
+                      ? '#f87171'
+                      : selectedEmployee.status === 'ON_LEAVE'
+                      ? '#fbbf24'
+                      : '#34d399',
+                    boxShadow: `0 0 6px ${
+                      selectedEmployee.status === 'TERMINATED'
+                        ? '#f87171'
+                        : selectedEmployee.status === 'ON_LEAVE'
+                        ? '#fbbf24'
+                        : '#34d399'
+                    }`
+                  }} />
+                  <span style={{
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    color: selectedEmployee.status === 'TERMINATED'
+                      ? '#f87171'
+                      : selectedEmployee.status === 'ON_LEAVE'
+                      ? '#fbbf24'
+                      : '#34d399'
+                  }}>
+                    {selectedEmployee.status || 'ACTIVE'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Frosted Glass Highlight Stat Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '8px',
+              marginBottom: '16px',
+              position: 'relative',
+              zIndex: 2,
+              flexShrink: 0
+            }}>
+              {/* Stat 1: Contract */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.07)',
+                borderRadius: '16px',
+                padding: '10px 10px',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3px',
+                position: 'relative'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 600 }}>Contract</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#fbbf24' }}>work_outline</span>
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {selectedEmployee.employmentType || 'Full-Time'}
+                </div>
+              </div>
+
+              {/* Stat 2: Duty Shift */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.07)',
+                borderRadius: '16px',
+                padding: '10px 10px',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3px',
+                position: 'relative'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 600 }}>
+                    {selectedEmployee.workShift ? 'Shift' : 'Duty'}
+                  </span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#818cf8' }}>schedule</span>
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {selectedEmployee.workShift ? selectedEmployee.workShift.startTime : '09:30'}
+                </div>
+              </div>
+
+              {/* Stat 3: Employee ID */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.07)',
+                borderRadius: '16px',
+                padding: '10px 10px',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3px',
+                position: 'relative'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '9.5px', color: '#94a3b8', fontWeight: 600 }}>Employee ID</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#34d399' }}>badge</span>
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {selectedEmployee.employeeId ? `#${selectedEmployee.employeeId.replace('EMP-', '')}` : 'ACTIVE'}
+                </div>
+              </div>
+            </div>
+
+            {/* Segmented Tab Bar Navigation */}
+            <div
+              className={styles.noScrollbar}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '18px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                paddingTop: '6px',
+                paddingBottom: '10px',
+                marginTop: '4px',
+                marginBottom: '14px',
+                position: 'relative',
+                zIndex: 2,
+                overflowX: 'hidden',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                flexShrink: 0
+              }}
+            >
+              {(['about', 'availability', 'experience', 'payroll'] as const).map(tab => {
+                const isActive = modalActiveTab === tab;
+                const tabLabels: Record<string, string> = {
+                  about: 'About',
+                  availability: 'Availability',
+                  experience: 'Experience',
+                  payroll: 'Payroll'
+                };
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setModalActiveTab(tab)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '4px 0',
+                      color: isActive ? '#ffffff' : '#64748b',
+                      fontSize: '13px',
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: 'pointer',
+                      position: 'relative',
+                      whiteSpace: 'nowrap',
+                      lineHeight: '1.4',
+                      transition: 'color 0.15s ease'
+                    }}
+                  >
+                    {tabLabels[tab]}
+                    {isActive && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '-11px',
+                        left: 0,
+                        right: 0,
+                        height: '2.5px',
+                        background: 'linear-gradient(90deg, #34d399 0%, #38bdf8 100%)',
+                        borderRadius: '2px',
+                        boxShadow: '0 0 8px rgba(52, 211, 153, 0.5)'
+                      }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tab Dynamic Body */}
+            <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: '12px', flexShrink: 0 }}>
+              {/* Tab 1: About */}
+              {modalActiveTab === 'about' && (
+                <>
+                  {/* Bio Paragraph */}
+                  <p style={{
+                    margin: 0,
+                    fontSize: '12.5px',
+                    color: '#94a3b8',
+                    lineHeight: 1.55
+                  }}>
+                    {selectedEmployee.firstName} {selectedEmployee.lastName} is an active{' '}
+                    <strong style={{ color: '#ffffff', fontWeight: 600 }}>
+                      {selectedEmployee.designationRef?.name || selectedEmployee.designation || 'Staff'}
+                    </strong>{' '}
+                    in the{' '}
+                    <strong style={{ color: '#ffffff', fontWeight: 600 }}>
+                      {selectedEmployee.departmentRef?.name || selectedEmployee.department || 'Operations'}
+                    </strong>{' '}
+                    department. Contracted under {selectedEmployee.employmentType || 'Full-Time'} terms with verified duty telemetry.
+                    {isBioExpanded && (
+                      <span>
+                        {' '}Joined {selectedEmployee.joinDate ? new Date(selectedEmployee.joinDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'recently'}. Biometric attendance and custom duty shifts are actively monitored.
+                      </span>
+                    )}
+                    <span
+                      onClick={() => setIsBioExpanded(!isBioExpanded)}
+                      style={{ color: '#38bdf8', cursor: 'pointer', fontWeight: 600, marginLeft: '4px' }}
+                    >
+                      {isBioExpanded ? 'Less' : '...More'}
+                    </span>
+                  </p>
+
+                  {/* 2x2 Feature Grid Cards */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '10px'
+                  }}>
+                    {/* Grid Card 1: Base Salary */}
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#34d399',
+                        marginBottom: '2px'
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
+                      </div>
+                      <span style={{ fontSize: '10.5px', color: '#94a3b8', fontWeight: 500 }}>
+                        {selectedEmployee.employmentType === 'Project-Based' ? 'Session Fee' : 'Base Salary'}
+                      </span>
+                      <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#ffffff' }}>
+                        {formatCurrency(selectedEmployee.basicSalary || 0)}
+                      </div>
+                    </div>
+
+                    {/* Grid Card 2: Duty Shift */}
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: 'rgba(99, 102, 241, 0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#818cf8',
+                        marginBottom: '2px'
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>schedule</span>
+                      </div>
+                      <span style={{ fontSize: '10.5px', color: '#94a3b8', fontWeight: 500 }}>Duty Shift</span>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
+                        {selectedEmployee.workShift ? `${selectedEmployee.workShift.startTime} - ${selectedEmployee.workShift.endTime}` : '09:30 - 18:00'}
+                      </div>
+                      <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+                        Grace: {selectedEmployee.workShift?.gracePeriod ?? 15}m • Break: {selectedEmployee.workShift?.breakTime ?? 60}m
+                      </span>
+                    </div>
+
+                    {/* Grid Card 3: Official Email */}
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '6px',
+                          background: 'rgba(59, 130, 246, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#60a5fa'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>mail</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(selectedEmployee.email, 'email')}
+                          title="Copy Email"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: copiedField === 'email' ? '#34d399' : '#64748b',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                            {copiedField === 'email' ? 'check' : 'content_copy'}
+                          </span>
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '10.5px', color: '#94a3b8', fontWeight: 500 }}>Official Email</span>
+                      <div
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#ffffff',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title={selectedEmployee.email}
+                      >
+                        {selectedEmployee.email}
+                      </div>
+                    </div>
+
+                    {/* Grid Card 4: Phone Number */}
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '6px',
+                          background: 'rgba(52, 211, 153, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#34d399'
+                        }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>call</span>
+                        </div>
+                        {selectedEmployee.phone && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(selectedEmployee.phone || '', 'phone')}
+                            title="Copy Phone"
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: copiedField === 'phone' ? '#34d399' : '#64748b',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                              {copiedField === 'phone' ? 'check' : 'content_copy'}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '10.5px', color: '#94a3b8', fontWeight: 500 }}>Phone Number</span>
+                      <div style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: selectedEmployee.phone ? '#ffffff' : '#64748b',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {selectedEmployee.phone || 'Not Provided'}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Tab 2: Availability / Shift Details */}
+              {modalActiveTab === 'availability' && (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  borderRadius: '18px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#818cf8' }}>sensors</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Active Duty Timing</span>
+                    </div>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: selectedEmployee.workShift?.nightShift ? '#f59e0b' : '#38bdf8',
+                      padding: '2px 8px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)'
+                    }}>
+                      {selectedEmployee.workShift?.nightShift ? '🌙 Night Shift' : '☀️ Day Shift'}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff' }}>
+                    {selectedEmployee.workShift ? `${selectedEmployee.workShift.startTime} — ${selectedEmployee.workShift.endTime}` : '09:30 AM — 06:00 PM'}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '4px' }}>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '10px' }}>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Grace Period</span>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc' }}>
+                        {selectedEmployee.workShift?.gracePeriod ?? 15} Minutes
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '10px' }}>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Meal & Break</span>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc' }}>
+                        {selectedEmployee.workShift?.breakTime ?? 60} Minutes
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const emp = selectedEmployee;
+                      setSelectedEmployee(null);
+                      handleOpenCustomDuty(emp);
+                    }}
+                    style={{
+                      marginTop: '4px',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      color: '#a5b4fc',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>schedule</span>
+                    Configure Duty Shift
+                  </button>
+                </div>
+              )}
+
+              {/* Tab 3: Experience & Roles */}
+              {modalActiveTab === 'experience' && (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  borderRadius: '18px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#38bdf8' }}>badge</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Employment & Tenure</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Designation</span>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#ffffff' }}>
+                        {selectedEmployee.designationRef?.name || selectedEmployee.designation || 'Staff'}
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Department</span>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#ffffff' }}>
+                        {selectedEmployee.departmentRef?.name || selectedEmployee.department || 'Operations'}
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Join Date</span>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#ffffff' }}>
+                        {selectedEmployee.joinDate ? new Date(selectedEmployee.joinDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Active'}
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Contract Type</span>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#ffffff' }}>
+                        {selectedEmployee.employmentType || 'Full-Time'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 4: Payroll & Terms */}
+              {modalActiveTab === 'payroll' && (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  borderRadius: '18px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#34d399' }}>account_balance_wallet</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>Compensation Summary</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Base Salary</span>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: '#34d399' }}>
+                        {formatCurrency(selectedEmployee.basicSalary || 0)}
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>Billing Frequency</span>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#ffffff' }}>
+                        {selectedEmployee.employmentType === 'Project-Based' ? 'Per Project' : 'Monthly Retainer'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Action Footer */}
+            <div style={{
+              marginTop: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              zIndex: 2
+            }}>
+              {/* Primary Full Width CTA Button (White Pill style matching Image 2) */}
+              <Link
+                href={`/erp/hr/employees/${selectedEmployee.id}`}
+                style={{
+                  width: '100%',
+                  height: '46px',
+                  borderRadius: '9999px',
+                  background: '#ffffff',
+                  color: '#090b10',
+                  fontSize: '14.5px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 20px rgba(255, 255, 255, 0.15)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Open Full Profile
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+              </Link>
             </div>
           </div>
         </div>

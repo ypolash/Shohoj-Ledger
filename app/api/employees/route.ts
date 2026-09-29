@@ -23,7 +23,8 @@ export async function GET(req: Request) {
         departmentRef: true,
         designationRef: true,
         reportingManager: true,
-        workShift: true
+        workShift: true,
+        profile: true,
       }
     });
     return NextResponse.json(JSON.parse(JSON.stringify(employees)));

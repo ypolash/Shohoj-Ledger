@@ -110,6 +110,95 @@
   transform: translateY(-1px);
 }
 
+/* Multi-Cut Header Bar */
+.multiCutContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+}
+
+.multiCutHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.multiCutTitle {
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.multiCutGrid {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.multiCutCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  flex-shrink: 0;
+  min-width: 200px;
+  max-width: 320px;
+  transition: all 0.2s ease;
+}
+
+.multiCutCardActive {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.multiCutCardText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.multiCutName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.multiCutMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.uploaderTag {
+  font-size: 10px;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
 /* Messages Scroll Area */
 .messagesScrollArea {
   flex: 1;

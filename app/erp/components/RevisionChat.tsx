@@ -208,9 +208,6 @@ export default function RevisionChat({
     return { name: `🏢 ${msg.senderName || 'Studio Manager'} (Admin)`, avatar: '🏢', color: '#c084fc' };
   };
 
-  // Find latest editor-shared cut
-  const latestCut = demoFiles && demoFiles.length > 0 ? demoFiles[demoFiles.length - 1] : null;
-
   const formatSecs = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
@@ -235,28 +232,77 @@ export default function RevisionChat({
         </div>
       </div>
 
-      {/* Editor Delivered Cut Top Banner */}
-      {latestCut && (
-        <div className={styles.editorCutBanner}>
-          <div className={styles.editorCutInfo}>
-            <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '18px' }}>
-              play_circle
-            </span>
-            <span>
-              <strong>Latest Demo Cut:</strong> {latestCut.name}{' '}
-              {latestCut.uploadedBy && currentUserRole !== 'CLIENT' ? `(${latestCut.uploadedBy})` : ''}
-            </span>
+      {/* Editor Delivered Cut(s) Multi-Banner */}
+      {demoFiles && demoFiles.length > 0 && (
+        demoFiles.length === 1 ? (
+          <div className={styles.editorCutBanner}>
+            <div className={styles.editorCutInfo}>
+              <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '18px' }}>
+                play_circle
+              </span>
+              <span>
+                <strong>Demo Cut:</strong> {demoFiles[0].name}{' '}
+                {demoFiles[0].uploadedBy && currentUserRole !== 'CLIENT' ? `(${demoFiles[0].uploadedBy})` : ''}
+              </span>
+            </div>
+            <a
+              href={demoFiles[0].url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.watchCutBtn}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>open_in_new</span>
+              Watch Demo Cut ↗
+            </a>
           </div>
-          <a
-            href={latestCut.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.watchCutBtn}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>open_in_new</span>
-            Watch Demo Cut ↗
-          </a>
-        </div>
+        ) : (
+          <div className={styles.multiCutContainer}>
+            <div className={styles.multiCutHeaderRow}>
+              <span className={styles.multiCutTitle}>
+                <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '16px' }}>movie_filter</span>
+                Shared Demo Cuts ({demoFiles.length} Videos)
+              </span>
+              <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                Scroll & select cut to preview ↗
+              </span>
+            </div>
+
+            <div className={styles.multiCutGrid}>
+              {demoFiles.map((file, idx) => {
+                const targetDeliv = (videoDeliverables || []).find(v => v.id === selectedDeliverableId);
+                const isSelected = targetDeliv && file.name.toLowerCase().includes(targetDeliv.title.toLowerCase());
+                return (
+                  <div
+                    key={file.id || idx}
+                    className={`${styles.multiCutCard} ${isSelected ? styles.multiCutCardActive : ''}`}
+                  >
+                    <div className={styles.multiCutCardText}>
+                      <span className={styles.multiCutName} title={file.name}>
+                        {file.name}
+                      </span>
+                      <div className={styles.multiCutMeta}>
+                        <span>{file.date}</span>
+                        {file.uploadedBy && currentUserRole !== 'CLIENT' && (
+                          <span className={styles.uploaderTag}>{file.uploadedBy}</span>
+                        )}
+                      </div>
+                    </div>
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.watchCutBtn}
+                      style={{ padding: '4px 10px', fontSize: '11px', flexShrink: 0 }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>play_circle</span>
+                      Watch ↗
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
       )}
 
       {/* Message Thread Scroll Area */}

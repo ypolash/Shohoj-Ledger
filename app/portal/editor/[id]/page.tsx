@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import styles from './editor-portal.module.css';
-import RevisionChat from '@/app/erp/components/RevisionChat';
 
 export default function EditorLivePortalPage() {
   const params = useParams();
@@ -198,26 +197,13 @@ export default function EditorLivePortalPage() {
     setSubmittingDemo(true);
     setDemoSuccess(null);
     try {
-      // If a specific deliverable is selected, also sync to that deliverable
-      if (selectedDeliverableId && selectedDeliverableId !== 'ALL') {
-        await fetch(`/api/portal/project/${projectId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'SUBMIT_VIDEO_DEMO',
-            deliverableId: selectedDeliverableId,
-            demoUrl: demoUrl.trim(),
-            notes: editorNotes.trim(),
-            status: 'Review Ready'
-          })
-        });
-      }
-
       const res = await fetch(`/api/portal/project/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'SUBMIT_EDITOR_DEMO',
+          deliverableId: selectedDeliverableId,
+          selectedDeliverableId,
           demoName: demoName.trim(),
           demoUrl: demoUrl.trim(),
           editorNotes: editorNotes.trim(),
@@ -519,6 +505,59 @@ export default function EditorLivePortalPage() {
                       )}
                     </div>
 
+                    {/* Client Revision Requests for this deliverable */}
+                    {(() => {
+                      const allRevisions = Array.isArray(project?.revisions) ? project.revisions : [];
+                      const delivRevs = allRevisions.filter((r: any) => 
+                        r.targetDeliverableId === deliv.id || 
+                        r.targetDeliverableTitle?.includes(deliv.title) ||
+                        (!r.targetDeliverableId && r.targetDeliverableTitle === undefined)
+                      );
+
+                      if (delivRevs.length === 0) return null;
+
+                      return (
+                        <div style={{
+                          padding: '10px 12px',
+                          background: 'rgba(245, 158, 11, 0.08)',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          marginTop: '4px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                              Revision Instructions ({delivRevs.length})
+                            </span>
+                            <span style={{ fontSize: '10px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.2)', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                              Action Needed
+                            </span>
+                          </div>
+
+                          {delivRevs.map((r: any, idx: number) => (
+                            <div key={r.id || idx} style={{ padding: '8px 10px', background: 'rgba(0, 0, 0, 0.35)', borderRadius: '6px', fontSize: '11px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                <strong style={{ color: '#fbbf24' }}>
+                                  #{r.roundNumber || idx + 1}: {r.title || 'Revision Request'}
+                                </strong>
+                                {r.timecode && (
+                                  <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontSize: '10px', background: 'rgba(56, 189, 248, 0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+                                    ⏱️ {r.timecode}
+                                  </span>
+                                )}
+                              </div>
+                              <p style={{ margin: 0, color: '#f8fafc', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+                                {r.note}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
                     {/* Success message */}
                     {deliverableSuccessMsg[deliv.id] && (
                       <div style={{ padding: '6px 10px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px', color: '#34d399', fontSize: '11px', fontWeight: 600 }}>
@@ -780,7 +819,7 @@ export default function EditorLivePortalPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Separated Demo Cut vs Complete Master File & Revision Chat */}
+          {/* RIGHT COLUMN: Separated Demo Cut vs Complete Master File & Revision Requests */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* MASTER CUT APPROVED BANNER */}
             {isMasterCutApproved && (
@@ -801,6 +840,59 @@ export default function EditorLivePortalPage() {
                   <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#cbd5e1' }}>
                     Client has approved the review cut. Deliver the final master ProRes / 4K files under Tab #2 below.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* CLIENT REVISION REQUESTS & INSTRUCTIONS (FOR EDITORS) */}
+            {Array.isArray(project?.revisions) && project.revisions.length > 0 && (
+              <div className={styles.portalCard} style={{ padding: '18px 22px', border: '1px solid rgba(245, 158, 11, 0.35)', background: 'linear-gradient(180deg, rgba(245, 158, 11, 0.06) 0%, rgba(15, 23, 42, 0.95) 100%)' }}>
+                <div className={styles.cardHeader} style={{ paddingBottom: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <div>
+                    <h4 className={styles.cardTitle} style={{ color: '#fbbf24' }}>
+                      <span className="material-symbols-outlined" style={{ color: '#fbbf24' }}>rate_review</span>
+                      Client Revision Instructions ({project.revisions.length} Rounds)
+                    </h4>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#cbd5e1' }}>
+                      Detailed feedback & change requests submitted by client / studio manager.
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', fontWeight: 700, border: '1px solid rgba(245, 158, 11, 0.4)' }}>
+                    Action Items
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', maxHeight: '360px', overflowY: 'auto' }}>
+                  {project.revisions.map((rev: any, idx: number) => (
+                    <div key={rev.id || idx} style={{ padding: '12px 14px', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <strong style={{ color: '#fbbf24', fontSize: '13px' }}>
+                            Round #{rev.roundNumber || idx + 1}: {rev.title || 'Revision'}
+                          </strong>
+                          {rev.targetDeliverableTitle && (
+                            <span style={{ fontSize: '10px', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                              🎬 {rev.targetDeliverableTitle}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {rev.timecode && (
+                            <span style={{ fontSize: '11px', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.15)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                              ⏱️ {rev.timecode}
+                            </span>
+                          )}
+                          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                            {new Date(rev.createdAt || Date.now()).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '8px 10px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '6px', fontSize: '12px', color: '#f8fafc', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                        {rev.note || 'No notes specified.'}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -1095,19 +1187,7 @@ export default function EditorLivePortalPage() {
               )}
             </div>
 
-            {/* Live Customer & Studio Revision Chat Thread (Stage 6) */}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <RevisionChat
-                projectId={projectId}
-                currentUserRole="EDITOR"
-                currentUserName={editorParam || shootingData.assignedEditorName || "Lead Editor"}
-                currentEditorName={editorParam || shootingData.assignedEditorName}
-                messages={project.revisionChat || []}
-                demoFiles={demoData.demoFiles || []}
-                videoDeliverables={filteredDeliverables}
-                onRefresh={fetchProjectData}
-              />
-            </div>
+
 
             {/* Performance Rating & Review (Stage 7 / Completion) */}
             {(reviewData || editorRating || currentStage === 7) && (

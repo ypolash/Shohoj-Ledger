@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import styles from './portal.module.css';
-import RevisionChat from '@/app/erp/components/RevisionChat';
 
 export default function CustomerProjectPortalPage() {
   const params = useParams();
@@ -17,9 +16,17 @@ export default function CustomerProjectPortalPage() {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   // Stage 6 Client Revision Submission State
-  const [isRevisionFormOpen, setIsRevisionFormOpen] = useState(false);
-  const [isChatUnlocked, setIsChatUnlocked] = useState(false);
+  const [isRevisionFormOpen, setIsRevisionFormOpen] = useState(true);
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [revisionDeliverableId, setRevisionDeliverableId] = useState<string>('ALL');
+  const [selectedTargetDemo, setSelectedTargetDemo] = useState<{
+    id: string;
+    title: string;
+    aspectRatio?: string;
+    url?: string;
+    type: 'deliverable' | 'demoFile' | 'project';
+  } | null>(null);
+  const [selectedRevisionCategories, setSelectedRevisionCategories] = useState<string[]>([]);
   const [revisionTitle, setRevisionTitle] = useState('');
   const [revisionNote, setRevisionNote] = useState('');
   const [revisionTimecode, setRevisionTimecode] = useState('');
@@ -78,17 +85,24 @@ export default function CustomerProjectPortalPage() {
     setRevisionSuccess(null);
     try {
       const targetDeliv = videoDeliverables.find(v => v.id === revisionDeliverableId);
+      const targetDemoFile = (demoData.demoFiles || []).find((f: any) => f.id === revisionDeliverableId);
+
+      const targetTitle = selectedTargetDemo?.title || targetDeliv?.title || targetDemoFile?.name || (revisionDeliverableId !== 'ALL' ? revisionDeliverableId : 'Entire Project');
+      
+      const formattedNotes = selectedRevisionCategories.length > 0
+        ? `[Scope: ${selectedRevisionCategories.join(', ')}]\n${revisionNote.trim()}`
+        : revisionNote.trim();
 
       const res = await fetch(`/api/portal/project/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'SUBMIT_REVISION',
-          title: revisionTitle.trim(),
-          revisionNote: revisionNote.trim(),
+          title: revisionTitle.trim() || `Revision for ${targetTitle}`,
+          revisionNote: formattedNotes,
           timecode: revisionTimecode.trim(),
-          targetDeliverableId: targetDeliv?.id,
-          targetDeliverableTitle: targetDeliv ? `${targetDeliv.title} (${targetDeliv.aspectRatio || '9:16'})` : undefined,
+          targetDeliverableId: targetDeliv?.id || targetDemoFile?.id || (revisionDeliverableId !== 'ALL' ? revisionDeliverableId : undefined),
+          targetDeliverableTitle: targetDeliv ? `${targetDeliv.title} (${targetDeliv.aspectRatio || '9:16'})` : targetDemoFile ? targetDemoFile.name : (revisionDeliverableId !== 'ALL' ? targetTitle : undefined),
           targetEditorName: targetDeliv?.assignedEditorName,
           clientName: project?.clientName
         })
@@ -99,8 +113,11 @@ export default function CustomerProjectPortalPage() {
         setRevisionTitle('');
         setRevisionNote('');
         setRevisionTimecode('');
+        setSelectedRevisionCategories([]);
+        setSelectedTargetDemo(null);
         setRevisionDeliverableId('ALL');
         setIsRevisionFormOpen(false);
+        setIsRevisionModalOpen(false);
         fetchProjectData();
       } else {
         alert(data.error || 'Failed to submit revision');
@@ -613,7 +630,7 @@ export default function CustomerProjectPortalPage() {
                 </div>
                 <div className={styles.stageHeroText}>
                   <h3>Stage 5: {stageNames[5] || 'Post-Production & Editing'}</h3>
-                  <p>Raw footage is currently being processed, color graded, and mastered by our lead editor.</p>
+                  <p>Project footage is currently being processed, color graded, and mastered by our lead editor.</p>
                 </div>
               </div>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#818cf8', padding: '6px 14px', borderRadius: '10px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
@@ -742,10 +759,36 @@ export default function CustomerProjectPortalPage() {
                         )}
 
                         {v.demoUrl ? (
-                          <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
-                            Watch Demo Cut ↗
-                          </a>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'auto' }}>
+                            <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn} style={{ flex: 1, minWidth: '120px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
+                              Watch Demo Cut ↗
+                            </a>
+                            {demoData.approvalStatus !== 'Approved' && !demoData.revisionsLocked && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const delivId = v.id || `deliv_${i}`;
+                                  setSelectedTargetDemo({
+                                    id: delivId,
+                                    title: v.title || `Video #${i + 1}`,
+                                    aspectRatio: v.aspectRatio || '9:16 Reel',
+                                    url: v.demoUrl,
+                                    type: 'deliverable'
+                                  });
+                                  setRevisionDeliverableId(delivId);
+                                  setRevisionTitle(`Revision for ${v.title || `Video #${i + 1}`}`);
+                                  setSelectedRevisionCategories([]);
+                                  setIsRevisionModalOpen(true);
+                                }}
+                                className={styles.clientRevisionBtn}
+                                style={{ flex: 1, minWidth: '120px' }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                                Request Revision
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
                             🎬 Editing underway by production team
@@ -827,10 +870,36 @@ export default function CustomerProjectPortalPage() {
                         )}
 
                         {v.demoUrl ? (
-                          <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
-                            Watch Review Cut ↗
-                          </a>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'auto' }}>
+                            <a href={v.demoUrl} target="_blank" rel="noopener noreferrer" className={styles.clientWatchBtn} style={{ flex: 1, minWidth: '120px' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span>
+                              Watch Review Cut ↗
+                            </a>
+                            {demoData.approvalStatus !== 'Approved' && !demoData.revisionsLocked && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const delivId = v.id || `deliv_${i}`;
+                                  setSelectedTargetDemo({
+                                    id: delivId,
+                                    title: v.title || `Video #${i + 1}`,
+                                    aspectRatio: v.aspectRatio || '9:16 Reel',
+                                    url: v.demoUrl,
+                                    type: 'deliverable'
+                                  });
+                                  setRevisionDeliverableId(delivId);
+                                  setRevisionTitle(`Revision for ${v.title || `Video #${i + 1}`}`);
+                                  setSelectedRevisionCategories([]);
+                                  setIsRevisionModalOpen(true);
+                                }}
+                                className={styles.clientRevisionBtn}
+                                style={{ flex: 1, minWidth: '120px' }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                                Request Revision
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', padding: '4px 0' }}>
                             🎬 Cut rendering in progress
@@ -843,39 +912,39 @@ export default function CustomerProjectPortalPage() {
               </div>
             )}
 
-            <div className={styles.portalGrid2}>
-              {/* Left Card: Attached Demo Preview Files & Multiple Revisions System */}
-              <div className={styles.portalCard} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <div className={styles.cardHeader}>
-                    <h4 className={styles.cardTitle}>
-                      <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>play_circle</span>
-                      Attached Demo Preview Deliverables ({demoData.demoFiles?.length || 0})
-                    </h4>
-                  </div>
+            {/* Attached Demo Preview Files & Multiple Revisions System */}
+            <div className={styles.portalCard} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <div className={styles.cardHeader}>
+                  <h4 className={styles.cardTitle}>
+                    <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>play_circle</span>
+                    Attached Demo Preview Deliverables ({demoData.demoFiles?.length || 0})
+                  </h4>
+                </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                    {demoData.demoFiles && demoData.demoFiles.length > 0 ? (
-                      demoData.demoFiles.map((file: any) => (
-                        <div key={file.id} className={styles.demoCard}>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                              <strong style={{ fontSize: '14px', color: '#f8fafc' }}>{file.name}</strong>
-                              {file.uploadedBy && (
-                                <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 600 }}>
-                                  🎬 {file.uploadedBy}
-                                </span>
-                              )}
-                            </div>
-                            <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '2px' }}>
-                              Delivered {file.date}
-                            </span>
-                            {file.note && (
-                              <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic' }}>
-                                "{file.note}"
-                              </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                  {demoData.demoFiles && demoData.demoFiles.length > 0 ? (
+                    demoData.demoFiles.map((file: any) => (
+                      <div key={file.id} className={styles.demoCard}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <strong style={{ fontSize: '14px', color: '#f8fafc' }}>{file.name}</strong>
+                            {file.uploadedBy && (
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(99,102,241,0.2)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.3)', fontWeight: 600 }}>
+                                🎬 {file.uploadedBy}
+                              </span>
                             )}
                           </div>
+                          <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '2px' }}>
+                            Delivered {file.date}
+                          </span>
+                          {file.note && (
+                            <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic' }}>
+                              "{file.note}"
+                            </p>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <a
                             href={file.url}
                             target="_blank"
@@ -885,294 +954,203 @@ export default function CustomerProjectPortalPage() {
                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
                             Watch Demo ↗
                           </a>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{ textAlign: 'center', padding: '24px', color: '#94a3b8', fontSize: '13px' }}>
-                        Demo cut is being rendered by our editor. Check back shortly.
-                      </div>
-                    )}
-
-                    {demoData.approvalStatus !== 'Approved' && (
-                      <button
-                        type="button"
-                        onClick={handleClientApproveDemo}
-                        className={styles.actionBtnSuccess}
-                        style={{ marginTop: '8px' }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
-                        Approve Deliverable as Final Master Cut ✓
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Multiple Revision Allowance & Billing Section */}
-                {(() => {
-                  const revList = Array.isArray(project.revisions) ? project.revisions : [];
-                  const isVip = Boolean(demoData.isSpecialCustomerFree);
-                  const freeIncluded = demoData.freeRevisionsIncluded !== undefined ? Number(demoData.freeRevisionsIncluded) : 2;
-                  const costPerRev = demoData.costPerRevision !== undefined ? Number(demoData.costPerRevision) : 1000;
-                  const nextRound = revList.length + 1;
-                  const isNextBillable = !isVip && nextRound > freeIncluded;
-
-                  return (
-                    <div style={{ padding: '16px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.25)', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '20px' }}>receipt_long</span>
-                          <strong style={{ fontSize: '13px', color: '#fbbf24' }}>Revision Policy & Rounds</strong>
-                        </div>
-                        {isVip ? (
-                          <span style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', fontSize: '11px', fontWeight: 700 }}>
-                            👑 Special VIP Customer (Unlimited Free Revisions)
-                          </span>
-                        ) : (
-                          <span style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)', fontSize: '11px', fontWeight: 700 }}>
-                            {Math.min(freeIncluded, revList.length)}/{freeIncluded} Free Used • Extra: {formatCurrency(costPerRev)}/rev
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Request Revision Round Trigger Button */}
-                      {!isRevisionFormOpen && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsRevisionFormOpen(true);
-                            setIsChatUnlocked(true);
-                          }}
-                          className={styles.actionBtnPrimary}
-                          style={{ background: isNextBillable ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
-                          + Request Revision Round #{nextRound} {isNextBillable ? `(${formatCurrency(costPerRev)} Billable)` : '(FREE)'}
-                        </button>
-                      )}
-
-                      {/* Revision Submission Form */}
-                      {isRevisionFormOpen && (
-                        <form onSubmit={handleClientSubmitRevision} style={{ padding: '14px', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ fontSize: '13px', color: '#f8fafc' }}>
-                              Requesting Revision Round #{nextRound}
-                            </strong>
-                            <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: isNextBillable ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)', color: isNextBillable ? '#fbbf24' : '#34d399', border: isNextBillable ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(16,185,129,0.4)' }}>
-                              {isVip ? '👑 VIP Free' : isNextBillable ? `💳 Billable: +${formatCurrency(costPerRev)}` : `✓ Free (${nextRound}/${freeIncluded})`}
-                            </span>
-                          </div>
-
-                          {/* Deliverable Selector if multiple deliverables exist */}
-                          {videoDeliverables.length > 0 && (
-                            <div>
-                              <label style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
-                                Target Video Deliverable:
-                              </label>
-                              <select
-                                value={revisionDeliverableId}
-                                onChange={(e) => setRevisionDeliverableId(e.target.value)}
-                                className={styles.portalInput}
-                                style={{ width: '100%', cursor: 'pointer', background: 'rgba(15, 23, 42, 0.8)' }}
-                              >
-                                <option value="ALL">🎬 Entire Project / All Deliverables</option>
-                                {videoDeliverables.map((v, idx) => (
-                                  <option key={v.id || idx} value={v.id}>
-                                    🎬 {v.title || `Video #${idx + 1}`} ({v.aspectRatio || '9:16'})
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-
-                          <input
-                            type="text"
-                            placeholder="Revision Topic / Scope (e.g. Intro pacing and color tint)"
-                            value={revisionTitle}
-                            onChange={(e) => setRevisionTitle(e.target.value)}
-                            className={styles.portalInput}
-                          />
-
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <input
-                              type="text"
-                              placeholder="Timestamp (e.g. 00:15 - 00:22)"
-                              value={revisionTimecode}
-                              onChange={(e) => setRevisionTimecode(e.target.value)}
-                              className={styles.portalInput}
-                              style={{ maxWidth: '160px' }}
-                            />
-                            <span style={{ fontSize: '11px', color: '#94a3b8', alignSelf: 'center' }}>Optional timecode</span>
-                          </div>
-
-                          <textarea
-                            rows={3}
-                            required
-                            placeholder="Describe requested adjustments in detail..."
-                            value={revisionNote}
-                            onChange={(e) => setRevisionNote(e.target.value)}
-                            className={styles.portalTextarea}
-                          />
-
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                          {demoData.approvalStatus !== 'Approved' && !demoData.revisionsLocked && (
                             <button
                               type="button"
-                              onClick={() => setIsRevisionFormOpen(false)}
-                              style={{ padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', fontSize: '12px', cursor: 'pointer' }}
+                              onClick={() => {
+                                setSelectedTargetDemo({
+                                  id: file.id,
+                                  title: file.name,
+                                  url: file.url,
+                                  type: 'demoFile'
+                                });
+                                setRevisionDeliverableId(file.id);
+                                setRevisionTitle(`Revision for ${file.name}`);
+                                setSelectedRevisionCategories([]);
+                                setIsRevisionModalOpen(true);
+                              }}
+                              className={styles.clientRevisionBtn}
                             >
-                              Cancel
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                              Request Revision
                             </button>
-                            <button
-                              type="submit"
-                              disabled={submittingRevision}
-                              className={styles.actionBtnPrimary}
-                              style={{ padding: '8px 16px', fontSize: '12px' }}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>send</span>
-                              {submittingRevision ? 'Submitting...' : `Submit Round #${nextRound}`}
-                            </button>
-                          </div>
-                        </form>
-                      )}
-
-                      {revisionSuccess && (
-                        <div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', color: '#34d399', fontSize: '12px', fontWeight: 600 }}>
-                          {revisionSuccess}
+                          )}
                         </div>
-                      )}
-
-                      {/* Previous Revision Rounds Log */}
-                      {revList.length > 0 && (
-                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px', marginTop: '4px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                            Revision Rounds History ({revList.length})
-                          </span>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                            {revList.map((rev: any, index: number) => {
-                              const roundNum = rev.roundNumber || (revList.length - index);
-                              const isBill = Boolean(rev.isBillable);
-                              return (
-                                <div key={rev.id || index} style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '12px' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <strong style={{ color: '#fbbf24', fontSize: '12px' }}>
-                                        Round #{roundNum}
-                                      </strong>
-                                      {rev.timecode && (
-                                        <span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(0,0,0,0.4)', color: '#38bdf8', fontFamily: 'monospace' }}>
-                                          ⏱ {rev.timecode}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: isVip ? 'rgba(168,85,247,0.15)' : isBill ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)', color: isVip ? '#c084fc' : isBill ? '#fbbf24' : '#34d399', fontWeight: 600 }}>
-                                      {isVip ? '👑 VIP Free' : isBill ? `💳 Billable (+${formatCurrency(rev.cost || costPerRev)})` : '✓ Free Included'}
-                                    </span>
-                                  </div>
-                                  {rev.targetDeliverableTitle && (
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '4px', fontSize: '10px', color: '#a5b4fc', marginBottom: '4px' }}>
-                                      <span>🎬</span>
-                                      <span>{rev.targetDeliverableTitle}</span>
-                                    </div>
-                                  )}
-                                  <p style={{ margin: '2px 0 0 0', color: '#f8fafc', fontSize: '12px' }}>{rev.note}</p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#94a3b8', fontSize: '13px' }}>
+                      Demo cut is being rendered by our editor. Check back shortly.
                     </div>
-                  );
-                })()}
-              </div>
+                  )}
 
-              {/* Right Card: Interactive Revision Chat or Locked State */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {demoData.approvalStatus === 'Approved' ? (
-                  <div style={{
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.25) 100%)',
-                    border: '1px solid rgba(52, 211, 153, 0.3)',
-                    borderRadius: '16px',
-                    padding: '36px 24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    minHeight: '380px',
-                    gap: '12px'
-                  }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#34d399' }}>check_circle</span>
-                    <h4 style={{ margin: 0, color: '#34d399', fontSize: '18px', fontWeight: 800 }}>Master Cut Approved!</h4>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#cbd5e1', maxWidth: '320px', lineHeight: '1.5' }}>
-                      You have approved this deliverable as final master cut. Production chat is concluded and contract settlement is ready.
-                    </p>
-                  </div>
-                ) : !isChatUnlocked ? (
-                  <div style={{
-                    background: 'rgba(15, 23, 42, 0.6)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '16px',
-                    padding: '36px 24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    minHeight: '380px',
-                    gap: '12px'
-                  }}>
-                    <div style={{
-                      width: '56px',
-                      height: '56px',
-                      borderRadius: '50%',
-                      background: 'rgba(251, 191, 36, 0.12)',
-                      border: '1px solid rgba(251, 191, 36, 0.3)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fbbf24'
-                    }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>lock</span>
-                    </div>
-                    <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '16px', fontWeight: 700 }}>
-                      Revision Chat Locked
-                    </h4>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8', maxWidth: '320px', lineHeight: '1.5' }}>
-                      Live chat with the production editor is locked. To submit feedback, request timecoded changes, or discuss edits, please click the button below.
-                    </p>
+                  {demoData.approvalStatus !== 'Approved' && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsChatUnlocked(true);
-                        setIsRevisionFormOpen(true);
-                      }}
-                      className={styles.actionBtnPrimary}
-                      style={{
-                        marginTop: '8px',
-                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 20px',
-                        fontSize: '13px'
-                      }}
+                      onClick={handleClientApproveDemo}
+                      className={styles.actionBtnSuccess}
+                      style={{ marginTop: '8px' }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>lock_open</span>
-                      Request Revision & Unlock Chat
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                      Approve Deliverable as Final Master Cut ✓
                     </button>
-                  </div>
-                ) : (
-                  <RevisionChat
-                    projectId={projectId}
-                    currentUserRole="CLIENT"
-                    currentUserName={project.clientName || "Customer"}
-                    messages={project.revisionChat || []}
-                    demoFiles={demoData.demoFiles || []}
-                    videoDeliverables={videoDeliverables}
-                    onRefresh={fetchProjectData}
-                  />
-                )}
+                  )}
+                </div>
               </div>
+
+              {/* Multiple Revision Allowance & Billing Section */}
+              {(() => {
+                const revList = Array.isArray(project.revisions) ? project.revisions : [];
+                const isVip = Boolean(demoData.isSpecialCustomerFree);
+                const freeIncluded = demoData.freeRevisionsIncluded !== undefined ? Number(demoData.freeRevisionsIncluded) : 2;
+                const costPerRev = demoData.costPerRevision !== undefined ? Number(demoData.costPerRevision) : 1000;
+                const nextRound = revList.length + 1;
+                const isNextBillable = !isVip && nextRound > freeIncluded;
+
+                return (
+                  <div style={{ padding: '16px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.25)', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '20px' }}>receipt_long</span>
+                        <strong style={{ fontSize: '13px', color: '#fbbf24' }}>Revision Policy & Rounds</strong>
+                      </div>
+                      {isVip ? (
+                        <span style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.4)', fontSize: '11px', fontWeight: 700 }}>
+                          👑 Special VIP Customer (Unlimited Free Revisions)
+                        </span>
+                      ) : (
+                        <span style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)', fontSize: '11px', fontWeight: 700 }}>
+                          {Math.min(freeIncluded, revList.length)}/{freeIncluded} Free Used • Extra: {formatCurrency(costPerRev)}/rev
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Revision Submission Form */}
+                    {demoData.approvalStatus !== 'Approved' && (
+                      <form onSubmit={handleClientSubmitRevision} style={{ padding: '14px', background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ fontSize: '13px', color: '#f8fafc' }}>
+                            Submit Revision Request (Round #{nextRound})
+                          </strong>
+                          <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: isNextBillable ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.2)', color: isNextBillable ? '#fbbf24' : '#34d399', border: isNextBillable ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(16,185,129,0.4)' }}>
+                            {isVip ? '👑 VIP Free' : isNextBillable ? `💳 Billable: +${formatCurrency(costPerRev)}` : `✓ Free (${nextRound}/${freeIncluded})`}
+                          </span>
+                        </div>
+
+                        {/* Deliverable Selector if multiple deliverables exist */}
+                        {videoDeliverables.length > 0 && (
+                          <div>
+                            <label style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
+                              Target Video Deliverable:
+                            </label>
+                            <select
+                              value={revisionDeliverableId}
+                              onChange={(e) => setRevisionDeliverableId(e.target.value)}
+                              className={styles.portalInput}
+                              style={{ width: '100%', cursor: 'pointer', background: 'rgba(15, 23, 42, 0.8)' }}
+                            >
+                              <option value="ALL">🎬 Entire Project / All Deliverables</option>
+                              {videoDeliverables.map((v, idx) => (
+                                <option key={v.id || idx} value={v.id}>
+                                  🎬 {v.title || `Video #${idx + 1}`} ({v.aspectRatio || '9:16'})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <input
+                          type="text"
+                          placeholder="Revision Topic / Scope (e.g. Intro pacing and color tint)"
+                          value={revisionTitle}
+                          onChange={(e) => setRevisionTitle(e.target.value)}
+                          className={styles.portalInput}
+                        />
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            placeholder="Timestamp (e.g. 00:15 - 00:22)"
+                            value={revisionTimecode}
+                            onChange={(e) => setRevisionTimecode(e.target.value)}
+                            className={styles.portalInput}
+                            style={{ maxWidth: '160px' }}
+                          />
+                          <span style={{ fontSize: '11px', color: '#94a3b8', alignSelf: 'center' }}>Optional timecode</span>
+                        </div>
+
+                        <textarea
+                          rows={3}
+                          required
+                          placeholder="Describe requested adjustments in detail..."
+                          value={revisionNote}
+                          onChange={(e) => setRevisionNote(e.target.value)}
+                          className={styles.portalTextarea}
+                        />
+
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                          <button
+                            type="submit"
+                            disabled={submittingRevision}
+                            className={styles.actionBtnPrimary}
+                            style={{ padding: '8px 16px', fontSize: '12px' }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>send</span>
+                            {submittingRevision ? 'Submitting...' : `Submit Revision Round #${nextRound}`}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {revisionSuccess && (
+                      <div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', color: '#34d399', fontSize: '12px', fontWeight: 600 }}>
+                        {revisionSuccess}
+                      </div>
+                    )}
+
+                    {/* Previous Revision Rounds Log */}
+                    {revList.length > 0 && (
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                          Revision Rounds History ({revList.length})
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                          {revList.map((rev: any, index: number) => {
+                            const roundNum = rev.roundNumber || (revList.length - index);
+                            const isBill = Boolean(rev.isBillable);
+                            return (
+                              <div key={rev.id || index} style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <strong style={{ color: '#fbbf24', fontSize: '12px' }}>
+                                      Round #{roundNum}
+                                    </strong>
+                                    {rev.timecode && (
+                                      <span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(0,0,0,0.4)', color: '#38bdf8', fontFamily: 'monospace' }}>
+                                        ⏱ {rev.timecode}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: isVip ? 'rgba(168,85,247,0.15)' : isBill ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)', color: isVip ? '#c084fc' : isBill ? '#fbbf24' : '#34d399', fontWeight: 600 }}>
+                                    {isVip ? '👑 VIP Free' : isBill ? `💳 Billable (+${formatCurrency(rev.cost || costPerRev)})` : '✓ Free Included'}
+                                  </span>
+                                </div>
+                                {rev.targetDeliverableTitle && (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 6px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '4px', fontSize: '10px', color: '#a5b4fc', marginBottom: '4px' }}>
+                                    <span>🎬</span>
+                                    <span>{rev.targetDeliverableTitle}</span>
+                                  </div>
+                                )}
+                                <p style={{ margin: '2px 0 0 0', color: '#f8fafc', fontSize: '12px' }}>{rev.note}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </>
         )}
@@ -1569,6 +1547,226 @@ export default function CustomerProjectPortalPage() {
                 Print / Save as PDF
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL: CLIENT REVISION SUBMISSION
+          ==================================================================== */}
+      {isRevisionModalOpen && (
+        <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsRevisionModalOpen(false); }}>
+          <div className={styles.portalModalContent} style={{ maxWidth: '600px' }}>
+            <div className={styles.portalModalHeader}>
+              <h3 className={styles.portalModalTitle}>
+                <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '22px' }}>rate_review</span>
+                Submit Revision Request (Round #{(Array.isArray(project.revisions) ? project.revisions.length : 0) + 1})
+              </h3>
+              <button onClick={() => setIsRevisionModalOpen(false)} className={styles.closeBtn} style={{ color: '#94a3b8' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+            </div>
+
+            {(() => {
+              const revList = Array.isArray(project.revisions) ? project.revisions : [];
+              const isVip = Boolean(demoData.isSpecialCustomerFree);
+              const freeIncluded = demoData.freeRevisionsIncluded !== undefined ? Number(demoData.freeRevisionsIncluded) : 2;
+              const costPerRev = demoData.costPerRevision !== undefined ? Number(demoData.costPerRevision) : 1000;
+              const nextRound = revList.length + 1;
+              const isNextBillable = !isVip && nextRound > freeIncluded;
+
+              return (
+                <form onSubmit={handleClientSubmitRevision} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {/* Prominent Selected Demo Banner */}
+                  <div style={{
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(2, 132, 199, 0.08) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>movie</span>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Target Video Demo Cut
+                        </div>
+                        <strong style={{ fontSize: '14px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {selectedTargetDemo?.title || 'Selected Deliverable Cut'}
+                          {selectedTargetDemo?.aspectRatio && (
+                            <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 600 }}>({selectedTargetDemo.aspectRatio})</span>
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {selectedTargetDemo?.url && (
+                      <a
+                        href={selectedTargetDemo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          background: '#0284c7',
+                          color: '#fff',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>play_circle</span>
+                        Watch Cut ↗
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Unlimited Revisions & Billing Status Banner */}
+                  <div style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: isVip
+                      ? 'rgba(168, 85, 247, 0.12)'
+                      : !isNextBillable
+                      ? 'rgba(16, 185, 129, 0.12)'
+                      : 'rgba(251, 191, 36, 0.12)',
+                    border: isVip
+                      ? '1px solid rgba(168, 85, 247, 0.25)'
+                      : !isNextBillable
+                      ? '1px solid rgba(16, 185, 129, 0.25)'
+                      : '1px solid rgba(251, 191, 36, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-outlined" style={{
+                        color: isVip ? '#c084fc' : !isNextBillable ? '#34d399' : '#fbbf24',
+                        fontSize: '18px'
+                      }}>
+                        lock_open
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#cbd5e1' }}>
+                        Unlimited Revisions Active <strong style={{ color: '#f8fafc' }}>(Round #{nextRound})</strong>
+                      </span>
+                    </div>
+
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: isVip ? '#c084fc' : !isNextBillable ? '#34d399' : '#fbbf24' }}>
+                      {isVip ? '👑 VIP Free' : !isNextBillable ? `✓ Within Allowance (${nextRound}/${freeIncluded})` : `💳 Billable (+${formatCurrency(costPerRev)})`}
+                    </span>
+                  </div>
+
+                  {/* Quick Revision Category Chips */}
+                  <div>
+                    <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      What kind of changes do you need?
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {['✂️ Cuts & Pacing', '🎨 Color Grading', '🔊 Audio & Music', '📝 Subtitles & Text', '✨ Visual FX', '🔁 Re-shoot / Footage', '💬 General Feedback'].map(cat => {
+                        const isSelected = selectedRevisionCategories.includes(cat);
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedRevisionCategories(prev => prev.filter(c => c !== cat));
+                              } else {
+                                setSelectedRevisionCategories(prev => [...prev, cat]);
+                              }
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              border: isSelected ? '1px solid #f59e0b' : '1px solid rgba(255,255,255,0.12)',
+                              background: isSelected ? 'rgba(245, 158, 11, 0.25)' : 'rgba(255,255,255,0.05)',
+                              color: isSelected ? '#fbbf24' : '#cbd5e1',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                        Revision Topic / Scope:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Intro hook and pacing adjustments"
+                        value={revisionTitle}
+                        onChange={(e) => setRevisionTitle(e.target.value)}
+                        className={styles.portalInput}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                        Timecode Reference (Optional):
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 00:15 - 00:22 or at 01:10"
+                        value={revisionTimecode}
+                        onChange={(e) => setRevisionTimecode(e.target.value)}
+                        className={styles.portalInput}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                      Revision Details & Instructions <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      required
+                      placeholder="Describe in detail what needs to be changed for this video cut (e.g. remove intro clip at 0:05, adjust background music volume, fix typo in caption at 0:20)..."
+                      value={revisionNote}
+                      onChange={(e) => setRevisionNote(e.target.value)}
+                      className={styles.portalTextarea}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsRevisionModalOpen(false)}
+                      className={styles.actionBtnSecondary}
+                      style={{ padding: '8px 16px', fontSize: '12px' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingRevision}
+                      className={styles.clientRevisionBtn}
+                      style={{ padding: '8px 22px', fontSize: '13px' }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>send</span>
+                      {submittingRevision ? 'Submitting...' : `Submit Revision Round #${nextRound}`}
+                    </button>
+                  </div>
+                </form>
+              );
+            })()}
           </div>
         </div>
       )}

@@ -65,7 +65,7 @@ export default function ProjectListPage() {
 
   const [form, setForm] = useState({
     name: '', projectCode: '', clientName: '', clientPhone: '', priority: 'Medium',
-    startDate: '', endDate: '', expectedShootingDate: '', expectedEditingDate: '', estimatedBudget: '', advancePayment: '', description: ''
+    startDate: '', endDate: '', expectedShootingDate: '', expectedEditingDate: '', estimatedBudget: '', description: ''
   });
 
   useEffect(() => {
@@ -159,7 +159,6 @@ export default function ProjectListPage() {
           expectedShootingDate: form.expectedShootingDate ? form.expectedShootingDate : undefined,
           expectedEditingDate: form.expectedEditingDate ? form.expectedEditingDate : undefined,
           estimatedBudget: form.estimatedBudget ? Number(form.estimatedBudget) : undefined,
-          advancePayment: form.advancePayment ? Number(form.advancePayment) : undefined,
           description: finalDescription || undefined
         })
       });
@@ -167,7 +166,7 @@ export default function ProjectListPage() {
       if (!res.ok) { setError(d.error || 'Failed to create project'); return; }
       setSuccess('Project created successfully!');
       setShowModal(false);
-      setForm({ name: '', projectCode: '', clientName: '', clientPhone: '', priority: 'Medium', startDate: '', endDate: '', expectedShootingDate: '', expectedEditingDate: '', estimatedBudget: '', advancePayment: '', description: '' });
+      setForm({ name: '', projectCode: '', clientName: '', clientPhone: '', priority: 'Medium', startDate: '', endDate: '', expectedShootingDate: '', expectedEditingDate: '', estimatedBudget: '', description: '' });
       setRoleAssignments([createDefaultRole()]);
       fetchProjects();
       setTimeout(() => setSuccess(''), 4000);

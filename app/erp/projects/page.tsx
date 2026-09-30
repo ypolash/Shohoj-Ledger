@@ -90,7 +90,6 @@ export default function ProjectDashboardPage() {
     expectedShootingDate: '',
     expectedEditingDate: '',
     estimatedBudget: '',
-    advancePayment: '',
     description: ''
   });
 
@@ -208,7 +207,6 @@ export default function ProjectDashboardPage() {
         expectedShootingDate: form.expectedShootingDate ? form.expectedShootingDate : undefined,
         expectedEditingDate: form.expectedEditingDate ? form.expectedEditingDate : undefined,
         estimatedBudget: form.estimatedBudget ? Number(form.estimatedBudget) : undefined,
-        advancePayment: form.advancePayment ? Number(form.advancePayment) : undefined,
         description: finalDescription || undefined
       };
 
@@ -237,7 +235,6 @@ export default function ProjectDashboardPage() {
         expectedShootingDate: '',
         expectedEditingDate: '',
         estimatedBudget: '',
-        advancePayment: '',
         description: ''
       });
       setRoleAssignments([createDefaultRole()]);
@@ -978,42 +975,26 @@ export default function ProjectDashboardPage() {
                 </button>
               </div>
 
-              {/* Section: Budget & Advance Pay */}
+              {/* Section: Budget */}
               <div className={styles.formSectionDivider}>
                 <span className={styles.formSectionLabel}>
                   <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>payments</span>
-                  Budget &amp; Advance Pay
+                  Estimated Budget
                 </span>
                 <div className={styles.formSectionLine} />
               </div>
 
-              <div className={styles.formRow2}>
-                <div className={styles.formField}>
-                  <label className={styles.fieldLabel}>Estimated Budget</label>
-                  <div className={styles.inputWrapper}>
-                    <span className={styles.currencyPrefix}>BDT</span>
-                    <input
-                      type="number"
-                      placeholder="e.g. 750,000"
-                      value={form.estimatedBudget}
-                      onChange={(e) => handleFormChange('estimatedBudget', e.target.value)}
-                      className={`${styles.fieldInput} ${styles.currencyFieldInput}`}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formField}>
-                  <label className={styles.fieldLabel}>Advance Pay</label>
-                  <div className={styles.inputWrapper}>
-                    <span className={styles.currencyPrefix}>BDT</span>
-                    <input
-                      type="number"
-                      placeholder="e.g. 50,000 (0 if none)"
-                      value={form.advancePayment}
-                      onChange={(e) => handleFormChange('advancePayment', e.target.value)}
-                      className={`${styles.fieldInput} ${styles.currencyFieldInput}`}
-                    />
-                  </div>
+              <div className={styles.formField}>
+                <label className={styles.fieldLabel}>Estimated Budget</label>
+                <div className={styles.inputWrapper}>
+                  <span className={styles.currencyPrefix}>BDT</span>
+                  <input
+                    type="number"
+                    placeholder="e.g. 750,000"
+                    value={form.estimatedBudget}
+                    onChange={(e) => handleFormChange('estimatedBudget', e.target.value)}
+                    className={`${styles.fieldInput} ${styles.currencyFieldInput}`}
+                  />
                 </div>
               </div>
 

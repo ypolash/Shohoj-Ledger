@@ -389,6 +389,15 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
   const [shareModalTab, setShareModalTab] = useState<'customer' | 'editor'>('customer');
   const [clientRevisions, setClientRevisions] = useState<any[]>([]);
   const [revisionChat, setRevisionChat] = useState<any[]>([]);
+  const [isAddRevisionModalOpen, setIsAddRevisionModalOpen] = useState(false);
+  const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
+  const [revisionForm, setRevisionForm] = useState({
+    title: '',
+    deliverableId: 'ALL',
+    timecode: '',
+    notes: '',
+    clientName: ''
+  });
   const [clientReview, setClientReview] = useState<any>(null);
   const [editorRating, setEditorRating] = useState<any>(null);
   const [isRateEditorModalOpen, setIsRateEditorModalOpen] = useState(false);
@@ -737,6 +746,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       editing?: typeof editingData;
       demo?: typeof demoData;
       names?: typeof stageNames;
+      revisions?: typeof clientRevisions;
+      revisionChat?: typeof revisionChat;
     },
     extraProjectPayload?: any
   ) => {
@@ -770,8 +781,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
         editingData: editingToPersist,
         videoDeliverables: editingToPersist.videoDeliverables || [],
         demoData: demoToPersist,
-        revisions: clientRevisions,
-        revisionChat: revisionChat,
+        revisions: customData?.revisions ?? clientRevisions,
+        revisionChat: customData?.revisionChat ?? revisionChat,
         reviewData: clientReview,
         editorRating: editorRating
       };
@@ -1634,6 +1645,106 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     });
 
     return Object.values(map);
+  };
+
+  const handleAddAdminRevision = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revisionForm.notes.trim()) {
+      showToast("⚠️ Revision notes or change request details cannot be empty.");
+      return;
+    }
+
+    setIsSubmittingRevision(true);
+    try {
+      const roundNumber = clientRevisions.length + 1;
+      const isBillable = !isSpecialCustomerFree && roundNumber > freeRevisionsIncluded;
+      const cost = isBillable ? costPerRevision : 0;
+
+      const selectedDeliverable = (editingData.videoDeliverables || []).find(v => v.id === revisionForm.deliverableId);
+
+      const newRevision = {
+        id: String(Date.now()),
+        roundNumber,
+        title: revisionForm.title.trim() || `Revision Round #${roundNumber}`,
+        note: revisionForm.notes.trim(),
+        clientName: revisionForm.clientName.trim() || project?.clientName || 'Client',
+        timecode: revisionForm.timecode.trim() || '',
+        targetDeliverableId: revisionForm.deliverableId !== 'ALL' ? revisionForm.deliverableId : undefined,
+        targetDeliverableTitle: selectedDeliverable ? `${selectedDeliverable.title || 'Deliverable'} (${selectedDeliverable.aspectRatio || '16:9'})` : undefined,
+        targetEditorName: selectedDeliverable?.assignedEditorName || shootingData.assignedEditorName || undefined,
+        isBillable,
+        cost,
+        createdAt: new Date().toISOString(),
+        status: 'Pending'
+      };
+
+      const updatedRevisions = [newRevision, ...clientRevisions];
+      setClientRevisions(updatedRevisions);
+
+      const chatBadge = isSpecialCustomerFree 
+        ? '👑 VIP Free Revision' 
+        : isBillable 
+        ? `💳 Billable Fee: BDT ${cost}` 
+        : `✓ Free Included (${roundNumber}/${freeRevisionsIncluded})`;
+
+      const deliverableTag = selectedDeliverable ? ` • 🎬 ${selectedDeliverable.title || 'Deliverable'}` : '';
+
+      const chatMsg = {
+        id: String(Date.now()),
+        sender: 'STUDIO',
+        senderName: 'Studio Manager (on behalf of Client)',
+        type: 'TEXT',
+        text: `[📋 Revision Round #${roundNumber}${deliverableTag} • ${chatBadge}]\n${revisionForm.notes.trim()}`,
+        timecode: revisionForm.timecode.trim() || '',
+        targetDeliverableId: revisionForm.deliverableId !== 'ALL' ? revisionForm.deliverableId : undefined,
+        targetDeliverableTitle: selectedDeliverable ? `${selectedDeliverable.title || 'Deliverable'} (${selectedDeliverable.aspectRatio || '16:9'})` : undefined,
+        targetEditorName: selectedDeliverable?.assignedEditorName || shootingData.assignedEditorName || undefined,
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedChat = [...revisionChat, chatMsg];
+      setRevisionChat(updatedChat);
+
+      const updatedDemo = {
+        ...demoData,
+        approvalStatus: 'Revision Requested',
+        revisionCount: roundNumber,
+        freeRevisionsIncluded,
+        costPerRevision,
+        isSpecialCustomerFree,
+        revisionNotes: `[Revision #${roundNumber}${deliverableTag} - ${new Date().toLocaleDateString()} (${chatBadge})]: ${revisionForm.notes.trim()}${demoData.revisionNotes ? `\n\n${demoData.revisionNotes}` : ''}`
+      };
+      setDemoData(updatedDemo);
+
+      await saveWorkflowState(currentStage, completedStages, {
+        demo: updatedDemo,
+        revisions: updatedRevisions,
+        revisionChat: updatedChat
+      });
+
+      showToast(`✓ Revision Round #${roundNumber} logged successfully`);
+      setIsAddRevisionModalOpen(false);
+      setRevisionForm({
+        title: '',
+        deliverableId: 'ALL',
+        timecode: '',
+        notes: '',
+        clientName: ''
+      });
+    } catch (err) {
+      console.error("Failed to add revision:", err);
+      showToast("❌ Error saving revision round.");
+    } finally {
+      setIsSubmittingRevision(false);
+    }
+  };
+
+  const handleDeleteRevisionRound = async (revId: string) => {
+    if (!confirm("Are you sure you want to remove this revision round? This will update the revision count and billing.")) return;
+    const updated = clientRevisions.filter(r => r.id !== revId);
+    setClientRevisions(updated);
+    await saveWorkflowState(currentStage, completedStages, { revisions: updated });
+    showToast("Revision round removed");
   };
 
   const handleSaveProjectDetails = async (e: React.FormEvent) => {
@@ -4618,6 +4729,49 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                           </div>
                         </div>
 
+                        {/* Client Revision Requests for this deliverable in Stage 5 */}
+                        {(() => {
+                          const delivRevs = clientRevisions.filter((r: any) =>
+                            r.targetDeliverableId === deliv.id ||
+                            r.targetDeliverableTitle?.includes(deliv.title)
+                          );
+                          if (delivRevs.length === 0) return null;
+                          return (
+                            <div style={{
+                              padding: '10px 14px',
+                              background: 'rgba(245, 158, 11, 0.08)',
+                              border: '1px solid rgba(245, 158, 11, 0.3)',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '6px'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <strong style={{ color: '#fbbf24', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>rate_review</span>
+                                  Client Revision Feedback ({delivRevs.length})
+                                </strong>
+                                <span style={{ fontSize: '10px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                                  Active Round
+                                </span>
+                              </div>
+                              {delivRevs.map((rev: any, idx: number) => (
+                                <div key={rev.id || idx} style={{ padding: '6px 8px', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', fontSize: '11px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                                    <strong style={{ color: '#fbbf24' }}>#{rev.roundNumber || idx + 1}: {rev.title || 'Revision'}</strong>
+                                    {rev.timecode && (
+                                      <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontSize: '10px' }}>⏱️ {rev.timecode}</span>
+                                    )}
+                                  </div>
+                                  <p style={{ margin: 0, color: '#f8fafc', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+                                    {rev.note}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
                         {deliv.editorInstructions && (
                           <div style={{ padding: '8px 12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', fontSize: '11px', color: '#cbd5e1' }}>
                             <strong style={{ color: '#818cf8' }}>Directions: </strong>
@@ -4971,19 +5125,174 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                         </div>
                       )}
 
-                      {/* Revision Rounds Tally Pill */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '11px', flexWrap: 'wrap', gap: '6px' }}>
-                        <span style={{ color: '#94a3b8' }}>
-                          Total Revisions: <strong style={{ color: '#f8fafc' }}>{totalRevisionsCount} rounds</strong>
-                        </span>
-                        {isSpecialCustomerFree ? (
-                          <span style={{ color: '#c084fc', fontWeight: 600 }}>👑 VIP Free Client (BDT 0)</span>
-                        ) : (
-                          <span style={{ color: billableRevisionsCount > 0 ? '#fbbf24' : '#34d399', fontWeight: 600 }}>
-                            {freeRevisionsUsed}/{freeRevisionsIncluded} Free Used • {billableRevisionsCount} Billable (+{formatCurrency(totalRevisionFees)})
+                      {/* Admin Lock / Stop Customer Revisions Control */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        background: demoData.revisionsLocked ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                        border: demoData.revisionsLocked ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                        borderRadius: '8px',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="material-symbols-outlined" style={{ color: demoData.revisionsLocked ? '#ef4444' : '#34d399', fontSize: '18px' }}>
+                            {demoData.revisionsLocked ? 'lock' : 'lock_open'}
                           </span>
-                        )}
+                          <div>
+                            <strong style={{ fontSize: '12px', color: demoData.revisionsLocked ? '#ef4444' : '#34d399' }}>
+                              {demoData.revisionsLocked ? 'Customer Revisions: STOPPED / LOCKED' : 'Customer Revisions: OPEN (UNLIMITED)'}
+                            </strong>
+                            <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8' }}>
+                              {demoData.revisionsLocked ? 'Customer cannot submit further revision requests on the portal' : 'Customer can submit unlimited revision rounds on the portal'}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = { ...demoData, revisionsLocked: !demoData.revisionsLocked };
+                            setDemoData(updated);
+                            saveWorkflowState(currentStage, completedStages, { demo: updated });
+                            showToast(updated.revisionsLocked ? "🔒 Customer revisions stopped & locked" : "🔓 Customer revisions unlocked (unlimited active)");
+                          }}
+                          style={{
+                            padding: '5px 12px',
+                            borderRadius: '6px',
+                            background: demoData.revisionsLocked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                            border: demoData.revisionsLocked ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                            color: demoData.revisionsLocked ? '#34d399' : '#f87171',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {demoData.revisionsLocked ? '🔓 Allow Revisions' : '🔒 Stop / Lock Revisions'}
+                        </button>
                       </div>
+
+                      {/* Revision Rounds Tally Pill & Add Revision Button */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '11px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ color: '#94a3b8' }}>
+                            Total Revisions: <strong style={{ color: '#f8fafc' }}>{totalRevisionsCount} rounds</strong>
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
+                          {isSpecialCustomerFree ? (
+                            <span style={{ color: '#c084fc', fontWeight: 600 }}>👑 VIP Free Client (BDT 0)</span>
+                          ) : (
+                            <span style={{ color: billableRevisionsCount > 0 ? '#fbbf24' : '#34d399', fontWeight: 600 }}>
+                              {freeRevisionsUsed}/{freeRevisionsIncluded} Free Used • {billableRevisionsCount} Billable (+{formatCurrency(totalRevisionFees)})
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRevisionForm({
+                              title: `Revision Round #${clientRevisions.length + 1}`,
+                              deliverableId: 'ALL',
+                              timecode: '',
+                              notes: '',
+                              clientName: project?.clientName || ''
+                            });
+                            setIsAddRevisionModalOpen(true);
+                          }}
+                          style={{
+                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                            color: '#0f172a',
+                            border: 'none',
+                            padding: '6px 14px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
+                            fontSize: '11px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.25)',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>add_circle</span>
+                          + Add Revision
+                        </button>
+                      </div>
+
+                      {/* Logged Revision Rounds List (if any exist) */}
+                      {clientRevisions.length > 0 && (
+                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                            Logged Client Revision Instructions ({clientRevisions.length} Rounds)
+                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
+                            {clientRevisions.map((rev: any, idx: number) => {
+                              const isBillable = rev.isBillable || (!isSpecialCustomerFree && (rev.roundNumber || (idx + 1)) > freeRevisionsIncluded);
+                              return (
+                                <div
+                                  key={rev.id || idx}
+                                  style={{
+                                    padding: '10px 12px',
+                                    background: 'rgba(0,0,0,0.35)',
+                                    border: '1px solid rgba(251, 191, 36, 0.2)',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px',
+                                    fontSize: '11px'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <strong style={{ color: '#fbbf24', fontSize: '12px' }}>
+                                        #{rev.roundNumber || idx + 1}: {rev.title || `Revision ${idx + 1}`}
+                                      </strong>
+                                      {rev.targetDeliverableTitle && (
+                                        <span style={{ fontSize: '10px', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                                          🎬 {rev.targetDeliverableTitle}
+                                        </span>
+                                      )}
+                                      {rev.timecode && (
+                                        <span style={{ fontSize: '10px', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.15)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                                          ⏱️ {rev.timecode}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      {isSpecialCustomerFree ? (
+                                        <span style={{ color: '#c084fc', fontSize: '10px', fontWeight: 600 }}>👑 VIP</span>
+                                      ) : isBillable ? (
+                                        <span style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 600 }}>💳 +{formatCurrency(costPerRevision)}</span>
+                                      ) : (
+                                        <span style={{ color: '#34d399', fontSize: '10px', fontWeight: 600 }}>✓ Free</span>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteRevisionRound(rev.id)}
+                                        title="Delete revision round"
+                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                                      >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Full Revision Text / Notes */}
+                                  <div style={{ padding: '8px 10px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '6px', fontSize: '12px', color: '#f8fafc', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+                                    {rev.note || 'No revision notes provided.'}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -8559,6 +8868,168 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                       {isSavingProductReturn ? 'Saving...' : productData.productReturned ? 'Update Return Info' : 'Confirm Return'}
                     </button>
                   </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* ====================================================================
+            MODAL: ADD REVISION ROUND (STAGE 6 - LOG CLIENT REVISION)
+            ==================================================================== */}
+        {isAddRevisionModalOpen && (
+          <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsAddRevisionModalOpen(false); }}>
+            <div className={styles.modalContent} style={{ maxWidth: '560px' }}>
+              <div className={styles.modalHeader}>
+                <h3 className={styles.modalTitle}>
+                  <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '22px' }}>rate_review</span>
+                  Record Revision Round #{clientRevisions.length + 1}
+                </h3>
+                <button onClick={() => setIsAddRevisionModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleAddAdminRevision} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Billing Status Callout */}
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: isSpecialCustomerFree
+                    ? 'rgba(168, 85, 247, 0.15)'
+                    : clientRevisions.length + 1 <= freeRevisionsIncluded
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : 'rgba(251, 191, 36, 0.15)',
+                  border: isSpecialCustomerFree
+                    ? '1px solid rgba(168, 85, 247, 0.3)'
+                    : clientRevisions.length + 1 <= freeRevisionsIncluded
+                    ? '1px solid rgba(16, 185, 129, 0.3)'
+                    : '1px solid rgba(251, 191, 36, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span className="material-symbols-outlined" style={{
+                    color: isSpecialCustomerFree ? '#c084fc' : clientRevisions.length + 1 <= freeRevisionsIncluded ? '#34d399' : '#fbbf24',
+                    fontSize: '20px'
+                  }}>
+                    {isSpecialCustomerFree ? 'workspace_premium' : clientRevisions.length + 1 <= freeRevisionsIncluded ? 'check_circle' : 'monetization_on'}
+                  </span>
+                  <div style={{ fontSize: '12px' }}>
+                    {isSpecialCustomerFree ? (
+                      <span style={{ color: '#c084fc', fontWeight: 600 }}>👑 VIP Special Customer: Free unlimited revisions (Cost: BDT 0)</span>
+                    ) : clientRevisions.length + 1 <= freeRevisionsIncluded ? (
+                      <span style={{ color: '#34d399', fontWeight: 600 }}>
+                        ✓ Included in Free Allowance (Round {clientRevisions.length + 1} of {freeRevisionsIncluded} Free)
+                      </span>
+                    ) : (
+                      <span style={{ color: '#fbbf24', fontWeight: 600 }}>
+                        💳 Billable Revision Round (+{formatCurrency(costPerRevision)} fee will be added to invoice)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Target Deliverable Selector */}
+                {(editingData.videoDeliverables || []).length > 0 && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Target Deliverable
+                    </label>
+                    <select
+                      value={revisionForm.deliverableId}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, deliverableId: e.target.value })}
+                      className={styles.stageSelect}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="ALL">🌐 All Deliverables / General Video Project</option>
+                      {(editingData.videoDeliverables || []).map((v, i) => (
+                        <option key={v.id || i} value={v.id}>
+                          🎬 {v.title || `Deliverable ${i + 1}`} ({v.aspectRatio || '16:9'}) {v.assignedEditorName ? `— Editor: ${v.assignedEditorName}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  {/* Scope / Title */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Revision Scope / Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={`e.g. Revision Round #${clientRevisions.length + 1}`}
+                      value={revisionForm.title}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, title: e.target.value })}
+                      className={styles.stageInput}
+                      style={{ width: '100%', paddingLeft: '12px' }}
+                    />
+                  </div>
+
+                  {/* Timecode */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                      Timecode Reference (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 00:24 - 00:45 or 01:12"
+                      value={revisionForm.timecode}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, timecode: e.target.value })}
+                      className={styles.stageInput}
+                      style={{ width: '100%', paddingLeft: '12px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Revision Notes / Client instructions */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px' }}>
+                    Revision Notes & Change Details <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    placeholder="Describe the client's requested changes, cuts, subtitles, color grading, or audio feedback in detail..."
+                    value={revisionForm.notes}
+                    onChange={(e) => setRevisionForm({ ...revisionForm, notes: e.target.value })}
+                    className={styles.stageTextarea}
+                    style={{ width: '100%', padding: '10px 12px' }}
+                  />
+                </div>
+
+                {/* Modal Footer Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddRevisionModalOpen(false)}
+                    className={styles.stageBackBtn}
+                    style={{ fontSize: '12px', padding: '8px 14px' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingRevision}
+                    style={{
+                      padding: '8px 20px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      border: 'none',
+                      color: '#0f172a',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
+                    {isSubmittingRevision ? 'Saving...' : `Record Revision Round #${clientRevisions.length + 1}`}
+                  </button>
                 </div>
               </form>
             </div>

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { createLedgerEntry } from "@/lib/ledger";
+import { getPresetById } from "@/lib/projects/projectPresets";
 
 export async function GET(req: Request) {
   try {
@@ -152,13 +153,55 @@ export async function POST(req: Request) {
       }
     }
 
+    // Initialize Workflow Preset Metadata
+    let finalDescription = description?.trim() || "";
+    if (!finalDescription.includes("[[WORKFLOW_META_V1:")) {
+      let defaultPresetId = body.presetId;
+      if (!defaultPresetId) {
+        const setting = await prisma.systemSetting.findUnique({
+          where: { key: `project_default_preset_${companyId}` }
+        });
+        defaultPresetId = setting?.value || "video_agency";
+      }
+
+      // Check for any company-level custom configs for this preset
+      const customSetting = await prisma.systemSetting.findUnique({
+        where: { key: `project_custom_preset_config_${companyId}` }
+      });
+      let customPresetConfig = null;
+      if (customSetting?.value) {
+        try {
+          const parsed = JSON.parse(customSetting.value);
+          customPresetConfig = parsed[defaultPresetId] || null;
+        } catch {}
+      }
+
+      const presetDef = getPresetById(defaultPresetId);
+      const stageNames: Record<number, string> = {};
+      for (let s = 1; s <= 7; s++) {
+        stageNames[s] = customPresetConfig?.stageNames?.[s] || presetDef.stages[s]?.name || `Stage ${s}`;
+      }
+
+      const initialWorkflowMeta = {
+        presetId: defaultPresetId,
+        currentStage: 1,
+        completedStages: [],
+        stageNames,
+        customFieldValues: {},
+        customFields: customPresetConfig?.customFields || presetDef.defaultFields || []
+      };
+
+      const metaString = `[[WORKFLOW_META_V1:${JSON.stringify(initialWorkflowMeta)}]]`;
+      finalDescription = finalDescription ? `${finalDescription}\n\n${metaString}` : metaString;
+    }
+
     const newProject = await prisma.$transaction(async (tx) => {
       const p = await (tx.project as any).create({
         data: {
           companyId,
           projectCode: trimmedCode,
           name: trimmedName,
-          description: description?.trim() || null,
+          description: finalDescription,
           category: category?.trim() || null,
           priority: priority || "Medium",
           status: "Draft",

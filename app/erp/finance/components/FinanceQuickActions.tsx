@@ -13,7 +13,7 @@ export function FinanceQuickActions() {
     { label: 'Bills Due', icon: 'pending_actions', color: '#f43f5e', path: '/erp/finance/bills' },
     { label: 'Advance', icon: 'payments', color: 'var(--warning)', path: '/erp/finance/advances' },
     { label: 'Settlement', icon: 'receipt_long', color: 'var(--primary)', path: '/erp/finance/settlements' },
-    { label: 'Export Report', icon: 'download', color: 'var(--text-main)', path: '/erp/finance/reports' }
+    { label: 'Export Report', icon: 'download', color: '#38bdf8', path: '/erp/finance/reports/statement' }
   ];
 
   return (

@@ -17,6 +17,8 @@ export async function POST(request: Request) {
       ownerPasswordRaw: payload.ownerPasswordRaw,
       ownerName: payload.ownerName?.trim() || "Company Owner",
       businessType: payload.businessType || "Product + Service",
+      industryTemplate: payload.industryTemplate || "it",
+      projectPreset: payload.projectPreset || undefined,
       selectedModules: payload.selectedModules || [],
       logoUrl: payload.logoUrl || null,
     });

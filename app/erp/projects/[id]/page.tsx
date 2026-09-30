@@ -24,6 +24,15 @@ import {
 } from 'lucide-react';
 import styles from './workspace.module.css';
 import RevisionChat from '@/app/erp/components/RevisionChat';
+import { 
+  PROJECT_PRESETS, 
+  ProjectPresetId, 
+  getPresetById, 
+  ProjectDynamicField, 
+  mergeCustomPresetConfig 
+} from '@/lib/projects/projectPresets';
+import { DynamicStageFields } from './components/DynamicStageFields';
+import { ProjectPresetModal } from './components/ProjectPresetModal';
 
 interface Employee {
   id: string;
@@ -134,6 +143,13 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     6: "Demo",
     7: "Complete"
   };
+
+  const [presetId, setPresetId] = useState<ProjectPresetId>('video_agency');
+  const [customFields, setCustomFields] = useState<ProjectDynamicField[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
+  const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
+
+  const activePresetDef = getPresetById(presetId);
 
   const [currentStage, setCurrentStage] = useState<number>(1);
   const [completedStages, setCompletedStages] = useState<number[]>([]);
@@ -531,6 +547,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
           if (match) {
             try {
               const parsed = JSON.parse(match[1]);
+              if (parsed.presetId && PROJECT_PRESETS[parsed.presetId as ProjectPresetId]) {
+                setPresetId(parsed.presetId as ProjectPresetId);
+              }
+              if (Array.isArray(parsed.customFields)) {
+                setCustomFields(parsed.customFields);
+              } else {
+                const defaultDef = getPresetById(parsed.presetId || 'video_agency');
+                setCustomFields(defaultDef.defaultFields || []);
+              }
+              if (parsed.customFieldValues && typeof parsed.customFieldValues === 'object') {
+                setCustomFieldValues(parsed.customFieldValues);
+              }
               if (parsed.currentStage) setCurrentStage(parsed.currentStage);
               if (parsed.completedStages) setCompletedStages(parsed.completedStages);
               if (parsed.stageNames) {
@@ -741,6 +769,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     targetStage?: number,
     targetCompleted?: number[],
     customData?: {
+      presetId?: ProjectPresetId;
+      customFields?: ProjectDynamicField[];
+      customFieldValues?: Record<string, any>;
       product?: typeof productData;
       shooting?: typeof shootingData;
       editing?: typeof editingData;
@@ -755,6 +786,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       const stageToPersist = targetStage ?? currentStage;
       const completedToPersist = targetCompleted ?? completedStages;
       const namesToPersist = customData?.names ?? stageNames;
+      const presetToPersist = customData?.presetId ?? presetId;
+      const fieldsToPersist = customData?.customFields ?? customFields;
+      const fieldValuesToPersist = customData?.customFieldValues ?? customFieldValues;
       const productToPersist = customData?.product ?? productData;
       const shootingToPersist = customData?.shooting ? { ...customData.shooting } : { ...shootingData };
       const editingToPersist = customData?.editing ? { ...customData.editing } : { ...editingData };
@@ -773,9 +807,12 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
       }
 
       const workflowMeta = {
+        presetId: presetToPersist,
         currentStage: stageToPersist,
         completedStages: completedToPersist,
         stageNames: namesToPersist,
+        customFields: fieldsToPersist,
+        customFieldValues: fieldValuesToPersist,
         productData: productToPersist,
         shootingData: shootingToPersist,
         editingData: editingToPersist,
@@ -821,7 +858,42 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     } catch (e) {
       console.error("Failed to save workflow state:", e);
     }
-  }, [projectId, currentStage, completedStages, stageNames, productData, shootingData, editingData, demoData, clientRevisions, revisionChat, clientReview, editorRating, project]);
+  }, [projectId, currentStage, completedStages, stageNames, presetId, customFields, customFieldValues, productData, shootingData, editingData, demoData, clientRevisions, revisionChat, clientReview, editorRating, project]);
+
+  const handleUpdateFieldValue = (fieldId: string, val: any) => {
+    const updatedValues = { ...customFieldValues, [fieldId]: val };
+    setCustomFieldValues(updatedValues);
+    debouncedSaveWorkflow({ customFieldValues: updatedValues } as any);
+  };
+
+  const handleAddDynamicField = (newField: ProjectDynamicField) => {
+    const updatedFields = [...customFields, newField];
+    setCustomFields(updatedFields);
+    saveWorkflowState(currentStage, completedStages, { customFields: updatedFields } as any);
+    showToast(`Added custom field "${newField.label}" to Stage ${currentStage}`);
+  };
+
+  const handleRemoveDynamicField = (fieldId: string) => {
+    const updatedFields = customFields.filter(f => f.id !== fieldId);
+    setCustomFields(updatedFields);
+    saveWorkflowState(currentStage, completedStages, { customFields: updatedFields } as any);
+    showToast(`Field removed from Stage ${currentStage}`);
+  };
+
+  const handleSavePresetAndStages = (newPresetId: ProjectPresetId, newStageNames: Record<number, string>) => {
+    setPresetId(newPresetId);
+    setStageNames(newStageNames);
+    setCustomStageNames(newStageNames);
+    const newDef = getPresetById(newPresetId);
+    const updatedFields = newDef.defaultFields || [];
+    setCustomFields(updatedFields);
+    saveWorkflowState(currentStage, completedStages, {
+      presetId: newPresetId,
+      names: newStageNames,
+      customFields: updatedFields
+    } as any);
+    showToast(`Project structure switched to "${newDef.name}"!`);
+  };
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -2358,18 +2430,44 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setCustomStageNames({ ...stageNames });
-                setIsSettingsModalOpen(true);
-              }}
-              className={styles.workflowSettingsBtn}
-              title="Edit workflow stage names & settings"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>tune</span>
-              Workflow Settings
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setIsPresetModalOpen(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '7px 14px',
+                  borderRadius: '10px',
+                  background: activePresetDef.bg,
+                  border: `1px solid ${activePresetDef.color}55`,
+                  color: activePresetDef.color,
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Switch or customize project structure preset"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{activePresetDef.icon}</span>
+                <span>Preset: {activePresetDef.name}</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px', opacity: 0.7 }}>tune</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomStageNames({ ...stageNames });
+                  setIsSettingsModalOpen(true);
+                }}
+                className={styles.workflowSettingsBtn}
+                title="Edit workflow stage names & settings"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                Stage Names
+              </button>
+            </div>
           </div>
 
           <div className={styles.breadcrumbPipeline}>
@@ -2555,6 +2653,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
               </div>
+
+              {/* Dynamic Specifications & Custom Fields for Stage 1 */}
+              <DynamicStageFields
+                stage={1}
+                stageName={stageNames[1] || activePresetDef.stages[1]?.name || 'Project Scope'}
+                presetColor={activePresetDef.color}
+                fields={customFields}
+                fieldValues={customFieldValues}
+                onUpdateFieldValue={handleUpdateFieldValue}
+                onAddField={handleAddDynamicField}
+                onRemoveField={handleRemoveDynamicField}
+              />
 
               <div className={styles.stageBottomActions}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>
@@ -2825,6 +2935,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
               </div>
+
+              {/* Dynamic Specifications & Custom Fields for Stage 2 */}
+              <DynamicStageFields
+                stage={2}
+                stageName={stageNames[2] || activePresetDef.stages[2]?.name || 'Advance Payment'}
+                presetColor={activePresetDef.color}
+                fields={customFields}
+                fieldValues={customFieldValues}
+                onUpdateFieldValue={handleUpdateFieldValue}
+                onAddField={handleAddDynamicField}
+                onRemoveField={handleRemoveDynamicField}
+              />
 
               <div className={styles.stageBottomActions}>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>
@@ -3608,6 +3730,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
               </div>
 
+              {/* Dynamic Specifications & Custom Fields for Stage 3 */}
+              <DynamicStageFields
+                stage={3}
+                stageName={stageNames[3] || activePresetDef.stages[3]?.name || 'Pre-Production & Assets'}
+                presetColor={activePresetDef.color}
+                fields={customFields}
+                fieldValues={customFieldValues}
+                onUpdateFieldValue={handleUpdateFieldValue}
+                onAddField={handleAddDynamicField}
+                onRemoveField={handleRemoveDynamicField}
+              />
+
               {/* Validation Warning Alert in Stage 3 */}
               {stage3ValidationError && (
                 <div className={styles.warningAlert} style={{ marginTop: '14px', borderColor: '#ef4444', background: 'rgba(239, 68, 68, 0.14)' }}>
@@ -3615,7 +3749,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     error
                   </span>
                   <div style={{ flex: 1 }}>
-                    <strong style={{ color: '#fca5a5' }}>Model Assignment Required!</strong>
+                    <strong style={{ color: '#fca5a5' }}>Role Assignment Notice</strong>
                     <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#fecaca' }}>
                       {stage3ValidationError}
                     </p>
@@ -3634,8 +3768,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 <button
                   type="button"
                   onClick={() => {
-                    if (!productData.assignedModelName || !productData.assignedModelName.trim()) {
-                      const errorMsg = "Model is not assigned! Please select or enter a model talent before confirming.";
+                    const isModelRequired = activePresetDef.id === 'video_agency';
+                    if (isModelRequired && (!productData.assignedModelName || !productData.assignedModelName.trim())) {
+                      const errorMsg = `${activePresetDef.deliverableSchema.secondaryRoleTitle} is not assigned! Please select or enter a name before confirming.`;
                       setStage3ValidationError(errorMsg);
                       showToast(`⚠️ ${errorMsg}`, 'warning');
                       const el = document.getElementById('stage3-model-input');
@@ -4377,6 +4512,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
 
 
 
+              {/* Dynamic Specifications & Custom Fields for Stage 4 */}
+              <DynamicStageFields
+                stage={4}
+                stageName={stageNames[4] || activePresetDef.stages[4]?.name || 'Production Execution'}
+                presetColor={activePresetDef.color}
+                fields={customFields}
+                fieldValues={customFieldValues}
+                onUpdateFieldValue={handleUpdateFieldValue}
+                onAddField={handleAddDynamicField}
+                onRemoveField={handleRemoveDynamicField}
+              />
+
               {/* Validation Warning Alert in Stage 4 */}
               {stage4ValidationError && (
                 <div className={styles.warningAlert} style={{ marginTop: '14px', borderColor: '#ef4444', background: 'rgba(239, 68, 68, 0.14)' }}>
@@ -4830,6 +4977,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
               </div>
+
+              {/* Dynamic Specifications & Custom Fields for Stage 5 */}
+              <DynamicStageFields
+                stage={5}
+                stageName={stageNames[5] || activePresetDef.stages[5]?.name || 'Deliverables & Assembly'}
+                presetColor={activePresetDef.color}
+                fields={customFields}
+                fieldValues={customFieldValues}
+                onUpdateFieldValue={handleUpdateFieldValue}
+                onAddField={handleAddDynamicField}
+                onRemoveField={handleRemoveDynamicField}
+              />
 
               <div className={styles.stageBottomActions}>
                 <button
@@ -5361,6 +5520,18 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 </div>
               </div>
+
+              {/* Dynamic Specifications & Custom Fields for Stage 6 */}
+              <DynamicStageFields
+                stage={6}
+                stageName={stageNames[6] || activePresetDef.stages[6]?.name || 'Demo & Revisions'}
+                presetColor={activePresetDef.color}
+                fields={customFields}
+                fieldValues={customFieldValues}
+                onUpdateFieldValue={handleUpdateFieldValue}
+                onAddField={handleAddDynamicField}
+                onRemoveField={handleRemoveDynamicField}
+              />
 
               <div className={styles.stageBottomActions}>
                 <button
@@ -6124,6 +6295,20 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </span>
                   </div>
                 )}
+
+                {/* Dynamic Specifications & Custom Fields for Stage 7 */}
+                <div style={{ width: '100%', maxWidth: '840px', marginTop: '16px' }}>
+                  <DynamicStageFields
+                    stage={7}
+                    stageName={stageNames[7] || activePresetDef.stages[7]?.name || 'Complete & Settlements'}
+                    presetColor={activePresetDef.color}
+                    fields={customFields}
+                    fieldValues={customFieldValues}
+                    onUpdateFieldValue={handleUpdateFieldValue}
+                    onAddField={handleAddDynamicField}
+                    onRemoveField={handleRemoveDynamicField}
+                  />
+                </div>
 
                 {/* Action Buttons */}
                 <div className={styles.celebrationActions} style={{ width: '100%', maxWidth: '840px', display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '10px' }}>
@@ -9035,6 +9220,15 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
             </div>
           </div>
         )}
+
+        {/* Preset Switcher & Stage Customizer Modal */}
+        <ProjectPresetModal
+          isOpen={isPresetModalOpen}
+          onClose={() => setIsPresetModalOpen(false)}
+          activePresetId={presetId}
+          stageNames={stageNames}
+          onSavePresetAndStages={handleSavePresetAndStages}
+        />
       </div>
     </PageContainer>
   );

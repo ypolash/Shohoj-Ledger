@@ -4,9 +4,13 @@ import { provisionDefaultRoles } from "./roleProvision";
 import { provisionIndustryTemplate } from "./templateProvision";
 import bcrypt from "bcryptjs";
 
+import { mapIndustryToProjectPreset } from "@/lib/projects/projectPresets";
+
 export interface CompanySignupPayload {
   companyName: string;
   businessType: string;
+  industryTemplate?: string;
+  projectPreset?: string;
   selectedModules: string[];
   ownerName: string;
   ownerEmail: string;
@@ -172,6 +176,21 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
       } catch (templateError: any) {
         console.log(`✗ Template Provision Failed. Error Code: ${templateError.code || templateError.message}`);
         throw templateError;
+      }
+
+      // 11. Provision Project Structure Preset
+      try {
+        const resolvedPreset = payload.projectPreset || mapIndustryToProjectPreset(payload.industryTemplate || businessType);
+        await tx.systemSetting.create({
+          data: {
+            key: `project_default_preset_${company.id}`,
+            value: resolvedPreset,
+            description: "Default project structure preset selected during company onboarding"
+          }
+        });
+        console.log("✓ Project Preset Provisioned:", resolvedPreset);
+      } catch (presetError: any) {
+        console.log(`✗ Project Preset Provision Non-Fatal Warning:`, presetError?.message);
       }
 
       console.log("✓ Transaction Committed");

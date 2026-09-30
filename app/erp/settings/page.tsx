@@ -37,6 +37,7 @@ export default function SystemSettingsDashboard() {
       group: 'General Settings',
       items: [
         { id: 'company', title: 'Company Profile', desc: 'Manage legal name, address, tax IDs, and fiscal year.', icon: 'business', color: 'var(--primary)' },
+        { id: 'projects', title: 'Project Presets & Stages', desc: 'Customize default project structure, 7-stage workflows, and dynamic custom fields.', icon: 'account_tree', color: '#a855f7' },
         { id: 'branding', title: 'Branding & UI', desc: 'Configure logos, colors, and interface preferences.', icon: 'palette', color: 'var(--accent)' },
         { id: 'onboarding', title: 'Employee Data Collection', desc: 'Toggle between Basic (7 fields) and Professional (Enterprise Dossier) modes.', icon: 'how_to_reg', color: '#10b981' },
       ]

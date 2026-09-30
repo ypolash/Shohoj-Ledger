@@ -10,9 +10,12 @@ val Emerald800 = Color(0xFF065F46)
 val Emerald900 = Color(0xFF064E3B)
 val Emerald400 = Color(0xFF34D399)
 
-// Accent Cyan
+// Accent Cyan & Blue
 val Cyan400 = Color(0xFF22D3EE)
 val Cyan500 = Color(0xFF06B6D4)
+val Blue400 = Color(0xFF60A5FA)
+val Blue500 = Color(0xFF3B82F6)
+val Blue600 = Color(0xFF2563EB)
 
 // Background & Surface - Dark Slate
 val Slate950 = Color(0xFF0B0F19)

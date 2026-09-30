@@ -181,4 +181,18 @@ interface ShohojApiService {
     suspend fun getAppVersion(
         @Query("app") app: String = "staff"
     ): Response<AppUpdateInfo>
+
+    // --- Product Management ---
+
+    @GET("api/staff/products")
+    suspend fun getStaffProducts(
+        @Query("search") search: String? = null,
+        @Query("status") status: String? = null,
+        @Query("employeeId") employeeId: String? = null
+    ): Response<StaffProductsResponse>
+
+    @PATCH("api/staff/products")
+    suspend fun updateStaffProduct(
+        @Body request: UpdateProductRequest
+    ): Response<UpdateProductResponse>
 }

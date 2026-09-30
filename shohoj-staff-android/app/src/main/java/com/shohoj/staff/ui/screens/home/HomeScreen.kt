@@ -656,10 +656,13 @@ fun HomeScreen(
             val isProductManagerRole = remember(uiState.employee) {
                 val des = uiState.employee?.designation?.lowercase() ?: ""
                 val dep = uiState.employee?.department?.lowercase() ?: ""
+                val role = uiState.employee?.role?.lowercase() ?: ""
                 des.contains("product") || des.contains("production") || des.contains("inventory") ||
                 des.contains("studio") || des.contains("merchandis") || des.contains("catalog") ||
+                des.contains("manager") || des.contains("lead") ||
                 dep.contains("product") || dep.contains("production") || dep.contains("inventory") ||
-                dep.contains("studio") || dep.contains("merchandis")
+                dep.contains("studio") || dep.contains("merchandis") || dep.contains("operation") ||
+                role.contains("product") || role.contains("admin") || role.contains("manager")
             }
 
             if (isProductManagerRole) {
@@ -676,6 +679,7 @@ fun HomeScreen(
                             shape = RoundedCornerShape(16.dp)
                         )
                         .border(1.dp, Amber500.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                        .clickable { onNavigate(Screen.Products.route) }
                         .padding(16.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -744,26 +748,38 @@ fun HomeScreen(
                             )
                         )
 
-                        Button(
-                            onClick = {
-                                try {
-                                    uriHandler.openUri("https://team.shohojsolution.com/staff")
-                                } catch (e: Exception) {
-                                    // fallback
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Amber500,
-                                contentColor = Slate950
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Launch, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Open Product Manager Portal", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Button(
+                                onClick = { onNavigate(Screen.Products.route) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Amber500,
+                                    contentColor = Slate950
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                            ) {
+                                Icon(Icons.Default.Inventory2, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = "Open Product Manager", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                            IconButton(
+                                onClick = {
+                                    try {
+                                        uriHandler.openUri("https://team.shohojsolution.com/staff")
+                                    } catch (e: Exception) {}
+                                },
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(Amber500.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                    .border(1.dp, Amber500.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                            ) {
+                                Icon(Icons.Default.OpenInBrowser, contentDescription = "Web Portal", tint = Amber400, modifier = Modifier.size(20.dp))
+                            }
                         }
                     }
                 }
@@ -831,6 +847,26 @@ fun HomeScreen(
                         onClick = { onNavigate(Screen.Announcements.route) },
                         modifier = Modifier.weight(1f)
                     )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuickActionTile(
+                        title = "Products",
+                        icon = Icons.Default.Inventory2,
+                        tint = Amber400,
+                        onClick = { onNavigate(Screen.Products.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
+                        title = "Profile",
+                        icon = Icons.Default.Person,
+                        tint = Slate300,
+                        onClick = { onNavigate(Screen.Profile.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
 

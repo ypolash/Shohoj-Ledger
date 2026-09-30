@@ -31,6 +31,7 @@ data class EmployeeDto(
     @SerializedName("phone") val phone: String? = null,
     @SerializedName("designation") val designation: String? = null,
     @SerializedName("department") val department: String? = null,
+    @SerializedName("role") val role: String? = null,
     @SerializedName("status") val status: String? = null,
     @SerializedName("companyId") val companyId: String? = null,
     @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null

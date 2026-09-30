@@ -14,6 +14,7 @@ import com.shohoj.staff.ui.screens.home.HomeScreen
 import com.shohoj.staff.ui.screens.leave.LeaveScreen
 import com.shohoj.staff.ui.screens.login.LoginScreen
 import com.shohoj.staff.ui.screens.payroll.PayrollScreen
+import com.shohoj.staff.ui.screens.products.ProductsScreen
 import com.shohoj.staff.ui.screens.profile.ProfileScreen
 import com.shohoj.staff.ui.screens.tasks.TaskScreen
 
@@ -138,6 +139,17 @@ fun ShohojNavGraph(
             AnnouncementScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.Products.route) {
+            ProductsScreen(
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(Screen.Home.route)
+                        launchSingleTop = true
+                    }
                 }
             )
         }

@@ -11,6 +11,7 @@ interface ChecklistItem {
 export default function StaffPortalPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);

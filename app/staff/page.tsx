@@ -476,27 +476,6 @@ export default function StaffPortalPage() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
-        <div className="glass-card" style={{ padding: '40px', borderRadius: '16px', width: '400px' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '24px', color: '#f8fafc' }}>Staff Portal Login</h2>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Employee ID</label>
-              <input type="text" className="input" value={employeeId} onChange={e => setEmployeeId(e.target.value)} required placeholder="EMP-1001" />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Password</label>
-              <input type="password" className="input" value={password} onChange={e => setPassword(e.target.value)} required />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>Login</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   const emp = currentUser || 
     (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || 
     { firstName: 'Employee', employeeId, designation: 'Staff' };
@@ -539,6 +518,27 @@ export default function StaffPortalPage() {
       setActiveTab('ATTENDANCE');
     }
   }, [isProductManager, activeTab]);
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
+        <div className="glass-card" style={{ padding: '40px', borderRadius: '16px', width: '400px' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '24px', color: '#f8fafc' }}>Staff Portal Login</h2>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Employee ID</label>
+              <input type="text" className="input" value={employeeId} onChange={e => setEmployeeId(e.target.value)} required placeholder="EMP-1001" />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>Password</label>
+              <input type="password" className="input" value={password} onChange={e => setPassword(e.target.value)} required />
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>Login</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#f8fafc', padding: '32px 20px' }}>

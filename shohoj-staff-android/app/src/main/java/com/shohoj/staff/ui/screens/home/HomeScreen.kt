@@ -444,73 +444,91 @@ fun HomeScreen(
                         }
                         !isCheckedOut -> {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                // Lunch Break Action (Only when not already on active break)
+                                // Dedicated Lunch Break Action (Clickable at Any Time during Shift)
                                 if (uiState.activeBreak == null) {
-                                    if (isLunchBreakVisible) {
-                                        Button(
-                                            onClick = { viewModel.requestLunchBreak() },
-                                            enabled = !uiState.isStartingBreak && !uiState.isClocking,
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Amber500,
-                                                contentColor = Slate950,
-                                                disabledContainerColor = Slate800,
-                                                disabledContentColor = Slate500
-                                            ),
-                                            shape = RoundedCornerShape(12.dp),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(48.dp)
-                                        ) {
-                                            if (uiState.isStartingBreak) {
-                                                CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                                            } else {
-                                                Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(text = "Start Lunch Break", fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                                                .border(1.dp, Amber500.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-                                                .padding(12.dp)
-                                        ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(Slate800.copy(alpha = 0.65f), RoundedCornerShape(14.dp))
+                                            .border(1.dp, Amber500.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                                            .padding(14.dp)
+                                    ) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.fillMaxWidth()
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(32.dp)
-                                                        .background(Amber500.copy(alpha = 0.15f), CircleShape),
-                                                    contentAlignment = Alignment.Center
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                                                 ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Restaurant,
-                                                        contentDescription = null,
-                                                        tint = Amber400,
-                                                        modifier = Modifier.size(18.dp)
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(36.dp)
+                                                            .background(Amber500.copy(alpha = 0.15f), CircleShape),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Restaurant,
+                                                            contentDescription = null,
+                                                            tint = Amber400,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                    Column {
+                                                        Text(
+                                                            text = "Dedicated Lunch Break",
+                                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Slate50,
+                                                                fontSize = 14.sp
+                                                            )
+                                                        )
+                                                        Text(
+                                                            text = "Set Allowance: ${dutySchedule?.breakTime ?: 60}m (+${dutySchedule?.gracePeriod ?: 15}m grace)",
+                                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                                color = Slate400,
+                                                                fontSize = 11.sp
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                                Surface(
+                                                    color = Emerald500.copy(alpha = 0.15f),
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    border = androidx.compose.foundation.BorderStroke(1.dp, Emerald500.copy(alpha = 0.3f))
+                                                ) {
+                                                    Text(
+                                                        text = "ANY TIME",
+                                                        color = Emerald400,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                     )
                                                 }
-                                                Spacer(modifier = Modifier.width(10.dp))
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    Text(
-                                                        text = "Lunch Break opens at $lunchAvailableTime",
-                                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                                            color = Slate50,
-                                                            fontWeight = FontWeight.SemiBold,
-                                                            fontSize = 13.sp
-                                                        )
-                                                    )
-                                                    Text(
-                                                        text = "Available 15 min before $lunchStartTime lunch",
-                                                        style = MaterialTheme.typography.bodySmall.copy(
-                                                            color = Slate400,
-                                                            fontSize = 11.sp
-                                                        )
-                                                    )
+                                            }
+
+                                            Button(
+                                                onClick = { viewModel.requestLunchBreak() },
+                                                enabled = !uiState.isStartingBreak && !uiState.isClocking,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Amber500,
+                                                    contentColor = Slate950,
+                                                    disabledContainerColor = Slate800,
+                                                    disabledContentColor = Slate500
+                                                ),
+                                                shape = RoundedCornerShape(10.dp),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(44.dp)
+                                            ) {
+                                                if (uiState.isStartingBreak) {
+                                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                                } else {
+                                                    Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(text = "Start Lunch Break", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                                 }
                                             }
                                         }
@@ -630,6 +648,101 @@ fun HomeScreen(
                     iconTint = Amber400,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            // Dedicated Product Manager Section (Rendered for Product/Production/Inventory Managers)
+            val isProductManagerRole = remember(uiState.employee) {
+                val des = uiState.employee?.designation?.lowercase() ?: ""
+                val dep = uiState.employee?.department?.lowercase() ?: ""
+                des.contains("product") || des.contains("production") || des.contains("inventory") ||
+                des.contains("studio") || des.contains("merchandis") || des.contains("catalog") ||
+                dep.contains("product") || dep.contains("production") || dep.contains("inventory") ||
+                dep.contains("studio") || dep.contains("merchandis")
+            }
+
+            if (isProductManagerRole) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    Color(0xFF3B280A),
+                                    Slate900
+                                )
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .border(1.dp, Amber500.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+                        .padding(16.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .background(Amber500.copy(alpha = 0.2f), RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Inventory,
+                                        contentDescription = null,
+                                        tint = Amber400,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Product Manager Section",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Slate50,
+                                            fontSize = 15.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = "${uiState.employee?.designation ?: "Product Manager"} • Dedicated Access",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = Amber400,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                }
+                            }
+                            Surface(
+                                color = Amber500.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(8.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Amber500.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "ACTIVE",
+                                    color = Amber400,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "Track studio items, manage client handover returns, inspect shooting inventory, and oversee production workflow stages.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Slate300,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        )
+                    }
+                }
             }
 
             // Quick Actions Section Title

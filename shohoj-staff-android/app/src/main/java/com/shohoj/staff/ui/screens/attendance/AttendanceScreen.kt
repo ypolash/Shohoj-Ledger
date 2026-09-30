@@ -286,71 +286,88 @@ fun AttendanceScreen(
                                     }
                                 }
                             } else {
-                                // B. No active break -> Check lunch break window (15 mins prior)
-                                if (isLunchBreakVisible) {
-                                    Button(
-                                        onClick = { viewModel.requestLunchBreak() },
-                                        enabled = !uiState.isStartingBreak && !uiState.isActionLoading,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Amber500,
-                                            contentColor = Slate950,
-                                            disabledContainerColor = Slate800,
-                                            disabledContentColor = Slate500
-                                        ),
-                                        shape = RoundedCornerShape(10.dp),
-                                        modifier = Modifier.fillMaxWidth().height(46.dp)
-                                    ) {
-                                        if (uiState.isStartingBreak) {
-                                            CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                                        } else {
-                                            Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Start Lunch Break", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                        }
-                                    }
-                                } else {
-                                    // Notice before lunch window opens
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-                                            .border(1.dp, Amber500.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
-                                            .padding(12.dp)
-                                    ) {
+                                // Dedicated Lunch Break Action (Clickable at Any Time during Shift)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Slate800.copy(alpha = 0.65f), RoundedCornerShape(14.dp))
+                                        .border(1.dp, Amber500.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                                        .padding(14.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                         Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(32.dp)
-                                                    .background(Amber500.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
-                                                contentAlignment = Alignment.Center
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Restaurant,
-                                                    contentDescription = null,
-                                                    tint = Amber400,
-                                                    modifier = Modifier.size(18.dp)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(36.dp)
+                                                        .background(Amber500.copy(alpha = 0.15f), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Restaurant,
+                                                        contentDescription = null,
+                                                        tint = Amber400,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Column {
+                                                    Text(
+                                                        text = "Dedicated Lunch Break",
+                                                        style = MaterialTheme.typography.titleMedium.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Slate50,
+                                                            fontSize = 14.sp
+                                                        )
+                                                    )
+                                                    Text(
+                                                        text = "Set Allowance: ${dutySchedule?.breakTime ?: 60}m (+${dutySchedule?.gracePeriod ?: 15}m grace)",
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            color = Slate400,
+                                                            fontSize = 11.sp
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                            Surface(
+                                                color = Emerald500.copy(alpha = 0.15f),
+                                                shape = RoundedCornerShape(6.dp),
+                                                border = androidx.compose.foundation.BorderStroke(1.dp, Emerald500.copy(alpha = 0.3f))
+                                            ) {
+                                                Text(
+                                                    text = "ANY TIME",
+                                                    color = Emerald400,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                                 )
                                             }
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = "Lunch Break opens at $lunchAvailableTime",
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        color = Slate50,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        fontSize = 13.sp
-                                                    )
-                                                )
-                                                Text(
-                                                    text = "Available 15 min before $lunchStartTime lunch time",
-                                                    style = MaterialTheme.typography.bodySmall.copy(
-                                                        color = Slate400,
-                                                        fontSize = 11.sp
-                                                    )
-                                                )
+                                        }
+
+                                        Button(
+                                            onClick = { viewModel.requestLunchBreak() },
+                                            enabled = !uiState.isStartingBreak && !uiState.isActionLoading,
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Amber500,
+                                                contentColor = Slate950,
+                                                disabledContainerColor = Slate800,
+                                                disabledContentColor = Slate500
+                                            ),
+                                            shape = RoundedCornerShape(10.dp),
+                                            modifier = Modifier.fillMaxWidth().height(44.dp)
+                                        ) {
+                                            if (uiState.isStartingBreak) {
+                                                CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                            } else {
+                                                Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text("Start Lunch Break", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                             }
                                         }
                                     }

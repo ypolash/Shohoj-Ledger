@@ -159,16 +159,8 @@ object DateUtils {
         isNightShift: Boolean = false,
         calendar: Calendar = Calendar.getInstance()
     ): Boolean {
-        val lunchStartMinutes = getLunchStartMinutes(dutyStartTime, dutyEndTime, isNightShift)
-        val lunchOpenMinutes = lunchStartMinutes - 15
-        val currentMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
-
-        if (isNightShift && lunchStartMinutes < 12 * 60) {
-            return (currentMinutes >= lunchOpenMinutes && currentMinutes <= 12 * 60) ||
-                    (currentMinutes >= 20 * 60 && lunchOpenMinutes < 0)
-        }
-
-        return currentMinutes >= lunchOpenMinutes
+        // Staff can start their dedicated lunch break at any time during their duty
+        return true
     }
 
     fun getLunchTimeString(

@@ -13,7 +13,7 @@ const nextConfig = {
       beforeFiles: [
         {
           source: '/downloads/shohoj-staff-latest.apk',
-          destination: '/downloads/shohoj-staff-v1.6.4.apk',
+          destination: '/downloads/shohoj-staff-v1.6.5.apk',
         },
       ],
       afterFiles: [],

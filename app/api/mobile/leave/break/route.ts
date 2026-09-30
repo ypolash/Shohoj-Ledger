@@ -89,11 +89,10 @@ export async function POST(request: Request) {
 
       const result = await processBreakEnd(targetLeaveId, employee.id, employee.companyId);
       return NextResponse.json({
-        success: true,
+        ...result,
         message: result.fineApplied
           ? `Break ended. Overstayed by ${result.overstayMinutes}m. A fine of ৳${result.fineAmount} has been registered.`
           : "Break completed successfully within the allocated time.",
-        ...result,
       }, { headers: ESS_CORS_HEADERS });
     }
 
@@ -123,32 +122,60 @@ export async function POST(request: Request) {
         include: { workShift: true },
       });
 
-      const shiftBreakTime = empWithShift?.workShift?.breakTime || 60;
+      // Break time and grace period configured in employee section via workShift:
+      const shiftBreakTime = (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0)
+        ? empWithShift.workShift.breakTime
+        : 60;
+      const shiftGracePeriod = (empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0)
+        ? empWithShift.workShift.gracePeriod
+        : 15;
+
       const parsedConfig = lt ? parseLeaveTypeConfig(lt) : {
         breakDurationMinutes: shiftBreakTime,
-        gracePeriodMinutes: 5,
+        gracePeriodMinutes: shiftGracePeriod,
         fineAmount: 50,
         fineType: "FIXED",
         autoFine: true,
         maxPerDay: 2,
       };
 
+      const effectiveDuration = (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0)
+        ? empWithShift.workShift.breakTime
+        : (parsedConfig.breakDurationMinutes || 60);
+
+      const effectiveGrace = (empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0)
+        ? empWithShift.workShift.gracePeriod
+        : (parsedConfig.gracePeriodMinutes || 15);
+
+      const effectiveFine = parsedConfig.fineAmount || 50;
+      const effectiveFineType = parsedConfig.fineType || "FIXED";
+
       const now = new Date();
-      const durationMs = (parsedConfig.breakDurationMinutes || shiftBreakTime || 60) * 60 * 1000;
+      const durationMs = effectiveDuration * 60 * 1000;
       const targetEnd = new Date(now.getTime() + durationMs);
+
+      const configStr = JSON.stringify({
+        duration: effectiveDuration,
+        grace: effectiveGrace,
+        fine: effectiveFine,
+        fineType: effectiveFineType,
+        autoFine: parsedConfig.autoFine !== false,
+      });
+
+      const breakName = lt?.name || "Lunch Break";
 
       const newLeave = await prisma.leaveRequest.create({
         data: {
           companyId: employee.companyId,
           employeeId: employee.id,
           leaveTypeId: lt?.id || null,
-          type: lt?.name || "Lunch Break",
+          type: breakName,
           startDate: now,
           endDate: targetEnd,
           reason: reason || "Lunch Break",
           status: "APPROVED", // Instant Auto-Approved
           systemSource: "MOBILE",
-          comments: `Auto-Approved Short break timer: ${parsedConfig.breakDurationMinutes} mins (+${parsedConfig.gracePeriodMinutes || 5}m grace). Overstay fine: ৳${parsedConfig.fineAmount || 0}.`
+          comments: `[TIMER_CONFIG:${configStr}] Auto-Approved ${breakName}: ${effectiveDuration} mins (+${effectiveGrace}m grace tolerance). Overstay penalty fine: ৳${effectiveFine}.`
         }
       });
 
@@ -156,7 +183,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `${lt?.name || "Lunch Break"} started successfully. Countdown is now active.`,
+        message: `${breakName} started successfully (${effectiveDuration} mins countdown + ${effectiveGrace}m grace).`,
         autoApproved: true,
         leave: newLeave,
         activeBreak,

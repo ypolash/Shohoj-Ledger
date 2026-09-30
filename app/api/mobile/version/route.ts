@@ -18,22 +18,22 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 29,
-      versionName: '1.6.4',
+      versionCode: 30,
+      versionName: '1.6.5',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.6.4 Available',
+      title: 'Shohoj Staff v1.6.5 Available',
       releaseNotes: [
-        '📦 Dedicated Product Management portal for assigned Product Managers',
+        '🍽️ Dedicated Lunch Break section with anytime trigger, live countdown & grace period penalty protection',
+        '📦 Dedicated Product Management portal for assigned Product Managers & dynamic roles',
         '⚡ Real-time inventory tracking, studio receipts, & client dispatch workflows',
         '🚚 Instant Return Handover confirmation with courier tracking support',
         '👥 Full Directory listing & instant 1-on-1 private chat creation',
         '✨ Top bar status bar safe-area padding & safe insets on all devices',
         '⚡ Redesigned Community tabs with live unread indicators & directory counters',
-        '☕ Dynamic Lunch Break on Check-In with 15-minute prior availability & live countdown',
         '🖼️ Fullscreen image viewer and attachment uploads in Community Chat',
         '🔔 Instant real-time notifications for Tasks, Announcements & Community Chat'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.4.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.5.apk`,
       fileSize: '12.8 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()
@@ -43,11 +43,11 @@ export async function GET(request: Request) {
   // Fallback for general or other apps
   return NextResponse.json({
     appName: 'Shohoj Mobile',
-    versionCode: 16,
-    versionName: '1.6.4',
+    versionCode: 17,
+    versionName: '1.6.5',
     title: 'Shohoj Mobile Update Available',
     releaseNotes: ['General bug fixes and performance improvements'],
-    downloadUrl: `${baseUrl}/downloads/shohoj-app-v1.6.4.apk`,
+    downloadUrl: `${baseUrl}/downloads/shohoj-app-v1.6.5.apk`,
     isForceUpdate: false
   });
 }

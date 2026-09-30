@@ -11,8 +11,9 @@ interface ChecklistItem {
 export default function StaffPortalPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [employeeId, setEmployeeId] = useState('');
-  const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   // Dashboard Data
   const [attendance, setAttendance] = useState<any[]>([]);
@@ -40,6 +41,7 @@ export default function StaffPortalPage() {
   // Active Live Break Timer State
   const [activeBreak, setActiveBreak] = useState<any>(null);
   const [isEndingBreak, setIsEndingBreak] = useState(false);
+  const [isStartingLunchBreak, setIsStartingLunchBreak] = useState(false);
 
   // New Leave Form
   const [availableLeaveTypes, setAvailableLeaveTypes] = useState<any[]>([]);
@@ -157,16 +159,8 @@ export default function StaffPortalPage() {
       })
       .catch(() => {});
 
-    // 7. Fetch Products for Product Management only if user is Product Manager
-    const isPM = Boolean(
-      currentEmp?.designation?.toLowerCase().includes('product') ||
-      currentEmp?.role?.toLowerCase().includes('product') ||
-      currentEmp?.department?.toLowerCase().includes('product') ||
-      (currentEmp?.department?.toLowerCase().includes('production') && currentEmp?.designation?.toLowerCase().includes('manager'))
-    );
-    if (isPM) {
-      fetchProductsData('', 'ALL');
-    }
+    // 7. Fetch Products for Product Management
+    fetchProductsData('', 'ALL');
   }, [employeeId, leaveType, fetchProductsData]);
 
   const handleOpenStaffReturnModal = (pItem: any) => {
@@ -267,14 +261,37 @@ export default function StaffPortalPage() {
     const interval = setInterval(() => {
       setActiveBreak((prev: any) => {
         if (!prev || !prev.isBreakActive) return prev;
-        const newRemaining = Math.max(0, prev.remainingSeconds - 1);
-        const isOverstay = newRemaining === 0;
-        const overstaySecs = isOverstay ? (prev.overstayMinutes || 0) * 60 + 1 : 0;
+
+        const now = Date.now();
+        const targetEnd = prev.targetEndTime
+          ? new Date(prev.targetEndTime).getTime()
+          : (prev.startTime ? new Date(prev.startTime).getTime() + (prev.durationMinutes || 60) * 60000 : now);
+        const graceEnd = prev.graceEndTime
+          ? new Date(prev.graceEndTime).getTime()
+          : (targetEnd + (prev.gracePeriodMinutes || 15) * 60000);
+
+        const remainingSeconds = Math.max(0, Math.floor((targetEnd - now) / 1000));
+        const isInGrace = now > targetEnd && now <= graceEnd;
+        const graceRemainingSeconds = isInGrace ? Math.max(0, Math.floor((graceEnd - now) / 1000)) : 0;
+        const isOverstay = now > graceEnd;
+        const overstaySeconds = isOverstay ? Math.floor((now - graceEnd) / 1000) : 0;
+        const overstayMinutes = Math.ceil(overstaySeconds / 60);
+
+        const fineAmountBase = prev.fineAmount || 50;
+        const estimatedFine = isOverstay
+          ? (prev.fineType === 'PER_MINUTE' ? fineAmountBase * overstayMinutes : fineAmountBase)
+          : 0;
+
         return {
           ...prev,
-          remainingSeconds: newRemaining,
+          remainingSeconds,
+          isInGrace,
+          graceRemainingSeconds,
           isOverstay,
-          overstayMinutes: Math.floor(overstaySecs / 60)
+          isOverstayed: isOverstay,
+          overstayMinutes,
+          overstaySeconds,
+          estimatedFine
         };
       });
     }, 1000);
@@ -282,32 +299,69 @@ export default function StaffPortalPage() {
     return () => clearInterval(interval);
   }, [activeBreak?.isBreakActive]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emp = employees.find(e => e.employeeId === employeeId && e.password === password);
-    if (emp) {
-      setIsAuthenticated(true);
-      if (emp.workShift) {
-        setDutySchedule({
-          name: emp.workShift.name,
-          startTime: emp.workShift.startTime,
-          endTime: emp.workShift.endTime,
-          gracePeriod: emp.workShift.gracePeriod,
-          breakTime: emp.workShift.breakTime,
-          nightShift: emp.workShift.nightShift,
-          isCustom: true,
-          dutyHoursFormatted: `${emp.workShift.startTime} - ${emp.workShift.endTime}`
-        });
+    setIsLoggingIn(true);
+    try {
+      const cleanEmpId = employeeId.trim();
+      // 1. Try mobile auth login endpoint (verifies password via bcrypt & returns full employee context)
+      const res = await fetch('/api/mobile/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId: cleanEmpId, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.employee) {
+        const loggedEmp = {
+          ...data.employee,
+          role: data.user?.role || data.employee.designation,
+          workShift: data.employee.dutySchedule || data.employee.workShift
+        };
+        setCurrentUser(loggedEmp);
+        setIsAuthenticated(true);
+        if (data.employee.dutySchedule) {
+          setDutySchedule(data.employee.dutySchedule);
+        }
+        await fetchDashboardData(data.employee.id, loggedEmp);
+        fetchProductsData('', 'ALL');
+        return;
       }
-      fetchDashboardData(emp.id, emp);
-    } else {
-      alert('Invalid Employee ID or Password');
+
+      // 2. Fallback check from local list if available
+      const localEmp = Array.isArray(employees)
+        ? employees.find(e => e.employeeId === cleanEmpId && e.password === password)
+        : null;
+      if (localEmp) {
+        setCurrentUser(localEmp);
+        setIsAuthenticated(true);
+        if (localEmp.workShift) {
+          setDutySchedule({
+            name: localEmp.workShift.name,
+            startTime: localEmp.workShift.startTime,
+            endTime: localEmp.workShift.endTime,
+            gracePeriod: localEmp.workShift.gracePeriod,
+            breakTime: localEmp.workShift.breakTime,
+            nightShift: localEmp.workShift.nightShift,
+            isCustom: true,
+            dutyHoursFormatted: `${localEmp.workShift.startTime} - ${localEmp.workShift.endTime}`
+          });
+        }
+        await fetchDashboardData(localEmp.id, localEmp);
+        fetchProductsData('', 'ALL');
+      } else {
+        alert(data.message || data.error || 'Invalid Employee ID or Password');
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert('Login error. Please check your connection and try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const submitLeave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emp = employees.find(e => e.employeeId === employeeId);
+    const emp = currentUser || (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || { id: employeeId, employeeId };
     if (!emp) return;
 
     setIsSubmittingLeave(true);
@@ -355,8 +409,39 @@ export default function StaffPortalPage() {
     }
   };
 
+  const handleStartLunchBreak = async () => {
+    const emp = currentUser || (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || { id: employeeId, employeeId };
+    if (!emp) return;
+    setIsStartingLunchBreak(true);
+    try {
+      const res = await fetch('/api/mobile/leave/break', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: emp.employeeId,
+          action: 'REQUEST_BREAK',
+          reason: 'Lunch Break'
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.activeBreak) {
+          setActiveBreak(data.activeBreak);
+        }
+        alert(data.message || '🍽️ Lunch break started! Auto-countdown is now active.');
+        await fetchDashboardData(emp.id, emp);
+      } else {
+        alert(data.error || 'Failed to start lunch break');
+      }
+    } catch {
+      alert('Error starting lunch break');
+    } finally {
+      setIsStartingLunchBreak(false);
+    }
+  };
+
   const handleEndActiveBreak = async () => {
-    const emp = employees.find(e => e.employeeId === employeeId);
+    const emp = currentUser || (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || { id: employeeId, employeeId };
     if (!emp) return;
 
     setIsEndingBreak(true);
@@ -411,13 +496,41 @@ export default function StaffPortalPage() {
     );
   }
 
-  const emp = employees.find(e => e.employeeId === employeeId) || { firstName: 'Employee', employeeId, designation: 'Staff' };
+  const emp = currentUser || 
+    (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || 
+    { firstName: 'Employee', employeeId, designation: 'Staff' };
 
   const isProductManager = Boolean(
-    emp?.designation?.toLowerCase().includes('product') ||
-    emp?.role?.toLowerCase().includes('product') ||
-    emp?.department?.toLowerCase().includes('product') ||
-    (emp?.department?.toLowerCase().includes('production') && emp?.designation?.toLowerCase().includes('manager'))
+    (emp?.designation && (
+      emp.designation.toLowerCase().includes('product') ||
+      emp.designation.toLowerCase().includes('production') ||
+      emp.designation.toLowerCase().includes('inventory') ||
+      emp.designation.toLowerCase().includes('studio') ||
+      emp.designation.toLowerCase().includes('merchandis') ||
+      emp.designation.toLowerCase().includes('catalog')
+    )) ||
+    (emp?.department && (
+      emp.department.toLowerCase().includes('product') ||
+      emp.department.toLowerCase().includes('production') ||
+      emp.department.toLowerCase().includes('inventory') ||
+      emp.department.toLowerCase().includes('studio') ||
+      emp.department.toLowerCase().includes('merchandis')
+    )) ||
+    (emp?.role && (
+      emp.role.toLowerCase().includes('product') ||
+      emp.role.toLowerCase().includes('manager') ||
+      emp.role.toLowerCase().includes('admin')
+    )) ||
+    (emp?.designationRef?.name && (
+      emp.designationRef.name.toLowerCase().includes('product') ||
+      emp.designationRef.name.toLowerCase().includes('production') ||
+      emp.designationRef.name.toLowerCase().includes('inventory')
+    )) ||
+    (emp?.departmentRef?.name && (
+      emp.departmentRef.name.toLowerCase().includes('product') ||
+      emp.departmentRef.name.toLowerCase().includes('production') ||
+      emp.departmentRef.name.toLowerCase().includes('inventory')
+    ))
   );
 
   useEffect(() => {
@@ -457,13 +570,89 @@ export default function StaffPortalPage() {
           <button onClick={() => setIsAuthenticated(false)} className="btn" style={{ background: 'rgba(255,255,255,0.1)' }}>Logout</button>
         </div>
 
-        {/* Live Active Break Alert Card */}
+        {/* Dedicated Lunch Break Card (Visible & Clickable at Any Time when not on break) */}
+        {(!activeBreak || !activeBreak.isBreakActive) && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(30, 41, 59, 0.85) 100%)',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            borderRadius: '16px',
+            padding: '20px 24px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '14px',
+                background: 'rgba(245, 158, 11, 0.2)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fbbf24',
+                fontSize: '28px'
+              }}>
+                <span className="material-symbols-outlined">restaurant</span>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    🍽️ Dedicated Lunch Break
+                  </span>
+                  <span style={{ fontSize: '11px', background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                    Click Any Time
+                  </span>
+                </div>
+                <div style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '4px' }}>
+                  Set Lunch Allowance: <strong>{dutySchedule?.breakTime ?? 60} mins</strong> (+{dutySchedule?.gracePeriod ?? 15}m grace period). Starts auto countdown upon click.
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleStartLunchBreak}
+              disabled={isStartingLunchBreak}
+              className="btn"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: '#0f172a',
+                fontWeight: 800,
+                padding: '12px 24px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restaurant</span>
+              {isStartingLunchBreak ? 'Starting Break...' : 'Start Lunch Break'}
+            </button>
+          </div>
+        )}
+
+        {/* Live Active Lunch Break Auto-Countdown Card */}
         {activeBreak && activeBreak.isBreakActive && (
           <div style={{
             background: activeBreak.isOverstay
               ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.15) 100%)'
-              : 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.12) 100%)',
-            border: activeBreak.isOverstay ? '1px solid #ef4444' : '1px solid #f59e0b',
+              : activeBreak.isInGrace
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%)'
+              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.12) 100%)',
+            border: activeBreak.isOverstay
+              ? '1.5px solid #ef4444'
+              : activeBreak.isInGrace
+              ? '1.5px solid #f59e0b'
+              : '1.5px solid #10b981',
             borderRadius: '16px',
             padding: '20px 24px',
             marginBottom: '24px',
@@ -476,33 +665,67 @@ export default function StaffPortalPage() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div style={{
-                width: '52px',
-                height: '52px',
+                width: '56px',
+                height: '56px',
                 borderRadius: '14px',
-                background: activeBreak.isOverstay ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)',
+                background: activeBreak.isOverstay
+                  ? 'rgba(239, 68, 68, 0.3)'
+                  : activeBreak.isInGrace
+                  ? 'rgba(245, 158, 11, 0.3)'
+                  : 'rgba(16, 185, 129, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: activeBreak.isOverstay ? '#f87171' : '#fbbf24',
-                fontSize: '28px'
+                color: activeBreak.isOverstay
+                  ? '#f87171'
+                  : activeBreak.isInGrace
+                  ? '#fbbf24'
+                  : '#34d399',
+                fontSize: '30px'
               }}>
                 <span className="material-symbols-outlined">
-                  {activeBreak.isOverstay ? 'error' : 'timer'}
+                  {activeBreak.isOverstay ? 'error' : activeBreak.isInGrace ? 'hourglass_top' : 'timer'}
                 </span>
               </div>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: activeBreak.isOverstay ? '#f87171' : '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {activeBreak.isOverstay ? '🚨 OVERSTAY PENALTY ACTIVE' : '⏱️ SHORT BREAK IN PROGRESS'}
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  color: activeBreak.isOverstay
+                    ? '#f87171'
+                    : activeBreak.isInGrace
+                    ? '#fbbf24'
+                    : '#34d399',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  {activeBreak.isOverstay
+                    ? '🚨 OVERSTAY PENALTY ACTIVE'
+                    : activeBreak.isInGrace
+                    ? '⚠️ GRACE PERIOD TOLERANCE'
+                    : '🍽️ LUNCH BREAK IN PROGRESS'}
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', marginTop: '2px', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', marginTop: '2px', fontFamily: 'monospace', letterSpacing: '1px' }}>
                   {activeBreak.isOverstay
                     ? `+${activeBreak.overstayMinutes || 0}m OVERSTAYED`
+                    : activeBreak.isInGrace
+                    ? `+${formatSeconds(activeBreak.graceRemainingSeconds || 0)} grace remaining`
                     : formatSeconds(activeBreak.remainingSeconds || 0)}
                 </div>
-                <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>
-                  {activeBreak.isOverstay
-                    ? `Fine Applied: ৳${activeBreak.estimatedFine || 50} (Auto-charged)`
-                    : `Allowed: ${activeBreak.totalDurationMinutes}m (+${activeBreak.gracePeriodMinutes}m grace tolerance)`}
+                <div style={{ fontSize: '12.5px', color: '#cbd5e1', marginTop: '2px' }}>
+                  {activeBreak.isOverstay ? (
+                    <span style={{ color: '#fca5a5', fontWeight: 700 }}>
+                      Penalty Fine: ৳{activeBreak.estimatedFine || 50} (Auto-applied to employee record)
+                    </span>
+                  ) : activeBreak.isInGrace ? (
+                    <span style={{ color: '#fde047', fontWeight: 600 }}>
+                      Countdown finished. In grace period tolerance (+{activeBreak.gracePeriodMinutes || 15}m). Return now to avoid penalty!
+                    </span>
+                  ) : (
+                    <span>
+                      Set Allowance: {activeBreak.durationMinutes || activeBreak.totalDurationMinutes || 60}m (+{activeBreak.gracePeriodMinutes || 15}m grace)
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -512,18 +735,24 @@ export default function StaffPortalPage() {
               disabled={isEndingBreak}
               className="btn"
               style={{
-                background: activeBreak.isOverstay ? '#ef4444' : '#f59e0b',
+                background: activeBreak.isOverstay
+                  ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 color: '#ffffff',
-                fontWeight: 700,
-                padding: '12px 24px',
-                borderRadius: '10px',
+                fontWeight: 800,
+                padding: '12px 26px',
+                borderRadius: '12px',
                 fontSize: '14px',
                 cursor: 'pointer',
                 border: 'none',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.3)'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.35)'
               }}
             >
-              {isEndingBreak ? 'Ending...' : "I'm Back / End Break"}
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>stop_circle</span>
+              {isEndingBreak ? 'Ending Break...' : 'Lunch Ends / I\'m Back'}
             </button>
           </div>
         )}

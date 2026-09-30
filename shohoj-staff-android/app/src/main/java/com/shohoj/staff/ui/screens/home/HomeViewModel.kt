@@ -36,7 +36,9 @@ data class HomeUiState(
     val currentDateString: String = "",
     val isClocking: Boolean = false,
     val clockActionSuccessMessage: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    val updateDialogInfo: AppUpdateInfo? = null,
+    val appVersionName: String = "1.0.0"
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,9 +48,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val attendanceRepo = app.attendanceRepository
     private val announcementRepo = app.announcementRepository
     private val leaveRepo = app.leaveRepository
+    private val updateRepo = app.appUpdateRepository
 
     private val _uiState = MutableStateFlow(
-        HomeUiState(employee = authRepo.getCurrentEmployee())
+        HomeUiState(
+            employee = authRepo.getCurrentEmployee(),
+            appVersionName = updateRepo.getCurrentAppVersion().second
+        )
     )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -57,6 +63,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     init {
         startLiveClock()
         loadDashboardData()
+        checkForAppUpdate()
     }
 
     private fun startLiveClock() {
@@ -317,6 +324,27 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearFeedback() {
         _uiState.value = _uiState.value.copy(error = null, clockActionSuccessMessage = null)
+    }
+
+    fun checkForAppUpdate() {
+        viewModelScope.launch {
+            val result = updateRepo.checkForUpdate()
+            val checkResult = result.getOrNull()
+            if (checkResult != null && checkResult.isUpdateAvailable && checkResult.updateInfo != null) {
+                _uiState.value = _uiState.value.copy(
+                    updateDialogInfo = checkResult.updateInfo,
+                    appVersionName = checkResult.currentVersionName
+                )
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        _uiState.value = _uiState.value.copy(updateDialogInfo = null)
+    }
+
+    fun downloadUpdate(downloadUrl: String) {
+        updateRepo.downloadAndInstallApk(downloadUrl)
     }
 
     override fun onCleared() {

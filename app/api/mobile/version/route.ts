@@ -34,8 +34,8 @@ export async function GET(request: Request) {
         '🔔 Instant real-time notifications for Tasks, Announcements & Community Chat'
       ],
       downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.5.apk`,
-      fileSize: '12.8 MB',
-      isForceUpdate: false,
+      fileSize: '12.6 MB',
+      isForceUpdate: true,
       publishedAt: new Date().toISOString()
     });
   }

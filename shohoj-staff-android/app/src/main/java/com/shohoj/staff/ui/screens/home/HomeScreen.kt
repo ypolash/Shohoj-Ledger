@@ -936,6 +936,20 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+
+        // Automatic In-App Update Dialog on Launch
+        uiState.updateDialogInfo?.let { info ->
+            AppUpdateDialog(
+                updateInfo = info,
+                currentVersionName = uiState.appVersionName,
+                onDownload = { url ->
+                    viewModel.downloadUpdate(url)
+                },
+                onDismiss = {
+                    viewModel.dismissUpdateDialog()
+                }
+            )
+        }
     }
 }
 

@@ -562,3 +562,215 @@ export async function recalculateRecentAttendance(companyId?: string) {
 
   return { totalChecked: records.length, updatedCount };
 }
+
+/**
+ * Scans all employees scheduled for duty on a specific date.
+ * If an employee does not check in during their scheduled duty time and has no approved leave,
+ * marks them as ABSENT with their designated penalty/fine and reason.
+ */
+export async function evaluateDailyAbsenceAndPenalties(companyId: string, targetDateStr?: string) {
+  // 1. Resolve Company Settings & Timezone
+  const compSetting = await prisma.companySetting.findUnique({
+    where: { companyId },
+  });
+
+  let timezone = compSetting?.timezone || "Asia/Dhaka";
+  if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
+    timezone = "Asia/Dhaka";
+  }
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: timezone });
+  } catch {
+    timezone = "Asia/Dhaka";
+  }
+
+  // 2. Resolve Date in Local Timezone
+  const now = new Date();
+  let dateString = targetDateStr;
+  if (!dateString) {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    dateString = formatter.format(now); // e.g. "2026-10-06"
+  }
+
+  const startOfDay = new Date(`${dateString}T00:00:00.000Z`);
+  const endOfDay = new Date(`${dateString}T23:59:59.999Z`);
+
+  // 3. Resolve Weekly Holidays & Company Config
+  const config = await prisma.attendanceConfig.findFirst({
+    where: { companyId },
+  });
+
+  const weeklyHolidays = Array.isArray(compSetting?.weeklyHolidays)
+    ? (compSetting.weeklyHolidays as string[]).map(d => d.toLowerCase().slice(0, 3))
+    : ["fri"];
+  
+  const dayOfWeekStr = new Date(startOfDay).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }).toLowerCase().slice(0, 3);
+  const isWeeklyHoliday = (config?.fridayOff !== false && dayOfWeekStr === "fri") || weeklyHolidays.includes(dayOfWeekStr);
+
+  // 4. Fetch Absent Punishment Rule
+  const absentPunishmentRule = await prisma.punishmentSetting.findFirst({
+    where: {
+      companyId,
+      type: "ABSENT",
+      active: true,
+    },
+    orderBy: { amount: "desc" }
+  });
+
+  // 5. Fetch Active Employees
+  const employees = await prisma.employee.findMany({
+    where: {
+      companyId,
+      status: "ACTIVE"
+    },
+    include: {
+      workShift: true
+    }
+  });
+
+  // 6. Fetch Existing Attendance Records for this date
+  const existingAttendances = await prisma.attendance.findMany({
+    where: {
+      companyId,
+      date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      }
+    }
+  });
+  const attendanceEmpMap = new Map(existingAttendances.map(a => [a.employeeId, a]));
+
+  // 7. Fetch Approved Leaves covering this date
+  const approvedLeaves = await prisma.leaveRequest.findMany({
+    where: {
+      companyId,
+      status: "APPROVED",
+      startDate: { lte: endOfDay },
+      endDate: { gte: startOfDay },
+    }
+  });
+  const leaveEmpSet = new Set(approvedLeaves.map(l => l.employeeId));
+
+  // 8. Fetch Duty Roster overrides for this date
+  const dutyRosters = await prisma.attendanceRoster.findMany({
+    where: {
+      companyId,
+      date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+      status: { not: "CANCELLED" }
+    },
+    include: {
+      workShift: true
+    }
+  });
+  const rosterEmpMap = new Map(dutyRosters.map(r => [r.employeeId, r]));
+
+  let absentCount = 0;
+  let totalPenalties = 0;
+  const absentEmployees: Array<{ employeeId: string; name: string; penalty: number; dutyTime: string }> = [];
+
+  for (const emp of employees) {
+    const existing = attendanceEmpMap.get(emp.id);
+
+    // If already checked in, skip
+    if (existing && existing.checkInTime && existing.status !== "ABSENT") {
+      continue;
+    }
+
+    // If on approved leave, record as LEAVE without penalty
+    if (leaveEmpSet.has(emp.id)) {
+      if (!existing) {
+        await prisma.attendance.create({
+          data: {
+            companyId,
+            employeeId: emp.id,
+            date: startOfDay,
+            status: "LEAVE",
+            isLate: false,
+            lateMinutes: 0,
+            punishmentAmount: 0,
+            punishmentReason: "Approved Leave of Absence",
+            systemSource: "ERP"
+          }
+        });
+      }
+      continue;
+    }
+
+    // If it's a weekly holiday and employee was not specifically scheduled on the duty roster, skip
+    const roster = rosterEmpMap.get(emp.id);
+    if (isWeeklyHoliday && !roster) {
+      continue;
+    }
+
+    // Resolve duty start and end time
+    const dutyStart = roster?.startTime || roster?.workShift?.startTime || emp.workShift?.startTime || config?.shiftStart || compSetting?.shiftStartTime || "09:30";
+    const dutyEnd = roster?.endTime || roster?.workShift?.endTime || emp.workShift?.endTime || config?.shiftEnd || compSetting?.shiftEndTime || "18:00";
+    const dutyLabel = `${dutyStart} - ${dutyEnd}`;
+
+    // Calculate penalty amount
+    let penaltyAmount = 0;
+    if (absentPunishmentRule && Number(absentPunishmentRule.amount) > 0) {
+      penaltyAmount = Number(absentPunishmentRule.amount);
+    } else if (emp.basicSalary && Number(emp.basicSalary) > 0) {
+      // 1 day salary deduction fallback
+      penaltyAmount = Math.round(Number(emp.basicSalary) / 22);
+    }
+
+    const reason = `Unexcused Absence on ${dateString} [Duty Time: ${dutyLabel}]`;
+
+    // Create or update attendance record as ABSENT with penalty
+    await prisma.attendance.upsert({
+      where: {
+        employeeId_date: {
+          employeeId: emp.id,
+          date: startOfDay,
+        }
+      },
+      create: {
+        companyId,
+        employeeId: emp.id,
+        date: startOfDay,
+        status: "ABSENT",
+        isLate: false,
+        lateMinutes: 0,
+        punishmentAmount: penaltyAmount,
+        punishmentReason: reason,
+        systemSource: "ERP"
+      },
+      update: {
+        status: "ABSENT",
+        isLate: false,
+        lateMinutes: 0,
+        punishmentAmount: penaltyAmount,
+        punishmentReason: reason,
+      }
+    });
+
+    absentCount++;
+    totalPenalties += penaltyAmount;
+    absentEmployees.push({
+      employeeId: emp.employeeId,
+      name: `${emp.firstName} ${emp.lastName}`,
+      penalty: penaltyAmount,
+      dutyTime: dutyLabel
+    });
+  }
+
+  return {
+    success: true,
+    date: dateString,
+    totalEmployees: employees.length,
+    absentCount,
+    totalPenalties,
+    absentEmployees
+  };
+}
+

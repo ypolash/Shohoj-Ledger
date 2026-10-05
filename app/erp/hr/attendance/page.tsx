@@ -526,10 +526,35 @@ export default function AttendancePage() {
     }
   };
 
+  const [isEvaluatingAbsent, setIsEvaluatingAbsent] = useState(false);
+  const handleEvaluateAbsent = async () => {
+    setIsEvaluatingAbsent(true);
+    setError('');
+    try {
+      const res = await fetch('/api/hr/attendance/evaluate-absent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: filterDate || undefined })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSuccessMsg(`Absence Audit Complete: ${data.absentCount} absent staff marked with ৳${data.totalPenalties} in fines/penalties.`);
+        await loadData(true);
+        setTimeout(() => setSuccessMsg(''), 5000);
+      } else {
+        setError(data.error || 'Failed to evaluate absent staff');
+      }
+    } catch {
+      setError('Network communication error while evaluating absences');
+    } finally {
+      setIsEvaluatingAbsent(false);
+    }
+  };
+
   // CSV Export
   const handleExportCSV = () => {
     if (records.length === 0) return;
-    const headers = ['Employee Name', 'Employee ID', 'Date', 'Status', 'Check In', 'Check Out', 'Late (Minutes)', 'Early Leave (Minutes)'];
+    const headers = ['Employee Name', 'Employee ID', 'Date', 'Status', 'Check In', 'Check Out', 'Late (Minutes)', 'Early Leave (Minutes)', 'Penalty Amount'];
     const rows = filteredRecords.map(r => {
       const emp = empMap[r.employeeId];
       return [
@@ -541,6 +566,7 @@ export default function AttendancePage() {
         formatDisplayTime(r.checkOut || r.checkOutTime, officeTiming.timezone),
         r.lateMinutes || 0,
         r.earlyLeaveMinutes || 0,
+        r.punishmentAmount || 0,
       ];
     });
 
@@ -605,6 +631,21 @@ export default function AttendancePage() {
               style={{ fontSize: '20px' }}
             >
               refresh
+            </span>
+          </button>
+
+          <button
+            onClick={handleEvaluateAbsent}
+            className={styles.headerIconBtn}
+            disabled={isEvaluatingAbsent}
+            title="Scan & Evaluate Absences and Penalties for Today / Selected Date"
+            aria-label="Evaluate Absences & Penalties"
+          >
+            <span
+              className={`material-symbols-outlined ${isEvaluatingAbsent ? styles.spinning : ''}`}
+              style={{ fontSize: '20px', color: '#ef4444' }}
+            >
+              person_off
             </span>
           </button>
 
@@ -1105,21 +1146,53 @@ export default function AttendancePage() {
                               </td>
 
                               <td className={styles.tableCell}>
-                                <span className={styles.timeBadge}>
-                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
-                                  {formatDisplayTime(checkIn, officeTiming.timezone)}
-                                </span>
+                                {r.status === 'ABSENT' ? (
+                                  <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Unattended</span>
+                                ) : (
+                                  <span className={styles.timeBadge}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
+                                    {formatDisplayTime(checkIn, officeTiming.timezone)}
+                                  </span>
+                                )}
                               </td>
 
                               <td className={styles.tableCell}>
-                                <span className={styles.timeBadge}>
-                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
-                                  {formatDisplayTime(checkOut, officeTiming.timezone)}
-                                </span>
+                                {r.status === 'ABSENT' ? (
+                                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                                ) : (
+                                  <span className={styles.timeBadge}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
+                                    {formatDisplayTime(checkOut, officeTiming.timezone)}
+                                  </span>
+                                )}
                               </td>
 
                               <td className={styles.tableCell}>
-                                {r.lateMinutes && r.lateMinutes > 0 ? (
+                                {r.status === 'ABSENT' ? (
+                                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
+                                    {r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                                      <span style={{
+                                        fontSize: '11px',
+                                        fontWeight: 800,
+                                        color: '#ef4444',
+                                        background: 'rgba(239, 68, 68, 0.12)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        width: 'fit-content'
+                                      }}>
+                                        ৳{Number(r.punishmentAmount)} Penalty
+                                      </span>
+                                    ) : (
+                                      <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Absent (No Fine)</span>
+                                    )}
+                                    {r.punishmentReason && (
+                                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
+                                        {r.punishmentReason}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : r.lateMinutes && r.lateMinutes > 0 ? (
                                   <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
                                     +{r.lateMinutes} min late
                                   </span>
@@ -1129,7 +1202,9 @@ export default function AttendancePage() {
                               </td>
 
                               <td className={styles.tableCell}>
-                                {r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
+                                {r.status === 'ABSENT' ? (
+                                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                                ) : r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
                                   <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
                                     <span style={{ fontSize: '12px', fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '6px', width: 'fit-content' }}>
                                       -{r.earlyLeaveMinutes} min early
@@ -1200,7 +1275,7 @@ export default function AttendancePage() {
                   <th className={styles.tableHeaderCell}>Log Date</th>
                   <th className={styles.tableHeaderCell}>Check In</th>
                   <th className={styles.tableHeaderCell}>Check Out</th>
-                  <th className={styles.tableHeaderCell}>Late Duration</th>
+                  <th className={styles.tableHeaderCell}>Late Duration / Fine</th>
                   <th className={styles.tableHeaderCell}>Early Leave Time</th>
                   <th className={styles.tableHeaderCell}>Status</th>
                   <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
@@ -1239,21 +1314,53 @@ export default function AttendancePage() {
                       </td>
 
                       <td className={styles.tableCell}>
-                        <span className={styles.timeBadge}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
-                          {formatDisplayTime(checkIn, officeTiming.timezone)}
-                        </span>
+                        {r.status === 'ABSENT' ? (
+                          <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Unattended</span>
+                        ) : (
+                          <span className={styles.timeBadge}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
+                            {formatDisplayTime(checkIn, officeTiming.timezone)}
+                          </span>
+                        )}
                       </td>
 
                       <td className={styles.tableCell}>
-                        <span className={styles.timeBadge}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
-                          {formatDisplayTime(checkOut, officeTiming.timezone)}
-                        </span>
+                        {r.status === 'ABSENT' ? (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                        ) : (
+                          <span className={styles.timeBadge}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
+                            {formatDisplayTime(checkOut, officeTiming.timezone)}
+                          </span>
+                        )}
                       </td>
 
                       <td className={styles.tableCell}>
-                        {r.lateMinutes && r.lateMinutes > 0 ? (
+                        {r.status === 'ABSENT' ? (
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
+                            {r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: '#ef4444',
+                                background: 'rgba(239, 68, 68, 0.12)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                width: 'fit-content'
+                              }}>
+                                ৳{Number(r.punishmentAmount)} Penalty
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Absent (No Fine)</span>
+                            )}
+                            {r.punishmentReason && (
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
+                                {r.punishmentReason}
+                              </span>
+                            )}
+                          </div>
+                        ) : r.lateMinutes && r.lateMinutes > 0 ? (
                           <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
                             +{r.lateMinutes} min late
                           </span>
@@ -1263,7 +1370,9 @@ export default function AttendancePage() {
                       </td>
 
                       <td className={styles.tableCell}>
-                        {r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
+                        {r.status === 'ABSENT' ? (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                        ) : r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
                           <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
                             <span style={{ fontSize: '12px', fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '6px', width: 'fit-content' }}>
                               -{r.earlyLeaveMinutes} min early

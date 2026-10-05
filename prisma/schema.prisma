@@ -554,20 +554,25 @@ model AttendanceOvertime {
 }
 
 model AttendanceRoster {
-  id          String    @id @default(uuid())
+  id          String     @id @default(uuid())
   companyId   String
   employeeId  String
-  workShiftId String
+  workShiftId String?
+  startTime   String?
+  endTime     String?
+  gracePeriod Int?       @default(0)
+  note        String?
   date        DateTime
-  status      String    @default("PLANNED")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  workShift   WorkShift @relation(fields: [workShiftId], references: [id])
+  status      String     @default("PLANNED")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  workShift   WorkShift? @relation(fields: [workShiftId], references: [id])
 
   @@index([companyId])
   @@index([employeeId])
+  @@index([date])
 }
 
 model AttendanceHolidayAssignment {

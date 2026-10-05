@@ -186,37 +186,7 @@ export async function calculateAttendanceStatus(
     timezone = "Asia/Dhaka";
   }
 
-  // 4. Resolve Office Shift Start & Grace Period
-  // Check CompanySetting.shiftStartTime (e.g. "09:30") and AttendanceConfig.shiftStart
-  let shiftStartStr = "09:30";
-  let gracePeriod = 0;
-  let isFridayOff = true;
-  let isNightShift = false;
-
-  if (config?.shiftStart) {
-    shiftStartStr = config.shiftStart;
-  } else if (compSetting?.shiftStartTime) {
-    shiftStartStr = compSetting.shiftStartTime;
-  }
-
-  if (config?.gracePeriod !== undefined && config?.gracePeriod !== null) {
-    gracePeriod = config.gracePeriod;
-  } else if (compSetting?.gracePeriodMinutes !== undefined && compSetting?.gracePeriodMinutes !== null) {
-    gracePeriod = compSetting.gracePeriodMinutes;
-  }
-
-  if (config?.fridayOff !== undefined && config?.fridayOff !== null) {
-    isFridayOff = config.fridayOff;
-  }
-
-  // WorkShift assigned specifically to this employee takes highest priority
-  if (employee?.workShift) {
-    shiftStartStr = employee.workShift.startTime || shiftStartStr;
-    gracePeriod = employee.workShift.gracePeriod ?? gracePeriod;
-    isNightShift = !!employee.workShift.nightShift;
-  }
-
-  // 5. Extract check-in components in the company's local timezone
+  // 4. Extract check-in components in the company's local timezone
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     hourCycle: "h23",
@@ -239,6 +209,75 @@ export async function calculateAttendanceStatus(
   if (checkInHour === 24) checkInHour = 0;
   let checkInMin = parseInt(partMap.minute, 10) || 0;
   const weekday = partMap.weekday; // "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+
+  // 5. Resolve Office Shift Start & Grace Period (Roster override > Permanent Shift > Company Default)
+  let shiftStartStr = "09:30";
+  let gracePeriod = 0;
+  let isFridayOff = true;
+  let isNightShift = false;
+
+  if (config?.shiftStart) {
+    shiftStartStr = config.shiftStart;
+  } else if (compSetting?.shiftStartTime) {
+    shiftStartStr = compSetting.shiftStartTime;
+  }
+
+  if (config?.gracePeriod !== undefined && config?.gracePeriod !== null) {
+    gracePeriod = config.gracePeriod;
+  } else if (compSetting?.gracePeriodMinutes !== undefined && compSetting?.gracePeriodMinutes !== null) {
+    gracePeriod = compSetting.gracePeriodMinutes;
+  }
+
+  if (config?.fridayOff !== undefined && config?.fridayOff !== null) {
+    isFridayOff = config.fridayOff;
+  }
+
+  // Check specific day AttendanceRoster duty override first
+  const localDateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
+  const startOfDay = new Date(`${localDateStr}T00:00:00.000Z`);
+  const endOfDay = new Date(`${localDateStr}T23:59:59.999Z`);
+
+  let dayRoster: any = null;
+  try {
+    dayRoster = await prisma.attendanceRoster.findFirst({
+      where: {
+        employeeId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        status: { not: "CANCELLED" }
+      },
+      include: {
+        workShift: true
+      }
+    });
+  } catch (rErr) {
+    // Graceful fallback if table query fails
+  }
+
+  if (dayRoster) {
+    if (dayRoster.startTime) {
+      shiftStartStr = dayRoster.startTime;
+    } else if (dayRoster.workShift?.startTime) {
+      shiftStartStr = dayRoster.workShift.startTime;
+    }
+
+    if (dayRoster.gracePeriod !== null && dayRoster.gracePeriod !== undefined) {
+      gracePeriod = dayRoster.gracePeriod;
+    } else if (dayRoster.workShift?.gracePeriod !== null && dayRoster.workShift?.gracePeriod !== undefined) {
+      gracePeriod = dayRoster.workShift.gracePeriod;
+    }
+
+    if (dayRoster.workShift?.nightShift) {
+      isNightShift = true;
+    }
+  } else if (employee?.workShift) {
+    // Fallback to employee assigned permanent workShift
+    shiftStartStr = employee.workShift.startTime || shiftStartStr;
+    gracePeriod = employee.workShift.gracePeriod ?? gracePeriod;
+    isNightShift = !!employee.workShift.nightShift;
+  }
 
   // 6. Parse Shift Start Minutes
   const shiftStartMinutes = parseTimeToMinutes(shiftStartStr);
@@ -333,20 +372,6 @@ export async function calculateEarlyLeaveStatus(
     timezone = "Asia/Dhaka";
   }
 
-  let shiftEndStr = "18:00";
-  let isNightShift = false;
-
-  if (config?.shiftEnd) {
-    shiftEndStr = config.shiftEnd;
-  } else if (compSetting?.shiftEndTime) {
-    shiftEndStr = compSetting.shiftEndTime;
-  }
-
-  if (employee?.workShift) {
-    shiftEndStr = employee.workShift.endTime || shiftEndStr;
-    isNightShift = !!employee.workShift.nightShift;
-  }
-
   // 4. Extract check-out components in local timezone
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
@@ -363,6 +388,54 @@ export async function calculateEarlyLeaveStatus(
   const partMap: Record<string, string> = {};
   for (const p of parts) {
     partMap[p.type] = p.value;
+  }
+
+  let shiftEndStr = "18:00";
+  let isNightShift = false;
+
+  if (config?.shiftEnd) {
+    shiftEndStr = config.shiftEnd;
+  } else if (compSetting?.shiftEndTime) {
+    shiftEndStr = compSetting.shiftEndTime;
+  }
+
+  // Check specific day AttendanceRoster duty override first
+  const localDateStr = `${partMap.year}-${partMap.month}-${partMap.day}`;
+  const startOfDay = new Date(`${localDateStr}T00:00:00.000Z`);
+  const endOfDay = new Date(`${localDateStr}T23:59:59.999Z`);
+
+  let dayRoster: any = null;
+  try {
+    dayRoster = await prisma.attendanceRoster.findFirst({
+      where: {
+        employeeId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        status: { not: "CANCELLED" }
+      },
+      include: {
+        workShift: true
+      }
+    });
+  } catch (rErr) {
+    // Graceful fallback
+  }
+
+  if (dayRoster) {
+    if (dayRoster.endTime) {
+      shiftEndStr = dayRoster.endTime;
+    } else if (dayRoster.workShift?.endTime) {
+      shiftEndStr = dayRoster.workShift.endTime;
+    }
+
+    if (dayRoster.workShift?.nightShift) {
+      isNightShift = true;
+    }
+  } else if (employee?.workShift) {
+    shiftEndStr = employee.workShift.endTime || shiftEndStr;
+    isNightShift = !!employee.workShift.nightShift;
   }
 
   let checkOutHour = parseInt(partMap.hour, 10) || 0;

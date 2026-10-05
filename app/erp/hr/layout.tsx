@@ -22,6 +22,7 @@ const row1Nav: NavItem[] = [
 
 const row2Nav: NavItem[] = [
   { name: 'Attendance',   href: '/erp/hr/attendance',   icon: 'fact_check',   exact: false },
+  { name: 'Duty Roster',  href: '/erp/hr/shifts',       icon: 'schedule',     exact: false },
   { name: 'Leaves',       href: '/erp/hr/leaves',       icon: 'event_busy',   exact: false },
   { name: 'Tasks',        href: '/erp/hr/tasks',        icon: 'assignment',   exact: false },
   { name: 'Task Rewards', href: '/erp/hr/task-rewards', icon: 'military_tech',exact: false },

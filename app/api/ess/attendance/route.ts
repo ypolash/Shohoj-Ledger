@@ -153,9 +153,11 @@ export async function POST(request: Request) {
 
       const calc = await calculateAttendanceStatus(employee.companyId || "", employee.id, now);
 
-      const record = await prisma.attendance.upsert({
-        where: { id: todayRecord?.id || "" },
-        update: { 
+      let record;
+      if (todayRecord) {
+        record = await prisma.attendance.update({
+          where: { id: todayRecord.id },
+          data: { 
             checkInTime: now, 
             checkInLocation: locationString, 
             status: calc.status,
@@ -165,23 +167,27 @@ export async function POST(request: Request) {
             longitude: longitude,
             wifiSsid: ssid,
             wifiBssid: bssid
-        },
-        create: {
-          companyId: employee.companyId,
-          employeeId: employee.id,
-          date: todayDateOnly,
-          checkInTime: now,
-          checkInLocation: locationString,
-          status: calc.status,
-          isLate: calc.isLate,
-          lateMinutes: calc.lateMinutes,
-          systemSource: employee.systemSource || "LEGACY",
-          latitude: latitude,
-          longitude: longitude,
-          wifiSsid: ssid,
-          wifiBssid: bssid
-        },
-      });
+          },
+        });
+      } else {
+        record = await prisma.attendance.create({
+          data: {
+            companyId: employee.companyId,
+            employeeId: employee.id,
+            date: todayDateOnly,
+            checkInTime: now,
+            checkInLocation: locationString,
+            status: calc.status,
+            isLate: calc.isLate,
+            lateMinutes: calc.lateMinutes,
+            systemSource: employee.systemSource || "LEGACY",
+            latitude: latitude,
+            longitude: longitude,
+            wifiSsid: ssid,
+            wifiBssid: bssid
+          },
+        });
+      }
       return NextResponse.json({ success: true, record, message: "Clocked in successfully." });
     }
 

@@ -4,7 +4,7 @@
   left: 0;
   bottom: 0;
   background-color: var(--surface-main);
-  border-right: none;
+  border-right: 1px solid var(--border-main);
   display: flex;
   flex-direction: column;
   transition: width var(--transition-base), transform var(--transition-base);

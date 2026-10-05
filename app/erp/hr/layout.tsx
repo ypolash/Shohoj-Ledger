@@ -85,112 +85,108 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      {/* Top Navigation Wrapper */}
-      <div style={{ padding: '20px 24px 0 24px', flexShrink: 0, background: 'var(--surface-bg)' }}>
-        {/* Floating 2-Line Categorized Nav Card */}
-        <header style={{
-          background: 'var(--surface-card)',
-          borderRadius: '16px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-          border: '1px solid var(--border-main)',
-          padding: '10px 14px',
+      {/* Flat 2-Line Categorized Nav Header */}
+      <header style={{
+        background: 'var(--surface-card)',
+        borderBottom: '1px solid var(--border-main)',
+        padding: '12px 24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        flexShrink: 0,
+      }}>
+        {/* Row 1: Workforce & Structure */}
+        <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
         }}>
-          {/* Row 1: Workforce & Structure */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
+          {/* Category Tag 1 */}
+          <div style={{ 
+            flexShrink: 0,
+            background: 'rgba(37, 99, 235, 0.12)', 
+            color: '#3b82f6', 
+            border: '1px solid rgba(37, 99, 235, 0.25)',
+            padding: '4px 10px', 
+            borderRadius: '6px',
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '6px',
+            fontWeight: 700,
+            fontSize: '11px',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            width: '128px',
+            boxSizing: 'border-box',
+            justifyContent: 'center',
+            whiteSpace: 'nowrap',
           }}>
-            {/* Category Tag 1 */}
-            <div style={{ 
-              flexShrink: 0,
-              background: 'rgba(37, 99, 235, 0.12)', 
-              color: '#3b82f6', 
-              border: '1px solid rgba(37, 99, 235, 0.25)',
-              padding: '4px 10px', 
-              borderRadius: '8px',
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              fontWeight: 700,
-              fontSize: '11px',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              width: '128px',
-              boxSizing: 'border-box',
-              justifyContent: 'center',
-              whiteSpace: 'nowrap',
-            }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>groups</span>
-              <span>Workforce</span>
-            </div>
-
-            <nav style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              flexWrap: 'wrap',
-              flex: 1,
-            }}>
-              {row1Nav.map(renderNavLink)}
-            </nav>
+            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>groups</span>
+            <span>Workforce</span>
           </div>
 
-          {/* Divider */}
-          <div style={{
-            height: '1px',
-            background: 'var(--border-main)',
-            opacity: 0.6,
-            margin: '0 2px',
-          }} />
-
-          {/* Row 2: Operations & Policies */}
-          <div style={{
+          <nav style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '4px',
             flexWrap: 'wrap',
+            flex: 1,
           }}>
-            {/* Category Tag 2 */}
-            <div style={{ 
-              flexShrink: 0,
-              background: 'rgba(16, 185, 129, 0.12)', 
-              color: '#10b981', 
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              padding: '4px 10px', 
-              borderRadius: '8px',
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              fontWeight: 700,
-              fontSize: '11px',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              width: '128px',
-              boxSizing: 'border-box',
-              justifyContent: 'center',
-              whiteSpace: 'nowrap',
-            }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>event_note</span>
-              <span>Operations</span>
-            </div>
+            {row1Nav.map(renderNavLink)}
+          </nav>
+        </div>
 
-            <nav style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              flexWrap: 'wrap',
-              flex: 1,
-            }}>
-              {row2Nav.map(renderNavLink)}
-            </nav>
+        {/* Divider */}
+        <div style={{
+          height: '1px',
+          background: 'var(--border-main)',
+          opacity: 0.6,
+          margin: '0 2px',
+        }} />
+
+        {/* Row 2: Operations & Policies */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
+        }}>
+          {/* Category Tag 2 */}
+          <div style={{ 
+            flexShrink: 0,
+            background: 'rgba(16, 185, 129, 0.12)', 
+            color: '#10b981', 
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            padding: '4px 10px', 
+            borderRadius: '6px',
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '6px',
+            fontWeight: 700,
+            fontSize: '11px',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            width: '128px',
+            boxSizing: 'border-box',
+            justifyContent: 'center',
+            whiteSpace: 'nowrap',
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>event_note</span>
+            <span>Operations</span>
           </div>
-        </header>
-      </div>
+
+          <nav style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            flexWrap: 'wrap',
+            flex: 1,
+          }}>
+            {row2Nav.map(renderNavLink)}
+          </nav>
+        </div>
+      </header>
 
       {/* Main content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px', background: 'var(--surface-bg)' }}>

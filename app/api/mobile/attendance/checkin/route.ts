@@ -8,8 +8,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     const employeeId = body.employeeId;
-    const ssid = body.ssid;
-    const bssid = body.bssid;
+    const ssid = body.ssid || body.wifiSsid;
+    const bssid = body.bssid || body.wifiBssid;
     const latitude = body.latitude;
     const longitude = body.longitude;
 
@@ -20,8 +20,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { employeeId },
+          { id: employeeId },
+        ],
+      },
     });
 
     if (!employee) {

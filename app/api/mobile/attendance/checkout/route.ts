@@ -6,7 +6,11 @@ import { calculateEarlyLeaveStatus, getNowInTimezone } from "@/lib/attendance";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { employeeId, wifiSsid, wifiBssid, latitude, longitude } = body;
+    const employeeId = body.employeeId;
+    const wifiSsid = body.wifiSsid || body.ssid;
+    const wifiBssid = body.wifiBssid || body.bssid;
+    const latitude = body.latitude;
+    const longitude = body.longitude;
 
     if (!employeeId) {
       return NextResponse.json(
@@ -15,8 +19,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { employeeId },
+          { id: employeeId },
+        ],
+      },
     });
 
     if (!employee) {

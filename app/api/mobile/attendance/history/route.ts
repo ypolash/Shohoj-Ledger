@@ -20,8 +20,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { employeeId },
+          { id: employeeId },
+        ],
+      },
     });
 
     if (!employee) {

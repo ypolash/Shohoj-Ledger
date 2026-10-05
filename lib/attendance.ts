@@ -276,6 +276,8 @@ export async function calculateAttendanceStatus(
     isLate = false;
   }
 
+  const normalizedCheckInTime: Date | undefined = undefined;
+
   return { isLate, lateMinutes, status, normalizedCheckInTime };
 }
 
@@ -387,6 +389,8 @@ export async function calculateEarlyLeaveStatus(
   if (checkOutMinutes < shiftEndMinutes) {
     earlyLeaveMinutes = shiftEndMinutes - checkOutMinutes;
   }
+
+  const normalizedCheckOutTime: Date | undefined = undefined;
 
   return {
     earlyLeaveMinutes,

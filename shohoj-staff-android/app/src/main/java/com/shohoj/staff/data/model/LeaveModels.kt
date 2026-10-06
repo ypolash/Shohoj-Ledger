@@ -56,6 +56,7 @@ data class ActiveBreakInfo(
     @SerializedName("leaveId") val leaveId: String = "",
     @SerializedName("type") val type: String = "Short Break",
     @SerializedName("status") val status: String = "APPROVED",
+    @SerializedName("isPaused") val isPaused: Boolean = false,
     @SerializedName("startTime") val startTime: String = "",
     @SerializedName("targetEndTime") val targetEndTime: String = "",
     @SerializedName("graceEndTime") val graceEndTime: String = "",
@@ -65,6 +66,7 @@ data class ActiveBreakInfo(
     @SerializedName("fineType") val fineType: String = "FIXED",
     @SerializedName("autoFine") val autoFine: Boolean = true,
     @SerializedName("remainingSeconds") val remainingSeconds: Long = 0,
+    @SerializedName("consumedSeconds") val consumedSeconds: Long = 0,
     @SerializedName("isOverstayed") val isOverstayed: Boolean = false,
     @SerializedName("overstayMinutes") val overstayMinutes: Int = 0,
     @SerializedName("estimatedFine") val estimatedFine: Double = 0.0
@@ -85,6 +87,7 @@ data class LeaveApplyResponse(
     @SerializedName("leave") val leave: LeaveItem? = null,
     @SerializedName("activeBreak") val activeBreak: ActiveBreakInfo? = null,
     @SerializedName("hasActiveBreak") val hasActiveBreak: Boolean = false,
+    @SerializedName("isPaused") val isPaused: Boolean = false,
     @SerializedName("error") val error: String? = null
 )
 
@@ -92,7 +95,31 @@ data class RequestBreakRequest(
     @SerializedName("action") val action: String = "REQUEST_BREAK",
     @SerializedName("leaveTypeId") val leaveTypeId: String? = null,
     @SerializedName("reason") val reason: String = "Lunch Break",
-    @SerializedName("employeeId") val employeeId: String? = null
+    @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("ssid") val ssid: String? = null,
+    @SerializedName("bssid") val bssid: String? = null
+)
+
+data class PauseBreakRequest(
+    @SerializedName("action") val action: String = "PAUSE_BREAK",
+    @SerializedName("leaveId") val leaveId: String? = null,
+    @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("ssid") val ssid: String? = null,
+    @SerializedName("bssid") val bssid: String? = null
+)
+
+data class ResumeBreakRequest(
+    @SerializedName("action") val action: String = "RESUME_BREAK",
+    @SerializedName("leaveId") val leaveId: String? = null,
+    @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("ssid") val ssid: String? = null,
+    @SerializedName("bssid") val bssid: String? = null
 )
 
 data class StartBreakResponse(
@@ -102,13 +129,18 @@ data class StartBreakResponse(
     @SerializedName("leave") val leave: LeaveItem? = null,
     @SerializedName("activeBreak") val activeBreak: ActiveBreakInfo? = null,
     @SerializedName("hasActiveBreak") val hasActiveBreak: Boolean = false,
+    @SerializedName("isPaused") val isPaused: Boolean = false,
     @SerializedName("error") val error: String? = null
 )
 
 data class EndBreakRequest(
     @SerializedName("action") val action: String = "END_BREAK",
     @SerializedName("leaveId") val leaveId: String? = null,
-    @SerializedName("employeeId") val employeeId: String? = null
+    @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("ssid") val ssid: String? = null,
+    @SerializedName("bssid") val bssid: String? = null
 )
 
 data class EndBreakResponse(

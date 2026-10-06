@@ -1,5 +1,6 @@
 package com.shohoj.staff.ui.screens.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -234,24 +235,99 @@ fun HomeScreen(
                             }
                         }
 
-                        Button(
-                            onClick = { viewModel.endActiveBreak() },
-                            enabled = !uiState.isEndingBreak,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Emerald500,
-                                contentColor = Slate950
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp)
-                        ) {
-                            if (uiState.isEndingBreak) {
-                                CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                            } else {
-                                Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        if (uiState.activeBreak?.isPaused == true) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.resumeBreak() },
+                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Emerald500,
+                                        contentColor = Slate950
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isStartingBreak) {
+                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Resume Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { viewModel.endActiveBreak() },
+                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Rose500,
+                                        contentColor = Slate50
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isEndingBreak) {
+                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("End Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.pauseBreak() },
+                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Amber500,
+                                        contentColor = Slate950
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isStartingBreak) {
+                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.Pause, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Pause Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { viewModel.endActiveBreak() },
+                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Slate800,
+                                        contentColor = Slate50
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isEndingBreak) {
+                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
                             }
                         }
                     }
@@ -625,6 +701,229 @@ fun HomeScreen(
                                 Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(text = "Shift Complete", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 📅 Duty Schedule & Assigned Roster Card
+            val isRosterDuty = dutySchedule?.isRoster == true || uiState.todayRoster != null
+            val isCustomDuty = dutySchedule?.isCustom == true || uiState.customDuty != null
+            val shiftCardGradient = when {
+                isRosterDuty -> listOf(Color(0xFF064E3B), Color(0xFF0F172A))
+                isCustomDuty -> listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+                else -> listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+            }
+            val shiftBorderColor = when {
+                isRosterDuty -> Emerald500.copy(alpha = 0.5f)
+                isCustomDuty -> Amber500.copy(alpha = 0.4f)
+                else -> CardBorder
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(brush = Brush.linearGradient(shiftCardGradient), shape = RoundedCornerShape(18.dp))
+                    .border(1.dp, shiftBorderColor, RoundedCornerShape(18.dp))
+                    .padding(20.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isRosterDuty) Icons.Default.EventNote else if (isCustomDuty) Icons.Default.Bolt else Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = if (isRosterDuty) Emerald400 else if (isCustomDuty) Amber400 else Slate400,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "My Duty Schedule",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Slate50
+                                )
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isRosterDuty) Emerald500.copy(alpha = 0.2f) else if (isCustomDuty) Amber500.copy(alpha = 0.2f) else Slate800,
+                            border = BorderStroke(1.dp, if (isRosterDuty) Emerald500 else if (isCustomDuty) Amber500 else Slate700)
+                        ) {
+                            Text(
+                                text = when {
+                                    isRosterDuty -> "📅 Roster Active"
+                                    isCustomDuty -> "⚡ Custom Duty"
+                                    else -> "Standard Shift"
+                                },
+                                color = if (isRosterDuty) Emerald400 else if (isCustomDuty) Amber400 else Slate300,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    // Shift Timings & Shift Name
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val shiftDisplayName = dutySchedule?.name ?: if (isRosterDuty) "Assigned Duty Roster" else if (isCustomDuty) "Custom Duty Shift" else "Standard Company Shift"
+                        Text(
+                            text = shiftDisplayName,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = if (isRosterDuty) Emerald400 else if (isCustomDuty) Amber400 else Slate400,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                        )
+                        Text(
+                            text = "$dutyStartTime — $dutyEndTime",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Slate50,
+                                fontSize = 22.sp,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                        if (!dutySchedule?.rosterNote.isNullOrBlank()) {
+                            Text(
+                                text = "Note: ${dutySchedule?.rosterNote}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Emerald300,
+                                    fontSize = 11.5.sp
+                                )
+                            )
+                        }
+                    }
+
+                    // Duty Badges (Grace Period, Break, Night Shift)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Slate800.copy(alpha = 0.6f),
+                            border = BorderStroke(0.5.dp, Slate700),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Grace Period", color = Slate400, fontSize = 10.sp)
+                                Text("+${dutySchedule?.gracePeriod ?: 15}m", color = Amber400, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Slate800.copy(alpha = 0.6f),
+                            border = BorderStroke(0.5.dp, Slate700),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Lunch Break", color = Slate400, fontSize = 10.sp)
+                                Text("${dutySchedule?.breakTime ?: 60}m", color = Emerald400, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        if (isNightShift) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFF3B1D54),
+                                border = BorderStroke(0.5.dp, Color(0xFF9333EA)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text("Shift Type", color = Color(0xFFD8B4FE), fontSize = 10.sp)
+                                    Text("Night", color = Color(0xFFC084FC), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    // Upcoming Assigned Roster Dates List (if any)
+                    if (uiState.dutyRosters.isNotEmpty()) {
+                        Divider(color = Slate800, thickness = 1.dp)
+                        Text(
+                            text = "Assigned Roster Schedule (${uiState.dutyRosters.size} Days)",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Slate300,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            uiState.dutyRosters.take(5).forEach { r ->
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (r.isToday == true) Emerald500.copy(alpha = 0.12f) else Slate800.copy(alpha = 0.4f),
+                                    border = BorderStroke(1.dp, if (r.isToday == true) Emerald500.copy(alpha = 0.4f) else Slate700.copy(alpha = 0.4f)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                Text(
+                                                    text = r.dateFormatted ?: r.date,
+                                                    color = Slate100,
+                                                    fontSize = 12.5.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                                if (r.isToday == true) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(4.dp),
+                                                        color = Emerald500,
+                                                    ) {
+                                                        Text("TODAY", color = Slate950, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp))
+                                                    }
+                                                }
+                                            }
+                                            if (!r.note.isNullOrBlank()) {
+                                                Text(
+                                                    text = r.note,
+                                                    color = Slate400,
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                        }
+
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(
+                                                text = if (!r.startTime.isNullOrBlank() && !r.endTime.isNullOrBlank()) "${r.startTime} - ${r.endTime}" else (r.shiftName ?: "Assigned"),
+                                                color = if (r.isToday == true) Emerald400 else Slate200,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            if (!r.shiftName.isNullOrBlank()) {
+                                                Text(
+                                                    text = r.shiftName,
+                                                    color = Slate400,
+                                                    fontSize = 10.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

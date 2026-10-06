@@ -26,6 +26,7 @@ data class ClockActionResponse(
 )
 
 data class DutyScheduleDto(
+    @SerializedName("id") val id: String? = null,
     @SerializedName("name") val name: String? = null,
     @SerializedName("startTime") val startTime: String? = null,
     @SerializedName("endTime") val endTime: String? = null,
@@ -33,7 +34,38 @@ data class DutyScheduleDto(
     @SerializedName("breakTime") val breakTime: Int? = null,
     @SerializedName("nightShift") val nightShift: Boolean? = false,
     @SerializedName("isCustom") val isCustom: Boolean? = false,
+    @SerializedName("isRoster") val isRoster: Boolean? = false,
+    @SerializedName("rosterId") val rosterId: String? = null,
+    @SerializedName("rosterDate") val rosterDate: String? = null,
+    @SerializedName("rosterNote") val rosterNote: String? = null,
+    @SerializedName("dutyTypeLabel") val dutyTypeLabel: String? = null,
     @SerializedName("dutyHoursFormatted") val dutyHoursFormatted: String? = null
+)
+
+data class DutyRosterDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("date") val date: String,
+    @SerializedName("dateFormatted") val dateFormatted: String? = null,
+    @SerializedName("startTime") val startTime: String? = null,
+    @SerializedName("endTime") val endTime: String? = null,
+    @SerializedName("gracePeriod") val gracePeriod: Int? = null,
+    @SerializedName("breakTime") val breakTime: Int? = null,
+    @SerializedName("nightShift") val nightShift: Boolean? = false,
+    @SerializedName("shiftName") val shiftName: String? = null,
+    @SerializedName("note") val note: String? = null,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("isToday") val isToday: Boolean? = false,
+    @SerializedName("dutyHoursFormatted") val dutyHoursFormatted: String? = null
+)
+
+data class RosterListResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("rosters") val rosters: List<DutyRosterDto> = emptyList(),
+    @SerializedName("todayRoster") val todayRoster: DutyRosterDto? = null,
+    @SerializedName("effectiveDutyToday") val effectiveDutyToday: DutyScheduleDto? = null,
+    @SerializedName("customDuty") val customDuty: DutyScheduleDto? = null,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("error") val error: String? = null
 )
 
 data class AttendanceRecord(

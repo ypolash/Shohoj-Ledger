@@ -55,6 +55,16 @@ interface ShohojApiService {
         @Query("employeeId") employeeId: String
     ): Response<List<AttendanceRecord>>
 
+    // --- Duty Roster & Custom Duty ---
+
+    @GET("api/mobile/roster")
+    suspend fun getMobileDutyRosters(
+        @Query("employeeId") employeeId: String
+    ): Response<RosterListResponse>
+
+    @GET("api/ess/roster")
+    suspend fun getEssDutyRosters(): Response<RosterListResponse>
+
     // --- Leave Management ---
 
     @GET("api/mobile/leave")
@@ -80,6 +90,16 @@ interface ShohojApiService {
     @POST("api/mobile/leave/break")
     suspend fun requestBreak(
         @Body request: RequestBreakRequest
+    ): Response<StartBreakResponse>
+
+    @POST("api/mobile/leave/break")
+    suspend fun pauseBreak(
+        @Body request: PauseBreakRequest
+    ): Response<StartBreakResponse>
+
+    @POST("api/mobile/leave/break")
+    suspend fun resumeBreak(
+        @Body request: ResumeBreakRequest
     ): Response<StartBreakResponse>
 
     @POST("api/mobile/leave/break")

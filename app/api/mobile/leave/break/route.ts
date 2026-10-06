@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
-import { getActiveBreakForEmployee, processBreakEnd, parseLeaveTypeConfig } from "@/lib/hr/leaveTimer";
+import { 
+  getActiveBreakForEmployee, 
+  processBreakEnd, 
+  processBreakPause, 
+  processBreakResume, 
+  parseLeaveTypeConfig 
+} from "@/lib/hr/leaveTimer";
+import { validateAttendanceRequest } from "@/app/api/mobile/attendance/utils";
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });
@@ -54,7 +61,8 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/mobile/leave/break
- * End active break and compute/apply fine if overstayed.
+ * Handles REQUEST_BREAK, PAUSE_BREAK, RESUME_BREAK, and END_BREAK actions.
+ * Enforces company Wi-Fi network permission.
  */
 export async function POST(request: Request) {
   try {
@@ -73,10 +81,73 @@ export async function POST(request: Request) {
       );
     }
 
-    const { action, leaveId, leaveTypeId, reason = "Short Break" } = body;
+    const { action = "END_BREAK", leaveId, leaveTypeId, reason = "Lunch Break" } = body;
+    const ssid = body.ssid || body.wifiSsid;
+    const bssid = body.bssid || body.wifiBssid;
+    const latitude = body.latitude;
+    const longitude = body.longitude;
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(',')[0] || request.headers.get("x-real-ip") || '127.0.0.1';
 
-    // 1. Action: End active break
-    if (action === "END_BREAK" || !action) {
+    // Enforce permitted Wi-Fi network validation for break operations
+    const validation = await validateAttendanceRequest(
+      employee.companyId || "",
+      latitude,
+      longitude,
+      ssid,
+      bssid,
+      ipAddress,
+      false // do not strictly fail on GPS if employee is indoors on authorized Wi-Fi
+    );
+
+    if (!validation.isValid) {
+      return NextResponse.json({
+        success: false,
+        code: "FORBIDDEN_WIFI",
+        error: validation.error || "Lunch break operations are only permitted on authorized company Wi-Fi.",
+        details: validation.details
+      }, { status: 403, headers: ESS_CORS_HEADERS });
+    }
+
+    // 1. Action: Pause active break
+    if (action === "PAUSE_BREAK") {
+      const active = await getActiveBreakForEmployee(employee.id, employee.companyId);
+      const targetLeaveId = leaveId || active?.leaveId;
+
+      if (!targetLeaveId) {
+        return NextResponse.json(
+          { error: "No active break found to pause." },
+          { status: 400, headers: ESS_CORS_HEADERS }
+        );
+      }
+
+      const result = await processBreakPause(targetLeaveId, employee.id, employee.companyId);
+      return NextResponse.json({
+        ...result,
+        success: true,
+      }, { headers: ESS_CORS_HEADERS });
+    }
+
+    // 2. Action: Resume paused break
+    if (action === "RESUME_BREAK") {
+      const active = await getActiveBreakForEmployee(employee.id, employee.companyId);
+      const targetLeaveId = leaveId || active?.leaveId;
+
+      if (!targetLeaveId) {
+        return NextResponse.json(
+          { error: "No paused break found to resume." },
+          { status: 400, headers: ESS_CORS_HEADERS }
+        );
+      }
+
+      const result = await processBreakResume(targetLeaveId, employee.id, employee.companyId);
+      return NextResponse.json({
+        ...result,
+        success: true,
+      }, { headers: ESS_CORS_HEADERS });
+    }
+
+    // 3. Action: End active/paused break
+    if (action === "END_BREAK") {
       const active = await getActiveBreakForEmployee(employee.id, employee.companyId);
       const targetLeaveId = leaveId || active?.leaveId;
 
@@ -96,8 +167,31 @@ export async function POST(request: Request) {
       }, { headers: ESS_CORS_HEADERS });
     }
 
-    // 2. Action: Instant Request Short Break / Lunch Break
-    if (action === "REQUEST_BREAK") {
+    // 4. Action: Start or Resume Lunch/Short Break
+    if (action === "REQUEST_BREAK" || action === "START_BREAK") {
+      const existingBreak = await getActiveBreakForEmployee(employee.id, employee.companyId);
+
+      // If an existing break for today is paused, clicking start will RESUME it without resetting to start
+      if (existingBreak && existingBreak.isPaused) {
+        const result = await processBreakResume(existingBreak.leaveId, employee.id, employee.companyId);
+        return NextResponse.json({
+          ...result,
+          success: true,
+          hasActiveBreak: true,
+        }, { headers: ESS_CORS_HEADERS });
+      }
+
+      // If already active and running
+      if (existingBreak && !existingBreak.isPaused) {
+        return NextResponse.json({
+          success: true,
+          message: "Lunch break is already in progress.",
+          activeBreak: existingBreak,
+          hasActiveBreak: true
+        }, { headers: ESS_CORS_HEADERS });
+      }
+
+      // Otherwise create a fresh break
       let lt: any = null;
       if (leaveTypeId) {
         lt = await prisma.leaveType.findFirst({
@@ -122,7 +216,6 @@ export async function POST(request: Request) {
         include: { workShift: true },
       });
 
-      // Break time and grace period configured in employee section via workShift:
       const shiftBreakTime = (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0)
         ? empWithShift.workShift.breakTime
         : 60;
@@ -192,7 +285,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: "Invalid action. Supported actions: END_BREAK, REQUEST_BREAK" },
+      { error: "Invalid action. Supported actions: END_BREAK, REQUEST_BREAK, PAUSE_BREAK, RESUME_BREAK" },
       { status: 400, headers: ESS_CORS_HEADERS }
     );
   } catch (error: any) {

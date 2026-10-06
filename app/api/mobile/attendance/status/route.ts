@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getNowInTimezone } from "@/lib/attendance";
+import { getEffectiveDutySchedule } from "@/lib/hr/dutyResolver";
 
 export async function GET(req: Request) {
   try {
@@ -82,34 +83,7 @@ export async function GET(req: Request) {
     const checkInTimeIso = attendance?.checkInTime ? attendance.checkInTime.toISOString() : null;
     const checkOutTimeIso = attendance?.checkOutTime ? attendance.checkOutTime.toISOString() : null;
 
-    let dutySchedule = null;
-    if (employee.workShift) {
-      dutySchedule = {
-        name: employee.workShift.name,
-        startTime: employee.workShift.startTime,
-        endTime: employee.workShift.endTime,
-        gracePeriod: employee.workShift.gracePeriod,
-        breakTime: employee.workShift.breakTime,
-        nightShift: employee.workShift.nightShift,
-        isCustom: true,
-        dutyHoursFormatted: `${employee.workShift.startTime} - ${employee.workShift.endTime}`,
-      };
-    } else {
-      const config = employee.company?.attendanceConfigs?.[0];
-      const setting = employee.company?.settings;
-      const startTime = config?.shiftStart || setting?.shiftStartTime || "09:00";
-      const endTime = config?.shiftEnd || setting?.shiftEndTime || "20:00";
-      dutySchedule = {
-        name: "Regular Shift",
-        startTime,
-        endTime,
-        gracePeriod: config?.gracePeriod ?? setting?.gracePeriodMinutes ?? 15,
-        breakTime: 0,
-        nightShift: false,
-        isCustom: false,
-        dutyHoursFormatted: `${startTime} - ${endTime}`,
-      };
-    }
+    const { dutySchedule } = await getEffectiveDutySchedule(employee.id, employee.companyId);
 
     return NextResponse.json({
       success: true,

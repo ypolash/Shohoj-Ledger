@@ -25,6 +25,9 @@ data class HomeUiState(
     val summary: AttendanceSummary? = null,
     val announcements: List<AnnouncementItem> = emptyList(),
     val dutySchedule: DutyScheduleDto? = null,
+    val dutyRosters: List<DutyRosterDto> = emptyList(),
+    val todayRoster: DutyRosterDto? = null,
+    val customDuty: DutyScheduleDto? = null,
     val activeBreak: ActiveBreakInfo? = null,
     val activeBreakCountdown: String = "",
     val activeBreakStatusText: String = "",
@@ -88,14 +91,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             // Refresh current employee
             val currentEmp = authRepo.getCurrentEmployee()
 
-            // Fetch attendance, announcements & active break in parallel
+            // Fetch attendance, duty rosters, announcements & active break in parallel
             val attResult = attendanceRepo.getAttendanceData()
+            val rosterResult = attendanceRepo.getDutyRosters()
             val annResult = announcementRepo.getAnnouncements()
             val leaveResult = leaveRepo.getLeaveData()
 
             var todayRecord: AttendanceRecord? = null
             var summary: AttendanceSummary? = null
             var dutySchedule: DutyScheduleDto? = currentEmp?.dutySchedule
+            var dutyRostersList: List<DutyRosterDto> = emptyList()
+            var todayRosterDto: DutyRosterDto? = null
+            var customDutyDto: DutyScheduleDto? = null
             var announcementsList: List<AnnouncementItem> = emptyList()
             var activeBreak: ActiveBreakInfo? = null
 
@@ -103,6 +110,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 todayRecord = data.today
                 summary = data.summary
                 dutySchedule = data.dutySchedule ?: data.today?.dutySchedule ?: currentEmp?.dutySchedule
+            }
+
+            rosterResult.onSuccess { rData ->
+                dutyRostersList = rData.rosters
+                todayRosterDto = rData.todayRoster
+                customDutyDto = rData.customDuty
+                if (rData.effectiveDutyToday != null) {
+                    dutySchedule = rData.effectiveDutyToday
+                }
             }
 
             annResult.onSuccess { list ->
@@ -119,6 +135,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 todayAttendance = todayRecord,
                 summary = summary,
                 dutySchedule = dutySchedule,
+                dutyRosters = dutyRostersList,
+                todayRoster = todayRosterDto,
+                customDuty = customDutyDto,
                 announcements = announcementsList,
                 activeBreak = activeBreak
             )
@@ -134,6 +153,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 activeBreakCountdown = "",
                 activeBreakStatusText = "",
                 activeBreakFineText = null
+            )
+            return
+        }
+
+        if (breakInfo.isPaused || breakInfo.status == "PAUSED") {
+            val remSec = maxOf(0L, breakInfo.remainingSeconds)
+            val mins = remSec / 60
+            val secs = remSec % 60
+            _uiState.value = _uiState.value.copy(
+                activeBreakCountdown = String.format("%02d:%02d", mins, secs),
+                activeBreakStatusText = "Break Paused",
+                activeBreakStatusColor = "AMBER",
+                activeBreakFineText = "Timer is paused. Click 'Resume Break' to continue."
             )
             return
         }
@@ -215,9 +247,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun requestLunchBreak(reason: String = "Lunch Break") {
+        val currentActive = _uiState.value.activeBreak
+        if (currentActive != null && currentActive.isPaused) {
+            resumeBreak()
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isStartingBreak = true, error = null, clockActionSuccessMessage = null)
-            val result = leaveRepo.requestBreak(leaveTypeId = null, reason = reason)
+            val location = LocationHelper.getCurrentLocation(getApplication())
+            val wifi = WifiHelper.getWifiDetails(getApplication())
+
+            val result = leaveRepo.requestBreak(
+                leaveTypeId = null,
+                reason = reason,
+                latitude = location?.latitude,
+                longitude = location?.longitude,
+                ssid = wifi.ssid,
+                bssid = wifi.bssid
+            )
             result.fold(
                 onSuccess = { res ->
                     _uiState.value = _uiState.value.copy(
@@ -238,11 +286,89 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun pauseBreak() {
+        val breakInfo = _uiState.value.activeBreak ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isStartingBreak = true, error = null, clockActionSuccessMessage = null)
+            val location = LocationHelper.getCurrentLocation(getApplication())
+            val wifi = WifiHelper.getWifiDetails(getApplication())
+
+            val result = leaveRepo.pauseBreak(
+                leaveId = breakInfo.leaveId,
+                latitude = location?.latitude,
+                longitude = location?.longitude,
+                ssid = wifi.ssid,
+                bssid = wifi.bssid
+            )
+            result.fold(
+                onSuccess = { res ->
+                    breakTickerJob?.cancel()
+                    _uiState.value = _uiState.value.copy(
+                        isStartingBreak = false,
+                        activeBreak = res.activeBreak,
+                        clockActionSuccessMessage = res.message ?: "Break paused successfully."
+                    )
+                    startBreakCountdownTicker(res.activeBreak)
+                    loadDashboardData()
+                },
+                onFailure = { ex ->
+                    _uiState.value = _uiState.value.copy(
+                        isStartingBreak = false,
+                        error = ex.localizedMessage ?: "Failed to pause break"
+                    )
+                }
+            )
+        }
+    }
+
+    fun resumeBreak() {
+        val breakInfo = _uiState.value.activeBreak ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isStartingBreak = true, error = null, clockActionSuccessMessage = null)
+            val location = LocationHelper.getCurrentLocation(getApplication())
+            val wifi = WifiHelper.getWifiDetails(getApplication())
+
+            val result = leaveRepo.resumeBreak(
+                leaveId = breakInfo.leaveId,
+                latitude = location?.latitude,
+                longitude = location?.longitude,
+                ssid = wifi.ssid,
+                bssid = wifi.bssid
+            )
+            result.fold(
+                onSuccess = { res ->
+                    _uiState.value = _uiState.value.copy(
+                        isStartingBreak = false,
+                        activeBreak = res.activeBreak,
+                        clockActionSuccessMessage = res.message ?: "Break resumed successfully."
+                    )
+                    startBreakCountdownTicker(res.activeBreak)
+                    loadDashboardData()
+                },
+                onFailure = { ex ->
+                    _uiState.value = _uiState.value.copy(
+                        isStartingBreak = false,
+                        error = ex.localizedMessage ?: "Failed to resume break"
+                    )
+                }
+            )
+        }
+    }
+
     fun endActiveBreak() {
         val breakInfo = _uiState.value.activeBreak ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isEndingBreak = true, error = null, clockActionSuccessMessage = null)
-            val result = leaveRepo.endBreak(breakInfo.leaveId)
+            val location = LocationHelper.getCurrentLocation(getApplication())
+            val wifi = WifiHelper.getWifiDetails(getApplication())
+
+            val result = leaveRepo.endBreak(
+                leaveId = breakInfo.leaveId,
+                latitude = location?.latitude,
+                longitude = location?.longitude,
+                ssid = wifi.ssid,
+                bssid = wifi.bssid
+            )
             result.fold(
                 onSuccess = { response ->
                     breakTickerJob?.cancel()

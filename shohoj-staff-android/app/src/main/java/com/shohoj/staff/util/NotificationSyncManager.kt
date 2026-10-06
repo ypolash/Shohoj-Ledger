@@ -25,6 +25,7 @@ object NotificationSyncManager {
     private const val PREFS_NAME = "shohoj_notifications_tracker"
     private const val KEY_SEEN_TASK_IDS = "seen_task_ids"
     private const val KEY_SEEN_NOTICE_IDS = "seen_notice_ids"
+    private const val KEY_SEEN_ROSTER_IDS = "seen_roster_ids"
     private const val KEY_CHANNEL_UNREAD_MAP = "channel_unread_map"
     private const val KEY_IS_INITIALIZED = "is_sync_initialized"
 
@@ -234,7 +235,32 @@ object NotificationSyncManager {
                 // Notice sync quiet catch
             }
 
-            // 3. Sync Community & Direct Chat Messages
+            // 3. Sync Assigned Duty Rosters & Custom Schedules
+            try {
+                val empId = sessionManager.employeeId
+                val rosterRes = if (empId != null) service.getMobileDutyRosters(empId) else service.getEssDutyRosters()
+                if (rosterRes.isSuccessful && rosterRes.body() != null) {
+                    hasSyncSuccess = true
+                    val rosters = rosterRes.body()?.rosters ?: emptyList()
+                    val seenRosters = prefs.getStringSet(KEY_SEEN_ROSTER_IDS, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+                    if (!isInitialized) {
+                        rosters.forEach { seenRosters.add(it.id) }
+                    } else {
+                        rosters.forEach { roster ->
+                            if (!seenRosters.contains(roster.id)) {
+                                SoundNotificationHelper.showRosterNotification(context, roster)
+                                seenRosters.add(roster.id)
+                            }
+                        }
+                    }
+                    prefs.edit().putStringSet(KEY_SEEN_ROSTER_IDS, seenRosters).apply()
+                }
+            } catch (e: Exception) {
+                // Duty roster sync quiet catch
+            }
+
+            // 4. Sync Community & Direct Chat Messages
             try {
                 val channelRes = service.getCommunityChannels()
                 if (channelRes.isSuccessful && channelRes.body() != null) {

@@ -23,6 +23,7 @@ export default function StaffPortalPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'TASKS' | 'PRODUCTS' | 'LEAVES' | 'PAYROLL'>('ATTENDANCE');
   const [dutySchedule, setDutySchedule] = useState<any>(null);
+  const [dutyRosters, setDutyRosters] = useState<any[]>([]);
 
   // Product Management State
   const [products, setProducts] = useState<any[]>([]);
@@ -94,12 +95,20 @@ export default function StaffPortalPage() {
       .then(data => setAttendance(Array.isArray(data) ? data : []))
       .catch(() => {});
 
-    // 2. Fetch Mobile Attendance Status for Duty Schedule
+    // 2. Fetch Mobile Attendance Status & Duty Roster Schedule
     if (targetEmpId) {
       fetch(`/api/mobile/attendance/status?employeeId=${targetEmpId}`)
         .then(res => res.json())
         .then(d => {
           if (d.dutySchedule) setDutySchedule(d.dutySchedule);
+        })
+        .catch(() => {});
+
+      fetch(`/api/mobile/roster?employeeId=${targetEmpId}`)
+        .then(res => res.json())
+        .then(rData => {
+          if (rData.rosters) setDutyRosters(rData.rosters);
+          if (rData.effectiveDutyToday) setDutySchedule(rData.effectiveDutyToday);
         })
         .catch(() => {});
     }
@@ -257,7 +266,7 @@ export default function StaffPortalPage() {
 
   // Live timer tick for active break
   useEffect(() => {
-    if (!activeBreak || !activeBreak.isBreakActive) return;
+    if (!activeBreak || !activeBreak.isBreakActive || activeBreak.isPaused) return;
 
     const interval = setInterval(() => {
       setActiveBreak((prev: any) => {
@@ -436,6 +445,66 @@ export default function StaffPortalPage() {
       }
     } catch {
       alert('Error starting lunch break');
+    } finally {
+      setIsStartingLunchBreak(false);
+    }
+  };
+
+  const handlePauseBreak = async () => {
+    const emp = currentUser || (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || { id: employeeId, employeeId };
+    if (!emp) return;
+    setIsStartingLunchBreak(true);
+    try {
+      const res = await fetch('/api/mobile/leave/break', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: emp.employeeId,
+          action: 'PAUSE_BREAK'
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.activeBreak) {
+          setActiveBreak(data.activeBreak);
+        }
+        alert(data.message || '⏸️ Break paused.');
+        await fetchDashboardData(emp.id, emp);
+      } else {
+        alert(data.error || 'Failed to pause break');
+      }
+    } catch {
+      alert('Error pausing break');
+    } finally {
+      setIsStartingLunchBreak(false);
+    }
+  };
+
+  const handleResumeBreak = async () => {
+    const emp = currentUser || (Array.isArray(employees) ? employees.find(e => e.employeeId === employeeId) : null) || { id: employeeId, employeeId };
+    if (!emp) return;
+    setIsStartingLunchBreak(true);
+    try {
+      const res = await fetch('/api/mobile/leave/break', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: emp.employeeId,
+          action: 'RESUME_BREAK'
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.activeBreak) {
+          setActiveBreak(data.activeBreak);
+        }
+        alert(data.message || '▶️ Break resumed!');
+        await fetchDashboardData(emp.id, emp);
+      } else {
+        alert(data.error || 'Failed to resume break');
+      }
+    } catch {
+      alert('Error resuming break');
     } finally {
       setIsStartingLunchBreak(false);
     }
@@ -646,11 +715,15 @@ export default function StaffPortalPage() {
           <div style={{
             background: activeBreak.isOverstay
               ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.15) 100%)'
+              : activeBreak.isPaused
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(180, 83, 9, 0.15) 100%)'
               : activeBreak.isInGrace
               ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%)'
               : 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.12) 100%)',
             border: activeBreak.isOverstay
               ? '1.5px solid #ef4444'
+              : activeBreak.isPaused
+              ? '1.5px solid #f59e0b'
               : activeBreak.isInGrace
               ? '1.5px solid #f59e0b'
               : '1.5px solid #10b981',
@@ -671,7 +744,7 @@ export default function StaffPortalPage() {
                 borderRadius: '14px',
                 background: activeBreak.isOverstay
                   ? 'rgba(239, 68, 68, 0.3)'
-                  : activeBreak.isInGrace
+                  : (activeBreak.isPaused || activeBreak.isInGrace)
                   ? 'rgba(245, 158, 11, 0.3)'
                   : 'rgba(16, 185, 129, 0.3)',
                 display: 'flex',
@@ -679,13 +752,13 @@ export default function StaffPortalPage() {
                 justifyContent: 'center',
                 color: activeBreak.isOverstay
                   ? '#f87171'
-                  : activeBreak.isInGrace
+                  : (activeBreak.isPaused || activeBreak.isInGrace)
                   ? '#fbbf24'
                   : '#34d399',
                 fontSize: '30px'
               }}>
                 <span className="material-symbols-outlined">
-                  {activeBreak.isOverstay ? 'error' : activeBreak.isInGrace ? 'hourglass_top' : 'timer'}
+                  {activeBreak.isOverstay ? 'error' : activeBreak.isPaused ? 'pause_circle' : activeBreak.isInGrace ? 'hourglass_top' : 'timer'}
                 </span>
               </div>
               <div>
@@ -694,7 +767,7 @@ export default function StaffPortalPage() {
                   fontWeight: 800,
                   color: activeBreak.isOverstay
                     ? '#f87171'
-                    : activeBreak.isInGrace
+                    : (activeBreak.isPaused || activeBreak.isInGrace)
                     ? '#fbbf24'
                     : '#34d399',
                   textTransform: 'uppercase',
@@ -702,6 +775,8 @@ export default function StaffPortalPage() {
                 }}>
                   {activeBreak.isOverstay
                     ? '🚨 OVERSTAY PENALTY ACTIVE'
+                    : activeBreak.isPaused
+                    ? '⏸️ BREAK PAUSED (REMAINING TIME PRESERVED)'
                     : activeBreak.isInGrace
                     ? '⚠️ GRACE PERIOD TOLERANCE'
                     : '🍽️ LUNCH BREAK IN PROGRESS'}
@@ -709,6 +784,8 @@ export default function StaffPortalPage() {
                 <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', marginTop: '2px', fontFamily: 'monospace', letterSpacing: '1px' }}>
                   {activeBreak.isOverstay
                     ? `+${activeBreak.overstayMinutes || 0}m OVERSTAYED`
+                    : activeBreak.isPaused
+                    ? formatSeconds(activeBreak.remainingSeconds || 0)
                     : activeBreak.isInGrace
                     ? `+${formatSeconds(activeBreak.graceRemainingSeconds || 0)} grace remaining`
                     : formatSeconds(activeBreak.remainingSeconds || 0)}
@@ -717,6 +794,10 @@ export default function StaffPortalPage() {
                   {activeBreak.isOverstay ? (
                     <span style={{ color: '#fca5a5', fontWeight: 700 }}>
                       Penalty Fine: ৳{activeBreak.estimatedFine || 50} (Auto-applied to employee record)
+                    </span>
+                  ) : activeBreak.isPaused ? (
+                    <span style={{ color: '#fde047', fontWeight: 600 }}>
+                      Timer is paused. Click &quot;Resume Lunch Break&quot; to continue from where you left off.
                     </span>
                   ) : activeBreak.isInGrace ? (
                     <span style={{ color: '#fde047', fontWeight: 600 }}>
@@ -731,92 +812,200 @@ export default function StaffPortalPage() {
               </div>
             </div>
 
-            <button
-              onClick={handleEndActiveBreak}
-              disabled={isEndingBreak}
-              className="btn"
-              style={{
-                background: activeBreak.isOverstay
-                  ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: '#ffffff',
-                fontWeight: 800,
-                padding: '12px 26px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.35)'
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>stop_circle</span>
-              {isEndingBreak ? 'Ending Break...' : 'Lunch Ends / I\'m Back'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {activeBreak.isPaused ? (
+                <button
+                  onClick={handleResumeBreak}
+                  disabled={isStartingLunchBreak || isEndingBreak}
+                  className="btn"
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    padding: '12px 22px',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
+                  Resume Break
+                </button>
+              ) : (
+                <button
+                  onClick={handlePauseBreak}
+                  disabled={isStartingLunchBreak || isEndingBreak}
+                  className="btn"
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#0f172a',
+                    fontWeight: 800,
+                    padding: '12px 22px',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>pause</span>
+                  Pause Break
+                </button>
+              )}
+
+              <button
+                onClick={handleEndActiveBreak}
+                disabled={isEndingBreak || isStartingLunchBreak}
+                className="btn"
+                style={{
+                  background: activeBreak.isOverstay
+                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                    : 'rgba(255, 255, 255, 0.12)',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  padding: '12px 22px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.35)'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>stop_circle</span>
+                {isEndingBreak ? 'Ending Break...' : 'End Break'}
+              </button>
+            </div>
           </div>
         )}
 
         {/* Duty Schedule Banner */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          background: dutySchedule?.isRoster
+            ? 'linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
           borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: dutySchedule?.isRoster ? '1.5px solid rgba(16, 185, 129, 0.45)' : dutySchedule?.isCustom ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
           padding: '20px 24px',
           marginBottom: '28px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
-              background: dutySchedule?.isCustom ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: dutySchedule?.isCustom ? '#34d399' : '#60a5fa',
-              fontSize: '22px'
-            }}>
-              <span className="material-symbols-outlined">schedule</span>
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: dutySchedule?.isCustom ? '#34d399' : '#94a3b8' }}>
-                  {dutySchedule?.isCustom ? '★ Assigned Custom Duty' : 'Standard Company Shift'}
-                </span>
-                {dutySchedule?.nightShift && (
-                  <span style={{ fontSize: '11px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '2px 8px', borderRadius: '12px' }}>
-                    Night Shift
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                background: dutySchedule?.isRoster ? 'rgba(16, 185, 129, 0.25)' : dutySchedule?.isCustom ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: dutySchedule?.isRoster ? '#34d399' : dutySchedule?.isCustom ? '#fbbf24' : '#60a5fa',
+                fontSize: '22px'
+              }}>
+                <span className="material-symbols-outlined">{dutySchedule?.isRoster ? 'event_note' : 'schedule'}</span>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: dutySchedule?.isRoster ? '#34d399' : dutySchedule?.isCustom ? '#fbbf24' : '#94a3b8'
+                  }}>
+                    {dutySchedule?.isRoster ? `📅 Assigned Roster: ${dutySchedule?.name || 'Today'}` : dutySchedule?.isCustom ? `⚡ Custom Duty: ${dutySchedule?.name || 'Shift'}` : 'Standard Company Shift'}
                   </span>
+                  {dutySchedule?.nightShift && (
+                    <span style={{ fontSize: '11px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '2px 8px', borderRadius: '12px' }}>
+                      Night Shift
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#f8fafc', marginTop: '2px' }}>
+                  {dutySchedule?.startTime ? `${dutySchedule.startTime} — ${dutySchedule.endTime}` : (emp?.shift || '09:30 — 18:00')}
+                </div>
+                {dutySchedule?.rosterNote && (
+                  <div style={{ fontSize: '12px', color: '#6ee7b7', marginTop: '2px' }}>
+                    Note: {dutySchedule.rosterNote}
+                  </div>
                 )}
               </div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: '#f8fafc', marginTop: '2px' }}>
-                {dutySchedule?.startTime ? `${dutySchedule.startTime} — ${dutySchedule.endTime}` : (emp?.shift || '09:30 — 18:00')}
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Grace Period</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#fbbf24' }}>
+                  +{dutySchedule?.gracePeriod ?? 15} mins
+                </div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Break Allowance</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#60a5fa' }}>
+                  {dutySchedule?.breakTime ?? 60} mins
+                </div>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Grace Period</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#fbbf24' }}>
-                +{dutySchedule?.gracePeriod ?? 15} mins
+          {/* Assigned Duty Roster Schedule Preview */}
+          {dutyRosters && dutyRosters.length > 0 && (
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#34d399' }}>calendar_month</span>
+                Assigned Duty Roster Schedule ({dutyRosters.length} Days)
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+                {dutyRosters.slice(0, 4).map((r) => (
+                  <div
+                    key={r.id}
+                    style={{
+                      background: r.isToday ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                      border: r.isToday ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                        {r.dateFormatted || r.date}
+                      </span>
+                      {r.isToday && (
+                        <span style={{ fontSize: '9px', background: '#10b981', color: '#0f172a', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
+                          TODAY
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '12px', color: r.isToday ? '#34d399' : '#94a3b8', marginTop: '3px', fontWeight: 600 }}>
+                      {r.startTime && r.endTime ? `${r.startTime} - ${r.endTime}` : (r.shiftName || 'Scheduled')}
+                    </div>
+                    {r.note && (
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                        {r.note}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Break Allowance</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#60a5fa' }}>
-                {dutySchedule?.breakTime ?? 60} mins
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Tab Navigation */}

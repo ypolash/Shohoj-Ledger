@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveEssEmployee, ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
-import { getActiveBreakForEmployee, parseLeaveTypeConfig } from "@/lib/hr/leaveTimer";
+import { getActiveBreakForEmployee, processBreakResume, parseLeaveTypeConfig } from "@/lib/hr/leaveTimer";
+import { validateAttendanceRequest } from "@/app/api/mobile/attendance/utils";
 
 /**
  * OPTIONS /api/mobile/leave
@@ -160,6 +161,51 @@ export async function POST(request: Request) {
     const finalStatus = isShortBreak ? "APPROVED" : "PENDING";
 
     if (isShortBreak) {
+      const ssid = body.ssid || body.wifiSsid;
+      const bssid = body.bssid || body.wifiBssid;
+      const latitude = body.latitude;
+      const longitude = body.longitude;
+      const ipAddress = request.headers.get("x-forwarded-for")?.split(',')[0] || request.headers.get("x-real-ip") || '127.0.0.1';
+
+      const validation = await validateAttendanceRequest(
+        employee.companyId || "",
+        latitude,
+        longitude,
+        ssid,
+        bssid,
+        ipAddress,
+        false
+      );
+
+      if (!validation.isValid) {
+        return NextResponse.json({
+          success: false,
+          code: "FORBIDDEN_WIFI",
+          error: validation.error || "Break actions are only allowed on authorized company Wi-Fi.",
+          details: validation.details
+        }, { status: 403, headers: ESS_CORS_HEADERS });
+      }
+
+      const existingBreak = await getActiveBreakForEmployee(employee.id, employee.companyId);
+      if (existingBreak && existingBreak.isPaused) {
+        const result = await processBreakResume(existingBreak.leaveId, employee.id, employee.companyId);
+        return NextResponse.json({
+          ...result,
+          success: true,
+          autoApproved: true,
+          hasActiveBreak: true
+        }, { status: 200, headers: ESS_CORS_HEADERS });
+      }
+
+      if (existingBreak && !existingBreak.isPaused) {
+        return NextResponse.json({
+          success: true,
+          message: "Break is already in progress.",
+          activeBreak: existingBreak,
+          hasActiveBreak: true
+        }, { status: 200, headers: ESS_CORS_HEADERS });
+      }
+
       const empWithShift = await prisma.employee.findUnique({
         where: { id: employee.id },
         include: { workShift: true }

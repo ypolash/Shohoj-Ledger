@@ -108,4 +108,27 @@ class AttendanceRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun getDutyRosters(): Result<RosterListResponse> = withContext(Dispatchers.IO) {
+        try {
+            val service = apiClient.getService()
+            // 1. Try ESS route first
+            val essRes = service.getEssDutyRosters()
+            if (essRes.isSuccessful && essRes.body() != null) {
+                return@withContext Result.success(essRes.body()!!)
+            }
+
+            // 2. Fallback to mobile roster endpoint with employeeId
+            val empId = sessionManager.employeeId ?: return@withContext Result.failure(Exception("Not logged in"))
+            val mobileRes = service.getMobileDutyRosters(empId)
+            if (mobileRes.isSuccessful && mobileRes.body() != null) {
+                return@withContext Result.success(mobileRes.body()!!)
+            }
+
+            val errorMsg = mobileRes.errorBody()?.string() ?: essRes.errorBody()?.string() ?: "Failed to load duty roster"
+            Result.failure(Exception(errorMsg))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

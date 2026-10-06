@@ -53,11 +53,12 @@ export function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lo
 
 export async function validateAttendanceRequest(
   companyId: string,
-  latitude?: number,
-  longitude?: number,
-  wifiSsid?: string,
-  wifiBssid?: string,
-  ipAddress?: string
+  latitude?: number | null,
+  longitude?: number | null,
+  wifiSsid?: string | null,
+  wifiBssid?: string | null,
+  ipAddress?: string | null,
+  requireGps: boolean = true
 ): Promise<{ isValid: boolean; error?: string; details?: any }> {
   if (companyId) {
     try {
@@ -78,7 +79,7 @@ export async function validateAttendanceRequest(
     return { isValid: false, error: "Company ID is missing for validation." };
   }
 
-  if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
+  if (requireGps && (latitude === undefined || longitude === undefined || latitude === null || longitude === null)) {
     return { isValid: false, error: "GPS disabled or location not provided." };
   }
 
@@ -116,10 +117,12 @@ export async function validateAttendanceRequest(
     let isMatch = false;
     let storedBssid = "";
     let storedIp = "";
+    let storedSsid = "";
     
     for (const net of allowedNetworks) {
       storedBssid = ((net as any).bssid || "").toLowerCase().trim();
       storedIp = ((net as any).ipAddress || "").trim();
+      storedSsid = ((net as any).ssid || "").toLowerCase().trim();
       
       if (storedBssid && incomingBssid && incomingBssid === storedBssid) {
         isMatch = true;
@@ -130,12 +133,18 @@ export async function validateAttendanceRequest(
         isMatch = true;
         break;
       }
+
+      if (storedSsid && incomingSsid && (incomingSsid.toLowerCase() === storedSsid || incomingSsid.toLowerCase().replace(/"/g, "") === storedSsid.replace(/"/g, ""))) {
+        isMatch = true;
+        break;
+      }
     }
 
     if (!isMatch) {
       const storedBssidsList = allowedNetworks.filter(n => (n as any).bssid).map(n => (n as any).bssid).join(", ");
+      const storedSsidsList = allowedNetworks.filter(n => (n as any).ssid).map(n => (n as any).ssid).join(", ");
       const storedIpsList = allowedNetworks.filter(n => (n as any).ipAddress).map(n => (n as any).ipAddress).join(", ");
-      const diagMessage = `Network mismatch. Phone MAC: "${incomingBssid}", IP: "${incomingIp}". Allowed MACs: "${storedBssidsList}", IPs: "${storedIpsList}".`;
+      const diagMessage = `Network mismatch. Phone SSID: "${incomingSsid}", MAC: "${incomingBssid}", IP: "${incomingIp}". Allowed SSIDs: "${storedSsidsList}", MACs: "${storedBssidsList}", IPs: "${storedIpsList}".`;
       
       if (companyId) {
         try {
@@ -156,7 +165,7 @@ export async function validateAttendanceRequest(
 
       return { 
         isValid: false, 
-        error: "You are not connected to an allowed office network.",
+        error: "You are not connected to an allowed office Wi-Fi network.",
         details: {
           incomingBssid,
           detectedSsid: incomingSsid,
@@ -167,10 +176,11 @@ export async function validateAttendanceRequest(
     }
   }
 
-  const distance = getDistanceInMeters(latitude, longitude, OFFICE_LATITUDE, OFFICE_LONGITUDE);
-
-  if (distance > ALLOWED_RADIUS_METERS) {
-    return { isValid: false, error: `Location outside radius. You are ${Math.round(distance)} meters away.` };
+  if (latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
+    const distance = getDistanceInMeters(latitude, longitude, OFFICE_LATITUDE, OFFICE_LONGITUDE);
+    if (distance > ALLOWED_RADIUS_METERS) {
+      return { isValid: false, error: `Location outside radius. You are ${Math.round(distance)} meters away.` };
+    }
   }
 
   return { isValid: true };

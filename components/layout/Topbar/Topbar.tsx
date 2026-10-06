@@ -275,7 +275,7 @@ export function Topbar() {
                   color: '#10b981',
                   border: '1px solid rgba(16, 185, 129, 0.4)',
                 }}>
-                  v1.6.5 (Latest)
+                  v1.6.6 (Latest)
                 </span>
                 <span style={{
                   fontSize: '11px',
@@ -370,7 +370,7 @@ export function Topbar() {
                   overflow: 'hidden',
                 }}>
                   <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                    shohoj-staff-v1.6.5.apk (12.6 MB)
+                    shohoj-staff-v1.6.6.apk (12.6 MB)
                   </span>
                   <button
                     onClick={() => {
@@ -400,7 +400,7 @@ export function Topbar() {
 
               <a
                 href="/api/mobile/download/staff"
-                download="shohoj-staff-v1.6.5.apk"
+                download="shohoj-staff-v1.6.6.apk"
                 style={{
                   display: 'flex',
                   alignItems: 'center',

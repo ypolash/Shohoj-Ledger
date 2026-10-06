@@ -156,6 +156,22 @@ export async function POST(
       },
     });
 
+    if (updatedEmployee.userId) {
+      try {
+        const { sendNotification } = await import("@/lib/notifications/notificationService");
+        await sendNotification({
+          companyId,
+          userId: updatedEmployee.userId,
+          category: "HR",
+          title: "⚡ Custom Duty Schedule Updated",
+          message: `Your duty shift has been configured to ${startTime} - ${endTime} (+${gracePeriod || 0}m grace period, ${breakTime || 0}m break).`,
+          priority: "HIGH",
+        });
+      } catch (e) {
+        console.error("Failed to send notification for custom duty update:", e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: "Custom duty schedule configured successfully.",

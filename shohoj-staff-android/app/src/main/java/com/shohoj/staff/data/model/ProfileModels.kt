@@ -28,7 +28,9 @@ data class DetailedEmployeeProfile(
     @SerializedName("status") val status: String? = null,
     @SerializedName("departmentRef") val departmentRef: RefName? = null,
     @SerializedName("designationRef") val designationRef: RefName? = null,
-    @SerializedName("reportingManager") val reportingManager: ManagerRef? = null
+    @SerializedName("reportingManager") val reportingManager: ManagerRef? = null,
+    @SerializedName("shift") val shift: String? = null,
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null
 ) {
     val fullName: String
         get() = "${firstName ?: ""} ${lastName ?: ""}".trim().ifEmpty { employeeId }

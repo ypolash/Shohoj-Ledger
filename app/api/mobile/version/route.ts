@@ -18,23 +18,24 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 30,
-      versionName: '1.6.5',
+      versionCode: 31,
+      versionName: '1.6.6',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.6.5 Available',
+      title: 'Shohoj Staff v1.6.6 Available',
       releaseNotes: [
-        '🍽️ Dedicated Lunch Break section with anytime trigger, live countdown & grace period penalty protection',
+        '⏸️ Break Timer Pause & Resume: Preserves exact remaining countdown without restarting from start',
+        '📶 Wi-Fi Verification: Break actions and clock operations restricted to permitted office Wi-Fi',
+        '⚡ Custom Duty Schedule Sync: Real-time sync and display of assigned custom duty shifts',
+        '🗓️ Duty Roster Alerts: Instant notifications and schedule display for assigned duty dates',
+        '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection',
         '📦 Dedicated Product Management portal for assigned Product Managers & dynamic roles',
         '⚡ Real-time inventory tracking, studio receipts, & client dispatch workflows',
         '🚚 Instant Return Handover confirmation with courier tracking support',
         '👥 Full Directory listing & instant 1-on-1 private chat creation',
-        '✨ Top bar status bar safe-area padding & safe insets on all devices',
-        '⚡ Redesigned Community tabs with live unread indicators & directory counters',
-        '🖼️ Fullscreen image viewer and attachment uploads in Community Chat',
-        '🔔 Instant real-time notifications for Tasks, Announcements & Community Chat'
+        '🔔 Instant real-time notifications for Tasks, Announcements, Rosters & Community Chat'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.5.apk`,
-      fileSize: '12.6 MB',
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.6.apk`,
+      fileSize: '12.8 MB',
       isForceUpdate: true,
       publishedAt: new Date().toISOString()
     });
@@ -43,11 +44,11 @@ export async function GET(request: Request) {
   // Fallback for general or other apps
   return NextResponse.json({
     appName: 'Shohoj Mobile',
-    versionCode: 17,
-    versionName: '1.6.5',
+    versionCode: 18,
+    versionName: '1.6.6',
     title: 'Shohoj Mobile Update Available',
-    releaseNotes: ['General bug fixes and performance improvements'],
-    downloadUrl: `${baseUrl}/downloads/shohoj-app-v1.6.5.apk`,
+    releaseNotes: ['Custom duty sync, duty roster notifications, pause & resume lunch timer improvements'],
+    downloadUrl: `${baseUrl}/downloads/shohoj-app-v1.6.6.apk`,
     isForceUpdate: false
   });
 }

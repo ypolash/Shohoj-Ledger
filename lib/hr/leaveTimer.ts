@@ -125,6 +125,30 @@ export function encodeLeaveTypeConfig(
   return clean ? `[QUOTA:${model}] ${clean}` : `[QUOTA:${model}]`;
 }
 
+export interface PauseState {
+  remainingSeconds: number;
+  consumedSeconds: number;
+  pausedAt: string;
+}
+
+export function parsePauseState(comments?: string | null): PauseState | null {
+  if (!comments) return null;
+  const match = comments.match(/\[PAUSE_STATE:({[\s\S]*?})\]/);
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      return {
+        remainingSeconds: Number(parsed.remainingSeconds) || 0,
+        consumedSeconds: Number(parsed.consumedSeconds) || 0,
+        pausedAt: parsed.pausedAt || new Date().toISOString(),
+      };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function getActiveBreakForEmployee(employeeId: string, companyId?: string | null) {
   try {
     const now = new Date();
@@ -132,7 +156,7 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
 
     const whereClause: any = {
       employeeId,
-      status: { in: ["APPROVED", "IN_PROGRESS", "ACTIVE"] },
+      status: { in: ["APPROVED", "IN_PROGRESS", "ACTIVE", "PAUSED"] },
       createdAt: { gte: startOfDay },
     };
     if (companyId) whereClause.companyId = companyId;
@@ -203,9 +227,19 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
     const targetEndTime = new Date(startTime.getTime() + durationMs);
     const graceEndTime = new Date(targetEndTime.getTime() + graceMs);
 
+    const isPaused = leave.status === "PAUSED";
+    const pauseState = isPaused ? parsePauseState(leave.comments) : null;
+
     const nowMs = Date.now();
-    const remainingSeconds = Math.max(0, Math.floor((targetEndTime.getTime() - nowMs) / 1000));
-    const isOverstayed = nowMs > graceEndTime.getTime();
+    let remainingSeconds = Math.max(0, Math.floor((targetEndTime.getTime() - nowMs) / 1000));
+    let consumedSeconds = Math.max(0, Math.min(durationMinutes * 60, Math.floor((nowMs - startTime.getTime()) / 1000)));
+
+    if (isPaused && pauseState) {
+      remainingSeconds = pauseState.remainingSeconds;
+      consumedSeconds = pauseState.consumedSeconds;
+    }
+
+    const isOverstayed = !isPaused && nowMs > graceEndTime.getTime();
     const overstaySeconds = isOverstayed ? Math.floor((nowMs - graceEndTime.getTime()) / 1000) : 0;
     const overstayMinutes = Math.ceil(overstaySeconds / 60);
 
@@ -219,8 +253,8 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
       }
     }
 
-    // Auto-record or update penalty in EmployeeFine table if grace period is exceeded
-    if (isOverstayed && (parsedType?.autoFine !== false) && estimatedFine > 0) {
+    // Auto-record or update penalty in EmployeeFine table if grace period is exceeded (only when active running)
+    if (!isPaused && isOverstayed && (parsedType?.autoFine !== false) && estimatedFine > 0) {
       try {
         const leaveShortId = leave.id.substring(0, 8);
         const existingFine = await prisma.employeeFine.findFirst({
@@ -260,8 +294,9 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
     return {
       leaveId: leave.id,
       type: leave.type,
-      status: isOverstayed ? "OVERSTAYED" : leave.status,
+      status: isPaused ? "PAUSED" : (isOverstayed ? "OVERSTAYED" : leave.status),
       isBreakActive: true,
+      isPaused,
       startTime: startTime.toISOString(),
       targetEndTime: targetEndTime.toISOString(),
       graceEndTime: graceEndTime.toISOString(),
@@ -272,6 +307,7 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
       fineType: parsedType?.fineType || "FIXED",
       autoFine: parsedType?.autoFine !== false,
       remainingSeconds,
+      consumedSeconds,
       isOverstayed,
       isOverstay: isOverstayed,
       overstayMinutes,
@@ -281,6 +317,161 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
     console.error("[getActiveBreakForEmployee] error:", error);
     return null;
   }
+}
+
+export async function processBreakPause(leaveId: string, employeeId: string, companyId?: string | null) {
+  const leave = await prisma.leaveRequest.findFirst({
+    where: { id: leaveId, employeeId },
+    include: { 
+      leaveType: true,
+      employee: {
+        include: {
+          workShift: true
+        }
+      }
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Active break request not found");
+  }
+
+  if (leave.status === "PAUSED") {
+    const active = await getActiveBreakForEmployee(employeeId, companyId);
+    return { success: true, activeBreak: active, message: "Break is already paused.", isPaused: true };
+  }
+
+  let leaveTypeObj = leave.leaveType;
+  if (!leaveTypeObj && leave.companyId) {
+    leaveTypeObj = await prisma.leaveType.findFirst({
+      where: {
+        companyId: leave.companyId,
+        OR: [
+          { name: { equals: leave.type, mode: "insensitive" } },
+          { id: leave.leaveTypeId || "" }
+        ]
+      }
+    });
+  }
+
+  const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
+  const startTime = new Date(leave.startDate || leave.createdAt);
+  
+  const shiftBreakTime = leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0
+    ? leave.employee.workShift.breakTime
+    : null;
+  const shiftGracePeriod = leave.employee?.workShift?.gracePeriod && leave.employee.workShift.gracePeriod > 0
+    ? leave.employee.workShift.gracePeriod
+    : null;
+
+  let durationMinutes = parsedType?.breakDurationMinutes || shiftBreakTime || 60;
+  if (leave.endDate && leave.startDate) {
+    const explicitMinutes = Math.round((new Date(leave.endDate).getTime() - new Date(leave.startDate).getTime()) / (60 * 1000));
+    if (explicitMinutes > 0) {
+      durationMinutes = explicitMinutes;
+    }
+  }
+
+  const durationMs = durationMinutes * 60 * 1000;
+  const targetEndTime = new Date(startTime.getTime() + durationMs);
+
+  const nowMs = Date.now();
+  const remainingSeconds = Math.max(0, Math.floor((targetEndTime.getTime() - nowMs) / 1000));
+  const consumedSeconds = Math.max(0, durationMinutes * 60 - remainingSeconds);
+
+  const pauseStateJson = JSON.stringify({
+    remainingSeconds,
+    consumedSeconds,
+    pausedAt: new Date().toISOString(),
+  });
+
+  const cleanComments = (leave.comments || "").replace(/\[PAUSE_STATE:({[\s\S]*?})\]\s*/g, "").trim();
+  const updatedComments = `[PAUSE_STATE:${pauseStateJson}] ${cleanComments}`;
+
+  await prisma.leaveRequest.update({
+    where: { id: leave.id },
+    data: {
+      status: "PAUSED",
+      comments: updatedComments
+    }
+  });
+
+  const activeBreak = await getActiveBreakForEmployee(employeeId, companyId);
+  const mins = Math.floor(remainingSeconds / 60);
+  const secs = remainingSeconds % 60;
+  return {
+    success: true,
+    message: `Break paused. ${mins}m ${secs}s remaining preserved. Click Resume when ready to continue.`,
+    activeBreak,
+    isPaused: true
+  };
+}
+
+export async function processBreakResume(leaveId: string, employeeId: string, companyId?: string | null) {
+  const leave = await prisma.leaveRequest.findFirst({
+    where: { id: leaveId, employeeId },
+    include: { 
+      leaveType: true,
+      employee: {
+        include: {
+          workShift: true
+        }
+      }
+    },
+  });
+
+  if (!leave) {
+    throw new Error("Paused break request not found");
+  }
+
+  let leaveTypeObj = leave.leaveType;
+  if (!leaveTypeObj && leave.companyId) {
+    leaveTypeObj = await prisma.leaveType.findFirst({
+      where: {
+        companyId: leave.companyId,
+        OR: [
+          { name: { equals: leave.type, mode: "insensitive" } },
+          { id: leave.leaveTypeId || "" }
+        ]
+      }
+    });
+  }
+
+  const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
+  const shiftBreakTime = leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0
+    ? leave.employee.workShift.breakTime
+    : null;
+  const durationMinutes = parsedType?.breakDurationMinutes || shiftBreakTime || 60;
+
+  const pauseState = parsePauseState(leave.comments);
+  const remainingSeconds = pauseState ? pauseState.remainingSeconds : Math.max(0, Math.floor((new Date(leave.endDate).getTime() - new Date(leave.updatedAt).getTime()) / 1000));
+  const consumedSeconds = pauseState ? pauseState.consumedSeconds : Math.max(0, durationMinutes * 60 - remainingSeconds);
+
+  const now = new Date();
+  const targetEndTime = new Date(now.getTime() + remainingSeconds * 1000);
+  const adjustedStartTime = new Date(now.getTime() - consumedSeconds * 1000);
+
+  const cleanComments = (leave.comments || "").replace(/\[PAUSE_STATE:({[\s\S]*?})\]\s*/g, "").trim();
+
+  await prisma.leaveRequest.update({
+    where: { id: leave.id },
+    data: {
+      status: "APPROVED",
+      startDate: adjustedStartTime,
+      endDate: targetEndTime,
+      comments: cleanComments
+    }
+  });
+
+  const activeBreak = await getActiveBreakForEmployee(employeeId, companyId);
+  const mins = Math.floor(remainingSeconds / 60);
+  const secs = remainingSeconds % 60;
+  return {
+    success: true,
+    message: `Break resumed with ${mins}m ${secs}s remaining countdown.`,
+    activeBreak,
+    isPaused: false
+  };
 }
 
 export async function processBreakEnd(leaveId: string, employeeId: string, companyId?: string | null) {
@@ -337,8 +528,9 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
   const targetEndTime = new Date(startTime.getTime() + durationMs);
   const graceEndTime = new Date(targetEndTime.getTime() + graceMs);
 
+  const isPaused = leave.status === "PAUSED";
   const nowMs = Date.now();
-  const isOverstayed = nowMs > graceEndTime.getTime();
+  const isOverstayed = !isPaused && nowMs > graceEndTime.getTime();
   const overstaySeconds = isOverstayed ? Math.floor((nowMs - graceEndTime.getTime()) / 1000) : 0;
   const overstayMinutes = Math.ceil(overstaySeconds / 60);
 
@@ -383,13 +575,15 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
     }
   }
 
+  const cleanComments = (leave.comments || "").replace(/\[PAUSE_STATE:({[\s\S]*?})\]\s*/g, "").trim();
+
   await prisma.leaveRequest.update({
     where: { id: leave.id },
     data: {
       status: isOverstayed ? "OVERSTAYED" : "COMPLETED",
       comments: isOverstayed
-        ? `Break ended. Overstayed by ${overstayMinutes} min(s). Penalty fine: ৳${fineAmount}.`
-        : `Break completed within allocated ${durationMinutes}m limit.`
+        ? `Break ended. Overstayed by ${overstayMinutes} min(s). Penalty fine: ৳${fineAmount}. ${cleanComments}`
+        : `Break completed within allocated ${durationMinutes}m limit. ${cleanComments}`
     }
   });
 

@@ -16,6 +16,7 @@ import com.shohoj.staff.MainActivity
 import com.shohoj.staff.R
 import com.shohoj.staff.data.model.AnnouncementItem
 import com.shohoj.staff.data.model.CommunityChannel
+import com.shohoj.staff.data.model.DutyRosterDto
 import com.shohoj.staff.data.model.TaskItem
 
 object SoundNotificationHelper {
@@ -27,6 +28,10 @@ object SoundNotificationHelper {
     const val CHANNEL_NOTICES_ID = "shohoj_notices_notifications"
     const val CHANNEL_NOTICES_NAME = "Company Notices & Announcements"
     const val CHANNEL_NOTICES_DESC = "Important announcements and company-wide notices"
+
+    const val CHANNEL_ROSTER_ID = "shohoj_roster_notifications"
+    const val CHANNEL_ROSTER_NAME = "Duty Roster & Schedule"
+    const val CHANNEL_ROSTER_DESC = "Notifications for assigned duty rosters, custom shifts, and duty timings"
 
     const val CHANNEL_CHAT_ID = "shohoj_chat_notifications"
     const val CHANNEL_CHAT_NAME = "Community & Chat Messages"
@@ -79,7 +84,22 @@ object SoundNotificationHelper {
             }
             notificationManager.createNotificationChannel(noticesChannel)
 
-            // 3. Chat Channel
+            // 3. Duty Roster Channel
+            val rosterChannel = NotificationChannel(
+                CHANNEL_ROSTER_ID,
+                CHANNEL_ROSTER_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = CHANNEL_ROSTER_DESC
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 100, 250, 100, 250)
+                setSound(soundUri, audioAttr)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+                enableLights(true)
+            }
+            notificationManager.createNotificationChannel(rosterChannel)
+
+            // 4. Chat Channel
             val chatChannel = NotificationChannel(
                 CHANNEL_CHAT_ID,
                 CHANNEL_CHAT_NAME,
@@ -94,7 +114,7 @@ object SoundNotificationHelper {
             }
             notificationManager.createNotificationChannel(chatChannel)
 
-            // 4. Background Sync Service Channel (Silent / Low Importance)
+            // 5. Background Sync Service Channel (Silent / Low Importance)
             val serviceChannel = NotificationChannel(
                 CHANNEL_PERSISTENT_SERVICE_ID,
                 CHANNEL_PERSISTENT_SERVICE_NAME,
@@ -247,6 +267,54 @@ object SoundNotificationHelper {
             val notifId = ("notice_" + announcement.id).hashCode()
             notificationManager.notify(notifId, builder.build())
             playNotificationSound(context, isMention = isUrgent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun showRosterNotification(context: Context, roster: DutyRosterDto) {
+        try {
+            initNotificationChannels(context)
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+
+            val dateStr = roster.dateFormatted ?: roster.date
+            val title = "🗓️ Duty Roster Assigned: $dateStr"
+            val shiftTiming = if (!roster.startTime.isNullOrBlank() && !roster.endTime.isNullOrBlank()) {
+                "${roster.startTime} - ${roster.endTime}"
+            } else "Scheduled Shift"
+            val shiftName = roster.shiftName ?: "Duty Roster"
+            val noteText = if (!roster.note.isNullOrBlank()) " | Note: ${roster.note}" else ""
+            val body = "Assigned Shift: $shiftName ($shiftTiming)$noteText. Tap to view full schedule."
+
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra("target_screen", "home")
+                putExtra("roster_id", roster.id)
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                ("roster_" + roster.id).hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(context, CHANNEL_ROSTER_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_EVENT)
+                .setAutoCancel(true)
+                .setShowWhen(true)
+                .setWhen(System.currentTimeMillis())
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(pendingIntent)
+
+            val notifId = ("roster_" + roster.id).hashCode()
+            notificationManager.notify(notifId, builder.build())
+            playNotificationSound(context, isMention = true)
         } catch (e: Exception) {
             e.printStackTrace()
         }

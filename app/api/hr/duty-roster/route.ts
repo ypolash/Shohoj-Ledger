@@ -216,6 +216,46 @@ export async function POST(req: Request) {
       }
     });
 
+    // Notify assigned employees
+    try {
+      let shiftTimeDisplay = `${startTime || ""} - ${endTime || ""}`.trim();
+      if (workShiftId) {
+        const ws = await prisma.workShift.findUnique({ where: { id: workShiftId } });
+        if (ws) {
+          shiftTimeDisplay = `${ws.startTime} - ${ws.endTime} (${ws.name})`;
+        }
+      }
+
+      const assignedEmployees = await prisma.employee.findMany({
+        where: { id: { in: targetEmployeeIds }, companyId },
+        select: { id: true, userId: true, firstName: true, employeeId: true }
+      });
+
+      const dateListStr = targetDates.length <= 3 
+        ? targetDates.join(", ")
+        : `${targetDates.slice(0, 3).join(", ")} +${targetDates.length - 3} more`;
+
+      for (const emp of assignedEmployees) {
+        if (emp.userId) {
+          try {
+            const { sendNotification } = await import("@/lib/notifications/notificationService");
+            await sendNotification({
+              companyId,
+              userId: emp.userId,
+              category: "HR",
+              title: "🗓️ Duty Roster Assigned",
+              message: `You have been assigned duty roster for ${dateListStr} (${shiftTimeDisplay}). Open Staff App to view schedule.`,
+              priority: "HIGH",
+            });
+          } catch (e) {
+            console.error("Failed to send user notification for roster:", e);
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error("Duty roster notification error:", notifErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: `Successfully scheduled duty override for ${targetEmployeeIds.length} employee(s) across ${targetDates.length} date(s).`,

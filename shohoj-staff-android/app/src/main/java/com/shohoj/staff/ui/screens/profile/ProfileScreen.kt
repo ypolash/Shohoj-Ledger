@@ -171,6 +171,68 @@ fun ProfileScreen(
                 }
             }
 
+            // Duty & Shift Schedule Section
+            val profileDuty = detailed?.dutySchedule ?: empDto?.dutySchedule
+            val isCustomShift = profileDuty?.isCustom == true
+            val isRosterShift = profileDuty?.isRoster == true
+
+            Text(
+                text = "Duty & Shift Schedule",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CardBackground, RoundedCornerShape(16.dp))
+                    .border(
+                        1.dp,
+                        if (isRosterShift) Emerald500.copy(alpha = 0.5f) else if (isCustomShift) Amber500.copy(alpha = 0.4f) else CardBorder,
+                        RoundedCornerShape(16.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    ProfileInfoRow(
+                        icon = if (isRosterShift) Icons.Default.EventNote else if (isCustomShift) Icons.Default.Bolt else Icons.Default.Schedule,
+                        label = "Shift Type",
+                        value = when {
+                            isRosterShift -> "📅 Roster Duty (${profileDuty?.name ?: "Assigned"})"
+                            isCustomShift -> "⚡ Custom Duty (${profileDuty?.name ?: "Custom"})"
+                            else -> profileDuty?.name ?: "Standard Company Shift"
+                        }
+                    )
+                    Divider(color = Slate700, thickness = 0.5.dp)
+                    ProfileInfoRow(
+                        icon = Icons.Default.AccessTime,
+                        label = "Duty Hours",
+                        value = if (!profileDuty?.startTime.isNullOrBlank() && !profileDuty?.endTime.isNullOrBlank()) {
+                            "${profileDuty.startTime} — ${profileDuty.endTime}"
+                        } else (detailed?.shift ?: "09:00 — 18:00")
+                    )
+                    Divider(color = Slate700, thickness = 0.5.dp)
+                    ProfileInfoRow(
+                        icon = Icons.Default.Timer,
+                        label = "Grace Period",
+                        value = "+${profileDuty?.gracePeriod ?: 15} minutes"
+                    )
+                    Divider(color = Slate700, thickness = 0.5.dp)
+                    ProfileInfoRow(
+                        icon = Icons.Default.Restaurant,
+                        label = "Lunch Allowance",
+                        value = "${profileDuty?.breakTime ?: 60} minutes"
+                    )
+                    if (profileDuty?.nightShift == true) {
+                        Divider(color = Slate700, thickness = 0.5.dp)
+                        ProfileInfoRow(
+                            icon = Icons.Default.NightlightRound,
+                            label = "Night Shift",
+                            value = "Yes (Overnight Duty Active)"
+                        )
+                    }
+                }
+            }
+
             // Background & Notifications Settings
             Text(
                 text = "Background & Notifications",

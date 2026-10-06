@@ -78,9 +78,25 @@ class LeaveRepository(
         }
     }
 
+    private fun extractErrorMessage(errorBody: String?, defaultMsg: String): String {
+        if (errorBody.isNullOrBlank()) return defaultMsg
+        return try {
+            val jsonObj = org.json.JSONObject(errorBody)
+            jsonObj.optString("error").takeIf { it.isNotBlank() }
+                ?: jsonObj.optString("message").takeIf { it.isNotBlank() }
+                ?: defaultMsg
+        } catch (_: Exception) {
+            errorBody
+        }
+    }
+
     suspend fun requestBreak(
         leaveTypeId: String? = null,
-        reason: String = "Lunch Break"
+        reason: String = "Lunch Break",
+        latitude: Double? = null,
+        longitude: Double? = null,
+        ssid: String? = null,
+        bssid: String? = null
     ): Result<StartBreakResponse> = withContext(Dispatchers.IO) {
         try {
             val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
@@ -88,13 +104,17 @@ class LeaveRepository(
                 action = "REQUEST_BREAK",
                 leaveTypeId = leaveTypeId,
                 reason = reason,
-                employeeId = empId
+                employeeId = empId,
+                latitude = latitude,
+                longitude = longitude,
+                ssid = ssid,
+                bssid = bssid
             )
             val response = apiClient.getService().requestBreak(request)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                val err = response.body()?.error ?: response.errorBody()?.string() ?: "Failed to start break"
+                val err = extractErrorMessage(response.errorBody()?.string(), response.body()?.error ?: "Failed to start break")
                 Result.failure(Exception(err))
             }
         } catch (e: Exception) {
@@ -102,19 +122,89 @@ class LeaveRepository(
         }
     }
 
-    suspend fun endBreak(leaveId: String? = null): Result<EndBreakResponse> = withContext(Dispatchers.IO) {
+    suspend fun pauseBreak(
+        leaveId: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        ssid: String? = null,
+        bssid: String? = null
+    ): Result<StartBreakResponse> = withContext(Dispatchers.IO) {
+        try {
+            val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
+            val request = PauseBreakRequest(
+                action = "PAUSE_BREAK",
+                leaveId = leaveId,
+                employeeId = empId,
+                latitude = latitude,
+                longitude = longitude,
+                ssid = ssid,
+                bssid = bssid
+            )
+            val response = apiClient.getService().pauseBreak(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val err = extractErrorMessage(response.errorBody()?.string(), response.body()?.error ?: "Failed to pause break")
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun resumeBreak(
+        leaveId: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        ssid: String? = null,
+        bssid: String? = null
+    ): Result<StartBreakResponse> = withContext(Dispatchers.IO) {
+        try {
+            val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
+            val request = ResumeBreakRequest(
+                action = "RESUME_BREAK",
+                leaveId = leaveId,
+                employeeId = empId,
+                latitude = latitude,
+                longitude = longitude,
+                ssid = ssid,
+                bssid = bssid
+            )
+            val response = apiClient.getService().resumeBreak(request)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val err = extractErrorMessage(response.errorBody()?.string(), response.body()?.error ?: "Failed to resume break")
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun endBreak(
+        leaveId: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        ssid: String? = null,
+        bssid: String? = null
+    ): Result<EndBreakResponse> = withContext(Dispatchers.IO) {
         try {
             val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
             val request = EndBreakRequest(
                 action = "END_BREAK",
                 leaveId = leaveId,
-                employeeId = empId
+                employeeId = empId,
+                latitude = latitude,
+                longitude = longitude,
+                ssid = ssid,
+                bssid = bssid
             )
             val response = apiClient.getService().endBreak(request)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                val err = response.body()?.error ?: response.errorBody()?.string() ?: "Failed to end active break"
+                val err = extractErrorMessage(response.errorBody()?.string(), response.body()?.error ?: "Failed to end active break")
                 Result.failure(Exception(err))
             }
         } catch (e: Exception) {

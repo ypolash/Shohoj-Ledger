@@ -207,7 +207,7 @@ fun ProfileScreen(
                         icon = Icons.Default.AccessTime,
                         label = "Duty Hours",
                         value = if (!profileDuty?.startTime.isNullOrBlank() && !profileDuty?.endTime.isNullOrBlank()) {
-                            "${profileDuty.startTime} — ${profileDuty.endTime}"
+                            "${profileDuty?.startTime} — ${profileDuty?.endTime}"
                         } else (detailed?.shift ?: "09:00 — 18:00")
                     )
                     Divider(color = Slate700, thickness = 0.5.dp)

@@ -796,7 +796,7 @@ fun HomeScreen(
                             Text(
                                 text = "Note: ${dutySchedule?.rosterNote}",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Emerald300,
+                                    color = Emerald400,
                                     fontSize = 11.5.sp
                                 )
                             )

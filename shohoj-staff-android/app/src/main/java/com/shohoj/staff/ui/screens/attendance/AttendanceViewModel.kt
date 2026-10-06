@@ -7,6 +7,7 @@ import com.shohoj.staff.ShohojStaffApp
 import com.shohoj.staff.data.model.ActiveBreakInfo
 import com.shohoj.staff.data.model.AttendanceRecord
 import com.shohoj.staff.data.model.AttendanceSummary
+import com.shohoj.staff.data.model.DutyRosterDto
 import com.shohoj.staff.data.model.DutyScheduleDto
 import com.shohoj.staff.util.DateUtils
 import com.shohoj.staff.util.LocationHelper

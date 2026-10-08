@@ -113,7 +113,13 @@ export async function approveLeaveRequest(id: string) {
     data: { status: "APPROVED" }
   });
 
+  const { syncLeaveRequestWithAttendance } = await import("@/lib/attendance");
+  await syncLeaveRequestWithAttendance(id).catch(err =>
+    console.error("[Leave Actions] Error syncing approved leave with attendance:", err)
+  );
+
   revalidatePath("/erp/staff-management/leave");
+  revalidatePath("/erp/hr/attendance");
   return { success: true };
 }
 
@@ -128,7 +134,13 @@ export async function rejectLeaveRequest(id: string) {
     data: { status: "REJECTED" }
   });
 
+  const { syncLeaveRequestWithAttendance } = await import("@/lib/attendance");
+  await syncLeaveRequestWithAttendance(id).catch(err =>
+    console.error("[Leave Actions] Error syncing rejected leave with attendance:", err)
+  );
+
   revalidatePath("/erp/staff-management/leave");
+  revalidatePath("/erp/hr/attendance");
   return { success: true };
 }
 
@@ -143,6 +155,12 @@ export async function cancelLeaveRequest(id: string) {
     data: { status: "CANCELLED" }
   });
 
+  const { syncLeaveRequestWithAttendance } = await import("@/lib/attendance");
+  await syncLeaveRequestWithAttendance(id).catch(err =>
+    console.error("[Leave Actions] Error syncing cancelled leave with attendance:", err)
+  );
+
   revalidatePath("/erp/staff-management/leave");
+  revalidatePath("/erp/hr/attendance");
   return { success: true };
 }

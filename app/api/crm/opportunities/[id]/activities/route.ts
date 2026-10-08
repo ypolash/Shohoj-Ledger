@@ -4,13 +4,14 @@ import { getCompanyId } from "@/lib/company/companyFilter";
 import { addActivity } from "@/lib/crm/opportunityService";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const opportunity = await prisma.opportunity.findFirst({
-      where: { id: params.id, companyId },
+      where: { id, companyId },
       include: {
         activities: {
           orderBy: { activityDate: 'desc' }
@@ -26,13 +27,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const opportunity = await prisma.opportunity.findFirst({
-      where: { id: params.id, companyId }
+      where: { id, companyId }
     });
 
     if (!opportunity) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -45,7 +47,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const activity = await addActivity(
       companyId,
       userId,
-      params.id,
+      id,
       data.activityType,
       data.subject,
       data.description,

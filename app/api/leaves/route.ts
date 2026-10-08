@@ -1,6 +1,7 @@
 import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { syncLeaveRequestWithAttendance } from "@/lib/attendance";
 
 import { requireModule } from "@/lib/modules/moduleGuard";
 
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
 
       if (matchingLeaveType?.description?.includes("TIMER_CONFIG")) {
         try {
-          const match = matchingLeaveType.description.match(/\[TIMER_CONFIG:({.*?})\]/s);
+          const match = matchingLeaveType.description.match(/\[TIMER_CONFIG:({[\s\S]*?})\]/);
           if (match) {
             const cfg = JSON.parse(match[1]);
             durationMinutes = Number(cfg.duration) || 30;
@@ -171,7 +172,7 @@ export async function PATCH(request: Request) {
         let durationMinutes = 30;
         if (targetLeave.leaveType?.description?.includes("TIMER_CONFIG")) {
           try {
-            const match = targetLeave.leaveType.description.match(/\[TIMER_CONFIG:({.*?})\]/s);
+            const match = targetLeave.leaveType.description.match(/\[TIMER_CONFIG:({[\s\S]*?})\]/);
             if (match) {
               const cfg = JSON.parse(match[1]);
               durationMinutes = Number(cfg.duration) || 30;
@@ -188,6 +189,11 @@ export async function PATCH(request: Request) {
       where: { id: data.id },
       data: updateData
     });
+
+    // Synchronize leave status with Attendance records (excuses absences when approved, marks absent when cancelled)
+    await syncLeaveRequestWithAttendance(updated.id).catch(err =>
+      console.error("[Leaves API] Error syncing leave with attendance:", err)
+    );
 
     return NextResponse.json(updated);
   } catch (error) {

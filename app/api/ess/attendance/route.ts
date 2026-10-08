@@ -61,6 +61,7 @@ export async function GET(request: Request) {
         absent: records.filter((r) => r.status === "ABSENT").length,
         late: records.filter((r) => r.status === "LATE").length,
         halfDay: records.filter((r) => r.status === "HALF_DAY").length,
+        leave: records.filter((r) => r.status === "LEAVE").length,
       }
     });
   } catch (error) {

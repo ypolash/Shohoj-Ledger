@@ -42,14 +42,13 @@ export async function approveLeave(requestId: string, approverId: string, level:
         where: { id: requestId },
         data: { status: 'APPROVED', approvedById: approverId }
       });
-      
-      // Post-Approval Note:
-      // The Attendance module/worker will read this APPROVED leave request 
-      // and map it across the Attendance grid for those dates.
-      // We do NOT modify Attendance directly here.
     }
 
     return true;
+  }).then(async (result) => {
+    const { syncLeaveRequestWithAttendance } = await import('@/lib/attendance');
+    await syncLeaveRequestWithAttendance(requestId).catch(console.error);
+    return result;
   });
 }
 
@@ -69,14 +68,21 @@ export async function rejectLeave(requestId: string, approverId: string, comment
       where: { id: requestId },
       data: { status: 'REJECTED' }
     });
+  }).then(async (result) => {
+    const { syncLeaveRequestWithAttendance } = await import('@/lib/attendance');
+    await syncLeaveRequestWithAttendance(requestId).catch(console.error);
+    return result;
   });
 }
 
 export async function cancelLeave(requestId: string) {
-  return prisma.leaveRequest.update({
+  const updated = await prisma.leaveRequest.update({
     where: { id: requestId },
     data: { status: 'CANCELLED' }
   });
+  const { syncLeaveRequestWithAttendance } = await import('@/lib/attendance');
+  await syncLeaveRequestWithAttendance(requestId).catch(console.error);
+  return updated;
 }
 
 export async function calculateBalance(employeeId: string, leaveTypeId: string, year: number) {

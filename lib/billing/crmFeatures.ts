@@ -119,6 +119,11 @@ export const FEATURE_PRESETS = {
     description: "Core CRM essentials: Dashboard, Customers, and Leads.",
     keys: ["crm_dashboard", "crm_customers", "crm_leads"],
   },
+  STANDARD_CRM: {
+    name: "Standard CRM",
+    description: "Standard CRM package including Leads, Customers, Opportunities, and Quotations.",
+    keys: ["crm_dashboard", "crm_customers", "crm_leads", "crm_opportunities", "crm_quotations", "crm_sales_orders"],
+  },
   SALES_PIPELINE: {
     name: "Sales Pipeline",
     description: "Complete sales flow: Dashboard, Customers, Leads, Opportunities, and Quotations.",

@@ -3,12 +3,13 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { getOpportunity, updateOpportunity, deleteOpportunity } from "@/lib/crm/opportunityService";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const opportunity = await getOpportunity(companyId, params.id);
+    const opportunity = await getOpportunity(companyId, id);
     if (!opportunity) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     return NextResponse.json(opportunity);
@@ -17,8 +18,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -27,19 +29,20 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const userId = session?.user?.id;
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); 
 
-    const opportunity = await updateOpportunity(companyId, params.id, userId, data);
+    const opportunity = await updateOpportunity(companyId, id, userId, data);
     return NextResponse.json(opportunity);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    await deleteOpportunity(companyId, params.id);
+    await deleteOpportunity(companyId, id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

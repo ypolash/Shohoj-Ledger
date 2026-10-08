@@ -48,13 +48,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         data: {
           companyId: companyIdForGuard,
           projectId: project.id,
-          category: lead.serviceType,
+          category: lead.serviceType || "General Service",
           source: lead.companyName,
-          amount: lead.expectedValue,
+          amount: lead.expectedValue || 0,
           received: 0,
           paymentStatus: "UNPAID",
           shareable: true,
-          description: `Converted from lead ${lead.serialNumber}: ${lead.serviceType}`,
+          description: `Converted from lead ${lead.serialNumber}: ${lead.serviceType || "Service"}`,
         }
       });
 

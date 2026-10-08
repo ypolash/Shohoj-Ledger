@@ -39,7 +39,7 @@ export async function applyMyLeave(data: { type: string; startDate: string; endD
 
     if (matchingType?.description?.includes("TIMER_CONFIG")) {
       try {
-        const match = matchingType.description.match(/\[TIMER_CONFIG:({.*?})\]/s);
+        const match = matchingType.description.match(/\[TIMER_CONFIG:({[\s\S]*?})\]/);
         if (match) {
           const cfg = JSON.parse(match[1]);
           durationMinutes = Number(cfg.duration) || 30;
@@ -108,6 +108,12 @@ export async function cancelMyLeave(id: string) {
     data: { status: "CANCELLED" }
   });
 
+  const { syncLeaveRequestWithAttendance } = await import("@/lib/attendance");
+  await syncLeaveRequestWithAttendance(id).catch(err =>
+    console.error("[ESS Leave Actions] Error syncing cancelled leave with attendance:", err)
+  );
+
   revalidatePath("/erp/ess/leave");
+  revalidatePath("/erp/ess/attendance");
   return { success: true };
 }

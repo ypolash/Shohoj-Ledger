@@ -12,7 +12,8 @@ import {
   Sliders, 
   X, 
   Edit2,
-  Trash2
+  Trash2,
+  Save
 } from 'lucide-react';
 import styles from '../../crm.module.css';
 

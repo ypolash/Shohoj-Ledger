@@ -90,12 +90,19 @@ export async function POST(request: Request) {
       });
     }
 
-    // Invalidate Settlement for this month
+    // Invalidate PENDING Settlement for this month (protecting finalized/executed settlements)
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const monthName = monthNames[new Date(income.createdAt).getMonth()];
     const yearName = new Date(income.createdAt).getFullYear();
     const period = `${monthName} ${yearName}`;
-    await prisma.settlement.deleteMany({ where: { ...(await withCompany()), period, systemSource } });
+    await prisma.settlement.deleteMany({ 
+      where: { 
+        ...(await withCompany()), 
+        period, 
+        systemSource,
+        status: "PENDING"
+      } 
+    });
 
     return NextResponse.json(income, { status: 201 });
   } catch (error) {

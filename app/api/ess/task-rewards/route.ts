@@ -21,19 +21,19 @@ export async function GET(req: Request) {
       );
     }
 
-    const companyId = employee.companyId;
+    const companyId = employee.companyId || "";
 
     // Fetch company settings
-    const setting = await prisma.taskRewardSetting.findUnique({
+    const setting = companyId ? await prisma.taskRewardSetting.findUnique({
       where: { companyId },
-    });
+    }) : null;
     const pointRate = setting ? Number(setting.pointToCashRate) : 10;
     const minRedeemPoints = setting?.minRedeemPoints ?? 1;
 
     // Fetch all open or relevant tasks
     const allTasks = await prisma.taskReward.findMany({
       where: {
-        companyId,
+        ...(companyId ? { companyId } : {}),
         status: { in: ["OPEN", "IN_PROGRESS", "COMPLETED"] },
         OR: [
           { assignedToEmployeeId: null },
@@ -74,10 +74,10 @@ export async function GET(req: Request) {
     const totalAmountEarned = approvedSubmissions.reduce((sum, s) => sum + Number(s.rewardAmount || 0), 0);
 
     const totalPointsRedeemed = myPayouts
-      .filter((p) => p.status === "PAID" || p.status === "PROCESSING")
+      .filter((p) => p.paymentStatus === "PAID" || p.paymentStatus === "PROCESSING")
       .reduce((sum, p) => sum + (p.pointsRedeemed || 0), 0);
     const totalAmountRedeemed = myPayouts
-      .filter((p) => p.status === "PAID" || p.status === "PROCESSING")
+      .filter((p) => p.paymentStatus === "PAID" || p.paymentStatus === "PROCESSING")
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
     const balancePoints = Math.max(0, totalPointsEarned - totalPointsRedeemed);

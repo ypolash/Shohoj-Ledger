@@ -64,35 +64,38 @@ export const valuationService = {
     const reqQty = new Decimal(data.quantityToConsume);
     if (reqQty.lessThanOrEqualTo(0)) throw new Error("Quantity to consume must be greater than zero.");
 
-    // Retrieve active FIFO layers (oldest first)
-    const layers = await prisma.inventoryValuationLayer.findMany({
-      where: {
-        companyId: data.companyId,
-        productId: data.productId,
-        warehouseId: data.warehouseId,
-        remainingQuantity: { gt: 0 }
-      },
-      orderBy: { createdAt: "asc" } // Core FIFO behavior
-    });
-
-    let remainingToConsume = reqQty;
-    let totalCOGS = new Decimal(0);
-    const consumedDetails: { layerId: string; consumedQty: Decimal; unitCost: Decimal; layerCOGS: Decimal }[] = [];
-
     return prisma.$transaction(async (tx) => {
+      // Retrieve active FIFO layers (oldest first) inside transaction to avoid race conditions
+      const layers = await tx.inventoryValuationLayer.findMany({
+        where: {
+          companyId: data.companyId,
+          productId: data.productId,
+          warehouseId: data.warehouseId,
+          remainingQuantity: { gt: 0 }
+        },
+        orderBy: { createdAt: "asc" }
+      });
+
+      let remainingToConsume = reqQty;
+      let totalCOGS = new Decimal(0);
+      const consumedDetails: { layerId: string; consumedQty: Decimal; unitCost: Decimal; layerCOGS: Decimal }[] = [];
+
       for (const layer of layers) {
         if (remainingToConsume.equals(0)) break;
 
         const available = new Decimal(layer.remainingQuantity as any);
-        const toTake = Decimal.min(available, remainingToConsume);
+        if (available.lessThanOrEqualTo(0)) continue;
 
+        const toTake = Decimal.min(available, remainingToConsume);
         const layerCOGS = toTake.mul(new Decimal(layer.unitCost as any));
         totalCOGS = totalCOGS.plus(layerCOGS);
 
-        // Update layer
+        const newRemaining = available.minus(toTake);
+
+        // Update layer within transaction
         await tx.inventoryValuationLayer.update({
           where: { id: layer.id },
-          data: { remainingQuantity: available.minus(toTake) }
+          data: { remainingQuantity: newRemaining }
         });
 
         consumedDetails.push({

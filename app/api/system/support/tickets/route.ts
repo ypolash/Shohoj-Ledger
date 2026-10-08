@@ -62,7 +62,7 @@ export async function GET(req: Request) {
         },
         orderBy: { updatedAt: "desc" }
       }),
-      prisma.supportTicket.count(isSuperAdmin ? {} : { where: { userId: session.user.id } }),
+      prisma.supportTicket.count(isSuperAdmin ? undefined : { where: { userId: session.user.id } }),
       prisma.supportTicket.count({ where: { ...(isSuperAdmin ? {} : { userId: session.user.id }), status: "OPEN" } }),
       prisma.supportTicket.count({ where: { ...(isSuperAdmin ? {} : { userId: session.user.id }), status: "IN_PROGRESS" } }),
       prisma.supportTicket.count({ where: { ...(isSuperAdmin ? {} : { userId: session.user.id }), status: "RESOLVED" } }),

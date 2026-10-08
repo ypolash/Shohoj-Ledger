@@ -70,7 +70,7 @@ export function QuotationPDF({ quotation }: QuotationPDFProps) {
           </tr>
         </thead>
         <tbody>
-          {items.map((item, idx) => (
+          {items.map((item: any, idx: number) => (
             <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
               <td style={{ padding: '16px', fontSize: '14px' }}>{item.description}</td>
               <td style={{ padding: '16px', textAlign: 'center', fontSize: '14px' }}>{item.quantity}</td>

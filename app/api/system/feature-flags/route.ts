@@ -74,7 +74,7 @@ export async function GET(req: Request) {
       }).catch(() => []),
     ]);
 
-    let flags = existingFlags;
+    let flags: any[] = existingFlags;
 
     // Seed defaults if table is empty
     if (flags.length === 0) {

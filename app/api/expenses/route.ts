@@ -129,7 +129,7 @@ export async function PATCH(request: Request) {
         createdById: session?.user?.id
       });
     } else if (oldExpense.approvalStatus === 'APPROVED' && approvalStatus !== 'APPROVED') {
-      // Reversal/Refund if it was un-approved
+      // Reversal/Refund if it was un-approved or cancelled
       const session = await getSession();
       await createLedgerEntry({
         companyId: companyIdForGuard,
@@ -138,7 +138,7 @@ export async function PATCH(request: Request) {
         amount: Number(updatedExpense.amount),
         isDebit: true, // Debit Bank (Asset returned)
         accountType: updatedExpense.paymentMethod || 'Bank',
-        description: `Expense Un-approved (Reversed): ${updatedExpense.category}`,
+        description: `Expense Cancelled/Un-approved (Reversal): ${updatedExpense.category}`,
         createdById: session?.user?.id
       });
     }
@@ -147,5 +147,56 @@ export async function PATCH(request: Request) {
   } catch (error) {
     console.error("Error updating expense:", error);
     return NextResponse.json({ error: "Failed to update expense status" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  const moduleGuard = await requireModule(companyIdForGuard, "ACCOUNTING");
+  if (moduleGuard) return moduleGuard;
+
+  try {
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Expense ID is required" }, { status: 400 });
+    }
+
+    const referer = request.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
+    const expense = await prisma.expense.findFirst({
+      where: { ...(await withCompany()), id, systemSource }
+    });
+
+    if (!expense) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    // If deleting an approved expense, reverse the ledger entry first
+    if (expense.approvalStatus === 'APPROVED') {
+      const session = await getSession();
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Expense',
+        referenceId: expense.id,
+        amount: Number(expense.amount),
+        isDebit: true, // Debit Bank (Reversal of deleted expense)
+        accountType: expense.paymentMethod || 'Bank',
+        description: `Deleted Expense Reversal: ${expense.category}`,
+        createdById: session?.user?.id
+      });
+    }
+
+    await prisma.expense.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting expense:", error);
+    return NextResponse.json({ error: "Failed to delete expense" }, { status: 500 });
   }
 }

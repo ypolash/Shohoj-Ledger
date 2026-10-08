@@ -111,7 +111,8 @@ export async function POST(req: NextRequest) {
             addresses: temp.address
               ? {
                   create: {
-                    addressType: "SHIPPING",
+                    companyId,
+                    type: "SHIPPING",
                     addressLine1: temp.address,
                     city: "Dhaka",
                     country: "Bangladesh"

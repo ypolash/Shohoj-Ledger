@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     for (const proj of projects) {
       let workflowMeta: any = null;
       if (proj.description) {
-        const match = proj.description.match(/\[WORKFLOW_STATE\](.*?)\[\/WORKFLOW_STATE\]/s);
+        const match = proj.description.match(/\[WORKFLOW_STATE\]([\s\S]*?)\[\/WORKFLOW_STATE\]/);
         if (match && match[1]) {
           try {
             workflowMeta = JSON.parse(match[1]);
@@ -175,7 +175,7 @@ export async function PATCH(req: Request) {
     };
 
     if (project.description) {
-      const match = project.description.match(/\[WORKFLOW_STATE\](.*?)\[\/WORKFLOW_STATE\]/s);
+      const match = project.description.match(/\[WORKFLOW_STATE\]([\s\S]*?)\[\/WORKFLOW_STATE\]/);
       if (match && match[1]) {
         try {
           workflowMeta = JSON.parse(match[1]);
@@ -211,7 +211,7 @@ export async function PATCH(req: Request) {
     }
 
     // Reconstruct description with updated workflow state
-    const cleanDesc = (project.description || '').replace(/\[WORKFLOW_STATE\].*?\[\/WORKFLOW_STATE\]/s, '').trim();
+    const cleanDesc = (project.description || '').replace(/\[WORKFLOW_STATE\][\s\S]*?\[\/WORKFLOW_STATE\]/, '').trim();
     const newDesc = `${cleanDesc ? cleanDesc + '\n\n' : ''}[WORKFLOW_STATE]${JSON.stringify(workflowMeta)}[/WORKFLOW_STATE]`;
 
     const updatedProject = await prisma.project.update({

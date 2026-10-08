@@ -1,29 +1,33 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from "@/lib/rbac/permissionGuard";
-import { getCompanyId } from "@/lib/company/companyFilter";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   const rbacGuard = await requirePermission("EMPLOYEE_VIEW");
   if (rbacGuard) return rbacGuard;
 
   try {
-    const companyId = await getCompanyId();
-    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const companyFilter = await withCompany(false);
 
     const employees = await prisma.employee.findMany({
       where: {
-        companyId,
+        ...companyFilter,
         OR: [
-          { employmentType: { in: ['Freelance', 'Project-Based', 'Contractor', 'Freelancer', 'Editor'] } },
-          { department: { in: ['Freelance', 'Post-Production', 'Creative Freelance', 'Video Editing'] } },
-          { designation: { contains: 'Freelance', mode: 'insensitive' } }
+          { employmentType: { in: ['Freelance', 'Project-Based', 'Contractor', 'Freelancer', 'Editor', 'freelance', 'contractor', 'freelancer', 'editor', 'FREELANCE'] } },
+          { department: { in: ['Freelance', 'Post-Production', 'Creative Freelance', 'Video Editing', 'freelance', 'post-production', 'creative freelance', 'video editing', 'FREELANCE'] } },
+          { designation: { contains: 'Freelance', mode: 'insensitive' } },
+          { designation: { contains: 'Contractor', mode: 'insensitive' } },
+          { location: { contains: 'FREELANCER' } }
         ]
       },
       orderBy: { createdAt: 'desc' },
       include: {
-        projectEmployees: {
+        projectAssignments: {
           include: {
             project: {
               select: { id: true, name: true, status: true }
@@ -52,11 +56,11 @@ export async function GET() {
         role: emp.designation || 'Freelancer',
         department: emp.department || 'Freelance',
         rate: Number(emp.basicSalary) || 0,
-        status: emp.status || 'ACTIVE',
+        status: (emp.status || 'ACTIVE').toUpperCase(),
         skills: extraData.skills || ['Video Editing', 'Color Grading'],
         portfolioUrl: extraData.portfolioUrl || '',
         notes: extraData.notes || '',
-        activeProjectsCount: emp.projectEmployees?.filter((pe: any) => pe.project?.status !== 'Completed').length || 0,
+        activeProjectsCount: emp.projectAssignments?.filter((pa: any) => pa.project?.status !== 'Completed').length || 0,
         joinedAt: emp.joinDate ? emp.joinDate.toISOString() : emp.createdAt.toISOString(),
         createdAt: emp.createdAt.toISOString()
       };

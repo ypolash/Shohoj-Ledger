@@ -375,6 +375,7 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     approvalStatus: string;
     finalVideoUrl?: string;
     finalVideoNotes?: string;
+    revisionsLocked?: boolean;
   }>({
     demoFiles: [],
     newDemoName: '',
@@ -386,7 +387,8 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
     isSpecialCustomerFree: false,
     approvalStatus: 'Pending Review', // 'Pending Review' | 'Revision Requested' | 'Approved'
     finalVideoUrl: '',
-    finalVideoNotes: ''
+    finalVideoNotes: '',
+    revisionsLocked: false
   });
 
   // Inline Quick Actual Cost Edit

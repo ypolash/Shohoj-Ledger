@@ -14,7 +14,7 @@ export function IncomeExpenseChart({ data }: { data?: any }) {
       <h3 style={{ margin: '0 0 24px 0', fontSize: '16px', fontWeight: 600 }}>Income vs Expense (YTD)</h3>
       
       <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', paddingBottom: '24px' }}>
-        {months.map((m, i) => (
+        {months.map((m: string, i: number) => (
           <div key={m} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
             <div style={{ height: '200px', width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '4px' }}>
               <div style={{ width: '40%', height: `${(income[i] / maxVal) * 100}%`, background: 'var(--primary)', borderRadius: '4px 4px 0 0' }} title={`Income: ${income[i]}M`}></div>

@@ -86,16 +86,58 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       expenseId = expense.id;
 
       const { createLedgerEntry } = await import("@/lib/ledger");
-      await createLedgerEntry({
-        companyId: companyId!,
-        module: 'Payroll',
-        referenceId: existingPayment.id,
-        amount: Number(existingPayment.netSalary),
-        isDebit: false, // Credit Bank (Asset decreases)
-        accountType: paymentMethod || 'Bank Transfer',
-        description: `Salary Payment for ${existingPayment.employee.firstName} ${existingPayment.employee.lastName} (${existingPayment.month}/${existingPayment.year})`,
-        createdById: userId
+      try {
+        await createLedgerEntry({
+          companyId: companyId!,
+          module: 'Payroll',
+          referenceId: expense.id,
+          amount: Number(existingPayment.netSalary),
+          isDebit: false, // Credit Bank (Asset decreases)
+          accountType: paymentMethod || 'Bank Transfer',
+          description: `Salary Payment for ${existingPayment.employee.firstName} ${existingPayment.employee.lastName} (${existingPayment.month}/${existingPayment.year})`,
+          createdById: userId
+        });
+      } catch (ledgerErr) {
+        console.warn('Ledger entry creation skipped or optional:', ledgerErr);
+      }
+
+      // Mark pending fines as DEDUCTED
+      await prisma.employeeFine.updateMany({
+        where: {
+          companyId: companyId!,
+          employeeId: existingPayment.employeeId,
+          status: 'PENDING'
+        },
+        data: { status: 'DEDUCTED' }
       });
+
+      // Deduct from active salary advances
+      const activeAdvances = await prisma.salaryAdvance.findMany({
+        where: {
+          companyId: companyId!,
+          employeeId: existingPayment.employeeId,
+          status: 'APPROVED',
+        },
+        include: { recoveries: true }
+      });
+      for (const adv of activeAdvances) {
+        const recovered = (adv.recoveries || []).reduce((sum, r) => sum + Number(r.amount), 0);
+        const rem = Math.max(0, Number(adv.amount) - recovered);
+        if (rem > 0) {
+          await prisma.salaryAdvanceRecovery.create({
+            data: {
+              advanceId: adv.id,
+              amount: rem,
+              recoveryDate: new Date(),
+              payrollReference: `PAY-${existingPayment.id}`
+            }
+          });
+          await prisma.salaryAdvance.update({
+            where: { id: adv.id },
+            data: { status: 'PAID' }
+          });
+        }
+      }
     }
 
     // If cancelling a PAID payroll

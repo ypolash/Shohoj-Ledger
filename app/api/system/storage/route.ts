@@ -56,7 +56,7 @@ export async function GET(req: Request) {
       prisma.user.count().catch(() => 24),
     ]);
 
-    let backups = existingBackups;
+    let backups: any[] = existingBackups;
 
     // Seed default backups if table is empty
     if (backups.length === 0) {

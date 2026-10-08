@@ -85,7 +85,7 @@ export async function getOpportunityDashboard(companyId: string) {
     by: ['stageId'],
     where: { companyId },
     _count: { id: true },
-    _sum: { expectedValue: true }
+    _sum: { estimatedRevenue: true }
   });
   return { pipelineByStage: opsByStage };
 }
@@ -181,9 +181,9 @@ export async function getCustomerGrowth(companyId: string) {
 export async function getRevenuePipeline(companyId: string) {
   const openOps = await prisma.opportunity.aggregate({
     where: { companyId, status: "OPEN" },
-    _sum: { expectedValue: true }
+    _sum: { estimatedRevenue: true }
   });
-  return openOps._sum.expectedValue || 0;
+  return openOps._sum.estimatedRevenue || 0;
 }
 
 export async function getConversionRates(companyId: string) {

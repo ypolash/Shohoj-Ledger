@@ -1,9 +1,7 @@
 import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 import { requireModule } from "@/lib/modules/moduleGuard";
-
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function GET(request: Request) {
@@ -23,7 +21,6 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' }
     });
 
-    // We also need the user names
     const userIds = loans.map(l => l.memberId);
     const members = await prisma.member.findMany({
       where: { ...(await withCompany()), id: { in: userIds } },
@@ -38,11 +35,9 @@ export async function GET(request: Request) {
     const now = new Date();
 
     const loansWithDetails = loans.map(loan => {
-      const issueDate = new Date(loan.issueDate);
-      const dueDate = new Date(issueDate);
-      dueDate.setMonth(dueDate.getMonth() + 6);
-      
-      const isOverdue = loan.status === "ACTIVE" && now > dueDate;
+      // Respect stored dueDate or calculate standard fallback
+      const dueDate = loan.dueDate ? new Date(loan.dueDate) : new Date(new Date(loan.issueDate).setMonth(new Date(loan.issueDate).getMonth() + 6));
+      const isOverdue = loan.status === "ACTIVE" && now > dueDate && Number(loan.remainingAmount) > 0;
 
       return {
         ...loan,
@@ -69,13 +64,12 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { memberId, amount, description } = body;
+    const { memberId, amount, description, tenureMonths = 6, dueDate: customDueDate } = body;
 
     if (!memberId || amount === undefined) {
       return NextResponse.json({ error: "Missing memberId or amount" }, { status: 400 });
     }
 
-    // SECURITY HOTFIX: Verify target relation belongs to authenticated company
     const targetMember = await prisma.member.findFirst({
       where: { id: memberId, companyId: companyIdForGuard }
     });
@@ -84,10 +78,11 @@ export async function POST(request: Request) {
     }
 
     const loanAmount = parseFloat(amount);
-
     const issueDate = new Date();
-    const dueDate = new Date(issueDate);
-    dueDate.setMonth(dueDate.getMonth() + 6);
+    let dueDate = customDueDate ? new Date(customDueDate) : new Date(issueDate);
+    if (!customDueDate) {
+      dueDate.setMonth(dueDate.getMonth() + Number(tenureMonths));
+    }
 
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
@@ -138,10 +133,10 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, status } = body;
+    const { id, status, repaymentAmount } = body;
 
-    if (!id || !status) {
-      return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "Missing loan ID" }, { status: 400 });
     }
     
     const referer = request.headers.get("referer") || "";
@@ -155,28 +150,45 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Loan not found or access denied" }, { status: 404 });
     }
 
-    const updateData: any = { status };
+    let newRemaining = Number(oldLoan.remainingAmount);
+    let repaidAmountRecorded = 0;
+
+    // Handle partial repayment
+    if (repaymentAmount && Number(repaymentAmount) > 0) {
+      const repayAmt = Number(repaymentAmount);
+      repaidAmountRecorded = Math.min(newRemaining, repayAmt);
+      newRemaining = Math.max(0, newRemaining - repayAmt);
+    } else if (status === "REPAID" || status === "DEDUCTED") {
+      repaidAmountRecorded = newRemaining;
+      newRemaining = 0;
+    }
+
+    const newStatus = newRemaining === 0 ? "REPAID" : (status || oldLoan.status);
 
     const updatedLoan = await prisma.memberLoan.update({
       where: { id },
-      data: updateData
+      data: {
+        remainingAmount: newRemaining,
+        status: newStatus
+      }
     });
 
-    if (oldLoan.status === "ACTIVE" && (status === "REPAID" || status === "DEDUCTED")) {
-       const { createLedgerEntry } = await import("@/lib/ledger");
-       const { getSession } = await import("@/lib/session");
-       const session = await getSession();
+    // Record ledger repayment
+    if (repaidAmountRecorded > 0) {
+      const { createLedgerEntry } = await import("@/lib/ledger");
+      const { getSession } = await import("@/lib/session");
+      const session = await getSession();
 
-       await createLedgerEntry({
-         companyId: companyIdForGuard,
-         module: 'Loan',
-         referenceId: updatedLoan.id,
-         amount: Number(updatedLoan.amount), // Assuming full repayment for simplicity
-         isDebit: true, // Debit Bank (Cash enters the company from repayment)
-         accountType: 'Bank', 
-         description: `Loan Repaid by Member (${status})`,
-         createdById: session?.user?.id
-       });
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Loan',
+        referenceId: updatedLoan.id,
+        amount: repaidAmountRecorded,
+        isDebit: true, // Debit Bank (Cash received into company)
+        accountType: 'Bank', 
+        description: `Loan Repayment Received from Member (${newStatus})`,
+        createdById: session?.user?.id
+      });
     }
 
     return NextResponse.json(updatedLoan);

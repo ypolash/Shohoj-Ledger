@@ -700,6 +700,17 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
             systemSource: "ERP"
           }
         });
+      } else if (existing.status !== "LEAVE" || (existing.punishmentAmount && Number(existing.punishmentAmount) > 0)) {
+        await prisma.attendance.update({
+          where: { id: existing.id },
+          data: {
+            status: "LEAVE",
+            isLate: false,
+            lateMinutes: 0,
+            punishmentAmount: 0,
+            punishmentReason: "Approved Leave of Absence",
+          }
+        });
       }
       continue;
     }
@@ -724,7 +735,29 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
       penaltyAmount = Math.round(Number(emp.basicSalary) / 22);
     }
 
-    const reason = `Unexcused Absence on ${dateString} [Duty Time: ${dutyLabel}]`;
+    // Check if employee requested leave that was cancelled, rejected, or pending
+    const unapprovedLeave = await prisma.leaveRequest.findFirst({
+      where: {
+        employeeId: emp.id,
+        companyId,
+        startDate: { lte: endOfDay },
+        endDate: { gte: startOfDay },
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+
+    let leaveStatusReason = "No Leave Requested";
+    if (unapprovedLeave) {
+      if (unapprovedLeave.status === "CANCELLED") {
+        leaveStatusReason = "Leave Cancelled";
+      } else if (unapprovedLeave.status === "REJECTED") {
+        leaveStatusReason = "Leave Rejected";
+      } else if (unapprovedLeave.status === "PENDING") {
+        leaveStatusReason = "Leave Not Approved";
+      }
+    }
+
+    const reason = `Unexcused Absence (${leaveStatusReason}) on ${dateString} [Duty Time: ${dutyLabel}]`;
 
     // Create or update attendance record as ABSENT with penalty
     await prisma.attendance.upsert({
@@ -772,5 +805,122 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
     totalPenalties,
     absentEmployees
   };
+}
+
+/**
+ * Synchronizes a leave request's approval, cancellation, or rejection status directly into the Attendance table.
+ * - When APPROVED: Ensures all days covered by the leave are marked status: "LEAVE" with penalty: 0.
+ *   If an attendance record was previously marked ABSENT, it is excused and updated to LEAVE.
+ * - When CANCELLED or REJECTED:
+ *   If any attendance day covered by the leave was marked LEAVE (and employee did not check in):
+ *   reverts it to ABSENT with the designated unexcused absence penalty, or cleans future records.
+ */
+export async function syncLeaveRequestWithAttendance(leaveRequestId: string) {
+  const leave = await prisma.leaveRequest.findUnique({
+    where: { id: leaveRequestId },
+    include: { employee: true }
+  });
+  if (!leave || !leave.employeeId || !leave.companyId) return;
+
+  const { companyId, employeeId, startDate, endDate, status } = leave;
+
+  const current = new Date(startDate);
+  const end = new Date(endDate);
+
+  const startDayUtc = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate()));
+  const endDayUtc = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+
+  let iter = new Date(startDayUtc);
+  while (iter <= endDayUtc) {
+    const dayDate = new Date(iter);
+
+    const existingAttendance = await prisma.attendance.findUnique({
+      where: {
+        employeeId_date: {
+          employeeId,
+          date: dayDate,
+        }
+      }
+    });
+
+    if (status === "APPROVED") {
+      // If approved and employee did not work (or was previously marked absent), mark as LEAVE without penalty
+      if (existingAttendance?.checkInTime && existingAttendance.status !== "ABSENT") {
+        // preserve actual check-in
+      } else {
+        await prisma.attendance.upsert({
+          where: {
+            employeeId_date: {
+              employeeId,
+              date: dayDate,
+            }
+          },
+          create: {
+            companyId,
+            employeeId,
+            date: dayDate,
+            status: "LEAVE",
+            isLate: false,
+            lateMinutes: 0,
+            punishmentAmount: 0,
+            punishmentReason: "Approved Leave of Absence",
+            systemSource: "ERP"
+          },
+          update: {
+            status: "LEAVE",
+            isLate: false,
+            lateMinutes: 0,
+            punishmentAmount: 0,
+            punishmentReason: "Approved Leave of Absence",
+          }
+        });
+      }
+    } else if (status === "CANCELLED" || status === "REJECTED") {
+      // Check if employee has another approved leave covering this day
+      const otherApprovedLeave = await prisma.leaveRequest.findFirst({
+        where: {
+          id: { not: leave.id },
+          companyId,
+          employeeId,
+          status: "APPROVED",
+          startDate: { lte: new Date(dayDate.getTime() + 24 * 60 * 60 * 1000 - 1) },
+          endDate: { gte: dayDate },
+        }
+      });
+
+      if (!otherApprovedLeave) {
+        if (existingAttendance && !existingAttendance.checkInTime) {
+          const nowUtc = new Date();
+          const todayUtc = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate()));
+
+          if (dayDate <= todayUtc) {
+            // Past or today with no check in: Mark as ABSENT with penalty
+            const absentRule = await prisma.punishmentSetting.findFirst({
+              where: { companyId, type: "ABSENT", active: true },
+              orderBy: { amount: "desc" }
+            });
+            const penaltyAmount = absentRule?.amount ? Number(absentRule.amount) : Math.round(Number(leave.employee?.basicSalary || 0) / 22);
+            const cancelReason = status === "CANCELLED" ? "Unexcused Absence (Leave Cancelled)" : "Unexcused Absence (Leave Rejected)";
+
+            await prisma.attendance.update({
+              where: { id: existingAttendance.id },
+              data: {
+                status: "ABSENT",
+                punishmentAmount: penaltyAmount,
+                punishmentReason: cancelReason,
+              }
+            });
+          } else {
+            // Future date: delete the premature LEAVE attendance record
+            await prisma.attendance.delete({
+              where: { id: existingAttendance.id }
+            });
+          }
+        }
+      }
+    }
+
+    iter.setUTCDate(iter.getUTCDate() + 1);
+  }
 }
 

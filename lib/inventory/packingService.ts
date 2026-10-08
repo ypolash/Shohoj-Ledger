@@ -104,27 +104,25 @@ export const packingService = {
         const qty = new Decimal(line.packedQuantity as any);
         if (qty.greaterThan(0)) {
           // 1. Physical Movement (Issue)
-          await stockMovementService.recordMovement(tx, {
+          await stockMovementService.recordMovement({
             companyId,
             warehouseId: packTask.warehouseId,
             productId: line.productId,
-            quantity: qty,
+            quantity: qty.negated(),
             movementType: "ISSUE",
             referenceType: "PACKING_TASK",
             referenceId: packTask.id,
-            fromBinId: stagingBin.id,
-            batchId: line.batchId || undefined,
-            serialId: line.serialId || undefined,
-            userId: packTask.packedById || "SYSTEM"
+            binId: stagingBin.id,
+            performedById: packTask.packedById || "SYSTEM"
           });
 
           // 2. Financial Valuation Consumption (FIFO)
           // Delegate to Phase 2M Valuation Engine to calculate exact COGS
-          const cogs = await valuationService.consumeLayer(tx, {
+          const cogs = await valuationService.consumeLayer({
             companyId,
             productId: line.productId,
             warehouseId: packTask.warehouseId,
-            quantity: qty
+            quantityToConsume: qty
           });
 
           // Future Phase: Post Journal Entry with exact `cogs` via PostingService

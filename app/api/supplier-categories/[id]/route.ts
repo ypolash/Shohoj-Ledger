@@ -6,23 +6,24 @@ import { getCompanyId } from "@/lib/company/companyFilter";
  * DELETE /api/supplier-categories/[id]
  * Deletes a supplier category. Unassigns suppliers before deleting.
  */
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const category = await prisma.supplierCategory.findUnique({ where: { id: params.id } });
+    const category = await prisma.supplierCategory.findUnique({ where: { id } });
     if (!category || category.companyId !== companyId) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
     // Unassign any suppliers in this category before deleting
     await prisma.supplier.updateMany({
-      where: { companyId, categoryId: params.id },
+      where: { companyId, categoryId: id },
       data: { categoryId: null }
     });
 
-    await prisma.supplierCategory.delete({ where: { id: params.id } });
+    await prisma.supplierCategory.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -35,21 +36,22 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
  * PATCH /api/supplier-categories/[id]
  * Updates a supplier category's name or description.
  */
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const { name, description } = body;
 
-    const category = await prisma.supplierCategory.findUnique({ where: { id: params.id } });
+    const category = await prisma.supplierCategory.findUnique({ where: { id } });
     if (!category || category.companyId !== companyId) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
     const updated = await prisma.supplierCategory.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name?.trim() ? { name: name.trim() } : {}),
         ...(description !== undefined ? { description: description?.trim() || null } : {})

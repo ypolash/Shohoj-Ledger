@@ -1,29 +1,30 @@
 /**
- * Calculates totals for a Sales Order.
+ * Calculates totals for a Sales Order with exact line item apportionment.
  */
-export function calculateTotals(lines: any[], globalDiscount: number = 0, globalShipping: number = 0, globalTaxRate: number = 0) {
+export function calculateTotals(
+  lines: any[],
+  globalDiscount: number = 0,
+  globalShipping: number = 0,
+  globalTaxRate: number = 0
+) {
   let grossSubtotal = 0;
   let lineDiscountsTotal = 0;
-  let taxAmount = 0;
+  let lineTaxesTotal = 0;
 
-  const processedLines = lines.map(line => {
+  const rawProcessed = (lines || []).map((line) => {
     const qty = Number(line.quantity) || 0;
     const price = Number(line.unitPrice) || 0;
     const discPct = Number(line.discountPercent) || 0;
     const taxPct = Number(line.taxPercent) || 0;
 
     const grossLineTotal = qty * price;
-    // Prefer explicitly provided discountAmount, fallback to percentage-based calculation
-    const discountAmt = line.discountAmount !== undefined ? Number(line.discountAmount) : (grossLineTotal * (discPct / 100));
-    const lineSubtotal = grossLineTotal - discountAmt;
-    
-    // Prefer explicitly provided taxAmount, fallback to percentage-based calculation
-    const lineTaxAmt = line.taxAmount !== undefined ? Number(line.taxAmount) : (lineSubtotal * (taxPct / 100));
-    const lineTotal = lineSubtotal + lineTaxAmt;
+    const discountAmt = line.discountAmount !== undefined ? Number(line.discountAmount) : grossLineTotal * (discPct / 100);
+    const lineSubtotal = Math.max(0, grossLineTotal - discountAmt);
+    const lineTaxAmt = line.taxAmount !== undefined ? Number(line.taxAmount) : lineSubtotal * (taxPct / 100);
 
     grossSubtotal += grossLineTotal;
     lineDiscountsTotal += discountAmt;
-    taxAmount += lineTaxAmt;
+    lineTaxesTotal += lineTaxAmt;
 
     return {
       ...line,
@@ -32,26 +33,51 @@ export function calculateTotals(lines: any[], globalDiscount: number = 0, global
       discountPercent: discPct,
       taxPercent: taxPct,
       discountAmount: discountAmt,
+      lineSubtotal,
       taxAmount: lineTaxAmt,
-      lineTotal
     };
   });
 
-  const totalDiscount = lineDiscountsTotal + globalDiscount;
-  const taxableAmount = Math.max(0, grossSubtotal - totalDiscount);
+  const totalLineSubtotal = rawProcessed.reduce((acc, l) => acc + l.lineSubtotal, 0);
+  const totalDiscount = lineDiscountsTotal + Number(globalDiscount || 0);
+
   // If globalTaxRate is provided, override the summed line tax amount
+  let calculatedTaxAmount = lineTaxesTotal;
   if (globalTaxRate > 0) {
-    taxAmount = (taxableAmount * globalTaxRate) / 100;
+    const taxableAmount = Math.max(0, grossSubtotal - totalDiscount);
+    calculatedTaxAmount = (taxableAmount * globalTaxRate) / 100;
   }
 
-  const totalAmount = taxableAmount + taxAmount + globalShipping;
+  const processedLines = rawProcessed.map((l) => {
+    const ratio = totalLineSubtotal > 0 ? l.lineSubtotal / totalLineSubtotal : 0;
+    const allocatedGlobalDiscount = Number(globalDiscount || 0) * ratio;
+    const effectiveSubtotal = Math.max(0, l.lineSubtotal - allocatedGlobalDiscount);
+
+    let effectiveTax = l.taxAmount;
+    if (globalTaxRate > 0) {
+      effectiveTax = calculatedTaxAmount * ratio;
+    }
+
+    const lineTotal = Math.round((effectiveSubtotal + effectiveTax) * 100) / 100;
+
+    return {
+      ...l,
+      allocatedGlobalDiscount: Math.round(allocatedGlobalDiscount * 100) / 100,
+      taxAmount: Math.round(effectiveTax * 100) / 100,
+      lineTotal,
+    };
+  });
+
+  const taxableAmount = Math.max(0, grossSubtotal - totalDiscount);
+  const totalAmount = Math.round((taxableAmount + calculatedTaxAmount + Number(globalShipping || 0)) * 100) / 100;
 
   return {
-    subtotal: grossSubtotal,
-    taxAmount,
-    shippingAmount: globalShipping,
-    discountAmount: totalDiscount,
+    subtotal: Math.round(grossSubtotal * 100) / 100,
+    taxAmount: Math.round(calculatedTaxAmount * 100) / 100,
+    shippingAmount: Number(globalShipping || 0),
+    discountAmount: Math.round(totalDiscount * 100) / 100,
     totalAmount,
-    processedLines
+    processedLines,
   };
 }
+

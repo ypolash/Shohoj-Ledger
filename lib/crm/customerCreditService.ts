@@ -268,7 +268,7 @@ export async function evaluateRisk(companyId: string, customerId: string) {
   const limit = Number(profile.creditLimit);
   const exposure = Number(profile.currentExposure);
 
-  let newRiskLevel = RiskLevel.LOW;
+  let newRiskLevel: RiskLevel = RiskLevel.LOW;
 
   if (limit > 0) {
     const utilization = exposure / limit;

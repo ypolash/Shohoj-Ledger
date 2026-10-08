@@ -11,7 +11,7 @@ export function CashFlowChart({ data }: { data?: any }) {
       <h3 style={{ margin: '0 0 24px 0', fontSize: '16px', fontWeight: 600 }}>Cash Flow (Waterfall)</h3>
       
       <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', paddingBottom: '24px', position: 'relative' }}>
-        {categories.map((c, i) => {
+        {categories.map((c: string, i: number) => {
           let heightPct = 0;
           let bottomPct = 0;
           let color = 'var(--primary)';

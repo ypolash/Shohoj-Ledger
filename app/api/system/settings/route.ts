@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     const rbacGuard = await requirePermission("MANAGE_COMPANIES");
     if (rbacGuard) return rbacGuard;
 
-    let settings = await prisma.systemSetting.findMany({
+    let settings: any[] = await prisma.systemSetting.findMany({
       orderBy: { key: "asc" },
     }).catch(() => []);
 

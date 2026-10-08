@@ -384,15 +384,14 @@ export async function completeReturn(companyId: string, id: string, userId: stri
  * Cancels a Customer Return.
  */
 export async function cancelReturn(companyId: string, id: string, userId: string) {
-  const existing = await prisma.customerReturn.findUnique({ where: { id } });
-  if (existing?.status === CustomerReturnStatus.RESTOCKED || existing?.status === CustomerReturnStatus.SCRAPPED || existing?.status === CustomerReturnStatus.COMPLETED) {
+  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
+  if (!existing) throw new Error("Record not found or access denied");
+  if (existing.status === CustomerReturnStatus.RESTOCKED || existing.status === CustomerReturnStatus.SCRAPPED || existing.status === CustomerReturnStatus.COMPLETED) {
     throw new Error("Cannot cancel a processed return.");
   }
 
-  const existing = await prisma.customerReturn.findFirst({ where: { id, companyId } });
-    if (!existing) throw new Error("Record not found or access denied");
-    const customerReturn = await prisma.customerReturn.update({
-      where: { id },
+  const customerReturn = await prisma.customerReturn.update({
+    where: { id },
     data: { status: CustomerReturnStatus.CANCELLED }
   });
 

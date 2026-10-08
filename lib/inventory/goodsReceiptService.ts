@@ -42,7 +42,7 @@ export const goodsReceiptService = {
   }) => {
     await goodsReceiptService.validateReceipt(data.companyId, data.warehouseId, data.supplierId, data.purchaseOrderId);
     
-    const receiptNumber = await goodsReceiptService.generateReceiptNumber(data.companyId);
+    const grnNumber = await goodsReceiptService.generateReceiptNumber(data.companyId);
 
     return prisma.goodsReceiptNote.create({
       data: {
@@ -50,13 +50,15 @@ export const goodsReceiptService = {
         warehouseId: data.warehouseId,
         supplierId: data.supplierId,
         purchaseOrderId: data.purchaseOrderId,
-        receiptNumber,
+        grnNumber,
         status: "DRAFT",
         remarks: data.remarks,
+        createdById: data.userId,
         lines: {
           create: data.lines.map(line => ({
             productId: line.productId,
-            orderedQuantity: new Decimal(line.orderedQuantity)
+            quantityReceived: new Decimal(0),
+            quantityRejected: new Decimal(0)
           }))
         }
       },
@@ -70,7 +72,7 @@ export const goodsReceiptService = {
   }[]) => {
     const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id, companyId }, include: { lines: true } });
     if (!receipt) throw new Error("Goods Receipt not found.");
-    if (receipt.status !== "DRAFT" && receipt.status !== "RECEIVING") throw new Error("Cannot update items in this status.");
+    if (receipt.status !== "DRAFT" && receipt.status !== "PENDING_APPROVAL" && receipt.status !== "PARTIALLY_RECEIVED") throw new Error("Cannot update items in this status.");
 
     return prisma.$transaction(async (tx) => {
       for (const update of updates) {
@@ -79,13 +81,13 @@ export const goodsReceiptService = {
         
         await tx.goodsReceiptLine.update({
           where: { id: line.id },
-          data: { receivedQuantity: new Decimal(update.receivedQuantity) }
+          data: { quantityReceived: new Decimal(update.receivedQuantity) }
         });
       }
 
-      const updated = await tx.goodsReceipt.update({
+      const updated = await tx.goodsReceiptNote.update({
         where: { id },
-        data: { status: "RECEIVING" },
+        data: { status: "PARTIALLY_RECEIVED" },
         include: { lines: true }
       });
       return updated;
@@ -110,7 +112,7 @@ export const goodsReceiptService = {
   }) => {
     const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id: data.receiptId, companyId: data.companyId }, include: { lines: true } });
     if (!receipt) throw new Error("Goods Receipt not found.");
-    if (receipt.status === "COMPLETED" || receipt.status === "CANCELLED") throw new Error("Receipt cannot be modified.");
+    if (receipt.status === "RECEIVED" || receipt.status === "CANCELLED") throw new Error("Receipt cannot be modified.");
 
     // This method processes the physical induction of accepted quantities into the warehouse.
     // Rejected quantities are NOT inducted into ProductWarehouse (they never hit the ledger).
@@ -123,7 +125,7 @@ export const goodsReceiptService = {
         const accepted = new Decimal(reqLine.acceptedQuantity);
         const rejected = new Decimal(reqLine.rejectedQuantity);
         
-        const totalReceived = new Decimal(line.receivedQuantity as any);
+        const totalReceived = new Decimal(line.quantityReceived as any);
         if (accepted.plus(rejected).greaterThan(totalReceived)) {
           throw new Error("Accepted + Rejected cannot exceed Received quantity.");
         }
@@ -183,8 +185,8 @@ export const goodsReceiptService = {
         await tx.goodsReceiptLine.update({
           where: { id: line.id },
           data: {
-            acceptedQuantity: accepted,
-            rejectedQuantity: rejected,
+            quantityReceived: accepted,
+            quantityRejected: rejected,
             binId: reqLine.binId,
             batchId,
             serialId
@@ -192,9 +194,9 @@ export const goodsReceiptService = {
         });
       }
 
-      return tx.goodsReceipt.update({
+      return tx.goodsReceiptNote.update({
         where: { id: receipt.id },
-        data: { status: "PARTIAL" }, // Changed to completed on formal close
+        data: { status: "PARTIALLY_RECEIVED" },
         include: { lines: true }
       });
     });
@@ -204,24 +206,16 @@ export const goodsReceiptService = {
     const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id, companyId }, include: { lines: true } });
     if (!receipt) throw new Error("Goods Receipt not found.");
 
-    // This is the step where Accounting Posting is officially invoked.
-    // accountingPostingService.post({
-    //   companyId,
-    //   referenceType: "GOODS_RECEIPT",
-    //   referenceId: receipt.id,
-    //   ... (Generate Journal Entry mapping Inventory Assets and Accounts Payable or GRNI)
-    // });
-
     return prisma.goodsReceiptNote.update({
       where: { id },
-      data: { status: "COMPLETED", receivedById: userId }
+      data: { status: "RECEIVED", approvedById: userId, approvedAt: new Date() }
     });
   },
 
   cancelReceipt: async (id: string, companyId: string) => {
     const receipt = await prisma.goodsReceiptNote.findFirst({ where: { id, companyId } });
     if (!receipt) throw new Error("Goods Receipt not found.");
-    if (receipt.status === "COMPLETED") throw new Error("Cannot cancel a completed receipt.");
+    if (receipt.status === "RECEIVED") throw new Error("Cannot cancel a completed receipt.");
 
     return prisma.goodsReceiptNote.update({
       where: { id },

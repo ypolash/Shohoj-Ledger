@@ -53,15 +53,15 @@ export const reorderService = {
     const currentStock = stockRecord._sum.quantity || new Decimal(0);
 
     // Also check stock currently "On Order" (Purchase Orders in processing)
-    const onOrderRecord = await prisma.purchaseOrderItem.aggregate({
+    const onOrderRecord = await prisma.purchaseOrderLine.aggregate({
       where: {
-        purchaseOrder: { companyId, status: { in: ["APPROVED", "SENT", "PARTIALLY_RECEIVED"] } },
+        purchaseOrder: { companyId, status: { in: ["APPROVED", "OPEN", "PARTIALLY_RECEIVED"] } },
         productId
       },
       _sum: { quantity: true } // Simplified: In reality, subtract received quantity from this
     });
 
-    const onOrderStock = onOrderRecord._sum.quantity || new Decimal(0);
+    const onOrderStock = onOrderRecord._sum?.quantity || new Decimal(0);
     const effectiveStock = currentStock.plus(onOrderStock);
 
     if (effectiveStock.lessThanOrEqualTo(policy.reorderPoint)) {
@@ -81,7 +81,7 @@ export const reorderService = {
         reorderPoint: policy.reorderPoint,
         recommendedQuantity: recommendedQty,
         supplierId: policy.preferredSupplierId,
-        autoGenerate: policy.autoGeneratePurchaseRequest
+        autoGenerate: policy.autoGeneratePurchaseRequisition
       };
     }
 

@@ -13,7 +13,7 @@ export async function getExecutiveDashboard(companyId: string) {
     prisma.employee.count({
       where: {
         companyId,
-        joiningDate: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
+        joinDate: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
       }
     }),
     getPayrollSummary(companyId),
@@ -39,7 +39,7 @@ export async function getEmployeeDashboard(companyId: string) {
 export async function getRecruitmentDashboard(companyId: string) {
   const pipeline = await prisma.applicant.groupBy({
     by: ['status'],
-    where: { jobOpening: { companyId } },
+    where: { companyId },
     _count: { _all: true }
   });
   return { pipeline };
@@ -91,21 +91,26 @@ export async function getDepartmentDistribution(companyId: string) {
 }
 
 export async function getLeaveStatistics(companyId: string) {
-  const leaves = await prisma.leaveApproval.aggregate({
-    where: { request: { companyId }, status: 'APPROVED' },
-    _sum: {
-      daysTaken: true
-    }
+  const approvedLeaves = await prisma.leaveRequest.findMany({
+    where: { companyId, status: 'APPROVED' },
+    select: { startDate: true, endDate: true, isHalfDay: true }
   });
+
+  const totalDaysTaken = approvedLeaves.reduce((acc, l) => {
+    if (l.isHalfDay) return acc + 0.5;
+    const diff = Math.max(1, Math.ceil((new Date(l.endDate).getTime() - new Date(l.startDate).getTime()) / (1000 * 60 * 60 * 24)));
+    return acc + diff;
+  }, 0);
+
   return {
-    totalDaysTaken: leaves._sum.daysTaken || 0
+    totalDaysTaken
   };
 }
 
 export async function getAttendanceStatistics(companyId: string) {
-  // Highly simplified. Real world needs to calculate based on expected vs actual shifts.
+  // Calculates attendance rate based on PRESENT / LATE / HALF_DAY statuses
   const presentCount = await prisma.attendance.count({
-    where: { companyId, isPresent: true }
+    where: { companyId, status: { in: ['PRESENT', 'LATE', 'HALF_DAY'] } }
   });
   const totalCount = await prisma.attendance.count({
     where: { companyId }
@@ -119,9 +124,9 @@ export async function getAttendanceStatistics(companyId: string) {
 export async function getOvertimeStatistics(companyId: string) {
   const ot = await prisma.attendanceOvertime.aggregate({
     where: { employee: { companyId }, status: 'APPROVED' },
-    _sum: { approvedHours: true }
+    _sum: { hours: true }
   });
-  return { totalOvertimeHours: ot._sum.approvedHours || 0 };
+  return { totalOvertimeHours: ot._sum.hours || 0 };
 }
 
 // ==========================================
@@ -144,10 +149,9 @@ export async function getPayrollSummary(companyId: string) {
 }
 
 export async function getSalaryDistribution(companyId: string) {
-  // Simplified grouping. Real world needs bucketized logic (e.g. 50k-60k)
-  return prisma.employeeSalary.groupBy({
-    by: ['amount'],
-    where: { employee: { companyId } },
+  return prisma.employee.groupBy({
+    by: ['basicSalary'],
+    where: { companyId, status: 'ACTIVE' },
     _count: { _all: true }
   });
 }

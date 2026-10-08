@@ -16,7 +16,7 @@ export const warehouseAnalyticsService = {
         _count: {
           select: {
             putAwayTasks: true,
-            purchaseRequests: true,
+            goodsReceiptNotes: true,
             cycleCounts: true,
             inventoryAdjustments: true
           }
@@ -27,10 +27,10 @@ export const warehouseAnalyticsService = {
 
   getWarehouseKPIs: async (companyId: string, warehouseId: string) => {
     // Basic aggregation
-    const pendingReceipts = await prisma.goodsReceipt.count({ where: { companyId, warehouseId, status: { in: ["DRAFT", "PENDING_APPROVAL"] } } });
+    const pendingReceipts = await prisma.goodsReceiptNote.count({ where: { companyId, warehouseId, status: { in: ["DRAFT", "PENDING_APPROVAL"] } } });
     const pendingPutAways = await prisma.putAwayTask.count({ where: { companyId, warehouseId, status: "PENDING" } });
     const pendingTransfers = await prisma.stockTransfer.count({ where: { companyId, toWarehouseId: warehouseId, status: "IN_TRANSIT" } });
-    const pendingRequests = await prisma.purchaseRequest.count({ where: { companyId, warehouseId, status: "DRAFT" } });
+    const pendingRequests = await prisma.purchaseRequisition.count({ where: { companyId, status: "DRAFT" } });
     
     return { pendingReceipts, pendingPutAways, pendingTransfers, pendingRequests };
   },
@@ -100,7 +100,7 @@ export const warehouseAnalyticsService = {
 
   getWarehouseUtilization: async (companyId: string, warehouseId: string) => {
     // Formula: Total occupied bins / Total active bins
-    const activeBins = await prisma.warehouseBin.count({ where: { warehouseZone: { warehouseId } } });
+    const activeBins = await prisma.warehouseBin.count({ where: { warehouseId, isActive: true } });
     const occupiedBins = await prisma.productWarehouse.count({
       where: { warehouseId, binId: { not: null }, quantity: { gt: 0 } }
     });

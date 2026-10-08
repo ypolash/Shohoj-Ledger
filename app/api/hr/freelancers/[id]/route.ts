@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from "@/lib/rbac/permissionGuard";
-import { getCompanyId } from "@/lib/company/companyFilter";
+import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function PATCH(
   request: Request,
@@ -14,11 +17,10 @@ export async function PATCH(
     const params = await context.params;
     const { id } = params;
     const data = await request.json();
-    const companyId = await getCompanyId();
-    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const companyFilter = await withCompany(false);
 
     const existing = await prisma.employee.findFirst({
-      where: { id, companyId }
+      where: { id, ...companyFilter }
     });
     if (!existing) return NextResponse.json({ error: 'Freelancer not found' }, { status: 404 });
 
@@ -82,11 +84,10 @@ export async function DELETE(
   try {
     const params = await context.params;
     const { id } = params;
-    const companyId = await getCompanyId();
-    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const companyFilter = await withCompany(false);
 
     const existing = await prisma.employee.findFirst({
-      where: { id, companyId }
+      where: { id, ...companyFilter }
     });
     if (!existing) return NextResponse.json({ error: 'Freelancer not found' }, { status: 404 });
 

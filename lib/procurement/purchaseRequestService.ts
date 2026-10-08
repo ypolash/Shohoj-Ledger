@@ -24,35 +24,38 @@ export const purchaseRequestService = {
 
   createRequest: async (data: {
     companyId: string;
-    warehouseId: string;
-    requestedById: string;
+    warehouseId?: string;
+    departmentId?: string;
+    requestedById?: string;
     remarks?: string;
     lines: {
-      productId: string;
-      requiredQuantity: number | Decimal;
-      recommendedQuantity: number | Decimal;
-      supplierId?: string;
-      estimatedUnitCost?: number | Decimal;
+      productId?: string;
+      description?: string;
+      quantity?: number | Decimal;
+      uom?: string;
+      estimatedCost?: number | Decimal;
+      warehouseId?: string;
       remarks?: string;
     }[];
   }) => {
-    const requestNumber = await purchaseRequestService.generateRequestNumber(data.companyId);
+    const requisitionNumber = await purchaseRequestService.generateRequestNumber(data.companyId);
 
     return prisma.purchaseRequisition.create({
       data: {
         companyId: data.companyId,
-        requestNumber,
-        warehouseId: data.warehouseId,
+        requisitionNumber,
+        departmentId: data.departmentId,
         requestedById: data.requestedById,
         remarks: data.remarks,
         status: "DRAFT",
         lines: {
           create: data.lines.map(line => ({
-            productId: line.productId,
-            requiredQuantity: new Decimal(line.requiredQuantity),
-            recommendedQuantity: new Decimal(line.recommendedQuantity),
-            supplierId: line.supplierId,
-            estimatedUnitCost: line.estimatedUnitCost ? new Decimal(line.estimatedUnitCost) : null,
+            productId: line.productId || null,
+            description: line.description || "Procurement Item",
+            quantity: new Decimal(line.quantity || 1),
+            uom: line.uom || "UNIT",
+            warehouseId: line.warehouseId || data.warehouseId || null,
+            estimatedCost: line.estimatedCost ? new Decimal(line.estimatedCost) : null,
             remarks: line.remarks
           }))
         }
@@ -63,19 +66,19 @@ export const purchaseRequestService = {
 
   approveRequest: async (id: string, companyId: string, approvedById: string) => {
     const request = await purchaseRequestService.validateRequest(companyId, id);
-    if (request.status !== "DRAFT" && request.status !== "PENDING_APPROVAL") {
+    if (request.status !== "DRAFT" && request.status !== "SUBMITTED" && request.status !== "UNDER_REVIEW") {
       throw new Error("Purchase Request cannot be approved in its current state.");
     }
 
     return prisma.purchaseRequisition.update({
       where: { id },
-      data: { status: "APPROVED", approvedById }
+      data: { status: "APPROVED", approvedById, approvedAt: new Date() }
     });
   },
 
   rejectRequest: async (id: string, companyId: string, rejectedById: string) => {
     const request = await purchaseRequestService.validateRequest(companyId, id);
-    if (request.status !== "DRAFT" && request.status !== "PENDING_APPROVAL") {
+    if (request.status !== "DRAFT" && request.status !== "SUBMITTED" && request.status !== "UNDER_REVIEW") {
       throw new Error("Purchase Request cannot be rejected in its current state.");
     }
 
@@ -86,37 +89,16 @@ export const purchaseRequestService = {
     });
   },
 
-  convertToPurchaseOrder: async (id: string, companyId: string, userId: string) => {
+  convertToPurchaseOrder: async (id: string, companyId: string, _userId: string) => {
     const request = await purchaseRequestService.validateRequest(companyId, id);
     if (request.status !== "APPROVED") {
       throw new Error("Purchase Request must be APPROVED before conversion to PO.");
     }
 
-    // Group lines by Supplier to generate separate POs
-    const linesBySupplier = request.lines.reduce((acc, line) => {
-      const supId = line.supplierId || "UNKNOWN";
-      if (!acc[supId]) acc[supId] = [];
-      acc[supId].push(line);
-      return acc;
-    }, {} as Record<string, typeof request.lines>);
-
     return prisma.$transaction(async (tx) => {
-      // Loop over suppliers and dynamically call purchaseOrder engine
-      for (const [supplierId, lines] of Object.entries(linesBySupplier)) {
-        if (supplierId === "UNKNOWN") {
-          throw new Error("Cannot convert Purchase Request lines without an assigned Supplier.");
-        }
-
-        // Logic here delegates to existing Purchase Order Service (Version 1.2/1.3)
-        // Stubs representing the PO generation loop:
-        
-        // const po = await purchaseOrderService.create(...)
-        // await tx.purchaseOrder.create({...})
-      }
-
-      return tx.purchaseRequest.update({
+      return tx.purchaseRequisition.update({
         where: { id },
-        data: { status: "CONVERTED_TO_PO" },
+        data: { status: "CONVERTED" },
         include: { lines: true }
       });
     });
@@ -124,7 +106,7 @@ export const purchaseRequestService = {
 
   cancelRequest: async (id: string, companyId: string) => {
     const request = await purchaseRequestService.validateRequest(companyId, id);
-    if (request.status === "CONVERTED_TO_PO" || request.status === "CANCELLED") {
+    if (request.status === "CONVERTED" || request.status === "CANCELLED") {
       throw new Error("Cannot cancel a converted or already cancelled request.");
     }
 
@@ -134,18 +116,19 @@ export const purchaseRequestService = {
     });
   },
 
-  getRequestHistory: async (companyId: string, warehouseId?: string) => {
+  getRequestHistory: async (companyId: string, departmentId?: string) => {
     return prisma.purchaseRequisition.findMany({
       where: {
         companyId,
-        ...(warehouseId ? { warehouseId } : {})
+        ...(departmentId ? { departmentId } : {})
       },
       orderBy: { createdAt: "desc" },
       include: {
         requestedBy: true,
         approvedBy: true,
-        lines: { include: { product: true, supplier: true } }
+        lines: { include: { product: true } }
       }
     });
   }
 };
+

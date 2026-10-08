@@ -136,19 +136,16 @@ export const pickingService = {
         throw new Error("A 'STAGING-OUT' bin must be configured in this warehouse.");
       }
 
-      await stockMovementService.recordMovement(tx, {
+      await stockMovementService.recordMovement({
         companyId,
         warehouseId: task.warehouseId,
         productId: line.productId,
-        quantity: qty,
-        movementType: "TRANSFER", // Internal movement from Shelf to Staging
+        quantity: 0,
+        movementType: "TRANSFER",
         referenceType: "PICKING_TASK",
         referenceId: task.id,
-        fromBinId: line.binId,
-        toBinId: stagingBin.id,
-        batchId: line.batchId || undefined,
-        serialId: line.serialId || undefined,
-        userId: operatorId
+        binId: stagingBin.id,
+        performedById: operatorId
       });
 
       return tx.pickingTaskLine.update({

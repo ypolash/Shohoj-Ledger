@@ -59,7 +59,7 @@ export default function FreelancePage() {
   const fetchFreelancers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/hr/freelancers');
+      const res = await fetch('/api/hr/freelancers', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setFreelancers(Array.isArray(data) ? data : []);
@@ -78,7 +78,10 @@ export default function FreelancePage() {
   // KPIs
   const stats = useMemo(() => {
     const total = freelancers.length;
-    const active = freelancers.filter(f => f.status === 'ACTIVE').length;
+    const active = freelancers.filter(f => {
+      const st = (f.status || 'ACTIVE').toUpperCase();
+      return st === 'ACTIVE' || st === 'AVAILABLE';
+    }).length;
     const busy = freelancers.filter(f => (f.activeProjectsCount || 0) > 0).length;
     const avgRate = total > 0 ? Math.round(freelancers.reduce((s, f) => s + (f.rate || 0), 0) / total) : 0;
     return { total, active, busy, avgRate };
@@ -101,7 +104,8 @@ export default function FreelancePage() {
         (f.skills || []).some(s => s.toLowerCase().includes(search.toLowerCase()))
       );
       const matchRole = selectedRole === 'ALL' || f.role === selectedRole;
-      const matchStatus = statusFilter === 'ALL' || f.status === statusFilter;
+      const fStatus = (f.status || 'ACTIVE').toUpperCase();
+      const matchStatus = statusFilter === 'ALL' || fStatus === statusFilter || (statusFilter === 'ACTIVE' && (fStatus === 'ACTIVE' || fStatus === 'AVAILABLE'));
       return matchSearch && matchRole && matchStatus;
     });
   }, [freelancers, search, selectedRole, statusFilter]);

@@ -3,9 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculatePayroll } from '@/lib/payroll';
 import { getSession } from '@/lib/session';
-
 import { requireModule } from "@/lib/modules/moduleGuard";
-
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function POST(request: Request) {
@@ -28,7 +26,7 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
-    const { employeeId, month, year, workingDays, status = 'DRAFT' } = data;
+    const { employeeId, month, year, workingDays, status = 'DRAFT', paymentMethod, transactionRef, paymentNote } = data;
     
     if (!employeeId || !month || !year || !workingDays) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -48,33 +46,166 @@ export async function POST(request: Request) {
     const employee = await prisma.employee.findFirst({ where: { companyId, id: employeeId, systemSource } });
     if (!employee) return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 404 });
 
-    // Fetch Attendances for the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    // 1. Fetch Attendances for the month
     const attendances = await prisma.attendance.findMany({
-      where: { ...companyFilter,
+      where: { 
+        ...companyFilter,
         employeeId,
-        date: {
-          gte: new Date(year, month - 1, 1),
-          lt: new Date(year, month, 1)
-        }
+        date: { gte: startDate, lt: endDate }
       }
     });
 
-    // Fetch Leaves
+    // 2. Fetch Leaves
     const leaveRequests = await prisma.leaveRequest.findMany({
-      where: { ...companyFilter,
+      where: { 
+        ...companyFilter,
         employeeId,
-        startDate: {
-          gte: new Date(year, month - 1, 1),
-        }
+        startDate: { gte: startDate }
       }
     });
 
-    // Fetch Bonuses
+    // 3. Fetch Bonuses
     const bonuses = await prisma.bonus.findMany({
       where: { ...companyFilter, employeeId, month, year }
     });
 
-    const payroll = calculatePayroll(Number(employee.basicSalary), workingDays, attendances, leaveRequests, bonuses);
+    // 4. Fetch Pending Fines (EmployeeFine)
+    const fines = await prisma.employeeFine.findMany({
+      where: {
+        companyId,
+        employeeId,
+        status: 'PENDING'
+      }
+    });
+
+    // 5. Fetch Active Salary Advances
+    const rawAdvances = await prisma.salaryAdvance.findMany({
+      where: {
+        companyId,
+        employeeId,
+        status: 'APPROVED',
+      },
+      include: { recoveries: true }
+    });
+    const salaryAdvances = rawAdvances.map(a => {
+      const recovered = (a.recoveries || []).reduce((sum, r) => sum + Number(r.amount), 0);
+      const remainingAmount = Math.max(0, Number(a.amount) - recovered);
+      return { ...a, remainingAmount };
+    }).filter(a => a.remainingAmount > 0);
+
+    // 6. Fetch Active Loans
+    const rawLoans = await prisma.employeeLoan.findMany({
+      where: {
+        companyId,
+        employeeId,
+        status: 'ACTIVE',
+        outstandingBalance: { gt: 0 }
+      }
+    });
+    const employeeLoans = rawLoans.map(l => ({
+      ...l,
+      amount: l.principalAmount,
+      remainingAmount: l.outstandingBalance,
+      monthlyEmi: l.installmentAmount
+    }));
+
+    // 7. Fetch Approved Task Reward Submissions for the month
+    const taskRewards = await prisma.taskRewardSubmission.findMany({
+      where: {
+        employeeId,
+        status: 'APPROVED',
+        createdAt: { gte: startDate, lt: endDate }
+      },
+      include: { taskReward: true }
+    });
+
+    // 8. Fetch Approved Overtime records
+    const overtimes = await prisma.attendanceOvertime.findMany({
+      where: {
+        employeeId,
+        status: 'APPROVED',
+        attendance: {
+          date: { gte: startDate, lt: endDate }
+        }
+      }
+    });
+
+    const payroll = calculatePayroll(
+      Number(employee.basicSalary),
+      workingDays,
+      attendances,
+      leaveRequests,
+      bonuses,
+      fines,
+      salaryAdvances,
+      employeeLoans,
+      taskRewards,
+      overtimes
+    );
+
+    let expenseId: string | null = null;
+
+    // If initial status is PAID, generate the expense and ledger entry
+    if (status === 'PAID') {
+      const expense = await prisma.expense.create({
+        data: {
+          companyId: companyId!,
+          category: 'Payroll',
+          amount: payroll.netSalary,
+          paymentMethod: paymentMethod || 'Bank Transfer',
+          approvalStatus: 'Approved',
+          description: `Salary Payment for ${employee.firstName} ${employee.lastName} (${month}/${year})${transactionRef ? ' | Ref: ' + transactionRef : ''}`,
+          systemSource
+        }
+      });
+      expenseId = expense.id;
+
+      try {
+        const { createLedgerEntry } = await import("@/lib/ledger");
+        await createLedgerEntry({
+          companyId: companyId!,
+          module: 'Payroll',
+          referenceId: expense.id,
+          amount: Number(payroll.netSalary),
+          isDebit: false,
+          accountType: paymentMethod || 'Bank Transfer',
+          description: `Salary Payment for ${employee.firstName} ${employee.lastName} (${month}/${year})`,
+          createdById: userId
+        });
+      } catch (ledgerErr) {
+        console.warn('Ledger entry creation skipped or optional:', ledgerErr);
+      }
+
+      // Mark fines as DEDUCTED
+      for (const fine of fines) {
+        await prisma.employeeFine.update({
+          where: { id: fine.id },
+          data: { status: 'DEDUCTED' }
+        });
+      }
+
+      // Deduct from salary advances
+      for (const adv of salaryAdvances) {
+        const remAmt = Number(adv.remainingAmount || 0);
+        if (remAmt > 0) {
+          await prisma.salaryAdvanceRecovery.create({
+            data: {
+              advanceId: adv.id,
+              amount: remAmt,
+              recoveryDate: new Date(),
+              payrollReference: `PAY-${month}-${year}`
+            }
+          });
+          await prisma.salaryAdvance.update({
+            where: { id: adv.id },
+            data: { status: 'PAID' }
+          });
+        }
+      }
+    }
 
     // Save Payroll Record
     const payment = await prisma.salaryPayment.create({
@@ -86,12 +217,16 @@ export async function POST(request: Request) {
         basicSalary: payroll.basicSalary,
         grossSalary: payroll.grossSalary,
         netSalary: payroll.netSalary,
-        status: status, // DRAFT, CALCULATED, APPROVED, PAID
-        // expenseId is left null until PAID
+        status: status,
+        expenseId,
+        paymentDate: status === 'PAID' ? new Date() : null,
+        paymentMethod: status === 'PAID' ? (paymentMethod || 'Bank Transfer') : null,
+        transactionRef: status === 'PAID' ? (transactionRef || null) : null,
+        paymentNote: status === 'PAID' ? (paymentNote || null) : null
       }
     });
 
-    // Save deductions if any
+    // Save deductions breakdown
     for (const ded of payroll.deductions) {
       await prisma.salaryDeduction.create({
         data: {
@@ -129,7 +264,7 @@ export async function POST(request: Request) {
         role: userRole,
         oldStatus: null,
         newStatus: status,
-        remarks: 'Payroll manually generated'
+        remarks: 'Payroll generated with fine/advance/overtime deductions'
       }
     });
 
@@ -160,7 +295,14 @@ export async function GET(request: Request) {
 
     const payments = await prisma.salaryPayment.findMany({
       where: { ...companyFilter, employee: { systemSource } },
-      include: { employee: true },
+      include: { 
+        employee: {
+          include: {
+            departmentRef: true,
+            designationRef: true
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
 

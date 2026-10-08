@@ -18,6 +18,7 @@ const row1Nav: NavItem[] = [
   { name: 'Members',      href: '/erp/hr/members',      icon: 'groups',       exact: false },
   { name: 'Departments',  href: '/erp/hr/departments',  icon: 'corporate_fare',exact: false },
   { name: 'Designations', href: '/erp/hr/designations', icon: 'work',         exact: false },
+  { name: 'Recruitment',  href: '/erp/hr/recruitment',  icon: 'person_search',exact: false },
 ];
 
 const row2Nav: NavItem[] = [
@@ -26,8 +27,11 @@ const row2Nav: NavItem[] = [
   { name: 'Leaves',       href: '/erp/hr/leaves',       icon: 'event_busy',   exact: false },
   { name: 'Tasks',        href: '/erp/hr/tasks',        icon: 'assignment',   exact: false },
   { name: 'Task Rewards', href: '/erp/hr/task-rewards', icon: 'military_tech',exact: false },
-  { name: 'Notices',      href: '/erp/hr/notices',      icon: 'campaign',     exact: false },
+  { name: 'Payroll',      href: '/erp/hr/payroll',      icon: 'payments',     exact: false },
+  { name: 'Performance',  href: '/erp/hr/performance',  icon: 'trending_up',  exact: false },
   { name: 'Fines',        href: '/erp/hr/fines',        icon: 'money_off',    exact: false },
+  { name: 'Notices',      href: '/erp/hr/notices',      icon: 'campaign',     exact: false },
+  { name: 'Reports',      href: '/erp/hr/reports',      icon: 'bar_chart',    exact: false },
   { name: 'Settings',     href: '/erp/hr/settings',     icon: 'settings',     exact: false },
 ];
 

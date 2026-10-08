@@ -16,6 +16,9 @@ interface AttendanceRecord {
   checkIn?: string;
   checkOut?: string;
   employeeId: string;
+  punishmentAmount?: number | string | null;
+  punishmentReason?: string | null;
+  reviewStatus?: string | null;
 }
 
 interface Employee {

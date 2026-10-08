@@ -734,7 +734,7 @@ export default function ProductDetailsPage() {
                     color: 'var(--text-main)',
                     fontSize: '0.825rem',
                     outline: 'none',
-                    boxBox: 'border-box'
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>

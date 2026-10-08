@@ -108,16 +108,15 @@ export async function receiveGoods(companyId: string, userId: string, id: string
           warehouseId: grn.warehouseId,
           quantity: line.quantityReceived,
           movementType: "IN",
-          sourceType: "GOODS_RECEIPT",
-          sourceId: grn.id,
-          reference: grn.grnNumber,
-          createdById: userId
+          referenceType: "GOODS_RECEIPT",
+          referenceId: grn.id,
+          balanceAfter: line.quantityReceived,
         }
       });
 
       // Update ProductWarehouse balance
-      const pw = await prisma.productWarehouse.findUnique({
-        where: { companyId_productId_warehouseId: { companyId, productId: line.productId, warehouseId: grn.warehouseId } }
+      const pw = await prisma.productWarehouse.findFirst({
+        where: { companyId, productId: line.productId, warehouseId: grn.warehouseId }
       });
 
       if (pw) {
@@ -213,15 +212,19 @@ export async function validateReceipt(companyId: string, id: string, allowedStat
 }
 
 export async function createFIFO(companyId: string, productId: string, warehouseId: string, quantity: any, unitCost: any) {
+  const qty = Number(quantity);
+  const cost = Number(unitCost);
   await prisma.inventoryValuationLayer.create({
     data: {
       companyId,
       productId,
       warehouseId,
-      quantity,
-      remainingQty: quantity,
-      unitCost,
-      status: "OPEN"
+      quantity: qty,
+      remainingQuantity: qty,
+      unitCost: cost,
+      totalCost: qty * cost,
+      layerType: "IN",
+      valuationMethod: "FIFO"
     }
   });
 }

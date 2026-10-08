@@ -3,8 +3,9 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { markWon, markLost, archiveOpportunity, restoreOpportunity, moveStage } from "@/lib/crm/opportunityService";
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -17,20 +18,20 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     switch (data.action) {
       case "WON":
-        opportunity = await markWon(companyId, params.id, userId);
+        opportunity = await markWon(companyId, id, userId);
         break;
       case "LOST":
-        opportunity = await markLost(companyId, params.id, userId, data.reason);
+        opportunity = await markLost(companyId, id, userId, data.reason);
         break;
       case "ARCHIVE":
-        opportunity = await archiveOpportunity(companyId, params.id, userId);
+        opportunity = await archiveOpportunity(companyId, id, userId);
         break;
       case "RESTORE":
-        opportunity = await restoreOpportunity(companyId, params.id, userId);
+        opportunity = await restoreOpportunity(companyId, id, userId);
         break;
       case "MOVE_STAGE":
         if (!data.stageId) throw new Error("stageId is required");
-        opportunity = await moveStage(companyId, params.id, userId, data.stageId);
+        opportunity = await moveStage(companyId, id, userId, data.stageId);
         break;
       default:
         throw new Error("Invalid action");

@@ -659,7 +659,7 @@ export default function HRSettingsPage() {
     setLeaveError("");
     const policy = type.leavePolicies?.[0];
     const model = type.quotaModel || (type.description?.includes("[TIMER_CONFIG:") || type.description?.includes("[QUOTA:SHORT_BREAK]") ? "SHORT_BREAK" : type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
-    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[(TIMER_CONFIG:{.*?}|QUOTA:(ANNUAL|MONTHLY|DAILY|SHORT_BREAK))\]\s*/s, '') : "");
+    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[(TIMER_CONFIG:{[\s\S]*?}|QUOTA:(ANNUAL|MONTHLY|DAILY|SHORT_BREAK))\]\s*/, '') : "");
     setLeaveForm({
       name: type.name,
       description: cleanDesc,
@@ -1472,7 +1472,7 @@ export default function HRSettingsPage() {
                   leaveTypes.map((type) => {
                     const policy = type.leavePolicies?.[0];
                     const model = type.quotaModel || (type.description?.includes("[TIMER_CONFIG:") || type.description?.includes("[QUOTA:SHORT_BREAK]") ? "SHORT_BREAK" : type.description?.includes("[QUOTA:MONTHLY]") ? "MONTHLY" : type.description?.includes("[QUOTA:DAILY]") ? "DAILY" : "ANNUAL");
-                    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[(TIMER_CONFIG:{.*?}|QUOTA:(ANNUAL|MONTHLY|DAILY|SHORT_BREAK))\]\s*/s, '') : "");
+                    const cleanDesc = type.displayDescription || (type.description ? type.description.replace(/^\[(TIMER_CONFIG:{[\s\S]*?}|QUOTA:(ANNUAL|MONTHLY|DAILY|SHORT_BREAK))\]\s*/, '') : "");
                     const rate = policy ? Number(policy.accrualRate) : 0;
 
                     return (

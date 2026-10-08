@@ -4,14 +4,17 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 
 export interface LogAuditParams {
-  module: string;
+  module?: string;
   entityType: string;
   entityId: string;
   action: string;
   description?: string;
+  details?: any;
   beforeValue?: Record<string, any> | string | null;
   afterValue?: Record<string, any> | string | null;
   status?: "SUCCESS" | "FAILED";
+  companyId?: string;
+  userId?: string;
 }
 
 const SENSITIVE_KEYS = ["password", "token", "secret", "apikey", "authorization"];
@@ -55,21 +58,24 @@ function maskSensitiveData(payload: any): any {
  * Safely masks secrets and fetches IP/User-Agent from Next.js headers.
  */
 export async function logAudit({
-  module,
+  module = "PROCUREMENT",
   entityType,
   entityId,
   action,
   description,
+  details,
   beforeValue,
   afterValue,
   status = "SUCCESS",
+  companyId: explicitCompanyId,
+  userId: explicitUserId,
 }: LogAuditParams) {
   try {
-    const companyId = await getCompanyId().catch(() => null);
+    const companyId = explicitCompanyId || (await getCompanyId().catch(() => null));
     if (!companyId) return null; // We only log tenant-specific events right now.
 
     const session = await getSession();
-    const userId = session?.user?.id;
+    const userId = explicitUserId || session?.user?.id;
 
     const headersList = await headers();
     const ipAddress = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || null;
@@ -77,6 +83,7 @@ export async function logAudit({
 
     const maskedBefore = beforeValue ? JSON.stringify(maskSensitiveData(beforeValue)) : null;
     const maskedAfter = afterValue ? JSON.stringify(maskSensitiveData(afterValue)) : null;
+    const finalDescription = description || (typeof details === "string" ? details : details ? JSON.stringify(details) : `${action} on ${entityType}`);
 
     const audit = await prisma.globalAuditLog.create({
       data: {
@@ -86,7 +93,7 @@ export async function logAudit({
         entityType,
         entityId,
         action,
-        description,
+        description: finalDescription,
         beforeValue: maskedBefore,
         afterValue: maskedAfter,
         ipAddress,

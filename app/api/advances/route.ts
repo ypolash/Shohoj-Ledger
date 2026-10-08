@@ -120,10 +120,10 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, status } = body;
+    const { id, status, repaymentAmount } = body;
 
-    if (!id || !status) {
-      return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "Missing advance ID" }, { status: 400 });
     }
 
     const existingAdvance = await prisma.advance.findFirst({
@@ -134,10 +134,45 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Advance not found or access denied" }, { status: 404 });
     }
 
+    let newRemaining = Number(existingAdvance.remainingAmount);
+    let repaidAmountRecorded = 0;
+
+    if (repaymentAmount && Number(repaymentAmount) > 0) {
+      const repayAmt = Number(repaymentAmount);
+      repaidAmountRecorded = Math.min(newRemaining, repayAmt);
+      newRemaining = Math.max(0, newRemaining - repayAmt);
+    } else if (status === "REPAID" || status === "SETTLED" || status === "DEDUCTED") {
+      repaidAmountRecorded = newRemaining;
+      newRemaining = 0;
+    }
+
+    const newStatus = newRemaining === 0 ? "REPAID" : (status || existingAdvance.status);
+
     const updatedAdvance = await prisma.advance.update({
       where: { id },
-      data: { status }
+      data: { 
+        remainingAmount: newRemaining,
+        status: newStatus
+      }
     });
+
+    if (repaidAmountRecorded > 0) {
+      const { createLedgerEntry } = await import("@/lib/ledger");
+      const { getSession } = await import("@/lib/session");
+      const session = await getSession();
+
+      await createLedgerEntry({
+        companyId: companyIdForGuard,
+        module: 'Advance',
+        referenceId: updatedAdvance.id,
+        amount: repaidAmountRecorded,
+        isDebit: true, // Debit Bank (Cash recovered from advance repayment)
+        accountType: 'Advance',
+        description: `Advance Repayment Received (${newStatus})`,
+        createdById: session?.user?.id,
+        systemSource: updatedAdvance.systemSource
+      });
+    }
 
     return NextResponse.json(updatedAdvance);
   } catch (error) {

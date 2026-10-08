@@ -3,9 +3,7 @@ import { withCompany, getCompanyId } from "@/lib/company/companyFilter";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calculateSettlement } from "@/lib/calculations";
-
 import { requireModule } from "@/lib/modules/moduleGuard";
-
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
 export async function GET(request: Request) {
@@ -27,7 +25,7 @@ export async function GET(request: Request) {
     const systemSourceCondition = isErp ? { in: ["ERP", "ERP_CRM"] } : { in: ["LEGACY", "ERP_CRM"] };
 
     if (isNaN(month) || isNaN(year)) {
-      // Just fetch all settlements
+      // Fetch all settlements
       const settlements = await prisma.settlement.findMany({
         where: { ...(await withCompany()), systemSource },
         orderBy: { createdAt: 'desc' }
@@ -35,12 +33,13 @@ export async function GET(request: Request) {
       return NextResponse.json(settlements);
     }
 
-    // PREVIEW CALCULATION for a specific month/year
-    const startDate = new Date(year, month - 1, 1);
+    // PREVIEW CALCULATION for a specific month/year with exact boundaries
+    const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     const incomes = await prisma.income.findMany({
-      where: { ...(await withCompany()),
+      where: { 
+        ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
         paymentStatus: { in: ["PAID", "PARTIAL"] },
         shareable: true,
@@ -49,97 +48,30 @@ export async function GET(request: Request) {
     });
 
     const expenses = await prisma.expense.findMany({
-      where: { ...(await withCompany()),
+      where: { 
+        ...(await withCompany()),
         createdAt: { gte: startDate, lte: endDate },
-        approvalStatus: "APPROVED",
+        approvalStatus: { in: ["APPROVED", "Approved"] },
         systemSource: systemSourceCondition
       }
     });
 
-    const totalIncome = incomes.reduce((sum, inc) => sum + Number(inc.received), 0);
-    const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
-    const netProfit = totalIncome - totalExpenses;
+    const totalIncome = incomes.reduce((sum, inc) => sum + Number(inc.received || 0), 0);
+    const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+    const netProfit = Math.round((totalIncome - totalExpenses) * 100) / 100;
 
-    // Distribution logic by category
-    const projectIncomes: Record<string, { total: number; category: string }> = {};
-    const nonProjectIncomes: Array<{ amount: number; category: string }> = [];
-
-    incomes.forEach(inc => {
-      if (inc.projectId) {
-        if (!projectIncomes[inc.projectId]) {
-          projectIncomes[inc.projectId] = { total: 0, category: inc.category };
-        }
-        projectIncomes[inc.projectId].total += Number(inc.received);
-      } else {
-        nonProjectIncomes.push({ amount: Number(inc.received), category: inc.category });
-      }
-    });
-
-    const projectExpenses: Record<string, number> = {};
-    let generalExpense = 0;
-
-    expenses.forEach(exp => {
-      if (exp.projectId) {
-        projectExpenses[exp.projectId] = (projectExpenses[exp.projectId] || 0) + Number(exp.amount);
-      } else {
-        generalExpense += Number(exp.amount);
-      }
-    });
-
-    let ceoShare = 0;
-    let developerShare = 0;
-    let advisorShare = 0;
-    let companyShare = 0;
-
-    // 1. Calculate shares from project-specific income minus project-specific expenses
-    Object.keys(projectIncomes).forEach(projectId => {
-      const pIncome = projectIncomes[projectId].total;
-      const pExpense = projectExpenses[projectId] || 0;
-      const pNet = pIncome - pExpense;
-      
-      if (pNet > 0) {
-        const shares = calculateSettlement(pNet, projectIncomes[projectId].category);
-        ceoShare += shares.ceo;
-        developerShare += shares.developer;
-        advisorShare += shares.advisor;
-        companyShare += shares.company;
-      }
-    });
-
-    // 2. Add non-project income shares (using their explicit category)
-    nonProjectIncomes.forEach(inc => {
-      if (inc.amount > 0) {
-        const shares = calculateSettlement(inc.amount, inc.category);
-        ceoShare += shares.ceo;
-        developerShare += shares.developer;
-        advisorShare += shares.advisor;
-        companyShare += shares.company;
-      }
-    });
-
-    // 3. Deduct general expenses proportionally from everyone's gross shares
-    if (generalExpense > 0) {
-      const grossShares = ceoShare + developerShare + advisorShare + companyShare;
-      if (grossShares > 0) {
-        ceoShare = Math.max(0, ceoShare - generalExpense * (ceoShare / grossShares));
-        developerShare = Math.max(0, developerShare - generalExpense * (developerShare / grossShares));
-        advisorShare = Math.max(0, advisorShare - generalExpense * (advisorShare / grossShares));
-        companyShare = Math.max(0, companyShare - generalExpense * (companyShare / grossShares));
-      } else {
-        // If there's no income but there are general expenses, it hits the company reserve
-        companyShare -= generalExpense;
-      }
-    }
+    // Use unified profit distribution engine with loss protection
+    const shares = calculateSettlement(netProfit, 'General');
 
     return NextResponse.json({
       period: `${startDate.toLocaleString('default', { month: 'long' })} ${year}`,
-      totalIncome,
-      totalExpenses,
+      totalIncome: Math.round(totalIncome * 100) / 100,
+      totalExpenses: Math.round(totalExpenses * 100) / 100,
       netProfit,
-      ceoShare,
-      developerShare,
-      advisorShare,
-      companyShare
+      ceoShare: shares.ceo,
+      developerShare: shares.developer,
+      advisorShare: shares.advisor,
+      companyShare: shares.company
     });
   } catch (error) {
     console.error("Error with settlements GET:", error);
@@ -162,16 +94,30 @@ export async function POST(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
+    // Check if an executed settlement already exists for this period
+    const existing = await prisma.settlement.findFirst({
+      where: { companyId: companyIdForGuard, period, systemSource }
+    });
+
+    if (existing && existing.status === 'EXECUTED') {
+      return NextResponse.json({ error: "A finalized settlement already exists for this period and cannot be overwritten." }, { status: 400 });
+    }
+
+    // Delete existing pending settlement for clean regeneration
+    if (existing && existing.status === 'PENDING') {
+      await prisma.settlement.delete({ where: { id: existing.id } });
+    }
+
     const settlement = await prisma.settlement.create({
       data: {
         companyId: companyIdForGuard,
         period,
-        totalIncome,
-        totalExpenses,
-        ceoShare,
-        developerShare,
-        advisorShare,
-        companyShare,
+        totalIncome: Number(totalIncome),
+        totalExpenses: Number(totalExpenses),
+        ceoShare: Number(ceoShare),
+        developerShare: Number(developerShare),
+        advisorShare: Number(advisorShare),
+        companyShare: Number(companyShare),
         status: "PENDING",
         systemSource
       }
@@ -209,24 +155,24 @@ export async function PATCH(request: Request) {
     }
 
     // Execute the settlement within a transaction
-    const [updatedSettlement, reserveDeposit] = await prisma.$transaction([
+    const [updatedSettlement] = await prisma.$transaction([
       // 1. Mark Settlement as Executed
       prisma.settlement.update({
         where: { id },
         data: { status: "EXECUTED" }
       }),
-      // 2. Auto-transfer the Company portion to the Reserve Balance
-      prisma.reserveTransaction.create({
-        data: {
-          companyId: companyIdForGuard,
-          type: "DEPOSIT",
-          amount: settlement.companyShare,
-          reason: `Auto-deposit from ${settlement.period} Settlement`,
-          systemSource
-          // Note: The current Prisma schema for ReserveTransaction might not have settlementId explicitly linked,
-          // but we can add it to the reason/description.
-        }
-      })
+      // 2. Auto-transfer the positive Company portion to the Reserve Balance
+      ...(Number(settlement.companyShare) > 0 ? [
+        prisma.reserveTransaction.create({
+          data: {
+            companyId: companyIdForGuard,
+            type: "DEPOSIT",
+            amount: settlement.companyShare,
+            reason: `Auto-deposit from ${settlement.period} Settlement`,
+            systemSource
+          }
+        })
+      ] : [])
     ]);
 
     return NextResponse.json(updatedSettlement);
@@ -260,18 +206,13 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Settlement not found" }, { status: 404 });
     }
 
-    // Use a transaction to delete the settlement and its auto-deposit
-    await prisma.$transaction([
-      prisma.reserveTransaction.deleteMany({
-        where: { ...(await withCompany()),
-          reason: `Auto-deposit from ${settlement.period} Settlement`,
-          systemSource
-        }
-      }),
-      prisma.settlement.delete({
-        where: { id }
-      })
-    ]);
+    if (settlement.status === "EXECUTED") {
+      return NextResponse.json({ error: "Cannot delete an executed settlement record. Reversal voucher required." }, { status: 400 });
+    }
+
+    await prisma.settlement.delete({
+      where: { id }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

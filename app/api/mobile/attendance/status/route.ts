@@ -75,15 +75,48 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
+    const { dutySchedule } = await getEffectiveDutySchedule(employee.id, employee.companyId);
+
     let currentStatus = attendance?.status;
     if (!currentStatus) {
-      currentStatus = isFriday ? "WEEKLY_OFF" : "PENDING";
+      // Check if employee has an approved leave request for today
+      const approvedLeaveToday = await prisma.leaveRequest.findFirst({
+        where: {
+          employeeId: employee.id,
+          companyId: employee.companyId,
+          status: "APPROVED",
+          startDate: { lte: endOfServerDay },
+          endDate: { gte: startOfServerDay },
+        }
+      });
+
+      if (approvedLeaveToday) {
+        currentStatus = "LEAVE";
+      } else {
+        // If not on approved leave, check if duty shift has already finished today without check-in
+        const shiftEndStr = dutySchedule?.endTime || "18:00";
+        const [endHour, endMin] = shiftEndStr.split(":").map(Number);
+        
+        const timeFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Dhaka",
+          hour: "numeric",
+          minute: "numeric",
+          hour12: false
+        });
+        const [currentHour, currentMin] = timeFormatter.format(serverTime).split(":").map(Number);
+        const currentMins = (currentHour || 0) * 60 + (currentMin || 0);
+        const shiftEndMins = (endHour || 18) * 60 + (endMin || 0);
+
+        if (!isFriday && currentMins > shiftEndMins) {
+          currentStatus = "ABSENT";
+        } else {
+          currentStatus = isFriday ? "WEEKLY_OFF" : "PENDING";
+        }
+      }
     }
 
     const checkInTimeIso = attendance?.checkInTime ? attendance.checkInTime.toISOString() : null;
     const checkOutTimeIso = attendance?.checkOutTime ? attendance.checkOutTime.toISOString() : null;
-
-    const { dutySchedule } = await getEffectiveDutySchedule(employee.id, employee.companyId);
 
     return NextResponse.json({
       success: true,

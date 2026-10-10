@@ -149,11 +149,17 @@ export default function AttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filterEmpId, setFilterEmpId] = useState('');
-  const [filterDate, setFilterDate] = useState('');
+  const [filterDate, setFilterDate] = useState(() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    } catch {
+      return new Date().toISOString().slice(0, 10);
+    }
+  });
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState<'DATE_WISE' | 'FLAT_LIST'>('DATE_WISE');
   const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
-  const [datePreset, setDatePreset] = useState<'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH'>('ALL');
+  const [datePreset, setDatePreset] = useState<'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'CUSTOM'>('TODAY');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
@@ -378,6 +384,15 @@ export default function AttendancePage() {
       let matchesDate = true;
       if (filterDate) {
         matchesDate = rDateKey === filterDate;
+      } else if (datePreset === 'TODAY') {
+        const today = new Date();
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: officeTiming.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(today);
+        matchesDate = rDateKey === todayStr;
+      } else if (datePreset === 'YESTERDAY') {
+        const yest = new Date();
+        yest.setDate(yest.getDate() - 1);
+        const yestStr = new Intl.DateTimeFormat('en-CA', { timeZone: officeTiming.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(yest);
+        matchesDate = rDateKey === yestStr;
       } else if (datePreset === 'THIS_WEEK') {
         const today = new Date();
         const rDate = new Date(rDateKey);

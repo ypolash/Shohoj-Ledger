@@ -5,6 +5,201 @@ import { withCompany } from "@/lib/company/companyFilter";
 import { requireModule } from "@/lib/modules/moduleGuard";
 import { getSession } from "@/lib/session";
 
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const companyFilter = await withCompany();
+  const companyId = companyFilter.companyId;
+
+  const moduleGuard = await requireModule(companyId || "", "PAYROLL");
+  if (moduleGuard) return moduleGuard;
+
+  const rbacGuard = await requirePermission("PAYROLL_VIEW");
+  if (rbacGuard) return rbacGuard;
+
+  try {
+    const payment = await prisma.salaryPayment.findFirst({
+      where: { ...companyFilter, id },
+      include: {
+        employee: {
+          include: {
+            departmentRef: true,
+            designationRef: true
+          }
+        },
+        audits: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!payment) {
+      return NextResponse.json({ error: 'Payroll record not found' }, { status: 404 });
+    }
+
+    const { employeeId, month, year } = payment;
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    // 1. Fetch all attendances for the month
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        ...companyFilter,
+        employeeId,
+        date: { gte: startDate, lt: endDate }
+      },
+      orderBy: { date: 'asc' }
+    });
+
+    // 2. Fetch leave requests
+    const leaves = await prisma.leaveRequest.findMany({
+      where: {
+        ...companyFilter,
+        employeeId,
+        OR: [
+          { startDate: { gte: startDate, lt: endDate } },
+          { endDate: { gte: startDate, lt: endDate } }
+        ]
+      },
+      orderBy: { startDate: 'desc' }
+    });
+
+    // 3. Fetch employee fines (all fines recorded in this period or pending/deducted)
+    const fines = await prisma.employeeFine.findMany({
+      where: {
+        companyId: companyId!,
+        employeeId,
+        OR: [
+          { date: { gte: startDate, lt: endDate } },
+          { createdAt: { gte: startDate, lt: endDate } }
+        ]
+      },
+      orderBy: { date: 'desc' }
+    });
+
+    // 4. Fetch bonuses
+    const bonuses = await prisma.bonus.findMany({
+      where: {
+        ...companyFilter,
+        employeeId,
+        month,
+        year
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // 5. Fetch calculated salary deductions
+    const deductions = await prisma.salaryDeduction.findMany({
+      where: {
+        companyId: companyId!,
+        employeeId,
+        month,
+        year
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    // 6. Fetch task rewards
+    const taskRewards = await prisma.taskRewardSubmission.findMany({
+      where: {
+        employeeId,
+        createdAt: { gte: startDate, lt: endDate }
+      },
+      include: {
+        taskReward: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // 7. Fetch overtimes
+    const overtimes = await prisma.attendanceOvertime.findMany({
+      where: {
+        employeeId,
+        attendance: {
+          date: { gte: startDate, lt: endDate }
+        }
+      },
+      include: {
+        attendance: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // 8. Fetch active salary advances & recoveries
+    const salaryAdvances = await prisma.salaryAdvance.findMany({
+      where: {
+        companyId: companyId!,
+        employeeId
+      },
+      include: {
+        recoveries: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // 9. Fetch employee loans
+    const loans = await prisma.employeeLoan.findMany({
+      where: {
+        companyId: companyId!,
+        employeeId
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Summarize telemetry metrics
+    const presentRecords = attendances.filter(a => a.status === 'PRESENT');
+    const absentRecords = attendances.filter(a => a.status === 'ABSENT');
+    const lateRecords = attendances.filter(a => (a.lateMinutes && a.lateMinutes > 0) || a.status === 'LATE');
+    const halfDayRecords = attendances.filter(a => a.status === 'HALF_DAY');
+    const totalLateMinutes = lateRecords.reduce((acc, curr) => acc + (curr.lateMinutes || 0), 0);
+    const totalPunishmentAmount = attendances.reduce((acc, curr) => acc + Number(curr.punishmentAmount || 0), 0);
+    const totalFineAmount = fines.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+    const totalBonusAmount = bonuses.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+    const totalTaskRewardAmount = taskRewards.reduce((acc, curr) => acc + Number(curr.rewardAmount || 0), 0);
+
+    return NextResponse.json({
+      payment,
+      telemetry: {
+        totalAttendanceLogs: attendances.length,
+        presentDays: presentRecords.length,
+        absentDays: absentRecords.length,
+        lateDays: lateRecords.length,
+        halfDays: halfDayRecords.length,
+        totalLateMinutes,
+        totalPunishmentAmount,
+        totalFineAmount,
+        totalBonusAmount,
+        totalTaskRewardAmount,
+      },
+      fines,
+      attendances,
+      absentRecords,
+      lateRecords,
+      leaves,
+      bonuses,
+      deductions,
+      taskRewards,
+      overtimes,
+      salaryAdvances,
+      loans,
+      audits: payment.audits || []
+    });
+  } catch (error) {
+    console.error('Failed to fetch payroll review detail:', error);
+    return NextResponse.json({ error: 'Failed to fetch payroll review details' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   

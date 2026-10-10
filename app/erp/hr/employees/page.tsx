@@ -50,6 +50,21 @@ interface Designation {
   name: string;
 }
 
+const isTemporaryStaff = (emp: any) => {
+  const type = (emp.employmentType || '').toLowerCase();
+  const empId = (emp.employeeId || '').toUpperCase();
+  const dept = (emp.departmentRef?.name || emp.department || '').toLowerCase();
+  const desig = (emp.designationRef?.name || emp.designation || '').toLowerCase();
+  const loc = typeof emp.location === 'string' ? emp.location : '';
+
+  if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
+  if (empId.startsWith('FL-') || empId.startsWith('MDL-')) return true;
+  if (['freelance', 'model talent', 'modeling agency'].includes(dept)) return true;
+  if (desig.includes('freelance') || desig.includes('contractor') || desig.includes('model talent')) return true;
+  if (loc.includes('FREELANCER') || loc.includes('MODEL_TALENT')) return true;
+  return false;
+};
+
 /**
  * ERP HR — Redesigned Employee Directory & Workforce Hub
  * Enterprise directory with live metrics, multi-dimensional filters,
@@ -359,7 +374,8 @@ export default function EmployeesPage() {
 
       if (empRes && empRes.ok) {
         const empData = await empRes.json();
-        setEmployees(Array.isArray(empData) ? empData : []);
+        const regularEmployees = Array.isArray(empData) ? empData.filter(e => !isTemporaryStaff(e)) : [];
+        setEmployees(regularEmployees);
       }
       if (deptRes && deptRes.ok) {
         const deptData = await deptRes.json();
@@ -446,6 +462,8 @@ export default function EmployeesPage() {
   // Multi-dimensional filtering
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
+      if (isTemporaryStaff(emp)) return false;
+
       // Search
       const searchTarget = `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.employeeId || ''} ${emp.department || ''} ${emp.designation || ''}`.toLowerCase();
       const matchesSearch = !search || searchTarget.includes(search.toLowerCase());

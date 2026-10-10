@@ -451,9 +451,27 @@ export default function ModelsPage() {
                     {m.height && <span>{m.height} </span>}
                     {m.measurements && <span>({m.measurements})</span>}
                   </td>
-                  <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '12px' }}>
-                    <div>{m.phone}</div>
-                    <div style={{ fontSize: '11px' }}>{m.email}</div>
+                  <td style={{ padding: '12px 16px', color: '#cbd5e1', fontSize: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      {m.phone ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#38bdf8', fontWeight: 600 }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#38bdf8' }}>call</span>
+                          <span>{m.phone}</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '11px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>phone_disabled</span>
+                          <span>No Mobile</span>
+                        </div>
+                      )}
+
+                      {m.email && (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#94a3b8', fontSize: '11px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span>
+                          <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <span className={styles.statusBadge} style={{

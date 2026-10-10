@@ -39,7 +39,8 @@ export async function PATCH(
       ...extraData,
       ...(data.skills !== undefined ? { skills: Array.isArray(data.skills) ? data.skills : String(data.skills).split(',').map((s: string) => s.trim()) } : {}),
       ...(data.portfolioUrl !== undefined ? { portfolioUrl: data.portfolioUrl } : {}),
-      ...(data.notes !== undefined ? { notes: data.notes } : {})
+      ...(data.notes !== undefined ? { notes: data.notes } : {}),
+      ...(data.address !== undefined ? { address: data.address } : {})
     };
 
     const updated = await prisma.employee.update({
@@ -61,6 +62,7 @@ export async function PATCH(
       name: `${updated.firstName} ${updated.lastName}`.trim(),
       email: updated.email,
       phone: updated.phone,
+      address: updatedExtra.address || '',
       role: updated.designation,
       rate: Number(updated.basicSalary) || 0,
       status: updated.status,

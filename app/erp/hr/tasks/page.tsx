@@ -71,6 +71,34 @@ function isChecklistTask(task: Task): boolean {
   return false;
 }
 
+function getLocalDayString(d: Date | string | null | undefined): string {
+  if (!d) return "";
+  const dateObj = new Date(d);
+  if (isNaN(dateObj.getTime())) return "";
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isDateInCurrentWeek(d: Date | string | null | undefined): boolean {
+  if (!d) return false;
+  const target = new Date(d);
+  if (isNaN(target.getTime())) return false;
+
+  const now = new Date();
+  const currentDay = now.getDay();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - currentDay);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  return target >= startOfWeek && target <= endOfWeek;
+}
+
 const EMPTY_TASK_FORM = {
   taskType: "PLAIN" as "PLAIN" | "CHECKLIST",
   title: "",
@@ -88,12 +116,15 @@ export default function HRTasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
-  // Filtering & Search
+  // Filtering, Search & Sorting
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [selectedPriority, setSelectedPriority] = useState("ALL");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("ALL");
   const [selectedType, setSelectedType] = useState("ALL");
+  const [selectedDateFilter, setSelectedDateFilter] = useState<"TODAY" | "TOMORROW" | "THIS_WEEK" | "OVERDUE" | "ALL" | "CUSTOM">("TODAY");
+  const [customCalendarDate, setCustomCalendarDate] = useState("");
+  const [sortBy, setSortBy] = useState<"DATE_ASC" | "DATE_DESC" | "CREATED_DESC" | "CREATED_ASC" | "PRIORITY_DESC">("DATE_ASC");
 
   // Modals
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -151,9 +182,38 @@ export default function HRTasksPage() {
     return { total, pending, inProgress, completed, highPriority };
   }, [tasks]);
 
-  // Filtered Tasks
+  const todayStr = useMemo(() => getLocalDayString(new Date()), []);
+  const tomorrowStr = useMemo(() => {
+    const tom = new Date();
+    tom.setDate(tom.getDate() + 1);
+    return getLocalDayString(tom);
+  }, []);
+
+  // Counts for Date Filter Tabs
+  const dateCounts = useMemo(() => {
+    let today = 0;
+    let tomorrow = 0;
+    let thisWeek = 0;
+    let overdue = 0;
+    let all = tasks.length;
+
+    tasks.forEach((t) => {
+      const dueDay = getLocalDayString(t.dueDate);
+      const createdDay = getLocalDayString(t.createdAt);
+      const targetDay = dueDay || createdDay;
+
+      if (targetDay === todayStr || dueDay === todayStr) today++;
+      if (dueDay === tomorrowStr) tomorrow++;
+      if (isDateInCurrentWeek(t.dueDate || t.createdAt)) thisWeek++;
+      if (t.dueDate && t.status !== "Completed" && new Date(t.dueDate).getTime() < Date.now()) overdue++;
+    });
+
+    return { today, tomorrow, thisWeek, overdue, all };
+  }, [tasks, todayStr, tomorrowStr]);
+
+  // Filtered & Sorted Tasks
   const filteredTasks = useMemo(() => {
-    return tasks.filter((t) => {
+    const list = tasks.filter((t) => {
       const q = searchQuery.toLowerCase().trim();
       const matchSearch =
         !q ||
@@ -183,9 +243,69 @@ export default function HRTasksPage() {
         (selectedType === "CHECKLIST" && isChecklist) ||
         (selectedType === "PLAIN" && !isChecklist);
 
-      return matchSearch && matchStatus && matchPriority && matchEmployee && matchType;
+      // Date Filtering
+      let matchDate = true;
+      const dueDay = getLocalDayString(t.dueDate);
+      const createdDay = getLocalDayString(t.createdAt);
+
+      if (selectedDateFilter === "TODAY") {
+        matchDate = dueDay === todayStr || (!dueDay && createdDay === todayStr);
+      } else if (selectedDateFilter === "TOMORROW") {
+        matchDate = dueDay === tomorrowStr;
+      } else if (selectedDateFilter === "THIS_WEEK") {
+        matchDate = isDateInCurrentWeek(t.dueDate || t.createdAt);
+      } else if (selectedDateFilter === "OVERDUE") {
+        matchDate = !(!t.dueDate || t.status === "Completed") && new Date(t.dueDate).getTime() < Date.now();
+      } else if (selectedDateFilter === "CUSTOM" && customCalendarDate) {
+        matchDate = dueDay === customCalendarDate || (!dueDay && createdDay === customCalendarDate);
+      }
+
+      return matchSearch && matchStatus && matchPriority && matchEmployee && matchType && matchDate;
     });
-  }, [tasks, searchQuery, selectedStatus, selectedPriority, selectedEmployeeId, selectedType]);
+
+    // Sorting
+    const priorityWeights: Record<string, number> = {
+      urgent: 4,
+      high: 3,
+      medium: 2,
+      low: 1,
+    };
+
+    list.sort((a, b) => {
+      if (sortBy === "DATE_ASC") {
+        const timeA = a.dueDate ? new Date(a.dueDate).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() + 9999999999 : 99999999999);
+        const timeB = b.dueDate ? new Date(b.dueDate).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() + 9999999999 : 99999999999);
+        return timeA - timeB;
+      } else if (sortBy === "DATE_DESC") {
+        const timeA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+        const timeB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+        return timeB - timeA;
+      } else if (sortBy === "CREATED_DESC") {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      } else if (sortBy === "CREATED_ASC") {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      } else if (sortBy === "PRIORITY_DESC") {
+        const pA = priorityWeights[a.priority?.toLowerCase()] || 0;
+        const pB = priorityWeights[b.priority?.toLowerCase()] || 0;
+        return pB - pA;
+      }
+      return 0;
+    });
+
+    return list;
+  }, [
+    tasks,
+    searchQuery,
+    selectedStatus,
+    selectedPriority,
+    selectedEmployeeId,
+    selectedType,
+    selectedDateFilter,
+    customCalendarDate,
+    sortBy,
+    todayStr,
+    tomorrowStr,
+  ]);
 
   // Checklist Helpers for Form
   const handleAddTodoItem = () => {
@@ -592,6 +712,19 @@ export default function HRTasksPage() {
               ))}
             </select>
 
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className={styles.selectInput}
+              title="Sort Tasks"
+            >
+              <option value="DATE_ASC">📅 Due Date (Earliest / Date Wise)</option>
+              <option value="DATE_DESC">📅 Due Date (Latest First)</option>
+              <option value="CREATED_DESC">⏱️ Created (Newest First)</option>
+              <option value="CREATED_ASC">⏱️ Created (Oldest First)</option>
+              <option value="PRIORITY_DESC">⚡ Priority (Highest First)</option>
+            </select>
+
             <div className={styles.viewToggle}>
               <button
                 type="button"
@@ -614,6 +747,106 @@ export default function HRTasksPage() {
                 </span>
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Date Filter & Calendar Picker Row */}
+        <div className={styles.dateFilterRow}>
+          <div className={styles.dateFilterTabs}>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDateFilter("TODAY");
+                setCustomCalendarDate("");
+              }}
+              className={`${styles.dateFilterTab} ${selectedDateFilter === "TODAY" ? styles.dateFilterTabActive : ""}`}
+            >
+              <span>Today</span>
+              <span className={styles.dateTabCount}>{dateCounts.today}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDateFilter("TOMORROW");
+                setCustomCalendarDate("");
+              }}
+              className={`${styles.dateFilterTab} ${selectedDateFilter === "TOMORROW" ? styles.dateFilterTabActive : ""}`}
+            >
+              <span>Tomorrow</span>
+              <span className={styles.dateTabCount}>{dateCounts.tomorrow}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDateFilter("THIS_WEEK");
+                setCustomCalendarDate("");
+              }}
+              className={`${styles.dateFilterTab} ${selectedDateFilter === "THIS_WEEK" ? styles.dateFilterTabActive : ""}`}
+            >
+              <span>This Week</span>
+              <span className={styles.dateTabCount}>{dateCounts.thisWeek}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDateFilter("OVERDUE");
+                setCustomCalendarDate("");
+              }}
+              className={`${styles.dateFilterTab} ${selectedDateFilter === "OVERDUE" ? styles.dateFilterTabActive : ""}`}
+            >
+              <span>Overdue</span>
+              <span className={styles.dateTabCount}>{dateCounts.overdue}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDateFilter("ALL");
+                setCustomCalendarDate("");
+              }}
+              className={`${styles.dateFilterTab} ${selectedDateFilter === "ALL" ? styles.dateFilterTabActive : ""}`}
+            >
+              <span>All Dates</span>
+              <span className={styles.dateTabCount}>{dateCounts.all}</span>
+            </button>
+          </div>
+
+          {/* Interactive Calendar Date Picker */}
+          <div className={`${styles.calendarPickerWrapper} ${selectedDateFilter === "CUSTOM" && customCalendarDate ? styles.calendarPickerWrapperActive : ""}`}>
+            <span className={`material-symbols-outlined ${styles.calendarPickerLabel}`} style={{ fontSize: "16px", color: selectedDateFilter === "CUSTOM" && customCalendarDate ? "#2563eb" : "var(--text-muted)" }}>
+              calendar_month
+            </span>
+            <input
+              type="date"
+              value={customCalendarDate}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCustomCalendarDate(val);
+                if (val) {
+                  setSelectedDateFilter("CUSTOM");
+                } else {
+                  setSelectedDateFilter("TODAY");
+                }
+              }}
+              className={styles.calendarInput}
+              title="Pick specific date"
+            />
+            {customCalendarDate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomCalendarDate("");
+                  setSelectedDateFilter("TODAY");
+                }}
+                className={styles.calendarClearBtn}
+                title="Clear date filter"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -645,26 +878,49 @@ export default function HRTasksPage() {
           <div className={styles.emptyIcon}>
             <span className="material-symbols-outlined">assignment_turned_in</span>
           </div>
-          <h3 className={styles.emptyTitle}>No tasks found</h3>
+          <h3 className={styles.emptyTitle}>
+            {selectedDateFilter === "TODAY" ? "No Tasks for Today" : "No tasks found"}
+          </h3>
           <p className={styles.emptyDesc}>
-            {searchQuery || selectedStatus !== "ALL" || selectedPriority !== "ALL" || selectedEmployeeId !== "ALL"
+            {selectedDateFilter === "TODAY" && dateCounts.all > 0
+              ? `No tasks scheduled for today (${todayStr}). You currently have ${dateCounts.all} task(s) across other dates.`
+              : searchQuery || selectedStatus !== "ALL" || selectedPriority !== "ALL" || selectedEmployeeId !== "ALL" || selectedDateFilter !== "ALL"
               ? "No tasks match your current search and filter criteria."
               : "No tasks have been assigned yet. Start by assigning a duty to an employee."}
           </p>
-          <button
-            onClick={() => {
-              setTaskForm(EMPTY_TASK_FORM);
-              setNewTodoText("");
-              setIsAssignModalOpen(true);
-            }}
-            className={styles.primaryBtn}
-            style={{ marginTop: "8px" }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
-              add_task
-            </span>
-            Assign First Task
-          </button>
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginTop: "12px" }}>
+            {selectedDateFilter === "TODAY" && dateCounts.all > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedDateFilter("ALL")}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--border-main)",
+                  background: "var(--surface-bg, #f8fafc)",
+                  color: "var(--text-main)",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                View All Tasks ({dateCounts.all})
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setTaskForm(EMPTY_TASK_FORM);
+                setNewTodoText("");
+                setIsAssignModalOpen(true);
+              }}
+              className={styles.primaryBtn}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+                add_task
+              </span>
+              Assign New Task
+            </button>
+          </div>
         </div>
       ) : viewMode === "cards" ? (
         /* Cards View */

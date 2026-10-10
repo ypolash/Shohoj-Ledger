@@ -45,6 +45,8 @@ export async function GET() {
         }
       } catch (e) {}
 
+      const address = extraData.address || (emp.location && !emp.location.startsWith('{') ? emp.location : '');
+
       return {
         id: emp.id,
         employeeId: emp.employeeId,
@@ -52,7 +54,8 @@ export async function GET() {
         firstName: emp.firstName,
         lastName: emp.lastName,
         email: emp.email,
-        phone: emp.phone,
+        phone: emp.phone || extraData.phone || '',
+        address,
         role: emp.designation || 'Freelancer',
         department: emp.department || 'Freelance',
         rate: Number(emp.basicSalary) || 0,
@@ -96,6 +99,8 @@ export async function POST(request: Request) {
     const skills = Array.isArray(data.skills) ? data.skills : (data.skills ? String(data.skills).split(',').map(s => s.trim()) : ['Video Editing']);
     const portfolioUrl = (data.portfolioUrl || '').trim();
     const notes = (data.notes || '').trim();
+    const address = (data.address || '').trim();
+    const phone = (data.phone || '').trim();
     const status = data.status || 'ACTIVE';
 
     const employeeId = `FL-${Date.now().toString().slice(-6)}`;
@@ -105,6 +110,8 @@ export async function POST(request: Request) {
       skills,
       portfolioUrl,
       notes,
+      address,
+      phone,
       type: 'FREELANCER'
     });
 
@@ -115,7 +122,7 @@ export async function POST(request: Request) {
         firstName,
         lastName,
         email,
-        phone: data.phone || null,
+        phone: phone || null,
         designation: role,
         department: 'Freelance',
         joinDate: data.joinedAt ? new Date(data.joinedAt) : new Date(),
@@ -134,7 +141,8 @@ export async function POST(request: Request) {
       employeeId: employee.employeeId,
       name: `${employee.firstName} ${employee.lastName}`.trim(),
       email: employee.email,
-      phone: employee.phone,
+      phone: employee.phone || phone,
+      address,
       role: employee.designation,
       department: employee.department,
       rate: Number(employee.basicSalary) || 0,

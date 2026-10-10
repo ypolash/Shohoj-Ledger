@@ -113,8 +113,8 @@ export default function LoginPage() {
             <h2 className={styles.title}>Welcome Back</h2>
             <p className={styles.subtitle}>Sign in to your Shohoj Ledger workspace</p>
 
-            <form onSubmit={handleLogin} className={styles.form}>
-              <div className={styles.formGroup}>
+            <form onSubmit={handleLogin} className={styles.form} suppressHydrationWarning>
+              <div className={styles.formGroup} suppressHydrationWarning>
                 <label htmlFor="email" className={styles.label}>
                   Email or Employee ID
                 </label>
@@ -126,10 +126,12 @@ export default function LoginPage() {
                   className={styles.input}
                   placeholder="e.g. user@shohojsolution.com or EMP-101"
                   required
+                  autoComplete="username"
+                  suppressHydrationWarning
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={styles.formGroup} suppressHydrationWarning>
                 <div className={styles.passwordLabelRow}>
                   <label htmlFor="password" className={styles.label}>
                     Password
@@ -138,7 +140,7 @@ export default function LoginPage() {
                     Forgot Password?
                   </Link>
                 </div>
-                <div className={styles.passwordWrapper}>
+                <div className={styles.passwordWrapper} suppressHydrationWarning>
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -147,6 +149,8 @@ export default function LoginPage() {
                     className={styles.passwordInput}
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
+                    suppressHydrationWarning
                   />
                   <button
                     type="button"

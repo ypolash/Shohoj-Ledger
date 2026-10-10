@@ -12,6 +12,7 @@ interface Freelancer {
   lastName?: string;
   email?: string;
   phone?: string;
+  address?: string;
   role: string;
   department?: string;
   rate: number;
@@ -30,6 +31,7 @@ const EMPTY_FORM = {
   rate: '1500',
   email: '',
   phone: '',
+  address: '',
   skills: 'Premiere Pro, DaVinci Resolve, Color Grading',
   portfolioUrl: '',
   status: 'ACTIVE',
@@ -41,7 +43,7 @@ export default function FreelancePage() {
   const [search, setSearch] = useState('');
   const [selectedRole, setSelectedRole] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'BUSY' | 'INACTIVE'>('ALL');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal
@@ -358,9 +360,30 @@ export default function FreelancePage() {
 
               {/* Footer */}
               <div className={styles.cardFooter}>
-                <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {f.phone && <span>📞 {f.phone}</span>}
-                  {f.email && <span>✉️ {f.email}</span>}
+                <div style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {f.phone ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#38bdf8', fontWeight: 600 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#38bdf8' }}>call</span>
+                      {f.phone}
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#64748b', fontSize: '11px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>phone_disabled</span>
+                      No Mobile
+                    </span>
+                  )}
+                  {f.email && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span>
+                      {f.email}
+                    </span>
+                  )}
+                  {f.address && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#a78bfa' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#a78bfa' }}>location_on</span>
+                      {f.address}
+                    </span>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -374,6 +397,7 @@ export default function FreelancePage() {
                         rate: String(f.rate),
                         email: f.email || '',
                         phone: f.phone || '',
+                        address: f.address || '',
                         skills: (f.skills || []).join(', '),
                         portfolioUrl: f.portfolioUrl || '',
                         status: f.status,
@@ -445,9 +469,34 @@ export default function FreelancePage() {
                       ))}
                     </div>
                   </td>
-                  <td style={{ padding: '12px 16px', color: '#94a3b8', fontSize: '12px' }}>
-                    <div>{f.phone}</div>
-                    <div style={{ fontSize: '11px' }}>{f.email}</div>
+                  <td style={{ padding: '12px 16px', color: '#cbd5e1', fontSize: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      {f.phone ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#38bdf8', fontWeight: 600 }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#38bdf8' }}>call</span>
+                          <span>{f.phone}</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '11px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>phone_disabled</span>
+                          <span>No Mobile</span>
+                        </div>
+                      )}
+
+                      {f.email && (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#94a3b8', fontSize: '11px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span>
+                          <span style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.email}</span>
+                        </div>
+                      )}
+
+                      {f.address && (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#a78bfa', fontSize: '11px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#a78bfa' }}>location_on</span>
+                          <span>{f.address}</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <span className={styles.statusBadge} style={{
@@ -469,6 +518,7 @@ export default function FreelancePage() {
                           rate: String(f.rate),
                           email: f.email || '',
                           phone: f.phone || '',
+                          address: f.address || '',
                           skills: (f.skills || []).join(', '),
                           portfolioUrl: f.portfolioUrl || '',
                           status: f.status,
@@ -478,6 +528,7 @@ export default function FreelancePage() {
                         setShowModal(true);
                       }}
                       style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', marginRight: '8px' }}
+                      title="Edit"
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                     </button>
@@ -485,6 +536,7 @@ export default function FreelancePage() {
                       type="button"
                       onClick={() => handleDelete(f.id, f.name)}
                       style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
+                      title="Delete"
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                     </button>
@@ -553,7 +605,7 @@ export default function FreelancePage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>Phone Number</label>
+                  <label className={styles.label}>Mobile / Phone Number</label>
                   <input
                     type="text"
                     placeholder="e.g. +880 1700-000000"
@@ -587,6 +639,17 @@ export default function FreelancePage() {
                     <option value="INACTIVE">On Break / Inactive</option>
                   </select>
                 </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Address / Location</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Mirpur DOHS, Dhaka or Remote"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  className={styles.input}
+                />
               </div>
 
               <div className={styles.formGroup}>

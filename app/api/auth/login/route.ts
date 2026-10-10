@@ -155,10 +155,15 @@ export async function POST(req: Request) {
       { success: false, message: "Invalid credentials. Please check your email and password." },
       { status: 401 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login Error:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { 
+        success: false, 
+        message: process.env.NODE_ENV === "development" 
+          ? (error?.message || "Internal server error") 
+          : "Internal server error" 
+      },
       { status: 500 }
     );
   }

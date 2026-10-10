@@ -424,12 +424,20 @@ export default function PayrollPage() {
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '14px 18px' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                          {p.employee?.firstName} {p.employee?.lastName}
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          {p.employee?.designationRef?.name || p.employee?.designation || 'Staff'} · <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{p.employee?.employeeId}</span>
-                        </div>
+                        <Link
+                          href={`/erp/hr/payroll/review/${p.id}`}
+                          style={{ textDecoration: 'none', display: 'block' }}
+                        >
+                          <div style={{ fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {p.employee?.firstName} {p.employee?.lastName}
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)', opacity: 0.8 }}>
+                              open_in_new
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            {p.employee?.designationRef?.name || p.employee?.designation || 'Staff'} · <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{p.employee?.employeeId}</span>
+                          </div>
+                        </Link>
                       </td>
 
                       <td style={{ padding: '14px 18px', color: 'var(--text-secondary)', fontWeight: 500 }}>
@@ -470,6 +478,15 @@ export default function PayrollPage() {
 
                       <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Link
+                            href={`/erp/hr/payroll/review/${p.id}`}
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 8px', fontSize: '12px', color: '#3b82f6', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                            title="Review Audit: Fines, Absences, Activity"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                          </Link>
+
                           <button
                             onClick={() => { setSelectedRecord(p); setShowPayslipModal(true); }}
                             className="btn btn-secondary"

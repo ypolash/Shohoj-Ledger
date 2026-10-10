@@ -31,6 +31,8 @@ interface Employee {
   lastName: string;
   designation: string;
   department?: string;
+  employmentType?: string;
+  location?: string;
   workShiftId?: string;
   workShift?: {
     id: string;
@@ -41,6 +43,21 @@ interface Employee {
     nightShift?: boolean;
   };
 }
+
+const isTemporaryStaff = (emp: any) => {
+  const type = (emp.employmentType || '').toLowerCase();
+  const empId = (emp.employeeId || '').toUpperCase();
+  const dept = (emp.department || '').toLowerCase();
+  const desig = (emp.designation || '').toLowerCase();
+  const loc = typeof emp.location === 'string' ? emp.location : '';
+
+  if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
+  if (empId.startsWith('FL-') || empId.startsWith('MDL-')) return true;
+  if (['freelance', 'model talent', 'modeling agency'].includes(dept)) return true;
+  if (desig.includes('freelance') || desig.includes('contractor') || desig.includes('model talent')) return true;
+  if (loc.includes('FREELANCER') || loc.includes('MODEL_TALENT')) return true;
+  return false;
+};
 
 interface WorkShift {
   id: string;
@@ -169,7 +186,9 @@ export default function ShiftsAndDutyRosterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch duty roster');
 
-      setEmployees(data.employees || []);
+      const rawEmps = Array.isArray(data.employees) ? data.employees : [];
+      const regularEmps = rawEmps.filter((e: any) => !isTemporaryStaff(e));
+      setEmployees(regularEmps);
       setRosters(data.rosters || []);
       setShifts(data.shifts || []);
       if (data.shifts && data.shifts.length > 0 && !overrideForm.workShiftId) {
@@ -212,6 +231,7 @@ export default function ShiftsAndDutyRosterPage() {
   // Filtered employees
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
+      if (isTemporaryStaff(emp)) return false;
       const name = `${emp.firstName} ${emp.lastName}`.toLowerCase();
       const code = (emp.employeeId || '').toLowerCase();
       const desig = (emp.designation || '').toLowerCase();

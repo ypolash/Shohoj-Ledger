@@ -27,11 +27,19 @@ export async function GET(req: Request) {
       ? new Date(`${endDateParam}T23:59:59.999Z`) 
       : new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 12, 23, 59, 59, 999));
 
-    // 1. Fetch active employees
+    // 1. Fetch active employees (excluding temporary freelance and models)
     const employees = await prisma.employee.findMany({
       where: {
         companyId,
         status: "ACTIVE",
+        NOT: [
+          { employmentType: { in: ['Freelance', 'Freelancer', 'Contractor', 'freelance', 'freelancer', 'contractor', 'FREELANCE', 'Model', 'Talent', 'model', 'talent'] } },
+          { employeeId: { startsWith: 'FL-' } },
+          { employeeId: { startsWith: 'MDL-' } },
+          { location: { contains: 'FREELANCER' } },
+          { location: { contains: 'MODEL_TALENT' } },
+          { department: { in: ['Freelance', 'Model Talent', 'Modeling Agency', 'freelance', 'model talent', 'modeling agency'] } }
+        ],
         ...(employeeIdParam && { id: employeeIdParam }),
         ...(departmentIdParam && { departmentId: departmentIdParam })
       },

@@ -298,6 +298,125 @@
   color: #ffffff;
 }
 
+.dateFilterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-main, #e2e8f0);
+}
+
+.dateFilterTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.dateFilterTab {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-main, #e2e8f0);
+  background: var(--surface-bg, #f8fafc);
+  color: var(--text-secondary, #475569);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dateFilterTab:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.dateFilterTabActive {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.dateFilterTabActive:hover {
+  color: #ffffff;
+}
+
+.dateTabCount {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+}
+
+.dateFilterTabActive .dateTabCount {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.calendarPickerWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-bg, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 10px;
+  padding: 4px 10px;
+  transition: all 0.15s ease;
+}
+
+.calendarPickerWrapper:focus-within,
+.calendarPickerWrapperActive {
+  border-color: #2563eb;
+  background: var(--surface-card, #ffffff);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.calendarPickerLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendarInput {
+  border: none;
+  background: transparent;
+  color: var(--text-main, #0f172a);
+  font-size: 12.5px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.calendarClearBtn {
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.calendarClearBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
 .statusTabs {
   display: flex;
   align-items: center;

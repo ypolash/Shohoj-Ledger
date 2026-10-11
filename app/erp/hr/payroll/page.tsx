@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface PayrollRecord {
   id: string;
@@ -51,6 +52,7 @@ const statusColors: Record<string, { color: string; bg: string; border: string }
 };
 
 export default function PayrollPage() {
+  const router = useRouter();
   const [payments, setPayments] = useState<PayrollRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [summary, setSummary] = useState<any>({});
@@ -323,23 +325,25 @@ export default function PayrollPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '240px' }}>
+      <div className="glass-card" suppressHydrationWarning style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+        <div suppressHydrationWarning style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
+          <div suppressHydrationWarning style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '240px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
             <input
               type="text"
               placeholder="Search employee name or ID..."
               value={search}
               onChange={e => setSearch(e.target.value)}
+              suppressHydrationWarning
               style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', fontSize: '13px', outline: 'none', width: '100%' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div suppressHydrationWarning style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <select
               value={selectedMonth}
               onChange={e => setSelectedMonth(e.target.value)}
+              suppressHydrationWarning
               style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '13px' }}
             >
               {MONTHS.map((m, i) => (
@@ -350,6 +354,7 @@ export default function PayrollPage() {
             <select
               value={selectedYear}
               onChange={e => setSelectedYear(e.target.value)}
+              suppressHydrationWarning
               style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '13px' }}
             >
               {['2024', '2025', '2026', '2027'].map(y => (
@@ -419,15 +424,14 @@ export default function PayrollPage() {
                   return (
                     <tr
                       key={p.id}
-                      style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.15s ease' }}
+                      onClick={() => router.push(`/erp/hr/payroll/review/${p.id}`)}
+                      style={{ borderBottom: '1px solid var(--border-main)', cursor: 'pointer', transition: 'background 0.15s ease' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
+                      title="Click to view detailed payroll review"
                     >
                       <td style={{ padding: '14px 18px' }}>
-                        <Link
-                          href={`/erp/hr/payroll/review/${p.id}`}
-                          style={{ textDecoration: 'none', display: 'block' }}
-                        >
+                        <div>
                           <div style={{ fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {p.employee?.firstName} {p.employee?.lastName}
                             <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)', opacity: 0.8 }}>
@@ -437,7 +441,7 @@ export default function PayrollPage() {
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                             {p.employee?.designationRef?.name || p.employee?.designation || 'Staff'} · <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{p.employee?.employeeId}</span>
                           </div>
-                        </Link>
+                        </div>
                       </td>
 
                       <td style={{ padding: '14px 18px', color: 'var(--text-secondary)', fontWeight: 500 }}>
@@ -476,21 +480,23 @@ export default function PayrollPage() {
                         </span>
                       </td>
 
-                      <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                      <td style={{ padding: '14px 18px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                           <Link
                             href={`/erp/hr/payroll/review/${p.id}`}
                             className="btn btn-secondary"
-                            style={{ padding: '4px 8px', fontSize: '12px', color: '#3b82f6', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-                            title="Review Audit: Fines, Absences, Activity"
+                            style={{ padding: '5px 10px', fontSize: '12px', color: 'var(--primary, #3b82f6)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            title="View Details & Audit Review"
+                            onClick={e => e.stopPropagation()}
                           >
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>rate_review</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>visibility</span>
+                            <span>View</span>
                           </Link>
 
                           <button
-                            onClick={() => { setSelectedRecord(p); setShowPayslipModal(true); }}
+                            onClick={(e) => { e.stopPropagation(); setSelectedRecord(p); setShowPayslipModal(true); }}
                             className="btn btn-secondary"
-                            style={{ padding: '4px 8px', fontSize: '12px' }}
+                            style={{ padding: '5px 8px', fontSize: '12px', display: 'inline-flex', alignItems: 'center' }}
                             title="View Payslip"
                           >
                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>receipt_long</span>
@@ -498,9 +504,9 @@ export default function PayrollPage() {
 
                           {p.status === 'DRAFT' && (
                             <button
-                              onClick={() => handleStatusChange(p.id, 'APPROVED')}
+                              onClick={(e) => { e.stopPropagation(); handleStatusChange(p.id, 'APPROVED'); }}
                               className="btn btn-secondary"
-                              style={{ padding: '4px 8px', fontSize: '12px', color: '#3b82f6' }}
+                              style={{ padding: '5px 8px', fontSize: '12px', color: '#3b82f6', display: 'inline-flex', alignItems: 'center' }}
                               title="Approve Payroll"
                             >
                               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
@@ -509,9 +515,9 @@ export default function PayrollPage() {
 
                           {p.status === 'APPROVED' && (
                             <button
-                              onClick={() => { setSelectedRecord(p); setShowPayModal(true); }}
+                              onClick={(e) => { e.stopPropagation(); setSelectedRecord(p); setShowPayModal(true); }}
                               className="btn btn-primary"
-                              style={{ padding: '4px 10px', fontSize: '12px' }}
+                              style={{ padding: '5px 12px', fontSize: '12px' }}
                               title="Disburse / Mark Paid"
                             >
                               Pay

@@ -219,6 +219,39 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   try {
     const data = await request.json();
+
+    if (data.action === 'REDUCE_ATTENDANCE_PUNISHMENT') {
+      const { attendanceId, newPunishmentAmount, reason } = data;
+      const att = await prisma.attendance.findUnique({ where: { id: attendanceId } });
+      if (!att) return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });
+
+      const oldPunishment = Number(att.punishmentAmount || 0);
+      const newPunishment = Math.max(0, Number(newPunishmentAmount || 0));
+      const diff = newPunishment - oldPunishment;
+
+      await prisma.attendance.update({
+        where: { id: attendanceId },
+        data: {
+          punishmentAmount: newPunishment,
+          punishmentReason: reason ? `${att.punishmentReason || ''} [Reduction: ${reason}]` : att.punishmentReason
+        }
+      });
+
+      const existingPayment = await prisma.salaryPayment.findFirst({
+        where: { companyId: companyId!, id }
+      });
+
+      if (existingPayment && ['DRAFT', 'CALCULATED', 'SUBMITTED', 'APPROVED'].includes(existingPayment.status)) {
+        const newNet = Math.max(0, Number(existingPayment.netSalary) - diff);
+        await prisma.salaryPayment.update({
+          where: { id: existingPayment.id },
+          data: { netSalary: newNet }
+        });
+      }
+
+      return NextResponse.json({ success: true, newPunishmentAmount: newPunishment });
+    }
+
     const { status, paymentMethod, transactionRef, paymentNote, remarks } = data;
 
     const validStatuses = ['DRAFT', 'CALCULATED', 'SUBMITTED', 'APPROVED', 'PAID', 'LOCKED', 'ARCHIVED', 'CANCELLED'];

@@ -186,9 +186,41 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  // Fine Edit & Add State
+  const [editingFineId, setEditingFineId] = useState<string | null>(null);
+  const [editFineAmount, setEditFineAmount] = useState<string | number>('');
+  const [editFineReason, setEditFineReason] = useState<string>('');
+  const [editFineStatus, setEditFineStatus] = useState<string>('PENDING');
+  const [fineActionLoading, setFineActionLoading] = useState(false);
+
+  // Fine Reduction State
+  const [reducingFineId, setReducingFineId] = useState<string | null>(null);
+  const [reduceDiscountAmount, setReduceDiscountAmount] = useState<number | string>('');
+  const [reduceNewAmount, setReduceNewAmount] = useState<number | string>('');
+  const [reduceReason, setReduceReason] = useState<string>('Management pardon / waiver');
+  const [reducePreset, setReducePreset] = useState<number | null>(50);
+
+  // Attendance Penalty Reduction State
+  const [reducingAttendanceId, setReducingAttendanceId] = useState<string | null>(null);
+  const [reduceAttendanceNewAmount, setReduceAttendanceNewAmount] = useState<number | string>('');
+  const [reduceAttendanceReason, setReduceAttendanceReason] = useState<string>('Management penalty reduction');
+
+  const [showAddFineForm, setShowAddFineForm] = useState(false);
+  const [newFineAmount, setNewFineAmount] = useState<string | number>('');
+  const [newFineReason, setNewFineReason] = useState<string>('');
+  const [newFineDate, setNewFineDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleKpiCardClick = (tab: 'ledger' | 'activity' | 'fines' | 'attendance') => {
+    setActiveTab(tab);
+    const navElem = document.getElementById('reviewTabsNav');
+    if (navElem) {
+      navElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const loadData = useCallback(async () => {
@@ -209,6 +241,338 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
       setLoading(false);
     }
   }, [id]);
+
+  const handleStartEditFine = (fine: any) => {
+    setReducingFineId(null);
+    setEditingFineId(fine.id);
+    setEditFineAmount(fine.amount);
+    setEditFineReason(fine.reason || '');
+    setEditFineStatus(fine.status || 'PENDING');
+  };
+
+  const handleSaveEditFine = async (fineId: string) => {
+    if (!editFineAmount || Number(editFineAmount) < 0) {
+      showToast('Please specify a valid fine amount', 'error');
+      return;
+    }
+    if (!String(editFineReason).trim()) {
+      showToast('Please specify a violation reason for the fine', 'error');
+      return;
+    }
+    setFineActionLoading(true);
+    try {
+      const res = await fetch(`/api/hr/fines/${fineId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Number(editFineAmount),
+          reason: editFineReason,
+          status: editFineStatus,
+          payrollId: id
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to update fine');
+      showToast('Fine updated successfully');
+      setEditingFineId(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error updating fine', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  const handleDeleteFine = async (fineId: string) => {
+    if (!confirm('Are you sure you want to remove/waive this disciplinary fine?')) return;
+    setFineActionLoading(true);
+    try {
+      const res = await fetch(`/api/hr/fines/${fineId}?payrollId=${id}`, {
+        method: 'DELETE'
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to delete fine');
+      showToast('Disciplinary fine removed successfully');
+      setEditingFineId(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting fine', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  // Fine Reduction Handlers
+  const handleStartReduceFine = (fine: any) => {
+    setEditingFineId(null);
+    setReducingFineId(fine.id);
+    const orig = Number(fine.amount) || 0;
+    const discount50 = Math.round(orig * 0.5);
+    setReducePreset(50);
+    setReduceDiscountAmount(discount50);
+    setReduceNewAmount(orig - discount50);
+    setReduceReason('50% fine reduction granted by Management');
+  };
+
+  const handleSelectReducePreset = (fine: any, percent: number) => {
+    setReducePreset(percent);
+    const orig = Number(fine.amount) || 0;
+    const discount = Math.round((orig * percent) / 100);
+    const target = Math.max(0, orig - discount);
+    setReduceDiscountAmount(discount);
+    setReduceNewAmount(target);
+    if (percent === 100) {
+      setReduceReason('Waived 100% in full by Management');
+    } else {
+      setReduceReason(`${percent}% fine reduction granted by Management`);
+    }
+  };
+
+  const handleDiscountAmountChange = (fine: any, discountVal: string) => {
+    setReducePreset(null);
+    setReduceDiscountAmount(discountVal);
+    const orig = Number(fine.amount) || 0;
+    const numDisc = Number(discountVal) || 0;
+    setReduceNewAmount(Math.max(0, orig - numDisc));
+  };
+
+  const handleNewAmountChange = (fine: any, newVal: string) => {
+    setReducePreset(null);
+    setReduceNewAmount(newVal);
+    const orig = Number(fine.amount) || 0;
+    const numNew = Number(newVal) || 0;
+    setReduceDiscountAmount(Math.max(0, orig - numNew));
+  };
+
+  const handleConfirmReduceFine = async (fine: any) => {
+    const origAmount = Number(fine.amount) || 0;
+    const targetAmount = Math.max(0, Number(reduceNewAmount) || 0);
+    if (targetAmount >= origAmount) {
+      showToast('New fine amount must be less than current fine to reduce it', 'error');
+      return;
+    }
+
+    setFineActionLoading(true);
+    try {
+      const discount = origAmount - targetAmount;
+      const note = reduceReason.trim() || 'Management reduction';
+      const updatedReason = `${fine.reason || 'Disciplinary fine'} [Reduced from ৳${origAmount} to ৳${targetAmount}: ${note}]`;
+      const newStatus = targetAmount === 0 ? 'CANCELLED' : fine.status;
+
+      const res = await fetch(`/api/hr/fines/${fine.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: targetAmount,
+          reason: updatedReason,
+          status: newStatus,
+          payrollId: id
+        })
+      });
+
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to reduce fine');
+
+      showToast(`Fine reduced by ৳${discount.toLocaleString()}! Employee take-home pay increased.`);
+      setReducingFineId(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error reducing fine', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  const handleQuickWaiveFine = async (fine: any) => {
+    const amt = Number(fine.amount) || 0;
+    if (!confirm(`Waive 100% of this fine (৳${amt.toLocaleString()})? This immediately restores the amount to the employee's take-home pay.`)) {
+      return;
+    }
+
+    setFineActionLoading(true);
+    try {
+      const res = await fetch(`/api/hr/fines/${fine.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: 0,
+          status: 'CANCELLED',
+          reason: `${fine.reason || 'Disciplinary fine'} [Waived 100% by Management]`,
+          payrollId: id
+        })
+      });
+
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to waive fine');
+
+      showToast(`Fine waived in full! ৳${amt.toLocaleString()} restored to net salary.`);
+      setReducingFineId(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error waiving fine', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  // Attendance Punishment Handlers
+  const handleStartReduceAttendance = (att: any) => {
+    setReducingAttendanceId(att.id);
+    const curr = Number(att.punishmentAmount) || 0;
+    setReduceAttendanceNewAmount(Math.round(curr / 2));
+    setReduceAttendanceReason('50% penalty reduction by Management');
+  };
+
+  const handleConfirmReduceAttendance = async (att: any) => {
+    const orig = Number(att.punishmentAmount) || 0;
+    const target = Math.max(0, Number(reduceAttendanceNewAmount) || 0);
+
+    setFineActionLoading(true);
+    try {
+      const res = await fetch(`/api/payroll/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'REDUCE_ATTENDANCE_PUNISHMENT',
+          attendanceId: att.id,
+          newPunishmentAmount: target,
+          reason: reduceAttendanceReason.trim() || 'Reduced by Management'
+        })
+      });
+
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to reduce penalty');
+
+      showToast(`Attendance penalty reduced from ৳${orig} to ৳${target}!`);
+      setReducingAttendanceId(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error reducing penalty', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  const handleQuickWaiveAttendance = async (att: any) => {
+    const amt = Number(att.punishmentAmount) || 0;
+    if (!confirm(`Waive 100% of this attendance penalty (৳${amt.toLocaleString()})?`)) return;
+
+    setFineActionLoading(true);
+    try {
+      const res = await fetch(`/api/payroll/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'REDUCE_ATTENDANCE_PUNISHMENT',
+          attendanceId: att.id,
+          newPunishmentAmount: 0,
+          reason: 'Waived 100% by Management'
+        })
+      });
+
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to waive penalty');
+
+      showToast(`Attendance penalty of ৳${amt.toLocaleString()} waived!`);
+      setReducingAttendanceId(null);
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error waiving penalty', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  const handleWaiveAllFines = async () => {
+    const total = telemetry?.totalFineAmount || 0;
+    if (!confirm(`Are you sure you want to waive all active fines (totaling ৳${Number(total).toLocaleString()}) for this employee? Full amount will be restored to take-home pay.`)) {
+      return;
+    }
+
+    setFineActionLoading(true);
+    try {
+      if (data?.fines) {
+        for (const fine of data.fines) {
+          if (fine.status !== 'CANCELLED' && Number(fine.amount) > 0) {
+            await fetch(`/api/hr/fines/${fine.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                amount: 0,
+                status: 'CANCELLED',
+                reason: `${fine.reason || 'Fine'} [All fines waived by Management]`,
+                payrollId: id
+              })
+            });
+          }
+        }
+      }
+
+      if (data?.attendances) {
+        for (const att of data.attendances) {
+          if (Number(att.punishmentAmount || 0) > 0) {
+            await fetch(`/api/payroll/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'REDUCE_ATTENDANCE_PUNISHMENT',
+                attendanceId: att.id,
+                newPunishmentAmount: 0,
+                reason: 'All attendance penalties waived by Management'
+              })
+            });
+          }
+        }
+      }
+
+      showToast('All fines and penalties waived! Full salary restored.');
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error waiving all fines', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
+
+  const handleCreateFine = async (e: React.FormEvent, employeeId?: string) => {
+    e.preventDefault();
+    if (!newFineAmount || Number(newFineAmount) <= 0) {
+      showToast('Please specify a valid fine amount', 'error');
+      return;
+    }
+    if (!newFineReason.trim()) {
+      showToast('Please specify a violation reason for the fine', 'error');
+      return;
+    }
+    if (!employeeId) {
+      showToast('Employee information is not loaded', 'error');
+      return;
+    }
+    setFineActionLoading(true);
+    try {
+      const res = await fetch('/api/hr/fines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId,
+          amount: Number(newFineAmount),
+          reason: newFineReason.trim(),
+          date: newFineDate || new Date().toISOString()
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed to record fine');
+      showToast('Disciplinary fine recorded successfully');
+      setShowAddFineForm(false);
+      setNewFineAmount('');
+      setNewFineReason('');
+      await loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Error recording fine', 'error');
+    } finally {
+      setFineActionLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -435,7 +799,13 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
 
       {/* KPI Overview Cards */}
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${styles.statCardClickable} ${activeTab === 'ledger' ? styles.statCardActiveLedger : ''}`}
+          onClick={() => handleKpiCardClick('ledger')}
+          role="button"
+          tabIndex={0}
+          title="Click to view Itemized Ledger Breakdown"
+        >
           <div className={styles.statHeader}>
             <span className={styles.statTitle}>Base Fixed Salary</span>
             <div className={styles.statIcon} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
@@ -443,10 +813,19 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
           <div className={styles.statValue}>{formatBDT(payment.basicSalary)}</div>
-          <div className={styles.statSubtext}>Standard Monthly Pay</div>
+          <div className={styles.statSubtext}>
+            <span>Standard Monthly Pay</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--primary, #3b82f6)', fontSize: '11px', fontWeight: 600 }}>Ledger →</span>
+          </div>
         </div>
 
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${styles.statCardClickable} ${activeTab === 'activity' ? styles.statCardActiveActivity : ''}`}
+          onClick={() => handleKpiCardClick('activity')}
+          role="button"
+          tabIndex={0}
+          title="Click to view Tasks, Overtime & Rewards"
+        >
           <div className={styles.statHeader}>
             <span className={styles.statTitle}>Additions & Rewards</span>
             <div className={styles.statIcon} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
@@ -455,11 +834,18 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           </div>
           <div className={styles.statValue} style={{ color: '#10b981' }}>+{formatBDT(totalEarningsAdditions)}</div>
           <div className={styles.statSubtext}>
-            Bonus ({formatBDT(telemetry.totalBonusAmount)}) + Tasks ({formatBDT(telemetry.totalTaskRewardAmount)})
+            <span>Bonus ({formatBDT(telemetry.totalBonusAmount)}) + Tasks ({formatBDT(telemetry.totalTaskRewardAmount)})</span>
+            <span style={{ marginLeft: 'auto', color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Tasks →</span>
           </div>
         </div>
 
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${styles.statCardClickable} ${activeTab === 'fines' ? styles.statCardActiveFines : ''}`}
+          onClick={() => handleKpiCardClick('fines')}
+          role="button"
+          tabIndex={0}
+          title="Click to audit & edit disciplinary fines"
+        >
           <div className={styles.statHeader}>
             <span className={styles.statTitle}>Fines & Penalties</span>
             <div className={styles.statIcon} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
@@ -468,11 +854,18 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           </div>
           <div className={styles.statValue} style={{ color: '#ef4444' }}>-{formatBDT(telemetry.totalFineAmount)}</div>
           <div className={styles.statSubtext}>
-            {fines.length} violation penalty records
+            <span>{fines.length} violation penalty records</span>
+            <span style={{ marginLeft: 'auto', color: '#ef4444', fontSize: '11px', fontWeight: 600 }}>Edit Fines →</span>
           </div>
         </div>
 
-        <div className={styles.statCard}>
+        <div
+          className={`${styles.statCard} ${styles.statCardClickable} ${activeTab === 'attendance' ? styles.statCardActiveAttendance : ''}`}
+          onClick={() => handleKpiCardClick('attendance')}
+          role="button"
+          tabIndex={0}
+          title="Click to view Attendance & Absences telemetry"
+        >
           <div className={styles.statHeader}>
             <span className={styles.statTitle}>Absences & Deductions</span>
             <div className={styles.statIcon} style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
@@ -483,19 +876,20 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
             -{formatBDT(totalDeductionsAmount)}
           </div>
           <div className={styles.statSubtext}>
-            {telemetry.absentDays} Absent Days • {telemetry.lateDays} Late arrivals
+            <span>{telemetry.absentDays} Absent Days • {telemetry.lateDays} Late</span>
+            <span style={{ marginLeft: 'auto', color: '#f59e0b', fontSize: '11px', fontWeight: 600 }}>Attendance →</span>
           </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className={styles.tabNav}>
+      <div id="reviewTabsNav" className={styles.tabNav}>
         <button
           onClick={() => setActiveTab('fines')}
           className={`${styles.tabBtn} ${activeTab === 'fines' ? styles.active : ''}`}
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>gavel</span>
-          Fines & Violations
+          Fines
           {fines.length > 0 && (
             <span className={`${styles.tabBadge} ${styles.danger}`}>{fines.length}</span>
           )}
@@ -506,7 +900,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           className={`${styles.tabBtn} ${activeTab === 'attendance' ? styles.active : ''}`}
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calendar_month</span>
-          Attendance & Absences
+          Attendance
           <span className={styles.tabBadge}>{telemetry.absentDays} Abs / {telemetry.lateDays} Late</span>
         </button>
 
@@ -515,7 +909,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           className={`${styles.tabBtn} ${activeTab === 'ledger' ? styles.active : ''}`}
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>receipt_long</span>
-          Itemized Ledger Breakdown
+          Ledger
         </button>
 
         <button
@@ -523,7 +917,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.active : ''}`}
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>military_tech</span>
-          Tasks, Overtime & Advances
+          Tasks & Overtime
         </button>
 
         <button
@@ -531,7 +925,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           className={`${styles.tabBtn} ${activeTab === 'audits' ? styles.active : ''}`}
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>history</span>
-          Workflow & Approval Audit
+          Audit Log
           <span className={styles.tabBadge}>{audits.length}</span>
         </button>
       </div>
@@ -549,60 +943,428 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                 Detailed breakdown of administrative fines, violation reasons, and applied deduction penalties for {periodTitle}.
               </p>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Total Fine Deductions: </span>
-              <strong style={{ fontSize: '16px', color: '#ef4444' }}>{formatBDT(telemetry.totalFineAmount)}</strong>
+            <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Total Fine Deductions: </span>
+                <strong style={{ fontSize: '16px', color: '#ef4444' }}>{formatBDT(telemetry.totalFineAmount)}</strong>
+              </div>
+              {telemetry.totalFineAmount > 0 && (
+                <button
+                  type="button"
+                  disabled={fineActionLoading}
+                  onClick={handleWaiveAllFines}
+                  className="btn btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontWeight: 600 }}
+                  title="Waive all fines and restore employee take-home pay"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_check</span>
+                  <span>Waive All Fines</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowAddFineForm(prev => !prev)}
+                className="btn btn-secondary"
+                style={{ padding: '6px 14px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)', fontWeight: 600 }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{showAddFineForm ? 'close' : 'add'}</span>
+                <span>{showAddFineForm ? 'Close Form' : 'Levy Fine'}</span>
+              </button>
             </div>
           </div>
 
-          {fines.length === 0 ? (
+          {/* Inline Add Fine Form */}
+          {showAddFineForm && (
+            <form onSubmit={e => handleCreateFine(e, emp?.id)} style={{ background: 'var(--surface-hover, #f8fafc)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '14px', padding: '18px', marginBottom: '22px' }}>
+              <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>gavel</span>
+                Record / Levy Disciplinary Fine
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>Fine Amount (BDT) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    value={newFineAmount}
+                    onChange={e => setNewFineAmount(e.target.value)}
+                    placeholder="e.g. 500"
+                    required
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>Violation Date *</label>
+                  <input
+                    type="date"
+                    value={newFineDate}
+                    onChange={e => setNewFineDate(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>Reason for Fine (Violation Description) *</label>
+                <input
+                  type="text"
+                  value={newFineReason}
+                  onChange={e => setNewFineReason(e.target.value)}
+                  placeholder="e.g., Unexcused absence, Late report submission, Uniform violation"
+                  required
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '13px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  type="submit"
+                  disabled={fineActionLoading}
+                  className="btn btn-primary"
+                  style={{ padding: '7px 18px', fontSize: '13px', background: '#ef4444', borderColor: '#ef4444', fontWeight: 600 }}
+                >
+                  {fineActionLoading ? 'Saving...' : 'Apply Fine Deduction'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddFineForm(false)}
+                  className="btn btn-secondary"
+                  style={{ padding: '7px 14px', fontSize: '13px' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {fines.length === 0 && !showAddFineForm ? (
             <div className={styles.emptyState}>
               <span className={`material-symbols-outlined ${styles.emptyIcon}`} style={{ color: '#10b981' }}>verified_user</span>
               <h4 style={{ margin: 0, color: 'var(--text-main)', fontSize: '16px' }}>Clean Record — No Fines Levied</h4>
               <p style={{ margin: 0, fontSize: '13px', maxWidth: '400px' }}>
                 This employee has zero disciplinary fines, penalties, or compliance violations logged for this payroll month.
               </p>
+              <button
+                type="button"
+                onClick={() => setShowAddFineForm(true)}
+                className="btn btn-secondary"
+                style={{ marginTop: '12px', padding: '6px 14px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)', fontWeight: 600 }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_circle</span>
+                <span>Levy Disciplinary Fine</span>
+              </button>
             </div>
           ) : (
             <div className={styles.fineCardGrid}>
-              {fines.map(fine => (
-                <div key={fine.id} className={styles.fineCard}>
-                  <div className={styles.fineCardHeader}>
-                    <div>
-                      <h4 className={styles.fineReasonTitle}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>flag</span>
-                        Disciplinary Fine
-                      </h4>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Date: {formatDate(fine.date || fine.createdAt)}</span>
-                    </div>
-                    <span className={styles.fineAmount}>{formatBDT(fine.amount)}</span>
-                  </div>
+              {fines.map(fine => {
+                const isEditing = editingFineId === fine.id;
+                const isReducing = reducingFineId === fine.id;
+                const fineNum = Number(fine.amount) || 0;
 
-                  <div>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#991b1b', fontWeight: 700, marginBottom: '4px' }}>
-                      Why they got fined:
-                    </div>
-                    <div className={styles.fineReasonNarrative}>
-                      {fine.reason || 'No detailed reason specified by supervisor.'}
-                    </div>
-                  </div>
+                return (
+                  <div key={fine.id} className={styles.fineCard}>
+                    {isReducing ? (
+                      /* Dedicated Fine Reduction Form */
+                      <div className={styles.fineReduceBox}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.3)', paddingBottom: '6px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#b45309', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>trending_down</span>
+                            Reduce Disciplinary Fine
+                          </span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Current: {formatBDT(fine.amount)}</span>
+                        </div>
 
-                  <div className={styles.fineFooter}>
-                    <span>Status: <strong style={{ color: fine.status === 'DEDUCTED' ? '#10b981' : '#f59e0b' }}>{fine.status}</strong></span>
-                    <span>Logged on: {formatDate(fine.createdAt)}</span>
+                        {/* Quick Reduction Presets */}
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '5px' }}>
+                            Quick Reduction Presets:
+                          </label>
+                          <div className={styles.reducePresetRow}>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectReducePreset(fine, 25)}
+                              className={`${styles.reducePresetBtn} ${reducePreset === 25 ? styles.active : ''}`}
+                            >
+                              -25% Off
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectReducePreset(fine, 50)}
+                              className={`${styles.reducePresetBtn} ${reducePreset === 50 ? styles.active : ''}`}
+                            >
+                              -50% Off
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectReducePreset(fine, 75)}
+                              className={`${styles.reducePresetBtn} ${reducePreset === 75 ? styles.active : ''}`}
+                            >
+                              -75% Off
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectReducePreset(fine, 100)}
+                              className={`${styles.reducePresetBtn} ${reducePreset === 100 ? styles.active : ''}`}
+                              style={{ color: '#dc2626' }}
+                            >
+                              Waive 100% (৳0)
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Custom inputs */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                              Reduce By Discount (BDT)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max={fineNum}
+                              value={reduceDiscountAmount}
+                              onChange={e => handleDiscountAmountChange(fine, e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 700 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                              New Reduced Fine (BDT)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max={fineNum}
+                              value={reduceNewAmount}
+                              onChange={e => handleNewAmountChange(fine, e.target.value)}
+                              style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: '#dc2626', fontSize: '12px', fontWeight: 700 }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Live Comparison Badge */}
+                        <div className={styles.reduceComparison}>
+                          <div>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Current: </span>
+                            <strong style={{ textDecoration: 'line-through', color: '#94a3b8' }}>{formatBDT(fineNum)}</strong>
+                            <span style={{ margin: '0 6px', color: '#10b981' }}>➔</span>
+                            <span style={{ color: '#10b981', fontWeight: 700 }}>
+                              New: {formatBDT(reduceNewAmount)}
+                            </span>
+                          </div>
+                          <div style={{ color: '#10b981', fontWeight: 700, fontSize: '11px' }}>
+                            +{formatBDT(Number(fineNum) - Number(reduceNewAmount || 0))} Net Pay
+                          </div>
+                        </div>
+
+                        {/* Reduction Reason Note */}
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Reduction Note / Reason
+                          </label>
+                          <input
+                            type="text"
+                            value={reduceReason}
+                            onChange={e => setReduceReason(e.target.value)}
+                            placeholder="e.g. Good conduct pardon, first offense grace"
+                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px' }}
+                          />
+                        </div>
+
+                        {/* Reduction Buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                          <button
+                            type="button"
+                            disabled={fineActionLoading}
+                            onClick={() => handleConfirmReduceFine(fine)}
+                            className="btn btn-primary"
+                            style={{ padding: '6px 14px', fontSize: '12px', background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                          >
+                            {fineActionLoading ? 'Saving...' : 'Apply Fine Reduction'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReducingFineId(null)}
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : isEditing ? (
+                      /* Inline Full Edit Form for this fine */
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(239, 68, 68, 0.2)', paddingBottom: '6px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                            Edit Disciplinary Fine
+                          </span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {fine.id.slice(0, 8)}</span>
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Fine Amount (BDT)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editFineAmount}
+                            onChange={e => setEditFineAmount(e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 700 }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Reason / Description
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={editFineReason}
+                            onChange={e => setEditFineReason(e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px', resize: 'vertical' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                            Status
+                          </label>
+                          <select
+                            value={editFineStatus}
+                            onChange={e => setEditFineStatus(e.target.value)}
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600 }}
+                          >
+                            <option value="PENDING">PENDING (Will Deduct on Pay)</option>
+                            <option value="DEDUCTED">DEDUCTED (Applied to Payroll)</option>
+                            <option value="CANCELLED">CANCELLED (Waived / Void)</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                          <button
+                            type="button"
+                            disabled={fineActionLoading}
+                            onClick={() => handleSaveEditFine(fine.id)}
+                            className="btn btn-primary"
+                            style={{ padding: '6px 14px', fontSize: '12px', background: '#dc2626', borderColor: '#dc2626', fontWeight: 600 }}
+                          >
+                            {fineActionLoading ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingFineId(null)}
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={fineActionLoading}
+                            onClick={() => handleDeleteFine(fine.id)}
+                            style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px' }}
+                            title="Delete or waive this fine"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* View Mode for this fine */
+                      <>
+                        <div className={styles.fineCardHeader}>
+                          <div>
+                            <h4 className={styles.fineReasonTitle}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>flag</span>
+                              Disciplinary Fine
+                            </h4>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Date: {formatDate(fine.date || fine.createdAt)}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className={styles.fineAmount}>{formatBDT(fine.amount)}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#991b1b', fontWeight: 700, marginBottom: '4px' }}>
+                            Why they got fined:
+                          </div>
+                          <div className={styles.fineReasonNarrative}>
+                            {fine.reason || 'No detailed reason specified by supervisor.'}
+                          </div>
+                        </div>
+
+                        <div className={styles.fineFooter}>
+                          <span>Status: <strong style={{ color: fine.status === 'DEDUCTED' ? '#10b981' : fine.status === 'CANCELLED' ? '#ef4444' : '#f59e0b' }}>{fine.status}</strong></span>
+                          
+                          {/* Quick Actions Row */}
+                          <div className={styles.fineCardActions}>
+                            {fineNum > 0 && fine.status !== 'CANCELLED' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartReduceFine(fine)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#b45309', borderColor: 'rgba(245, 158, 11, 0.4)', fontWeight: 700 }}
+                                  title="Reduce this fine amount"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_down</span>
+                                  <span>Reduce Fine</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickWaiveFine(fine)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontWeight: 600 }}
+                                  title="Waive 100% of this fine"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>price_check</span>
+                                  <span>Waive</span>
+                                </button>
+                              </>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditFine(fine)}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--primary, #3b82f6)', fontWeight: 600 }}
+                              title="Edit fine amount or reason"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span>
+                              <span>Edit</span>
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
           {/* Also check if any attendance records had punishment penalties */}
           {attendances.some(a => a.punishmentAmount && Number(a.punishmentAmount) > 0) && (
             <div style={{ marginTop: '28px', borderTop: '1px solid var(--border-main, #e2e8f0)', paddingTop: '20px' }}>
-              <h4 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontSize: '18px' }}>history_toggle_off</span>
-                Attendance-Level Violation Punishments
-              </h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#f59e0b', fontSize: '18px' }}>history_toggle_off</span>
+                  Attendance-Level Violation Punishments
+                </h4>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Penalties logged during attendance check-in audits
+                </span>
+              </div>
+
               <div className={styles.tableWrapper}>
                 <table className={styles.auditTable}>
                   <thead>
@@ -611,25 +1373,97 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                       <th>Attendance Status</th>
                       <th>Why Punishment Was Levied (Reason)</th>
                       <th>Deduction Amount</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {attendances.filter(a => a.punishmentAmount && Number(a.punishmentAmount) > 0).map(att => (
-                      <tr key={att.id}>
-                        <td style={{ fontWeight: 600 }}>{formatDate(att.date)}</td>
-                        <td>
-                          <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-                            {att.status}
-                          </span>
-                        </td>
-                        <td style={{ color: '#991b1b', fontWeight: 500 }}>
-                          {att.punishmentReason || 'Violation recorded during attendance audit'}
-                        </td>
-                        <td style={{ color: '#dc2626', fontWeight: 700 }}>
-                          {formatBDT(att.punishmentAmount)}
-                        </td>
-                      </tr>
-                    ))}
+                    {attendances.filter(a => a.punishmentAmount && Number(a.punishmentAmount) > 0).map(att => {
+                      const isReducingAtt = reducingAttendanceId === att.id;
+                      const attPenalty = Number(att.punishmentAmount) || 0;
+
+                      return (
+                        <tr key={att.id}>
+                          <td style={{ fontWeight: 600 }}>{formatDate(att.date)}</td>
+                          <td>
+                            <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                              {att.status}
+                            </span>
+                          </td>
+                          <td style={{ color: '#991b1b', fontWeight: 500 }}>
+                            {att.punishmentReason || 'Violation recorded during attendance audit'}
+                          </td>
+                          <td style={{ color: '#dc2626', fontWeight: 700 }}>
+                            {formatBDT(att.punishmentAmount)}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {isReducingAtt ? (
+                              <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '6px', textAlign: 'left', background: 'var(--surface-hover)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.4)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max={attPenalty}
+                                    value={reduceAttendanceNewAmount}
+                                    onChange={e => setReduceAttendanceNewAmount(e.target.value)}
+                                    placeholder="New amount"
+                                    style={{ width: '90px', padding: '4px 6px', fontSize: '12px', borderRadius: '4px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: '#dc2626', fontWeight: 700 }}
+                                  />
+                                  <input
+                                    type="text"
+                                    value={reduceAttendanceReason}
+                                    onChange={e => setReduceAttendanceReason(e.target.value)}
+                                    placeholder="Reason"
+                                    style={{ width: '130px', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)' }}
+                                  />
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    disabled={fineActionLoading}
+                                    onClick={() => handleConfirmReduceAttendance(att)}
+                                    className="btn btn-primary"
+                                    style={{ padding: '3px 8px', fontSize: '11px', background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setReducingAttendanceId(null)}
+                                    className="btn btn-secondary"
+                                    style={{ padding: '3px 6px', fontSize: '11px' }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartReduceAttendance(att)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#b45309', borderColor: 'rgba(245, 158, 11, 0.4)', fontWeight: 600 }}
+                                  title="Reduce penalty amount"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>trending_down</span>
+                                  <span>Reduce</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickWaiveAttendance(att)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontWeight: 600 }}
+                                  title="Waive penalty"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>price_check</span>
+                                  <span>Waive</span>
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

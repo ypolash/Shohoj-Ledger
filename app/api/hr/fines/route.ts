@@ -66,6 +66,26 @@ export async function POST(req: Request) {
       }
     });
 
+    // Sync with active payroll so new fine immediately deducts from net salary
+    const targetDate = date ? new Date(date) : new Date();
+    const activePayment = await prisma.salaryPayment.findFirst({
+      where: {
+        companyId: companyId!,
+        employeeId,
+        month: targetDate.getMonth() + 1,
+        year: targetDate.getFullYear(),
+        status: { in: ['DRAFT', 'CALCULATED', 'SUBMITTED', 'APPROVED'] }
+      }
+    });
+
+    if (activePayment) {
+      const newNet = Math.max(0, Number(activePayment.netSalary) - Number(amount));
+      await prisma.salaryPayment.update({
+        where: { id: activePayment.id },
+        data: { netSalary: newNet }
+      });
+    }
+
     return NextResponse.json({ fine });
   } catch (error) {
     console.error("POST Fine Error:", error);

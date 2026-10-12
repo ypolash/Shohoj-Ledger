@@ -120,6 +120,15 @@ interface PayrollAuditReviewData {
     installmentAmount?: number | string;
     status: string;
   }>;
+  increments?: Array<{
+    id: string;
+    eventType: string;
+    effectiveDate: string;
+    description?: string;
+    previousData?: any;
+    newData?: any;
+    createdAt?: string;
+  }>;
   audits: Array<{
     id: string;
     role?: string;
@@ -648,7 +657,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const { payment, telemetry, fines, attendances, absentRecords, lateRecords, leaves, bonuses, deductions, taskRewards, overtimes, salaryAdvances, loans, audits } = data;
+  const { payment, telemetry, fines, attendances, absentRecords, lateRecords, leaves, bonuses, deductions, taskRewards, overtimes, salaryAdvances, loans, increments = [], audits } = data;
   const emp = payment.employee;
   const sc = statusBadgeStyles[payment.status] || statusBadgeStyles.DRAFT;
   const periodTitle = `${MONTH_NAMES[payment.month - 1] || 'Month ' + payment.month} ${payment.year}`;
@@ -692,6 +701,18 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
         </Link>
 
         <div className={styles.actionGroup}>
+          {emp?.id && (
+            <Link
+              href={`/erp/hr/employees/${emp.id}`}
+              className="btn btn-secondary"
+              style={{ padding: '8px 14px', color: 'var(--text-main)', borderColor: 'var(--border-main)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              title="View full Employee Profile & HR Dossier"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>badge</span>
+              <span>HR Profile</span>
+            </Link>
+          )}
+
           <button
             onClick={() => window.print()}
             className={styles.backBtn}
@@ -815,7 +836,11 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
           <div className={styles.statValue}>{formatBDT(payment.basicSalary)}</div>
           <div className={styles.statSubtext}>
             <span>Standard Monthly Pay</span>
-            <span style={{ marginLeft: 'auto', color: 'var(--primary, #3b82f6)', fontSize: '11px', fontWeight: 600 }}>Ledger →</span>
+            {emp?.id && (
+              <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '11px' }}>
+                Base Rate
+              </span>
+            )}
           </div>
         </div>
 
@@ -1660,7 +1685,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                 Gross Earnings ({formatBDT(payment.grossSalary)})
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '8px 0', borderBottom: '1px dashed var(--border-main)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', padding: '8px 0', borderBottom: '1px dashed var(--border-main)' }}>
                   <span>Base Fixed Salary</span>
                   <strong>{formatBDT(payment.basicSalary)}</strong>
                 </div>
@@ -1732,6 +1757,87 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
             <span style={{ fontSize: '16px', fontWeight: 800, color: '#10b981' }}>
               = Net Pay: {formatBDT(payment.netSalary)}
             </span>
+          </div>
+
+          {/* Salary Increment Progression History Section */}
+          <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-main)', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '18px' }}>trending_up</span>
+                  Salary Increment & Compensation Progression History ({increments.length})
+                </h4>
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Permanent base salary increases, merit appraisals, and promotion progression logs.
+                </p>
+              </div>
+
+              {emp?.id && (
+                <Link
+                  href={`/erp/hr/employees/${emp.id}`}
+                  className="btn btn-secondary"
+                  style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--text-main)', borderColor: 'var(--border-main)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>badge</span>
+                  <span>Manage in HR Profile →</span>
+                </Link>
+              )}
+            </div>
+
+            {increments.length === 0 ? (
+              <div style={{ padding: '24px', textAlign: 'center', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px dashed var(--border-main)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--text-muted)', marginBottom: '6px' }}>insights</span>
+                <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  No historical salary increments recorded yet for {emp?.firstName} {emp?.lastName}.
+                </p>
+                {emp?.id && (
+                  <Link
+                    href={`/erp/hr/employees/${emp.id}`}
+                    className="btn btn-secondary"
+                    style={{ padding: '5px 14px', fontSize: '12px', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_up</span>
+                    <span>Grant in Employee HR Dossier</span>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className={styles.tableWrapper}>
+                <table className={styles.auditTable}>
+                  <thead>
+                    <tr>
+                      <th>Effective Date</th>
+                      <th>Previous Base Pay</th>
+                      <th>Increment Granted</th>
+                      <th>New Base Pay</th>
+                      <th>Reason / Appraisal Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {increments.map(inc => {
+                      const prevSalary = inc.previousData?.basicSalary !== undefined ? Number(inc.previousData.basicSalary) : null;
+                      const newSalary = inc.newData?.basicSalary !== undefined ? Number(inc.newData.basicSalary) : null;
+                      const incAmount = inc.newData?.incrementAmount !== undefined ? Number(inc.newData.incrementAmount) : (prevSalary !== null && newSalary !== null ? newSalary - prevSalary : null);
+                      const incPercent = inc.newData?.incrementPercentage !== undefined ? inc.newData.incrementPercentage : (prevSalary && incAmount ? ((incAmount / prevSalary) * 100).toFixed(1) : null);
+
+                      return (
+                        <tr key={inc.id}>
+                          <td style={{ fontWeight: 600 }}>{formatDate(inc.effectiveDate)}</td>
+                          <td style={{ color: 'var(--text-muted)' }}>{prevSalary !== null ? formatBDT(prevSalary) : '—'}</td>
+                          <td>
+                            <span style={{ color: '#10b981', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.1)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              +{incAmount !== null ? formatBDT(incAmount) : '—'} {incPercent ? `(+${incPercent}%)` : ''}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 800, color: 'var(--text-main)' }}>{newSalary !== null ? formatBDT(newSalary) : '—'}</td>
+                          <td style={{ color: 'var(--text-secondary)' }}>{inc.description || inc.newData?.reason || 'Performance appraisal increment'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

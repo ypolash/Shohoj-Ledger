@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { isWithinOfficeRadius } from '@/lib/gps';
 
 import { requireModule } from "@/lib/modules/moduleGuard";
-import { calculateAttendanceStatus, calculateEarlyLeaveStatus, parseDateTimeInTimezone } from "@/lib/attendance";
+import { calculateAttendanceStatus, calculateEarlyLeaveStatus, parseDateTimeInTimezone, runOfficeOff } from "@/lib/attendance";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 
@@ -24,6 +24,49 @@ export async function GET(request: Request) {
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
     const companyFilter = await withCompany();
 
+    // Auto-evaluate Office Off if configured and trigger time has arrived
+    const effectiveCompanyId = companyIdForGuard || (companyFilter as any)?.companyId;
+    if (effectiveCompanyId) {
+      try {
+        const attConfig: any = await (prisma.attendanceConfig as any).findFirst({
+          where: { companyId: effectiveCompanyId }
+        });
+        if (attConfig?.autoOfficeOff) {
+          const compSetting = await prisma.companySetting.findUnique({
+            where: { companyId: effectiveCompanyId }
+          });
+          let timezone = compSetting?.timezone || "Asia/Dhaka";
+          try { Intl.DateTimeFormat(undefined, { timeZone: timezone }); } catch { timezone = "Asia/Dhaka"; }
+          const now = new Date();
+          const currentTimeStr = new Intl.DateTimeFormat("en-GB", {
+            timeZone: timezone, hour: "2-digit", minute: "2-digit", hour12: false
+          }).format(now);
+          const todayStr = new Intl.DateTimeFormat("en-CA", {
+            timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit"
+          }).format(now);
+
+          const targetTime = attConfig.autoOfficeOffTime || attConfig.shiftEnd || "20:00";
+          let executedToday = false;
+          if (attConfig.lastOfficeOffRun) {
+            const lastRunStr = new Intl.DateTimeFormat("en-CA", {
+              timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit"
+            }).format(new Date(attConfig.lastOfficeOffRun));
+            if (lastRunStr === todayStr) executedToday = true;
+          }
+
+          if (currentTimeStr >= targetTime && !executedToday) {
+            await runOfficeOff(effectiveCompanyId, {
+              targetDate: todayStr,
+              backfillPastDays: attConfig.autoBackfillPastDays || 30,
+              source: "AUTO"
+            });
+          }
+        }
+      } catch (autoErr) {
+        console.error("Auto Office Off execution check failed:", autoErr);
+      }
+    }
+
     // Include company attendances across ERP, mobile app, and legacy sources
     const whereClause: any = {
       OR: [
@@ -40,7 +83,15 @@ export async function GET(request: Request) {
 
     // Auto-heal legacy or uncalculated attendance statuses on-the-fly without corrupting checkInTime
     for (const att of attendances) {
-      if (att.checkInTime && att.status !== "ABSENT" && att.status !== "HALF_DAY" && att.status !== "OFF_DAY_WORK") {
+      if (
+        att.checkInTime &&
+        att.status !== "ABSENT" &&
+        att.status !== "HALF_DAY" &&
+        att.status !== "OFF_DAY_WORK" &&
+        att.reviewStatus !== "CONSIDERED" &&
+        att.reviewStatus !== "WAIVED" &&
+        att.reviewStatus !== "EXCUSED"
+      ) {
         const effectiveCompanyId = att.companyId || companyIdForGuard || "";
         const calc = await calculateAttendanceStatus(effectiveCompanyId, att.employeeId, att.checkInTime);
 
@@ -221,4 +272,111 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: error.message || 'Failed to delete attendance' }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request) {
+  const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  if (!companyIdForGuard) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  try {
+    const data = await request.json();
+    const { id, action, lateMinutes, reason, status } = data;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Attendance record ID is required' }, { status: 400 });
+    }
+
+    const existing = await prisma.attendance.findFirst({
+      where: {
+        id,
+        OR: [
+          { companyId: companyIdForGuard },
+          { employee: { companyId: companyIdForGuard } }
+        ]
+      },
+      include: { employee: true }
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Attendance record not found or unauthorized' }, { status: 404 });
+    }
+
+    let updateData: any = {};
+
+    if (action === 'CONSIDER_LATE' || action === 'WAIVE_LATE') {
+      const minutes = typeof lateMinutes === 'number' ? Math.max(0, lateMinutes) : 0;
+      const isLate = minutes > 0;
+      const finalStatus = isLate ? 'LATE' : 'PRESENT';
+      const note = reason || 'HR Late Consideration (Staff forgot to press check-in)';
+
+      updateData = {
+        lateMinutes: minutes,
+        isLate,
+        status: finalStatus,
+        reviewStatus: 'CONSIDERED',
+        punishmentAmount: 0,
+        punishmentReason: note,
+      };
+
+      // Record adjustment in AttendanceAdjustment for full transparency
+      try {
+        await prisma.attendanceAdjustment.create({
+          data: {
+            attendanceId: id,
+            employeeId: existing.employeeId,
+            type: 'LATE_CONSIDERATION',
+            reason: note,
+            status: 'APPROVED',
+          }
+        });
+      } catch (adjErr) {
+        console.warn('AttendanceAdjustment creation optional:', adjErr);
+      }
+    } else if (action === 'REVERT_CONSIDERATION') {
+      // Revert to raw calculated late arrival time based on original check-in timestamp
+      if (existing.checkInTime) {
+        const calc = await calculateAttendanceStatus(companyIdForGuard, existing.employeeId, existing.checkInTime);
+        updateData = {
+          status: calc.status,
+          isLate: calc.isLate,
+          lateMinutes: calc.lateMinutes,
+          reviewStatus: null,
+          punishmentReason: null,
+        };
+      } else {
+        updateData = {
+          reviewStatus: null,
+          punishmentReason: null,
+        };
+      }
+
+      try {
+        await prisma.attendanceAdjustment.deleteMany({
+          where: { attendanceId: id, type: 'LATE_CONSIDERATION' }
+        });
+      } catch {}
+    } else {
+      if (lateMinutes !== undefined) {
+        updateData.lateMinutes = Number(lateMinutes);
+        updateData.isLate = Number(lateMinutes) > 0;
+      }
+      if (status) updateData.status = status;
+      if (reason) updateData.punishmentReason = reason;
+      if (data.reviewStatus !== undefined) updateData.reviewStatus = data.reviewStatus;
+    }
+
+    const updated = await prisma.attendance.update({
+      where: { id },
+      data: updateData
+    });
+
+    return NextResponse.json({ success: true, attendance: updated });
+  } catch (error: any) {
+    console.error('Failed to update attendance consideration:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update attendance' }, { status: 500 });
+  }
+}
+
 

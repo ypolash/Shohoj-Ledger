@@ -94,6 +94,7 @@ export default function PayrollPage() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -230,6 +231,33 @@ export default function PayrollPage() {
       setSelectedRecord(null);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Handle Delete Payroll Record
+  const handleDelete = async (p: PayrollRecord) => {
+    const empName = `${p.employee?.firstName || ''} ${p.employee?.lastName || ''}`.trim() || 'this employee';
+    const period = `${MONTHS[p.month - 1]} ${p.year}`;
+    if (!confirm(`Are you sure you want to delete the payroll record for ${empName} (${period})?`)) {
+      return;
+    }
+
+    setDeletingId(p.id);
+    try {
+      const res = await fetch(`/api/payroll/${p.id}`, {
+        method: 'DELETE',
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        showToast(d.error || 'Failed to delete payroll record', 'error');
+        return;
+      }
+      showToast('Payroll record deleted successfully!');
+      loadAll();
+    } catch {
+      showToast('Network error deleting payroll record', 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -523,6 +551,25 @@ export default function PayrollPage() {
                               Pay
                             </button>
                           )}
+
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(p); }}
+                            disabled={deletingId === p.id}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '5px 8px',
+                              fontSize: '12px',
+                              color: '#ef4444',
+                              borderColor: 'rgba(239, 68, 68, 0.3)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              cursor: 'pointer',
+                              opacity: deletingId === p.id ? 0.6 : 1,
+                            }}
+                            title="Delete Payroll Record"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                          </button>
                         </div>
                       </td>
                     </tr>

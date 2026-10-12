@@ -2983,6 +2983,28 @@ export default function EmployeesPage() {
                       </div>
                     </div>
                   </div>
+
+                  <Link
+                    href={`/erp/hr/employees/${selectedEmployee.id}?tab=compensation&action=increment`}
+                    style={{
+                      marginTop: '4px',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: '#10b981',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>trending_up</span>
+                    <span>Grant Salary Increment</span>
+                  </Link>
                 </div>
               )}
             </div>

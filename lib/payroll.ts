@@ -51,7 +51,12 @@ export function calculatePayroll(
         });
         totalDeductionAmount += dailyRate;
       }
-    } else if (att.status === 'LATE' || att.lateMinutes > 0) {
+    } else if (
+      (att.status === 'LATE' || att.lateMinutes > 0) &&
+      att.reviewStatus !== 'CONSIDERED' &&
+      att.reviewStatus !== 'WAIVED' &&
+      att.reviewStatus !== 'EXCUSED'
+    ) {
       if (att.lateMinutes >= 16 && att.lateMinutes <= 60) {
         // half day deduction
         const amount = dailyRate / 2;
@@ -72,8 +77,13 @@ export function calculatePayroll(
       }
     }
     
-    // Process punishment deduction if any exists from attendance review
-    if (att.punishmentAmount && Number(att.punishmentAmount) > 0) {
+    // Process punishment deduction if any exists from attendance review (unless considered/waived)
+    if (
+      att.punishmentAmount &&
+      Number(att.punishmentAmount) > 0 &&
+      att.reviewStatus !== 'CONSIDERED' &&
+      att.reviewStatus !== 'WAIVED'
+    ) {
        const amount = Number(att.punishmentAmount);
        deductions.push({
           type: 'OTHER',

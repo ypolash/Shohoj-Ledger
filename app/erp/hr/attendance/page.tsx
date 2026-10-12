@@ -146,6 +146,7 @@ const formatDisplayDate = (val?: string | null, tz: string = 'Asia/Dhaka') => {
  * date-wise grouped view, detailed check-in/out timestamps, CSV export, network geofencing status, and attendance recording modal.
  */
 export default function AttendancePage() {
+  const [isMounted, setIsMounted] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filterEmpId, setFilterEmpId] = useState('');
@@ -189,6 +190,75 @@ export default function AttendancePage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [attendanceToDelete, setAttendanceToDelete] = useState<AttendanceRecord | null>(null);
   const [deletingAttendanceId, setDeletingAttendanceId] = useState<string | null>(null);
+
+  // Late consideration modal state
+  const [considerModalOpen, setConsiderModalOpen] = useState(false);
+  const [recordToConsider, setRecordToConsider] = useState<AttendanceRecord | null>(null);
+  const [considerLateMinutes, setConsiderLateMinutes] = useState('0');
+  const [considerReason, setConsiderReason] = useState('Staff forgot to press check-in on time');
+  const [considerSubmitting, setConsiderSubmitting] = useState(false);
+
+  const handleOpenConsiderModal = (rec: AttendanceRecord) => {
+    setRecordToConsider(rec);
+    setConsiderLateMinutes('0');
+    setConsiderReason('Staff forgot to press check-in on time');
+    setConsiderModalOpen(true);
+  };
+
+  const handleConfirmConsiderLate = async () => {
+    if (!recordToConsider) return;
+    setConsiderSubmitting(true);
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: recordToConsider.id,
+          action: 'CONSIDER_LATE',
+          lateMinutes: Number(considerLateMinutes) || 0,
+          reason: considerReason,
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        alert(d.error || 'Failed to save late consideration');
+        return;
+      }
+      setSuccessMsg('Late arrival considered & adjusted by HR successfully!');
+      setConsiderModalOpen(false);
+      setRecordToConsider(null);
+      await loadData(false);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch {
+      alert('Network error while updating attendance');
+    } finally {
+      setConsiderSubmitting(false);
+    }
+  };
+
+  const handleRevertConsiderLate = async (rec: AttendanceRecord) => {
+    if (!confirm('Revert HR consideration and recalculate arrival status based on recorded clock-in time?')) return;
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: rec.id,
+          action: 'REVERT_CONSIDERATION',
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        alert(d.error || 'Failed to revert consideration');
+        return;
+      }
+      setSuccessMsg('Reverted HR consideration back to original system log.');
+      await loadData(false);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch {
+      alert('Network error reverting consideration');
+    }
+  };
 
   const toggleDateCollapse = (dateKey: string) => {
     setCollapsedDates(prev => ({
@@ -290,8 +360,13 @@ export default function AttendancePage() {
   }, [filterEmpId, loadNetworks]);
 
   useEffect(() => {
+    setIsMounted(true);
     loadData();
     loadNetworks();
+
+    const onRefetch = () => loadData(true);
+    window.addEventListener('attendance-refetch', onRefetch);
+    return () => window.removeEventListener('attendance-refetch', onRefetch);
   }, [loadData, loadNetworks]);
 
   // Handle register network
@@ -622,7 +697,7 @@ export default function AttendancePage() {
         <div className={styles.headerTitleGroup}>
           <h1 className={styles.pageTitle}>
             Attendance Tracking &amp; Shifts
-            <span className={styles.titleBadge}>{records.length} Logs</span>
+            <span className={styles.titleBadge} suppressHydrationWarning>{records.length} Logs</span>
           </h1>
         </div>
 
@@ -630,9 +705,10 @@ export default function AttendancePage() {
           <button
             onClick={handleExportCSV}
             className={styles.headerIconBtn}
-            disabled={records.length === 0}
+            disabled={!isMounted || records.length === 0}
             title="Export CSV Log"
             aria-label="Export CSV Log"
+            suppressHydrationWarning
           >
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
           </button>
@@ -1081,11 +1157,6 @@ export default function AttendancePage() {
 
                   <div className={styles.dateGroupRight}>
                     <div className={styles.dateMetricsRow}>
-                      <span className={`${styles.datePill} ${styles.datePillTotal}`}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>group</span>
-                        {group.totalCount} Logged
-                      </span>
-
                       {group.presentCount > 0 && (
                         <span className={`${styles.datePill} ${styles.datePillPresent}`}>
                           <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>check_circle</span>
@@ -1210,6 +1281,30 @@ export default function AttendancePage() {
                                       </span>
                                     )}
                                   </div>
+                                ) : r.reviewStatus === 'CONSIDERED' ? (
+                                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      color: '#059669',
+                                      background: 'rgba(16, 185, 129, 0.12)',
+                                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      width: 'fit-content'
+                                    }}>
+                                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
+                                      HR Considered {r.lateMinutes && r.lateMinutes > 0 ? `(${r.lateMinutes} min)` : '(Waived)'}
+                                    </span>
+                                    {r.punishmentReason && (
+                                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
+                                        {r.punishmentReason}
+                                      </span>
+                                    )}
+                                  </div>
                                 ) : r.lateMinutes && r.lateMinutes > 0 ? (
                                   <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
                                     +{r.lateMinutes} min late
@@ -1245,31 +1340,81 @@ export default function AttendancePage() {
                               </td>
 
                               <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setAttendanceToDelete(r);
-                                  }}
-                                  disabled={deletingAttendanceId === r.id}
-                                  title="Delete attendance record"
-                                  style={{
-                                    padding: '6px',
-                                    borderRadius: '8px',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                    background: 'rgba(239, 68, 68, 0.08)',
-                                    color: '#ef4444',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.15s ease'
-                                  }}
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                    {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
-                                  </span>
-                                </button>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                  {r.reviewStatus === 'CONSIDERED' ? (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRevertConsiderLate(r);
+                                      }}
+                                      title="Revert HR consideration to original clock-in log"
+                                      style={{
+                                        padding: '6px',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                        background: 'rgba(16, 185, 129, 0.08)',
+                                        color: '#059669',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.15s ease'
+                                      }}
+                                    >
+                                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>undo</span>
+                                    </button>
+                                  ) : r.status !== 'ABSENT' ? (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenConsiderModal(r);
+                                      }}
+                                      title={r.lateMinutes && r.lateMinutes > 0 ? "Consider / Waive Late Arrival (Forgot check-in)" : "Adjust / Consider Late Arrival"}
+                                      style={{
+                                        padding: '6px',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                                        background: 'rgba(245, 158, 11, 0.08)',
+                                        color: '#f59e0b',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.15s ease'
+                                      }}
+                                    >
+                                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule_send</span>
+                                    </button>
+                                  ) : null}
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAttendanceToDelete(r);
+                                    }}
+                                    disabled={deletingAttendanceId === r.id}
+                                    title="Delete attendance record"
+                                    style={{
+                                      padding: '6px',
+                                      borderRadius: '8px',
+                                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                                      background: 'rgba(239, 68, 68, 0.08)',
+                                      color: '#ef4444',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                      {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
+                                    </span>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -1378,6 +1523,30 @@ export default function AttendancePage() {
                               </span>
                             )}
                           </div>
+                        ) : r.reviewStatus === 'CONSIDERED' ? (
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: '#059669',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              width: 'fit-content'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
+                              HR Considered {r.lateMinutes && r.lateMinutes > 0 ? `(${r.lateMinutes} min)` : '(Waived)'}
+                            </span>
+                            {r.punishmentReason && (
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
+                                {r.punishmentReason}
+                              </span>
+                            )}
+                          </div>
                         ) : r.lateMinutes && r.lateMinutes > 0 ? (
                           <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
                             +{r.lateMinutes} min late
@@ -1413,28 +1582,72 @@ export default function AttendancePage() {
                       </td>
 
                       <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          onClick={() => setAttendanceToDelete(r)}
-                          disabled={deletingAttendanceId === r.id}
-                          title="Delete attendance record"
-                          style={{
-                            padding: '6px',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                            background: 'rgba(239, 68, 68, 0.08)',
-                            color: '#ef4444',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                            {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
-                          </span>
-                        </button>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                          {r.reviewStatus === 'CONSIDERED' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRevertConsiderLate(r)}
+                              title="Revert HR consideration to original clock-in log"
+                              style={{
+                                padding: '6px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                background: 'rgba(16, 185, 129, 0.08)',
+                                color: '#059669',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>undo</span>
+                            </button>
+                          ) : r.status !== 'ABSENT' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenConsiderModal(r)}
+                              title={r.lateMinutes && r.lateMinutes > 0 ? "Consider / Waive Late Arrival (Forgot check-in)" : "Adjust / Consider Late Arrival"}
+                              style={{
+                                padding: '6px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                background: 'rgba(245, 158, 11, 0.08)',
+                                color: '#f59e0b',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule_send</span>
+                            </button>
+                          ) : null}
+
+                          <button
+                            type="button"
+                            onClick={() => setAttendanceToDelete(r)}
+                            disabled={deletingAttendanceId === r.id}
+                            title="Delete attendance record"
+                            style={{
+                              padding: '6px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              background: 'rgba(239, 68, 68, 0.08)',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                              {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
+                            </span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1890,6 +2103,305 @@ export default function AttendancePage() {
                 }}
               >
                 {deletingAttendanceId === attendanceToDelete.id ? 'Deleting...' : 'Delete Entry'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* HR Manual Late Consideration Modal */}
+      {considerModalOpen && recordToConsider && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => {
+            if (!considerSubmitting) {
+              setConsiderModalOpen(false);
+              setRecordToConsider(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface-card, #1e293b)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '26px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  color: '#f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>schedule_send</span>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main, #fff)' }}>
+                    HR Late Consideration
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                    Manually forgive or adjust late minutes when staff forgot to check in.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setConsiderModalOpen(false); setRecordToConsider(null); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                  display: 'flex'
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Employee Info Card */}
+            <div style={{
+              background: 'var(--surface-input, rgba(0, 0, 0, 0.2))',
+              borderRadius: '12px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))',
+              padding: '14px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px'
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-main, #fff)' }}>
+                  {empMap[recordToConsider.employeeId]?.firstName} {empMap[recordToConsider.employeeId]?.lastName}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
+                  ID: <span style={{ fontFamily: 'monospace', color: 'var(--primary, #3b82f6)' }}>{empMap[recordToConsider.employeeId]?.employeeId || 'Staff'}</span> · {formatDisplayDate(recordToConsider.date, officeTiming.timezone)}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)' }}>Clocked in:</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main, #fff)' }}>
+                  {formatDisplayTime(recordToConsider.checkIn || recordToConsider.checkInTime, officeTiming.timezone)}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#f59e0b',
+                  marginTop: '2px'
+                }}>
+                  Current: +{recordToConsider.lateMinutes || 0} min late
+                </div>
+              </div>
+            </div>
+
+            {/* Preset Option Tabs */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '8px' }}>
+                Action / Adjusted Late Minutes:
+              </label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setConsiderLateMinutes('0')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: considerLateMinutes === '0' ? '2px solid #10b981' : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: considerLateMinutes === '0' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                    color: considerLateMinutes === '0' ? '#10b981' : 'var(--text-secondary, #cbd5e1)',
+                    fontWeight: 700,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified</span>
+                  Waive 100% (0 min · On Time)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setConsiderLateMinutes(String(Math.min(15, recordToConsider.lateMinutes || 10)))}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    border: considerLateMinutes !== '0' ? '2px solid #f59e0b' : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: considerLateMinutes !== '0' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                    color: considerLateMinutes !== '0' ? '#f59e0b' : 'var(--text-secondary, #cbd5e1)',
+                    fontWeight: 600,
+                    fontSize: '12.5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Custom Minutes
+                </button>
+              </div>
+
+              {considerLateMinutes !== '0' && (
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
+                    Set Approved Late Minutes:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="600"
+                    value={considerLateMinutes}
+                    onChange={e => setConsiderLateMinutes(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                      background: 'var(--surface-input, rgba(0, 0, 0, 0.2))',
+                      color: 'var(--text-main, #fff)',
+                      fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Common Reason Quick Suggestions */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '6px' }}>
+                HR Consideration Reason / Note:
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                {[
+                  'Staff forgot to press check-in on time',
+                  'Office biometric / Wi-Fi network delay',
+                  'Client meeting / Official outdoor duty',
+                  'Approved transit / personal emergency'
+                ].map(r => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setConsiderReason(r)}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid',
+                      borderColor: considerReason === r ? 'var(--primary, #3b82f6)' : 'var(--border-main, rgba(255, 255, 255, 0.1))',
+                      background: considerReason === r ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                      color: considerReason === r ? 'var(--primary, #3b82f6)' : 'var(--text-muted, #94a3b8)',
+                      fontSize: '11px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                rows={2}
+                value={considerReason}
+                onChange={e => setConsiderReason(e.target.value)}
+                placeholder="Enter justification note for record and payroll audit..."
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                  background: 'var(--surface-input, rgba(0, 0, 0, 0.2))',
+                  color: 'var(--text-main, #fff)',
+                  fontSize: '13px',
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            {/* Note info banner */}
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.08)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              fontSize: '12px',
+              color: 'var(--text-secondary, #cbd5e1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#3b82f6' }}>info</span>
+              <span>This manual consideration is locked against automatic recalculation and waives all late salary deductions in payroll.</span>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+              <button
+                type="button"
+                onClick={() => { setConsiderModalOpen(false); setRecordToConsider(null); }}
+                disabled={considerSubmitting}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                  background: 'transparent',
+                  color: 'var(--text-main, #fff)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmConsiderLate}
+                disabled={considerSubmitting}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#059669',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: considerSubmitting ? 0.7 : 1
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified</span>
+                {considerSubmitting ? 'Saving...' : 'Apply Consideration'}
               </button>
             </div>
           </div>

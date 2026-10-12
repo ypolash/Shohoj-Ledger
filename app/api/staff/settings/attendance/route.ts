@@ -32,19 +32,22 @@ export async function PUT(request: Request) {
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    let config = await prisma.attendanceConfig.findFirst({ where: { companyId } });
+    let config: any = await (prisma.attendanceConfig as any).findFirst({ where: { companyId } });
     
     if (!config) {
-      config = await prisma.attendanceConfig.create({ data: { ...body, companyId } });
+      config = await (prisma.attendanceConfig as any).create({ data: { ...body, companyId } });
     } else {
-      config = await prisma.attendanceConfig.update({
+      config = await (prisma.attendanceConfig as any).update({
         where: { id: config.id },
         data: {
           gracePeriod: body.gracePeriod,
           shiftStart: body.shiftStart,
           shiftEnd: body.shiftEnd,
           fridayOff: body.fridayOff,
-          enablePunishmentDeduction: body.enablePunishmentDeduction
+          enablePunishmentDeduction: body.enablePunishmentDeduction,
+          autoOfficeOff: body.autoOfficeOff !== undefined ? Boolean(body.autoOfficeOff) : undefined,
+          autoOfficeOffTime: body.autoOfficeOffTime !== undefined ? String(body.autoOfficeOffTime) : undefined,
+          autoBackfillPastDays: body.autoBackfillPastDays !== undefined ? Number(body.autoBackfillPastDays) : undefined,
         }
       });
     }

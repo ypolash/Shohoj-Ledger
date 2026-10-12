@@ -1401,14 +1401,18 @@ model PunishmentSetting {
 }
 
 model AttendanceConfig {
-  id                        String   @id @default(uuid())
-  gracePeriod               Int      @default(15)
-  shiftStart                String   @default("09:00")
-  shiftEnd                  String   @default("20:00")
-  fridayOff                 Boolean  @default(true)
-  enablePunishmentDeduction Boolean  @default(false)
+  id                        String    @id @default(uuid())
+  gracePeriod               Int       @default(15)
+  shiftStart                String    @default("09:00")
+  shiftEnd                  String    @default("20:00")
+  fridayOff                 Boolean   @default(true)
+  enablePunishmentDeduction Boolean   @default(false)
+  autoOfficeOff             Boolean   @default(false)
+  autoOfficeOffTime         String?   @default("20:00")
+  autoBackfillPastDays      Int       @default(30)
+  lastOfficeOffRun          DateTime?
   companyId                 String?
-  company                   Company? @relation(fields: [companyId], references: [id])
+  company                   Company?  @relation(fields: [companyId], references: [id])
 
   @@index([companyId])
 }

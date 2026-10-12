@@ -81,6 +81,17 @@ export default function PayrollOverviewPage() {
     finally { setActionLoading(null); }
   };
 
+  /** Deletes a single payroll record */
+  const handleDeleteRecord = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete the payroll record for ${name}?`)) return;
+    setActionLoading(id);
+    try {
+      await fetch(`/api/payroll/${id}`, { method: 'DELETE' });
+      loadPayroll();
+    } catch (e) { console.error(e); }
+    finally { setActionLoading(null); }
+  };
+
   /** Confirms payment with payment details */
   const confirmPayment = async () => {
     if (!payModal) return;
@@ -288,17 +299,24 @@ export default function PayrollOverviewPage() {
                       ) : '—'}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
-                      {meta.next ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {meta.next && (
+                          <button
+                            onClick={() => handleStatusTransition(p.id, meta.next!, `${p.employee?.firstName} ${p.employee?.lastName}`, Number(p.netSalary))}
+                            disabled={isActing}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px', borderRadius: '8px', border: 'none', background: meta.next === 'PAID' ? 'var(--success)' : meta.next === 'LOCKED' ? 'var(--warning-subtle)' : 'var(--primary)', color: meta.next === 'LOCKED' ? 'var(--warning)' : 'white', fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: isActing ? 0.6 : 1 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{meta.nextIcon}</span>
+                            {isActing ? '…' : meta.nextLabel}
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleStatusTransition(p.id, meta.next!, `${p.employee?.firstName} ${p.employee?.lastName}`, Number(p.netSalary))}
+                          onClick={() => handleDeleteRecord(p.id, `${p.employee?.firstName} ${p.employee?.lastName}`)}
                           disabled={isActing}
-                          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 12px', borderRadius: '8px', border: 'none', background: meta.next === 'PAID' ? 'var(--success)' : meta.next === 'LOCKED' ? 'var(--warning-subtle)' : 'var(--primary)', color: meta.next === 'LOCKED' ? 'var(--warning)' : 'white', fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: isActing ? 0.6 : 1 }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{meta.nextIcon}</span>
-                          {isActing ? '…' : meta.nextLabel}
+                          title="Delete Payroll Record"
+                          style={{ display: 'flex', alignItems: 'center', padding: '7px 8px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'transparent', color: '#ef4444', fontSize: '12px', cursor: 'pointer', opacity: isActing ? 0.6 : 1 }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                         </button>
-                      ) : (
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 );

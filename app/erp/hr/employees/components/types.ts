@@ -51,4 +51,5 @@ export interface TabProps {
   handleAddExperience?: () => void;
   handleRemoveExperience?: (index: number) => void;
   handleExperienceChange?: (index: number, field: string, value: any) => void;
+  onOpenIncrementModal?: () => void;
 }

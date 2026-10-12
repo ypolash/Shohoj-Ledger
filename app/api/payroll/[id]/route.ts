@@ -167,6 +167,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const totalBonusAmount = bonuses.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
     const totalTaskRewardAmount = taskRewards.reduce((acc, curr) => acc + Number(curr.rewardAmount || 0), 0);
 
+    // 10. Fetch employee salary increment history
+    const increments = await prisma.employeeLifecycle.findMany({
+      where: {
+        companyId: companyId!,
+        employeeId,
+        eventType: 'SALARY_INCREMENT'
+      },
+      orderBy: { effectiveDate: 'desc' }
+    });
+
     return NextResponse.json({
       payment,
       telemetry: {
@@ -192,6 +202,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       overtimes,
       salaryAdvances,
       loans,
+      increments,
       audits: payment.audits || []
     });
   } catch (error) {
@@ -409,3 +420,85 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Failed to update payroll status' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const companyFilter = await withCompany();
+  const companyId = companyFilter.companyId;
+
+  const moduleGuard = await requireModule(companyId || "", "PAYROLL");
+  if (moduleGuard) return moduleGuard;
+
+  const rbacGuard = await requirePermission("PAYROLL_MANAGE");
+  if (rbacGuard) {
+    const genGuard = await requirePermission("PAYROLL_GENERATE");
+    if (genGuard) return rbacGuard;
+  }
+
+  const session = await getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const existingPayment = await prisma.salaryPayment.findFirst({
+      where: { ...companyFilter, id },
+      include: { employee: true }
+    });
+
+    if (!existingPayment) {
+      return NextResponse.json({ error: 'Payroll record not found' }, { status: 404 });
+    }
+
+    if (existingPayment.status === 'LOCKED') {
+      return NextResponse.json({ error: 'Cannot delete a locked payroll record' }, { status: 400 });
+    }
+
+    // Clean up associated expense if this payroll had been disbursed
+    if (existingPayment.expenseId) {
+      try {
+        await prisma.expense.delete({
+          where: { id: existingPayment.expenseId }
+        });
+      } catch (err) {
+        console.warn('Associated expense deletion skipped or already removed:', err);
+      }
+    }
+
+    // Delete audits for this salary payment
+    await prisma.payrollAudit.deleteMany({
+      where: { salaryPaymentId: id }
+    });
+
+    // Delete associated payslip for this employee and period
+    await prisma.payslip.deleteMany({
+      where: {
+        employeeId: existingPayment.employeeId,
+        month: existingPayment.month,
+        year: existingPayment.year
+      }
+    });
+
+    // Delete associated deductions for this employee and period
+    await prisma.salaryDeduction.deleteMany({
+      where: {
+        employeeId: existingPayment.employeeId,
+        month: existingPayment.month,
+        year: existingPayment.year
+      }
+    });
+
+    // Delete the salary payment
+    await prisma.salaryPayment.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true, message: 'Payroll record deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete payroll record:', error);
+    return NextResponse.json({ error: 'Failed to delete payroll record' }, { status: 500 });
+  }
+}
+

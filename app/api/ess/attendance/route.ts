@@ -113,6 +113,29 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Already clocked in today." }, { status: 400 });
       }
 
+      // If office was closed for today, stop check-ins for the current work day.
+      // Next office working shift will automatically be active and open.
+      const attConfig: any = await (prisma.attendanceConfig as any).findFirst({
+        where: { companyId: employee.companyId }
+      });
+      if (attConfig?.lastOfficeOffRun) {
+        const compSetting = await prisma.companySetting.findUnique({
+          where: { companyId: employee.companyId || "" }
+        });
+        const timezone = compSetting?.timezone || "Asia/Dhaka";
+        const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+          timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit"
+        });
+        const lastRunDateStr = dateFormatter.format(new Date(attConfig.lastOfficeOffRun));
+        const nowDateStr = dateFormatter.format(now);
+
+        if (lastRunDateStr === nowDateStr && todayRecord?.status === "ABSENT") {
+          return NextResponse.json({
+            error: "Office duty for today has been closed (Office Off). Check-in will automatically reopen on the next office working shift."
+          }, { status: 403 });
+        }
+      }
+
       const calc = await calculateAttendanceStatus(employee.companyId || "", employee.id, now);
 
       let record;

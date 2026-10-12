@@ -349,6 +349,19 @@
   color: var(--primary);
 }
 
+.officeOffItem {
+  color: #f59e0b;
+}
+
+.officeOffItem:hover {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+
+.officeOffItem .flyoutItemIcon {
+  color: #f59e0b;
+}
+
 .dangerItem {
   color: var(--danger);
 }

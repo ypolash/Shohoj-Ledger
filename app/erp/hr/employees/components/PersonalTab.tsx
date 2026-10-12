@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TabProps } from './types';
 
-export default function PersonalTab({ formData, setFormData, isEditing, employee, handleProfileChange, getInitials }: TabProps) {
+export default function PersonalTab({ formData, setFormData, isEditing, employee, handleProfileChange, getInitials, onOpenIncrementModal }: TabProps) {
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [designations, setDesignations] = useState<{ id: string; title?: string; name?: string }[]>([]);
 
@@ -97,7 +97,32 @@ export default function PersonalTab({ formData, setFormData, isEditing, employee
           <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 600 }}>Financial & Bank Details</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
             <div>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Basic Salary</div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>Basic Salary</span>
+                {onOpenIncrementModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenIncrementModal}
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                      color: '#10b981',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px'
+                    }}
+                    title="Grant Salary Increment"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>trending_up</span>
+                    <span>Increment</span>
+                  </button>
+                )}
+              </div>
               <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--primary)' }}>৳{Number(formData.basicSalary || 0).toLocaleString()}</div>
             </div>
             <div>

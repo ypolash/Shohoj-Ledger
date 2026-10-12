@@ -504,6 +504,7 @@ export async function recalculateRecentAttendance(companyId?: string) {
       lateMinutes: true,
       earlyLeaveMinutes: true,
       isLate: true,
+      reviewStatus: true,
       employee: {
         select: {
           companyId: true,
@@ -516,8 +517,15 @@ export async function recalculateRecentAttendance(companyId?: string) {
   for (const rec of records) {
     if (!rec.checkInTime) continue;
 
-    // Skip records explicitly marked ABSENT, HALF_DAY, or OFF_DAY_WORK
-    if (rec.status === "ABSENT" || rec.status === "HALF_DAY" || rec.status === "OFF_DAY_WORK") {
+    // Skip records explicitly marked ABSENT, HALF_DAY, OFF_DAY_WORK or HR CONSIDERED
+    if (
+      rec.status === "ABSENT" ||
+      rec.status === "HALF_DAY" ||
+      rec.status === "OFF_DAY_WORK" ||
+      rec.reviewStatus === "CONSIDERED" ||
+      rec.reviewStatus === "WAIVED" ||
+      rec.reviewStatus === "EXCUSED"
+    ) {
       continue;
     }
 
@@ -673,19 +681,28 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
   const rosterEmpMap = new Map(dutyRosters.map(r => [r.employeeId, r]));
 
   let absentCount = 0;
+  let newAbsentCount = 0;
   let totalPenalties = 0;
-  const absentEmployees: Array<{ employeeId: string; name: string; penalty: number; dutyTime: string }> = [];
+  const absentEmployees: Array<{ employeeId: string; name: string; penalty: number; dutyTime: string; isNew: boolean }> = [];
 
   for (const emp of employees) {
+    // Skip if employee joined AFTER target date
+    if (emp.joinDate) {
+      const joinDateStr = new Date(emp.joinDate).toISOString().slice(0, 10);
+      if (dateString < joinDateStr) {
+        continue;
+      }
+    }
+
     const existing = attendanceEmpMap.get(emp.id);
 
-    // If already checked in, skip
-    if (existing && existing.checkInTime && existing.status !== "ABSENT") {
+    // If already checked in or recorded as present/worked, skip
+    if (existing && (existing.checkInTime || existing.status === "PRESENT" || existing.status === "HALF_DAY" || existing.status === "OFF_DAY_WORK")) {
       continue;
     }
 
     // If on approved leave, record as LEAVE without penalty
-    if (leaveEmpSet.has(emp.id)) {
+    if (leaveEmpSet.has(emp.id) || (existing && existing.status === "LEAVE")) {
       if (!existing) {
         await prisma.attendance.create({
           data: {
@@ -758,6 +775,7 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
     }
 
     const reason = `Unexcused Absence (${leaveStatusReason}) on ${dateString} [Duty Time: ${dutyLabel}]`;
+    const isNew = !existing;
 
     // Create or update attendance record as ABSENT with penalty
     await prisma.attendance.upsert({
@@ -788,12 +806,14 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
     });
 
     absentCount++;
+    if (isNew) newAbsentCount++;
     totalPenalties += penaltyAmount;
     absentEmployees.push({
       employeeId: emp.employeeId,
       name: `${emp.firstName} ${emp.lastName}`,
       penalty: penaltyAmount,
-      dutyTime: dutyLabel
+      dutyTime: dutyLabel,
+      isNew
     });
   }
 
@@ -802,8 +822,113 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
     date: dateString,
     totalEmployees: employees.length,
     absentCount,
+    newAbsentCount,
     totalPenalties,
     absentEmployees
+  };
+}
+
+/**
+ * Executes the "Office Off" procedure:
+ * 1. Closes duty for the target date (today by default), marking employees without check-in
+ *    and without approved leave as ABSENT with their designated company fines.
+ * 2. Optionally scans and backfills previous unrecorded duty days (past N days) so that
+ *    unrecorded past duty days without check-in or approved leave are marked ABSENT with fines
+ *    and appear on historical attendance lists.
+ * 3. Records timestamp on AttendanceConfig.lastOfficeOffRun.
+ */
+export async function runOfficeOff(
+  companyId: string,
+  options?: {
+    targetDate?: string;
+    backfillPastDays?: number;
+    source?: "MANUAL" | "AUTO";
+  }
+) {
+  const compSetting = await prisma.companySetting.findUnique({
+    where: { companyId },
+  });
+
+  let timezone = compSetting?.timezone || "Asia/Dhaka";
+  if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
+    timezone = "Asia/Dhaka";
+  }
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: timezone });
+  } catch {
+    timezone = "Asia/Dhaka";
+  }
+
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const todayStr = formatter.format(now);
+  const targetDate = options?.targetDate || todayStr;
+
+  // 1. Evaluate Target Date (Today)
+  const todayResult = await evaluateDailyAbsenceAndPenalties(companyId, targetDate);
+
+  // 2. Scan and backfill previous unrecorded duty days
+  let pastDaysScanned = 0;
+  let pastAbsentCount = 0;
+  let pastNewAbsentCount = 0;
+  let pastPenalties = 0;
+  
+  // Resolve backfill days from options or attendanceConfig (default 30 days)
+  let backfillDays = options?.backfillPastDays;
+  if (backfillDays === undefined) {
+    const attConf: any = await (prisma.attendanceConfig as any).findFirst({ where: { companyId } });
+    backfillDays = attConf?.autoBackfillPastDays ?? 30;
+  }
+
+  const effectiveBackfillDays = Number(backfillDays) || 0;
+  if (effectiveBackfillDays > 0) {
+    const targetDateObj = new Date(`${targetDate}T12:00:00Z`);
+
+    for (let i = 1; i <= effectiveBackfillDays; i++) {
+      const pastDateObj = new Date(targetDateObj);
+      pastDateObj.setUTCDate(pastDateObj.getUTCDate() - i);
+      const pastDateStr = pastDateObj.toISOString().slice(0, 10);
+
+      // Never evaluate future dates
+      if (pastDateStr > todayStr) continue;
+
+      const pastResult = await evaluateDailyAbsenceAndPenalties(companyId, pastDateStr);
+      pastDaysScanned++;
+      pastAbsentCount += pastResult.absentCount;
+      pastNewAbsentCount += pastResult.newAbsentCount;
+      pastPenalties += pastResult.totalPenalties;
+    }
+  }
+
+  // 3. Update AttendanceConfig lastOfficeOffRun timestamp
+  await (prisma.attendanceConfig as any).updateMany({
+    where: { companyId },
+    data: {
+      lastOfficeOffRun: new Date()
+    }
+  });
+
+  return {
+    success: true,
+    targetDate,
+    todayAbsentCount: todayResult.absentCount,
+    todayNewAbsentCount: todayResult.newAbsentCount,
+    todayPenalties: todayResult.totalPenalties,
+    todayAbsentEmployees: todayResult.absentEmployees,
+    pastDaysScanned,
+    pastAbsentCount,
+    pastNewAbsentCount,
+    pastPenalties,
+    totalAbsentCount: todayResult.absentCount + pastAbsentCount,
+    totalNewAbsentCount: todayResult.newAbsentCount + pastNewAbsentCount,
+    totalPenalties: todayResult.totalPenalties + pastPenalties,
+    source: options?.source || "MANUAL",
+    lastRun: new Date().toISOString()
   };
 }
 

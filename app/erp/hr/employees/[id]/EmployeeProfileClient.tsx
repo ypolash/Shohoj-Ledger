@@ -32,7 +32,67 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
     description: ''
   });
 
-  useEffect(() => {
+  // Salary Increment State
+  const [isIncrementModalOpen, setIsIncrementModalOpen] = useState(false);
+  const [incrementAmount, setIncrementAmount] = useState<string | number>('1000');
+  const [incrementMode, setIncrementMode] = useState<'amount' | 'percent'>('amount');
+  const [incrementReason, setIncrementReason] = useState('Annual performance appraisal increment');
+  const [incrementEffectiveDate, setIncrementEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
+  const [incrementLoading, setIncrementLoading] = useState(false);
+
+  const handleApplyIncrement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cur = Number(formData.basicSalary) || 0;
+    let amt = 0;
+    if (incrementMode === 'amount') {
+      amt = Number(incrementAmount) || 0;
+    } else {
+      const pct = Number(incrementAmount) || 0;
+      amt = Math.round((cur * pct) / 100);
+    }
+    if (amt <= 0) {
+      alert("Please specify a valid increment amount");
+      return;
+    }
+    setIncrementLoading(true);
+    try {
+      const res = await fetch(`/api/hr/employees/${employee.id}/increment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          incrementAmount: amt,
+          effectiveDate: incrementEffectiveDate,
+          reason: incrementReason || 'Salary Increment'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to grant increment');
+      alert(`Salary increment of +৳${amt.toLocaleString()} granted! New basic salary: ৳${(cur + amt).toLocaleString()}`);
+      setFormData(prev => ({ ...prev, basicSalary: cur + amt }));
+      setIsIncrementModalOpen(false);
+      fetchLifecycles();
+    } catch (err: any) {
+      alert(err.message || 'Error granting increment');
+    } finally {
+      setIncrementLoading(false);
+    }
+  };
+
+    useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam === 'compensation' || tabParam === 'increment') {
+        setViewMode('PROFESSIONAL');
+        setActiveTab('Compensation & Increments');
+        if (params.get('action') === 'increment') {
+          setIsIncrementModalOpen(true);
+        }
+      }
+    }
+  }, []);
+
+useEffect(() => {
     fetchLifecycles();
     fetchDepartmentsAndDesignations();
   }, []);
@@ -253,7 +313,7 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
     });
   };
 
-  const tabs = ["Profile", "Documents", "Notes", "Timeline"];
+  const tabs = ["Profile", "Compensation & Increments", "Documents", "Notes", "Timeline"];
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '60px' }}>
@@ -566,9 +626,32 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
                     padding: '16px 18px',
                     borderRadius: '14px'
                   }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#fbbf24' }}>payments</span>
-                      Basic Salary
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#fbbf24' }}>payments</span>
+                        Basic Salary
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsIncrementModalOpen(true)}
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          color: '#10b981',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                        title="Grant Salary Increment"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>trending_up</span>
+                        Increment
+                      </button>
                     </div>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: '#10b981' }}>
                       {formData.employmentType === 'Project-Based'
@@ -972,7 +1055,7 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
             <div style={{ position: 'relative' }}>
               {!isEditing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  <PersonalTab formData={formData} setFormData={setFormData} isEditing={false} employee={employee} getInitials={getInitials} />
+                  <PersonalTab formData={formData} setFormData={setFormData} isEditing={false} employee={employee} getInitials={getInitials} onOpenIncrementModal={() => setIsIncrementModalOpen(true)} />
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                       <EducationTab formData={formData} setFormData={setFormData} isEditing={false} employee={employee} handleAddEducation={handleAddEducation} handleRemoveEducation={handleRemoveEducation} handleEducationChange={handleEducationChange} />
@@ -1000,7 +1083,226 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
             </div>
           )}
 
-          {/* Documents Tab */}
+                    {/* Compensation & Increments Tab */}
+          {activeTab === "Compensation & Increments" && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Header Banner */}
+              <div className="glass-card" style={{ padding: '24px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main, #f8fafc)' }}>
+                    <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '24px' }}>payments</span>
+                    Compensation & Salary Increments
+                  </h3>
+                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted, #94a3b8)' }}>
+                    Official permanent base salary, contract rate, and historical merit progression for this employee.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsIncrementModalOpen(true)}
+                  className="btn btn-primary"
+                  style={{
+                    background: '#10b981',
+                    borderColor: '#10b981',
+                    padding: '9px 18px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>trending_up</span>
+                  <span>Grant Salary Increment</span>
+                </button>
+              </div>
+
+              {/* KPI Stat Cards Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                {/* Active Base Salary */}
+                <div className="glass-card" style={{ padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>CURRENT BASE SALARY</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                      ACTIVE BASE
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#10b981', marginBottom: '4px' }}>
+                    {formatCurrency(formData.basicSalary)}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                    {formData.employmentType === 'Project-Based' ? 'Per Project Milestone' : 'Per Calendar Month'}
+                  </div>
+                </div>
+
+                {/* Annualized Projection */}
+                <div className="glass-card" style={{ padding: '20px 24px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>ANNUALIZED PROJECTION</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                      12-MONTH
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '26px', fontWeight: 800, color: 'var(--text-main, #f8fafc)', marginBottom: '4px' }}>
+                    {formatCurrency((Number(formData.basicSalary) || 0) * 12)}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                    Annual Base Commitment
+                  </div>
+                </div>
+
+                {/* Increments Count */}
+                <div className="glass-card" style={{ padding: '20px 24px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>INCREMENTS GRANTED</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                      HISTORY
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#a78bfa', marginBottom: '4px' }}>
+                    {lifecycles.filter(l => l.eventType === 'SALARY_INCREMENT').length}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                    Recorded Career Appraisals
+                  </div>
+                </div>
+              </div>
+
+              {/* Future Payroll Guarantee Alert */}
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                borderRadius: '14px',
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px'
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#10b981', flexShrink: 0 }}>
+                  verified_user
+                </span>
+                <div style={{ fontSize: '13px', color: 'var(--text-main, #f8fafc)', lineHeight: 1.5 }}>
+                  <strong style={{ color: '#10b981' }}>Automatic Future Payroll Guarantee: </strong>
+                  When a salary increment is applied in this HR section, this employee's official contract basic salary is permanently upgraded in the system. Every subsequent monthly payroll generated under <strong>HR & Payroll</strong> automatically uses this increased rate for salary calculations, gross earnings, and disbursements.
+                </div>
+              </div>
+
+              {/* Historical Increment Log Table */}
+              <div className="glass-card" style={{ padding: '24px 28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main, #f8fafc)' }}>
+                      Salary Increment & Appraisal Progression History
+                    </h4>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                      Audit log of previous pay increases, appraisal notes, and effective dates.
+                    </p>
+                  </div>
+                </div>
+
+                {(() => {
+                  const incrementEvents = lifecycles.filter(l => l.eventType === 'SALARY_INCREMENT');
+                  if (incrementEvents.length === 0) {
+                    return (
+                      <div style={{ padding: '36px 20px', textAlign: 'center', border: '1px dashed var(--border-main, rgba(255,255,255,0.1))', borderRadius: '14px', background: 'var(--surface-bg, rgba(255,255,255,0.02))' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--text-muted, #94a3b8)', marginBottom: '8px' }}>insights</span>
+                        <h5 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 700, color: 'var(--text-main, #f8fafc)' }}>No Salary Increments Recorded Yet</h5>
+                        <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-muted, #94a3b8)' }}>
+                          This employee is currently drawing their initial joining basic salary of {formatCurrency(formData.basicSalary)}.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsIncrementModalOpen(true)}
+                          className="btn btn-secondary"
+                          style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>trending_up</span>
+                          <span>Grant First Increment</span>
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className={styles.table} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.1))' }}>
+                            <th style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>Effective Date</th>
+                            <th style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>Previous Base</th>
+                            <th style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>Increment Added</th>
+                            <th style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>New Permanent Base</th>
+                            <th style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>Reason / Notes</th>
+                            <th style={{ padding: '10px 14px', color: 'var(--text-muted, #94a3b8)' }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {incrementEvents.map(ev => {
+                            const prev = ev.previousData?.basicSalary ? Number(ev.previousData.basicSalary) : null;
+                            const newB = ev.newData?.basicSalary ? Number(ev.newData.basicSalary) : null;
+                            const amt = ev.newData?.incrementAmount ? Number(ev.newData.incrementAmount) : (prev && newB ? newB - prev : null);
+                            const pct = ev.newData?.incrementPercentage ? ev.newData.incrementPercentage : (prev && amt ? ((amt / prev) * 100).toFixed(1) : null);
+
+                            return (
+                              <tr key={ev.id} style={{ borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.06))' }}>
+                                <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--text-main, #f8fafc)' }}>
+                                  {new Date(ev.effectiveDate).toLocaleDateString()}
+                                </td>
+                                <td style={{ padding: '12px 14px', color: 'var(--text-muted, #94a3b8)' }}>
+                                  {prev ? formatCurrency(prev) : '—'}
+                                </td>
+                                <td style={{ padding: '12px 14px' }}>
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(16, 185, 129, 0.12)',
+                                    color: '#10b981',
+                                    fontWeight: 700,
+                                    fontSize: '12px'
+                                  }}>
+                                    +{amt ? formatCurrency(amt) : '—'} {pct ? `(+${pct}%)` : ''}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 14px', fontWeight: 800, color: '#10b981' }}>
+                                  {newB ? formatCurrency(newB) : '—'}
+                                </td>
+                                <td style={{ padding: '12px 14px', color: 'var(--text-main, #f8fafc)' }}>
+                                  {ev.description || ev.newData?.reason || 'Performance merit increment'}
+                                </td>
+                                <td style={{ padding: '12px 14px' }}>
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    background: 'rgba(16, 185, 129, 0.15)',
+                                    color: '#10b981'
+                                  }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>check_circle</span>
+                                    APPLIED
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+{/* Documents Tab */}
           {activeTab === "Documents" && (
             <div className="glass-card">
               <h3 style={{ margin: '0 0 var(--spacing-6) 0' }}>Employee Documents</h3>
@@ -1242,6 +1544,212 @@ export default function EmployeeProfileClient({ employee, initialMode = 'BASIC' 
               <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" onClick={() => setIsLifecycleModalOpen(false)} className="btn btn-secondary">Cancel</button>
                 <button type="submit" className="btn btn-primary">Save Event</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Salary Increment Modal */}
+      {isIncrementModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+          padding: '20px'
+        }}>
+          <div className="glass-card" style={{ width: '480px', maxWidth: '95%', padding: '28px', borderRadius: '20px', background: 'var(--surface-card, #1e293b)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main, #f8fafc)' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#10b981' }}>trending_up</span>
+                  Grant Salary Increment
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                  Current Base: <strong>{formatCurrency(formData.basicSalary)}</strong>
+                </p>
+              </div>
+              <button onClick={() => setIsIncrementModalOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleApplyIncrement} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Future Payroll Guarantee Banner */}
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '10px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                color: '#10b981'
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>update</span>
+                <span><strong>Future Payroll Guarantee:</strong> Permanently raises contract base salary for all future monthly payroll calculations.</span>
+              </div>
+              {/* Type Switcher */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIncrementMode('amount')}
+                  style={{
+                    flex: 1, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                    border: incrementMode === 'amount' ? '1px solid #10b981' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                    background: incrementMode === 'amount' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                    color: incrementMode === 'amount' ? '#10b981' : 'var(--text-muted, #94a3b8)'
+                  }}
+                >
+                  Fixed Amount (৳)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIncrementMode('percent')}
+                  style={{
+                    flex: 1, padding: '7px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                    border: incrementMode === 'percent' ? '1px solid #10b981' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                    background: incrementMode === 'percent' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                    color: incrementMode === 'percent' ? '#10b981' : 'var(--text-muted, #94a3b8)'
+                  }}
+                >
+                  Percentage (%)
+                </button>
+              </div>
+
+                            {/* Quick Presets */}
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '5px' }}>
+                  Quick Presets:
+                </label>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {incrementMode === 'amount' ? (
+                    <>
+                      {[500, 1000, 1500, 2000, 3000, 5000].map(amt => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setIncrementAmount(amt)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            border: Number(incrementAmount) === amt ? '1px solid #10b981' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                            background: Number(incrementAmount) === amt ? '#10b981' : 'var(--surface-bg, rgba(255,255,255,0.05))',
+                            color: Number(incrementAmount) === amt ? '#ffffff' : 'var(--text-main, #f8fafc)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          +৳{amt.toLocaleString()}
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {[5, 10, 15, 20, 25].map(pct => (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => setIncrementAmount(pct)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            border: Number(incrementAmount) === pct ? '1px solid #10b981' : '1px solid var(--border-main, rgba(255,255,255,0.1))',
+                            background: Number(incrementAmount) === pct ? '#10b981' : 'var(--surface-bg, rgba(255,255,255,0.05))',
+                            color: Number(incrementAmount) === pct ? '#ffffff' : 'var(--text-main, #f8fafc)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          +{pct}%
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Amount input */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
+                  {incrementMode === 'amount' ? 'Increment Amount (BDT) *' : 'Increment Percentage (%) *'}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={incrementAmount}
+                  onChange={e => setIncrementAmount(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main, rgba(255,255,255,0.1))', background: 'var(--surface-bg, rgba(255,255,255,0.05))', color: 'var(--text-main, #f8fafc)', fontSize: '13px', fontWeight: 700 }}
+                />
+              </div>
+
+              {/* Effective Date */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
+                  Effective Date *
+                </label>
+                <input
+                  type="date"
+                  value={incrementEffectiveDate}
+                  onChange={e => setIncrementEffectiveDate(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main, rgba(255,255,255,0.1))', background: 'var(--surface-bg, rgba(255,255,255,0.05))', color: 'var(--text-main, #f8fafc)', fontSize: '13px' }}
+                />
+              </div>
+
+              {/* Reason */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
+                  Appraisal Notes / Reason *
+                </label>
+                <input
+                  type="text"
+                  value={incrementReason}
+                  onChange={e => setIncrementReason(e.target.value)}
+                  placeholder="e.g. Annual merit review, promotion to senior"
+                  required
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-main, rgba(255,255,255,0.1))', background: 'var(--surface-bg, rgba(255,255,255,0.05))', color: 'var(--text-main, #f8fafc)', fontSize: '13px' }}
+                />
+              </div>
+
+              {/* Calculation Preview */}
+              {(() => {
+                const cur = Number(formData.basicSalary) || 0;
+                let inc = 0;
+                if (incrementMode === 'amount') {
+                  inc = Number(incrementAmount) || 0;
+                } else {
+                  inc = Math.round((cur * (Number(incrementAmount) || 0)) / 100);
+                }
+                const newBase = cur + inc;
+
+                return (
+                  <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px dashed rgba(16, 185, 129, 0.35)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-muted, #94a3b8)' }}>Current: {formatCurrency(cur)} ➔</span>
+                    <strong style={{ color: '#10b981', fontSize: '14px' }}>New Base: {formatCurrency(newBase)} (+{formatCurrency(inc)})</strong>
+                  </div>
+                );
+              })()}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                <button type="button" onClick={() => setIsIncrementModalOpen(false)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={incrementLoading}
+                  className="btn btn-primary"
+                  style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                >
+                  {incrementLoading ? "Saving..." : "Apply Increment"}
+                </button>
               </div>
             </form>
           </div>

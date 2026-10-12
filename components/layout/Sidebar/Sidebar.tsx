@@ -11,7 +11,6 @@ import {
   DollarSign, 
   Box, 
   Briefcase, 
-  CreditCard, 
   Folder, 
   BarChart2, 
   Settings,
@@ -22,8 +21,10 @@ import {
   Headphones,
   User,
   LogOut,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Moon
 } from 'lucide-react';
+import { OfficeOffModal } from '@/components/hr/OfficeOffModal';
 
 interface SidebarProps {
   businessType?: string;
@@ -35,6 +36,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
   const { sidebarOpen, isMobile } = useUI();
   const [isHovered, setIsHovered] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isOfficeOffModalOpen, setIsOfficeOffModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const pathname = usePathname() || '';
   const router = useRouter();
@@ -92,7 +94,6 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     { name: 'Finance', icon: DollarSign, href: '/erp/finance' },
     { name: 'Inventory', icon: Box, href: '/erp/inventory' },
     { name: 'HR', icon: Briefcase, href: '/erp/hr' },
-    { name: 'Payroll', icon: CreditCard, href: '/erp/payroll' },
     { name: 'Marketing', icon: Megaphone, href: '/erp/marketing' },
     { name: 'Reports', icon: BarChart2, href: '/erp/reports' },
   ].filter(item => {
@@ -228,6 +229,18 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
 
               <button
                 type="button"
+                className={`${styles.flyoutItem} ${styles.officeOffItem}`}
+                onClick={() => {
+                  setIsProfileMenuOpen(false);
+                  setIsOfficeOffModalOpen(true);
+                }}
+              >
+                <Moon size={16} className={styles.flyoutItemIcon} />
+                <span>Office Off (Close Day)</span>
+              </button>
+
+              <button
+                type="button"
                 className={`${styles.flyoutItem} ${styles.dangerItem}`}
                 onClick={handleLogout}
               >
@@ -265,6 +278,11 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
           )}
         </button>
       </div>
+
+      <OfficeOffModal
+        isOpen={isOfficeOffModalOpen}
+        onClose={() => setIsOfficeOffModalOpen(false)}
+      />
     </aside>
   );
 }

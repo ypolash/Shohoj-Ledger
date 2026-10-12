@@ -91,6 +91,34 @@ export async function POST(request: Request) {
       );
     }
 
+    // Office off only stops the current work day.
+    // Next office shift automatically reopens as a normal working day.
+    const attConfig: any = await (prisma.attendanceConfig as any).findFirst({
+      where: { companyId: employee.companyId }
+    });
+    if (attConfig?.lastOfficeOffRun) {
+      const compSetting = await prisma.companySetting.findUnique({
+        where: { companyId: employee.companyId || "" }
+      });
+      const timezone = compSetting?.timezone || "Asia/Dhaka";
+      const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit"
+      });
+      const lastRunDateStr = dateFormatter.format(new Date(attConfig.lastOfficeOffRun));
+      const serverDateStr = dateFormatter.format(serverTime);
+
+      if (lastRunDateStr === serverDateStr && existingAttendance?.status === "ABSENT") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Office duty for today has been closed (Office Off). Check-in will automatically reopen on the next office working shift.",
+            serverTime: serverTime.toISOString()
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const config = await prisma.attendanceConfig.findFirst({
         where: {
             // If companyId exists on config, we might need it.

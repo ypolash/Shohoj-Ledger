@@ -124,6 +124,9 @@ export async function PUT(request: Request) {
       gracePeriod = 15,
       fridayOff = true,
       enablePunishmentDeduction = false,
+      autoOfficeOff = false,
+      autoOfficeOffTime = "20:00",
+      autoBackfillPastDays = 30,
       currency = "BDT",
       timezone = "Asia/Dhaka",
       workingDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
@@ -131,30 +134,36 @@ export async function PUT(request: Request) {
     } = body;
 
     // 1. Synchronize AttendanceConfig
-    let attendanceConfig = await prisma.attendanceConfig.findFirst({ where: { companyId } });
+    let attendanceConfig: any = await (prisma.attendanceConfig as any).findFirst({ where: { companyId } });
     if (!attendanceConfig) {
-      attendanceConfig = await prisma.attendanceConfig.create({
+      attendanceConfig = await (prisma.attendanceConfig as any).create({
         data: {
           companyId,
           shiftStart,
           shiftEnd,
           gracePeriod: Number(gracePeriod) || 0,
           fridayOff: Boolean(fridayOff),
-          enablePunishmentDeduction: Boolean(enablePunishmentDeduction)
+          enablePunishmentDeduction: Boolean(enablePunishmentDeduction),
+          autoOfficeOff: Boolean(autoOfficeOff),
+          autoOfficeOffTime: autoOfficeOffTime || "20:00",
+          autoBackfillPastDays: Number(autoBackfillPastDays) || 30
         }
       });
     } else {
-      await prisma.attendanceConfig.updateMany({
+      await (prisma.attendanceConfig as any).updateMany({
         where: { companyId },
         data: {
           shiftStart,
           shiftEnd,
           gracePeriod: Number(gracePeriod) || 0,
           fridayOff: Boolean(fridayOff),
-          enablePunishmentDeduction: Boolean(enablePunishmentDeduction)
+          enablePunishmentDeduction: Boolean(enablePunishmentDeduction),
+          autoOfficeOff: Boolean(autoOfficeOff),
+          autoOfficeOffTime: autoOfficeOffTime || "20:00",
+          autoBackfillPastDays: Number(autoBackfillPastDays) || 30
         }
       });
-      attendanceConfig = await prisma.attendanceConfig.findFirst({ where: { companyId } });
+      attendanceConfig = await (prisma.attendanceConfig as any).findFirst({ where: { companyId } });
     }
 
     // 2. Synchronize CompanySetting

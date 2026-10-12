@@ -159,8 +159,22 @@ export async function POST(request: Request) {
         });
       }
 
-      await prisma.payslip.create({
-        data: {
+      await prisma.payslip.upsert({
+        where: {
+          employeeId_month_year: {
+            employeeId: empId,
+            month,
+            year
+          }
+        },
+        update: {
+          totalEarnings: payroll.grossSalary,
+          totalDeductions: payroll.totalDeductions,
+          netPay: payroll.netSalary,
+          companyId: companyId!,
+          systemSource
+        },
+        create: {
           companyId: companyId!,
           employeeId: empId,
           month,

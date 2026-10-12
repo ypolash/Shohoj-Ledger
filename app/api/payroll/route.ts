@@ -226,6 +226,15 @@ export async function POST(request: Request) {
       }
     });
 
+    // Clean up previous deductions for this employee & period if any
+    await prisma.salaryDeduction.deleteMany({
+      where: {
+        employeeId,
+        month,
+        year
+      }
+    });
+
     // Save deductions breakdown
     for (const ded of payroll.deductions) {
       await prisma.salaryDeduction.create({
@@ -241,9 +250,23 @@ export async function POST(request: Request) {
       });
     }
 
-    // Save Payslip
-    await prisma.payslip.create({
-      data: {
+    // Save or update Payslip
+    await prisma.payslip.upsert({
+      where: {
+        employeeId_month_year: {
+          employeeId,
+          month,
+          year
+        }
+      },
+      update: {
+        totalEarnings: payroll.grossSalary,
+        totalDeductions: payroll.totalDeductions,
+        netPay: payroll.netSalary,
+        companyId,
+        systemSource
+      },
+      create: {
         companyId,
         employeeId,
         month,
@@ -269,9 +292,9 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(payment, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to generate payroll:', error);
-    return NextResponse.json({ error: 'Failed to generate payroll' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to generate payroll' }, { status: 500 });
   }
 }
 

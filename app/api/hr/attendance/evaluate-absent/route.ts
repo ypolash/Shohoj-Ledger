@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
-import { evaluateDailyAbsenceAndPenalties } from "@/lib/attendance";
+import { evaluateDailyAbsenceAndPenalties, runOfficeOff } from "@/lib/attendance";
 
 export async function POST(req: Request) {
   try {
@@ -15,9 +15,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { date } = body;
+    const { date, backfillPastDays } = body;
 
-    const result = await evaluateDailyAbsenceAndPenalties(companyId, date);
+    let result;
+    if (backfillPastDays !== undefined && Number(backfillPastDays) > 0) {
+      result = await runOfficeOff(companyId, { targetDate: date, backfillPastDays: Number(backfillPastDays) });
+    } else {
+      result = await evaluateDailyAbsenceAndPenalties(companyId, date);
+    }
 
     return NextResponse.json(result);
   } catch (error: any) {

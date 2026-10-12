@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import styles from "./settings.module.css";
+import { OfficeOffModal } from "@/components/hr/OfficeOffModal";
 
 interface AttendanceConfig {
   id?: string;
@@ -10,6 +11,10 @@ interface AttendanceConfig {
   gracePeriod: number | string;
   fridayOff: boolean;
   enablePunishmentDeduction: boolean;
+  autoOfficeOff?: boolean;
+  autoOfficeOffTime?: string;
+  autoBackfillPastDays?: number | string;
+  lastOfficeOffRun?: string | null;
 }
 
 interface CompanySetting {
@@ -98,8 +103,13 @@ export default function HRSettingsPage() {
     shiftEnd: "18:00",
     gracePeriod: 15,
     fridayOff: true,
-    enablePunishmentDeduction: false
+    enablePunishmentDeduction: false,
+    autoOfficeOff: false,
+    autoOfficeOffTime: "20:00",
+    autoBackfillPastDays: 30,
+    lastOfficeOffRun: null
   });
+  const [showOfficeOffModal, setShowOfficeOffModal] = useState<boolean>(false);
 
   const [companySetting, setCompanySetting] = useState<CompanySetting>({
     currency: "BDT",
@@ -295,6 +305,9 @@ export default function HRSettingsPage() {
         gracePeriod: Number(attendanceConfig.gracePeriod) || 0,
         fridayOff: attendanceConfig.fridayOff,
         enablePunishmentDeduction: attendanceConfig.enablePunishmentDeduction,
+        autoOfficeOff: attendanceConfig.autoOfficeOff ?? false,
+        autoOfficeOffTime: attendanceConfig.autoOfficeOffTime || "20:00",
+        autoBackfillPastDays: Number(attendanceConfig.autoBackfillPastDays) || 30,
         currency: companySetting.currency,
         timezone: companySetting.timezone,
         workingDays: companySetting.workingDays,
@@ -332,6 +345,9 @@ export default function HRSettingsPage() {
         gracePeriod: Number(attendanceConfig.gracePeriod) || 0,
         fridayOff: attendanceConfig.fridayOff,
         enablePunishmentDeduction: newVal,
+        autoOfficeOff: attendanceConfig.autoOfficeOff ?? false,
+        autoOfficeOffTime: attendanceConfig.autoOfficeOffTime || "20:00",
+        autoBackfillPastDays: Number(attendanceConfig.autoBackfillPastDays) || 30,
         currency: companySetting.currency,
         timezone: companySetting.timezone,
         workingDays: companySetting.workingDays,
@@ -354,6 +370,44 @@ export default function HRSettingsPage() {
     } catch {
       setAttendanceConfig(prev => ({ ...prev, enablePunishmentDeduction: !newVal }));
       alert("Network error while updating deduction setting.");
+    }
+  };
+
+  // Instant toggle for Automatic Office Off
+  const handleToggleAutoOfficeOff = async (newVal: boolean) => {
+    setAttendanceConfig(prev => ({ ...prev, autoOfficeOff: newVal }));
+    try {
+      const payload = {
+        shiftStart: attendanceConfig.shiftStart,
+        shiftEnd: attendanceConfig.shiftEnd,
+        gracePeriod: Number(attendanceConfig.gracePeriod) || 0,
+        fridayOff: attendanceConfig.fridayOff,
+        enablePunishmentDeduction: attendanceConfig.enablePunishmentDeduction,
+        autoOfficeOff: newVal,
+        autoOfficeOffTime: attendanceConfig.autoOfficeOffTime || "20:00",
+        autoBackfillPastDays: Number(attendanceConfig.autoBackfillPastDays) || 30,
+        currency: companySetting.currency,
+        timezone: companySetting.timezone,
+        workingDays: companySetting.workingDays,
+        weeklyHolidays: companySetting.weeklyHolidays,
+        onboardingMode
+      };
+      const res = await fetch("/api/hr/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSaveSuccess(`Automatic Office Off has been ${newVal ? "enabled" : "disabled"} successfully.`);
+        setTimeout(() => setSaveSuccess(""), 3500);
+      } else {
+        setAttendanceConfig(prev => ({ ...prev, autoOfficeOff: !newVal }));
+        alert(json.error || "Failed to update Automatic Office Off setting.");
+      }
+    } catch {
+      setAttendanceConfig(prev => ({ ...prev, autoOfficeOff: !newVal }));
+      alert("Network error while updating Automatic Office Off setting.");
     }
   };
 
@@ -971,6 +1025,134 @@ export default function HRSettingsPage() {
                 />
                 <span className={styles.inputHelper}>Auto-close open attendance shifts at midnight</span>
               </div>
+            </div>
+          </div>
+
+          {/* Automatic Office Off Card */}
+          <div className={styles.card} style={{ borderLeft: "4px solid #f59e0b" }}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleGroup}>
+                <div className={styles.cardIcon} style={{ backgroundColor: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}>
+                  <span className="material-symbols-outlined">nightlight</span>
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <h2 className={styles.cardTitle}>Automatic Office Off (End-of-Day Closure)</h2>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                        backgroundColor: attendanceConfig.autoOfficeOff ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                        color: attendanceConfig.autoOfficeOff ? "#10b981" : "#94a3b8",
+                        border: `1px solid ${attendanceConfig.autoOfficeOff ? "rgba(16, 185, 129, 0.3)" : "rgba(148, 163, 184, 0.3)"}`
+                      }}
+                    >
+                      {attendanceConfig.autoOfficeOff ? "ACTIVE" : "DISABLED"}
+                    </span>
+                  </div>
+                  <p className={styles.cardSubtitle}>
+                    Automatically close office hours, evaluate unscheduled duty staff without check-in as Absent, and assess fines.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <label className={styles.switch}>
+                  <input
+                    type="checkbox"
+                    checked={!!attendanceConfig.autoOfficeOff}
+                    onChange={(e) => handleToggleAutoOfficeOff(e.target.checked)}
+                  />
+                  <span className={styles.slider}></span>
+                </label>
+              </div>
+            </div>
+
+            <div className={styles.grid3}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>
+                  Auto Closure Trigger Time
+                  <span className={styles.labelHint}>{attendanceConfig.autoOfficeOffTime || "20:00"}</span>
+                </label>
+                <input
+                  type="time"
+                  className={styles.input}
+                  value={attendanceConfig.autoOfficeOffTime || "20:00"}
+                  onChange={(e) => setAttendanceConfig({ ...attendanceConfig, autoOfficeOffTime: e.target.value })}
+                />
+                <span className={styles.inputHelper}>Automatic daily cutoff time to evaluate absences</span>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>
+                  Past Backfill Scan Range
+                  <span className={styles.labelHint}>{attendanceConfig.autoBackfillPastDays || 30} days</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="90"
+                  className={styles.input}
+                  value={attendanceConfig.autoBackfillPastDays ?? 30}
+                  onChange={(e) => setAttendanceConfig({ ...attendanceConfig, autoBackfillPastDays: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0 })}
+                />
+                <span className={styles.inputHelper}>Previous unrecorded duty days backfilled on audit</span>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>Audit Execution Status</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted, #94a3b8)" }}>
+                    {attendanceConfig.lastOfficeOffRun
+                      ? `Last run: ${new Date(attendanceConfig.lastOfficeOffRun).toLocaleString()}`
+                      : "Never executed yet"}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowOfficeOffModal(true)}
+                    className={styles.btnSecondary}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 12px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#f59e0b",
+                      borderColor: "rgba(245, 158, 11, 0.4)",
+                      backgroundColor: "rgba(245, 158, 11, 0.08)",
+                      cursor: "pointer",
+                      width: "fit-content"
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>play_circle</span>
+                    Run Office Off Audit Now
+                  </button>
+                </div>
+                <span className={styles.inputHelper}>Execute instant day closure and backfill</span>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "14px",
+                padding: "12px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(245, 158, 11, 0.05)",
+                border: "1px solid rgba(245, 158, 11, 0.2)",
+                fontSize: "12px",
+                color: "var(--text-muted, #cbd5e1)",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px"
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ color: "#f59e0b", fontSize: "18px" }}>info</span>
+              <span>
+                <strong>Day-by-Day Lifecycle:</strong> Office Off only closes the current working day. As soon as the next scheduled shift begins, the system automatically opens as an active working day without requiring manual intervention. Staff without check-in/leave on the closed day are assigned absence fines according to the <strong>Fine & Penalty Rules</strong> tab.
+              </span>
             </div>
           </div>
 
@@ -2577,6 +2759,15 @@ export default function HRSettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Office Off Audit Modal */}
+      <OfficeOffModal
+        isOpen={showOfficeOffModal}
+        onClose={() => {
+          setShowOfficeOffModal(false);
+          fetchSettings();
+        }}
+      />
     </div>
   );
 }

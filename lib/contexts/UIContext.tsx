@@ -38,6 +38,9 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
       setIsMobile(mobile);
       if (mobile) {
         setSidebarOpen(false); // Collapse on mobile by default
+      } else {
+        const saved = localStorage.getItem('shohoj-sidebar-open');
+        setSidebarOpen(saved !== null ? saved === 'true' : true);
       }
     };
 
@@ -73,7 +76,15 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('shohoj-theme', newTheme);
   };
 
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
+  const toggleSidebar = () => {
+    setSidebarOpen(prev => {
+      const next = !prev;
+      if (!isMobile) {
+        localStorage.setItem('shohoj-sidebar-open', String(next));
+      }
+      return next;
+    });
+  };
 
   return (
     <UIContext.Provider value={{ sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, theme, setTheme, pageTitleOverride, setPageTitleOverride }}>

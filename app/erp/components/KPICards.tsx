@@ -43,12 +43,15 @@ const formatCurrency = (val: number | string) => {
 export function KPICards({ data, role }: KPICardsProps) {
   if (!data) return null;
 
-  // Visibility logic
-  const showFinance = ['Owner', 'CEO', 'Accountant'].includes(role);
-  const showHR = ['Owner', 'CEO', 'HR'].includes(role);
+  // Visibility logic (support multi-roles like "Project Manager,HR")
+  const userRoles = (role || '').split(',').map((r: string) => r.trim());
+  const hasRole = (allowed: string[]) => allowed.some((r: string) => userRoles.includes(r));
+
+  const showFinance = hasRole(['Owner', 'CEO', 'Accountant']);
+  const showHR = hasRole(['Owner', 'CEO', 'HR']);
   const businessType = (data.businessType || 'Product + Service').toUpperCase();
-  const showProjects = ['Owner', 'CEO', 'Project Manager'].includes(role) && businessType !== 'PRODUCT';
-  const showInventory = ['Owner', 'CEO', 'Inventory'].includes(role) && businessType !== 'SERVICE';
+  const showProjects = hasRole(['Owner', 'CEO', 'Project Manager']) && businessType !== 'PRODUCT';
+  const showInventory = hasRole(['Owner', 'CEO', 'Inventory']) && businessType !== 'SERVICE';
 
   // Calculate dynamic trends from monthlyData if available
   const mData = data.monthlyData || [];

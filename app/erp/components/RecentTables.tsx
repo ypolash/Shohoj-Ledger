@@ -21,7 +21,8 @@ const formatCurrency = (val: number | string) => {
 export function RecentTables({ data, role }: RecentTablesProps) {
   if (!data) return null;
 
-  const showFinance = ['Owner', 'CEO', 'Accountant'].includes(role);
+  const userRoles = (role || '').split(',').map((r: string) => r.trim());
+  const showFinance = ['Owner', 'CEO', 'Accountant', 'Admin', 'Super Admin'].some((r) => userRoles.includes(r));
   if (!showFinance) return null;
 
   const transactions = data.recentTransactions || [];

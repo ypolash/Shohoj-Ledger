@@ -322,7 +322,7 @@ export default function AttendancePage() {
     try {
       const [attRes, empRes, hrRes] = await Promise.all([
         fetch(filterEmpId ? `/api/attendance?employeeId=${filterEmpId}` : '/api/attendance').catch(() => null),
-        fetch('/api/employees').catch(() => null),
+        fetch('/api/employees?all=true').catch(() => null),
         fetch('/api/hr/settings').catch(() => null),
       ]);
 
@@ -426,7 +426,12 @@ export default function AttendancePage() {
   const isNetworkConfigured = activeNetworks.length > 0;
 
   const empMap = useMemo(() => {
-    return Object.fromEntries(employees.map(e => [e.id, e]));
+    const map: Record<string, Employee> = {};
+    employees.forEach(e => {
+      if (e.id) map[e.id] = e;
+      if (e.employeeId) map[e.employeeId] = e;
+    });
+    return map;
   }, [employees]);
 
   // Derived metrics
@@ -1211,10 +1216,10 @@ export default function AttendancePage() {
                       </thead>
                       <tbody>
                         {group.records.map(r => {
-                          const emp = empMap[r.employeeId];
-                          const fullName = emp ? `${emp.firstName} ${emp.lastName}` : 'Staff Personnel';
-                          const initials = emp
-                            ? `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase()
+                          const emp = empMap[r.employeeId] || r.employee;
+                          const fullName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : (r.employeeName || 'Staff Personnel');
+                          const initials = emp && (emp.firstName || emp.lastName)
+                            ? `${(emp.firstName || '')[0] || ''}${(emp.lastName || '')[0] || ''}`.toUpperCase()
                             : 'ST';
 
                           const checkIn = r.checkIn || r.checkInTime || '—';
@@ -1446,10 +1451,10 @@ export default function AttendancePage() {
               </thead>
               <tbody>
                 {filteredRecords.slice(0, 100).map(r => {
-                  const emp = empMap[r.employeeId];
-                  const fullName = emp ? `${emp.firstName} ${emp.lastName}` : 'Staff Personnel';
-                  const initials = emp
-                    ? `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase()
+                  const emp = empMap[r.employeeId] || r.employee;
+                  const fullName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : (r.employeeName || 'Staff Personnel');
+                  const initials = emp && (emp.firstName || emp.lastName)
+                    ? `${(emp.firstName || '')[0] || ''}${(emp.lastName || '')[0] || ''}`.toUpperCase()
                     : 'ST';
 
                   const checkIn = r.checkIn || r.checkInTime || '—';

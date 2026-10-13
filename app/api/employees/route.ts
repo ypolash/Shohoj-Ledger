@@ -17,10 +17,10 @@ export async function GET(req: Request) {
     if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const includeTemporary = searchParams.get('includeTemporary') === 'true' || searchParams.get('all') === 'true';
+    const excludeTemporary = searchParams.get('excludeTemporary') === 'true' || searchParams.get('regularOnly') === 'true';
 
     const whereClause: any = { companyId };
-    if (!includeTemporary) {
+    if (excludeTemporary) {
       whereClause.NOT = [
         { employmentType: { in: ['Freelance', 'Freelancer', 'Contractor', 'freelance', 'freelancer', 'contractor', 'FREELANCE', 'Model', 'Talent', 'model', 'talent'] } },
         { employeeId: { startsWith: 'FL-' } },

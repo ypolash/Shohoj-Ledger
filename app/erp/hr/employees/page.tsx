@@ -374,8 +374,8 @@ export default function EmployeesPage() {
 
       if (empRes && empRes.ok) {
         const empData = await empRes.json();
-        const regularEmployees = Array.isArray(empData) ? empData.filter(e => !isTemporaryStaff(e)) : [];
-        setEmployees(regularEmployees);
+        const allEmployees = Array.isArray(empData) ? empData : [];
+        setEmployees(allEmployees);
       }
       if (deptRes && deptRes.ok) {
         const deptData = await deptRes.json();
@@ -462,8 +462,6 @@ export default function EmployeesPage() {
   // Multi-dimensional filtering
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
-      if (isTemporaryStaff(emp)) return false;
-
       // Search
       const searchTarget = `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.employeeId || ''} ${emp.department || ''} ${emp.designation || ''}`.toLowerCase();
       const matchesSearch = !search || searchTarget.includes(search.toLowerCase());
@@ -477,7 +475,7 @@ export default function EmployeesPage() {
       const matchesDesig = selectedDesig === 'ALL' || desigName === selectedDesig;
 
       // Compensation filter
-      const isProject = emp.employmentType === 'Project-Based';
+      const isProject = emp.employmentType === 'Project-Based' || isTemporaryStaff(emp);
       const matchesComp =
         compensationFilter === 'ALL' ||
         (compensationFilter === 'PROJECT' && isProject) ||

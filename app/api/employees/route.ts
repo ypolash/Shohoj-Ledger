@@ -17,17 +17,19 @@ export async function GET(req: Request) {
     if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const excludeTemporary = searchParams.get('excludeTemporary') === 'true' || searchParams.get('regularOnly') === 'true';
+    const includeTemporary = searchParams.get('includeTemporary') === 'true' || searchParams.get('all') === 'true';
 
     const whereClause: any = { companyId };
-    if (excludeTemporary) {
+    if (!includeTemporary) {
       whereClause.NOT = [
         { employmentType: { in: ['Freelance', 'Freelancer', 'Contractor', 'freelance', 'freelancer', 'contractor', 'FREELANCE', 'Model', 'Talent', 'model', 'talent'] } },
         { employeeId: { startsWith: 'FL-' } },
         { employeeId: { startsWith: 'MDL-' } },
         { location: { contains: 'FREELANCER' } },
         { location: { contains: 'MODEL_TALENT' } },
-        { department: { in: ['Freelance', 'Model Talent', 'Modeling Agency', 'freelance', 'model talent', 'modeling agency'] } }
+        { department: { in: ['Freelance', 'Model Talent', 'Modeling Agency', 'freelance', 'model talent', 'modeling agency', 'Independent / Freelance'] } },
+        { designation: { contains: 'Freelance', mode: 'insensitive' } },
+        { designation: { contains: 'Model', mode: 'insensitive' } }
       ];
     }
 

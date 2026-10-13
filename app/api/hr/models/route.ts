@@ -16,8 +16,9 @@ export async function GET() {
       where: {
         companyId,
         OR: [
+          { employeeId: { startsWith: 'MDL-' } },
           { employmentType: { in: ['Model', 'Talent'] } },
-          { department: { in: ['Model Talent', 'Fashion', 'Modeling Agency', 'Talent'] } },
+          { department: { in: ['Model Talent', 'Fashion', 'Modeling Agency', 'Talent', 'Independent / Freelance'] } },
           { designation: { contains: 'Model', mode: 'insensitive' } }
         ]
       },

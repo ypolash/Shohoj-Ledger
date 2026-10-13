@@ -59,8 +59,8 @@ const isTemporaryStaff = (emp: any) => {
 
   if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
   if (empId.startsWith('FL-') || empId.startsWith('MDL-')) return true;
-  if (['freelance', 'model talent', 'modeling agency'].includes(dept)) return true;
-  if (desig.includes('freelance') || desig.includes('contractor') || desig.includes('model talent')) return true;
+  if (['freelance', 'model talent', 'modeling agency', 'independent / freelance'].includes(dept)) return true;
+  if (desig.includes('freelance') || desig.includes('contractor') || desig.includes('model')) return true;
   if (loc.includes('FREELANCER') || loc.includes('MODEL_TALENT')) return true;
   return false;
 };
@@ -374,8 +374,8 @@ export default function EmployeesPage() {
 
       if (empRes && empRes.ok) {
         const empData = await empRes.json();
-        const allEmployees = Array.isArray(empData) ? empData : [];
-        setEmployees(allEmployees);
+        const regularEmployees = Array.isArray(empData) ? empData.filter(e => !isTemporaryStaff(e)) : [];
+        setEmployees(regularEmployees);
       }
       if (deptRes && deptRes.ok) {
         const deptData = await deptRes.json();
@@ -462,6 +462,8 @@ export default function EmployeesPage() {
   // Multi-dimensional filtering
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
+      if (isTemporaryStaff(emp)) return false;
+
       // Search
       const searchTarget = `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.employeeId || ''} ${emp.department || ''} ${emp.designation || ''}`.toLowerCase();
       const matchesSearch = !search || searchTarget.includes(search.toLowerCase());

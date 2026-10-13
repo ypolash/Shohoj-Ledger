@@ -18,6 +18,7 @@ export async function GET() {
       where: {
         ...companyFilter,
         OR: [
+          { employeeId: { startsWith: 'FL-' } },
           { employmentType: { in: ['Freelance', 'Project-Based', 'Contractor', 'Freelancer', 'Editor', 'freelance', 'contractor', 'freelancer', 'editor', 'FREELANCE'] } },
           { department: { in: ['Freelance', 'Post-Production', 'Creative Freelance', 'Video Editing', 'freelance', 'post-production', 'creative freelance', 'video editing', 'FREELANCE'] } },
           { designation: { contains: 'Freelance', mode: 'insensitive' } },

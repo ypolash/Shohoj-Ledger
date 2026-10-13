@@ -61,10 +61,30 @@ export async function POST(req: Request) {
       },
       include: {
         employee: {
-          select: { firstName: true, lastName: true, employeeId: true }
+          select: { firstName: true, lastName: true, employeeId: true, userId: true }
         }
       }
     });
+
+    // Create in-app Notification record if employee has linked user account
+    if (fine.employee?.userId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            companyId,
+            userId: fine.employee.userId,
+            category: "FINE",
+            title: `Disciplinary Fine: ৳${Number(amount)}`,
+            message: `A penalty fine of ৳${Number(amount)} has been imposed: ${reason}`,
+            channel: "IN_APP",
+            status: "UNREAD",
+            priority: "HIGH",
+          }
+        });
+      } catch (notifErr) {
+        console.warn("Failed to create in-app notification record:", notifErr);
+      }
+    }
 
     // Sync with active payroll so new fine immediately deducts from net salary
     const targetDate = date ? new Date(date) : new Date();

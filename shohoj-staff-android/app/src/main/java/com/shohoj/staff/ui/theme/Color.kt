@@ -11,6 +11,7 @@ val Emerald900 = Color(0xFF064E3B)
 val Emerald400 = Color(0xFF34D399)
 
 // Accent Cyan & Blue
+val Cyan300 = Color(0xFF67E8F9)
 val Cyan400 = Color(0xFF22D3EE)
 val Cyan500 = Color(0xFF06B6D4)
 val Blue400 = Color(0xFF60A5FA)
@@ -36,6 +37,8 @@ val Amber400 = Color(0xFFFBBF24)
 val Amber300 = Color(0xFFFCD34D)
 val Rose500 = Color(0xFFF43F5E)
 val Rose400 = Color(0xFFFB7185)
+val Rose300 = Color(0xFFFDA4AF)
+val Rose200 = Color(0xFFFECDD3)
 val Indigo500 = Color(0xFF6366F1)
 val Purple500 = Color(0xFFA855F7)
 

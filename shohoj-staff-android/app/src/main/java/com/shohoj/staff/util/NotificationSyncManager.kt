@@ -26,6 +26,7 @@ object NotificationSyncManager {
     private const val KEY_SEEN_TASK_IDS = "seen_task_ids"
     private const val KEY_SEEN_NOTICE_IDS = "seen_notice_ids"
     private const val KEY_SEEN_ROSTER_IDS = "seen_roster_ids"
+    private const val KEY_SEEN_FINE_IDS = "seen_fine_ids"
     private const val KEY_CHANNEL_UNREAD_MAP = "channel_unread_map"
     private const val KEY_IS_INITIALIZED = "is_sync_initialized"
 
@@ -319,6 +320,31 @@ object NotificationSyncManager {
                 }
             } catch (e: Exception) {
                 // Chat sync quiet catch
+            }
+
+            // 5. Sync Fines & Disciplinary Penalties
+            try {
+                val empId = sessionManager.employeeId
+                val fineRes = if (empId != null) service.getMobileFines(empId) else service.getEssFines()
+                if (fineRes.isSuccessful && fineRes.body() != null) {
+                    hasSyncSuccess = true
+                    val fines = fineRes.body()?.fines ?: emptyList()
+                    val seenFines = prefs.getStringSet(KEY_SEEN_FINE_IDS, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+                    if (!isInitialized) {
+                        fines.forEach { seenFines.add(it.id) }
+                    } else {
+                        fines.forEach { fine ->
+                            if (!seenFines.contains(fine.id) && fine.status != "CANCELLED") {
+                                SoundNotificationHelper.showFineNotification(context, fine)
+                                seenFines.add(fine.id)
+                            }
+                        }
+                    }
+                    prefs.edit().putStringSet(KEY_SEEN_FINE_IDS, seenFines).apply()
+                }
+            } catch (e: Exception) {
+                // Fine sync quiet catch
             }
 
             if (!isInitialized && hasSyncSuccess) {

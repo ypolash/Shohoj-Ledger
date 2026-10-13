@@ -112,6 +112,16 @@ interface ShohojApiService {
     @GET("api/ess/payroll")
     suspend fun getPayroll(): Response<PayrollResponse>
 
+    // --- Fines & Disciplinary Penalties ---
+
+    @GET("api/mobile/fines")
+    suspend fun getMobileFines(
+        @Query("employeeId") employeeId: String? = null
+    ): Response<FineListResponse>
+
+    @GET("api/ess/fines")
+    suspend fun getEssFines(): Response<FineListResponse>
+
     // --- Tasks ---
 
     @GET("api/ess/tasks")

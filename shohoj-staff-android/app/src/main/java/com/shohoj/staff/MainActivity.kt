@@ -169,6 +169,9 @@ class MainActivity : ComponentActivity() {
             "announcements" -> {
                 pendingIntentRoute = Screen.Announcements.route
             }
+            "payroll", "fines" -> {
+                pendingIntentRoute = Screen.Payroll.route
+            }
             "chat" -> {
                 val channelId = intent.getStringExtra("channel_id")
                 val channelName = intent.getStringExtra("channel_name") ?: "Chat"

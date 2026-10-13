@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.shohoj.staff.ShohojStaffApp
 import com.shohoj.staff.data.model.BonusItem
 import com.shohoj.staff.data.model.DeductionItem
+import com.shohoj.staff.data.model.FineItem
 import com.shohoj.staff.data.model.PayslipItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ data class PayrollUiState(
     val payslips: List<PayslipItem> = emptyList(),
     val bonuses: List<BonusItem> = emptyList(),
     val deductions: List<DeductionItem> = emptyList(),
+    val fines: List<FineItem> = emptyList(),
     val latestPayslip: PayslipItem? = null,
     val error: String? = null
 )
@@ -45,6 +47,7 @@ class PayrollViewModel(application: Application) : AndroidViewModel(application)
                         payslips = data.payslips,
                         bonuses = data.bonuses,
                         deductions = data.deductions,
+                        fines = data.fines,
                         latestPayslip = data.payslips.firstOrNull()
                     )
                 },

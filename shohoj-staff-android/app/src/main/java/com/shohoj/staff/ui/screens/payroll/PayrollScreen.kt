@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -247,17 +248,27 @@ fun PayrollScreen(
                     }
                 }
                 2 -> {
-                    if (uiState.deductions.isEmpty()) {
+                    if (uiState.deductions.isEmpty() && uiState.fines.isEmpty()) {
                         item {
-                            EmptyStateView(title = "No Deductions", description = "No fines or deductions recorded.")
+                            EmptyStateView(title = "No Deductions or Fines", description = "No disciplinary fines or payroll deductions recorded.")
                         }
                     } else {
                         items(uiState.deductions) { deduction ->
+                            val isFine = deduction.isFine || (deduction.title?.contains("fine", ignoreCase = true) == true)
+                            val statusText = deduction.status ?: if (isFine) "PENDING" else null
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(CardBackground, RoundedCornerShape(14.dp))
-                                    .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                                    .background(
+                                        if (isFine) Color(0xFF261214) else CardBackground,
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isFine) Rose500.copy(alpha = 0.5f) else CardBorder,
+                                        RoundedCornerShape(14.dp)
+                                    )
                                     .padding(16.dp)
                             ) {
                                 Row(
@@ -265,19 +276,74 @@ fun PayrollScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Text(
+                                                text = deduction.title ?: if (isFine) "Disciplinary Fine" else "Salary Deduction",
+                                                style = MaterialTheme.typography.titleMedium.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isFine) Rose200 else Slate50,
+                                                    fontSize = 15.sp
+                                                )
+                                            )
+                                            if (statusText != null) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .background(
+                                                            if (statusText.equals("CANCELLED", ignoreCase = true)) Slate800 else Rose500.copy(alpha = 0.2f),
+                                                            RoundedCornerShape(6.dp)
+                                                        )
+                                                        .border(
+                                                            0.5.dp,
+                                                            if (statusText.equals("CANCELLED", ignoreCase = true)) Slate600 else Rose400.copy(alpha = 0.6f),
+                                                            RoundedCornerShape(6.dp)
+                                                        )
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = statusText.uppercase(),
+                                                        color = if (statusText.equals("CANCELLED", ignoreCase = true)) Slate400 else Rose300,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        }
+
                                         Text(
-                                            text = deduction.title ?: "Salary Deduction",
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
+                                            text = deduction.reason ?: "Penalty fine recorded by HR",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                color = if (isFine) Rose300.copy(alpha = 0.8f) else Slate400,
+                                                fontSize = 12.sp
+                                            )
                                         )
-                                        Text(
-                                            text = deduction.reason ?: "Adjustment deduction",
-                                            style = MaterialTheme.typography.bodyMedium.copy(color = Slate400, fontSize = 12.sp)
-                                        )
+
+                                        if (deduction.createdAt != null) {
+                                            Text(
+                                                text = DateUtils.formatDate(deduction.createdAt),
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    color = Slate500,
+                                                    fontSize = 11.sp
+                                                )
+                                            )
+                                        }
                                     }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
                                     Text(
                                         text = "- ${DateUtils.formatCurrency(deduction.amount)}",
-                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Rose400)
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Rose400,
+                                            fontSize = 15.sp
+                                        )
                                     )
                                 }
                             }

@@ -39,6 +39,8 @@ data class DeductionItem(
     @SerializedName("title") val title: String? = null,
     @SerializedName("amount") val amount: Double,
     @SerializedName("reason") val reason: String? = null,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("isFine") val isFine: Boolean = false,
     @SerializedName("createdAt") val createdAt: String? = null
 )
 
@@ -47,5 +49,6 @@ data class PayrollResponse(
     @SerializedName("payments") val payments: List<SalaryPaymentItem> = emptyList(),
     @SerializedName("bonuses") val bonuses: List<BonusItem> = emptyList(),
     @SerializedName("deductions") val deductions: List<DeductionItem> = emptyList(),
+    @SerializedName("fines") val fines: List<FineItem> = emptyList(),
     @SerializedName("error") val error: String? = null
 )

@@ -40,6 +40,7 @@ data class HomeUiState(
     val isClocking: Boolean = false,
     val clockActionSuccessMessage: String? = null,
     val error: String? = null,
+    val activeFines: List<FineItem> = emptyList(),
     val updateDialogInfo: AppUpdateInfo? = null,
     val appVersionName: String = "1.0.0"
 )
@@ -129,6 +130,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 activeBreak = leaveData.activeBreak
             }
 
+            var activeFinesList: List<FineItem> = emptyList()
+            try {
+                val empId = app.sessionManager.employeeId
+                val fineRes = if (empId != null) app.apiClient.getService().getMobileFines(empId) else app.apiClient.getService().getEssFines()
+                if (fineRes.isSuccessful && fineRes.body() != null) {
+                    activeFinesList = (fineRes.body()?.fines ?: emptyList()).filter { it.status != "CANCELLED" }
+                }
+            } catch (e: Exception) {
+                // Ignore quiet catch
+            }
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 employee = currentEmp,
@@ -139,7 +151,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 todayRoster = todayRosterDto,
                 customDuty = customDutyDto,
                 announcements = announcementsList,
-                activeBreak = activeBreak
+                activeBreak = activeBreak,
+                activeFines = activeFinesList
             )
 
             startBreakCountdownTicker(activeBreak)

@@ -17,9 +17,14 @@ import com.shohoj.staff.R
 import com.shohoj.staff.data.model.AnnouncementItem
 import com.shohoj.staff.data.model.CommunityChannel
 import com.shohoj.staff.data.model.DutyRosterDto
+import com.shohoj.staff.data.model.FineItem
 import com.shohoj.staff.data.model.TaskItem
 
 object SoundNotificationHelper {
+
+    const val CHANNEL_FINES_ID = "shohoj_fines_notifications"
+    const val CHANNEL_FINES_NAME = "Fines & Disciplinary Penalties"
+    const val CHANNEL_FINES_DESC = "Urgent alerts for disciplinary penalties and fines imposed by HR"
 
     const val CHANNEL_TASKS_ID = "shohoj_tasks_notifications"
     const val CHANNEL_TASKS_NAME = "Tasks & Assignments"
@@ -126,6 +131,21 @@ object SoundNotificationHelper {
                 setShowBadge(false)
             }
             notificationManager.createNotificationChannel(serviceChannel)
+
+            // 6. Fines & Penalty Channel
+            val finesChannel = NotificationChannel(
+                CHANNEL_FINES_ID,
+                CHANNEL_FINES_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = CHANNEL_FINES_DESC
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 150, 300, 150, 300)
+                setSound(soundUri, audioAttr)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+                enableLights(true)
+            }
+            notificationManager.createNotificationChannel(finesChannel)
         }
     }
 
@@ -457,6 +477,50 @@ object SoundNotificationHelper {
                 .setContentIntent(pendingIntent)
 
             notificationManager.notify(9999, builder.build())
+            playNotificationSound(context, isMention = true)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun showFineNotification(context: Context, fine: FineItem) {
+        try {
+            initNotificationChannels(context)
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+
+            val title = "⚠️ Disciplinary Fine Issued: ৳${fine.amount.toInt()}"
+            val reasonText = fine.reason ?: "Violation penalty"
+            val statusText = fine.status ?: "PENDING"
+            val fullDetail = "A fine of ৳${fine.amount.toInt()} has been recorded on your account.\nReason: $reasonText\nStatus: $statusText"
+
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra("target_screen", "payroll")
+                putExtra("fine_id", fine.id)
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                fine.id.hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(context, CHANNEL_FINES_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText("Reason: $reasonText (৳${fine.amount.toInt()})")
+                .setStyle(NotificationCompat.BigTextStyle().bigText(fullDetail))
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setShowWhen(true)
+                .setWhen(System.currentTimeMillis())
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(pendingIntent)
+
+            val notifId = (fine.id.hashCode() and 0x7FFFFFFF)
+            notificationManager.notify(notifId, builder.build())
             playNotificationSound(context, isMention = true)
         } catch (e: Exception) {
             e.printStackTrace()

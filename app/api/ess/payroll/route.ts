@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     const { companyId, id: employeeId } = employee;
 
-    const [payslips, payments, bonuses, deductions] = await Promise.all([
+    const [payslips, payments, bonuses, salaryDeductions, employeeFines] = await Promise.all([
       prisma.payslip.findMany({
         where: { companyId, employeeId },
         orderBy: [{ year: "desc" }, { month: "desc" }],
@@ -42,9 +42,47 @@ export async function GET(request: Request) {
         orderBy: { createdAt: "desc" },
         take: 10,
       }),
+      prisma.employeeFine.findMany({
+        where: {
+          employeeId,
+          ...(companyId ? { companyId } : {}),
+        },
+        orderBy: { date: "desc" },
+        take: 20,
+      }),
     ]);
 
-    return NextResponse.json({ payslips, payments, bonuses, deductions });
+    const formattedFines = employeeFines.map((f: any) => ({
+      id: f.id,
+      amount: Number(f.amount),
+      reason: f.reason,
+      status: f.status,
+      date: f.date ? f.date.toISOString() : null,
+      createdAt: f.createdAt ? f.createdAt.toISOString() : null,
+    }));
+
+    const mappedFineDeductions = employeeFines.map((f: any) => ({
+      id: f.id,
+      title: `Disciplinary Fine: ৳${Number(f.amount)}`,
+      amount: Number(f.amount),
+      reason: `${f.reason} (${f.status})`,
+      status: f.status,
+      isFine: true,
+      createdAt: f.date ? f.date.toISOString() : f.createdAt.toISOString(),
+    }));
+
+    const combinedDeductions = [...mappedFineDeductions, ...salaryDeductions];
+
+    return NextResponse.json(
+      {
+        payslips,
+        payments,
+        bonuses,
+        deductions: combinedDeductions,
+        fines: formattedFines,
+      },
+      { headers: ESS_CORS_HEADERS }
+    );
   } catch (error) {
     console.error("[ESS] Payroll fetch error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

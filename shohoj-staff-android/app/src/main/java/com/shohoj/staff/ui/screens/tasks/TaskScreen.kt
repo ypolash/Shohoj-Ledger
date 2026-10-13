@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ fun TaskScreen(
     onNavigate: (String) -> Unit,
     viewModel: TaskViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
     val filteredTasks = remember(uiState.tasks, uiState.filterStatus) {
@@ -265,13 +267,16 @@ fun TaskScreen(
                                 )
 
                                 if (!task.description.isNullOrBlank()) {
-                                    Text(
+                                    ClickableUrlText(
                                         text = task.description,
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             color = Slate300,
                                             fontSize = 13.sp,
                                             lineHeight = 18.sp
-                                        )
+                                        ),
+                                        normalColor = Slate300,
+                                        linkColor = Amber300,
+                                        onUrlClick = { url -> UrlUtils.openBrowser(context, url) }
                                     )
                                 }
 
@@ -324,6 +329,8 @@ fun TaskScreen(
 
                                         // Render Checkbox list items (Display-only so staff don't tamper/touch directly)
                                         checklistItems.forEach { item ->
+                                            val extractedUrl = remember(item.title) { UrlUtils.extractFirstUrl(item.title) }
+
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -337,15 +344,44 @@ fun TaskScreen(
                                                     tint = if (item.completed) Emerald400 else Amber400,
                                                     modifier = Modifier.size(18.dp)
                                                 )
-                                                Text(
+                                                ClickableUrlText(
                                                     text = item.title,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        color = if (item.completed) Slate400 else Slate200,
-                                                        textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                                        fontSize = 13.sp
-                                                    ),
-                                                    modifier = Modifier.weight(1f)
+                                                    modifier = Modifier.weight(1f),
+                                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                                    normalColor = if (item.completed) Slate400 else Slate200,
+                                                    linkColor = Amber300,
+                                                    textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
+                                                    onUrlClick = { url -> UrlUtils.openBrowser(context, url) }
                                                 )
+                                                if (extractedUrl != null) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .clip(RoundedCornerShape(6.dp))
+                                                            .background(Amber500.copy(alpha = 0.2f))
+                                                            .border(0.8.dp, Amber400.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                                                            .clickable { UrlUtils.openBrowser(context, extractedUrl) }
+                                                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.OpenInNew,
+                                                                contentDescription = "Open Link",
+                                                                tint = Amber300,
+                                                                modifier = Modifier.size(12.dp)
+                                                            )
+                                                            Text(
+                                                                text = "Open Link",
+                                                                color = Amber300,
+                                                                fontSize = 10.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -457,9 +493,12 @@ fun TaskScreen(
                                 }
 
                                 if (!task.description.isNullOrBlank()) {
-                                    Text(
+                                    ClickableUrlText(
                                         text = task.description,
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = Slate400, fontSize = 13.sp)
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                        normalColor = Slate400,
+                                        linkColor = Cyan400,
+                                        onUrlClick = { url -> UrlUtils.openBrowser(context, url) }
                                     )
                                 }
 
@@ -524,13 +563,12 @@ fun TaskScreen(
 
                                         // Checkbox List Items
                                         checklistItems.forEach { item ->
+                                            val extractedUrl = remember(item.title) { UrlUtils.extractFirstUrl(item.title) }
+
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .clip(RoundedCornerShape(6.dp))
-                                                    .clickable {
-                                                        viewModel.toggleChecklistItem(task.id, item.id, !item.completed)
-                                                    }
                                                     .padding(vertical = 3.dp, horizontal = 2.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -547,15 +585,49 @@ fun TaskScreen(
                                                     ),
                                                     modifier = Modifier.size(20.dp)
                                                 )
-                                                Text(
+                                                ClickableUrlText(
                                                     text = item.title,
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        color = if (item.completed) Slate500 else Slate200,
-                                                        textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
-                                                        fontSize = 13.sp
-                                                    ),
-                                                    modifier = Modifier.weight(1f)
+                                                    modifier = Modifier.weight(1f),
+                                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                                    normalColor = if (item.completed) Slate500 else Slate200,
+                                                    linkColor = Cyan400,
+                                                    textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
+                                                    onTextClick = {
+                                                        viewModel.toggleChecklistItem(task.id, item.id, !item.completed)
+                                                    },
+                                                    onUrlClick = { url ->
+                                                        UrlUtils.openBrowser(context, url)
+                                                    }
                                                 )
+                                                if (extractedUrl != null) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .clip(RoundedCornerShape(6.dp))
+                                                            .background(Cyan500.copy(alpha = 0.2f))
+                                                            .border(0.8.dp, Cyan400.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                                                            .clickable { UrlUtils.openBrowser(context, extractedUrl) }
+                                                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.OpenInNew,
+                                                                contentDescription = "Open Link",
+                                                                tint = Cyan300,
+                                                                modifier = Modifier.size(12.dp)
+                                                            )
+                                                            Text(
+                                                                text = "Open Link",
+                                                                color = Cyan300,
+                                                                fontSize = 10.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }

@@ -25,7 +25,9 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     });
 
-    const formatted = employees.map(emp => {
+    const validModels = employees.filter(emp => !(emp.employeeId || '').toUpperCase().startsWith('EMP-'));
+
+    const formatted = validModels.map(emp => {
       let extraData: any = {};
       try {
         if (emp.location && emp.location.startsWith('{')) {

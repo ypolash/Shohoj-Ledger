@@ -28,18 +28,10 @@ export async function GET(req: Request) {
       : new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 12, 23, 59, 59, 999));
 
     // 1. Fetch active employees (excluding temporary freelance and models)
-    const employees = await prisma.employee.findMany({
+    const rawEmployees = await prisma.employee.findMany({
       where: {
         companyId,
         status: "ACTIVE",
-        NOT: [
-          { employmentType: { in: ['Freelance', 'Freelancer', 'Contractor', 'freelance', 'freelancer', 'contractor', 'FREELANCE', 'Model', 'Talent', 'model', 'talent'] } },
-          { employeeId: { startsWith: 'FL-' } },
-          { employeeId: { startsWith: 'MDL-' } },
-          { location: { contains: 'FREELANCER' } },
-          { location: { contains: 'MODEL_TALENT' } },
-          { department: { in: ['Freelance', 'Model Talent', 'Modeling Agency', 'freelance', 'model talent', 'modeling agency'] } }
-        ],
         ...(employeeIdParam && { id: employeeIdParam }),
         ...(departmentIdParam && { departmentId: departmentIdParam })
       },
@@ -50,6 +42,9 @@ export async function GET(req: Request) {
         lastName: true,
         designation: true,
         department: true,
+        employmentType: true,
+        location: true,
+        email: true,
         workShiftId: true,
         workShift: {
           select: {
@@ -64,6 +59,33 @@ export async function GET(req: Request) {
       },
       orderBy: { firstName: "asc" }
     });
+
+    const isTemporary = (emp: any) => {
+      const empId = (emp.employeeId || '').toUpperCase().trim();
+      if (empId.startsWith('EMP-')) return false;
+      if (empId.startsWith('FL-') || empId.startsWith('MDL-')) return true;
+      const loc = typeof emp.location === 'string' ? emp.location : '';
+      if (loc.includes('FREELANCER') || loc.includes('MODEL_TALENT')) return true;
+      const email = (emp.email || '').toLowerCase().trim();
+      if (email.startsWith('freelance.') || email.startsWith('model.')) return true;
+      const type = (emp.employmentType || '').toLowerCase().trim();
+      if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
+      const dept = (emp.department || '').toLowerCase().trim();
+      if (['freelance', 'model talent', 'modeling agency', 'independent / freelance'].includes(dept)) return true;
+      const desig = (emp.designation || '').toLowerCase().trim();
+      if (
+        desig === 'model' ||
+        desig.startsWith('freelance') ||
+        desig.includes('freelance ') ||
+        desig.includes('freelancer') ||
+        desig.includes('catalog model') ||
+        desig.includes('fashion model') ||
+        desig.includes('commercial model')
+      ) return true;
+      return false;
+    };
+
+    const employees = rawEmployees.filter(emp => !isTemporary(emp));
 
     // 2. Fetch duty rosters in the date range
     const rosters = await prisma.attendanceRoster.findMany({

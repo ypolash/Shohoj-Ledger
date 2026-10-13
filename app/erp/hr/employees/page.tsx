@@ -51,17 +51,36 @@ interface Designation {
 }
 
 const isTemporaryStaff = (emp: any) => {
-  const type = (emp.employmentType || '').toLowerCase();
-  const empId = (emp.employeeId || '').toUpperCase();
-  const dept = (emp.departmentRef?.name || emp.department || '').toLowerCase();
-  const desig = (emp.designationRef?.name || emp.designation || '').toLowerCase();
-  const loc = typeof emp.location === 'string' ? emp.location : '';
+  const empId = (emp.employeeId || '').toUpperCase().trim();
+  // Permanent staff IDs ALWAYS start with 'EMP-'
+  if (empId.startsWith('EMP-')) return false;
 
-  if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
+  // Freelancers and models have explicit prefixes
   if (empId.startsWith('FL-') || empId.startsWith('MDL-')) return true;
-  if (['freelance', 'model talent', 'modeling agency', 'independent / freelance'].includes(dept)) return true;
-  if (desig.includes('freelance') || desig.includes('contractor') || desig.includes('model')) return true;
+
+  const loc = typeof emp.location === 'string' ? emp.location : '';
   if (loc.includes('FREELANCER') || loc.includes('MODEL_TALENT')) return true;
+
+  const email = (emp.email || '').toLowerCase().trim();
+  if (email.startsWith('freelance.') || email.startsWith('model.')) return true;
+
+  const type = (emp.employmentType || '').toLowerCase().trim();
+  if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
+
+  const dept = (emp.departmentRef?.name || emp.department || '').toLowerCase().trim();
+  if (['freelance', 'model talent', 'modeling agency', 'independent / freelance'].includes(dept)) return true;
+
+  const desig = (emp.designationRef?.name || emp.designation || '').toLowerCase().trim();
+  if (
+    desig === 'model' ||
+    desig.startsWith('freelance') ||
+    desig.includes('freelance ') ||
+    desig.includes('freelancer') ||
+    desig.includes('catalog model') ||
+    desig.includes('fashion model') ||
+    desig.includes('commercial model')
+  ) return true;
+
   return false;
 };
 

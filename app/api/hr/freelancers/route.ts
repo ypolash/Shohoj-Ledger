@@ -38,7 +38,9 @@ export async function GET() {
       }
     });
 
-    const formatted = employees.map(emp => {
+    const validFreelancers = employees.filter(emp => !(emp.employeeId || '').toUpperCase().startsWith('EMP-'));
+
+    const formatted = validFreelancers.map(emp => {
       let extraData: any = {};
       try {
         if (emp.location && emp.location.startsWith('{')) {

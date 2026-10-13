@@ -42,7 +42,8 @@ data class HomeUiState(
     val error: String? = null,
     val activeFines: List<FineItem> = emptyList(),
     val updateDialogInfo: AppUpdateInfo? = null,
-    val appVersionName: String = "1.0.0"
+    val appVersionName: String = "1.0.0",
+    val netSalary: Double? = null
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -53,6 +54,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val announcementRepo = app.announcementRepository
     private val leaveRepo = app.leaveRepository
     private val updateRepo = app.appUpdateRepository
+    private val payrollRepo = app.payrollRepository
 
     private val _uiState = MutableStateFlow(
         HomeUiState(
@@ -141,6 +143,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 // Ignore quiet catch
             }
 
+            var netSalaryValue: Double? = null
+            try {
+                val payrollRes = payrollRepo.getPayroll()
+                payrollRes.onSuccess { pData ->
+                    val latestPayslip = pData.payslips.firstOrNull()
+                    if (latestPayslip != null) {
+                        netSalaryValue = latestPayslip.netSalary
+                    } else {
+                        val lastPayment = pData.payments.firstOrNull()
+                        if (lastPayment != null) {
+                            netSalaryValue = lastPayment.amount
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Quiet catch
+            }
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 employee = currentEmp,
@@ -152,10 +172,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 customDuty = customDutyDto,
                 announcements = announcementsList,
                 activeBreak = activeBreak,
-                activeFines = activeFinesList
+                activeFines = activeFinesList,
+                netSalary = netSalaryValue
             )
 
             startBreakCountdownTicker(activeBreak)
+
         }
     }
 

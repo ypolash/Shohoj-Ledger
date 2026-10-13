@@ -35,6 +35,7 @@ export async function GET(request: Request) {
   // 3. Fallback resolution cascade to newest available APK
   if (!targetPath) {
     const candidates = [
+      path.join(downloadsDir, 'shohoj-staff-v1.6.8.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.7.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.6.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.5.apk'),

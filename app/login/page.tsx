@@ -23,20 +23,22 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok || !data.success) {
-        setError(data.message || "Invalid credentials. Please try again.");
-      } else {
-        router.push("/erp");
-        router.refresh();
+      if (!res.ok || !data?.success) {
+        setError(data?.message || "Invalid credentials. Please try again.");
+        setIsLoading(false);
+        return;
       }
-    } catch (err) {
+
+      // Hard redirect to ensure session cookie is sent and all server components re-render cleanly
+      window.location.href = "/erp";
+    } catch (err: any) {
+      console.error("Login failure:", err);
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

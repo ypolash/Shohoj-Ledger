@@ -1601,7 +1601,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                             ? 'Exceeded 60m threshold (Full day deduction applied)'
                             : att.lateMinutes && att.lateMinutes >= 16
                             ? '16m - 60m threshold (Half day deduction applied)'
-                            : 'Within grace period'}
+                            : 'Under 16m threshold (No deduction applied)'}
                         </td>
                       </tr>
                     ))}

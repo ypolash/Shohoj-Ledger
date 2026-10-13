@@ -71,8 +71,9 @@ export async function POST(request: Request) {
 
       if (!attendance) {
         // First punch of the day = Check In
-        const lateMinutes = Math.max(0, Math.floor((punchDate.getTime() - shiftStart.getTime()) / 60000));
-        const isLate = lateMinutes > gracePeriod;
+        const diffMinutes = Math.max(0, Math.floor((punchDate.getTime() - shiftStart.getTime()) / 60000));
+        const isLate = diffMinutes > gracePeriod;
+        const lateMinutes = isLate ? diffMinutes - gracePeriod : 0;
 
         await prisma.attendance.create({
           data: {
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
             checkInLocation: deviceId ? `Biometric Device (${deviceId})` : 'Hardware Webhook',
             status: isLate ? 'LATE' : 'PRESENT',
             isLate,
-            lateMinutes: isLate ? lateMinutes : 0,
+            lateMinutes,
             systemSource: 'ERP'
           }
         });

@@ -308,7 +308,7 @@ export async function calculateAttendanceStatus(
   } else if (checkInMinutes > lateThreshold) {
     status = "LATE";
     isLate = true;
-    lateMinutes = checkInMinutes - shiftStartMinutes;
+    lateMinutes = checkInMinutes - lateThreshold;
   } else {
     status = "PRESENT";
     lateMinutes = 0;

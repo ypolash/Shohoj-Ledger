@@ -54,16 +54,16 @@ function runTests() {
   // Case A: 11:34 AM check in
   const checkInMin1 = parseTimeToMinutes("11:34"); // 694
   const isLate1 = checkInMin1 > lateThreshold;
-  const lateMinutes1 = checkInMin1 - shiftStartMinutes;
-  console.log(`  11:34 check in: isLate=${isLate1} (expected: true), lateMinutes=${lateMinutes1} (expected: 124)`);
-  if (!isLate1 || lateMinutes1 !== 124) throw new Error("Case A calculation failed");
+  const lateMinutes1 = checkInMin1 - lateThreshold;
+  console.log(`  11:34 check in: isLate=${isLate1} (expected: true), lateMinutes=${lateMinutes1} (expected: 109)`);
+  if (!isLate1 || lateMinutes1 !== 109) throw new Error("Case A calculation failed");
 
   // Case B: 13:21 check in
   const checkInMin2 = parseTimeToMinutes("13:21"); // 801
   const isLate2 = checkInMin2 > lateThreshold;
-  const lateMinutes2 = checkInMin2 - shiftStartMinutes;
-  console.log(`  13:21 check in: isLate=${isLate2} (expected: true), lateMinutes=${lateMinutes2} (expected: 231)`);
-  if (!isLate2 || lateMinutes2 !== 231) throw new Error("Case B calculation failed");
+  const lateMinutes2 = checkInMin2 - lateThreshold;
+  console.log(`  13:21 check in: isLate=${isLate2} (expected: true), lateMinutes=${lateMinutes2} (expected: 216)`);
+  if (!isLate2 || lateMinutes2 !== 216) throw new Error("Case B calculation failed");
 
   // Case C: 09:40 check in (within 15 min grace period)
   const checkInMin3 = parseTimeToMinutes("09:40"); // 580
@@ -71,13 +71,23 @@ function runTests() {
   console.log(`  09:40 check in (within grace): isLate=${isLate3} (expected: false)`);
   if (isLate3) throw new Error("Case C calculation failed");
 
+  // Case D (User Scenario): Office time 09:00 AM, Grace 15 min, Check in 09:20 AM => 5 min late
+  const userShiftStart = parseTimeToMinutes("09:00"); // 540
+  const userGrace = 15;
+  const userLateThreshold = userShiftStart + userGrace; // 555
+  const userCheckInMin = parseTimeToMinutes("09:20"); // 560
+  const userIsLate = userCheckInMin > userLateThreshold;
+  const userLateMinutes = userCheckInMin - userLateThreshold;
+  console.log(`  User Case (09:00 start, 15m grace, 09:20 check-in): isLate=${userIsLate} (expected: true), lateMinutes=${userLateMinutes} (expected: 5)`);
+  if (!userIsLate || userLateMinutes !== 5) throw new Error("User scenario calculation failed");
+
   // 4. Testing Legacy / Unadjusted checkIn resolution
   console.log("\n4. Testing Legacy/Unadjusted check-in resolution for 09/09 and 10/09:");
   const testScenarios = [
-    { label: "10/09 11:34 AM (UTC 05:34Z)", d: new Date("2026-09-10T05:34:00.000Z"), expectedLate: 124, expectedStatus: "LATE" },
-    { label: "09/09 01:21 PM (UTC 07:21Z)", d: new Date("2026-09-09T07:21:00.000Z"), expectedLate: 231, expectedStatus: "LATE" },
-    { label: "09/09 01:21 PM (wall-clock UTC 13:21Z)", d: new Date("2026-09-09T13:21:00.000Z"), expectedLate: 231, expectedStatus: "LATE" },
-    { label: "09/09 01:21 PM (12h wall-clock UTC 01:21Z)", d: new Date("2026-09-09T01:21:00.000Z"), expectedLate: 231, expectedStatus: "LATE" },
+    { label: "10/09 11:34 AM (UTC 05:34Z)", d: new Date("2026-09-10T05:34:00.000Z"), expectedLate: 109, expectedStatus: "LATE" },
+    { label: "09/09 01:21 PM (UTC 07:21Z)", d: new Date("2026-09-09T07:21:00.000Z"), expectedLate: 216, expectedStatus: "LATE" },
+    { label: "09/09 01:21 PM (wall-clock UTC 13:21Z)", d: new Date("2026-09-09T13:21:00.000Z"), expectedLate: 216, expectedStatus: "LATE" },
+    { label: "09/09 01:21 PM (12h wall-clock UTC 01:21Z)", d: new Date("2026-09-09T01:21:00.000Z"), expectedLate: 216, expectedStatus: "LATE" },
     { label: "10/09 09:15 AM on-time (UTC 03:15Z)", d: new Date("2026-09-10T03:15:00.000Z"), expectedLate: 0, expectedStatus: "PRESENT" },
   ];
 

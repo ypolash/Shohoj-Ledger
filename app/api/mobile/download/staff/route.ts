@@ -37,18 +37,7 @@ export async function GET(request: Request) {
     const candidates = [
       path.join(downloadsDir, 'shohoj-staff-v1.6.8.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.6.7.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.6.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.5.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.4.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.3.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.2.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.1.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.6.0.apk'),
       path.join(downloadsDir, 'shohoj-staff-latest.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.5.9.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.5.8.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.5.7.apk'),
-      path.join(downloadsDir, 'shohoj-staff-v1.5.apk'),
     ];
 
     for (const candidate of candidates) {

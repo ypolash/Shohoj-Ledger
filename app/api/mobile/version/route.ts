@@ -18,11 +18,13 @@ export async function GET(request: Request) {
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 31,
-      versionName: '1.6.6',
+      versionCode: 32,
+      versionName: '1.6.7',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.6.6 Available',
+      title: 'Shohoj Staff v1.6.7 Available',
       releaseNotes: [
+        '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
+        '🔗 Clickable Task URLs: Open external websites and checklists directly in browser with 1-tap launcher',
         '⏸️ Break Timer Pause & Resume: Preserves exact remaining countdown without restarting from start',
         '📶 Wi-Fi Verification: Break actions and clock operations restricted to permitted office Wi-Fi',
         '⚡ Custom Duty Schedule Sync: Real-time sync and display of assigned custom duty shifts',
@@ -34,7 +36,7 @@ export async function GET(request: Request) {
         '👥 Full Directory listing & instant 1-on-1 private chat creation',
         '🔔 Instant real-time notifications for Tasks, Announcements, Rosters & Community Chat'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.6.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.6.7.apk`,
       fileSize: '12.8 MB',
       isForceUpdate: true,
       publishedAt: new Date().toISOString()

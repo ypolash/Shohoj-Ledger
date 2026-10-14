@@ -223,6 +223,10 @@ model ReserveTransaction {
 model MemberLoan {
   id              String   @id @default(uuid())
   memberId        String
+  bankName        String?
+  facilityType    String?
+  interestRate    Decimal? @default(0)
+  loanType        String?  @default("CORPORATE")
   amount          Decimal
   remainingAmount Decimal
   issueDate       DateTime @default(now())

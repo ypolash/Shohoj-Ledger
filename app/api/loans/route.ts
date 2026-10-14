@@ -16,12 +16,20 @@ export async function GET(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
+    const { searchParams } = new URL(request.url);
+    const filterLoanType = searchParams.get('loanType'); // 'CORPORATE' | 'MEMBER' | 'ALL'
+
+    const where: any = { companyId: companyIdForGuard, systemSource: { in: ["ERP", "LEGACY"] } };
+    if (filterLoanType && filterLoanType !== 'ALL') {
+      where.loanType = filterLoanType;
+    }
+
     const loans = await prisma.memberLoan.findMany({
-      where: { companyId: companyIdForGuard, systemSource },
+      where,
       orderBy: { createdAt: 'desc' }
     });
 
-    const userIds = loans.map(l => l.memberId);
+    const userIds = loans.map(l => l.memberId).filter(id => id && id.length > 10);
     const members = await prisma.member.findMany({
       where: { ...(await withCompany()), id: { in: userIds } },
       select: { id: true, name: true }
@@ -38,10 +46,15 @@ export async function GET(request: Request) {
       // Respect stored dueDate or calculate standard fallback
       const dueDate = loan.dueDate ? new Date(loan.dueDate) : new Date(new Date(loan.issueDate).setMonth(new Date(loan.issueDate).getMonth() + 6));
       const isOverdue = loan.status === "ACTIVE" && now > dueDate && Number(loan.remainingAmount) > 0;
+      const bankOrMember = loan.bankName || userMap[loan.memberId] || loan.memberId || "Corporate Facility";
 
       return {
         ...loan,
-        memberName: userMap[loan.memberId] || "Unknown Member",
+        bankName: loan.bankName || bankOrMember,
+        facilityType: loan.facilityType || "Term Loan",
+        interestRate: Number(loan.interestRate || 0),
+        loanType: loan.loanType || (loan.bankName ? "CORPORATE" : "MEMBER"),
+        memberName: bankOrMember,
         dueDate: dueDate.toISOString(),
         isOverdue
       };
@@ -64,24 +77,41 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { memberId, amount, description, tenureMonths = 6, dueDate: customDueDate } = body;
+    const {
+      memberId,
+      bankName,
+      facilityType = "Term Loan",
+      interestRate = 0,
+      loanType = "CORPORATE",
+      amount,
+      description,
+      tenureMonths = 12,
+      issueDate: customIssueDate,
+      dueDate: customDueDate
+    } = body;
 
-    if (!memberId || amount === undefined) {
-      return NextResponse.json({ error: "Missing memberId or amount" }, { status: 400 });
-    }
-
-    const targetMember = await prisma.member.findFirst({
-      where: { id: memberId, companyId: companyIdForGuard }
-    });
-    if (!targetMember) {
-      return NextResponse.json({ error: "Unauthorized cross-tenant reference or member not found" }, { status: 403 });
+    if (amount === undefined || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return NextResponse.json({ error: "Valid loan amount is required" }, { status: 400 });
     }
 
     const loanAmount = parseFloat(amount);
-    const issueDate = new Date();
+    const issueDate = customIssueDate ? new Date(customIssueDate) : new Date();
     let dueDate = customDueDate ? new Date(customDueDate) : new Date(issueDate);
     if (!customDueDate) {
       dueDate.setMonth(dueDate.getMonth() + Number(tenureMonths));
+    }
+
+    const finalBankName = bankName || (memberId ? undefined : "Corporate Bank");
+    let targetMemberId = memberId || finalBankName || "Corporate Facility";
+
+    if (loanType === "MEMBER" && memberId) {
+      const targetMember = await prisma.member.findFirst({
+        where: { id: memberId, companyId: companyIdForGuard }
+      });
+      if (!targetMember) {
+        return NextResponse.json({ error: "Unauthorized cross-tenant reference or member not found" }, { status: 403 });
+      }
+      targetMemberId = targetMember.id;
     }
 
     const referer = request.headers.get("referer") || "";
@@ -90,7 +120,11 @@ export async function POST(request: Request) {
     const loan = await prisma.memberLoan.create({
       data: {
         companyId: companyIdForGuard,
-        memberId,
+        memberId: targetMemberId,
+        bankName: finalBankName,
+        facilityType,
+        interestRate: Number(interestRate) || 0,
+        loanType: finalBankName ? "CORPORATE" : loanType,
         amount: loanAmount,
         remainingAmount: loanAmount,
         status: "ACTIVE",
@@ -105,14 +139,18 @@ export async function POST(request: Request) {
     const { getSession } = await import("@/lib/session");
     const session = await getSession();
 
+    const isCorporate = (loan.loanType === 'CORPORATE') || Boolean(finalBankName);
+
     await createLedgerEntry({
       companyId: companyIdForGuard,
       module: 'Loan',
       referenceId: loan.id,
       amount: loanAmount,
-      isDebit: false, // Credit Bank (Cash leaves the company)
+      isDebit: isCorporate, // Corporate loan: funds received into Bank (Debit)
       accountType: 'Bank', 
-      description: `Loan Issued to Member: ${description || ''}`,
+      description: isCorporate
+        ? `Corporate Facility Disbursed (${finalBankName || 'Bank'} - ${facilityType}): ${description || ''}`
+        : `Loan Issued to Member: ${description || ''}`,
       createdById: session?.user?.id
     });
 
@@ -197,3 +235,29 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Failed to update loan status" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  const rbacGuard = await requirePermission("FINANCE_MANAGE");
+  if (rbacGuard) return rbacGuard;
+
+  const companyIdForGuard = await getCompanyId();
+  if (!companyIdForGuard) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: "Missing loan ID" }, { status: 400 });
+
+    const existing = await prisma.memberLoan.findFirst({
+      where: { id, companyId: companyIdForGuard }
+    });
+    if (!existing) return NextResponse.json({ error: "Loan not found" }, { status: 404 });
+
+    await prisma.memberLoan.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Error deleting loan:", err);
+    return NextResponse.json({ error: "Failed to delete loan" }, { status: 500 });
+  }
+}
+

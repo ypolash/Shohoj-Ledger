@@ -340,10 +340,10 @@ export async function GET(request: Request) {
     let processedCount = 0;
 
     currentMonthPayments.forEach(p => {
-      totalSalary += Number(p.basicSalary);
-      totalBonus += (Number(p.grossSalary) - Number(p.basicSalary));
-      totalDeductions += (Number(p.grossSalary) - Number(p.netSalary));
-      totalNetPay += Number(p.netSalary);
+      totalSalary += Number(p.basicSalary || 0);
+      totalBonus += (Number(p.grossSalary || 0) - Number(p.basicSalary || 0));
+      totalDeductions += (Number(p.grossSalary || 0) - Number(p.netSalary || 0));
+      totalNetPay += Number(p.netSalary || 0);
 
       if (p.status === 'PAID') {
         processedCount++;
@@ -362,7 +362,74 @@ export async function GET(request: Request) {
       processedCount
     };
 
-    return NextResponse.json({ summary, payments });
+    // Calculate Yearly Summary Metrics & Monthly Breakdown for the given year
+    const currentYearPayments = payments.filter(p => p.year === year);
+    let yearlySalary = 0;
+    let yearlyBonus = 0;
+    let yearlyDeductions = 0;
+    let yearlyNetPay = 0;
+    let yearlyPending = 0;
+    let yearlyProcessed = 0;
+
+    currentYearPayments.forEach(p => {
+      yearlySalary += Number(p.basicSalary || 0);
+      yearlyBonus += (Number(p.grossSalary || 0) - Number(p.basicSalary || 0));
+      yearlyDeductions += (Number(p.grossSalary || 0) - Number(p.netSalary || 0));
+      yearlyNetPay += Number(p.netSalary || 0);
+
+      if (p.status === 'PAID') {
+        yearlyProcessed++;
+      } else if (p.status !== 'CANCELLED') {
+        yearlyPending++;
+      }
+    });
+
+    const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyBreakdown = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const mPayments = currentYearPayments.filter(p => p.month === m);
+      let mSalary = 0;
+      let mBonus = 0;
+      let mDeductions = 0;
+      let mNet = 0;
+      let mPending = 0;
+      let mProcessed = 0;
+
+      mPayments.forEach(p => {
+        mSalary += Number(p.basicSalary || 0);
+        mBonus += (Number(p.grossSalary || 0) - Number(p.basicSalary || 0));
+        mDeductions += (Number(p.grossSalary || 0) - Number(p.netSalary || 0));
+        mNet += Number(p.netSalary || 0);
+        if (p.status === 'PAID') mProcessed++;
+        else if (p.status !== 'CANCELLED') mPending++;
+      });
+
+      return {
+        month: m,
+        name: MONTH_LABELS[i],
+        totalSalary: mSalary,
+        totalBonus: mBonus,
+        totalDeductions: mDeductions,
+        totalNetPay: mNet,
+        pendingCount: mPending,
+        processedCount: mProcessed,
+        totalRecords: mPayments.length,
+      };
+    });
+
+    const yearlySummary = {
+      year,
+      totalSalary: yearlySalary,
+      totalBonus: yearlyBonus,
+      totalDeductions: yearlyDeductions,
+      totalNetPay: yearlyNetPay,
+      pendingCount: yearlyPending,
+      processedCount: yearlyProcessed,
+      totalRecords: currentYearPayments.length,
+      monthlyBreakdown,
+    };
+
+    return NextResponse.json({ summary, yearlySummary, payments });
   } catch (error) {
     console.error("Failed to fetch payroll:", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

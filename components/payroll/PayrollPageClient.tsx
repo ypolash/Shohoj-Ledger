@@ -51,6 +51,7 @@ export default function PayrollPageClient() {
   const [loadingAudits, setLoadingAudits] = useState(false);
 
   // Filters State
+  const [viewMode, setViewMode] = useState<'monthly' | 'yearly'>('monthly');
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMonth, setFilterMonth] = useState((new Date().getMonth() + 1).toString());
   const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
@@ -210,8 +211,13 @@ export default function PayrollPageClient() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(Number(val));
   };
 
+  // Month-specific & Year-specific subsets
+  const monthlyList = payments.filter(p => p.month === Number(filterMonth) && p.year === Number(filterYear));
+  const yearlyList = payments.filter(p => p.year === Number(filterYear));
+  const activeDataset = viewMode === 'monthly' ? monthlyList : yearlyList;
+
   // Filter Logic
-  let filteredPayments = payments.filter(p => {
+  let filteredPayments = activeDataset.filter(p => {
     const searchString = `${p.employee.firstName} ${p.employee.lastName} ${p.employee.employeeId} ${p.id}`.toLowerCase();
     const matchesSearch = searchString.includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === "ALL" || p.status === filterStatus;
@@ -221,6 +227,45 @@ export default function PayrollPageClient() {
 
   const totalPages = Math.max(1, Math.ceil(filteredPayments.length / itemsPerPage));
   const paginatedPayments = filteredPayments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Dynamic summary
+  const yearlyTotals = (() => {
+    let basic = 0, bonus = 0, deductions = 0, net = 0, paid = 0, pending = 0;
+    yearlyList.forEach(p => {
+      basic += Number(p.basicSalary || 0);
+      bonus += (Number(p.grossSalary || 0) - Number(p.basicSalary || 0));
+      deductions += (Number(p.grossSalary || 0) - Number(p.netSalary || 0));
+      net += Number(p.netSalary || 0);
+      if (p.status === 'PAID') paid++;
+      else if (p.status !== 'CANCELLED') pending++;
+    });
+    return {
+      currentMonth: `Full Year ${filterYear}`,
+      totalSalary: basic,
+      totalBonus: bonus,
+      totalDeductions: deductions,
+      totalNetPay: net,
+      processedCount: paid,
+      pendingCount: pending,
+    };
+  })();
+
+  const activeSummary = viewMode === 'monthly' ? (summary || {
+    totalNetPay: 0, totalSalary: 0, totalBonus: 0, totalDeductions: 0, pendingCount: 0, processedCount: 0
+  }) : yearlyTotals;
+
+  // 12-Month distribution for yearly view
+  const monthlyDist = Array.from({ length: 12 }, (_, i) => {
+    const m = i + 1;
+    const mRecords = yearlyList.filter(p => p.month === m);
+    let net = 0, paid = 0, pending = 0;
+    mRecords.forEach(p => {
+      net += Number(p.netSalary || 0);
+      if (p.status === 'PAID') paid++;
+      else if (p.status !== 'CANCELLED') pending++;
+    });
+    return { month: m, name: getMonthName(m), count: mRecords.length, net, paid, pending };
+  });
 
   const getStatusBadgeClass = (status: string) => {
     if (status === 'PAID') return styles['badge-paid'];
@@ -236,14 +281,72 @@ export default function PayrollPageClient() {
     <div className="animate-fade-in container" style={{ maxWidth: '1400px' }}>
       
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "var(--spacing-6)", flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ margin: 0 }}>Payroll Dashboard</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '15px', color: 'var(--text-muted)' }}>
-            Manage employee payroll, workflow approvals, and history.
+            {viewMode === 'monthly'
+              ? `Monthly view · ${getMonthName(Number(filterMonth))} ${filterYear} (${monthlyList.length} records)`
+              : `Annual view · Full Year ${filterYear} (${yearlyList.length} records)`}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* View Mode Toggle: Monthly is default */}
+          <div style={{
+            display: 'inline-flex',
+            background: 'var(--surface-input, rgba(255, 255, 255, 0.05))',
+            padding: '4px',
+            borderRadius: '12px',
+            border: '1px solid var(--border-main)',
+            gap: '4px',
+          }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('monthly')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                background: viewMode === 'monthly' ? 'var(--primary, #2563eb)' : 'transparent',
+                color: viewMode === 'monthly' ? '#ffffff' : 'var(--text-secondary)',
+                boxShadow: viewMode === 'monthly' ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_month</span>
+              Monthly View
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('yearly')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                background: viewMode === 'yearly' ? 'var(--primary, #2563eb)' : 'transparent',
+                color: viewMode === 'yearly' ? '#ffffff' : 'var(--text-secondary)',
+                boxShadow: viewMode === 'yearly' ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>event_repeat</span>
+              Yearly View
+            </button>
+          </div>
+
           <Link href="/erp/staff-management/payroll/reports">
             <button className="btn btn-secondary">
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>bar_chart</span>
@@ -258,31 +361,71 @@ export default function PayrollPageClient() {
       </div>
 
       {/* Summary Cards */}
-      {summary && (
+      {activeSummary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Net Pay</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{formatCurrency(summary.totalNetPay)}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+              {viewMode === 'monthly' ? 'Total Net Pay' : `Annual Net Pay (${filterYear})`}
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>{formatCurrency(activeSummary.totalNetPay)}</div>
           </div>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Salary (Basic)</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{formatCurrency(summary.totalSalary)}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+              {viewMode === 'monthly' ? 'Total Salary (Basic)' : 'Annual Basic Salary'}
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{formatCurrency(activeSummary.totalSalary)}</div>
           </div>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Bonus</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)' }}>{formatCurrency(summary.totalBonus)}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+              {viewMode === 'monthly' ? 'Total Bonus' : 'Annual Total Bonus'}
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)' }}>{formatCurrency(activeSummary.totalBonus)}</div>
           </div>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total Deductions</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--danger)' }}>{formatCurrency(summary.totalDeductions)}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+              {viewMode === 'monthly' ? 'Total Deductions' : 'Annual Deductions'}
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--danger)' }}>{formatCurrency(activeSummary.totalDeductions)}</div>
           </div>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Pending</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>{summary.pendingCount}</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>{activeSummary.pendingCount}</div>
           </div>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Processed (Paid)</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)' }}>{summary.processedCount}</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--success)' }}>{activeSummary.processedCount}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Yearly View 12-Month Matrix */}
+      {viewMode === 'yearly' && (
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: '16px', fontWeight: 700 }}>
+            12-Month Overview ({filterYear})
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+            {monthlyDist.map(m => (
+              <div key={m.month} className="glass-card" style={{ padding: '14px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, fontSize: '13px' }}>{m.name}</span>
+                  <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '8px', background: m.count === 0 ? 'var(--surface-hover)' : m.pending === 0 ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: m.count === 0 ? 'var(--text-muted)' : m.pending === 0 ? '#10b981' : '#f59e0b', fontWeight: 700 }}>
+                    {m.count === 0 ? 'No Run' : m.pending === 0 ? '✓ Paid' : `${m.pending} Pending`}
+                  </span>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: m.net > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                  {formatCurrency(m.net)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setFilterMonth(String(m.month)); setViewMode('monthly'); }}
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 8px', fontSize: '11px', marginTop: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}
+                >
+                  Inspect Month →
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -304,17 +447,24 @@ export default function PayrollPageClient() {
             </div>
             <div className={styles.filterGroup}>
               <label className="label">Month</label>
-              <select className="input" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                  <option key={m} value={m.toString()}>{getMonthName(m)}</option>
-                ))}
-              </select>
+              {viewMode === 'monthly' ? (
+                <select className="input" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                    <option key={m} value={m.toString()}>{getMonthName(m)}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="input" style={{ display: 'flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 600, fontSize: '13px' }}>
+                  All 12 Months
+                </div>
+              )}
             </div>
             <div className={styles.filterGroup}>
               <label className="label">Year</label>
               <select className="input" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
                 <option value="2026">2026</option>
                 <option value="2025">2025</option>
+                <option value="2024">2024</option>
               </select>
             </div>
             <div className={styles.filterGroup}>

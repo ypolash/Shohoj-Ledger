@@ -19,6 +19,8 @@ interface AttendanceRecord {
   punishmentAmount?: number | string | null;
   punishmentReason?: string | null;
   reviewStatus?: string | null;
+  employee?: Employee | null;
+  employeeName?: string | null;
 }
 
 interface Employee {
@@ -98,9 +100,18 @@ const getDateKey = (r: AttendanceRecord, tz: string = 'Asia/Dhaka') => {
   return 'Unknown Date';
 };
 
-const formatDisplayTime = (val?: string | null, tz: string = 'Asia/Dhaka') => {
+const formatDisplayTime = (val?: string | null | Date, tz: string = 'Asia/Dhaka') => {
   if (!val || val === '—') return '—';
-  const trimmed = val.trim();
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return '—';
+    try {
+      return val.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz });
+    } catch {
+      return val.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+  }
+  const strVal = String(val);
+  const trimmed = strVal.trim();
   if (/^\d{1,2}:\d{2}(\s?[AP]M)?$/i.test(trimmed)) {
     const match = trimmed.match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
     if (match) {
@@ -115,8 +126,8 @@ const formatDisplayTime = (val?: string | null, tz: string = 'Asia/Dhaka') => {
     }
     return trimmed;
   }
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return val;
+  const d = new Date(trimmed);
+  if (isNaN(d.getTime())) return trimmed;
   try {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: tz });
   } catch {
@@ -198,15 +209,37 @@ export default function AttendancePage() {
   const [considerReason, setConsiderReason] = useState('Staff forgot to press check-in on time');
   const [considerSubmitting, setConsiderSubmitting] = useState(false);
 
-  // Auto check-out modal state
+  // Check-out modal state (Manual Out & Half Day Out)
   const [autoCheckoutRecord, setAutoCheckoutRecord] = useState<AttendanceRecord | null>(null);
+  const [checkoutMode, setCheckoutMode] = useState<'MANUAL' | 'HALF_DAY'>('MANUAL');
   const [autoCheckoutTimeInput, setAutoCheckoutTimeInput] = useState<string>('18:00');
+  const [halfDayReason, setHalfDayReason] = useState<string>('Medical / Health Emergency (Staff fell ill)');
+  const [customReasonNote, setCustomReasonNote] = useState<string>('');
   const [autoCheckoutSubmitting, setAutoCheckoutSubmitting] = useState(false);
   const [autoCheckoutLoadingId, setAutoCheckoutLoadingId] = useState<string | null>(null);
 
-  const handleOpenAutoCheckoutModal = (rec: AttendanceRecord) => {
+  const handleOpenAutoCheckoutModal = (rec: AttendanceRecord, defaultMode: 'MANUAL' | 'HALF_DAY' = 'MANUAL') => {
     setAutoCheckoutRecord(rec);
-    setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00');
+    setCheckoutMode(defaultMode);
+    setHalfDayReason('Medical / Health Emergency (Staff fell ill)');
+    setCustomReasonNote('');
+
+    if (defaultMode === 'HALF_DAY') {
+      try {
+        const nowTz = new Intl.DateTimeFormat('en-GB', {
+          timeZone: officeTiming.timezone || 'Asia/Dhaka',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).format(new Date());
+        setAutoCheckoutTimeInput(nowTz);
+      } catch {
+        const now = new Date();
+        setAutoCheckoutTimeInput(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+      }
+    } else {
+      setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00');
+    }
   };
 
   const handleConfirmAutoCheckoutDirect = async (rec: AttendanceRecord) => {
@@ -218,20 +251,24 @@ export default function AttendancePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: rec.id,
-          action: 'AUTO_CHECKOUT',
+          action: 'MANUAL_CHECKOUT',
+          checkoutType: 'MANUAL',
           checkOutTime: timeToApply,
         })
       });
       const d = await res.json();
       if (!res.ok) {
-        alert(d.error || 'Failed to auto check out');
+        alert(d.error || 'Failed to check out');
         return;
       }
-      setSuccessMsg('Employee auto checked-out successfully at shift end!');
+      if (d.attendance) {
+        setRecords(prev => prev.map(a => a.id === d.attendance.id ? { ...a, ...d.attendance } : a));
+      }
+      setSuccessMsg('Employee manual check-out saved successfully at shift end!');
       await loadData(false);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch {
-      alert('Network error while processing auto check out');
+      alert('Network error while processing check out');
     } finally {
       setAutoCheckoutLoadingId(null);
     }
@@ -242,27 +279,41 @@ export default function AttendancePage() {
     const timeToApply = autoCheckoutTimeInput || officeTiming.shiftEnd || '18:00';
     setAutoCheckoutSubmitting(true);
     setAutoCheckoutLoadingId(autoCheckoutRecord.id);
+
+    const isHalfDay = checkoutMode === 'HALF_DAY';
+    const reasonText = isHalfDay
+      ? (customReasonNote ? `${halfDayReason}: ${customReasonNote}` : `Emergency departure: ${halfDayReason} (HR Approved)`)
+      : undefined;
+
     try {
       const res = await fetch('/api/attendance', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: autoCheckoutRecord.id,
-          action: 'AUTO_CHECKOUT',
+          action: isHalfDay ? 'HALF_DAY_OUT' : 'MANUAL_CHECKOUT',
+          checkoutType: checkoutMode,
           checkOutTime: timeToApply,
+          reason: reasonText,
         })
       });
       const d = await res.json();
       if (!res.ok) {
-        alert(d.error || 'Failed to auto check out');
+        alert(d.error || 'Failed to process check out');
         return;
       }
-      setSuccessMsg('Employee auto checked-out successfully!');
+      if (d.attendance) {
+        setRecords(prev => prev.map(a => a.id === d.attendance.id ? { ...a, ...d.attendance } : a));
+      }
+      setSuccessMsg(isHalfDay
+        ? 'Emergency Half Day leave permit approved & staff clocked out!'
+        : 'Employee manual check-out recorded successfully!'
+      );
       setAutoCheckoutRecord(null);
       await loadData(false);
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch {
-      alert('Network error while processing auto check out');
+      alert('Network error while processing check out');
     } finally {
       setAutoCheckoutSubmitting(false);
       setAutoCheckoutLoadingId(null);
@@ -392,9 +443,9 @@ export default function AttendancePage() {
 
     try {
       const [attRes, empRes, hrRes] = await Promise.all([
-        fetch(filterEmpId ? `/api/attendance?employeeId=${filterEmpId}` : '/api/attendance').catch(() => null),
-        fetch('/api/employees?all=true').catch(() => null),
-        fetch('/api/hr/settings').catch(() => null),
+        fetch(filterEmpId ? `/api/attendance?employeeId=${filterEmpId}` : '/api/attendance', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/employees?all=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/hr/settings', { cache: 'no-store' }).catch(() => null),
       ]);
 
       if (attRes && attRes.ok) {
@@ -1417,43 +1468,79 @@ export default function AttendancePage() {
 
                               <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (e.shiftKey) {
+                                        handleConfirmAutoCheckoutDirect(r);
+                                      } else {
+                                        handleOpenAutoCheckoutModal(r, 'MANUAL');
+                                      }
+                                    }}
+                                    disabled={autoCheckoutLoadingId === r.id}
+                                    title={
+                                      checkOut === '—'
+                                        ? "Manual Out (Click to set time, or Shift+Click for instant shift end)"
+                                        : `Manual Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                                    }
+                                    style={{
+                                      padding: '6px',
+                                      borderRadius: '8px',
+                                      border: checkOut === '—'
+                                        ? '1px solid rgba(16, 185, 129, 0.45)'
+                                        : '1px solid rgba(16, 185, 129, 0.2)',
+                                      background: checkOut === '—'
+                                        ? 'rgba(16, 185, 129, 0.15)'
+                                        : 'rgba(16, 185, 129, 0.05)',
+                                      color: checkOut === '—' ? '#10b981' : '#059669',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      transition: 'all 0.15s ease',
+                                      boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                                    }}
+                                  >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                      {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                                    </span>
+                                  </button>
+
+                                  {/* Half Day Out (Emergency Permit) Button */}
                                   {r.status !== 'ABSENT' && (
                                     <button
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        if (e.shiftKey) {
-                                          handleConfirmAutoCheckoutDirect(r);
-                                        } else {
-                                          handleOpenAutoCheckoutModal(r);
-                                        }
+                                        handleOpenAutoCheckoutModal(r, 'HALF_DAY');
                                       }}
                                       disabled={autoCheckoutLoadingId === r.id}
                                       title={
-                                        checkOut === '—'
-                                          ? "Auto Check Out (Click to set time, or Shift+Click for instant shift end)"
-                                          : `Auto Check Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                                        r.status === 'HALF_DAY'
+                                          ? `Permitted Half Day (Departed at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                                          : "Half Day Out (Emergency Leave Permit - Waive Early Penalty)"
                                       }
                                       style={{
                                         padding: '6px',
                                         borderRadius: '8px',
-                                        border: checkOut === '—'
-                                          ? '1px solid rgba(16, 185, 129, 0.45)'
-                                          : '1px solid rgba(16, 185, 129, 0.2)',
-                                        background: checkOut === '—'
-                                          ? 'rgba(16, 185, 129, 0.15)'
-                                          : 'rgba(16, 185, 129, 0.05)',
-                                        color: checkOut === '—' ? '#10b981' : '#059669',
+                                        border: r.status === 'HALF_DAY'
+                                          ? '1px solid rgba(245, 158, 11, 0.6)'
+                                          : '1px solid rgba(245, 158, 11, 0.35)',
+                                        background: r.status === 'HALF_DAY'
+                                          ? 'rgba(245, 158, 11, 0.22)'
+                                          : 'rgba(245, 158, 11, 0.08)',
+                                        color: '#f59e0b',
                                         cursor: 'pointer',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         transition: 'all 0.15s ease',
-                                        boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                                        boxShadow: r.status === 'HALF_DAY' ? '0 0 8px rgba(245, 158, 11, 0.25)' : 'none'
                                       }}
                                     >
                                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                        {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                                        emergency
                                       </span>
                                     </button>
                                   )}
@@ -1700,43 +1787,79 @@ export default function AttendancePage() {
 
                       <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (e.shiftKey) {
+                                handleConfirmAutoCheckoutDirect(r);
+                              } else {
+                                handleOpenAutoCheckoutModal(r, 'MANUAL');
+                              }
+                            }}
+                            disabled={autoCheckoutLoadingId === r.id}
+                            title={
+                              checkOut === '—'
+                                ? "Manual Out (Click to set time, or Shift+Click for instant shift end)"
+                                : `Manual Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                            }
+                            style={{
+                              padding: '6px',
+                              borderRadius: '8px',
+                              border: checkOut === '—'
+                                ? '1px solid rgba(16, 185, 129, 0.45)'
+                                : '1px solid rgba(16, 185, 129, 0.2)',
+                              background: checkOut === '—'
+                                ? 'rgba(16, 185, 129, 0.15)'
+                                : 'rgba(16, 185, 129, 0.05)',
+                              color: checkOut === '—' ? '#10b981' : '#059669',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease',
+                              boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                              {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                            </span>
+                          </button>
+
+                          {/* Half Day Out (Emergency Permit) Button */}
                           {r.status !== 'ABSENT' && (
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (e.shiftKey) {
-                                  handleConfirmAutoCheckoutDirect(r);
-                                } else {
-                                  handleOpenAutoCheckoutModal(r);
-                                }
+                                handleOpenAutoCheckoutModal(r, 'HALF_DAY');
                               }}
                               disabled={autoCheckoutLoadingId === r.id}
                               title={
-                                checkOut === '—'
-                                  ? "Auto Check Out (Click to set time, or Shift+Click for instant shift end)"
-                                  : `Auto Check Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                                r.status === 'HALF_DAY'
+                                  ? `Permitted Half Day (Departed at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                                  : "Half Day Out (Emergency Leave Permit - Waive Early Penalty)"
                               }
                               style={{
                                 padding: '6px',
                                 borderRadius: '8px',
-                                border: checkOut === '—'
-                                  ? '1px solid rgba(16, 185, 129, 0.45)'
-                                  : '1px solid rgba(16, 185, 129, 0.2)',
-                                background: checkOut === '—'
-                                  ? 'rgba(16, 185, 129, 0.15)'
-                                  : 'rgba(16, 185, 129, 0.05)',
-                                color: checkOut === '—' ? '#10b981' : '#059669',
+                                border: r.status === 'HALF_DAY'
+                                  ? '1px solid rgba(245, 158, 11, 0.6)'
+                                  : '1px solid rgba(245, 158, 11, 0.35)',
+                                background: r.status === 'HALF_DAY'
+                                  ? 'rgba(245, 158, 11, 0.22)'
+                                  : 'rgba(245, 158, 11, 0.08)',
+                                color: '#f59e0b',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transition: 'all 0.15s ease',
-                                boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                                boxShadow: r.status === 'HALF_DAY' ? '0 0 8px rgba(245, 158, 11, 0.25)' : 'none'
                               }}
                             >
                               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                                emergency
                               </span>
                             </button>
                           )}
@@ -2570,6 +2693,17 @@ export default function AttendancePage() {
       {autoCheckoutRecord && (
         <div
           className={styles.modalOverlay}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
           onClick={() => {
             if (!autoCheckoutSubmitting) {
               setAutoCheckoutRecord(null);
@@ -2578,7 +2712,18 @@ export default function AttendancePage() {
         >
           <div
             className={styles.modalContent}
-            style={{ maxWidth: '520px', width: '92%', display: 'flex', flexDirection: 'column', gap: '18px' }}
+            style={{
+              background: 'var(--surface-card, #1e293b)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.12))',
+              maxWidth: '520px',
+              width: '92%',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px'
+            }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -2588,21 +2733,25 @@ export default function AttendancePage() {
                   width: '42px',
                   height: '42px',
                   borderRadius: '12px',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
+                  background: checkoutMode === 'HALF_DAY' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                  color: checkoutMode === 'HALF_DAY' ? '#f59e0b' : '#10b981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>logout</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
+                    {checkoutMode === 'HALF_DAY' ? 'emergency' : 'logout'}
+                  </span>
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main, #fff)' }}>
-                    Auto Check-Out
+                    {checkoutMode === 'HALF_DAY' ? 'Emergency Half Day Out' : 'Manual Shift Out'}
                   </h3>
                   <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
-                    Clock out employee and finalize shift working hours.
+                    {checkoutMode === 'HALF_DAY'
+                      ? 'Grant HR emergency leave permit and clock out staff with excused half-day status.'
+                      : 'Clock out employee and finalize shift working hours.'}
                   </p>
                 </div>
               </div>
@@ -2622,6 +2771,80 @@ export default function AttendancePage() {
                 }}
               >
                 <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Mode Switcher Tabs */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '6px',
+              background: 'rgba(0, 0, 0, 0.25)',
+              padding: '4px',
+              borderRadius: '12px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))'
+            }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutMode('MANUAL');
+                  setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00');
+                }}
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: '9px',
+                  border: checkoutMode === 'MANUAL' ? '1px solid rgba(16, 185, 129, 0.45)' : '1px solid transparent',
+                  background: checkoutMode === 'MANUAL' ? 'rgba(16, 185, 129, 0.18)' : 'transparent',
+                  color: checkoutMode === 'MANUAL' ? '#10b981' : 'var(--text-muted, #94a3b8)',
+                  fontWeight: checkoutMode === 'MANUAL' ? 700 : 500,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
+                Manual Out
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutMode('HALF_DAY');
+                  try {
+                    const nowTz = new Intl.DateTimeFormat('en-GB', {
+                      timeZone: officeTiming.timezone || 'Asia/Dhaka',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    }).format(new Date());
+                    setAutoCheckoutTimeInput(nowTz);
+                  } catch {
+                    const now = new Date();
+                    setAutoCheckoutTimeInput(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+                  }
+                }}
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: '9px',
+                  border: checkoutMode === 'HALF_DAY' ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid transparent',
+                  background: checkoutMode === 'HALF_DAY' ? 'rgba(245, 158, 11, 0.2)' : 'transparent',
+                  color: checkoutMode === 'HALF_DAY' ? '#f59e0b' : 'var(--text-muted, #94a3b8)',
+                  fontWeight: checkoutMode === 'HALF_DAY' ? 700 : 500,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>emergency</span>
+                Half Day Out (Permit)
               </button>
             </div>
 
@@ -2655,7 +2878,7 @@ export default function AttendancePage() {
                 <div style={{
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#10b981',
+                  color: checkoutMode === 'HALF_DAY' ? '#f59e0b' : '#10b981',
                   marginTop: '2px'
                 }}>
                   Shift: {officeTiming.shiftStart} - {officeTiming.shiftEnd}
@@ -2663,40 +2886,104 @@ export default function AttendancePage() {
               </div>
             </div>
 
-            {/* Preset Check-Out Quick Buttons */}
+            {/* Half Day Emergency Permit Fields */}
+            {checkoutMode === 'HALF_DAY' && (
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.06)',
+                borderRadius: '12px',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#f59e0b', marginBottom: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified_user</span>
+                    Emergency Permit Reason:
+                  </label>
+                  <select
+                    value={halfDayReason}
+                    onChange={e => setHalfDayReason(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      background: 'var(--surface-input, rgba(0, 0, 0, 0.35))',
+                      color: 'var(--text-main, #fff)',
+                      fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="Medical / Health Emergency (Staff fell ill)" style={{ background: '#1e293b', color: '#fff' }}>Medical / Health Emergency (Staff fell ill)</option>
+                    <option value="Personal / Family Urgent Matter" style={{ background: '#1e293b', color: '#fff' }}>Personal / Family Urgent Matter</option>
+                    <option value="Official External Assignment / Duty" style={{ background: '#1e293b', color: '#fff' }}>Official External Assignment / Duty</option>
+                    <option value="Urgent Transport / Severe Weather Constraint" style={{ background: '#1e293b', color: '#fff' }}>Urgent Transport / Severe Weather Constraint</option>
+                    <option value="Other Emergency (HR Discretion)" style={{ background: '#1e293b', color: '#fff' }}>Other Emergency (HR Discretion)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
+                    HR Remarks / Note (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Doctor appointment verified, permitted by HR manager"
+                    value={customReasonNote}
+                    onChange={e => setCustomReasonNote(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                      background: 'var(--surface-input, rgba(0, 0, 0, 0.25))',
+                      color: 'var(--text-main, #fff)',
+                      fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Check-Out / Departure Time Selector */}
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '8px' }}>
-                Select Check-Out Time:
+                {checkoutMode === 'HALF_DAY' ? 'Emergency Departure Time:' : 'Select Check-Out Time:'}
               </label>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00')}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    border: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
-                      ? '2px solid #10b981'
-                      : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
-                    background: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
-                      ? 'rgba(16, 185, 129, 0.15)'
-                      : 'transparent',
-                    color: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
-                      ? '#10b981'
-                      : 'var(--text-secondary, #cbd5e1)',
-                    fontWeight: 700,
-                    fontSize: '12.5px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule</span>
-                  Shift End ({officeTiming.shiftEnd || '18:00'})
-                </button>
+                {checkoutMode === 'MANUAL' && (
+                  <button
+                    type="button"
+                    onClick={() => setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00')}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      border: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
+                        ? '2px solid #10b981'
+                        : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                      background: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
+                        ? 'rgba(16, 185, 129, 0.15)'
+                        : 'transparent',
+                      color: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
+                        ? '#10b981'
+                        : 'var(--text-secondary, #cbd5e1)',
+                      fontWeight: 700,
+                      fontSize: '12.5px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule</span>
+                    Shift End ({officeTiming.shiftEnd || '18:00'})
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -2715,28 +3002,34 @@ export default function AttendancePage() {
                     }
                   }}
                   style={{
+                    flex: checkoutMode === 'HALF_DAY' ? 1 : undefined,
                     padding: '8px 14px',
                     borderRadius: '10px',
-                    border: '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
-                    background: 'transparent',
-                    color: 'var(--text-secondary, #cbd5e1)',
+                    border: checkoutMode === 'HALF_DAY'
+                      ? '1px solid rgba(245, 158, 11, 0.4)'
+                      : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: checkoutMode === 'HALF_DAY'
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : 'transparent',
+                    color: checkoutMode === 'HALF_DAY' ? '#f59e0b' : 'var(--text-secondary, #cbd5e1)',
                     fontWeight: 600,
                     fontSize: '12.5px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '6px'
                   }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>update</span>
-                  Current Time
+                  Current Time (Now)
                 </button>
               </div>
 
               {/* Custom time field */}
               <div style={{ marginBottom: '10px' }}>
                 <label style={{ display: 'block', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
-                  Check-Out Time (HH:MM):
+                  Departure Time (HH:MM):
                 </label>
                 <input
                   type="time"
@@ -2758,19 +3051,37 @@ export default function AttendancePage() {
 
             {/* Info banner */}
             <div style={{
-              background: 'rgba(16, 185, 129, 0.08)',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
+              background: checkoutMode === 'HALF_DAY' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+              border: checkoutMode === 'HALF_DAY' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(16, 185, 129, 0.2)',
               borderRadius: '10px',
-              padding: '10px 14px',
+              padding: '11px 14px',
               fontSize: '12px',
               color: 'var(--text-secondary, #cbd5e1)',
               display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+              alignItems: 'flex-start',
+              gap: '10px'
             }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#10b981' }}>check_circle</span>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  fontSize: '20px',
+                  color: checkoutMode === 'HALF_DAY' ? '#f59e0b' : '#10b981',
+                  flexShrink: 0,
+                  marginTop: '1px'
+                }}
+              >
+                {checkoutMode === 'HALF_DAY' ? 'verified_user' : 'check_circle'}
+              </span>
               <span>
-                Auto check-out will stamp <strong>{formatDisplayTime(autoCheckoutTimeInput, officeTiming.timezone)}</strong>, calculate total working hours, and close the shift record.
+                {checkoutMode === 'HALF_DAY' ? (
+                  <>
+                    Staff will be clocked out at <strong>{formatDisplayTime(autoCheckoutTimeInput, officeTiming.timezone)}</strong> with status stamped as <strong>HALF_DAY</strong>. HR approval waives early leave penalties while crediting total logged hours for payroll.
+                  </>
+                ) : (
+                  <>
+                    Manual check-out will stamp <strong>{formatDisplayTime(autoCheckoutTimeInput, officeTiming.timezone)}</strong>, calculate total working hours, and close the shift record.
+                  </>
+                )}
               </span>
             </div>
 
@@ -2806,7 +3117,9 @@ export default function AttendancePage() {
                   padding: '9px 20px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: '#10b981',
+                  background: checkoutMode === 'HALF_DAY'
+                    ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                    : '#10b981',
                   color: '#ffffff',
                   fontSize: '13px',
                   fontWeight: 700,
@@ -2815,13 +3128,21 @@ export default function AttendancePage() {
                   alignItems: 'center',
                   gap: '6px',
                   opacity: autoCheckoutSubmitting ? 0.7 : 1,
-                  boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)'
+                  boxShadow: checkoutMode === 'HALF_DAY'
+                    ? '0 2px 10px rgba(245, 158, 11, 0.35)'
+                    : '0 2px 10px rgba(16, 185, 129, 0.3)'
                 }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  {autoCheckoutSubmitting ? 'hourglass_empty' : 'logout'}
+                  {autoCheckoutSubmitting
+                    ? 'hourglass_empty'
+                    : checkoutMode === 'HALF_DAY'
+                      ? 'verified'
+                      : 'logout'}
                 </span>
-                {autoCheckoutSubmitting ? 'Checking Out...' : 'Confirm Auto Check-Out'}
+                {autoCheckoutSubmitting
+                  ? (checkoutMode === 'HALF_DAY' ? 'Granting Permit...' : 'Checking Out...')
+                  : (checkoutMode === 'HALF_DAY' ? 'Grant HR Permit & Clock Out (Half Day)' : 'Confirm Manual Out')}
               </button>
             </div>
           </div>

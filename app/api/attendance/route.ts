@@ -290,8 +290,13 @@ export async function PATCH(request: Request) {
   const rbacGuard = await requirePermission("ATTENDANCE_MANAGE");
   if (rbacGuard) return rbacGuard;
 
-  const companyIdForGuard = await getCompanyId();
-  if (!companyIdForGuard) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  let companyIdForGuard: string | null = null;
+  try {
+    companyIdForGuard = await getCompanyId();
+  } catch {}
+
+  const companyFilter = await withCompany(false).catch(() => ({}));
+  const effectiveCompanyId = companyIdForGuard || (companyFilter as any)?.companyId;
 
   try {
     const data = await request.json();
@@ -304,10 +309,12 @@ export async function PATCH(request: Request) {
     const existing = await prisma.attendance.findFirst({
       where: {
         id,
-        OR: [
-          { companyId: companyIdForGuard },
-          { employee: { companyId: companyIdForGuard } }
-        ]
+        ...(effectiveCompanyId ? {
+          OR: [
+            { companyId: effectiveCompanyId },
+            { employee: { companyId: effectiveCompanyId } }
+          ]
+        } : {})
       },
       include: { employee: true }
     });
@@ -315,6 +322,8 @@ export async function PATCH(request: Request) {
     if (!existing) {
       return NextResponse.json({ error: 'Attendance record not found or unauthorized' }, { status: 404 });
     }
+
+    const activeCompanyId = effectiveCompanyId || existing.companyId || existing.employee?.companyId || "";
 
     let updateData: any = {};
 
@@ -350,7 +359,7 @@ export async function PATCH(request: Request) {
     } else if (action === 'REVERT_CONSIDERATION') {
       // Revert to raw calculated late arrival time based on original check-in timestamp
       if (existing.checkInTime) {
-        const calc = await calculateAttendanceStatus(companyIdForGuard, existing.employeeId, existing.checkInTime);
+        const calc = await calculateAttendanceStatus(activeCompanyId, existing.employeeId, existing.checkInTime);
         updateData = {
           status: calc.status,
           isLate: calc.isLate,
@@ -370,11 +379,11 @@ export async function PATCH(request: Request) {
           where: { attendanceId: id, type: 'LATE_CONSIDERATION' }
         });
       } catch {}
-    } else if (action === 'AUTO_CHECKOUT') {
-      const compSetting = await prisma.companySetting.findUnique({
-        where: { companyId: companyIdForGuard },
-        select: { timezone: true, shiftEndTime: true }
-      });
+    } else if (action === 'AUTO_CHECKOUT' || action === 'MANUAL_CHECKOUT' || action === 'HALF_DAY_OUT') {
+      const compSetting = activeCompanyId ? await prisma.companySetting.findUnique({
+        where: { companyId: activeCompanyId },
+        select: { timezone: true, shiftEndTime: true, shiftStartTime: true }
+      }) : null;
       let timezone = compSetting?.timezone || "Asia/Dhaka";
       if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
         timezone = "Asia/Dhaka";
@@ -418,10 +427,10 @@ export async function PATCH(request: Request) {
         } catch {}
       }
 
-      if (shiftEndStr === "18:00") {
+      if (shiftEndStr === "18:00" && activeCompanyId) {
         try {
           const attConfig = await prisma.attendanceConfig.findFirst({
-            where: { companyId: companyIdForGuard }
+            where: { companyId: activeCompanyId }
           });
           if (attConfig?.shiftEnd) {
             shiftEndStr = attConfig.shiftEnd;
@@ -431,8 +440,12 @@ export async function PATCH(request: Request) {
         } catch {}
       }
 
-      const targetTimeStr = data.checkOutTime || data.checkOut || shiftEndStr;
-      let checkOutDate = parseDateTimeInTimezone(dateStr, targetTimeStr, timezone);
+      const isHalfDay = action === 'HALF_DAY_OUT' || data.checkoutType === 'HALF_DAY';
+      const targetTimeStr = data.checkOutTime || data.checkOut || (isHalfDay ? undefined : shiftEndStr);
+      let checkOutDate: Date | null = null;
+      if (targetTimeStr) {
+        checkOutDate = parseDateTimeInTimezone(dateStr, targetTimeStr, timezone);
+      }
       if (!checkOutDate) {
         checkOutDate = new Date();
       }
@@ -442,18 +455,58 @@ export async function PATCH(request: Request) {
         totalWorkingMinutes = Math.max(0, Math.floor((checkOutDate.getTime() - existing.checkInTime.getTime()) / 60000));
       }
 
-      const earlyCalc = await calculateEarlyLeaveStatus(companyIdForGuard, existing.employeeId, checkOutDate);
+      if (!existing.checkInTime) {
+        const shiftStartStr = compSetting?.shiftStartTime || "09:30";
+        const checkInDate = parseDateTimeInTimezone(dateStr, shiftStartStr, timezone) || checkOutDate;
+        updateData.checkInTime = checkInDate;
+        totalWorkingMinutes = Math.max(0, Math.floor((checkOutDate.getTime() - checkInDate.getTime()) / 60000));
+      }
 
-      updateData = {
-        checkOutTime: checkOutDate,
-        totalWorkingMinutes,
-        earlyLeaveMinutes: earlyCalc.earlyLeaveMinutes,
-      };
+      if (isHalfDay) {
+        const permitReason = reason || data.reason || 'Emergency departure permitted by HR (Half Day)';
+        updateData = {
+          ...updateData,
+          checkOutTime: checkOutDate,
+          totalWorkingMinutes,
+          status: 'HALF_DAY',
+          earlyLeaveMinutes: 0,
+          reviewStatus: 'PERMITTED_HALF_DAY',
+          punishmentAmount: 0,
+          punishmentReason: permitReason,
+        };
 
-      if (existing.status === 'ABSENT') {
-        updateData.status = 'PRESENT';
-        updateData.punishmentAmount = 0;
-        updateData.punishmentReason = null;
+        // Create adjustment record for full transparency
+        try {
+          await prisma.attendanceAdjustment.create({
+            data: {
+              attendanceId: id,
+              employeeId: existing.employeeId,
+              type: 'HALF_DAY_PERMIT',
+              reason: permitReason,
+              status: 'APPROVED',
+            }
+          });
+        } catch (adjErr) {
+          console.warn('Optional adjustment creation for half day permit:', adjErr);
+        }
+      } else {
+        const earlyCalc = await calculateEarlyLeaveStatus(activeCompanyId, existing.employeeId, checkOutDate);
+        updateData = {
+          ...updateData,
+          checkOutTime: checkOutDate,
+          totalWorkingMinutes,
+          earlyLeaveMinutes: earlyCalc.earlyLeaveMinutes,
+        };
+
+        if (existing.status === 'ABSENT' || !existing.checkInTime) {
+          updateData.status = 'PRESENT';
+          updateData.punishmentAmount = 0;
+          updateData.punishmentReason = null;
+        }
+      }
+
+      if (!existing.companyId && activeCompanyId) {
+        updateData.companyId = activeCompanyId;
       }
     } else {
       if (lateMinutes !== undefined) {

@@ -8,23 +8,123 @@ export async function GET(req: Request) {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const referer = req.headers.get("referer") || "";
-    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
-
-    const fines = await prisma.employeeFine.findMany({
-      where: { companyId, systemSource },
-      include: {
-        employee: {
-          select: { firstName: true, lastName: true, employeeId: true }
+    // Fetch existing disciplinary fines across ERP and LEGACY sources
+    const [existingFines, lateAttendances, punishmentRules] = await Promise.all([
+      prisma.employeeFine.findMany({
+        where: {
+          companyId,
+          systemSource: { in: ["ERP", "LEGACY"] }
         },
-        payrollRun: {
-          select: { period: { select: { name: true } } }
-        }
-      },
-      orderBy: { date: "desc" }
-    });
+        include: {
+          employee: {
+            select: { firstName: true, lastName: true, employeeId: true }
+          },
+          payrollRun: {
+            select: { period: { select: { name: true } } }
+          }
+        },
+        orderBy: { date: "desc" }
+      }),
+      // Fetch attendance records that have late arrival or fines
+      prisma.attendance.findMany({
+        where: {
+          companyId,
+          OR: [
+            { punishmentAmount: { gt: 0 } },
+            { isLate: true, lateMinutes: { gt: 0 } },
+            { reviewStatus: 'CONSIDERED' }
+          ]
+        },
+        include: {
+          employee: {
+            select: { firstName: true, lastName: true, employeeId: true }
+          }
+        },
+        orderBy: { date: "desc" },
+        take: 200
+      }),
+      // Fetch active late penalty tier rules
+      prisma.punishmentSetting.findMany({
+        where: {
+          active: true,
+          type: { in: ['LATE_IN', 'LATE'] },
+          OR: [{ companyId }, { companyId: null }]
+        },
+        orderBy: { fromMinutes: 'asc' }
+      })
+    ]);
 
-    return NextResponse.json({ fines });
+    const finesMap = new Map<string, any>();
+    for (const f of existingFines) {
+      finesMap.set(f.id, f);
+    }
+
+    // Auto-sync attendance records into EmployeeFine so they display on HR Fines tab
+    for (const att of lateAttendances) {
+      if (!att.employeeId) continue;
+
+      let fineAmt = 0;
+      let isWaived = false;
+
+      if (att.punishmentAmount !== undefined && att.punishmentAmount !== null) {
+        fineAmt = Number(att.punishmentAmount);
+        if (fineAmt === 0 && att.reviewStatus === 'CONSIDERED') {
+          isWaived = true;
+        }
+      } else if (att.isLate && (att.lateMinutes || 0) > 0 && att.reviewStatus !== 'CONSIDERED') {
+        const mins = Number(att.lateMinutes) || 0;
+        const matchedRule = punishmentRules.find(p => mins >= (p.fromMinutes ?? 0) && mins <= (p.toMinutes ?? 999999));
+        if (matchedRule && Number(matchedRule.amount) > 0) {
+          fineAmt = Number(matchedRule.amount);
+        }
+      }
+
+      // If no fine and not waived, skip
+      if (fineAmt <= 0 && !isWaived) continue;
+
+      const attDateStr = new Date(att.date).toISOString().slice(0, 10);
+
+      // Check if fine already exists for this attendance day
+      const alreadyHasFine = existingFines.find(f => {
+        if (f.employeeId !== att.employeeId) return false;
+        const fDateStr = new Date(f.date).toISOString().slice(0, 10);
+        return fDateStr === attDateStr && (f.reason || '').toLowerCase().includes('late');
+      });
+
+      if (!alreadyHasFine) {
+        try {
+          const fineReason = att.punishmentReason || `Late Arrival Penalty (${att.lateMinutes || 0} min late)`;
+          const createdFine = await prisma.employeeFine.create({
+            data: {
+              companyId,
+              employeeId: att.employeeId,
+              amount: fineAmt,
+              reason: fineReason,
+              date: att.date,
+              status: isWaived ? "CANCELLED" : "PENDING",
+              systemSource: "ERP"
+            },
+            include: {
+              employee: {
+                select: { firstName: true, lastName: true, employeeId: true }
+              },
+              payrollRun: {
+                select: { period: { select: { name: true } } }
+              }
+            }
+          });
+          finesMap.set(createdFine.id, createdFine);
+        } catch (createErr) {
+          console.warn("Auto-sync late fine error:", createErr);
+        }
+      }
+    }
+
+    const allFines = Array.from(finesMap.values()).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    return NextResponse.json({ fines: allFines });
   } catch (error) {
     console.error("GET Fines Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

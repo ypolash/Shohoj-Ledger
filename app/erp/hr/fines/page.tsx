@@ -76,6 +76,7 @@ export default function FinesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'DEDUCTED' | 'CANCELLED'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'LATE' | 'OTHER'>('ALL');
   const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isLoading, setIsLoading] = useState(true);
@@ -251,6 +252,15 @@ export default function FinesPage() {
         return false;
       }
 
+      // Category filter (Late Fines vs Other Disciplinary)
+      const isLateViolation = reason.includes('late');
+      if (typeFilter === 'LATE' && !isLateViolation) {
+        return false;
+      }
+      if (typeFilter === 'OTHER' && isLateViolation) {
+        return false;
+      }
+
       // Employee filter
       if (employeeFilter !== 'ALL' && f.employeeId !== employeeFilter) {
         return false;
@@ -258,7 +268,7 @@ export default function FinesPage() {
 
       return true;
     });
-  }, [fines, employeeMap, search, statusFilter, employeeFilter]);
+  }, [fines, employeeMap, search, statusFilter, typeFilter, employeeFilter]);
 
   // Aggregate KPI metrics
   const totalCount = fines.length;
@@ -276,15 +286,21 @@ export default function FinesPage() {
   const cancelledCount = cancelledFines.length;
   const cancelledAmount = cancelledFines.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
 
+  const lateFines = fines.filter(f => (f.reason || '').toLowerCase().includes('late'));
+  const lateCount = lateFines.length;
+  const otherCount = totalCount - lateCount;
+
   const hasActiveFilters = Boolean(
     search.trim() ||
     statusFilter !== 'ALL' ||
+    typeFilter !== 'ALL' ||
     employeeFilter !== 'ALL'
   );
 
   const handleResetFilters = () => {
     setSearch('');
     setStatusFilter('ALL');
+    setTypeFilter('ALL');
     setEmployeeFilter('ALL');
   };
 
@@ -502,8 +518,72 @@ export default function FinesPage() {
         </div>
 
         <div className={styles.controlsBottomRow}>
-          {/* Status Tabs */}
-          <div className={styles.statusTabsList}>
+          {/* Category & Status Tabs */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+            {/* Category Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '4px' }}>
+                Type:
+              </span>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('ALL')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: typeFilter === 'ALL' ? '1px solid #2563eb' : '1px solid var(--border-main, #e2e8f0)',
+                  background: typeFilter === 'ALL' ? '#2563eb' : 'var(--surface-card, #ffffff)',
+                  color: typeFilter === 'ALL' ? '#ffffff' : 'var(--text-secondary, #475569)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                All Fines ({totalCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('LATE')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  border: typeFilter === 'LATE' ? '1px solid #d97706' : '1px solid var(--border-main, #e2e8f0)',
+                  background: typeFilter === 'LATE' ? '#f59e0b' : 'var(--surface-card, #ffffff)',
+                  color: typeFilter === 'LATE' ? '#ffffff' : 'var(--text-secondary, #475569)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>schedule</span>
+                Late Arrival Fines ({lateCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('OTHER')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: typeFilter === 'OTHER' ? '1px solid #64748b' : '1px solid var(--border-main, #e2e8f0)',
+                  background: typeFilter === 'OTHER' ? '#64748b' : 'var(--surface-card, #ffffff)',
+                  color: typeFilter === 'OTHER' ? '#ffffff' : 'var(--text-secondary, #475569)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Other Penalties ({otherCount})
+              </button>
+            </div>
+
+            {/* Status Tabs */}
+            <div className={styles.statusTabsList}>
             <button
               onClick={() => setStatusFilter('ALL')}
               className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
@@ -536,6 +616,7 @@ export default function FinesPage() {
               <span style={{ opacity: 0.7 }}>({cancelledCount})</span>
             </button>
           </div>
+        </div>
 
           {/* View Mode Toggle */}
           <div className={styles.viewToggleGroup}>
@@ -642,9 +723,30 @@ export default function FinesPage() {
 
                     {/* Reason */}
                     <td className={styles.tableCell}>
-                      <span style={{ fontWeight: 500, color: 'var(--text-main)' }}>
-                        {f.reason}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {f.reason?.toLowerCase().includes('late') && (
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            background: 'rgba(245, 158, 11, 0.12)',
+                            color: '#b45309',
+                            border: '1px solid rgba(245, 158, 11, 0.25)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            width: 'fit-content',
+                            letterSpacing: '0.02em',
+                          }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>schedule</span>
+                            Late Fine
+                          </span>
+                        )}
+                        <span style={{ fontWeight: 500, color: 'var(--text-main)', fontSize: '13px' }}>
+                          {f.reason}
+                        </span>
+                      </div>
                     </td>
 
                     {/* Amount */}
@@ -785,7 +887,27 @@ export default function FinesPage() {
 
                 {/* Reason Quote */}
                 <div className={styles.cardReasonBox}>
-                  &ldquo;{f.reason}&rdquo;
+                  {f.reason?.toLowerCase().includes('late') && (
+                    <div style={{ marginBottom: '6px' }}>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        color: '#b45309',
+                        border: '1px solid rgba(245, 158, 11, 0.25)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        letterSpacing: '0.02em',
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>schedule</span>
+                        Late Fine
+                      </span>
+                    </div>
+                  )}
+                  <div>&ldquo;{f.reason}&rdquo;</div>
                 </div>
 
                 {/* Footer and Actions */}

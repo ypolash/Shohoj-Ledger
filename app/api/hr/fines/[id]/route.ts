@@ -92,6 +92,37 @@ export async function PATCH(
       }
     }
 
+    // Two-way sync: Update matching Attendance record if this fine is related to late arrival
+    if (fine.employeeId && (fine.reason || "").toLowerCase().includes("late")) {
+      try {
+        const fineDate = new Date(fine.date || fine.createdAt);
+        const startOfDay = new Date(fineDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(fineDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const targetAtt = await prisma.attendance.findFirst({
+          where: {
+            employeeId: fine.employeeId,
+            date: { gte: startOfDay, lte: endOfDay }
+          }
+        });
+
+        if (targetAtt) {
+          const isCancelled = updatedFine.status === 'CANCELLED';
+          await prisma.attendance.update({
+            where: { id: targetAtt.id },
+            data: {
+              punishmentAmount: isCancelled ? 0 : Number(updatedFine.amount),
+              reviewStatus: isCancelled ? 'CONSIDERED' : targetAtt.reviewStatus,
+            }
+          });
+        }
+      } catch (attSyncErr) {
+        console.warn("Sync to attendance on fine PATCH error:", attSyncErr);
+      }
+    }
+
     return NextResponse.json({ fine: updatedFine });
   } catch (error) {
     console.error("PATCH Fine Error:", error);
@@ -155,6 +186,30 @@ export async function DELETE(
           where: { id: activePayment.id },
           data: { netSalary: newNet }
         });
+      }
+    }
+
+    // Two-way sync: Reset Attendance fine amount if this fine was related to late arrival
+    if (fine.employeeId && (fine.reason || "").toLowerCase().includes("late")) {
+      try {
+        const fineDate = new Date(fine.date || fine.createdAt);
+        const startOfDay = new Date(fineDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(fineDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        await prisma.attendance.updateMany({
+          where: {
+            employeeId: fine.employeeId,
+            date: { gte: startOfDay, lte: endOfDay }
+          },
+          data: {
+            punishmentAmount: 0,
+            reviewStatus: 'CONSIDERED'
+          }
+        });
+      } catch (attSyncErr) {
+        console.warn("Sync to attendance on fine DELETE error:", attSyncErr);
       }
     }
 

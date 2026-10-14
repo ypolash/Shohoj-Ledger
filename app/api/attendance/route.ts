@@ -357,6 +357,66 @@ export async function PATCH(request: Request) {
       } catch (adjErr) {
         console.warn('AttendanceAdjustment creation optional:', adjErr);
       }
+
+      // Sync with EmployeeFine so late fine appears on HR Fines tab & payroll deductions
+      if (activeCompanyId && existing.employeeId) {
+        try {
+          const fineDate = existing.date || new Date();
+          const startOfAttDay = new Date(fineDate);
+          startOfAttDay.setHours(0, 0, 0, 0);
+          const endOfAttDay = new Date(fineDate);
+          endOfAttDay.setHours(23, 59, 59, 999);
+
+          const existingFine = await prisma.employeeFine.findFirst({
+            where: {
+              companyId: activeCompanyId,
+              employeeId: existing.employeeId,
+              date: { gte: startOfAttDay, lte: endOfAttDay },
+              reason: { contains: 'Late' }
+            }
+          });
+
+          if (fine > 0) {
+            if (existingFine) {
+              await prisma.employeeFine.update({
+                where: { id: existingFine.id },
+                data: {
+                  amount: fine,
+                  reason: note,
+                  status: 'PENDING',
+                  systemSource: 'ERP',
+                }
+              });
+            } else {
+              await prisma.employeeFine.create({
+                data: {
+                  companyId: activeCompanyId,
+                  employeeId: existing.employeeId,
+                  amount: fine,
+                  reason: note,
+                  date: existing.date || new Date(),
+                  status: 'PENDING',
+                  systemSource: 'ERP'
+                }
+              });
+            }
+          } else {
+            // Fine is 0 / waived
+            if (existingFine) {
+              await prisma.employeeFine.update({
+                where: { id: existingFine.id },
+                data: {
+                  amount: 0,
+                  status: 'CANCELLED',
+                  reason: `${note} (Fine Waived)`,
+                }
+              });
+            }
+          }
+        } catch (fineSyncErr) {
+          console.warn('Sync to EmployeeFine error:', fineSyncErr);
+        }
+      }
     } else if (action === 'REVERT_CONSIDERATION') {
       // Revert to raw calculated late arrival time based on original check-in timestamp
       if (existing.checkInTime) {
@@ -373,6 +433,25 @@ export async function PATCH(request: Request) {
           reviewStatus: null,
           punishmentReason: null,
         };
+      }
+
+      if (activeCompanyId && existing.employeeId) {
+        try {
+          const fineDate = existing.date || new Date();
+          const startOfAttDay = new Date(fineDate);
+          startOfAttDay.setHours(0, 0, 0, 0);
+          const endOfAttDay = new Date(fineDate);
+          endOfAttDay.setHours(23, 59, 59, 999);
+
+          await prisma.employeeFine.deleteMany({
+            where: {
+              companyId: activeCompanyId,
+              employeeId: existing.employeeId,
+              date: { gte: startOfAttDay, lte: endOfAttDay },
+              reason: { contains: 'Late' }
+            }
+          });
+        } catch {}
       }
 
       try {

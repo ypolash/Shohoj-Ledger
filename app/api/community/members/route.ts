@@ -27,6 +27,7 @@ export async function GET() {
         designation: true,
         department: true,
         status: true,
+        profile: { select: { photo: true } },
       },
       orderBy: { firstName: "asc" },
     });
@@ -43,6 +44,7 @@ export async function GET() {
         type: "STAFF" as const,
         email: e.email,
         department: e.department || "General",
+        avatar: e.profile?.photo || null,
       };
     });
 

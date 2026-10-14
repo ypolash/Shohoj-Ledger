@@ -30,6 +30,7 @@ export async function GET(req: Request) {
       where: { employeeId },
       include: {
         workShift: true,
+        profile: { select: { photo: true } },
         company: {
           include: {
             settings: true,
@@ -46,20 +47,23 @@ export async function GET(req: Request) {
       );
     }
 
-    // Try to find user image if userId exists
-    let profileImage = null;
-    if (employee.userId) {
+    // Try to find profile photo from employee.profile or user.image
+    let profileImage = employee.profile?.photo || null;
+    if (!profileImage && employee.userId) {
         const user = await prisma.user.findUnique({
-            where: { id: employee.userId }
+            where: { id: employee.userId },
+            select: { image: true }
         });
-        profileImage = user?.image;
+        profileImage = user?.image || null;
     }
 
     const { dutySchedule } = await getEffectiveDutySchedule(employee.id, employee.companyId);
 
     const profile = {
       id: employee.id,
-      fullName: `${employee.firstName} ${employee.lastName}`,
+      fullName: `${employee.firstName} ${employee.lastName}`.trim(),
+      firstName: employee.firstName,
+      lastName: employee.lastName,
       employeeId: employee.employeeId,
       designation: employee.designation,
       department: employee.department || "N/A",
@@ -67,6 +71,8 @@ export async function GET(req: Request) {
       phone: employee.phone || "N/A",
       email: employee.email,
       profileImage: profileImage,
+      photo: profileImage,
+      avatar: profileImage,
       isActive: employee.status === "ACTIVE",
       shift: dutySchedule.dutyHoursFormatted || (employee.workShift ? `${employee.workShift.startTime} - ${employee.workShift.endTime}` : (employee.shift || "Regular")),
       dutySchedule,

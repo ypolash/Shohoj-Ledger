@@ -48,6 +48,9 @@ export async function POST(req: Request) {
           { id: rawIdentifier },
         ],
       },
+      include: {
+        profile: { select: { photo: true } },
+      },
     });
 
     console.log("[Mobile Auth Login] rawIdentifier received:", rawIdentifier);
@@ -87,6 +90,15 @@ export async function POST(req: Request) {
     // 1. Resolve company context
     const context = await getCompanyContext(employee.id, "EMPLOYEE");
 
+    let photoUrl = employee.profile?.photo || null;
+    if (!photoUrl && employee.userId) {
+      const u = await prisma.user.findUnique({
+        where: { id: employee.userId },
+        select: { image: true }
+      });
+      photoUrl = u?.image || null;
+    }
+
     // 2. Prepare user payload for session
     const userPayload = {
       id: employee.id,
@@ -95,6 +107,7 @@ export async function POST(req: Request) {
       name: `${employee.firstName} ${employee.lastName}`.trim(),
       loginType: "EMPLOYEE",
       role: context.dbRoleName || "Employee",
+      image: photoUrl,
       ...context,
     };
 
@@ -108,16 +121,23 @@ export async function POST(req: Request) {
       userId: employee.id,
       name: `${employee.firstName} ${employee.lastName}`.trim(),
       email: employee.email,
+      photo: photoUrl,
+      avatar: photoUrl,
       employee: {
         id: employee.id,
         employeeId: employee.employeeId,
         name: `${employee.firstName} ${employee.lastName}`.trim(),
+        firstName: employee.firstName,
+        lastName: employee.lastName,
         email: employee.email,
         phone: employee.phone ?? null,
         designation: employee.designation ?? "Employee",
         department: employee.department ?? null,
         status: employee.status,
         companyId: employee.companyId ?? null,
+        photo: photoUrl,
+        avatar: photoUrl,
+        profileImage: photoUrl,
       },
       user: userPayload,
     }, { headers: CORS_HEADERS });

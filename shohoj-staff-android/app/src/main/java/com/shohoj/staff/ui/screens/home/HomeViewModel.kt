@@ -55,6 +55,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val leaveRepo = app.leaveRepository
     private val updateRepo = app.appUpdateRepository
     private val payrollRepo = app.payrollRepository
+    private val profileRepo = app.profileRepository
+    private val sessionManager = app.sessionManager
 
     private val _uiState = MutableStateFlow(
         HomeUiState(
@@ -93,6 +95,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             // Refresh current employee
             val currentEmp = authRepo.getCurrentEmployee()
+            var activeEmp = currentEmp
+
+            try {
+                val profileResult = profileRepo.getProfile()
+                profileResult.onSuccess { profile ->
+                    if (currentEmp != null) {
+                        val photo = profile.effectivePhoto
+                        activeEmp = currentEmp.copy(
+                            photo = photo ?: currentEmp.photo,
+                            avatar = photo ?: currentEmp.avatar,
+                            profileImage = photo ?: currentEmp.profileImage,
+                            name = profile.fullName.ifEmpty { currentEmp.name },
+                            firstName = profile.firstName ?: currentEmp.firstName,
+                            lastName = profile.lastName ?: currentEmp.lastName,
+                            designation = profile.effectiveDesignation,
+                            department = profile.effectiveDepartment
+                        )
+                        activeEmp?.let { sessionManager.saveEmployee(it) }
+                    }
+                }
+            } catch (e: Exception) {
+                // Quiet catch
+            }
 
             // Fetch attendance, duty rosters, announcements & active break in parallel
             val attResult = attendanceRepo.getAttendanceData()
@@ -163,7 +188,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                employee = currentEmp,
+                employee = activeEmp,
                 todayAttendance = todayRecord,
                 summary = summary,
                 dutySchedule = dutySchedule,

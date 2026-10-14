@@ -30,7 +30,10 @@ data class DetailedEmployeeProfile(
     @SerializedName("designationRef") val designationRef: RefName? = null,
     @SerializedName("reportingManager") val reportingManager: ManagerRef? = null,
     @SerializedName("shift") val shift: String? = null,
-    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null,
+    @SerializedName("photo") val photo: String? = null,
+    @SerializedName("avatar") val avatar: String? = null,
+    @SerializedName("profileImage") val profileImage: String? = null
 ) {
     val fullName: String
         get() = "${firstName ?: ""} ${lastName ?: ""}".trim().ifEmpty { employeeId }
@@ -40,6 +43,9 @@ data class DetailedEmployeeProfile(
 
     val effectiveDesignation: String
         get() = designationRef?.name ?: designation ?: "Employee"
+
+    val effectivePhoto: String?
+        get() = photo?.ifBlank { null } ?: avatar?.ifBlank { null } ?: profileImage?.ifBlank { null }
 }
 
 data class ProfileResponse(

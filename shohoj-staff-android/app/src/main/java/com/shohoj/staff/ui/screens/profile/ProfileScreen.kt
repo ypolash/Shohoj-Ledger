@@ -18,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.shohoj.staff.ui.components.AppUpdateDialog
 import com.shohoj.staff.ui.components.BackgroundPermissionDialog
 import com.shohoj.staff.ui.components.ShohojBottomBar
@@ -31,6 +33,7 @@ import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
 import com.shohoj.staff.util.BackgroundPermissionHelper
 import com.shohoj.staff.util.DateUtils
+import com.shohoj.staff.util.MediaUtils
 
 @Composable
 fun ProfileScreen(
@@ -50,6 +53,9 @@ fun ProfileScreen(
     val empDto = uiState.employeeDto
     val detailed = uiState.profileDetails
 
+    val rawPhotoUrl = detailed?.effectivePhoto ?: empDto?.effectivePhoto
+    val photoUrl = MediaUtils.resolveMediaUrl(rawPhotoUrl, uiState.serverUrl)
+
     val displayName = detailed?.fullName ?: empDto?.displayName ?: "Employee"
     val designation = detailed?.effectiveDesignation ?: empDto?.designation ?: "Staff Member"
     val department = detailed?.effectiveDepartment ?: empDto?.department ?: "General"
@@ -68,7 +74,8 @@ fun ProfileScreen(
         topBar = {
             ShohojTopBar(
                 title = "My Profile",
-                subtitle = employeeId
+                subtitle = employeeId,
+                avatarUrl = photoUrl
             )
         },
         bottomBar = {
@@ -102,24 +109,39 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Initials Avatar
+                    // Profile Avatar (AsyncImage with Fallback to Initials)
+                    var imageLoadFailed by remember(photoUrl) { mutableStateOf(false) }
+
                     Box(
                         modifier = Modifier
                             .size(68.dp)
                             .clip(CircleShape)
                             .background(
                                 brush = Brush.radialGradient(listOf(Emerald400, Emerald600))
-                            ),
+                            )
+                            .border(1.5.dp, Emerald500.copy(alpha = 0.5f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = initials.uppercase(),
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Slate950,
-                                fontSize = 24.sp
+                        if (!photoUrl.isNullOrBlank() && !imageLoadFailed) {
+                            AsyncImage(
+                                model = photoUrl,
+                                contentDescription = displayName,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                                onError = { imageLoadFailed = true }
                             )
-                        )
+                        } else {
+                            Text(
+                                text = initials.uppercase(),
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Slate950,
+                                    fontSize = 24.sp
+                                )
+                            )
+                        }
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

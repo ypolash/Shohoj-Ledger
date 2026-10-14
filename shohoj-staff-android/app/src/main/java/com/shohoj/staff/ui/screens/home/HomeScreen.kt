@@ -27,11 +27,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shohoj.staff.ShohojStaffApp
 import com.shohoj.staff.ui.components.*
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
 import com.shohoj.staff.util.BackgroundPermissionHelper
 import com.shohoj.staff.util.DateUtils
+import com.shohoj.staff.util.MediaUtils
 
 @Composable
 fun HomeScreen(
@@ -42,6 +44,10 @@ fun HomeScreen(
     val uriHandler = LocalUriHandler.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+
+    val app = context.applicationContext as? ShohojStaffApp
+    val baseUrl = app?.sessionManager?.baseUrl ?: "https://team.shohojsolution.com/"
+    val employeePhotoUrl = MediaUtils.resolveMediaUrl(uiState.employee?.effectivePhoto, baseUrl)
 
     var isBatteryIgnored by remember { mutableStateOf(BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)) }
     var isBgBannerDismissed by remember { mutableStateOf(false) }
@@ -71,6 +77,8 @@ fun HomeScreen(
             ShohojTopBar(
                 title = "Shohoj Staff",
                 subtitle = uiState.employee?.displayName ?: "Employee Portal",
+                avatarUrl = employeePhotoUrl,
+                onAvatarClick = { onNavigate(Screen.Profile.route) },
                 onNotificationsClick = { onNavigate(Screen.Announcements.route) }
             )
         },

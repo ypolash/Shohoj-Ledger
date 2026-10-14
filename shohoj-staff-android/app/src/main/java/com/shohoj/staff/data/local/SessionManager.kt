@@ -114,6 +114,16 @@ class SessionManager(context: Context) {
             .apply()
     }
 
+    fun updateEmployeePhoto(photoUrl: String?) {
+        val current = getEmployee() ?: return
+        val updated = current.copy(
+            photo = photoUrl,
+            avatar = photoUrl,
+            profileImage = photoUrl
+        )
+        saveEmployee(updated)
+    }
+
     fun getEmployee(): EmployeeDto? {
         val json = prefs.getString(KEY_EMPLOYEE_JSON, null) ?: return null
         return try {

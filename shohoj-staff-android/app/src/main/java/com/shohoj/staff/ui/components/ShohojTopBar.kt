@@ -2,7 +2,9 @@ package com.shohoj.staff.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
@@ -13,15 +15,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.shohoj.staff.ui.theme.*
 
 @Composable
 fun ShohojTopBar(
     title: String,
     subtitle: String? = null,
+    avatarUrl: String? = null,
+    onAvatarClick: (() -> Unit)? = null,
     onNotificationsClick: (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit)? = null,
     contentBelow: @Composable (() -> Unit)? = null
@@ -56,10 +62,33 @@ fun ShohojTopBar(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.weight(1f, fill = false)
                     ) {
-                        ShohojStaffLogo(
-                            size = 38.dp,
-                            showGlow = true
-                        )
+                        if (!avatarUrl.isNullOrBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .border(1.5.dp, Emerald500.copy(alpha = 0.8f), CircleShape)
+                                    .background(Slate800)
+                                    .then(
+                                        if (onAvatarClick != null) Modifier.clickable(onClick = onAvatarClick) else Modifier
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AsyncImage(
+                                    model = avatarUrl,
+                                    contentDescription = title,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        } else {
+                            ShohojStaffLogo(
+                                size = 38.dp,
+                                showGlow = true
+                            )
+                        }
                         Column(verticalArrangement = Arrangement.Center) {
                             Text(
                                 text = title,

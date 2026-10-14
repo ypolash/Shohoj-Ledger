@@ -99,7 +99,12 @@ export async function updateExtendedProfile(employeeId: string, data: any) {
   if (existing.userId) {
     await prisma.user.update({
       where: { id: existing.userId },
-      data: { name: `${data.firstName} ${data.lastName}` }
+      data: {
+        name: `${data.firstName} ${data.lastName}`,
+        ...(data.profile?.photo !== undefined ? { image: data.profile.photo } : {}),
+      }
+    }).catch((err) => {
+      console.warn("Failed to sync user image:", err);
     });
   }
 

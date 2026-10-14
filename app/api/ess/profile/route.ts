@@ -28,6 +28,7 @@ export async function GET(request: Request) {
         designationRef: { select: { name: true } },
         reportingManager: { select: { firstName: true, lastName: true } },
         workShift: true,
+        profile: { select: { photo: true } },
       },
     });
 
@@ -38,7 +39,23 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json({ employee });
+    let photoUrl = employee.profile?.photo || null;
+    if (!photoUrl && employee.userId) {
+      const u = await prisma.user.findUnique({
+        where: { id: employee.userId },
+        select: { image: true }
+      });
+      photoUrl = u?.image || null;
+    }
+
+    return NextResponse.json({
+      employee: {
+        ...employee,
+        photo: photoUrl,
+        avatar: photoUrl,
+        profileImage: photoUrl,
+      }
+    }, { headers: ESS_CORS_HEADERS });
   } catch (error) {
     console.error("[ESS] Profile fetch error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

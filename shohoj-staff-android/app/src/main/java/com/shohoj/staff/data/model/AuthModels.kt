@@ -34,15 +34,22 @@ data class EmployeeDto(
     @SerializedName("role") val role: String? = null,
     @SerializedName("status") val status: String? = null,
     @SerializedName("companyId") val companyId: String? = null,
-    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null,
+    @SerializedName("photo") val photo: String? = null,
+    @SerializedName("avatar") val avatar: String? = null,
+    @SerializedName("profileImage") val profileImage: String? = null
 ) {
     val displayName: String
         get() = name ?: "${firstName ?: ""} ${lastName ?: ""}".trim().ifEmpty { employeeId }
+
+    val effectivePhoto: String?
+        get() = photo?.ifBlank { null } ?: avatar?.ifBlank { null } ?: profileImage?.ifBlank { null }
 }
 
 data class UserDto(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,
     @SerializedName("name") val name: String? = null,
-    @SerializedName("role") val role: String? = null
+    @SerializedName("role") val role: String? = null,
+    @SerializedName("image") val image: String? = null
 )

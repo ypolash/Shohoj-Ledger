@@ -98,6 +98,14 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         update: { photo: photoUrl },
         create: { employeeId: actualId, photo: photoUrl }
       });
+      if (existingEmp.userId) {
+        await prisma.user.update({
+          where: { id: existingEmp.userId },
+          data: { image: photoUrl }
+        }).catch((err) => {
+          console.warn("Failed to sync user image in route:", err);
+        });
+      }
     }
 
     const updatedEmployee = await prisma.employee.findUnique({

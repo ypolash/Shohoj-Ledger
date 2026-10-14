@@ -67,9 +67,13 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
             result.fold(
                 onSuccess = { profile ->
+                    profile.effectivePhoto?.let { photo ->
+                        sessionManager.updateEmployeePhoto(photo)
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        profileDetails = profile
+                        profileDetails = profile,
+                        employeeDto = authRepo.getCurrentEmployee()
                     )
                 },
                 onFailure = { ex ->

@@ -370,6 +370,91 @@ export async function PATCH(request: Request) {
           where: { attendanceId: id, type: 'LATE_CONSIDERATION' }
         });
       } catch {}
+    } else if (action === 'AUTO_CHECKOUT') {
+      const compSetting = await prisma.companySetting.findUnique({
+        where: { companyId: companyIdForGuard },
+        select: { timezone: true, shiftEndTime: true }
+      });
+      let timezone = compSetting?.timezone || "Asia/Dhaka";
+      if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
+        timezone = "Asia/Dhaka";
+      }
+      try { Intl.DateTimeFormat(undefined, { timeZone: timezone }); } catch { timezone = "Asia/Dhaka"; }
+
+      const dateToFormat = existing.date || existing.checkInTime || new Date();
+      const dateStr = new Intl.DateTimeFormat("en-CA", {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date(dateToFormat));
+
+      let shiftEndStr = "18:00";
+      const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+      const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+
+      try {
+        const roster = await prisma.attendanceRoster.findFirst({
+          where: {
+            employeeId: existing.employeeId,
+            date: { gte: startOfDay, lte: endOfDay },
+            status: { not: "CANCELLED" }
+          },
+          include: { workShift: true }
+        });
+        if (roster?.endTime) shiftEndStr = roster.endTime;
+        else if (roster?.workShift?.endTime) shiftEndStr = roster.workShift.endTime;
+      } catch {}
+
+      if (shiftEndStr === "18:00") {
+        try {
+          const emp = await prisma.employee.findUnique({
+            where: { id: existing.employeeId },
+            include: { workShift: true }
+          });
+          if (emp?.workShift?.endTime) {
+            shiftEndStr = emp.workShift.endTime;
+          }
+        } catch {}
+      }
+
+      if (shiftEndStr === "18:00") {
+        try {
+          const attConfig = await prisma.attendanceConfig.findFirst({
+            where: { companyId: companyIdForGuard }
+          });
+          if (attConfig?.shiftEnd) {
+            shiftEndStr = attConfig.shiftEnd;
+          } else if (compSetting?.shiftEndTime) {
+            shiftEndStr = compSetting.shiftEndTime;
+          }
+        } catch {}
+      }
+
+      const targetTimeStr = data.checkOutTime || data.checkOut || shiftEndStr;
+      let checkOutDate = parseDateTimeInTimezone(dateStr, targetTimeStr, timezone);
+      if (!checkOutDate) {
+        checkOutDate = new Date();
+      }
+
+      let totalWorkingMinutes = 0;
+      if (existing.checkInTime) {
+        totalWorkingMinutes = Math.max(0, Math.floor((checkOutDate.getTime() - existing.checkInTime.getTime()) / 60000));
+      }
+
+      const earlyCalc = await calculateEarlyLeaveStatus(companyIdForGuard, existing.employeeId, checkOutDate);
+
+      updateData = {
+        checkOutTime: checkOutDate,
+        totalWorkingMinutes,
+        earlyLeaveMinutes: earlyCalc.earlyLeaveMinutes,
+      };
+
+      if (existing.status === 'ABSENT') {
+        updateData.status = 'PRESENT';
+        updateData.punishmentAmount = 0;
+        updateData.punishmentReason = null;
+      }
     } else {
       if (lateMinutes !== undefined) {
         updateData.lateMinutes = Number(lateMinutes);

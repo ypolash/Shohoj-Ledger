@@ -198,6 +198,77 @@ export default function AttendancePage() {
   const [considerReason, setConsiderReason] = useState('Staff forgot to press check-in on time');
   const [considerSubmitting, setConsiderSubmitting] = useState(false);
 
+  // Auto check-out modal state
+  const [autoCheckoutRecord, setAutoCheckoutRecord] = useState<AttendanceRecord | null>(null);
+  const [autoCheckoutTimeInput, setAutoCheckoutTimeInput] = useState<string>('18:00');
+  const [autoCheckoutSubmitting, setAutoCheckoutSubmitting] = useState(false);
+  const [autoCheckoutLoadingId, setAutoCheckoutLoadingId] = useState<string | null>(null);
+
+  const handleOpenAutoCheckoutModal = (rec: AttendanceRecord) => {
+    setAutoCheckoutRecord(rec);
+    setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00');
+  };
+
+  const handleConfirmAutoCheckoutDirect = async (rec: AttendanceRecord) => {
+    const timeToApply = officeTiming.shiftEnd || '18:00';
+    setAutoCheckoutLoadingId(rec.id);
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: rec.id,
+          action: 'AUTO_CHECKOUT',
+          checkOutTime: timeToApply,
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        alert(d.error || 'Failed to auto check out');
+        return;
+      }
+      setSuccessMsg('Employee auto checked-out successfully at shift end!');
+      await loadData(false);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch {
+      alert('Network error while processing auto check out');
+    } finally {
+      setAutoCheckoutLoadingId(null);
+    }
+  };
+
+  const handleConfirmAutoCheckout = async () => {
+    if (!autoCheckoutRecord) return;
+    const timeToApply = autoCheckoutTimeInput || officeTiming.shiftEnd || '18:00';
+    setAutoCheckoutSubmitting(true);
+    setAutoCheckoutLoadingId(autoCheckoutRecord.id);
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: autoCheckoutRecord.id,
+          action: 'AUTO_CHECKOUT',
+          checkOutTime: timeToApply,
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        alert(d.error || 'Failed to auto check out');
+        return;
+      }
+      setSuccessMsg('Employee auto checked-out successfully!');
+      setAutoCheckoutRecord(null);
+      await loadData(false);
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch {
+      alert('Network error while processing auto check out');
+    } finally {
+      setAutoCheckoutSubmitting(false);
+      setAutoCheckoutLoadingId(null);
+    }
+  };
+
   const handleOpenConsiderModal = (rec: AttendanceRecord) => {
     setRecordToConsider(rec);
     setConsiderLateMinutes('0');
@@ -1346,6 +1417,47 @@ export default function AttendancePage() {
 
                               <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                                  {r.status !== 'ABSENT' && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (e.shiftKey) {
+                                          handleConfirmAutoCheckoutDirect(r);
+                                        } else {
+                                          handleOpenAutoCheckoutModal(r);
+                                        }
+                                      }}
+                                      disabled={autoCheckoutLoadingId === r.id}
+                                      title={
+                                        checkOut === '—'
+                                          ? "Auto Check Out (Click to set time, or Shift+Click for instant shift end)"
+                                          : `Auto Check Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                                      }
+                                      style={{
+                                        padding: '6px',
+                                        borderRadius: '8px',
+                                        border: checkOut === '—'
+                                          ? '1px solid rgba(16, 185, 129, 0.45)'
+                                          : '1px solid rgba(16, 185, 129, 0.2)',
+                                        background: checkOut === '—'
+                                          ? 'rgba(16, 185, 129, 0.15)'
+                                          : 'rgba(16, 185, 129, 0.05)',
+                                        color: checkOut === '—' ? '#10b981' : '#059669',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.15s ease',
+                                        boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                                      }}
+                                    >
+                                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                        {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                                      </span>
+                                    </button>
+                                  )}
+
                                   {r.reviewStatus === 'CONSIDERED' ? (
                                     <button
                                       type="button"
@@ -1588,6 +1700,47 @@ export default function AttendancePage() {
 
                       <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                          {r.status !== 'ABSENT' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (e.shiftKey) {
+                                  handleConfirmAutoCheckoutDirect(r);
+                                } else {
+                                  handleOpenAutoCheckoutModal(r);
+                                }
+                              }}
+                              disabled={autoCheckoutLoadingId === r.id}
+                              title={
+                                checkOut === '—'
+                                  ? "Auto Check Out (Click to set time, or Shift+Click for instant shift end)"
+                                  : `Auto Check Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
+                              }
+                              style={{
+                                padding: '6px',
+                                borderRadius: '8px',
+                                border: checkOut === '—'
+                                  ? '1px solid rgba(16, 185, 129, 0.45)'
+                                  : '1px solid rgba(16, 185, 129, 0.2)',
+                                background: checkOut === '—'
+                                  ? 'rgba(16, 185, 129, 0.15)'
+                                  : 'rgba(16, 185, 129, 0.05)',
+                                color: checkOut === '—' ? '#10b981' : '#059669',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease',
+                                boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                              </span>
+                            </button>
+                          )}
+
                           {r.reviewStatus === 'CONSIDERED' ? (
                             <button
                               type="button"
@@ -2407,6 +2560,268 @@ export default function AttendancePage() {
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified</span>
                 {considerSubmitting ? 'Saving...' : 'Apply Consideration'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto Check-Out Modal */}
+      {autoCheckoutRecord && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => {
+            if (!autoCheckoutSubmitting) {
+              setAutoCheckoutRecord(null);
+            }
+          }}
+        >
+          <div
+            className={styles.modalContent}
+            style={{ maxWidth: '520px', width: '92%', display: 'flex', flexDirection: 'column', gap: '18px' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>logout</span>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main, #fff)' }}>
+                    Auto Check-Out
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                    Clock out employee and finalize shift working hours.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!autoCheckoutSubmitting) {
+                    setAutoCheckoutRecord(null);
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                  display: 'flex'
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Employee Info Card */}
+            <div style={{
+              background: 'var(--surface-input, rgba(0, 0, 0, 0.2))',
+              borderRadius: '12px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))',
+              padding: '14px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px'
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-main, #fff)' }}>
+                  {empMap[autoCheckoutRecord.employeeId]?.firstName} {empMap[autoCheckoutRecord.employeeId]?.lastName}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
+                  ID: <span style={{ fontFamily: 'monospace', color: 'var(--primary, #3b82f6)' }}>
+                    {empMap[autoCheckoutRecord.employeeId]?.employeeId || 'Staff'}
+                  </span> · {formatDisplayDate(autoCheckoutRecord.date, officeTiming.timezone)}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)' }}>Clocked in:</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main, #fff)' }}>
+                  {formatDisplayTime(autoCheckoutRecord.checkIn || autoCheckoutRecord.checkInTime, officeTiming.timezone)}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#10b981',
+                  marginTop: '2px'
+                }}>
+                  Shift: {officeTiming.shiftStart} - {officeTiming.shiftEnd}
+                </div>
+              </div>
+            </div>
+
+            {/* Preset Check-Out Quick Buttons */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '8px' }}>
+                Select Check-Out Time:
+              </label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setAutoCheckoutTimeInput(officeTiming.shiftEnd || '18:00')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
+                      ? '2px solid #10b981'
+                      : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : 'transparent',
+                    color: autoCheckoutTimeInput === (officeTiming.shiftEnd || '18:00')
+                      ? '#10b981'
+                      : 'var(--text-secondary, #cbd5e1)',
+                    fontWeight: 700,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule</span>
+                  Shift End ({officeTiming.shiftEnd || '18:00'})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      const nowTz = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: officeTiming.timezone || 'Asia/Dhaka',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }).format(new Date());
+                      setAutoCheckoutTimeInput(nowTz);
+                    } catch {
+                      const now = new Date();
+                      setAutoCheckoutTimeInput(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: 'transparent',
+                    color: 'var(--text-secondary, #cbd5e1)',
+                    fontWeight: 600,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>update</span>
+                  Current Time
+                </button>
+              </div>
+
+              {/* Custom time field */}
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
+                  Check-Out Time (HH:MM):
+                </label>
+                <input
+                  type="time"
+                  value={autoCheckoutTimeInput}
+                  onChange={e => setAutoCheckoutTimeInput(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                    background: 'var(--surface-input, rgba(0, 0, 0, 0.2))',
+                    color: 'var(--text-main, #fff)',
+                    fontSize: '13px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Info banner */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              fontSize: '12px',
+              color: 'var(--text-secondary, #cbd5e1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#10b981' }}>check_circle</span>
+              <span>
+                Auto check-out will stamp <strong>{formatDisplayTime(autoCheckoutTimeInput, officeTiming.timezone)}</strong>, calculate total working hours, and close the shift record.
+              </span>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!autoCheckoutSubmitting) {
+                    setAutoCheckoutRecord(null);
+                  }
+                }}
+                disabled={autoCheckoutSubmitting}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                  background: 'transparent',
+                  color: 'var(--text-main, #fff)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleConfirmAutoCheckout()}
+                disabled={autoCheckoutSubmitting}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#10b981',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: autoCheckoutSubmitting ? 0.7 : 1,
+                  boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                  {autoCheckoutSubmitting ? 'hourglass_empty' : 'logout'}
+                </span>
+                {autoCheckoutSubmitting ? 'Checking Out...' : 'Confirm Auto Check-Out'}
               </button>
             </div>
           </div>

@@ -1,13 +1,9 @@
 package com.shohoj.staff.ui.screens.home
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,32 +17,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.shohoj.staff.R
-import com.shohoj.staff.data.model.*
 import com.shohoj.staff.ui.components.*
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
 import com.shohoj.staff.util.BackgroundPermissionHelper
 import com.shohoj.staff.util.DateUtils
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.util.Calendar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigate: (String) -> Unit,
@@ -56,17 +42,9 @@ fun HomeScreen(
     val uriHandler = LocalUriHandler.current
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
 
     var isBatteryIgnored by remember { mutableStateOf(BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)) }
     var isBgBannerDismissed by remember { mutableStateOf(false) }
-
-    // Tap for Balance revealed animation state
-    var isBalanceRevealed by remember { mutableStateOf(false) }
-
-    // Quick Attendance Punch Bottom Sheet
-    var showQuickPunchSheet by remember { mutableStateOf(false) }
-    var showDutyScheduleSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         isBatteryIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)
@@ -84,1501 +62,1448 @@ fun HomeScreen(
     val checkOutOpenTime = DateUtils.getCheckOutOpenTimeString(dutyEndTime)
     val formattedDutyEnd = DateUtils.getDutyEndTimeString(dutyEndTime)
 
-    // Dynamic greeting based on current local hour
-    val greetingText = remember {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        when (hour) {
-            in 5..11 -> "Good Morning"
-            in 12..16 -> "Good Afternoon"
-            in 17..20 -> "Good Evening"
-            else -> "Good Night"
-        }
-    }
+    val isLunchBreakVisible = DateUtils.isLunchBreakVisible(dutyStartTime, dutyEndTime, isNightShift)
+    val lunchStartTime = DateUtils.getLunchTimeString(dutyStartTime, dutyEndTime, isNightShift)
+    val lunchAvailableTime = DateUtils.getLunchAvailableTimeString(dutyStartTime, dutyEndTime, isNightShift)
 
     Scaffold(
+        topBar = {
+            ShohojTopBar(
+                title = "Shohoj Staff",
+                subtitle = uiState.employee?.displayName ?: "Employee Portal",
+                onNotificationsClick = { onNavigate(Screen.Announcements.route) }
+            )
+        },
         bottomBar = {
             ShohojBottomBar(
                 currentRoute = Screen.Home.route,
-                onNavigate = onNavigate,
-                onCenterAction = {
-                    showQuickPunchSheet = true
-                }
+                onNavigate = onNavigate
             )
         },
-        containerColor = NagadBgWarm
+        containerColor = Slate950
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = padding.calculateBottomPadding())
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-            ) {
-                // 1. Scenic Nagad Header with Scenic Illustration & Balance Pill
-                ScenicHeaderSection(
-                    greeting = greetingText,
-                    employeeName = uiState.employee?.displayName ?: "Employee",
-                    unreadBadgeCount = (uiState.activeFines.size + uiState.announcements.size).coerceAtLeast(0),
-                    isBalanceRevealed = isBalanceRevealed,
-                    netSalary = uiState.netSalary,
-                    onToggleBalance = {
-                        isBalanceRevealed = !isBalanceRevealed
-                        if (isBalanceRevealed) {
-                            coroutineScope.launch {
-                                delay(4500L)
-                                isBalanceRevealed = false
-                            }
-                        }
-                    },
-                    onNotificationClick = { onNavigate(Screen.Announcements.route) }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Success or Error Feedback Banners
-                    if (uiState.clockActionSuccessMessage != null) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xFFECFDF5),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color(0xFFA7F3D0))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald600, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = uiState.clockActionSuccessMessage!!,
-                                    color = Emerald700,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-                    }
-
-                    if (uiState.error != null) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color(0xFFFEF2F2),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color(0xFFFECACA))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Rose500, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = uiState.error!!,
-                                    color = Rose500,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-                    }
-
-                    // 2. Nagad 8-Grid Core Actions (4 Columns x 2 Rows)
-                    NagadCoreActionsGrid(
-                        onAttendanceClick = { onNavigate(Screen.Attendance.route) },
-                        onLeaveClick = { onNavigate(Screen.Leave.route) },
-                        onTasksClick = { onNavigate(Screen.Tasks.route) },
-                        onPayrollClick = { onNavigate(Screen.Payroll.route) },
-                        onDutyClick = { showDutyScheduleSheet = true },
-                        onBreakClick = {
-                            if (uiState.activeBreak != null) {
-                                // Break is active
-                            } else {
-                                viewModel.requestLunchBreak()
-                            }
-                        },
-                        onNoticesClick = { onNavigate(Screen.Announcements.route) },
-                        onForumClick = { onNavigate(Screen.Community.route) }
-                    )
-
-                    // 3. Nagad Promotional Banner Slider / Notice Carousel
-                    NagadPromoBanner(
-                        announcements = uiState.announcements,
-                        onClick = { onNavigate(Screen.Announcements.route) }
-                    )
-
-                    // 4. Active Disciplinary Fine Banner (if any)
-                    if (uiState.activeFines.isNotEmpty()) {
-                        val totalFineAmount = uiState.activeFines.sumOf { it.amount }
-                        val latestFine = uiState.activeFines.first()
-
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
-                                .clickable { onNavigate(Screen.Payroll.route) },
-                            shape = RoundedCornerShape(16.dp),
-                            color = Color.White,
-                            border = BorderStroke(1.2.dp, NagadRed.copy(alpha = 0.5f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(14.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(46.dp)
-                                        .background(Color(0xFFFFF1F0), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Warning,
-                                        contentDescription = null,
-                                        tint = NagadRed,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = "DISCIPLINARY PENALTY RECORDED",
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                color = NagadRed,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                letterSpacing = 0.6.sp,
-                                                fontSize = 11.sp
-                                            )
-                                        )
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = NagadRed
-                                        ) {
-                                            Text(
-                                                text = "-৳${totalFineAmount.toInt()}",
-                                                color = Color.White,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                fontSize = 11.sp,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = latestFine.reason ?: "HR deduction recorded",
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            color = Slate900,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        ),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = "Tap to review salary deductions & details →",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = Slate500,
-                                            fontSize = 11.sp
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // 5. Active Live Break Banner (if on break)
-                    if (uiState.activeBreak != null) {
-                        ActiveBreakLiveCard(
-                            uiState = uiState,
-                            onResumeBreak = { viewModel.resumeBreak() },
-                            onPauseBreak = { viewModel.pauseBreak() },
-                            onEndBreak = { viewModel.endActiveBreak() }
-                        )
-                    }
-
-                    // 6. Services Section (Nagad-style Workplace Utilities)
-                    Text(
-                        text = "Services",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Slate800,
-                            fontSize = 17.sp
-                        )
-                    )
-
-                    ServicesQuickRow(
-                        isCheckedIn = isCheckedIn,
-                        isCheckedOut = isCheckedOut,
-                        onPunchClick = { showQuickPunchSheet = true },
-                        onLunchClick = { viewModel.requestLunchBreak() },
-                        onScheduleClick = { showDutyScheduleSheet = true },
-                        onProductsClick = { onNavigate(Screen.Products.route) }
-                    )
-
-                    // 7. Today's Attendance & Duty Schedule Status
-                    TodayDutySummaryCard(
-                        today = today,
-                        isCheckedIn = isCheckedIn,
-                        isCheckedOut = isCheckedOut,
-                        dutySchedule = dutySchedule,
-                        dutyStartTime = dutyStartTime,
-                        dutyEndTime = dutyEndTime,
-                        checkOutOpenTime = checkOutOpenTime,
-                        isCheckOutVisible = isCheckOutVisible,
-                        currentTimeString = uiState.currentTimeString,
-                        onOpenPunchSheet = { showQuickPunchSheet = true }
-                    )
-
-                    // 8. Background Optimization Fix Banner (if restricted)
-                    if (!isBatteryIgnored && !isBgBannerDismissed) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            color = Color(0xFFFFFBEB),
-                            border = BorderStroke(1.dp, Color(0xFFFDE68A))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Default.Bolt, contentDescription = null, tint = Amber500, modifier = Modifier.size(22.dp))
-                                    Column {
-                                        Text(
-                                            text = "Background alerts restricted",
-                                            style = MaterialTheme.typography.bodyMedium.copy(color = Slate900, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                        )
-                                        Text(
-                                            text = "Enable unrestricted running for instant task pings",
-                                            style = MaterialTheme.typography.bodySmall.copy(color = Slate600, fontSize = 11.5.sp)
-                                        )
-                                    }
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = Amber500,
-                                        modifier = Modifier.clickable {
-                                            BackgroundPermissionHelper.requestIgnoreBatteryOptimization(context)
-                                            isBatteryIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)
-                                        }
-                                    ) {
-                                        Text(
-                                            text = "Fix",
-                                            color = Color.White,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                        )
-                                    }
-                                    IconButton(
-                                        onClick = { isBgBannerDismissed = true },
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Slate500, modifier = Modifier.size(16.dp))
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-            }
-
-            // Quick Attendance Punch Modal Bottom Sheet
-            if (showQuickPunchSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { showQuickPunchSheet = false },
-                    containerColor = Color.White,
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                ) {
-                    QuickPunchSheetContent(
-                        uiState = uiState,
-                        isCheckedIn = isCheckedIn,
-                        isCheckedOut = isCheckedOut,
-                        isCheckOutVisible = isCheckOutVisible,
-                        checkOutOpenTime = checkOutOpenTime,
-                        formattedDutyEnd = formattedDutyEnd,
-                        onClockAction = {
-                            viewModel.performQuickClockAction()
-                        },
-                        onDismiss = { showQuickPunchSheet = false }
-                    )
-                }
-            }
-
-            // Duty Schedule Roster Bottom Sheet
-            if (showDutyScheduleSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { showDutyScheduleSheet = false },
-                    containerColor = Color.White,
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                ) {
-                    DutyScheduleSheetContent(
-                        uiState = uiState,
-                        dutySchedule = dutySchedule,
-                        dutyStartTime = dutyStartTime,
-                        dutyEndTime = dutyEndTime,
-                        onDismiss = { showDutyScheduleSheet = false }
-                    )
-                }
-            }
-
-            // In-app Update Dialog
-            uiState.updateDialogInfo?.let { info ->
-                AppUpdateDialog(
-                    updateInfo = info,
-                    currentVersionName = uiState.appVersionName,
-                    onDownload = { url ->
-                        viewModel.downloadUpdate(url)
-                    },
-                    onDismiss = {
-                        viewModel.dismissUpdateDialog()
-                    }
-                )
-            }
-        }
-    }
-}
-
-/**
- * Nagad Scenic Header with Watercolor Illustration, Greeting Bar & Tap for Balance Widget
- */
-@Composable
-private fun ScenicHeaderSection(
-    greeting: String,
-    employeeName: String,
-    unreadBadgeCount: Int,
-    isBalanceRevealed: Boolean,
-    netSalary: Double?,
-    onToggleBalance: () -> Unit,
-    onNotificationClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(240.dp)
-    ) {
-        // Background Watercolor Scenic Illustration
-        Image(
-            painter = painterResource(id = R.drawable.bg_nagad_scenic),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-        )
-
-        // Subtle gradient fading into warm background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Transparent,
-                            NagadBgWarm.copy(alpha = 0.5f),
-                            NagadBgWarm
-                        )
-                    )
-                )
-        )
-
-        // Top Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(padding)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // Greeting & Notification Bell Bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            // 1. Live Clock & Date Card (Nagad-inspired pill header + bold digital clock)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.linearGradient(listOf(Slate900, Color(0xFF162032))),
+                        shape = RoundedCornerShape(18.dp)
+                    )
+                    .border(1.dp, CardBorder, RoundedCornerShape(18.dp))
+                    .padding(20.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Avatar / App Icon in Nagad Coral Circle
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .shadow(elevation = 4.dp, shape = CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(NagadOrangeLight, NagadOrange, NagadRed)
+                    // Date capsule badge
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Emerald500.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, Emerald500.copy(alpha = 0.3f))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Today,
+                                contentDescription = null,
+                                tint = Emerald400,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Text(
+                                text = uiState.currentDateString.ifEmpty { "Today" },
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Emerald400,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.5.sp
                                 )
                             )
-                            .border(2.dp, Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = employeeName.take(1).uppercase(),
-                            color = Color.White,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp
-                        )
+                        }
                     }
 
-                    Column {
-                        Text(
-                            text = greeting,
-                            fontSize = 12.5.sp,
-                            color = Slate600,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = employeeName,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Slate900,
-                            letterSpacing = (-0.3).sp
-                        )
-                    }
-                }
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                // Notification Bell with Badge
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = onNotificationClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = "Notifications",
-                        tint = Slate800,
-                        modifier = Modifier.size(28.dp)
+                    // Live digital time
+                    Text(
+                        text = uiState.currentTimeString.ifEmpty { "--:--:--" },
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.5.sp,
+                            color = Slate50
+                        )
                     )
 
-                    if (unreadBadgeCount > 0) {
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Shift status subtitle
+                    Text(
+                        text = when {
+                            isCheckedOut -> "Shift Completed for Today"
+                            isCheckedIn -> "Shift In Progress • Clocked In"
+                            else -> "Ready to Punch • Welcome back"
+                        },
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = when {
+                                isCheckedOut -> Cyan400
+                                isCheckedIn -> Emerald400
+                                else -> Slate400
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+            }
+
+            // 2. Active Disciplinary Fine Alert Banner (if any)
+            if (uiState.activeFines.isNotEmpty()) {
+                val totalFineAmount = uiState.activeFines.sumOf { it.amount }
+                val latestFine = uiState.activeFines.first()
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF381016), Color(0xFF220A0E))
+                            )
+                        )
+                        .border(1.2.dp, Rose500.copy(alpha = 0.7f), RoundedCornerShape(18.dp))
+                        .clickable { onNavigate(Screen.Payroll.route) }
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Box(
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = (-2).dp, y = 2.dp)
-                                .size(18.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
-                                .background(NagadBadgeRed),
+                                .background(Rose500.copy(alpha = 0.2f))
+                                .border(1.2.dp, Rose500.copy(alpha = 0.5f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Rose400,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "DISCIPLINARY FINE ACTIVE",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = Rose400,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = 0.8.sp,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Rose500)
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "-৳${totalFineAmount.toInt()}",
+                                        color = Slate950,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
-                                text = if (unreadBadgeCount > 9) "9+" else unreadBadgeCount.toString(),
-                                color = Color.White,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold
+                                text = latestFine.reason ?: "Penalty recorded by HR",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Rose200,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Tap to review salary deductions & details →",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Rose300.copy(alpha = 0.75f),
+                                    fontSize = 11.sp
+                                )
                             )
                         }
                     }
                 }
             }
 
-            // Floating "Tap for Balance" / "Tap for Net Salary" Pill Capsule Widget
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .shadow(elevation = 6.dp, shape = RoundedCornerShape(28.dp))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onToggleBalance
-                    ),
-                color = Color.White,
-                shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-            ) {
-                Row(
+            // 3. Active Live Short Break Countdown Banner
+            if (uiState.activeBreak != null) {
+                val statusColor = when (uiState.activeBreakStatusColor) {
+                    "ROSE" -> Rose500
+                    "AMBER" -> Amber500
+                    else -> Emerald400
+                }
+
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Coral Currency Circle Badge
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(NagadOrange, NagadRed)
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    when (uiState.activeBreakStatusColor) {
+                                        "ROSE" -> Color(0xFF3B1219)
+                                        "AMBER" -> Color(0xFF3B280A)
+                                        else -> Color(0xFF063023)
+                                    },
+                                    Slate900
                                 )
                             ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "৳",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            shape = RoundedCornerShape(18.dp)
                         )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    // Animated Text Switcher (Tap for Balance <-> Revealing Net Salary)
-                    AnimatedContent(
-                        targetState = isBalanceRevealed,
-                        transitionSpec = {
-                            fadeIn(animationSpec = tween(220)) togetherWith
-                                    fadeOut(animationSpec = tween(180))
-                        },
-                        label = "BalanceRevealAnimation"
-                    ) { revealed ->
-                        if (revealed) {
+                        .border(1.5.dp, statusColor.copy(alpha = 0.6f), RoundedCornerShape(18.dp))
+                        .padding(18.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text(
-                                    text = if (netSalary != null) "৳ ${String.format("%,.0f", netSalary)}" else "৳ 0.00",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = NagadOrangeDark
-                                )
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = Color(0xFFFFF3EE)
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(statusColor.copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = "Net Salary",
-                                        color = NagadOrange,
-                                        fontSize = 11.sp,
+                                    Icon(
+                                        Icons.Default.Timer,
+                                        contentDescription = null,
+                                        tint = statusColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                Text(
+                                    text = uiState.activeBreak?.type ?: "Active Short Break",
+                                    style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        color = Slate50
+                                    )
+                                )
+                            }
+                            Surface(
+                                color = statusColor.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(20.dp),
+                                border = BorderStroke(1.dp, statusColor.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = uiState.activeBreakStatusText.ifEmpty { "ACTIVE" },
+                                    color = statusColor,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = uiState.activeBreakCountdown.ifEmpty { "00:00" },
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontSize = 38.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 2.sp,
+                                    color = if (uiState.activeBreakStatusColor == "ROSE") Rose400 else Slate50
+                                )
+                            )
+                            Text(
+                                text = if (uiState.activeBreakStatusColor == "ROSE") "Overstay Countdown" else "Time Remaining",
+                                color = Slate400,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        if (uiState.activeBreakFineText != null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(statusColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                    .border(1.dp, statusColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(vertical = 6.dp, horizontal = 10.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(Icons.Default.WarningAmber, contentDescription = null, tint = statusColor, modifier = Modifier.size(15.dp))
+                                    Text(
+                                        text = uiState.activeBreakFineText!!,
+                                        color = statusColor,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
+                        }
+
+                        if (uiState.activeBreak?.isPaused == true) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.resumeBreak() },
+                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Emerald500,
+                                        contentColor = Slate950
+                                    ),
+                                    shape = RoundedCornerShape(24.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isStartingBreak) {
+                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Resume Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { viewModel.endActiveBreak() },
+                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Rose500,
+                                        contentColor = Slate50
+                                    ),
+                                    shape = RoundedCornerShape(24.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isEndingBreak) {
+                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("End Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                            }
                         } else {
-                            Text(
-                                text = "Tap for Balance",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Slate700
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.pauseBreak() },
+                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Amber500,
+                                        contentColor = Slate950
+                                    ),
+                                    shape = RoundedCornerShape(24.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isStartingBreak) {
+                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.Pause, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Pause Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { viewModel.endActiveBreak() },
+                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Slate800,
+                                        contentColor = Slate50
+                                    ),
+                                    shape = RoundedCornerShape(24.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                ) {
+                                    if (uiState.isEndingBreak) {
+                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
+
+            // 4. Status Message Feedback Banner
+            if (uiState.clockActionSuccessMessage != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Emerald500.copy(alpha = 0.15f), shape = RoundedCornerShape(12.dp))
+                        .border(1.dp, Emerald500.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald400, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = uiState.clockActionSuccessMessage!!,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = Emerald400, fontSize = 13.sp)
+                        )
+                    }
+                }
+            }
+
+            if (uiState.error != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Rose500.copy(alpha = 0.15f), shape = RoundedCornerShape(12.dp))
+                        .border(1.dp, Rose500.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Rose400, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = uiState.error!!,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = Rose400, fontSize = 13.sp)
+                        )
+                    }
+                }
+            }
+
+            // 5. Background Running Optimization Alert Banner (if not unrestricted)
+            if (!isBatteryIgnored && !isBgBannerDismissed) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Amber500.copy(alpha = 0.12f), shape = RoundedCornerShape(14.dp))
+                        .border(1.dp, Amber500.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(Amber500.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Bolt, contentDescription = null, tint = Amber400, modifier = Modifier.size(16.dp))
+                            }
+                            Column {
+                                Text(
+                                    text = "Background alerts restricted",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = Slate100, fontWeight = FontWeight.SemiBold, fontSize = 12.5.sp)
+                                )
+                                Text(
+                                    text = "Enable unrestricted running for instant task pings",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = Slate400, fontSize = 11.sp)
+                                )
+                            }
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Amber500,
+                                modifier = Modifier.clickable {
+                                    BackgroundPermissionHelper.requestIgnoreBatteryOptimization(context)
+                                    isBatteryIgnored = BackgroundPermissionHelper.isIgnoringBatteryOptimizations(context)
+                                }
+                            ) {
+                                Text(
+                                    text = "Fix",
+                                    color = Slate950,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = { isBgBannerDismissed = true },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Slate400, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 6. Quick Attendance Widget Card (Directly on screen with Nagad pill buttons & badges)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = CardBackground, shape = RoundedCornerShape(18.dp))
+                    .border(1.dp, CardBorder, RoundedCornerShape(18.dp))
+                    .padding(18.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Today's Attendance",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Slate50,
+                                fontSize = 16.sp
+                            )
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if ((today?.lateMinutes ?: 0) > 0) {
+                                Text(
+                                    text = "+${today?.lateMinutes}m late",
+                                    color = Amber500,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            StatusBadge(
+                                status = when {
+                                    today?.isLate == true || (today?.lateMinutes ?: 0) > 0 -> "LATE"
+                                    isCheckedOut -> "COMPLETED"
+                                    isCheckedIn -> "CLOCKED IN"
+                                    else -> "NOT CLOCKED IN"
+                                }
+                            )
+                        }
+                    }
+
+                    // Times Row (Rounded pill-style boxes)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Default.Login, contentDescription = null, tint = Emerald400, modifier = Modifier.size(13.dp))
+                                    Text(text = "Check In", style = MaterialTheme.typography.bodyMedium.copy(color = Slate400, fontSize = 11.5.sp))
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = DateUtils.formatTime(today?.displayCheckIn),
+                                    style = MaterialTheme.typography.titleMedium.copy(color = Slate50, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .border(1.dp, Slate700.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Default.Logout, contentDescription = null, tint = Rose400, modifier = Modifier.size(13.dp))
+                                    Text(text = "Check Out", style = MaterialTheme.typography.bodyMedium.copy(color = Slate400, fontSize = 11.5.sp))
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = DateUtils.formatTime(today?.displayCheckOut),
+                                    style = MaterialTheme.typography.titleMedium.copy(color = Slate50, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Action Button / Pending State (Tactile Pill Buttons)
+                    when {
+                        !isCheckedIn -> {
+                            Button(
+                                onClick = { viewModel.performQuickClockAction() },
+                                enabled = !uiState.isClocking,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Emerald500,
+                                    contentColor = Slate950,
+                                    disabledContainerColor = Slate800,
+                                    disabledContentColor = Slate500
+                                ),
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                if (uiState.isClocking) {
+                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                                } else {
+                                    Icon(Icons.Default.Fingerprint, contentDescription = null, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "Clock In / Punch", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                            }
+                        }
+                        !isCheckedOut -> {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                // Dedicated Lunch Break Action
+                                if (uiState.activeBreak == null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                brush = Brush.horizontalGradient(listOf(Color(0xFF261C08), Color(0xFF1A1305))),
+                                                shape = RoundedCornerShape(14.dp)
+                                            )
+                                            .border(1.dp, Amber500.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                                            .padding(14.dp)
+                                    ) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(36.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Amber500.copy(alpha = 0.2f)),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Restaurant,
+                                                            contentDescription = null,
+                                                            tint = Amber400,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                    Column {
+                                                        Text(
+                                                            text = "Dedicated Lunch Break",
+                                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Slate50,
+                                                                fontSize = 14.sp
+                                                            )
+                                                        )
+                                                        Text(
+                                                            text = "Set Allowance: ${dutySchedule?.breakTime ?: 60}m (+${dutySchedule?.gracePeriod ?: 15}m grace)",
+                                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                                color = Slate400,
+                                                                fontSize = 11.sp
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                                Surface(
+                                                    color = Emerald500.copy(alpha = 0.15f),
+                                                    shape = RoundedCornerShape(14.dp),
+                                                    border = BorderStroke(1.dp, Emerald500.copy(alpha = 0.3f))
+                                                ) {
+                                                    Text(
+                                                        text = "ANY TIME",
+                                                        color = Emerald400,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            Button(
+                                                onClick = { viewModel.requestLunchBreak() },
+                                                enabled = !uiState.isStartingBreak && !uiState.isClocking,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Amber500,
+                                                    contentColor = Slate950,
+                                                    disabledContainerColor = Slate800,
+                                                    disabledContentColor = Slate500
+                                                ),
+                                                shape = RoundedCornerShape(24.dp),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(44.dp)
+                                            ) {
+                                                if (uiState.isStartingBreak) {
+                                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                                } else {
+                                                    Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(text = "Start Lunch Break", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Check Out Action / Availability Notice
+                                if (isCheckOutVisible) {
+                                    Button(
+                                        onClick = { viewModel.performQuickClockAction() },
+                                        enabled = !uiState.isClocking && uiState.activeBreak == null,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Rose500,
+                                            contentColor = Slate50,
+                                            disabledContainerColor = Slate800,
+                                            disabledContentColor = Slate500
+                                        ),
+                                        shape = RoundedCornerShape(24.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                    ) {
+                                        if (uiState.isClocking) {
+                                            CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                                        } else {
+                                            Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = "Clock Out", fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(Slate800.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                                            .border(1.dp, Slate700, RoundedCornerShape(14.dp))
+                                            .padding(12.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Slate700.copy(alpha = 0.3f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Schedule,
+                                                    contentDescription = null,
+                                                    tint = Slate400,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "Check-out opens at $checkOutOpenTime",
+                                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                                        color = Slate100,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontSize = 13.sp
+                                                    )
+                                                )
+                                                Text(
+                                                    text = "Available 1h before duty ends ($formattedDutyEnd)",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        color = Slate400,
+                                                        fontSize = 11.sp
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else -> {
+                            Button(
+                                onClick = {},
+                                enabled = false,
+                                colors = ButtonDefaults.buttonColors(
+                                    disabledContainerColor = Slate800,
+                                    disabledContentColor = Slate500
+                                ),
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = "Shift Complete", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 7. 📅 Duty Schedule & Assigned Roster Card
+            val isRosterDuty = dutySchedule?.isRoster == true || uiState.todayRoster != null
+            val isCustomDuty = dutySchedule?.isCustom == true || uiState.customDuty != null
+            val shiftCardGradient = when {
+                isRosterDuty -> listOf(Color(0xFF064E3B), Color(0xFF0F172A))
+                isCustomDuty -> listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+                else -> listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+            }
+            val shiftBorderColor = when {
+                isRosterDuty -> Emerald500.copy(alpha = 0.5f)
+                isCustomDuty -> Amber500.copy(alpha = 0.4f)
+                else -> CardBorder
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(brush = Brush.linearGradient(shiftCardGradient), shape = RoundedCornerShape(18.dp))
+                    .border(1.dp, shiftBorderColor, RoundedCornerShape(18.dp))
+                    .padding(18.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        (if (isRosterDuty) Emerald500 else if (isCustomDuty) Amber500 else Cyan500).copy(alpha = 0.15f)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isRosterDuty) Icons.Default.EventNote else if (isCustomDuty) Icons.Default.Bolt else Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = if (isRosterDuty) Emerald400 else if (isCustomDuty) Amber400 else Cyan400,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Text(
+                                text = "My Duty Schedule",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Slate50,
+                                    fontSize = 16.sp
+                                )
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isRosterDuty) Emerald500.copy(alpha = 0.2f) else if (isCustomDuty) Amber500.copy(alpha = 0.2f) else Slate800,
+                            border = BorderStroke(1.dp, if (isRosterDuty) Emerald500 else if (isCustomDuty) Amber500 else Slate700)
+                        ) {
+                            Text(
+                                text = when {
+                                    isRosterDuty -> "📅 Roster Active"
+                                    isCustomDuty -> "⚡ Custom Duty"
+                                    else -> "Standard Shift"
+                                },
+                                color = if (isRosterDuty) Emerald400 else if (isCustomDuty) Amber400 else Slate300,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    // Shift Timings & Shift Name
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val shiftDisplayName = dutySchedule?.name ?: if (isRosterDuty) "Assigned Duty Roster" else if (isCustomDuty) "Custom Duty Shift" else "Standard Company Shift"
+                        Text(
+                            text = shiftDisplayName,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = if (isRosterDuty) Emerald400 else if (isCustomDuty) Amber400 else Slate400,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                        )
+                        Text(
+                            text = "$dutyStartTime — $dutyEndTime",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Slate50,
+                                fontSize = 22.sp,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                        if (!dutySchedule?.rosterNote.isNullOrBlank()) {
+                            Text(
+                                text = "Note: ${dutySchedule?.rosterNote}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Emerald400,
+                                    fontSize = 11.5.sp
+                                )
+                            )
+                        }
+                    }
+
+                    // Duty Badges (Nagad-inspired pill chips)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Slate800.copy(alpha = 0.6f),
+                            border = BorderStroke(0.5.dp, Slate700),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Grace Period", color = Slate400, fontSize = 10.sp)
+                                Text("+${dutySchedule?.gracePeriod ?: 15}m", color = Amber400, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Slate800.copy(alpha = 0.6f),
+                            border = BorderStroke(0.5.dp, Slate700),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Lunch Break", color = Slate400, fontSize = 10.sp)
+                                Text("${dutySchedule?.breakTime ?: 60}m", color = Emerald400, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        if (isNightShift) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFF3B1D54),
+                                border = BorderStroke(0.5.dp, Color(0xFF9333EA)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text("Shift Type", color = Color(0xFFD8B4FE), fontSize = 10.sp)
+                                    Text("Night", color = Color(0xFFC084FC), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    // Upcoming Assigned Roster Dates List (if any)
+                    if (uiState.dutyRosters.isNotEmpty()) {
+                        Divider(color = Slate800, thickness = 1.dp)
+                        Text(
+                            text = "Assigned Roster Schedule (${uiState.dutyRosters.size} Days)",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Slate300,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            uiState.dutyRosters.take(5).forEach { r ->
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (r.isToday == true) Emerald500.copy(alpha = 0.12f) else Slate800.copy(alpha = 0.4f),
+                                    border = BorderStroke(1.dp, if (r.isToday == true) Emerald500.copy(alpha = 0.4f) else Slate700.copy(alpha = 0.4f)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                Text(
+                                                    text = r.dateFormatted ?: r.date,
+                                                    color = Slate100,
+                                                    fontSize = 12.5.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                                if (r.isToday == true) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(10.dp),
+                                                        color = Emerald500,
+                                                    ) {
+                                                        Text("TODAY", color = Slate950, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                                    }
+                                                }
+                                            }
+                                            if (!r.note.isNullOrBlank()) {
+                                                Text(
+                                                    text = r.note,
+                                                    color = Slate400,
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                        }
+
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = Slate900,
+                                            border = BorderStroke(0.5.dp, Slate700)
+                                        ) {
+                                            Text(
+                                                text = "${r.startTime} - ${r.endTime}",
+                                                color = Emerald400,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 8. Quick Stats Row (Present & Late)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MetricCard(
+                    title = "Present",
+                    value = "${uiState.summary?.present ?: 0} Days",
+                    icon = Icons.Default.CheckCircle,
+                    iconTint = Emerald400,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCard(
+                    title = "Late",
+                    value = "${uiState.summary?.late ?: 0} Days",
+                    icon = Icons.Default.Schedule,
+                    iconTint = Amber400,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // 9. Dedicated Product Manager Section (Rendered for Product/Production/Inventory Managers)
+            val isProductManagerRole = remember(uiState.employee) {
+                val des = uiState.employee?.designation?.lowercase() ?: ""
+                val dep = uiState.employee?.department?.lowercase() ?: ""
+                val role = uiState.employee?.role?.lowercase() ?: ""
+                des.contains("product") || des.contains("production") || des.contains("inventory") ||
+                des.contains("studio") || des.contains("merchandis") || des.contains("catalog") ||
+                des.contains("manager") || des.contains("lead") ||
+                dep.contains("product") || dep.contains("production") || dep.contains("inventory") ||
+                dep.contains("studio") || dep.contains("merchandis") || dep.contains("operation") ||
+                role.contains("product") || role.contains("admin") || role.contains("manager")
+            }
+
+            if (isProductManagerRole) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    Color(0xFF3B280A),
+                                    Slate900
+                                )
+                            ),
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .border(1.dp, Amber500.copy(alpha = 0.45f), RoundedCornerShape(18.dp))
+                        .clickable { onNavigate(Screen.Products.route) }
+                        .padding(16.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(Amber500.copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Inventory,
+                                        contentDescription = null,
+                                        tint = Amber400,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Product Manager Section",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Slate50,
+                                            fontSize = 15.sp
+                                        )
+                                    )
+                                    Text(
+                                        text = "${uiState.employee?.designation ?: "Product Manager"} • Dedicated Access",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = Amber400,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                }
+                            }
+                            Surface(
+                                color = Amber500.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, Amber500.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = "ACTIVE",
+                                    color = Amber400,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "Track studio items, manage client handover returns, inspect shooting inventory, and oversee production workflow stages.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Slate300,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onNavigate(Screen.Products.route) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Amber500,
+                                    contentColor = Slate950
+                                ),
+                                shape = RoundedCornerShape(24.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                            ) {
+                                Icon(Icons.Default.Inventory2, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = "Open Product Manager", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                            IconButton(
+                                onClick = {
+                                    try {
+                                        uriHandler.openUri("https://team.shohojsolution.com/staff")
+                                    } catch (e: Exception) {}
+                                },
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(Amber500.copy(alpha = 0.15f), CircleShape)
+                                    .border(1.dp, Amber500.copy(alpha = 0.3f), CircleShape)
+                            ) {
+                                Icon(Icons.Default.OpenInBrowser, contentDescription = "Web Portal", tint = Amber400, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 10. Quick Actions Section (Title & 3-Column Grid)
+            Text(
+                text = "Quick Actions",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Slate50,
+                    fontSize = 16.sp
+                )
+            )
+
+            // Quick Actions Grid (Nagad-inspired circular emblem icon tiles)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuickActionTile(
+                        title = "Attendance",
+                        icon = Icons.Default.Fingerprint,
+                        tint = Emerald400,
+                        onClick = { onNavigate(Screen.Attendance.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
+                        title = "Leave",
+                        icon = Icons.Default.CalendarToday,
+                        tint = Cyan400,
+                        onClick = { onNavigate(Screen.Leave.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
+                        title = "Payroll",
+                        icon = Icons.Default.Payments,
+                        tint = Amber400,
+                        onClick = { onNavigate(Screen.Payroll.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuickActionTile(
+                        title = "Community",
+                        icon = Icons.Default.Forum,
+                        tint = Emerald400,
+                        onClick = { onNavigate(Screen.Community.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
+                        title = "Tasks",
+                        icon = Icons.Default.Checklist,
+                        tint = Indigo500,
+                        onClick = { onNavigate(Screen.Tasks.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
+                        title = "Notices",
+                        icon = Icons.Default.Campaign,
+                        tint = Purple500,
+                        onClick = { onNavigate(Screen.Announcements.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuickActionTile(
+                        title = "Products",
+                        icon = Icons.Default.Inventory2,
+                        tint = Amber400,
+                        onClick = { onNavigate(Screen.Products.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickActionTile(
+                        title = "Profile",
+                        icon = Icons.Default.Person,
+                        tint = Slate300,
+                        onClick = { onNavigate(Screen.Profile.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+
+            // 11. Recent Announcements Preview
+            if (uiState.announcements.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Recent Notices",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Slate50,
+                            fontSize = 16.sp
+                        )
+                    )
+                    Text(
+                        text = "View All",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Emerald400,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        modifier = Modifier.clickable { onNavigate(Screen.Announcements.route) }
+                    )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    uiState.announcements.forEach { notice ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(CardBackground, RoundedCornerShape(14.dp))
+                                .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
+                                .clickable { onNavigate(Screen.Announcements.route) }
+                                .padding(16.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = notice.title,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Slate50
+                                        )
+                                    )
+                                    StatusBadge(status = notice.type ?: "INFO")
+                                }
+                                Text(
+                                    text = notice.content,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = Slate400,
+                                        fontSize = 12.sp
+                                    ),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Automatic In-App Update Dialog on Launch
+        uiState.updateDialogInfo?.let { info ->
+            AppUpdateDialog(
+                updateInfo = info,
+                currentVersionName = uiState.appVersionName,
+                onDownload = { url ->
+                    viewModel.downloadUpdate(url)
+                },
+                onDismiss = {
+                    viewModel.dismissUpdateDialog()
+                }
+            )
         }
     }
 }
 
 /**
- * Nagad 8-Grid Primary Action Cards (4 columns x 2 rows)
+ * QuickActionTile: Nagad-inspired circular emblem icon tile on dark slate card
  */
 @Composable
-private fun NagadCoreActionsGrid(
-    onAttendanceClick: () -> Unit,
-    onLeaveClick: () -> Unit,
-    onTasksClick: () -> Unit,
-    onPayrollClick: () -> Unit,
-    onDutyClick: () -> Unit,
-    onBreakClick: () -> Unit,
-    onNoticesClick: () -> Unit,
-    onForumClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        // Row 1
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            NagadActionCard(
-                title = "Attendance",
-                icon = Icons.Outlined.Fingerprint,
-                onClick = onAttendanceClick,
-                modifier = Modifier.weight(1f)
-            )
-            NagadActionCard(
-                title = "Leave Apply",
-                icon = Icons.Outlined.EventAvailable,
-                onClick = onLeaveClick,
-                modifier = Modifier.weight(1f)
-            )
-            NagadActionCard(
-                title = "My Tasks",
-                icon = Icons.Outlined.Checklist,
-                onClick = onTasksClick,
-                modifier = Modifier.weight(1f)
-            )
-            NagadActionCard(
-                title = "Payslip",
-                icon = Icons.Outlined.AccountBalanceWallet,
-                onClick = onPayrollClick,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        // Row 2
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            NagadActionCard(
-                title = "Duty Shift",
-                icon = Icons.Outlined.Schedule,
-                onClick = onDutyClick,
-                modifier = Modifier.weight(1f)
-            )
-            NagadActionCard(
-                title = "Break/Lunch",
-                icon = Icons.Outlined.FreeBreakfast,
-                onClick = onBreakClick,
-                modifier = Modifier.weight(1f)
-            )
-            NagadActionCard(
-                title = "Notices",
-                icon = Icons.Outlined.Campaign,
-                onClick = onNoticesClick,
-                modifier = Modifier.weight(1f)
-            )
-            NagadActionCard(
-                title = "Staff Forum",
-                icon = Icons.Outlined.People,
-                onClick = onForumClick,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun NagadActionCard(
+fun QuickActionTile(
     title: String,
     icon: ImageVector,
+    tint: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    Box(
         modifier = modifier
-            .height(98.dp)
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        color = Color.White,
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+            .aspectRatio(1f)
+            .background(CardBackground, RoundedCornerShape(16.dp))
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(10.dp),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 12.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
-                    .background(Color(0xFFFFF4EE), CircleShape),
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(tint.copy(alpha = 0.15f))
+                    .border(BorderStroke(1.2.dp, tint.copy(alpha = 0.35f)), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    tint = NagadOrange,
+                    tint = tint,
                     modifier = Modifier.size(24.dp)
                 )
             }
-
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Slate800,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                lineHeight = 13.sp
-            )
-        }
-    }
-}
-
-/**
- * Promotional Announcement Banner Slider (Nagad Style)
- */
-@Composable
-private fun NagadPromoBanner(
-    announcements: List<AnnouncementItem>,
-    onClick: () -> Unit
-) {
-    val topNotice = announcements.firstOrNull()
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(115.dp)
-                .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
-                .clickable(onClick = onClick),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.Transparent
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFFE52027),
-                                Color(0xFFF15A24),
-                                Color(0xFFFF7A45)
-                            )
-                        )
-                    )
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color.White.copy(alpha = 0.22f)
-                        ) {
-                            Text(
-                                text = "ANNOUNCEMENT & INCENTIVES",
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = topNotice?.title ?: "সবার আগে সব কাজের আপডেট!",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = topNotice?.content ?: "অন-টাইম উপস্থিতি ও কাজের সেরা পারফরম্যান্স",
-                            color = Color.White.copy(alpha = 0.85f),
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Campaign,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Carousel Dot Indicators
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 16.dp, height = 6.dp)
-                    .background(NagadOrange, RoundedCornerShape(3.dp))
-            )
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(Color(0xFFCBD5E1), CircleShape)
-            )
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(Color(0xFFCBD5E1), CircleShape)
-            )
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(Color(0xFFCBD5E1), CircleShape)
-            )
-        }
-    }
-}
-
-/**
- * Services Quick Row (Nagad-style Workplace Utilities)
- */
-@Composable
-private fun ServicesQuickRow(
-    isCheckedIn: Boolean,
-    isCheckedOut: Boolean,
-    onPunchClick: () -> Unit,
-    onLunchClick: () -> Unit,
-    onScheduleClick: () -> Unit,
-    onProductsClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        ServiceIconCard(
-            title = "Quick Punch",
-            icon = Icons.Outlined.Fingerprint,
-            badge = if (isCheckedOut) "Done" else if (isCheckedIn) "In" else "Ready",
-            onClick = onPunchClick,
-            modifier = Modifier.weight(1f)
-        )
-        ServiceIconCard(
-            title = "Dedicated Lunch",
-            icon = Icons.Outlined.Restaurant,
-            badge = "60m",
-            onClick = onLunchClick,
-            modifier = Modifier.weight(1f)
-        )
-        ServiceIconCard(
-            title = "Duty Shifts",
-            icon = Icons.Outlined.EventNote,
-            badge = "Roster",
-            onClick = onScheduleClick,
-            modifier = Modifier.weight(1f)
-        )
-        ServiceIconCard(
-            title = "Store Items",
-            icon = Icons.Outlined.Inventory2,
-            badge = "Items",
-            onClick = onProductsClick,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun ServiceIconCard(
-    title: String,
-    icon: ImageVector,
-    badge: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .height(86.dp)
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 10.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(NagadSurfaceTint, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = NagadOrange,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Text(
-                text = title,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = Slate800,
-                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = Slate200,
+                    fontSize = 11.5.sp
+                ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
-    }
-}
-
-/**
- * Today's Attendance & Duty Summary Card
- */
-@Composable
-private fun TodayDutySummaryCard(
-    today: AttendanceRecord?,
-    isCheckedIn: Boolean,
-    isCheckedOut: Boolean,
-    dutySchedule: DutyScheduleDto?,
-    dutyStartTime: String,
-    dutyEndTime: String,
-    checkOutOpenTime: String,
-    isCheckOutVisible: Boolean,
-    currentTimeString: String,
-    onOpenPunchSheet: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = null,
-                        tint = NagadOrange,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "Today's Attendance",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Slate900
-                        )
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = when {
-                        isCheckedOut -> Color(0xFFECFDF5)
-                        isCheckedIn -> Color(0xFFEFF6FF)
-                        else -> Color(0xFFFFFBEB)
-                    },
-                    border = BorderStroke(
-                        1.dp,
-                        when {
-                            isCheckedOut -> Emerald500
-                            isCheckedIn -> Blue500
-                            else -> Amber500
-                        }
-                    )
-                ) {
-                    Text(
-                        text = when {
-                            isCheckedOut -> "COMPLETED"
-                            isCheckedIn -> "CLOCKED IN"
-                            else -> "NOT CLOCKED IN"
-                        },
-                        color = when {
-                            isCheckedOut -> Emerald700
-                            isCheckedIn -> Blue600
-                            else -> Amber500
-                        },
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-            }
-
-            // Timings Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(text = "Check In", color = Slate500, fontSize = 11.5.sp)
-                    Text(
-                        text = DateUtils.formatTime(today?.displayCheckIn),
-                        color = Slate900,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Duty Shift", color = Slate500, fontSize = 11.5.sp)
-                    Text(
-                        text = "$dutyStartTime - $dutyEndTime",
-                        color = Slate800,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(text = "Check Out", color = Slate500, fontSize = 11.5.sp)
-                    Text(
-                        text = DateUtils.formatTime(today?.displayCheckOut),
-                        color = Slate900,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                }
-            }
-
-            // Action / Info Button
-            Button(
-                onClick = onOpenPunchSheet,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (!isCheckedIn) NagadOrange else if (!isCheckedOut) NagadRed else Slate800,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp)
-            ) {
-                Icon(
-                    imageVector = if (!isCheckedIn) Icons.Default.Login else if (!isCheckedOut) Icons.Default.Logout else Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (!isCheckedIn) "Clock In with GPS & Wi-Fi" else if (!isCheckedOut) "Punch / Check Out" else "Shift Completed",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.5.sp
-                )
-            }
-        }
-    }
-}
-
-/**
- * Active Break Live Countdown Card
- */
-@Composable
-private fun ActiveBreakLiveCard(
-    uiState: HomeUiState,
-    onResumeBreak: () -> Unit,
-    onPauseBreak: () -> Unit,
-    onEndBreak: () -> Unit
-) {
-    val statusColor = when (uiState.activeBreakStatusColor) {
-        "ROSE" -> Rose500
-        "AMBER" -> Amber500
-        else -> Emerald500
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.5.dp, statusColor.copy(alpha = 0.7f))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(Icons.Default.Timer, contentDescription = null, tint = statusColor, modifier = Modifier.size(20.dp))
-                    Text(
-                        text = uiState.activeBreak?.type ?: "Active Break",
-                        fontWeight = FontWeight.Bold,
-                        color = Slate900,
-                        fontSize = 15.sp
-                    )
-                }
-
-                Surface(
-                    color = statusColor.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(
-                        text = uiState.activeBreakStatusText.ifEmpty { "ACTIVE" },
-                        color = statusColor,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = uiState.activeBreakCountdown.ifEmpty { "00:00" },
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Slate900,
-                    letterSpacing = 1.sp
-                )
-                Text(
-                    text = if (uiState.activeBreakStatusColor == "ROSE") "Overstay Countdown" else "Time Remaining",
-                    color = Slate500,
-                    fontSize = 11.5.sp
-                )
-            }
-
-            if (uiState.activeBreakFineText != null) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFFEF2F2),
-                    border = BorderStroke(1.dp, Color(0xFFFECACA)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(Icons.Default.WarningAmber, contentDescription = null, tint = Rose500, modifier = Modifier.size(16.dp))
-                        Text(
-                            text = uiState.activeBreakFineText!!,
-                            color = Rose500,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                if (uiState.activeBreak?.isPaused == true) {
-                    Button(
-                        onClick = onResumeBreak,
-                        enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
-                        colors = ButtonDefaults.buttonColors(containerColor = Emerald600, contentColor = Color.White),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f).height(44.dp)
-                    ) {
-                        Text("Resume Break", fontWeight = FontWeight.Bold)
-                    }
-                } else {
-                    Button(
-                        onClick = onPauseBreak,
-                        enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
-                        colors = ButtonDefaults.buttonColors(containerColor = Amber500, contentColor = Color.White),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f).height(44.dp)
-                    ) {
-                        Text("Pause Break", fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Button(
-                    onClick = onEndBreak,
-                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
-                    colors = ButtonDefaults.buttonColors(containerColor = Rose500, contentColor = Color.White),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.weight(1f).height(44.dp)
-                ) {
-                    Text("End Break", fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-}
-
-/**
- * Quick Attendance Punch Modal Bottom Sheet Content
- */
-@Composable
-private fun QuickPunchSheetContent(
-    uiState: HomeUiState,
-    isCheckedIn: Boolean,
-    isCheckedOut: Boolean,
-    isCheckOutVisible: Boolean,
-    checkOutOpenTime: String,
-    formattedDutyEnd: String,
-    onClockAction: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Drag handle indicator
-        Box(
-            modifier = Modifier
-                .size(width = 40.dp, height = 4.dp)
-                .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
-        )
-
-        Text(
-            text = "Quick Attendance Punch",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                color = Slate900,
-                fontSize = 20.sp
-            )
-        )
-
-        Text(
-            text = uiState.currentTimeString.ifEmpty { "--:--:--" },
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = NagadOrange
-            )
-        )
-
-        Text(
-            text = uiState.currentDateString.ifEmpty { "Today" },
-            color = Slate500,
-            fontSize = 13.sp
-        )
-
-        // GPS and Wi-Fi validation badge
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = Color(0xFFF1F5F9),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(Icons.Default.GpsFixed, contentDescription = null, tint = NagadOrange, modifier = Modifier.size(18.dp))
-                Text(
-                    text = "Office GPS geofence & Wi-Fi radar active",
-                    color = Slate700,
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-
-        // Punch Action Button
-        when {
-            !isCheckedIn -> {
-                Button(
-                    onClick = {
-                        onClockAction()
-                        onDismiss()
-                    },
-                    enabled = !uiState.isClocking,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = NagadOrange,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    if (uiState.isClocking) {
-                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                    } else {
-                        Icon(Icons.Default.Login, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("PUNCH IN NOW", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    }
-                }
-            }
-            !isCheckedOut -> {
-                if (isCheckOutVisible) {
-                    Button(
-                        onClick = {
-                            onClockAction()
-                            onDismiss()
-                        },
-                        enabled = !uiState.isClocking,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = NagadRed,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                    ) {
-                        if (uiState.isClocking) {
-                            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                        } else {
-                            Icon(Icons.Default.Logout, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("PUNCH OUT NOW", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        }
-                    }
-                } else {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFFFFBEB),
-                        border = BorderStroke(1.dp, Color(0xFFFDE68A)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Schedule, contentDescription = null, tint = Amber500, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text("Check-out opens at $checkOutOpenTime", fontWeight = FontWeight.Bold, color = Slate900, fontSize = 13.sp)
-                                Text("Available 1h before duty ends ($formattedDutyEnd)", color = Slate600, fontSize = 11.5.sp)
-                            }
-                        }
-                    }
-                }
-            }
-            else -> {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFECFDF5),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Emerald600, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Shift Completed for Today!", fontWeight = FontWeight.Bold, color = Emerald700)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-    }
-}
-
-/**
- * Duty Schedule Bottom Sheet
- */
-@Composable
-private fun DutyScheduleSheetContent(
-    uiState: HomeUiState,
-    dutySchedule: DutyScheduleDto?,
-    dutyStartTime: String,
-    dutyEndTime: String,
-    onDismiss: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 40.dp, height = 4.dp)
-                .background(Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
-                .align(Alignment.CenterHorizontally)
-        )
-
-        Text(
-            text = "My Duty Schedule & Rosters",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                color = Slate900,
-                fontSize = 18.sp
-            )
-        )
-
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = Color(0xFFFFF4EE),
-            border = BorderStroke(1.dp, Color(0xFFFFD8C2)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = "Active Duty Shift", color = NagadOrange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text(text = "$dutyStartTime — $dutyEndTime", color = Slate900, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
-                Text(text = dutySchedule?.name ?: "Standard Company Shift", color = Slate700, fontSize = 13.sp)
-            }
-        }
-
-        if (uiState.dutyRosters.isNotEmpty()) {
-            Text(
-                text = "Upcoming Roster Dates (${uiState.dutyRosters.size} Days)",
-                fontWeight = FontWeight.Bold,
-                color = Slate900,
-                fontSize = 14.sp
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                uiState.dutyRosters.take(4).forEach { roster ->
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = roster.dateFormatted ?: roster.date, color = Slate900, fontWeight = FontWeight.SemiBold)
-                            Text(text = "${roster.startTime} - ${roster.endTime}", color = NagadOrange, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
     }
 }

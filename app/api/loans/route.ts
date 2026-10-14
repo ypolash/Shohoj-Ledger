@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
     const now = new Date();
 
-    const loansWithDetails = loans.map(loan => {
+    const loansWithDetails = loans.map((loan: any) => {
       // Respect stored dueDate or calculate standard fallback
       const dueDate = loan.dueDate ? new Date(loan.dueDate) : new Date(new Date(loan.issueDate).setMonth(new Date(loan.issueDate).getMonth() + 6));
       const isOverdue = loan.status === "ACTIVE" && now > dueDate && Number(loan.remainingAmount) > 0;
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const loan = await prisma.memberLoan.create({
+    const loan: any = await (prisma.memberLoan as any).create({
       data: {
         companyId: companyIdForGuard,
         memberId: targetMemberId,

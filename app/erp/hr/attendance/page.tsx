@@ -205,9 +205,13 @@ export default function AttendancePage() {
   // Late consideration modal state
   const [considerModalOpen, setConsiderModalOpen] = useState(false);
   const [recordToConsider, setRecordToConsider] = useState<AttendanceRecord | null>(null);
-  const [considerLateMinutes, setConsiderLateMinutes] = useState('0');
+  const [considerRawLateMinutes, setConsiderRawLateMinutes] = useState(0);
+  const [considerWaiveMinutes, setConsiderWaiveMinutes] = useState('0');
+  const [considerRemainingMinutes, setConsiderRemainingMinutes] = useState('0');
+  const [considerFineAmount, setConsiderFineAmount] = useState('0');
   const [considerReason, setConsiderReason] = useState('Staff forgot to press check-in on time');
   const [considerSubmitting, setConsiderSubmitting] = useState(false);
+  const [punishmentRules, setPunishmentRules] = useState<any[]>([]);
 
   // Check-out modal state (Manual Out & Half Day Out)
   const [autoCheckoutRecord, setAutoCheckoutRecord] = useState<AttendanceRecord | null>(null);
@@ -320,25 +324,146 @@ export default function AttendancePage() {
     }
   };
 
+  const calculateRawLateMinutes = useCallback((
+    rec: AttendanceRecord,
+    timing: { shiftStart: string; gracePeriod: number; timezone: string }
+  ): number => {
+    const checkIn = rec.checkIn || rec.checkInTime;
+    if (!checkIn) return rec.lateMinutes || 0;
+
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timing.timezone || 'Asia/Dhaka',
+        hourCycle: 'h23',
+        hour12: false,
+        hour: 'numeric',
+        minute: 'numeric',
+      });
+      const parts = formatter.formatToParts(new Date(checkIn));
+      let hour = 0;
+      let min = 0;
+      for (const p of parts) {
+        if (p.type === 'hour') hour = parseInt(p.value, 10) || 0;
+        if (p.type === 'minute') min = parseInt(p.value, 10) || 0;
+      }
+      if (hour === 24) hour = 0;
+
+      const checkInMin = hour * 60 + min;
+
+      const shiftParts = (timing.shiftStart || '09:00').split(':');
+      const shiftHour = parseInt(shiftParts[0], 10) || 9;
+      const shiftMin = parseInt(shiftParts[1], 10) || 0;
+      const shiftStartMin = shiftHour * 60 + shiftMin;
+
+      const threshold = shiftStartMin + (Number(timing.gracePeriod) || 0);
+      if (checkInMin > threshold) {
+        return checkInMin - threshold;
+      }
+      return 0;
+    } catch {
+      return rec.lateMinutes || 0;
+    }
+  }, []);
+
+  const getRecordLateFine = useCallback((r: AttendanceRecord, rules: any[]): number => {
+    if (r.punishmentAmount !== undefined && r.punishmentAmount !== null) {
+      const amt = Number(r.punishmentAmount);
+      if (!isNaN(amt)) return amt;
+    }
+    if (r.reviewStatus === 'CONSIDERED') {
+      return 0;
+    }
+    const lateMin = r.lateMinutes || 0;
+    if (lateMin > 0 && Array.isArray(rules) && rules.length > 0) {
+      const matched = rules.find((rule: any) =>
+        rule.active &&
+        rule.type === 'LATE' &&
+        lateMin >= rule.fromMinutes &&
+        lateMin <= rule.toMinutes
+      );
+      if (matched) return Number(matched.amount) || 0;
+    }
+    return 0;
+  }, []);
+
   const handleOpenConsiderModal = (rec: AttendanceRecord) => {
     setRecordToConsider(rec);
-    setConsiderLateMinutes('0');
-    setConsiderReason('Staff forgot to press check-in on time');
+    const rawLate = calculateRawLateMinutes(rec, officeTiming);
+    const effectiveRaw = rawLate > 0 ? rawLate : (rec.lateMinutes || 0);
+    setConsiderRawLateMinutes(effectiveRaw);
+
+    // If existing record was already considered, parse previous consideration
+    const match = rec.punishmentReason?.match(/HR Considered (\d+)\s*min/i);
+    if (match && match[1]) {
+      const prevConsidered = parseInt(match[1], 10);
+      setConsiderWaiveMinutes(String(prevConsidered));
+      setConsiderRemainingMinutes(String(Math.max(0, effectiveRaw - prevConsidered)));
+    } else if (rec.reviewStatus === 'CONSIDERED') {
+      if (effectiveRaw > (rec.lateMinutes || 0)) {
+        const prevConsidered = effectiveRaw - (rec.lateMinutes || 0);
+        setConsiderWaiveMinutes(String(prevConsidered));
+        setConsiderRemainingMinutes(String(rec.lateMinutes || 0));
+      } else {
+        setConsiderWaiveMinutes(String(effectiveRaw));
+        setConsiderRemainingMinutes('0');
+      }
+    } else {
+      // By default for new consideration, default to waiving 100%
+      setConsiderWaiveMinutes(String(effectiveRaw));
+      setConsiderRemainingMinutes('0');
+    }
+
+    setConsiderFineAmount(String(Number(rec.punishmentAmount || 0)));
+    setConsiderReason(
+      rec.punishmentReason
+        ? rec.punishmentReason.replace(/^HR Considered \d+ min:\s*/i, '')
+        : 'Staff forgot to press check-in on time'
+    );
     setConsiderModalOpen(true);
+  };
+
+  const handleWaiveMinutesChange = (valStr: string) => {
+    setConsiderWaiveMinutes(valStr);
+    const waiveNum = parseInt(valStr, 10);
+    if (!isNaN(waiveNum)) {
+      const rem = Math.max(0, considerRawLateMinutes - waiveNum);
+      setConsiderRemainingMinutes(String(rem));
+    }
+  };
+
+  const handleRemainingMinutesChange = (valStr: string) => {
+    setConsiderRemainingMinutes(valStr);
+    const remNum = parseInt(valStr, 10);
+    if (!isNaN(remNum)) {
+      const waive = Math.max(0, considerRawLateMinutes - remNum);
+      setConsiderWaiveMinutes(String(waive));
+    }
   };
 
   const handleConfirmConsiderLate = async () => {
     if (!recordToConsider) return;
     setConsiderSubmitting(true);
     try {
+      const considered = Number(considerWaiveMinutes) || 0;
+      const remaining = Number(considerRemainingMinutes) || 0;
+      const fine = Number(considerFineAmount) || 0;
+
+      const baseReason = considerReason.trim() || 'Staff forgot to press check-in on time';
+      const reasonText = considered > 0
+        ? `HR Considered ${considered} min: ${baseReason}`
+        : baseReason;
+
       const res = await fetch('/api/attendance', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: recordToConsider.id,
           action: 'CONSIDER_LATE',
-          lateMinutes: Number(considerLateMinutes) || 0,
-          reason: considerReason,
+          lateMinutes: remaining,
+          consideredMinutes: considered,
+          originalLateMinutes: considerRawLateMinutes,
+          punishmentAmount: fine,
+          reason: reasonText,
         })
       });
       const d = await res.json();
@@ -346,7 +471,10 @@ export default function AttendancePage() {
         alert(d.error || 'Failed to save late consideration');
         return;
       }
-      setSuccessMsg('Late arrival considered & adjusted by HR successfully!');
+      if (d.attendance) {
+        setRecords(prev => prev.map(a => a.id === d.attendance.id ? { ...a, ...d.attendance } : a));
+      }
+      setSuccessMsg(`HR considered ${considered} min. Effective late: +${remaining} min late saved!`);
       setConsiderModalOpen(false);
       setRecordToConsider(null);
       await loadData(false);
@@ -458,13 +586,17 @@ export default function AttendancePage() {
       }
       if (hrRes && hrRes.ok) {
         const hrData = await hrRes.json();
-        const tz = hrData.companySetting?.timezone;
+        const raw = hrData.data || hrData;
+        const tz = raw.companySetting?.timezone;
         setOfficeTiming({
-          shiftStart: hrData.attendanceConfig?.shiftStart || hrData.companySetting?.shiftStartTime || '09:30',
-          shiftEnd: hrData.attendanceConfig?.shiftEnd || hrData.companySetting?.shiftEndTime || '18:00',
-          gracePeriod: hrData.attendanceConfig?.gracePeriod ?? hrData.companySetting?.gracePeriodMinutes ?? 15,
+          shiftStart: raw.attendanceConfig?.shiftStart || raw.companySetting?.shiftStartTime || '09:30',
+          shiftEnd: raw.attendanceConfig?.shiftEnd || raw.companySetting?.shiftEndTime || '18:00',
+          gracePeriod: raw.attendanceConfig?.gracePeriod ?? raw.companySetting?.gracePeriodMinutes ?? 15,
           timezone: (!tz || tz === 'UTC' || tz === 'UTC / GMT') ? 'Asia/Dhaka' : tz,
         });
+        if (Array.isArray(raw.punishmentSettings)) {
+          setPunishmentRules(raw.punishmentSettings);
+        }
       }
 
       if (isManual) {
@@ -1331,6 +1463,7 @@ export default function AttendancePage() {
                           <th className={styles.tableHeaderCell}>Check In</th>
                           <th className={styles.tableHeaderCell}>Check Out</th>
                           <th className={styles.tableHeaderCell}>Late Duration</th>
+                          <th className={styles.tableHeaderCell}>Late Fines</th>
                           <th className={styles.tableHeaderCell}>Early Leave Time</th>
                           <th className={styles.tableHeaderCell}>Status</th>
                           <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
@@ -1385,34 +1518,27 @@ export default function AttendancePage() {
 
                               <td className={styles.tableCell}>
                                 {r.status === 'ABSENT' ? (
-                                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
-                                    {r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                                  <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Unattended</span>
+                                ) : r.reviewStatus === 'CONSIDERED' ? (
+                                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                                    {r.lateMinutes && r.lateMinutes > 0 ? (
                                       <span style={{
-                                        fontSize: '11px',
-                                        fontWeight: 800,
-                                        color: '#ef4444',
-                                        background: 'rgba(239, 68, 68, 0.12)',
-                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        fontSize: '12px',
+                                        fontWeight: 700,
+                                        color: 'var(--warning, #f59e0b)',
+                                        background: 'rgba(245, 158, 11, 0.1)',
                                         padding: '2px 8px',
                                         borderRadius: '6px',
                                         width: 'fit-content'
                                       }}>
-                                        ৳{Number(r.punishmentAmount)} Penalty
+                                        +{r.lateMinutes} min late
                                       </span>
                                     ) : (
-                                      <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Absent (No Fine)</span>
+                                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
                                     )}
-                                    {r.punishmentReason && (
-                                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
-                                        {r.punishmentReason}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : r.reviewStatus === 'CONSIDERED' ? (
-                                  <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
                                     <span style={{
                                       fontSize: '11px',
-                                      fontWeight: 700,
+                                      fontWeight: 600,
                                       color: '#059669',
                                       background: 'rgba(16, 185, 129, 0.12)',
                                       border: '1px solid rgba(16, 185, 129, 0.3)',
@@ -1424,11 +1550,17 @@ export default function AttendancePage() {
                                       width: 'fit-content'
                                     }}>
                                       <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-                                      HR Considered {r.lateMinutes && r.lateMinutes > 0 ? `(${r.lateMinutes} min)` : '(Waived)'}
+                                      HR Considered {(() => {
+                                        const match = r.punishmentReason?.match(/HR Considered (\d+)\s*min/i);
+                                        if (match && match[1]) return `(${match[1]} min)`;
+                                        const raw = calculateRawLateMinutes(r, officeTiming);
+                                        if (raw > (r.lateMinutes || 0)) return `(${raw - (r.lateMinutes || 0)} min)`;
+                                        return r.lateMinutes === 0 ? '(Waived)' : '';
+                                      })()}
                                     </span>
                                     {r.punishmentReason && (
                                       <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
-                                        {r.punishmentReason}
+                                        {r.punishmentReason.replace(/^HR Considered \d+ min:\s*/i, '')}
                                       </span>
                                     )}
                                   </div>
@@ -1438,6 +1570,82 @@ export default function AttendancePage() {
                                   </span>
                                 ) : (
                                   <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
+                                )}
+                              </td>
+
+                              <td className={styles.tableCell}>
+                                {r.status === 'ABSENT' ? (
+                                  r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                                    <span style={{
+                                      fontSize: '11.5px',
+                                      fontWeight: 700,
+                                      color: '#ef4444',
+                                      background: 'rgba(239, 68, 68, 0.1)',
+                                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}>
+                                      ৳{Number(r.punishmentAmount).toLocaleString()}
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                                  )
+                                ) : r.reviewStatus === 'CONSIDERED' ? (
+                                  r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                                    <span style={{
+                                      fontSize: '11.5px',
+                                      fontWeight: 700,
+                                      color: '#ef4444',
+                                      background: 'rgba(239, 68, 68, 0.1)',
+                                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px'
+                                    }}>
+                                      ৳{Number(r.punishmentAmount).toLocaleString()}
+                                    </span>
+                                  ) : (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      color: '#059669',
+                                      background: 'rgba(16, 185, 129, 0.1)',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px'
+                                    }}>
+                                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
+                                      Waived
+                                    </span>
+                                  )
+                                ) : r.lateMinutes && r.lateMinutes > 0 ? (
+                                  (() => {
+                                    const fine = getRecordLateFine(r, punishmentRules);
+                                    return fine > 0 ? (
+                                      <span style={{
+                                        fontSize: '11.5px',
+                                        fontWeight: 700,
+                                        color: '#ef4444',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}>
+                                        ৳{fine.toLocaleString()}
+                                      </span>
+                                    ) : (
+                                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>৳0</span>
+                                    );
+                                  })()
+                                ) : (
+                                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
                                 )}
                               </td>
 
@@ -1642,7 +1850,8 @@ export default function AttendancePage() {
                   <th className={styles.tableHeaderCell}>Log Date</th>
                   <th className={styles.tableHeaderCell}>Check In</th>
                   <th className={styles.tableHeaderCell}>Check Out</th>
-                  <th className={styles.tableHeaderCell}>Late Duration / Fine</th>
+                  <th className={styles.tableHeaderCell}>Late Duration</th>
+                  <th className={styles.tableHeaderCell}>Late Fines</th>
                   <th className={styles.tableHeaderCell}>Early Leave Time</th>
                   <th className={styles.tableHeaderCell}>Status</th>
                   <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
@@ -1704,34 +1913,27 @@ export default function AttendancePage() {
 
                       <td className={styles.tableCell}>
                         {r.status === 'ABSENT' ? (
-                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
-                            {r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                          <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Unattended</span>
+                        ) : r.reviewStatus === 'CONSIDERED' ? (
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                            {r.lateMinutes && r.lateMinutes > 0 ? (
                               <span style={{
-                                fontSize: '11px',
-                                fontWeight: 800,
-                                color: '#ef4444',
-                                background: 'rgba(239, 68, 68, 0.12)',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                color: 'var(--warning, #f59e0b)',
+                                background: 'rgba(245, 158, 11, 0.1)',
                                 padding: '2px 8px',
                                 borderRadius: '6px',
                                 width: 'fit-content'
                               }}>
-                                ৳{Number(r.punishmentAmount)} Penalty
+                                +{r.lateMinutes} min late
                               </span>
                             ) : (
-                              <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Absent (No Fine)</span>
+                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
                             )}
-                            {r.punishmentReason && (
-                              <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
-                                {r.punishmentReason}
-                              </span>
-                            )}
-                          </div>
-                        ) : r.reviewStatus === 'CONSIDERED' ? (
-                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
                             <span style={{
                               fontSize: '11px',
-                              fontWeight: 700,
+                              fontWeight: 600,
                               color: '#059669',
                               background: 'rgba(16, 185, 129, 0.12)',
                               border: '1px solid rgba(16, 185, 129, 0.3)',
@@ -1743,11 +1945,17 @@ export default function AttendancePage() {
                               width: 'fit-content'
                             }}>
                               <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-                              HR Considered {r.lateMinutes && r.lateMinutes > 0 ? `(${r.lateMinutes} min)` : '(Waived)'}
+                              HR Considered {(() => {
+                                const match = r.punishmentReason?.match(/HR Considered (\d+)\s*min/i);
+                                if (match && match[1]) return `(${match[1]} min)`;
+                                const raw = calculateRawLateMinutes(r, officeTiming);
+                                if (raw > (r.lateMinutes || 0)) return `(${raw - (r.lateMinutes || 0)} min)`;
+                                return r.lateMinutes === 0 ? '(Waived)' : '';
+                              })()}
                             </span>
                             {r.punishmentReason && (
                               <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
-                                {r.punishmentReason}
+                                {r.punishmentReason.replace(/^HR Considered \d+ min:\s*/i, '')}
                               </span>
                             )}
                           </div>
@@ -1756,7 +1964,83 @@ export default function AttendancePage() {
                             +{r.lateMinutes} min late
                           </span>
                         ) : (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
+                        )}
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        {r.status === 'ABSENT' ? (
+                          r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                            <span style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#ef4444',
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.25)',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              ৳{Number(r.punishmentAmount).toLocaleString()}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                          )
+                        ) : r.reviewStatus === 'CONSIDERED' ? (
+                          r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
+                            <span style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#ef4444',
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.25)',
+                              padding: '2px 8px',
+                              borderRadius: '6px'
+                            }}>
+                              ৳{Number(r.punishmentAmount).toLocaleString()}
+                            </span>
+                          ) : (
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#059669',
+                              background: 'rgba(16, 185, 129, 0.1)',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
+                              Waived
+                            </span>
+                          )
+                        ) : r.lateMinutes && r.lateMinutes > 0 ? (
+                          (() => {
+                            const fine = getRecordLateFine(r, punishmentRules);
+                            return fine > 0 ? (
+                              <span style={{
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                color: '#ef4444',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                ৳{fine.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>৳0</span>
+                            );
+                          })()
+                        ) : (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
                         )}
                       </td>
 
@@ -2496,29 +2780,47 @@ export default function AttendancePage() {
                   color: '#f59e0b',
                   marginTop: '2px'
                 }}>
-                  Current: +{recordToConsider.lateMinutes || 0} min late
+                  Arrival Delay: +{considerRawLateMinutes} min late
                 </div>
               </div>
             </div>
 
-            {/* Preset Option Tabs */}
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '8px' }}>
-                Action / Adjusted Late Minutes:
-              </label>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            {/* Delay & Consideration Breakdown */}
+            <div style={{
+              background: 'rgba(245, 158, 11, 0.06)',
+              borderRadius: '12px',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              padding: '14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12.5px', color: 'var(--text-secondary, #cbd5e1)', fontWeight: 600 }}>
+                  Recorded Delay vs Shift Start ({officeTiming.shiftStart}):
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#f59e0b' }}>
+                  +{considerRawLateMinutes} min
+                </span>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
-                  onClick={() => setConsiderLateMinutes('0')}
+                  onClick={() => {
+                    setConsiderWaiveMinutes(String(considerRawLateMinutes));
+                    setConsiderRemainingMinutes('0');
+                  }}
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    borderRadius: '10px',
-                    border: considerLateMinutes === '0' ? '2px solid #10b981' : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
-                    background: considerLateMinutes === '0' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                    color: considerLateMinutes === '0' ? '#10b981' : 'var(--text-secondary, #cbd5e1)',
+                    borderRadius: '9px',
+                    border: considerRemainingMinutes === '0' ? '2px solid #10b981' : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: considerRemainingMinutes === '0' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                    color: considerRemainingMinutes === '0' ? '#10b981' : 'var(--text-secondary, #cbd5e1)',
                     fontWeight: 700,
-                    fontSize: '12.5px',
+                    fontSize: '12px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -2527,40 +2829,105 @@ export default function AttendancePage() {
                   }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified</span>
-                  Waive 100% (0 min · On Time)
+                  Waive 100% (0 min late)
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setConsiderLateMinutes(String(Math.min(15, recordToConsider.lateMinutes || 10)))}
+                  onClick={() => {
+                    const defaultWaive = Math.min(20, considerRawLateMinutes);
+                    setConsiderWaiveMinutes(String(defaultWaive));
+                    setConsiderRemainingMinutes(String(Math.max(0, considerRawLateMinutes - defaultWaive)));
+                  }}
                   style={{
                     padding: '8px 14px',
-                    borderRadius: '10px',
-                    border: considerLateMinutes !== '0' ? '2px solid #f59e0b' : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
-                    background: considerLateMinutes !== '0' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
-                    color: considerLateMinutes !== '0' ? '#f59e0b' : 'var(--text-secondary, #cbd5e1)',
+                    borderRadius: '9px',
+                    border: considerRemainingMinutes !== '0' ? '2px solid #f59e0b' : '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                    background: considerRemainingMinutes !== '0' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                    color: considerRemainingMinutes !== '0' ? '#f59e0b' : 'var(--text-secondary, #cbd5e1)',
                     fontWeight: 600,
-                    fontSize: '12.5px',
-                    cursor: 'pointer'
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
                 >
-                  Custom Minutes
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>timelapse</span>
+                  Partial Consideration
                 </button>
               </div>
 
-              {considerLateMinutes !== '0' && (
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ display: 'block', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', marginBottom: '4px' }}>
-                    Set Approved Late Minutes:
+              {/* Two Interactive Linked Inputs: Considered Minutes & Remaining Late */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#10b981', marginBottom: '4px' }}>
+                    Minutes HR Considers (Forgives):
                   </label>
                   <input
                     type="number"
                     min="0"
-                    max="600"
-                    value={considerLateMinutes}
-                    onChange={e => setConsiderLateMinutes(e.target.value)}
+                    max={considerRawLateMinutes}
+                    value={considerWaiveMinutes}
+                    onChange={e => handleWaiveMinutesChange(e.target.value)}
                     style={{
                       width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      background: 'var(--surface-input, rgba(0, 0, 0, 0.25))',
+                      color: 'var(--text-main, #fff)',
+                      fontSize: '13px',
+                      outline: 'none',
+                      fontWeight: 700
+                    }}
+                  />
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted, #94a3b8)', marginTop: '2px', display: 'block' }}>
+                    Excused delay (e.g. 20 min)
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#f59e0b', marginBottom: '4px' }}>
+                    Remaining Late Shown on Table:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={considerRawLateMinutes}
+                    value={considerRemainingMinutes}
+                    onChange={e => handleRemainingMinutesChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                      background: 'var(--surface-input, rgba(0, 0, 0, 0.25))',
+                      color: 'var(--text-main, #fff)',
+                      fontSize: '13px',
+                      outline: 'none',
+                      fontWeight: 700
+                    }}
+                  />
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted, #94a3b8)', marginTop: '2px', display: 'block' }}>
+                    Final late duration (e.g. 18 min)
+                  </span>
+                </div>
+              </div>
+
+              {/* Late Fine Amount Field */}
+              <div>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '4px' }}>
+                  Late Fine Amount (৳):
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    value={considerFineAmount}
+                    onChange={e => setConsiderFineAmount(e.target.value)}
+                    style={{
+                      flex: 1,
                       padding: '8px 12px',
                       borderRadius: '8px',
                       border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
@@ -2570,8 +2937,48 @@ export default function AttendancePage() {
                       outline: 'none'
                     }}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setConsiderFineAmount('0')}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      color: '#10b981',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Waive Fine (৳0)
+                  </button>
                 </div>
-              )}
+              </div>
+
+              {/* Live Preview Pill */}
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.25)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '11.5px',
+                color: 'var(--text-secondary, #cbd5e1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '6px'
+              }}>
+                <span>Total Delay: <strong>{considerRawLateMinutes} min</strong></span>
+                <span style={{ color: '#10b981' }}>HR Considered: <strong>-{considerWaiveMinutes || 0} min</strong></span>
+                <span style={{ color: Number(considerRemainingMinutes) > 0 ? '#f59e0b' : '#10b981' }}>
+                  Table Late: <strong>{Number(considerRemainingMinutes) > 0 ? `+${considerRemainingMinutes} min late` : '0 min (On Time)'}</strong>
+                </span>
+                <span style={{ color: Number(considerFineAmount) > 0 ? '#ef4444' : '#10b981' }}>
+                  Fine: <strong>{Number(considerFineAmount) > 0 ? `৳${considerFineAmount}` : 'Waived'}</strong>
+                </span>
+              </div>
             </div>
 
             {/* Common Reason Quick Suggestions */}

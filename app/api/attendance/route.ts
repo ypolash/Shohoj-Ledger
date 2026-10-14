@@ -331,6 +331,7 @@ export async function PATCH(request: Request) {
       const minutes = typeof lateMinutes === 'number' ? Math.max(0, lateMinutes) : 0;
       const isLate = minutes > 0;
       const finalStatus = isLate ? 'LATE' : 'PRESENT';
+      const fine = typeof data.punishmentAmount === 'number' ? Math.max(0, data.punishmentAmount) : 0;
       const note = reason || 'HR Late Consideration (Staff forgot to press check-in)';
 
       updateData = {
@@ -338,7 +339,7 @@ export async function PATCH(request: Request) {
         isLate,
         status: finalStatus,
         reviewStatus: 'CONSIDERED',
-        punishmentAmount: 0,
+        punishmentAmount: fine,
         punishmentReason: note,
       };
 

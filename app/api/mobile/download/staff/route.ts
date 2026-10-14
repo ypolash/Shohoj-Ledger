@@ -32,15 +32,29 @@ export async function GET(request: Request) {
     }
   }
 
-  // 3. Fallback resolution cascade to newest available APK
+  const channel = searchParams.get('channel')?.toLowerCase();
+  const isPreview = searchParams.get('preview') === 'true' || 
+                    channel === 'preview' || 
+                    channel === 'internal' || 
+                    channel === 'beta' || 
+                    channel === 'private';
+
+  // 3. If preview/private channel requested, serve v1.6.8
+  if (!targetPath && isPreview) {
+    const previewCandidate = path.join(downloadsDir, 'shohoj-staff-v1.6.8.apk');
+    if (fs.existsSync(previewCandidate)) {
+      targetPath = previewCandidate;
+    }
+  }
+
+  // 4. Fallback resolution cascade to public stable APK (v1.6.7)
   if (!targetPath) {
-    const candidates = [
-      path.join(downloadsDir, 'shohoj-staff-v1.6.8.apk'),
+    const publicCandidates = [
       path.join(downloadsDir, 'shohoj-staff-v1.6.7.apk'),
       path.join(downloadsDir, 'shohoj-staff-latest.apk'),
     ];
 
-    for (const candidate of candidates) {
+    for (const candidate of publicCandidates) {
       if (fs.existsSync(candidate)) {
         targetPath = candidate;
         break;
@@ -48,7 +62,7 @@ export async function GET(request: Request) {
     }
   }
 
-  // 4. Dynamic discovery of any .apk in public/downloads if still not found
+  // 5. Dynamic discovery of any .apk in public/downloads if still not found
   if (!targetPath && fs.existsSync(downloadsDir)) {
     try {
       const files = fs.readdirSync(downloadsDir)

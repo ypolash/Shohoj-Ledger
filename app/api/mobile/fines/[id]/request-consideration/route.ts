@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ESS_CORS_HEADERS } from "@/lib/auth/resolveEmployeeSession";
-import { POST as handleFinePost } from "../route";
+import { POST as handleFinePost } from "../../route";
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: ESS_CORS_HEADERS });

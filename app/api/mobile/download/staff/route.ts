@@ -23,12 +23,19 @@ export async function GET(request: Request) {
     }
   }
 
-  // 2. If explicit version provided (e.g., '1.6.5' or 'v1.6.5'), check it
+  // 2. If explicit version provided (e.g., '1.7.1-beta' or '1.7.1 beta'), check it
   if (!targetPath && requestedVersion) {
-    const cleanVersion = requestedVersion.replace(/^v/, '');
-    const versionCandidate = path.join(downloadsDir, `shohoj-staff-v${cleanVersion}.apk`);
-    if (fs.existsSync(versionCandidate)) {
-      targetPath = versionCandidate;
+    const cleanVersion = requestedVersion.replace(/^v/, '').trim();
+    const candidates = [
+      path.join(downloadsDir, `shohoj-staff-v${cleanVersion}.apk`),
+      path.join(downloadsDir, `shohoj-staff-v${cleanVersion.replace(/\s+/g, '-')}.apk`),
+      path.join(downloadsDir, `shohoj-staff-v${cleanVersion.replace(/-/g, ' ')}.apk`),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) {
+        targetPath = c;
+        break;
+      }
     }
   }
 
@@ -39,19 +46,28 @@ export async function GET(request: Request) {
                     channel === 'beta' || 
                     channel === 'private';
 
-  // 3. If preview/private channel requested, serve v1.6.8
+  // 3. If preview/private channel requested, serve v1.7.1-beta
   if (!targetPath && isPreview) {
-    const previewCandidate = path.join(downloadsDir, 'shohoj-staff-v1.6.8.apk');
-    if (fs.existsSync(previewCandidate)) {
-      targetPath = previewCandidate;
+    const previewCandidates = [
+      path.join(downloadsDir, 'shohoj-staff-v1.7.1-beta.apk'),
+      path.join(downloadsDir, 'shohoj-staff-latest.apk'),
+      path.join(downloadsDir, 'shohoj-staff-v1.7.0.apk'),
+    ];
+    for (const c of previewCandidates) {
+      if (fs.existsSync(c)) {
+        targetPath = c;
+        break;
+      }
     }
   }
 
-  // 4. Fallback resolution cascade to public stable APK (v1.6.7)
+  // 4. Fallback resolution cascade to latest stable / beta APK
   if (!targetPath) {
     const publicCandidates = [
-      path.join(downloadsDir, 'shohoj-staff-v1.6.7.apk'),
+      path.join(downloadsDir, 'shohoj-staff-v1.7.1-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-latest.apk'),
+      path.join(downloadsDir, 'shohoj-staff-v1.7.0.apk'),
+      path.join(downloadsDir, 'shohoj-staff-v1.6.7.apk'),
     ];
 
     for (const candidate of publicCandidates) {

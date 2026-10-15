@@ -27,13 +27,15 @@ export async function GET(request: Request) {
       return NextResponse.json({
         appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 36,
-        versionName: '1.7.1-beta',
+        versionCode: 37,
+        versionName: '1.7.2-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.1 Beta — Fines Consideration & Task Comments',
+        title: 'Shohoj Staff v1.7.2 Beta — Horizontal Calendar & Date-wise Fines',
         releaseNotes: [
-          '💸 Disciplinary Fines Hub: Quick Action tile & complete fines list with one-tap consideration request dialog',
+          '📅 Interactive Horizontal Calendar: Smooth horizontally scrollable day selector for quick date filtering',
+          '💸 Date-wise Fines Grouping: Fines automatically grouped chronologically by date with daily totals and status badges',
+          '🤝 Fines Consideration Request: Tap any fine to open an instant review request modal',
           '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
           '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
           '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
@@ -45,23 +47,25 @@ export async function GET(request: Request) {
           '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
           '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
         ],
-        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.1-beta.apk?v=36`,
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.2-beta.apk?v=37`,
         fileSize: '12.2 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.1 Beta)
+    // Default Public Production Version (Shohoj Staff v1.7.2 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 36,
-      versionName: '1.7.1-beta',
+      versionCode: 37,
+      versionName: '1.7.2-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.1 Beta Available',
+      title: 'Shohoj Staff v1.7.2 Beta Available',
       releaseNotes: [
-        '💸 Disciplinary Fines Hub: Quick Action tile & complete fines list with one-tap consideration request dialog',
+        '📅 Interactive Horizontal Calendar: Smooth horizontally scrollable day selector for quick date filtering',
+        '💸 Date-wise Fines Grouping: Fines automatically grouped chronologically by date with daily totals and status badges',
+        '🤝 Fines Consideration Request: Tap any fine to open an instant review request modal',
         '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
         '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
         '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
@@ -73,7 +77,7 @@ export async function GET(request: Request) {
         '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
         '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.1-beta.apk?v=36`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.2-beta.apk?v=37`,
       fileSize: '12.2 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()

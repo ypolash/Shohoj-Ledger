@@ -10,11 +10,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+import java.text.SimpleDateFormat
+import java.util.*
+
+data class CalendarDay(
+    val dateKey: String,
+    val dayOfWeek: String,
+    val dayNumber: Int,
+    val isToday: Boolean,
+    val fineCount: Int = 0,
+    val totalFineAmount: Double = 0.0
+)
+
 data class FineUiState(
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val fines: List<FineItem> = emptyList(),
     val selectedFineForConsideration: FineItem? = null,
+    val selectedDate: String? = null, // null means "All Dates"
+    val selectedMonthCal: Calendar = Calendar.getInstance(),
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -50,6 +64,102 @@ class FineViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
             )
+        }
+    }
+
+    fun selectDate(dateKey: String?) {
+        if (_uiState.value.selectedDate == dateKey) {
+            _uiState.value = _uiState.value.copy(selectedDate = null)
+        } else {
+            _uiState.value = _uiState.value.copy(selectedDate = dateKey)
+        }
+    }
+
+    fun clearDateFilter() {
+        _uiState.value = _uiState.value.copy(selectedDate = null)
+    }
+
+    fun previousMonth() {
+        val newCal = (_uiState.value.selectedMonthCal.clone() as Calendar).apply {
+            add(Calendar.MONTH, -1)
+        }
+        _uiState.value = _uiState.value.copy(selectedMonthCal = newCal)
+    }
+
+    fun nextMonth() {
+        val newCal = (_uiState.value.selectedMonthCal.clone() as Calendar).apply {
+            add(Calendar.MONTH, 1)
+        }
+        _uiState.value = _uiState.value.copy(selectedMonthCal = newCal)
+    }
+
+    fun jumpToToday() {
+        val todayCal = Calendar.getInstance()
+        val todayKey = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(todayCal.time)
+        _uiState.value = _uiState.value.copy(
+            selectedMonthCal = todayCal,
+            selectedDate = todayKey
+        )
+    }
+
+    fun getCalendarDays(): List<CalendarDay> {
+        val days = mutableListOf<CalendarDay>()
+        val cal = _uiState.value.selectedMonthCal.clone() as Calendar
+        cal.set(Calendar.DAY_OF_MONTH, 1)
+        val maxDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        val todayCal = Calendar.getInstance()
+        val isCurrentYearMonth = cal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                cal.get(Calendar.MONTH) == todayCal.get(Calendar.MONTH)
+        val todayDayNumber = if (isCurrentYearMonth) todayCal.get(Calendar.DAY_OF_MONTH) else -1
+
+        val keyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dayOfWeekFormat = SimpleDateFormat("EEE", Locale.getDefault())
+
+        val finesByDate = _uiState.value.fines.groupBy { fine ->
+            val raw = fine.date ?: fine.createdAt ?: ""
+            if (raw.length >= 10) raw.substring(0, 10) else ""
+        }
+
+        for (day in 1..maxDays) {
+            cal.set(Calendar.DAY_OF_MONTH, day)
+            val dateKey = keyFormat.format(cal.time)
+            val dayOfWeek = dayOfWeekFormat.format(cal.time)
+            val dayFines = finesByDate[dateKey] ?: emptyList()
+
+            days.add(
+                CalendarDay(
+                    dateKey = dateKey,
+                    dayOfWeek = dayOfWeek,
+                    dayNumber = day,
+                    isToday = day == todayDayNumber,
+                    fineCount = dayFines.size,
+                    totalFineAmount = dayFines.sumOf { it.amount }
+                )
+            )
+        }
+        return days
+    }
+
+    fun getFilteredFines(): List<FineItem> {
+        val selectedDate = _uiState.value.selectedDate
+        val all = _uiState.value.fines
+        return if (selectedDate == null) {
+            all
+        } else {
+            all.filter { fine ->
+                val raw = fine.date ?: fine.createdAt ?: ""
+                val key = if (raw.length >= 10) raw.substring(0, 10) else ""
+                key == selectedDate
+            }
+        }
+    }
+
+    fun getGroupedFines(): Map<String, List<FineItem>> {
+        val fines = getFilteredFines()
+        return fines.groupBy { fine ->
+            val raw = fine.date ?: fine.createdAt ?: ""
+            if (raw.length >= 10) raw.substring(0, 10) else "Other"
         }
     }
 

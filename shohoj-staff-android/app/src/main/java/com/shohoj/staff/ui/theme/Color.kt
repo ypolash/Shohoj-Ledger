@@ -9,6 +9,7 @@ val Emerald700 = Color(0xFF047857)
 val Emerald800 = Color(0xFF065F46)
 val Emerald900 = Color(0xFF064E3B)
 val Emerald400 = Color(0xFF34D399)
+val Emerald300 = Color(0xFF6EE7B7)
 
 // Accent Cyan & Blue
 val Cyan300 = Color(0xFF67E8F9)

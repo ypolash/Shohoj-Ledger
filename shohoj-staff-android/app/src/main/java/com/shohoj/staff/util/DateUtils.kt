@@ -40,6 +40,31 @@ object DateUtils {
         }
     }
 
+    fun extractDateKey(dateStr: String?): String {
+        if (dateStr.isNullOrBlank()) return ""
+        return if (dateStr.length >= 10) dateStr.substring(0, 10) else dateStr
+    }
+
+    fun formatDateHeader(dateKey: String): String {
+        if (dateKey.isBlank()) return "Unknown Date"
+        return try {
+            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = parser.parse(dateKey.substring(0, minOf(10, dateKey.length))) ?: return dateKey
+            val todayKey = parser.format(Date())
+            val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+            val yesterdayKey = parser.format(cal.time)
+
+            val displayFormat = SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault())
+            when (dateKey) {
+                todayKey -> "Today • ${displayFormat.format(date)}"
+                yesterdayKey -> "Yesterday • ${displayFormat.format(date)}"
+                else -> displayFormat.format(date)
+            }
+        } catch (e: Exception) {
+            dateKey
+        }
+    }
+
     fun formatMonthYear(month: Int, year: Int): String {
         return try {
             val cal = Calendar.getInstance().apply {

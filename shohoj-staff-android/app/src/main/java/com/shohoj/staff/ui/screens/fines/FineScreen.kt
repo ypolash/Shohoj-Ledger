@@ -5,7 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,6 +27,8 @@ import com.shohoj.staff.ui.components.*
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
 import com.shohoj.staff.util.DateUtils
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun FineScreen(
@@ -50,11 +54,21 @@ fun FineScreen(
         }
     }
 
+    val calendarDays = remember(uiState.fines, uiState.selectedMonthCal) {
+        viewModel.getCalendarDays()
+    }
+    val filteredFines = remember(uiState.fines, uiState.selectedDate) {
+        viewModel.getFilteredFines()
+    }
+    val groupedFines = remember(filteredFines) {
+        viewModel.getGroupedFines()
+    }
+
     Scaffold(
         topBar = {
             ShohojTopBar(
                 title = "My Fines & Penalties",
-                subtitle = "Overview of deductions & consideration requests",
+                subtitle = "Overview of deductions & consideration",
                 actions = {
                     IconButton(onClick = { onNavigate(Screen.Home.route) }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Slate300)
@@ -99,12 +113,16 @@ fun FineScreen(
                                     Slate900
                                 )
                             ),
-                            shape = RoundedCornerShape(18.dp)
+                            shape = RoundedCornerShape(20.dp)
                         )
-                        .border(1.dp, Rose500.copy(alpha = 0.4f), RoundedCornerShape(18.dp))
-                        .padding(20.dp)
+                        .border(
+                            1.dp,
+                            Rose500.copy(alpha = 0.35f),
+                            RoundedCornerShape(20.dp)
+                        )
+                        .padding(18.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -112,13 +130,12 @@ fun FineScreen(
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Rose500.copy(alpha = 0.2f))
+                                        .size(46.dp)
+                                        .background(Rose500.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                                         .border(1.dp, Rose500.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -126,46 +143,42 @@ fun FineScreen(
                                         imageVector = Icons.Default.Gavel,
                                         contentDescription = null,
                                         tint = Rose400,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
                                 Column {
                                     Text(
                                         text = "Active Penalties",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = Rose300,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 1.sp
-                                        )
+                                        fontSize = 12.sp,
+                                        color = Rose300,
+                                        fontWeight = FontWeight.Medium
                                     )
                                     Text(
                                         text = "৳${totalAmount.toInt()}",
-                                        style = MaterialTheme.typography.headlineMedium.copy(
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = Slate50,
-                                            fontSize = 26.sp
-                                        )
+                                        fontSize = 26.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Slate50
                                     )
                                 }
                             }
 
+                            // Refresh button
                             IconButton(
                                 onClick = { viewModel.loadFines() },
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Slate800)
+                                    .size(38.dp)
+                                    .background(Slate800.copy(alpha = 0.7f), RoundedCornerShape(10.dp))
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = "Refresh",
-                                    tint = Slate300
+                                    tint = Slate200,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
 
-                        Divider(color = Slate800, thickness = 0.5.dp)
-
-                        // 3-Metric Stat Pills
+                        // Status metric counter boxes
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -213,28 +226,82 @@ fun FineScreen(
                 }
             }
 
-            // 2. Section Header
+            // 2. Horizontal Calendar View
+            item {
+                HorizontalCalendarSection(
+                    days = calendarDays,
+                    selectedDate = uiState.selectedDate,
+                    selectedMonthCal = uiState.selectedMonthCal,
+                    totalFinesCount = uiState.fines.size,
+                    onSelectDate = { dateKey -> viewModel.selectDate(dateKey) },
+                    onPrevMonth = { viewModel.previousMonth() },
+                    onNextMonth = { viewModel.nextMonth() },
+                    onTodayClick = { viewModel.jumpToToday() }
+                )
+            }
+
+            // 3. Section Header
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Fine History (${uiState.fines.size})",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Slate100,
-                            fontSize = 16.sp
+                    if (uiState.selectedDate != null) {
+                        Column {
+                            Text(
+                                text = "Fines on ${DateUtils.formatDate(uiState.selectedDate)} (${filteredFines.size})",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Slate100,
+                                    fontSize = 15.sp
+                                )
+                            )
+                            Text(
+                                text = "Filtered date view",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Rose300,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                        TextButton(
+                            onClick = { viewModel.clearDateFilter() },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Show All",
+                                color = Emerald400,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        Column {
+                            Text(
+                                text = "Fine History (${uiState.fines.size})",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Slate100,
+                                    fontSize = 16.sp
+                                )
+                            )
+                            Text(
+                                text = "Date-wise overview",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Slate400,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                        Text(
+                            text = "Tap to request consideration",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Slate400,
+                                fontSize = 11.5.sp
+                            )
                         )
-                    )
-                    Text(
-                        text = "Tap to request consideration",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Slate400,
-                            fontSize = 11.5.sp
-                        )
-                    )
+                    }
                 }
             }
 
@@ -252,7 +319,7 @@ fun FineScreen(
                 }
             }
 
-            // Empty State
+            // Overall Empty State
             if (!uiState.isLoading && uiState.fines.isEmpty()) {
                 item {
                     Box(
@@ -292,165 +359,90 @@ fun FineScreen(
                 }
             }
 
-            // Fines List Items
-            items(uiState.fines, key = { it.id }) { fine ->
-                val isUnderReview = fine.status == "CONSIDERATION_REQUESTED"
-                val isCancelled = fine.status == "CANCELLED"
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            if (isUnderReview) Color(0xFF131F2A)
-                            else if (isCancelled) Slate900.copy(alpha = 0.6f)
-                            else Slate900
-                        )
-                        .border(
-                            1.dp,
-                            if (isUnderReview) Cyan500.copy(alpha = 0.5f)
-                            else if (isCancelled) Slate800
-                            else Rose500.copy(alpha = 0.35f),
-                            RoundedCornerShape(16.dp)
-                        )
-                        .clickable(enabled = !isCancelled) {
-                            considerationReasonText = fine.appealReason ?: ""
-                            viewModel.selectFineForConsideration(fine)
-                        }
-                        .padding(18.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        // Header row: Amount & Status
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+            // Date-Filter Empty State (when a specific date has no fines)
+            if (!uiState.isLoading && uiState.fines.isNotEmpty() && filteredFines.isEmpty() && uiState.selectedDate != null) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Slate900.copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                            .border(1.dp, Slate800, RoundedCornerShape(16.dp))
+                            .padding(28.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "৳${fine.amount.toInt()}",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = if (isCancelled) Emerald400 else Rose400,
-                                        fontSize = 19.sp
-                                    )
-                                )
-                                if (fine.date != null) {
-                                    Text(
-                                        text = "• ${DateUtils.formatDate(fine.date)}",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = Slate400,
-                                            fontSize = 12.sp
-                                        )
-                                    )
-                                }
-                            }
-
-                            // Status Badge
-                            val badgeStatus = when (fine.status) {
-                                "CONSIDERATION_REQUESTED" -> "IN REVIEW"
-                                "CANCELLED" -> "WAIVED"
-                                "DEDUCTED" -> "DEDUCTED"
-                                else -> "PENDING"
-                            }
-                            StatusBadge(status = badgeStatus)
-                        }
-
-                        // Reason
-                        Text(
-                            text = fine.reason ?: "Penalty fine",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = Slate200,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 13.5.sp,
-                                lineHeight = 19.sp
+                            Icon(
+                                imageVector = Icons.Default.EventAvailable,
+                                contentDescription = null,
+                                tint = Emerald400,
+                                modifier = Modifier.size(36.dp)
                             )
-                        )
-
-                        // If staff submitted a consideration request note, display it
-                        if (!fine.appealReason.isNullOrBlank()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFF0F172A), RoundedCornerShape(10.dp))
-                                    .border(1.dp, Cyan500.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.HourglassTop,
-                                        contentDescription = null,
-                                        tint = Cyan400,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(
-                                            text = "Your Consideration Request:",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Cyan300
-                                        )
-                                        Text(
-                                            text = fine.appealReason,
-                                            fontSize = 12.sp,
-                                            color = Slate300
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        Divider(color = Slate800, thickness = 0.5.dp)
-
-                        // Action Footer
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
                             Text(
-                                text = if (fine.createdAt != null) "Logged: ${DateUtils.formatDate(fine.createdAt)}" else "",
-                                fontSize = 11.sp,
-                                color = Slate500
-                            )
-
-                            if (!isCancelled) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.clickable {
-                                        considerationReasonText = fine.appealReason ?: ""
-                                        viewModel.selectFineForConsideration(fine)
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = if (isUnderReview) Icons.Default.EditNote else Icons.Default.HelpOutline,
-                                        contentDescription = null,
-                                        tint = if (isUnderReview) Cyan400 else Amber400,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Text(
-                                        text = if (isUnderReview) "Update Consideration" else "Request Consideration",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isUnderReview) Cyan300 else Amber300
-                                    )
-                                }
-                            } else {
-                                Text(
-                                    text = "Waived / Cancelled",
-                                    fontSize = 11.5.sp,
+                                text = "No Fines on this Date",
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Emerald400
+                                    color = Slate200,
+                                    fontSize = 15.sp
                                 )
+                            )
+                            Text(
+                                text = "No penalties or disciplinary records logged for ${DateUtils.formatDate(uiState.selectedDate)}.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Slate400,
+                                    fontSize = 12.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Button(
+                                onClick = { viewModel.clearDateFilter() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Slate800,
+                                    contentColor = Slate100
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Text(text = "View All Fines", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
+                    }
+                }
+            }
+
+            // 4. Date-wise Fines Display
+            if (uiState.selectedDate != null) {
+                // Filtered by specific date
+                items(filteredFines, key = { it.id }) { fine ->
+                    FineCardItem(
+                        fine = fine,
+                        onSelectForConsideration = { selected ->
+                            considerationReasonText = selected.appealReason ?: ""
+                            viewModel.selectFineForConsideration(selected)
+                        }
+                    )
+                }
+            } else {
+                // Grouped Date-wise List
+                groupedFines.forEach { (dateKey, finesForDate) ->
+                    item(key = "header_$dateKey") {
+                        FineDateGroupHeader(
+                            dateKey = dateKey,
+                            finesCount = finesForDate.size,
+                            totalAmount = finesForDate.sumOf { it.amount }
+                        )
+                    }
+
+                    items(finesForDate, key = { it.id }) { fine ->
+                        FineCardItem(
+                            fine = fine,
+                            onSelectForConsideration = { selected ->
+                                considerationReasonText = selected.appealReason ?: ""
+                                viewModel.selectFineForConsideration(selected)
+                            }
+                        )
                     }
                 }
             }
@@ -588,5 +580,476 @@ fun FineScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * Horizontal Calendar Strip View
+ */
+@Composable
+fun HorizontalCalendarSection(
+    days: List<CalendarDay>,
+    selectedDate: String?,
+    selectedMonthCal: Calendar,
+    totalFinesCount: Int,
+    onSelectDate: (String?) -> Unit,
+    onPrevMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onTodayClick: () -> Unit
+) {
+    val monthName = remember(selectedMonthCal) {
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(selectedMonthCal.time)
+    }
+    val listState = rememberLazyListState()
+
+    // Auto-scroll to selected day, or today, or first day with fine
+    LaunchedEffect(selectedMonthCal, selectedDate) {
+        val targetIndex = if (selectedDate != null) {
+            days.indexOfFirst { it.dateKey == selectedDate }
+        } else {
+            days.indexOfFirst { it.isToday }.takeIf { it >= 0 }
+                ?: days.indexOfFirst { it.fineCount > 0 }.takeIf { it >= 0 }
+                ?: 0
+        }
+        if (targetIndex >= 0) {
+            val scrollPos = (targetIndex - 2).coerceAtLeast(0)
+            listState.animateScrollToItem(scrollPos)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Slate900.copy(alpha = 0.8f), RoundedCornerShape(18.dp))
+            .border(1.dp, Slate800, RoundedCornerShape(18.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Month Navigation Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                IconButton(
+                    onClick = onPrevMonth,
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        contentDescription = "Previous Month",
+                        tint = Slate300,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Text(
+                    text = monthName,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Slate100,
+                        fontSize = 15.sp
+                    )
+                )
+
+                IconButton(
+                    onClick = onNextMonth,
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = "Next Month",
+                        tint = Slate300,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            // Quick Filter Pills: All / Today
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(
+                            if (selectedDate == null) Emerald600 else Slate800
+                        )
+                        .clickable { onSelectDate(null) }
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = if (totalFinesCount > 0) "All ($totalFinesCount)" else "All",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (selectedDate == null) Slate50 else Slate300
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Slate800)
+                        .clickable { onTodayClick() }
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = "Today",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Slate300
+                    )
+                }
+            }
+        }
+
+        // Horizontal Days Strip
+        LazyRow(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 2.dp)
+        ) {
+            items(days, key = { it.dateKey }) { day ->
+                val isSelected = selectedDate == day.dateKey
+                val hasFines = day.fineCount > 0
+
+                Box(
+                    modifier = Modifier
+                        .width(54.dp)
+                        .height(82.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            when {
+                                isSelected -> Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF4A1A28), // Glow Rose/Dark Wine
+                                        Color(0xFF24101A)
+                                    )
+                                )
+                                hasFines -> Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF2C131D),
+                                        Slate900
+                                    )
+                                )
+                                day.isToday -> Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF112920),
+                                        Slate900
+                                    )
+                                )
+                                else -> Brush.verticalGradient(
+                                    listOf(
+                                        Slate900,
+                                        Slate950
+                                    )
+                                )
+                            }
+                        )
+                        .border(
+                            width = if (isSelected) 1.5.dp else 1.dp,
+                            color = when {
+                                isSelected -> Rose400
+                                hasFines -> Rose500.copy(alpha = 0.6f)
+                                day.isToday -> Emerald500.copy(alpha = 0.5f)
+                                else -> Slate800
+                            },
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable {
+                            onSelectDate(day.dateKey)
+                        }
+                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxHeight()
+                    ) {
+                        Text(
+                            text = day.dayOfWeek.uppercase(),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = when {
+                                isSelected -> Rose300
+                                hasFines -> Rose400
+                                day.isToday -> Emerald400
+                                else -> Slate400
+                            }
+                        )
+
+                        Text(
+                            text = "${day.dayNumber}",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = when {
+                                isSelected -> Slate50
+                                hasFines -> Slate100
+                                day.isToday -> Emerald300
+                                else -> Slate300
+                            }
+                        )
+
+                        // Bottom Indicator: Fine Amount Badge or Today Dot
+                        if (hasFines) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        Rose500.copy(alpha = 0.35f),
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "৳${day.totalFineAmount.toInt()}",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Rose300
+                                )
+                            }
+                        } else if (day.isToday) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(Emerald400, RoundedCornerShape(99.dp))
+                            )
+                        } else {
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Date Group Header
+ */
+@Composable
+fun FineDateGroupHeader(
+    dateKey: String,
+    finesCount: Int,
+    totalAmount: Double
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(Rose500.copy(alpha = 0.15f), RoundedCornerShape(6.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = Rose400,
+                    modifier = Modifier.size(13.dp)
+                )
+            }
+            Text(
+                text = DateUtils.formatDateHeader(dateKey),
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = Slate200
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .background(Slate900, RoundedCornerShape(99.dp))
+                .border(1.dp, Slate800, RoundedCornerShape(99.dp))
+                .padding(horizontal = 10.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = "$finesCount ${if (finesCount == 1) "penalty" else "penalties"} • ৳${totalAmount.toInt()}",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Rose300
+            )
+        }
+    }
+}
+
+/**
+ * Single Fine Card Item
+ */
+@Composable
+fun FineCardItem(
+    fine: FineItem,
+    onSelectForConsideration: (FineItem) -> Unit
+) {
+    val isUnderReview = fine.status == "CONSIDERATION_REQUESTED"
+    val isCancelled = fine.status == "CANCELLED"
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                if (isUnderReview) Color(0xFF131F2A)
+                else if (isCancelled) Slate900.copy(alpha = 0.6f)
+                else Slate900
+            )
+            .border(
+                1.dp,
+                if (isUnderReview) Cyan500.copy(alpha = 0.5f)
+                else if (isCancelled) Slate800
+                else Rose500.copy(alpha = 0.35f),
+                RoundedCornerShape(16.dp)
+            )
+            .clickable(enabled = !isCancelled) {
+                onSelectForConsideration(fine)
+            }
+            .padding(18.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Header row: Amount & Status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "৳${fine.amount.toInt()}",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (isCancelled) Emerald400 else Rose400,
+                            fontSize = 19.sp
+                        )
+                    )
+                    if (fine.date != null) {
+                        Text(
+                            text = "• ${DateUtils.formatDate(fine.date)}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Slate400,
+                                fontSize = 12.sp
+                            )
+                        )
+                    }
+                }
+
+                // Status Badge
+                val badgeStatus = when (fine.status) {
+                    "CONSIDERATION_REQUESTED" -> "IN REVIEW"
+                    "CANCELLED" -> "WAIVED"
+                    "DEDUCTED" -> "DEDUCTED"
+                    else -> "PENDING"
+                }
+                StatusBadge(status = badgeStatus)
+            }
+
+            // Reason
+            Text(
+                text = fine.reason ?: "Penalty fine",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Slate200,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.5.sp,
+                    lineHeight = 19.sp
+                )
+            )
+
+            // If staff submitted a consideration request note, display it
+            if (!fine.appealReason.isNullOrBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF0F172A), RoundedCornerShape(10.dp))
+                        .border(1.dp, Cyan500.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .padding(10.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.HourglassTop,
+                            contentDescription = null,
+                            tint = Cyan400,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "Your Consideration Request:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Cyan300
+                            )
+                            Text(
+                                text = fine.appealReason,
+                                fontSize = 12.sp,
+                                color = Slate300
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = Slate800, thickness = 0.5.dp)
+
+            // Action Footer
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (fine.createdAt != null) "Logged: ${DateUtils.formatDate(fine.createdAt)}" else "",
+                    fontSize = 11.sp,
+                    color = Slate500
+                )
+
+                if (!isCancelled) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.clickable {
+                            onSelectForConsideration(fine)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isUnderReview) Icons.Default.EditNote else Icons.Default.HelpOutline,
+                            contentDescription = null,
+                            tint = if (isUnderReview) Cyan400 else Amber400,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = if (isUnderReview) "Update Consideration" else "Request Consideration",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isUnderReview) Cyan300 else Amber300
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Waived / Cancelled",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Emerald400
+                    )
+                }
+            }
+        }
     }
 }

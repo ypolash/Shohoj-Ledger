@@ -25,15 +25,17 @@ export async function GET(request: Request) {
     // Private / Internal Preview Channel
     if (isPreview) {
       return NextResponse.json({
-        appName: 'Shohoj Staff (Private Preview)',
+        appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 35,
-        versionName: '1.7.0',
+        versionCode: 36,
+        versionName: '1.7.1-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.0 — ERP Profile Photo Sync & Nagad-Inspired Items',
+        title: 'Shohoj Staff v1.7.1 Beta — Fines Consideration & Task Comments',
         releaseNotes: [
-          '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP now instantly reflect in the Staff app without re-logging in',
+          '💸 Disciplinary Fines Hub: Quick Action tile & complete fines list with one-tap consideration request dialog',
+          '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
+          '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
           '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
           '🔝 Dynamic TopBar Avatar: Circular profile badge with tap-to-profile shortcut directly from TopBar',
           '🎨 Nagad Item Inspiration: Refined tactile pill buttons (Clock In, Lunch Break, Clock Out) with smooth gradients and leading icons',
@@ -43,23 +45,25 @@ export async function GET(request: Request) {
           '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
           '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
         ],
-        downloadUrl: `${baseUrl}/api/mobile/download/staff?version=1.7.0`,
-        fileSize: '12.1 MB',
+        downloadUrl: `${baseUrl}/api/mobile/download/staff?version=1.7.1-beta`,
+        fileSize: '12.2 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.0)
+    // Default Public Production Version (Shohoj Staff v1.7.1 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 35,
-      versionName: '1.7.0',
+      versionCode: 36,
+      versionName: '1.7.1-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.0 Available',
+      title: 'Shohoj Staff v1.7.1 Beta Available',
       releaseNotes: [
-        '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP now instantly reflect in the Staff app without re-logging in',
+        '💸 Disciplinary Fines Hub: Quick Action tile & complete fines list with one-tap consideration request dialog',
+        '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
+        '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
         '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
         '🔝 Dynamic TopBar Avatar: Circular profile badge with tap-to-profile shortcut directly from TopBar',
         '🎨 Nagad Item Inspiration: Refined tactile pill buttons (Clock In, Lunch Break, Clock Out) with smooth gradients and leading icons',
@@ -69,9 +73,9 @@ export async function GET(request: Request) {
         '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
         '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.0.apk`,
-      fileSize: '12.1 MB',
-      isForceUpdate: true,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.1-beta.apk`,
+      fileSize: '12.2 MB',
+      isForceUpdate: false,
       publishedAt: new Date().toISOString()
     });
   }

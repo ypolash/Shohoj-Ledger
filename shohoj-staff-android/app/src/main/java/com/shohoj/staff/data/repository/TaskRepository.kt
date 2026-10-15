@@ -67,4 +67,28 @@ class TaskRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun addTaskComment(taskId: String, text: String): Result<TaskItem> = withContext(Dispatchers.IO) {
+        try {
+            val empId = sessionManager.employeeId
+            val emp = sessionManager.getEmployee()
+            val author = emp?.let { "${it.firstName} ${it.lastName}".trim() }.takeIf { !it.isNullOrBlank() } ?: empId ?: "Staff"
+            val response = apiClient.getService().addTaskComment(
+                taskId = taskId,
+                request = com.shohoj.staff.data.model.TaskCommentRequest(
+                    text = text,
+                    author = author,
+                    employeeId = empId
+                )
+            )
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                val err = response.errorBody()?.string() ?: "Failed to post comment"
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

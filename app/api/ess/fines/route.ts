@@ -1,1 +1,1 @@
-export { GET, OPTIONS } from "../../mobile/fines/route";
+export { GET, POST, OPTIONS } from "../../mobile/fines/route";

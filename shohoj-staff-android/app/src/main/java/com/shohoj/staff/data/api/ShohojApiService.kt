@@ -122,6 +122,11 @@ interface ShohojApiService {
     @GET("api/ess/fines")
     suspend fun getEssFines(): Response<FineListResponse>
 
+    @POST("api/mobile/fines")
+    suspend fun requestFineConsideration(
+        @Body request: FineConsiderationRequest
+    ): Response<FineConsiderationResponse>
+
     // --- Tasks ---
 
     @GET("api/ess/tasks")
@@ -136,6 +141,12 @@ interface ShohojApiService {
     suspend fun updateTaskStatus(
         @Path("id") taskId: String,
         @Body request: TaskStatusUpdateRequest
+    ): Response<TaskItem>
+
+    @POST("api/mobile/tasks/{id}/comments")
+    suspend fun addTaskComment(
+        @Path("id") taskId: String,
+        @Body request: TaskCommentRequest
     ): Response<TaskItem>
 
     // --- Announcements ---

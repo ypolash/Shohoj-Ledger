@@ -11,8 +11,8 @@ android {
         applicationId = "com.shohoj.staff"
         minSdk = 26
         targetSdk = 34
-        versionCode = 35
-        versionName = "1.7.0"
+        versionCode = 36
+        versionName = "1.7.1-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

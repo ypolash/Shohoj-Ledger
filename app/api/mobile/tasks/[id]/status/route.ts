@@ -19,11 +19,12 @@ function normalizeChecklist(raw: any) {
     }
   }
   if (Array.isArray(parsed)) {
-    return { type: "CHECKLIST", items: parsed };
+    return { type: "CHECKLIST", items: parsed, comments: [] };
   }
   if (parsed && typeof parsed === "object") {
     const items = Array.isArray(parsed.items) ? parsed.items : [];
-    return { ...parsed, type: parsed.type || "CHECKLIST", items };
+    const comments = Array.isArray(parsed.comments) ? parsed.comments : [];
+    return { ...parsed, type: parsed.type || "CHECKLIST", items, comments };
   }
   return null;
 }
@@ -47,7 +48,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, checklist } = body;
+    const { status, checklist, comment, author } = body;
 
     const validStatuses = ["Pending", "In Progress", "Completed", "Blocked"];
     if (status && !validStatuses.includes(status)) {
@@ -57,16 +58,37 @@ export async function PATCH(
       );
     }
 
-    if (!status && checklist === undefined) {
+    if (!status && checklist === undefined && !comment) {
       return NextResponse.json(
-        { error: "Either status or checklist is required" },
+        { error: "Either status, checklist, or comment is required" },
         { status: 400 }
       );
     }
 
     const updateData: any = {};
     if (status) updateData.status = status;
-    if (checklist !== undefined) updateData.checklist = checklist;
+    if (checklist !== undefined) {
+      updateData.checklist = checklist;
+    }
+
+    if (comment) {
+      const existingTask = await prisma.task.findUnique({
+        where: { id: params.id },
+        select: { checklist: true },
+      });
+      const baseChecklist = normalizeChecklist(checklist !== undefined ? checklist : existingTask?.checklist) || { type: "CHECKLIST", items: [], comments: [] };
+      const currentComments = Array.isArray(baseChecklist.comments) ? [...baseChecklist.comments] : [];
+      currentComments.push({
+        id: crypto.randomUUID(),
+        author: author || "Staff",
+        text: String(comment).trim(),
+        createdAt: new Date().toISOString(),
+      });
+      updateData.checklist = {
+        ...baseChecklist,
+        comments: currentComments,
+      };
+    }
 
     const updatedTask = await prisma.task.update({
       where: { ...(await withCompany()), id: params.id },

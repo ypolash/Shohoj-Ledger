@@ -11,6 +11,14 @@ data class TaskChecklistItem(
     @SerializedName("completed") val completed: Boolean = false
 )
 
+data class TaskCommentItem(
+    @SerializedName("id") val id: String = "",
+    @SerializedName("author") val author: String = "Staff",
+    @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("text") val text: String = "",
+    @SerializedName("createdAt") val createdAt: String = ""
+)
+
 class TaskChecklistAdapter : JsonDeserializer<TaskChecklist?>, JsonSerializer<TaskChecklist> {
     override fun serialize(
         src: TaskChecklist?,
@@ -29,6 +37,18 @@ class TaskChecklistAdapter : JsonDeserializer<TaskChecklist?>, JsonSerializer<Ta
                 array.add(itemObj)
             }
             obj.add("items", array)
+
+            val commentsArray = JsonArray()
+            src.comments.forEach { comment ->
+                val cObj = JsonObject()
+                cObj.addProperty("id", comment.id)
+                cObj.addProperty("author", comment.author)
+                if (comment.employeeId != null) cObj.addProperty("employeeId", comment.employeeId)
+                cObj.addProperty("text", comment.text)
+                cObj.addProperty("createdAt", comment.createdAt)
+                commentsArray.add(cObj)
+            }
+            obj.add("comments", commentsArray)
         }
         return obj
     }
@@ -63,7 +83,26 @@ class TaskChecklistAdapter : JsonDeserializer<TaskChecklist?>, JsonSerializer<Ta
                         }
                     }
                 }
-                TaskChecklist(type = type, items = items)
+
+                val comments = mutableListOf<TaskCommentItem>()
+                if (obj.has("comments") && obj.get("comments").isJsonArray) {
+                    obj.getAsJsonArray("comments").forEach { elem ->
+                        if (elem.isJsonObject) {
+                            val cObj = elem.asJsonObject
+                            comments.add(
+                                TaskCommentItem(
+                                    id = if (cObj.has("id") && !cObj.get("id").isJsonNull) cObj.get("id").asString else "",
+                                    author = if (cObj.has("author") && !cObj.get("author").isJsonNull) cObj.get("author").asString else "Staff",
+                                    employeeId = if (cObj.has("employeeId") && !cObj.get("employeeId").isJsonNull) cObj.get("employeeId").asString else null,
+                                    text = if (cObj.has("text") && !cObj.get("text").isJsonNull) cObj.get("text").asString else "",
+                                    createdAt = if (cObj.has("createdAt") && !cObj.get("createdAt").isJsonNull) cObj.get("createdAt").asString else ""
+                                )
+                            )
+                        }
+                    }
+                }
+
+                TaskChecklist(type = type, items = items, comments = comments)
             } else if (json.isJsonArray) {
                 val items = mutableListOf<TaskChecklistItem>()
                 json.asJsonArray.forEach { elem ->
@@ -78,7 +117,7 @@ class TaskChecklistAdapter : JsonDeserializer<TaskChecklist?>, JsonSerializer<Ta
                         )
                     }
                 }
-                TaskChecklist(type = "CHECKLIST", items = items)
+                TaskChecklist(type = "CHECKLIST", items = items, comments = emptyList())
             } else if (json.isJsonPrimitive && json.asJsonPrimitive.isString) {
                 val str = json.asString.trim()
                 if (str.isEmpty() || str == "null") return null
@@ -97,7 +136,8 @@ class TaskChecklistAdapter : JsonDeserializer<TaskChecklist?>, JsonSerializer<Ta
 @JsonAdapter(TaskChecklistAdapter::class)
 data class TaskChecklist(
     @SerializedName("type") val type: String = "CHECKLIST",
-    @SerializedName("items") val items: List<TaskChecklistItem> = emptyList()
+    @SerializedName("items") val items: List<TaskChecklistItem> = emptyList(),
+    @SerializedName("comments") val comments: List<TaskCommentItem> = emptyList()
 )
 
 data class TaskItem(
@@ -125,5 +165,13 @@ data class TaskListResponse(
 
 data class TaskStatusUpdateRequest(
     @SerializedName("status") val status: String? = null,
-    @SerializedName("checklist") val checklist: TaskChecklist? = null
+    @SerializedName("checklist") val checklist: TaskChecklist? = null,
+    @SerializedName("comment") val comment: String? = null,
+    @SerializedName("author") val author: String? = null
+)
+
+data class TaskCommentRequest(
+    @SerializedName("text") val text: String,
+    @SerializedName("author") val author: String? = null,
+    @SerializedName("employeeId") val employeeId: String? = null
 )

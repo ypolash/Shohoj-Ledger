@@ -4675,6 +4675,7 @@ model EmployeeFine {
   status       String   @default("PENDING") // PENDING, DEDUCTED, CANCELLED
   payrollRunId String?
   systemSource String   @default("LEGACY")
+  appealReason String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -32,7 +32,7 @@ export async function PATCH(
 
     const dataToUpdate: any = {};
     if (status) {
-      if (!["PENDING", "CANCELLED", "DEDUCTED"].includes(status)) {
+      if (!["PENDING", "CANCELLED", "DEDUCTED", "CONSIDERATION_REQUESTED", "WAIVED"].includes(status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }
       dataToUpdate.status = status;

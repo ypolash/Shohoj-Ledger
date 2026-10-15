@@ -1373,7 +1373,13 @@ fun HomeScreen(
                         onClick = { onNavigate(Screen.Profile.route) },
                         modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
+                    QuickActionTile(
+                        title = "Fines",
+                        icon = Icons.Default.Gavel,
+                        tint = Rose400,
+                        onClick = { onNavigate(Screen.Fines.route) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
 

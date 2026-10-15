@@ -21,7 +21,13 @@ export default function StaffPortalPage() {
   const [leaves, setLeaves] = useState<any[]>([]);
   const [payroll, setPayroll] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'TASKS' | 'PRODUCTS' | 'LEAVES' | 'PAYROLL'>('ATTENDANCE');
+  const [fines, setFines] = useState<any[]>([]);
+  const [selectedFineForConsideration, setSelectedFineForConsideration] = useState<any>(null);
+  const [considerationNote, setConsiderationNote] = useState('');
+  const [isSubmittingConsideration, setIsSubmittingConsideration] = useState(false);
+  const [taskCommentInputs, setTaskCommentInputs] = useState<Record<string, string>>({});
+  const [isSubmittingTaskComment, setIsSubmittingTaskComment] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'TASKS' | 'PRODUCTS' | 'LEAVES' | 'PAYROLL' | 'FINES'>('ATTENDANCE');
   const [dutySchedule, setDutySchedule] = useState<any>(null);
   const [dutyRosters, setDutyRosters] = useState<any[]>([]);
 
@@ -169,9 +175,78 @@ export default function StaffPortalPage() {
       })
       .catch(() => {});
 
-    // 7. Fetch Products for Product Management
+    // 7. Fetch Fines & Penalties
+    if (targetEmpId) {
+      fetch(`/api/mobile/fines?employeeId=${targetEmpId}`)
+        .then(res => res.json())
+        .then(fData => {
+          if (fData && Array.isArray(fData.fines)) {
+            setFines(fData.fines);
+          }
+        })
+        .catch(() => {});
+    }
+
+    // 8. Fetch Products for Product Management
     fetchProductsData('', 'ALL');
   }, [employeeId, leaveType, fetchProductsData]);
+
+  const handleSubmitFineConsideration = async (fineId: string) => {
+    if (!considerationNote.trim()) return;
+    setIsSubmittingConsideration(true);
+    try {
+      const res = await fetch('/api/mobile/fines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fineId,
+          reason: considerationNote.trim(),
+          employeeId: emp?.employeeId || employeeId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.fine) {
+        setFines(prev => prev.map(f => f.id === fineId ? { ...f, ...data.fine } : f));
+        setSelectedFineForConsideration(null);
+        setConsiderationNote('');
+        alert('Consideration request submitted successfully!');
+      } else {
+        alert(data.error || 'Failed to submit consideration request');
+      }
+    } catch (err: any) {
+      alert('Error submitting request: ' + err.message);
+    } finally {
+      setIsSubmittingConsideration(false);
+    }
+  };
+
+  const handleAddTaskComment = async (taskId: string) => {
+    const text = (taskCommentInputs[taskId] || '').trim();
+    if (!text) return;
+    setIsSubmittingTaskComment(prev => ({ ...prev, [taskId]: true }));
+    try {
+      const res = await fetch(`/api/mobile/tasks/${taskId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          author: emp ? `${emp.firstName} ${emp.lastName}` : 'Staff',
+          employeeId: emp?.employeeId || employeeId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.task) {
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, checklist: data.task.checklist } : t));
+        setTaskCommentInputs(prev => ({ ...prev, [taskId]: '' }));
+      } else {
+        alert(data.error || 'Failed to post comment');
+      }
+    } catch (err: any) {
+      alert('Error posting comment: ' + err.message);
+    } finally {
+      setIsSubmittingTaskComment(prev => ({ ...prev, [taskId]: false }));
+    }
+  };
 
   const handleOpenStaffReturnModal = (pItem: any) => {
     setReturnModalProduct(pItem);
@@ -1021,7 +1096,13 @@ export default function StaffPortalPage() {
               isSpecialRole: true
             }] : []),
             { id: 'LEAVES', label: 'LEAVES', icon: 'event_busy' },
-            { id: 'PAYROLL', label: 'PAYROLL', icon: 'payments' }
+            { id: 'PAYROLL', label: 'PAYROLL', icon: 'payments' },
+            {
+              id: 'FINES',
+              label: 'FINES',
+              icon: 'gavel',
+              badge: fines.filter(f => f.status === 'PENDING').length
+            }
           ].map(tab => (
             <button
               key={tab.id}
@@ -1198,6 +1279,84 @@ export default function StaffPortalPage() {
                             ))}
                           </div>
                         )}
+
+                        {/* Staff Task Comments Section */}
+                        <div style={{
+                          background: 'rgba(0, 0, 0, 0.25)',
+                          borderRadius: '10px',
+                          padding: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700, color: '#94a3b8' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#60a5fa' }}>chat_bubble_outline</span>
+                            Comments ({Array.isArray(task.checklist?.comments) ? task.checklist.comments.length : 0})
+                          </div>
+
+                          {Array.isArray(task.checklist?.comments) && task.checklist.comments.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
+                              {task.checklist.comments.map((cm: any) => (
+                                <div key={cm.id || Math.random()} style={{
+                                  background: 'rgba(15, 23, 42, 0.6)',
+                                  borderRadius: '8px',
+                                  padding: '6px 8px',
+                                  fontSize: '11.5px',
+                                  border: '1px solid rgba(255,255,255,0.05)'
+                                }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                    <strong style={{ color: '#38bdf8' }}>{cm.author || 'Staff'}</strong>
+                                    {cm.createdAt && <span style={{ color: '#64748b', fontSize: '10px' }}>{new Date(cm.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                                  </div>
+                                  <div style={{ color: '#cbd5e1' }}>{cm.text}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Add Comment Input */}
+                          <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
+                            <input
+                              type="text"
+                              value={taskCommentInputs[task.id] || ''}
+                              onChange={e => setTaskCommentInputs(prev => ({ ...prev, [task.id]: e.target.value }))}
+                              placeholder="Write a comment / update..."
+                              className="input"
+                              style={{
+                                flex: 1,
+                                fontSize: '11.5px',
+                                padding: '6px 10px',
+                                height: 'auto',
+                                borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)'
+                              }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleAddTaskComment(task.id);
+                              }}
+                            />
+                            <button
+                              onClick={() => handleAddTaskComment(task.id)}
+                              disabled={isSubmittingTaskComment[task.id] || !(taskCommentInputs[task.id] || '').trim()}
+                              className="btn"
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                borderRadius: '8px',
+                                background: '#3b82f6',
+                                color: '#ffffff',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>send</span>
+                              Post
+                            </button>
+                          </div>
+                        </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                           <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
@@ -1810,7 +1969,277 @@ export default function StaffPortalPage() {
               {payroll.length === 0 && <div style={{ color: '#94a3b8' }}>No salary records.</div>}
             </div>
           )}
+
+          {/* TAB 6: FINES & PENALTIES */}
+          {activeTab === 'FINES' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Fines Header Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.15) 0%, rgba(30, 41, 59, 0.85) 100%)',
+                border: '1px solid rgba(225, 29, 72, 0.35)',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '52px',
+                      height: '52px',
+                      borderRadius: '14px',
+                      background: 'rgba(225, 29, 72, 0.2)',
+                      border: '1px solid rgba(225, 29, 72, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fb7185',
+                      fontSize: '28px'
+                    }}>
+                      <span className="material-symbols-outlined">gavel</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#fb7185', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Active Penalties Total
+                      </div>
+                      <div style={{ fontSize: '28px', fontWeight: 800, color: '#f8fafc' }}>
+                        ৳ {fines.filter(f => f.status !== 'CANCELLED').reduce((sum, f) => sum + Number(f.amount || 0), 0).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', color: '#fbbf24', textTransform: 'uppercase', fontWeight: 600 }}>Pending</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#f8fafc' }}>
+                        {fines.filter(f => f.status === 'PENDING').length}
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 600 }}>In Review</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#f8fafc' }}>
+                        {fines.filter(f => f.status === 'CONSIDERATION_REQUESTED').length}
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', color: '#34d399', textTransform: 'uppercase', fontWeight: 600 }}>Waived</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#f8fafc' }}>
+                        {fines.filter(f => f.status === 'CANCELLED').length}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fines List */}
+              <div className="glass-card" style={{ padding: '24px', borderRadius: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>My Disciplinary Fines ({fines.length})</h2>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>Click any fine to request consideration</span>
+                </div>
+
+                {fines.length === 0 ? (
+                  <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '40px', color: '#34d399', display: 'block', marginBottom: '8px' }}>check_circle</span>
+                    No penalty fines or disciplinary deductions recorded.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {fines.map(fine => {
+                      const isUnderReview = fine.status === 'CONSIDERATION_REQUESTED';
+                      const isCancelled = fine.status === 'CANCELLED';
+
+                      return (
+                        <div
+                          key={fine.id}
+                          onClick={() => {
+                            if (!isCancelled) {
+                              setConsiderationNote(fine.appealReason || '');
+                              setSelectedFineForConsideration(fine);
+                            }
+                          }}
+                          style={{
+                            padding: '16px 20px',
+                            background: isUnderReview ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255,255,255,0.02)',
+                            borderRadius: '12px',
+                            border: isUnderReview ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255,255,255,0.06)',
+                            cursor: isCancelled ? 'default' : 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span style={{
+                                fontSize: '20px',
+                                fontWeight: 800,
+                                color: isCancelled ? '#34d399' : '#fb7185'
+                              }}>
+                                ৳ {Number(fine.amount).toLocaleString()}
+                              </span>
+                              {fine.date && (
+                                <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
+                                  • {new Date(fine.date).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+
+                            <span style={{
+                              fontSize: '11.5px',
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              fontWeight: 700,
+                              background: isCancelled ? 'rgba(52, 211, 153, 0.2)' : isUnderReview ? 'rgba(56, 189, 248, 0.2)' : fine.status === 'DEDUCTED' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(251, 191, 36, 0.2)',
+                              color: isCancelled ? '#34d399' : isUnderReview ? '#38bdf8' : fine.status === 'DEDUCTED' ? '#cbd5e1' : '#fbbf24',
+                              border: isCancelled ? '1px solid rgba(52, 211, 153, 0.4)' : isUnderReview ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(251, 191, 36, 0.4)'
+                            }}>
+                              {isCancelled ? 'WAIVED' : isUnderReview ? 'UNDER REVIEW' : fine.status || 'PENDING'}
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '13.5px', color: '#e2e8f0', lineHeight: 1.5 }}>
+                            {fine.reason}
+                          </div>
+
+                          {fine.appealReason && (
+                            <div style={{
+                              background: 'rgba(0, 0, 0, 0.3)',
+                              borderRadius: '8px',
+                              padding: '8px 12px',
+                              fontSize: '12px',
+                              border: '1px solid rgba(56, 189, 248, 0.25)',
+                              color: '#93c5fd'
+                            }}>
+                              <strong>Your Consideration Request:</strong> {fine.appealReason}
+                            </div>
+                          )}
+
+                          {!isCancelled && (
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConsiderationNote(fine.appealReason || '');
+                                  setSelectedFineForConsideration(fine);
+                                }}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: isUnderReview ? '#38bdf8' : '#fbbf24',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                  {isUnderReview ? 'edit_note' : 'help_outline'}
+                                </span>
+                                {isUnderReview ? 'Update Consideration Request' : 'Request Consideration'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* MODAL: REQUEST FINE CONSIDERATION */}
+        {selectedFineForConsideration && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <div className="glass-card" style={{
+              width: '100%',
+              maxWidth: '500px',
+              padding: '24px',
+              borderRadius: '16px',
+              background: '#1e293b',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#fbbf24' }}>feedback</span>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Request Fine Consideration</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedFineForConsideration(null)}
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '20px' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(225, 29, 72, 0.1)', border: '1px solid rgba(225, 29, 72, 0.25)', borderRadius: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>Fine Amount:</span>
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: '#fb7185' }}>৳ {Number(selectedFineForConsideration.amount).toLocaleString()}</span>
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#e2e8f0' }}>{selectedFineForConsideration.reason}</div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                <label style={{ fontSize: '12.5px', color: '#cbd5e1', fontWeight: 600 }}>
+                  Reason / Explanation for Consideration Request:
+                </label>
+                <textarea
+                  rows={4}
+                  value={considerationNote}
+                  onChange={e => setConsiderationNote(e.target.value)}
+                  placeholder="Explain why this fine should be reviewed or considered (e.g., unexpected traffic delay, medical emergency, technical check-in error, approved permission)..."
+                  className="input"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFineForConsideration(null)}
+                  className="btn"
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#cbd5e1' }}
+                  disabled={isSubmittingConsideration}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSubmitFineConsideration(selectedFineForConsideration.id)}
+                  className="btn"
+                  style={{ background: '#f59e0b', color: '#0f172a', fontWeight: 700 }}
+                  disabled={isSubmittingConsideration || !considerationNote.trim()}
+                >
+                  {isSubmittingConsideration ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* MODAL: STAFF RETURN PRODUCT HANDOVER */}
         {isProductManager && returnModalProduct && (

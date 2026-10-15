@@ -46,6 +46,9 @@ class ShohojStaffApp : Application() {
     lateinit var productRepository: ProductRepository
         private set
 
+    lateinit var fineRepository: FineRepository
+        private set
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var livePollerJob: Job? = null
 
@@ -65,6 +68,7 @@ class ShohojStaffApp : Application() {
         communityRepository = CommunityRepository(apiClient)
         appUpdateRepository = AppUpdateRepository(apiClient, sessionManager, this)
         productRepository = ProductRepository(apiClient, sessionManager)
+        fineRepository = FineRepository(apiClient, sessionManager)
 
         // Initialize system notification channels (Tasks, Notices, Chat)
         SoundNotificationHelper.initNotificationChannels(this)

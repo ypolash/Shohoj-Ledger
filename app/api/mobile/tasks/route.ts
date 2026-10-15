@@ -17,11 +17,12 @@ function normalizeChecklist(raw: any) {
     }
   }
   if (Array.isArray(parsed)) {
-    return { type: "CHECKLIST", items: parsed };
+    return { type: "CHECKLIST", items: parsed, comments: [] };
   }
   if (parsed && typeof parsed === "object") {
     const items = Array.isArray(parsed.items) ? parsed.items : (Array.isArray(parsed.todos) ? parsed.todos : []);
-    return { ...parsed, type: parsed.type || "CHECKLIST", items };
+    const comments = Array.isArray(parsed.comments) ? parsed.comments : [];
+    return { ...parsed, type: parsed.type || "CHECKLIST", items, comments };
   }
   return null;
 }

@@ -116,6 +116,31 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addComment(taskId: String, commentText: String) {
+        if (commentText.isBlank()) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(updatingTaskId = taskId, error = null)
+            val result = taskRepo.addTaskComment(taskId, commentText.trim())
+
+            result.fold(
+                onSuccess = { updated ->
+                    val newList = _uiState.value.tasks.map { if (it.id == taskId) updated else it }
+                    _uiState.value = _uiState.value.copy(
+                        updatingTaskId = null,
+                        tasks = newList,
+                        successMessage = "Comment added successfully"
+                    )
+                },
+                onFailure = { ex ->
+                    _uiState.value = _uiState.value.copy(
+                        updatingTaskId = null,
+                        error = ex.localizedMessage ?: "Failed to post comment"
+                    )
+                }
+            )
+        }
+    }
+
     fun clearFeedback() {
         _uiState.value = _uiState.value.copy(successMessage = null, error = null)
     }

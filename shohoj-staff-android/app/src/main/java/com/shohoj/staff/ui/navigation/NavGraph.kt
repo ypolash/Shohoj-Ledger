@@ -10,6 +10,7 @@ import com.shohoj.staff.ui.screens.announcements.AnnouncementScreen
 import com.shohoj.staff.ui.screens.attendance.AttendanceScreen
 import com.shohoj.staff.ui.screens.community.CommunityChannelsScreen
 import com.shohoj.staff.ui.screens.community.CommunityChatScreen
+import com.shohoj.staff.ui.screens.fines.FineScreen
 import com.shohoj.staff.ui.screens.home.HomeScreen
 import com.shohoj.staff.ui.screens.leave.LeaveScreen
 import com.shohoj.staff.ui.screens.login.LoginScreen
@@ -150,6 +151,20 @@ fun ShohojNavGraph(
                         popUpTo(Screen.Home.route)
                         launchSingleTop = true
                     }
+                }
+            )
+        }
+
+        composable(Screen.Fines.route) {
+            FineScreen(
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(Screen.Home.route)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

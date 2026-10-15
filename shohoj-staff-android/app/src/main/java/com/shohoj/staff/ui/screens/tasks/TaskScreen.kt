@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shohoj.staff.data.model.TaskCommentItem
 import com.shohoj.staff.ui.components.*
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
@@ -387,6 +388,15 @@ fun TaskScreen(
                                     }
                                 }
 
+                                // Staff Comments Section
+                                TaskCommentsSection(
+                                    comments = task.checklist?.comments ?: emptyList(),
+                                    isSpecialTask = true,
+                                    onAddComment = { commentText ->
+                                        viewModel.addComment(task.id, commentText)
+                                    }
+                                )
+
                                 Divider(color = Amber500.copy(alpha = 0.25f), thickness = 0.5.dp)
 
                                 // Special Task Footer: Due Date, Touch-Protection Notice & Claim Status
@@ -633,6 +643,15 @@ fun TaskScreen(
                                     }
                                 }
 
+                                // Staff Comments Section
+                                TaskCommentsSection(
+                                    comments = task.checklist?.comments ?: emptyList(),
+                                    isSpecialTask = false,
+                                    onAddComment = { commentText ->
+                                        viewModel.addComment(task.id, commentText)
+                                    }
+                                )
+
                                 Divider(color = Slate700, thickness = 0.5.dp)
 
                                 Row(
@@ -688,3 +707,207 @@ fun TaskScreen(
         }
     }
 }
+
+@Composable
+fun TaskCommentsSection(
+    comments: List<TaskCommentItem>,
+    isSpecialTask: Boolean = false,
+    onAddComment: (String) -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(comments.isNotEmpty()) }
+    var commentInput by remember { mutableStateOf("") }
+    var showInputField by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (isSpecialTask) Color(0xFF161005) else Slate900.copy(alpha = 0.6f),
+                RoundedCornerShape(10.dp)
+            )
+            .border(
+                1.dp,
+                if (isSpecialTask) Amber500.copy(alpha = 0.25f) else Slate700.copy(alpha = 0.5f),
+                RoundedCornerShape(10.dp)
+            )
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Comments Header with expand/collapse toggle and "Add Comment" button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.clickable { isExpanded = !isExpanded }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChatBubbleOutline,
+                    contentDescription = null,
+                    tint = if (isSpecialTask) Amber400 else Cyan400,
+                    modifier = Modifier.size(15.dp)
+                )
+                Text(
+                    text = "Staff Comments (${comments.size})",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSpecialTask) Amber300 else Slate200,
+                        fontSize = 12.sp
+                    )
+                )
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Slate400,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            if (!showInputField) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSpecialTask) Amber500.copy(alpha = 0.15f) else Cyan500.copy(alpha = 0.15f))
+                        .clickable {
+                            showInputField = true
+                            isExpanded = true
+                        }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AddComment,
+                        contentDescription = "Add Comment",
+                        tint = if (isSpecialTask) Amber400 else Cyan400,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Text(
+                        text = "Add Comment",
+                        color = if (isSpecialTask) Amber300 else Cyan300,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        if (isExpanded) {
+            // Existing comments list
+            if (comments.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    comments.forEach { comment ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Slate950.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .border(0.5.dp, Slate800, RoundedCornerShape(8.dp))
+                                .padding(8.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = comment.author.ifBlank { "Staff" },
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.5.sp,
+                                        color = if (isSpecialTask) Amber300 else Emerald400
+                                    )
+                                    if (comment.createdAt.isNotBlank()) {
+                                        Text(
+                                            text = DateUtils.formatDate(comment.createdAt),
+                                            fontSize = 10.sp,
+                                            color = Slate500
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = comment.text,
+                                    fontSize = 12.sp,
+                                    color = Slate200,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (!showInputField) {
+                Text(
+                    text = "No comments yet. Tap 'Add Comment' to share updates.",
+                    fontSize = 11.sp,
+                    color = Slate500
+                )
+            }
+
+            // Comment Input Field
+            if (showInputField) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedTextField(
+                        value = commentInput,
+                        onValueChange = { commentInput = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = {
+                            Text(
+                                text = "Write a staff comment / update...",
+                                fontSize = 12.sp,
+                                color = Slate500
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = if (isSpecialTask) Amber400 else Cyan400,
+                            unfocusedBorderColor = Slate700,
+                            focusedTextColor = Slate100,
+                            unfocusedTextColor = Slate200,
+                            cursorColor = if (isSpecialTask) Amber400 else Cyan400
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        maxLines = 3
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showInputField = false
+                                commentInput = ""
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text("Cancel", fontSize = 11.5.sp, color = Slate400)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Button(
+                            onClick = {
+                                if (commentInput.isNotBlank()) {
+                                    onAddComment(commentInput.trim())
+                                    commentInput = ""
+                                    showInputField = false
+                                }
+                            },
+                            enabled = commentInput.isNotBlank(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSpecialTask) Amber500 else Cyan500,
+                                contentColor = Slate950
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Send, contentDescription = "Send", modifier = Modifier.size(13.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Post", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

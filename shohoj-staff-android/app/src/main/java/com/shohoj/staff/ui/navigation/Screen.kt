@@ -11,6 +11,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object Community : Screen("community")
     object Products : Screen("products")
+    object Fines : Screen("fines")
     object Chat : Screen("chat/{channelId}/{channelName}/{channelType}") {
         fun createRoute(channelId: String, channelName: String, channelType: String): String {
             val encodedName = java.net.URLEncoder.encode(channelName, "UTF-8")

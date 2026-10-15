@@ -24,7 +24,10 @@ import {
   FolderOpen,
   Sparkles,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Camera,
+  Video,
+  Laptop
 } from 'lucide-react';
 import { BillItem } from '@/app/api/finance/bills/route';
 
@@ -34,6 +37,7 @@ export default function BillsDuePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'PAYABLE' | 'RECEIVABLE'>('ALL');
+  const [talentFilter, setTalentFilter] = useState<'ALL' | 'MODEL' | 'FREELANCE' | 'VENDOR'>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -88,11 +92,31 @@ export default function BillsDuePage() {
     let totalReceivableDue = 0;
     let payableCount = 0;
     let receivableCount = 0;
+    let modelCount = 0;
+    let modelDue = 0;
+    let freelanceCount = 0;
+    let freelanceDue = 0;
+    let vendorCount = 0;
+    let vendorDue = 0;
 
     bills.forEach((b) => {
+      const isModel = b.talentType === 'MODEL' || b.category.toLowerCase().includes('model');
+      const isFreelance = b.talentType === 'EDITOR' || b.category.toLowerCase().includes('editor') || b.category.toLowerCase().includes('freelance');
+
       if (b.type === "PAYABLE") {
         totalPayableDue += b.dueAmount;
         payableCount++;
+
+        if (isModel) {
+          modelCount++;
+          modelDue += b.dueAmount;
+        } else if (isFreelance) {
+          freelanceCount++;
+          freelanceDue += b.dueAmount;
+        } else {
+          vendorCount++;
+          vendorDue += b.dueAmount;
+        }
       } else {
         totalReceivableDue += b.dueAmount;
         receivableCount++;
@@ -105,6 +129,12 @@ export default function BillsDuePage() {
       totalDue: totalPayableDue + totalReceivableDue,
       payableCount,
       receivableCount,
+      modelCount,
+      modelDue,
+      freelanceCount,
+      freelanceDue,
+      vendorCount,
+      vendorDue,
       totalCount: bills.length
     };
   }, [bills]);
@@ -129,6 +159,16 @@ export default function BillsDuePage() {
       const matchesType =
         typeFilter === "ALL" || b.type === typeFilter;
 
+      const isModel = b.talentType === 'MODEL' || b.category.toLowerCase().includes('model');
+      const isFreelance = b.talentType === 'EDITOR' || b.category.toLowerCase().includes('editor') || b.category.toLowerCase().includes('freelance');
+      const isVendor = !isModel && !isFreelance && b.type === 'PAYABLE';
+
+      const matchesTalent =
+        talentFilter === "ALL" ||
+        (talentFilter === "MODEL" && isModel) ||
+        (talentFilter === "FREELANCE" && isFreelance) ||
+        (talentFilter === "VENDOR" && isVendor);
+
       const matchesStatus =
         statusFilter === "ALL" ||
         (statusFilter === "PENDING" && b.status !== "PAID") ||
@@ -137,9 +177,9 @@ export default function BillsDuePage() {
       const matchesCategory =
         categoryFilter === "ALL" || b.category === categoryFilter;
 
-      return matchesSearch && matchesType && matchesStatus && matchesCategory;
+      return matchesSearch && matchesType && matchesTalent && matchesStatus && matchesCategory;
     });
-  }, [bills, searchQuery, typeFilter, statusFilter, categoryFilter]);
+  }, [bills, searchQuery, typeFilter, talentFilter, statusFilter, categoryFilter]);
 
   const handleCreateBill = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,16 +483,16 @@ export default function BillsDuePage() {
 
       {/* Filter & Search Bar */}
       <div className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-        {/* Type Filter Pills */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {/* Type & Talent Filter Pills */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
-            onClick={() => setTypeFilter('ALL')}
+            onClick={() => { setTypeFilter('ALL'); setTalentFilter('ALL'); }}
             style={{
               padding: '6px 14px',
               borderRadius: '8px',
-              border: typeFilter === 'ALL' ? '1px solid #3b82f6' : '1px solid var(--border-light)',
-              background: typeFilter === 'ALL' ? 'rgba(59, 130, 246, 0.2)' : 'var(--surface-hover)',
-              color: typeFilter === 'ALL' ? '#60a5fa' : 'var(--text-muted)',
+              border: (typeFilter === 'ALL' && talentFilter === 'ALL') ? '1px solid #3b82f6' : '1px solid var(--border-light)',
+              background: (typeFilter === 'ALL' && talentFilter === 'ALL') ? 'rgba(59, 130, 246, 0.2)' : 'var(--surface-hover)',
+              color: (typeFilter === 'ALL' && talentFilter === 'ALL') ? '#60a5fa' : 'var(--text-muted)',
               fontSize: '12px',
               fontWeight: 700,
               cursor: 'pointer'
@@ -460,23 +500,73 @@ export default function BillsDuePage() {
           >
             All Dues ({kpis.totalCount})
           </button>
+
           <button
-            onClick={() => setTypeFilter('PAYABLE')}
+            onClick={() => { setTypeFilter('PAYABLE'); setTalentFilter('ALL'); }}
             style={{
               padding: '6px 14px',
               borderRadius: '8px',
-              border: typeFilter === 'PAYABLE' ? '1px solid #2563eb' : '1px solid var(--border-light)',
-              background: typeFilter === 'PAYABLE' ? 'rgba(37, 99, 235, 0.25)' : 'var(--surface-hover)',
-              color: typeFilter === 'PAYABLE' ? '#3b82f6' : 'var(--text-muted)',
+              border: (typeFilter === 'PAYABLE' && talentFilter === 'ALL') ? '1px solid #2563eb' : '1px solid var(--border-light)',
+              background: (typeFilter === 'PAYABLE' && talentFilter === 'ALL') ? 'rgba(37, 99, 235, 0.25)' : 'var(--surface-hover)',
+              color: (typeFilter === 'PAYABLE' && talentFilter === 'ALL') ? '#3b82f6' : 'var(--text-muted)',
               fontSize: '12px',
               fontWeight: 700,
               cursor: 'pointer'
             }}
           >
-            Payable by Us (Blue: {kpis.payableCount})
+            All Payables (Blue: {kpis.payableCount})
           </button>
+
+          {/* Model Due Pill */}
           <button
-            onClick={() => setTypeFilter('RECEIVABLE')}
+            onClick={() => { setTypeFilter('PAYABLE'); setTalentFilter(talentFilter === 'MODEL' ? 'ALL' : 'MODEL'); }}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: talentFilter === 'MODEL' ? '1px solid #ec4899' : '1px solid var(--border-light)',
+              background: talentFilter === 'MODEL' ? 'rgba(236, 72, 153, 0.25)' : 'var(--surface-hover)',
+              color: talentFilter === 'MODEL' ? '#f472b6' : 'var(--text-muted)',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Camera size={13} color={talentFilter === 'MODEL' ? '#f472b6' : '#94a3b8'} />
+            <span>Model Due ({kpis.modelCount})</span>
+            {kpis.modelDue > 0 && (
+              <span style={{ fontSize: '11px', opacity: 0.85 }}>• ৳{kpis.modelDue.toLocaleString()}</span>
+            )}
+          </button>
+
+          {/* Freelance Due Pill */}
+          <button
+            onClick={() => { setTypeFilter('PAYABLE'); setTalentFilter(talentFilter === 'FREELANCE' ? 'ALL' : 'FREELANCE'); }}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: talentFilter === 'FREELANCE' ? '1px solid #06b6d4' : '1px solid var(--border-light)',
+              background: talentFilter === 'FREELANCE' ? 'rgba(6, 182, 212, 0.25)' : 'var(--surface-hover)',
+              color: talentFilter === 'FREELANCE' ? '#38bdf8' : 'var(--text-muted)',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Laptop size={13} color={talentFilter === 'FREELANCE' ? '#38bdf8' : '#94a3b8'} />
+            <span>Freelance Due ({kpis.freelanceCount})</span>
+            {kpis.freelanceDue > 0 && (
+              <span style={{ fontSize: '11px', opacity: 0.85 }}>• ৳{kpis.freelanceDue.toLocaleString()}</span>
+            )}
+          </button>
+
+          <button
+            onClick={() => { setTypeFilter('RECEIVABLE'); setTalentFilter('ALL'); }}
             style={{
               padding: '6px 14px',
               borderRadius: '8px',
@@ -514,6 +604,27 @@ export default function BillsDuePage() {
               }}
             />
           </div>
+
+          {/* Category Dropdown */}
+          <select 
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-light)',
+              background: 'var(--surface-hover)',
+              color: 'var(--text-main)',
+              fontSize: '13px',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="ALL">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
 
           <select 
             value={statusFilter}
@@ -610,17 +721,49 @@ export default function BillsDuePage() {
                     {/* Type & Category */}
                     <td style={{ padding: '16px 20px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                        <span style={{ 
-                          padding: '3px 8px', 
-                          borderRadius: '6px', 
-                          background: isPayable ? 'rgba(37, 99, 235, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
-                          border: `1px solid ${isPayable ? 'rgba(37, 99, 235, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
-                          fontSize: '11px', 
-                          fontWeight: 700, 
-                          color: isPayable ? '#3b82f6' : '#ef4444' 
-                        }}>
-                          {isPayable ? '💳 Payable (Liability)' : '📥 Receivable (Asset)'}
-                        </span>
+                        {bill.talentType === 'MODEL' ? (
+                          <span style={{ 
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            background: 'rgba(236, 72, 153, 0.15)', 
+                            border: '1px solid rgba(236, 72, 153, 0.4)',
+                            fontSize: '11px', 
+                            fontWeight: 700, 
+                            color: '#f472b6',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <Camera size={11} /> Model Due
+                          </span>
+                        ) : bill.talentType === 'EDITOR' || bill.category.toLowerCase().includes('editor') || bill.category.toLowerCase().includes('freelance') ? (
+                          <span style={{ 
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            background: 'rgba(6, 182, 212, 0.15)', 
+                            border: '1px solid rgba(6, 182, 212, 0.4)',
+                            fontSize: '11px', 
+                            fontWeight: 700, 
+                            color: '#38bdf8',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <Laptop size={11} /> Freelance Due
+                          </span>
+                        ) : (
+                          <span style={{ 
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            background: isPayable ? 'rgba(37, 99, 235, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+                            border: `1px solid ${isPayable ? 'rgba(37, 99, 235, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                            fontSize: '11px', 
+                            fontWeight: 700, 
+                            color: isPayable ? '#3b82f6' : '#ef4444' 
+                          }}>
+                            {isPayable ? '💳 Payable (Liability)' : '📥 Receivable (Asset)'}
+                          </span>
+                        )}
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                           {bill.category}
                         </span>

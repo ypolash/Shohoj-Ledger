@@ -1022,3 +1022,250 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* --------------------------------------------------------------------------
+   Export Dropdown Menu & Profile Action
+   -------------------------------------------------------------------------- */
+.exportDropdownWrapper {
+  position: relative;
+}
+
+.exportDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: modalScale 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exportMenuItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: var(--text-main, #0f172a);
+  transition: all 0.15s ease;
+}
+
+.exportMenuItem:hover {
+  background: var(--surface-hover, #f8fafc);
+  transform: translateX(2px);
+}
+
+.exportMenuItemIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface-hover, #f1f5f9);
+  color: var(--text-main, #0f172a);
+}
+
+.exportMenuItemTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  margin-bottom: 2px;
+}
+
+.exportMenuItemDesc {
+  font-size: 11px;
+  color: var(--text-muted, #64748b);
+  line-height: 1.35;
+}
+
+.headerIconBtnWithBadge {
+  position: relative;
+}
+
+.headerIconBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #f43f5e;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--surface-card, #ffffff);
+}
+
+/* --------------------------------------------------------------------------
+   Large Employee Profiles Modal
+   -------------------------------------------------------------------------- */
+.modalBoxLarge {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  width: 100%;
+  max-width: 980px;
+  max-height: 90vh;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeaderLarge {
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.modalLargeBody {
+  padding: 20px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+}
+
+.profileStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.profileStatCard {
+  background: var(--surface-hover, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profileStatLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+}
+
+.profileStatValue {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main, #0f172a);
+}
+
+.profileControlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profileCardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summaryEmpCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.summaryEmpCard:hover {
+  border-color: rgba(244, 63, 94, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.summaryEmpMainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.summaryAmountGroup {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.summaryBreakdownPills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.summaryPill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.summaryHistoryBox {
+  background: var(--surface-hover, #f8fafc);
+  border: 1px solid var(--border-main, #e2e8f0);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.clickableProfile {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px;
+  margin: -4px;
+  transition: all 0.15s ease;
+}
+
+.clickableProfile:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.05));
+}
+
+.clickableProfile:hover .empName {
+  color: #f43f5e;
+}
+

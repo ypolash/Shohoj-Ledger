@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import styles from './fines.module.css';
 
 interface EmployeeFine {
@@ -30,6 +30,25 @@ interface Employee {
   lastName: string;
   employeeId?: string;
   designation?: string;
+  department?: string;
+  departmentRef?: { name: string };
+  designationRef?: { name: string };
+}
+
+interface EmployeeFineSummary {
+  employeeId: string;
+  employeeCode: string;
+  name: string;
+  designation: string;
+  department: string;
+  totalCount: number;
+  totalAmount: number;
+  pendingAmount: number;
+  deductedAmount: number;
+  cancelledAmount: number;
+  lateCount: number;
+  otherCount: number;
+  fines: EmployeeFine[];
 }
 
 const EMPTY_FORM = {
@@ -85,12 +104,31 @@ export default function FinesPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showPolicy, setShowPolicy] = useState(true);
 
-  // Modal State
+  // Modal & Profile States
   const [showModal, setShowModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [profileSearch, setProfileSearch] = useState('');
+  const [profileFilter, setProfileFilter] = useState<'PENALIZED' | 'PENDING' | 'DEDUCTED' | 'ALL'>('PENALIZED');
+  const [profileSort, setProfileSort] = useState<'amount_desc' | 'amount_asc' | 'count_desc' | 'name_asc'>('amount_desc');
+  const [expandedEmpId, setExpandedEmpId] = useState<string | null>(null);
   const [newFine, setNewFine] = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close export dropdown when clicking outside
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportMenu]);
 
   // Map employee IDs
   const employeeMap = useMemo(() => {
@@ -304,7 +342,117 @@ export default function FinesPage() {
     setEmployeeFilter('ALL');
   };
 
-  // Export CSV
+  // Aggregate per-employee fine profiles
+  const employeeSummaries = useMemo<EmployeeFineSummary[]>(() => {
+    const map = new Map<string, EmployeeFineSummary>();
+
+    employees.forEach(emp => {
+      const designation = emp.designationRef?.name || emp.designation || 'Staff';
+      const department = emp.departmentRef?.name || emp.department || 'General';
+      const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unknown Staff';
+      const code = emp.employeeId || emp.id.slice(0, 8);
+
+      map.set(emp.id, {
+        employeeId: emp.id,
+        employeeCode: code,
+        name: fullName,
+        designation,
+        department,
+        totalCount: 0,
+        totalAmount: 0,
+        pendingAmount: 0,
+        deductedAmount: 0,
+        cancelledAmount: 0,
+        lateCount: 0,
+        otherCount: 0,
+        fines: [],
+      });
+    });
+
+    fines.forEach(f => {
+      let summary = map.get(f.employeeId);
+      if (!summary) {
+        const emp = f.employee;
+        const fullName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : `Employee #${f.employeeId.slice(0, 8)}`;
+        const code = emp?.employeeId || f.employeeId.slice(0, 8);
+        const designation = emp?.designation || 'Staff';
+
+        summary = {
+          employeeId: f.employeeId,
+          employeeCode: code,
+          name: fullName,
+          designation,
+          department: 'General',
+          totalCount: 0,
+          totalAmount: 0,
+          pendingAmount: 0,
+          deductedAmount: 0,
+          cancelledAmount: 0,
+          lateCount: 0,
+          otherCount: 0,
+          fines: [],
+        };
+        map.set(f.employeeId, summary);
+      }
+
+      const amt = Number(f.amount) || 0;
+      summary.totalCount += 1;
+      summary.totalAmount += amt;
+      summary.fines.push(f);
+
+      if (f.status === 'PENDING') {
+        summary.pendingAmount += amt;
+      } else if (f.status === 'DEDUCTED') {
+        summary.deductedAmount += amt;
+      } else if (f.status === 'CANCELLED') {
+        summary.cancelledAmount += amt;
+      }
+
+      const isLate = (f.reason || '').toLowerCase().includes('late');
+      if (isLate) {
+        summary.lateCount += 1;
+      } else {
+        summary.otherCount += 1;
+      }
+    });
+
+    return Array.from(map.values());
+  }, [employees, fines]);
+
+  const penalizedStaffList = useMemo(() => {
+    return employeeSummaries.filter(e => e.totalCount > 0);
+  }, [employeeSummaries]);
+
+  const penalizedEmployeesCount = penalizedStaffList.length;
+
+  const filteredSummaries = useMemo(() => {
+    return employeeSummaries
+      .filter(emp => {
+        if (profileFilter === 'PENALIZED' && emp.totalCount === 0) return false;
+        if (profileFilter === 'PENDING' && emp.pendingAmount === 0) return false;
+        if (profileFilter === 'DEDUCTED' && emp.deductedAmount === 0) return false;
+
+        if (profileSearch.trim()) {
+          const q = profileSearch.toLowerCase();
+          const match =
+            emp.name.toLowerCase().includes(q) ||
+            emp.employeeCode.toLowerCase().includes(q) ||
+            emp.designation.toLowerCase().includes(q) ||
+            emp.department.toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (profileSort === 'amount_desc') return b.totalAmount - a.totalAmount;
+        if (profileSort === 'amount_asc') return a.totalAmount - b.totalAmount;
+        if (profileSort === 'count_desc') return b.totalCount - a.totalCount;
+        if (profileSort === 'name_asc') return a.name.localeCompare(b.name);
+        return 0;
+      });
+  }, [employeeSummaries, profileFilter, profileSearch, profileSort]);
+
+  // Export Detailed Fines Log CSV
   const handleExportCSV = () => {
     if (filteredFines.length === 0) return;
     const headers = [
@@ -346,6 +494,53 @@ export default function FinesPage() {
     document.body.removeChild(link);
   };
 
+  // Export Employee Profiles Summary CSV
+  const handleExportEmployeeProfilesCSV = (listToExport?: EmployeeFineSummary[]) => {
+    const list = listToExport || employeeSummaries.filter(e => e.totalCount > 0);
+    if (list.length === 0) {
+      alert('No employee fine profiles available to export.');
+      return;
+    }
+    const headers = [
+      'Employee ID',
+      'Employee Name',
+      'Designation',
+      'Department',
+      'Total Penalties',
+      'Total Fine Amount (BDT)',
+      'Pending Amount (BDT)',
+      'Deducted Amount (BDT)',
+      'Waived Amount (BDT)',
+      'Late Fines Count',
+      'Other Fines Count',
+    ];
+
+    const rows = list.map(item => [
+      item.employeeCode || '',
+      item.name,
+      item.designation || 'Staff',
+      item.department || 'General',
+      item.totalCount,
+      item.totalAmount.toFixed(2),
+      item.pendingAmount.toFixed(2),
+      item.deductedAmount.toFixed(2),
+      item.cancelledAmount.toFixed(2),
+      item.lateCount,
+      item.otherCount,
+    ]);
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `employee_fines_profile_summary_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getStatusChipClass = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -371,14 +566,86 @@ export default function FinesPage() {
         </div>
 
         <div className={styles.headerActions}>
+          {/* Export CSV with Dropdown Options */}
+          <div className={styles.exportDropdownWrapper} ref={exportDropdownRef}>
+            <button
+              onClick={() => setShowExportMenu(prev => !prev)}
+              className={styles.headerIconBtn}
+              disabled={fines.length === 0}
+              title="Export CSV &amp; Summary Options"
+              aria-label="Export CSV Options"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
+            </button>
+
+            {showExportMenu && (
+              <div className={styles.exportDropdownMenu}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExportCSV();
+                    setShowExportMenu(false);
+                  }}
+                  className={styles.exportMenuItem}
+                >
+                  <div className={styles.exportMenuItemIcon} style={{ color: '#2563eb', background: 'rgba(37, 99, 235, 0.1)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>receipt_long</span>
+                  </div>
+                  <div>
+                    <div className={styles.exportMenuItemTitle}>Detailed Fines Log (.csv)</div>
+                    <div className={styles.exportMenuItemDesc}>Export all individual penalty records with dates, reasons, and amounts.</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExportEmployeeProfilesCSV();
+                    setShowExportMenu(false);
+                  }}
+                  className={styles.exportMenuItem}
+                >
+                  <div className={styles.exportMenuItemIcon} style={{ color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>badge</span>
+                  </div>
+                  <div>
+                    <div className={styles.exportMenuItemTitle}>Employee Fine Profiles (.csv)</div>
+                    <div className={styles.exportMenuItemDesc}>Export per-employee totals showing how much fines each employee got.</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    setShowProfileModal(true);
+                  }}
+                  className={styles.exportMenuItem}
+                  style={{ borderTop: '1px solid var(--border-main, #e2e8f0)', marginTop: '4px', paddingTop: '8px' }}
+                >
+                  <div className={styles.exportMenuItemIcon} style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>contacts</span>
+                  </div>
+                  <div>
+                    <div className={styles.exportMenuItemTitle}>Open Employee Profiles View</div>
+                    <div className={styles.exportMenuItemDesc}>View interactive breakdown modal of employee fines &amp; totals.</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Employee Fine Profiles Icon Button */}
           <button
-            onClick={handleExportCSV}
-            className={styles.headerIconBtn}
-            disabled={fines.length === 0}
-            title="Export CSV"
-            aria-label="Export CSV"
+            onClick={() => setShowProfileModal(true)}
+            className={`${styles.headerIconBtn} ${styles.headerIconBtnWithBadge}`}
+            title="Employee Fine Profiles (How much fines each employee got)"
+            aria-label="Employee Fine Profiles"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>badge</span>
+            {penalizedEmployeesCount > 0 && (
+              <span className={styles.headerIconBadge}>{penalizedEmployeesCount}</span>
+            )}
           </button>
 
           <button
@@ -712,7 +979,16 @@ export default function FinesPage() {
 
                     {/* Employee */}
                     <td className={styles.tableCell}>
-                      <div className={styles.employeeProfileGroup}>
+                      <div
+                        className={`${styles.employeeProfileGroup} ${styles.clickableProfile}`}
+                        onClick={() => {
+                          setProfileSearch(emp?.firstName || '');
+                          setProfileFilter('ALL');
+                          setExpandedEmpId(f.employeeId);
+                          setShowProfileModal(true);
+                        }}
+                        title="Click to view employee fine profile &amp; summary"
+                      >
                         <div className={styles.empAvatar}>{initials}</div>
                         <div className={styles.empDetailsGroup}>
                           <span className={styles.empName}>{firstName} {lastName}</span>
@@ -850,7 +1126,16 @@ export default function FinesPage() {
               <div key={f.id} className={styles.fineCard}>
                 {/* Header */}
                 <div className={styles.cardTopRow}>
-                  <div className={styles.employeeProfileGroup}>
+                  <div
+                    className={`${styles.employeeProfileGroup} ${styles.clickableProfile}`}
+                    onClick={() => {
+                      setProfileSearch(emp?.firstName || '');
+                      setProfileFilter('ALL');
+                      setExpandedEmpId(f.employeeId);
+                      setShowProfileModal(true);
+                    }}
+                    title="Click to view employee fine profile &amp; summary"
+                  >
                     <div className={styles.empAvatar}>{initials}</div>
                     <div className={styles.empDetailsGroup}>
                       <span className={styles.empName}>{firstName} {lastName}</span>
@@ -1111,6 +1396,369 @@ export default function FinesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Employee Fine Profiles & Totals Modal */}
+      {showProfileModal && (
+        <div
+          className={styles.modalBackdrop}
+          onClick={e => {
+            if (e.target === e.currentTarget) setShowProfileModal(false);
+          }}
+        >
+          <div className={styles.modalBoxLarge}>
+            {/* Modal Header */}
+            <div className={styles.modalHeaderLarge}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  className={styles.kpiIconBox}
+                  style={{ background: 'rgba(244, 63, 94, 0.12)', color: '#f43f5e', width: '44px', height: '44px', borderRadius: '12px' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>badge</span>
+                </div>
+                <div>
+                  <h2 className={styles.modalTitle} style={{ fontSize: '19px' }}>
+                    Employee Disciplinary Profiles &amp; Fine Totals
+                  </h2>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Showing cumulative penalties &amp; deduction breakdown across {penalizedEmployeesCount} staff members
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* Export CSV inside Modal */}
+                <button
+                  type="button"
+                  onClick={() => handleExportEmployeeProfilesCSV(filteredSummaries)}
+                  className={styles.secondaryBtn}
+                  disabled={filteredSummaries.length === 0}
+                  title="Export this employee summary as CSV"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+                  Export CSV ({filteredSummaries.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(false)}
+                  className={styles.modalCloseBtn}
+                  title="Close modal"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className={styles.modalLargeBody}>
+              {/* Profile KPI Stat Grid */}
+              <div className={styles.profileStatsGrid}>
+                <div className={styles.profileStatCard}>
+                  <span className={styles.profileStatLabel}>Penalized Employees</span>
+                  <span className={styles.profileStatValue} style={{ color: '#f43f5e' }}>
+                    {penalizedEmployeesCount} <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>/ {employees.length} staff</span>
+                  </span>
+                </div>
+
+                <div className={styles.profileStatCard}>
+                  <span className={styles.profileStatLabel}>Total Fines Incurred</span>
+                  <span className={styles.profileStatValue} style={{ color: 'var(--text-main)' }}>
+                    {formatBDT(totalGrossAmount)}
+                  </span>
+                </div>
+
+                <div className={styles.profileStatCard}>
+                  <span className={styles.profileStatLabel}>Settled / Deducted</span>
+                  <span className={styles.profileStatValue} style={{ color: '#059669' }}>
+                    {formatBDT(deductedAmount)}
+                  </span>
+                </div>
+
+                <div className={styles.profileStatCard}>
+                  <span className={styles.profileStatLabel}>Pending Deductions</span>
+                  <span className={styles.profileStatValue} style={{ color: '#f59e0b' }}>
+                    {formatBDT(pendingAmount)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Controls Bar: Search, Filter Tabs, Sort */}
+              <div className={styles.profileControlsRow}>
+                {/* Search */}
+                <div className={styles.searchWrapper} style={{ flex: '1 1 240px', minWidth: '220px' }}>
+                  <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
+                  <input
+                    type="text"
+                    placeholder="Search employee by name, ID, or title..."
+                    value={profileSearch}
+                    onChange={e => setProfileSearch(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                  {profileSearch && (
+                    <button onClick={() => setProfileSearch('')} className={styles.clearSearchBtn} title="Clear search">
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Tabs */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setProfileFilter('PENALIZED')}
+                    className={`${styles.statusTabBtn} ${profileFilter === 'PENALIZED' ? styles.statusTabBtnActive : ''}`}
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    Penalized ({penalizedEmployeesCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileFilter('PENDING')}
+                    className={`${styles.statusTabBtn} ${profileFilter === 'PENDING' ? styles.statusTabBtnActive : ''}`}
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    Pending ({employeeSummaries.filter(e => e.pendingAmount > 0).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileFilter('DEDUCTED')}
+                    className={`${styles.statusTabBtn} ${profileFilter === 'DEDUCTED' ? styles.statusTabBtnActive : ''}`}
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    Deducted ({employeeSummaries.filter(e => e.deductedAmount > 0).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProfileFilter('ALL')}
+                    className={`${styles.statusTabBtn} ${profileFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    All Staff ({employeeSummaries.length})
+                  </button>
+                </div>
+
+                {/* Sort dropdown */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Sort:
+                  </span>
+                  <select
+                    value={profileSort}
+                    onChange={e => setProfileSort(e.target.value as any)}
+                    className={styles.selectDropdown}
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    <option value="amount_desc">Highest Fines (৳)</option>
+                    <option value="amount_asc">Lowest Fines (৳)</option>
+                    <option value="count_desc">Most Penalties</option>
+                    <option value="name_asc">Employee Name (A-Z)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Employee Summaries List */}
+              {filteredSummaries.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '36px', opacity: 0.5, marginBottom: '8px', display: 'block' }}>
+                    person_search
+                  </span>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>No matching employees found</div>
+                  <div style={{ fontSize: '12px', marginTop: '4px' }}>Try clearing your search keyword or switching filter tabs.</div>
+                </div>
+              ) : (
+                <div className={styles.profileCardsList}>
+                  {filteredSummaries.map(emp => {
+                    const initials = emp.name
+                      .split(' ')
+                      .map(p => p[0] || '')
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase() || 'EM';
+                    const isExpanded = expandedEmpId === emp.employeeId;
+
+                    return (
+                      <div key={emp.employeeId} className={styles.summaryEmpCard}>
+                        {/* Top row */}
+                        <div className={styles.summaryEmpMainRow}>
+                          {/* Employee info */}
+                          <div className={styles.employeeProfileGroup}>
+                            <div className={styles.empAvatar} style={{ width: '42px', height: '42px', fontSize: '14px' }}>
+                              {initials}
+                            </div>
+                            <div className={styles.empDetailsGroup}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className={styles.empName} style={{ fontSize: '15px' }}>{emp.name}</span>
+                                <span className={styles.empIdBadge}>#{emp.employeeCode}</span>
+                              </div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                {emp.designation} {emp.department ? `· ${emp.department}` : ''}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Amount and Penalty Count */}
+                          <div className={styles.summaryAmountGroup}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                              <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                                Total Fines
+                              </span>
+                              <span className={styles.amountBadge} style={{ fontSize: '18px' }}>
+                                {formatBDT(emp.totalAmount)}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span
+                                style={{
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: emp.totalCount > 0 ? 'rgba(244, 63, 94, 0.12)' : 'var(--surface-hover)',
+                                  color: emp.totalCount > 0 ? '#e11d48' : 'var(--text-muted)',
+                                }}
+                              >
+                                {emp.totalCount} {emp.totalCount === 1 ? 'Penalty' : 'Penalties'}
+                              </span>
+
+                              {emp.totalCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedEmpId(isExpanded ? null : emp.employeeId)}
+                                  className={styles.secondaryBtn}
+                                  style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '8px' }}
+                                  title="Toggle fine history"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                    {isExpanded ? 'expand_less' : 'expand_more'}
+                                  </span>
+                                  {isExpanded ? 'Hide History' : 'View History'}
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEmployeeFilter(emp.employeeId);
+                                  setShowProfileModal(false);
+                                }}
+                                className={styles.secondaryBtn}
+                                style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '8px' }}
+                                title="Filter main page by this employee"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>filter_list</span>
+                                Filter
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Breakdown pills row */}
+                        <div className={styles.summaryBreakdownPills}>
+                          <span
+                            className={styles.summaryPill}
+                            style={{
+                              background: emp.pendingAmount > 0 ? 'rgba(245, 158, 11, 0.12)' : 'var(--surface-hover)',
+                              color: emp.pendingAmount > 0 ? '#b45309' : 'var(--text-muted)',
+                              border: '1px solid rgba(245, 158, 11, 0.25)',
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>schedule</span>
+                            Pending: {formatBDT(emp.pendingAmount)}
+                          </span>
+
+                          <span
+                            className={styles.summaryPill}
+                            style={{
+                              background: emp.deductedAmount > 0 ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover)',
+                              color: emp.deductedAmount > 0 ? '#059669' : 'var(--text-muted)',
+                              border: '1px solid rgba(16, 185, 129, 0.25)',
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>check_circle</span>
+                            Deducted: {formatBDT(emp.deductedAmount)}
+                          </span>
+
+                          {emp.cancelledAmount > 0 && (
+                            <span
+                              className={styles.summaryPill}
+                              style={{
+                                background: 'rgba(100, 116, 139, 0.12)',
+                                color: '#64748b',
+                                border: '1px solid rgba(100, 116, 139, 0.25)',
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>block</span>
+                              Waived: {formatBDT(emp.cancelledAmount)}
+                            </span>
+                          )}
+
+                          {emp.lateCount > 0 && (
+                            <span
+                              className={styles.summaryPill}
+                              style={{
+                                background: 'rgba(99, 102, 241, 0.08)',
+                                color: '#6366f1',
+                                border: '1px solid rgba(99, 102, 241, 0.2)',
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>alarm</span>
+                              {emp.lateCount} Late Fines
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Expandable fine history table */}
+                        {isExpanded && (
+                          <div className={styles.summaryHistoryBox}>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '4px' }}>
+                              Penalty History for {emp.name} ({emp.fines.length} records):
+                            </div>
+                            <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid var(--border-main)', textAlign: 'left', color: 'var(--text-muted)' }}>
+                                  <th style={{ padding: '6px 8px' }}>Date</th>
+                                  <th style={{ padding: '6px 8px' }}>Violation Reason</th>
+                                  <th style={{ padding: '6px 8px' }}>Amount</th>
+                                  <th style={{ padding: '6px 8px' }}>Status</th>
+                                  <th style={{ padding: '6px 8px' }}>Payroll Period</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {emp.fines.map(item => (
+                                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
+                                    <td style={{ padding: '6px 8px', color: 'var(--text-secondary)' }}>
+                                      {formatDate(item.date)}
+                                    </td>
+                                    <td style={{ padding: '6px 8px', fontWeight: 500 }}>
+                                      {item.reason}
+                                    </td>
+                                    <td style={{ padding: '6px 8px', fontWeight: 700, color: 'var(--danger)' }}>
+                                      {formatBDT(item.amount)}
+                                    </td>
+                                    <td style={{ padding: '6px 8px' }}>
+                                      <span className={`${styles.statusChip} ${getStatusChipClass(item.status)}`} style={{ padding: '2px 8px', fontSize: '10px' }}>
+                                        {item.status}
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: '6px 8px', color: 'var(--text-muted)' }}>
+                                      {item.payrollRun?.period?.name || '—'}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

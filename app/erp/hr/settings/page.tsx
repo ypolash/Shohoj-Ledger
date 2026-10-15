@@ -176,6 +176,7 @@ export default function HRSettingsPage() {
   });
 
   const [showRuleModal, setShowRuleModal] = useState<boolean>(false);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [isSavingRule, setIsSavingRule] = useState<boolean>(false);
   const [ruleError, setRuleError] = useState<string>("");
   const [ruleForm, setRuleForm] = useState<{
@@ -561,14 +562,26 @@ export default function HRSettingsPage() {
   };
 
   // --- PUNISHMENT SLAB HANDLERS ---
-  const handleOpenRuleModal = () => {
-    setRuleForm({
-      type: "LATE",
-      fromMinutes: 16,
-      toMinutes: 30,
-      amount: 100,
-      active: true
-    });
+  const handleOpenRuleModal = (rule?: any) => {
+    if (rule && rule.id) {
+      setEditingRuleId(rule.id);
+      setRuleForm({
+        type: rule.type || "LATE",
+        fromMinutes: rule.fromMinutes !== undefined ? rule.fromMinutes : 16,
+        toMinutes: rule.toMinutes !== undefined ? rule.toMinutes : 30,
+        amount: rule.amount !== undefined ? rule.amount : 100,
+        active: rule.active !== undefined ? rule.active : true
+      });
+    } else {
+      setEditingRuleId(null);
+      setRuleForm({
+        type: "LATE",
+        fromMinutes: 16,
+        toMinutes: 30,
+        amount: 100,
+        active: true
+      });
+    }
     setRuleError("");
     setShowRuleModal(true);
   };
@@ -610,8 +623,13 @@ export default function HRSettingsPage() {
     }
 
     try {
-      const res = await fetch("/api/staff/settings/punishments", {
-        method: "POST",
+      const url = editingRuleId
+        ? `/api/staff/settings/punishments/${editingRuleId}`
+        : "/api/staff/settings/punishments";
+      const method = editingRuleId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...ruleForm,
@@ -623,15 +641,16 @@ export default function HRSettingsPage() {
       const json = await res.json();
       if (res.ok) {
         setShowRuleModal(false);
-        const created = json.data || json;
-        if (created && created.id) {
+        setEditingRuleId(null);
+        const saved = json.data || json;
+        if (saved && saved.id) {
           setPunishmentRules(prev => {
-            const filtered = prev.filter(r => r.id !== created.id);
-            return [...filtered, created].sort((a, b) => (Number(a.fromMinutes) || 0) - (Number(b.fromMinutes) || 0));
+            const filtered = prev.filter(r => r.id !== saved.id);
+            return [...filtered, saved].sort((a, b) => (Number(a.fromMinutes) || 0) - (Number(b.fromMinutes) || 0));
           });
         }
         await fetchSettings();
-        setSaveSuccess("Penalty deduction slab registered successfully.");
+        setSaveSuccess(editingRuleId ? "Penalty deduction slab updated successfully." : "Penalty deduction slab registered successfully.");
         setTimeout(() => setSaveSuccess(""), 4000);
       } else {
         setRuleError(json.error || "Failed to save penalty rule");
@@ -1588,13 +1607,22 @@ export default function HRSettingsPage() {
                           </button>
                         </td>
                         <td className={styles.td} style={{ textAlign: "right" }}>
-                          <button
-                            onClick={() => handleDeleteRule(rule.id)}
-                            className={`${styles.iconBtn} ${styles.deleteBtn}`}
-                            title="Delete rule"
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
-                          </button>
+                          <div className={styles.actionBtnGroup} style={{ justifyContent: "flex-end" }}>
+                            <button
+                              onClick={() => handleOpenRuleModal(rule)}
+                              className={styles.iconBtn}
+                              title="Edit penalty slab"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRule(rule.id)}
+                              className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                              title="Delete rule"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -2219,13 +2247,13 @@ export default function HRSettingsPage() {
 
       {/* 3. Penalty Slab Modal */}
       {showRuleModal && (
-        <div className={styles.modalBackdrop} onClick={() => setShowRuleModal(false)}>
+        <div className={styles.modalBackdrop} onClick={() => { setShowRuleModal(false); setEditingRuleId(null); }}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Penalty Deduction Slab</h3>
+              <h3 className={styles.modalTitle}>{editingRuleId ? "Edit Penalty Deduction Slab" : "Add Penalty Deduction Slab"}</h3>
               <button
                 type="button"
-                onClick={() => setShowRuleModal(false)}
+                onClick={() => { setShowRuleModal(false); setEditingRuleId(null); }}
                 className={styles.iconBtn}
                 style={{ border: "none" }}
               >
@@ -2325,11 +2353,11 @@ export default function HRSettingsPage() {
               </div>
 
               <div className={styles.modalFooter}>
-                <button type="button" onClick={() => setShowRuleModal(false)} className={styles.secondaryBtn} disabled={isSavingRule}>
+                <button type="button" onClick={() => { setShowRuleModal(false); setEditingRuleId(null); }} className={styles.secondaryBtn} disabled={isSavingRule}>
                   Cancel
                 </button>
                 <button type="submit" className={styles.primaryBtn} disabled={isSavingRule}>
-                  {isSavingRule ? "Saving..." : "Save Penalty Rule"}
+                  {isSavingRule ? "Saving..." : editingRuleId ? "Update Penalty Slab" : "Save Penalty Rule"}
                 </button>
               </div>
             </form>

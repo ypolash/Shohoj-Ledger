@@ -45,7 +45,7 @@ export async function GET(request: Request) {
           '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
           '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
         ],
-        downloadUrl: `${baseUrl}/api/mobile/download/staff?version=1.7.1-beta`,
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.1-beta.apk?v=36`,
         fileSize: '12.2 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
         '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
         '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.1-beta.apk`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.1-beta.apk?v=36`,
       fileSize: '12.2 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()

@@ -66,12 +66,12 @@ export async function GET(req: Request) {
       let fineAmt = 0;
       let isWaived = false;
 
-      if (att.punishmentAmount !== undefined && att.punishmentAmount !== null) {
+      if (att.reviewStatus === 'CONSIDERED' || att.reviewStatus === 'WAIVED') {
+        fineAmt = Number(att.punishmentAmount || 0);
+        if (fineAmt === 0) isWaived = true;
+      } else if (att.punishmentAmount !== undefined && att.punishmentAmount !== null && Number(att.punishmentAmount) > 0) {
         fineAmt = Number(att.punishmentAmount);
-        if (fineAmt === 0 && att.reviewStatus === 'CONSIDERED') {
-          isWaived = true;
-        }
-      } else if (att.isLate && (att.lateMinutes || 0) > 0 && att.reviewStatus !== 'CONSIDERED') {
+      } else if (att.isLate && (att.lateMinutes || 0) > 0) {
         const mins = Number(att.lateMinutes) || 0;
         const matchedRule = punishmentRules.find(p => mins >= (p.fromMinutes ?? 0) && mins <= (p.toMinutes ?? 999999));
         if (matchedRule && Number(matchedRule.amount) > 0) {

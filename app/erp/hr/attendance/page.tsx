@@ -366,20 +366,42 @@ export default function AttendancePage() {
   }, []);
 
   const getRecordLateFine = useCallback((r: AttendanceRecord, rules: any[]): number => {
-    if (r.punishmentAmount !== undefined && r.punishmentAmount !== null) {
-      const amt = Number(r.punishmentAmount);
-      if (!isNaN(amt)) return amt;
+    // If the record was explicitly reviewed or waived by HR
+    if (r.reviewStatus === 'CONSIDERED' || r.reviewStatus === 'WAIVED') {
+      return Number(r.punishmentAmount || 0);
     }
-    if (r.reviewStatus === 'CONSIDERED') {
-      return 0;
+    // If an explicit non-zero punishment amount was already set
+    if (r.punishmentAmount !== undefined && r.punishmentAmount !== null && Number(r.punishmentAmount) > 0) {
+      return Number(r.punishmentAmount);
     }
+    // Otherwise calculate dynamically from configured active penalty slabs
     const lateMin = r.lateMinutes || 0;
     if (lateMin > 0 && Array.isArray(rules) && rules.length > 0) {
       const matched = rules.find((rule: any) =>
-        rule.active &&
-        rule.type === 'LATE' &&
-        lateMin >= rule.fromMinutes &&
-        lateMin <= rule.toMinutes
+        rule.active !== false &&
+        (rule.type === 'LATE' || rule.type === 'LATE_IN') &&
+        lateMin >= (Number(rule.fromMinutes) || 0) &&
+        lateMin <= (Number(rule.toMinutes) || 999999)
+      );
+      if (matched) return Number(matched.amount) || 0;
+    }
+    return 0;
+  }, []);
+
+  const getRecordAbsentFine = useCallback((r: AttendanceRecord, rules: any[]): number => {
+    // If the record was explicitly reviewed or waived by HR
+    if (r.reviewStatus === 'CONSIDERED' || r.reviewStatus === 'WAIVED') {
+      return Number(r.punishmentAmount || 0);
+    }
+    // If an explicit non-zero punishment amount was already set
+    if (r.punishmentAmount !== undefined && r.punishmentAmount !== null && Number(r.punishmentAmount) > 0) {
+      return Number(r.punishmentAmount);
+    }
+    // Otherwise calculate dynamically from configured active penalty slabs
+    if (Array.isArray(rules) && rules.length > 0) {
+      const matched = rules.find((rule: any) =>
+        rule.active !== false &&
+        rule.type === 'ABSENT'
       );
       if (matched) return Number(matched.amount) || 0;
     }
@@ -918,7 +940,7 @@ export default function AttendancePage() {
         formatDisplayTime(r.checkOut || r.checkOutTime, officeTiming.timezone),
         r.lateMinutes || 0,
         r.earlyLeaveMinutes || 0,
-        r.punishmentAmount || 0,
+        r.status === 'ABSENT' ? getRecordAbsentFine(r, punishmentRules) : getRecordLateFine(r, punishmentRules),
       ];
     });
 
@@ -1575,24 +1597,27 @@ export default function AttendancePage() {
 
                               <td className={styles.tableCell}>
                                 {r.status === 'ABSENT' ? (
-                                  r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
-                                    <span style={{
-                                      fontSize: '11.5px',
-                                      fontWeight: 700,
-                                      color: '#ef4444',
-                                      background: 'rgba(239, 68, 68, 0.1)',
-                                      border: '1px solid rgba(239, 68, 68, 0.25)',
-                                      padding: '2px 8px',
-                                      borderRadius: '6px',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px'
-                                    }}>
-                                      ৳{Number(r.punishmentAmount).toLocaleString()}
-                                    </span>
-                                  ) : (
-                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                                  )
+                                  (() => {
+                                    const absentFine = getRecordAbsentFine(r, punishmentRules);
+                                    return absentFine > 0 ? (
+                                      <span style={{
+                                        fontSize: '11.5px',
+                                        fontWeight: 700,
+                                        color: '#ef4444',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}>
+                                        ৳{absentFine.toLocaleString()}
+                                      </span>
+                                    ) : (
+                                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                                    );
+                                  })()
                                 ) : r.reviewStatus === 'CONSIDERED' ? (
                                   r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
                                     <span style={{
@@ -1970,24 +1995,27 @@ export default function AttendancePage() {
 
                       <td className={styles.tableCell}>
                         {r.status === 'ABSENT' ? (
-                          r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
-                            <span style={{
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              color: '#ef4444',
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.25)',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}>
-                              ৳{Number(r.punishmentAmount).toLocaleString()}
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                          )
+                          (() => {
+                            const absentFine = getRecordAbsentFine(r, punishmentRules);
+                            return absentFine > 0 ? (
+                              <span style={{
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                color: '#ef4444',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                ৳{absentFine.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
+                            );
+                          })()
                         ) : r.reviewStatus === 'CONSIDERED' ? (
                           r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
                             <span style={{

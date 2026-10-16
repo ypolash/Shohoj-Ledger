@@ -9,7 +9,8 @@ interface EmployeeFine {
   amount: number | string;
   reason: string;
   date: string;
-  status: 'PENDING' | 'DEDUCTED' | 'CANCELLED';
+  status: 'PENDING' | 'DEDUCTED' | 'CANCELLED' | 'CONSIDERATION_REQUESTED' | 'WAIVED' | string;
+  appealReason?: string | null;
 }
 
 interface HorizontalFinesDateStripProps {

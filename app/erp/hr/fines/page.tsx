@@ -11,8 +11,9 @@ interface EmployeeFine {
   amount: number | string;
   reason: string;
   date: string;
-  status: 'PENDING' | 'DEDUCTED' | 'CANCELLED';
+  status: 'PENDING' | 'DEDUCTED' | 'CANCELLED' | 'CONSIDERATION_REQUESTED' | 'WAIVED';
   createdAt?: string;
+  appealReason?: string | null;
   employee?: {
     firstName: string;
     lastName: string;
@@ -96,7 +97,7 @@ export default function FinesPage() {
   const [fines, setFines] = useState<EmployeeFine[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'DEDUCTED' | 'CANCELLED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'CONSIDERATION_REQUESTED' | 'DEDUCTED' | 'CANCELLED'>('ALL');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'LATE' | 'OTHER'>('ALL');
   const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
   const [filterDate, setFilterDate] = useState<string>('');
@@ -120,6 +121,12 @@ export default function FinesPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Consideration Request Modal States
+  const [selectedConsiderationFine, setSelectedConsiderationFine] = useState<EmployeeFine | null>(null);
+  const [considerAmount, setConsiderAmount] = useState<string>('');
+  const [considerNote, setConsiderNote] = useState<string>('');
+  const [isConsiderActionActive, setIsConsiderActionActive] = useState<boolean>(false);
 
   // Close export dropdown when clicking outside
   useEffect(() => {
@@ -173,8 +180,8 @@ export default function FinesPage() {
     fetchData();
   }, [fetchData]);
 
-  // Handle status update (Waive / Reinstate)
-  const handleUpdateStatus = async (id: string, status: 'PENDING' | 'CANCELLED') => {
+  // Handle status update (Waive / Reinstate / Status Change)
+  const handleUpdateStatus = async (id: string, status: string) => {
     const isWaiving = status === 'CANCELLED';
     if (isWaiving && !confirm('Are you sure you want to waive / cancel this fine?')) return;
 
@@ -220,6 +227,128 @@ export default function FinesPage() {
     } catch (err) {
       console.error(err);
       alert('Network error while deleting penalty');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Open Consideration Request Modal
+  const handleOpenConsiderationModal = (f: EmployeeFine) => {
+    setSelectedConsiderationFine(f);
+    const originalAmt = Number(f.amount) || 0;
+    const halfAmt = Math.max(0, Math.round(originalAmt / 2));
+    setConsiderAmount(String(halfAmt));
+    setConsiderNote('');
+    setIsConsiderActionActive(false);
+  };
+
+  // 1. Approve Request: Approves request and dismisses/waives the fine
+  const handleApproveConsideration = async () => {
+    if (!selectedConsiderationFine) return;
+    if (!confirm(`Are you sure you want to approve this request and dismiss the fine of ${formatBDT(selectedConsiderationFine.amount)}?`)) return;
+
+    setActionLoading(selectedConsiderationFine.id);
+    try {
+      const res = await fetch(`/api/hr/fines/${selectedConsiderationFine.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'CANCELLED',
+          attendanceReviewStatus: 'CONSIDERED',
+        }),
+      });
+      if (res.ok) {
+        setSuccessMsg(`Consideration approved: Fine of ${formatBDT(selectedConsiderationFine.amount)} dismissed & waived.`);
+        setTimeout(() => setSuccessMsg(''), 4500);
+        setSelectedConsiderationFine(null);
+        await fetchData(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to approve request');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while approving consideration');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 2. Consider: Adjusts/reduces the fine amount and keeps it pending for deduction
+  const handleApplyConsideredAmount = async () => {
+    if (!selectedConsiderationFine) return;
+    const num = Number(considerAmount);
+    if (isNaN(num) || num < 0) {
+      alert('Please enter a valid considered fine amount');
+      return;
+    }
+    const originalAmt = Number(selectedConsiderationFine.amount) || 0;
+    if (num > originalAmt) {
+      if (!confirm(`Considered amount (${formatBDT(num)}) is higher than original fine (${formatBDT(originalAmt)}). Proceed?`)) return;
+    }
+
+    setActionLoading(selectedConsiderationFine.id);
+    try {
+      const updatedReason = considerNote.trim()
+        ? `${selectedConsiderationFine.reason} (Considered: ${considerNote.trim()})`
+        : (num === 0
+            ? `${selectedConsiderationFine.reason} (Waived upon consideration)`
+            : `${selectedConsiderationFine.reason} (Considered: Reduced to ${formatBDT(num)})`);
+
+      const res = await fetch(`/api/hr/fines/${selectedConsiderationFine.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: num === 0 ? 'CANCELLED' : 'PENDING',
+          amount: num,
+          reason: updatedReason,
+          attendanceReviewStatus: 'CONSIDERED',
+        }),
+      });
+      if (res.ok) {
+        setSuccessMsg(`Fine considered: Penalty amount adjusted to ${formatBDT(num)} and queued for payroll.`);
+        setTimeout(() => setSuccessMsg(''), 4500);
+        setSelectedConsiderationFine(null);
+        await fetchData(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to apply considered amount');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while updating fine amount');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 3. Cancel: Rejects the request and enforces the full fine
+  const handleCancelConsiderationRequest = async () => {
+    if (!selectedConsiderationFine) return;
+    if (!confirm(`Are you sure you want to cancel / reject this request? The employee will receive the full original fine of ${formatBDT(selectedConsiderationFine.amount)}.`)) return;
+
+    setActionLoading(selectedConsiderationFine.id);
+    try {
+      const res = await fetch(`/api/hr/fines/${selectedConsiderationFine.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'PENDING',
+          attendanceReviewStatus: 'REJECTED',
+        }),
+      });
+      if (res.ok) {
+        setSuccessMsg(`Consideration request cancelled. Original fine of ${formatBDT(selectedConsiderationFine.amount)} enforced.`);
+        setTimeout(() => setSuccessMsg(''), 4500);
+        setSelectedConsiderationFine(null);
+        await fetchData(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to cancel request');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while cancelling consideration request');
     } finally {
       setActionLoading(null);
     }
@@ -329,9 +458,12 @@ export default function FinesPage() {
   const deductedCount = deductedFines.length;
   const deductedAmount = deductedFines.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
 
-  const cancelledFines = fines.filter(f => f.status === 'CANCELLED');
+  const cancelledFines = fines.filter(f => f.status === 'CANCELLED' || f.status === 'WAIVED');
   const cancelledCount = cancelledFines.length;
   const cancelledAmount = cancelledFines.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+
+  const considerationFines = fines.filter(f => f.status === 'CONSIDERATION_REQUESTED');
+  const considerationCount = considerationFines.length;
 
   const lateFines = fines.filter(f => (f.reason || '').toLowerCase().includes('late'));
   const lateCount = lateFines.length;
@@ -559,7 +691,10 @@ export default function FinesPage() {
       case 'DEDUCTED':
         return styles.statusDeducted;
       case 'CANCELLED':
+      case 'WAIVED':
         return styles.statusCancelled;
+      case 'CONSIDERATION_REQUESTED':
+        return styles.statusConsideration;
       default:
         return styles.statusCancelled;
     }
@@ -887,6 +1022,15 @@ export default function FinesPage() {
             </button>
 
             <button
+              onClick={() => setStatusFilter('CONSIDERATION_REQUESTED')}
+              className={`${styles.statusTabBtn} ${statusFilter === 'CONSIDERATION_REQUESTED' ? styles.statusTabBtnActive : ''}`}
+              style={considerationCount > 0 ? { borderColor: 'rgba(99, 102, 241, 0.45)', color: statusFilter === 'CONSIDERATION_REQUESTED' ? '#ffffff' : '#818cf8' } : undefined}
+            >
+              Consideration
+              <span style={{ opacity: 0.85 }}>({considerationCount})</span>
+            </button>
+
+            <button
               onClick={() => setStatusFilter('DEDUCTED')}
               className={`${styles.statusTabBtn} ${statusFilter === 'DEDUCTED' ? styles.statusTabBtnActive : ''}`}
             >
@@ -955,6 +1099,7 @@ export default function FinesPage() {
           }}
           onStatusChange={handleUpdateStatus}
           onDeleteFine={handleDeleteFine}
+          onReviewConsideration={handleOpenConsiderationModal}
         />
       ) : filteredFines.length === 0 ? (
         <div className={styles.emptyStateBox}>
@@ -1003,7 +1148,8 @@ export default function FinesPage() {
                 const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'EM';
                 const isPending = f.status === 'PENDING';
                 const isDeducted = f.status === 'DEDUCTED';
-                const isCancelled = f.status === 'CANCELLED';
+                const isCancelled = f.status === 'CANCELLED' || f.status === 'WAIVED';
+                const isConsideration = f.status === 'CONSIDERATION_REQUESTED';
                 const isActionBusy = actionLoading === f.id;
                 const periodName = f.payrollRun?.period?.name;
 
@@ -1074,11 +1220,16 @@ export default function FinesPage() {
 
                     {/* Status */}
                     <td className={styles.tableCell}>
-                      <span className={`${styles.statusChip} ${getStatusChipClass(f.status)}`}>
+                      <span
+                        className={`${styles.statusChip} ${getStatusChipClass(f.status)}`}
+                        onClick={() => isConsideration ? handleOpenConsiderationModal(f) : undefined}
+                        style={isConsideration ? { cursor: 'pointer' } : undefined}
+                        title={isConsideration ? "Click to view consideration request & resolve" : undefined}
+                      >
                         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                          {isDeducted ? 'check_circle' : isPending ? 'schedule' : 'block'}
+                          {isDeducted ? 'check_circle' : isPending ? 'schedule' : isConsideration ? 'rate_review' : 'block'}
                         </span>
-                        {f.status}
+                        {f.status === 'CONSIDERATION_REQUESTED' ? 'Consideration Requested' : f.status}
                       </span>
                     </td>
 
@@ -1099,6 +1250,18 @@ export default function FinesPage() {
                     {/* Actions */}
                     <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                       <div className={styles.actionBtnGroup} style={{ justifyContent: 'flex-end' }}>
+                        {isConsideration && (
+                          <button
+                            onClick={() => handleOpenConsiderationModal(f)}
+                            disabled={isActionBusy}
+                            className={styles.reviewBtn}
+                            title="View Consideration Request Message & Resolve"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>rate_review</span>
+                            {isActionBusy ? '...' : 'Review Request'}
+                          </button>
+                        )}
+
                         {isPending && (
                           <button
                             onClick={() => handleUpdateStatus(f.id, 'CANCELLED')}
@@ -1160,7 +1323,8 @@ export default function FinesPage() {
             const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'EM';
             const isPending = f.status === 'PENDING';
             const isDeducted = f.status === 'DEDUCTED';
-            const isCancelled = f.status === 'CANCELLED';
+            const isCancelled = f.status === 'CANCELLED' || f.status === 'WAIVED';
+            const isConsideration = f.status === 'CONSIDERATION_REQUESTED';
             const isActionBusy = actionLoading === f.id;
             const periodName = f.payrollRun?.period?.name;
 
@@ -1185,11 +1349,16 @@ export default function FinesPage() {
                     </div>
                   </div>
 
-                  <span className={`${styles.statusChip} ${getStatusChipClass(f.status)}`}>
+                  <span
+                    className={`${styles.statusChip} ${getStatusChipClass(f.status)}`}
+                    onClick={() => isConsideration ? handleOpenConsiderationModal(f) : undefined}
+                    style={isConsideration ? { cursor: 'pointer' } : undefined}
+                    title={isConsideration ? "Click to view consideration request & resolve" : undefined}
+                  >
                     <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                      {isDeducted ? 'check_circle' : isPending ? 'schedule' : 'block'}
+                      {isDeducted ? 'check_circle' : isPending ? 'schedule' : isConsideration ? 'rate_review' : 'block'}
                     </span>
-                    {f.status}
+                    {f.status === 'CONSIDERATION_REQUESTED' ? 'Consideration' : f.status}
                   </span>
                 </div>
 
@@ -1250,6 +1419,19 @@ export default function FinesPage() {
                   </div>
 
                   <div className={styles.actionBtnGroup}>
+                    {isConsideration && (
+                      <button
+                        onClick={() => handleOpenConsiderationModal(f)}
+                        disabled={isActionBusy}
+                        className={styles.reviewBtn}
+                        title="View Consideration Request Message & Resolve"
+                        style={{ padding: '4px 8px', fontSize: '11px' }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>rate_review</span>
+                        Review
+                      </button>
+                    )}
+
                     {isPending && (
                       <button
                         onClick={() => handleUpdateStatus(f.id, 'CANCELLED')}
@@ -1798,6 +1980,264 @@ export default function FinesPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 8. Fine Consideration Request Review Modal */}
+      {selectedConsiderationFine && (
+        <div
+          className={styles.modalBackdrop}
+          onClick={e => {
+            if (e.target === e.currentTarget) setSelectedConsiderationFine(null);
+          }}
+        >
+          <div className={styles.considerationModalBox}>
+            {/* Header */}
+            <div className={styles.considerationHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  className={styles.kpiIconBox}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    color: '#818cf8',
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>rate_review</span>
+                </div>
+                <div>
+                  <h2 className={styles.modalTitle} style={{ fontSize: '17px', margin: 0 }}>
+                    Fine Consideration Request
+                  </h2>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Review employee appeal &amp; select resolution action
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedConsiderationFine(null)}
+                className={styles.modalCloseBtn}
+                title="Close modal"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+            </div>
+
+            <div className={styles.considerationBody}>
+              {/* Employee & Fine Details Grid */}
+              <div className={styles.fineDetailGrid}>
+                <div className={styles.fineDetailItem}>
+                  <span className={styles.fineDetailLabel}>Employee</span>
+                  <span className={styles.fineDetailValue}>
+                    {selectedConsiderationFine.employee?.firstName} {selectedConsiderationFine.employee?.lastName}
+                    {selectedConsiderationFine.employee?.employeeId && ` (#${selectedConsiderationFine.employee.employeeId})`}
+                  </span>
+                </div>
+
+                <div className={styles.fineDetailItem}>
+                  <span className={styles.fineDetailLabel}>Original Fine Amount</span>
+                  <span className={styles.fineDetailValue} style={{ color: 'var(--danger, #f43f5e)' }}>
+                    {formatBDT(selectedConsiderationFine.amount)}
+                  </span>
+                </div>
+
+                <div className={styles.fineDetailItem}>
+                  <span className={styles.fineDetailLabel}>Penalty Date</span>
+                  <span className={styles.fineDetailValue}>
+                    {formatDate(selectedConsiderationFine.date)}
+                  </span>
+                </div>
+
+                <div className={styles.fineDetailItem}>
+                  <span className={styles.fineDetailLabel}>Violation Reason</span>
+                  <span className={styles.fineDetailValue}>
+                    {selectedConsiderationFine.reason}
+                  </span>
+                </div>
+              </div>
+
+              {/* Employee's Consideration Request Message */}
+              <div className={styles.appealReasonCard}>
+                <div className={styles.appealReasonLabel}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>chat</span>
+                  Employee Request Message
+                </div>
+                <div className={styles.appealReasonText}>
+                  &ldquo;{selectedConsiderationFine.appealReason || 'No detailed message provided with this consideration request.'}&rdquo;
+                </div>
+              </div>
+
+              {/* Action Buttons: 1. Approve, 2. Consider, 3. Cancel */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Select Resolution Action
+                </span>
+
+                <div className={styles.actionGrid3}>
+                  {/* 1. Approve: approves the req and dismisses the fines */}
+                  <button
+                    type="button"
+                    className={`${styles.actionChoiceBtn} ${styles.actionApprove}`}
+                    onClick={handleApproveConsideration}
+                    disabled={actionLoading === selectedConsiderationFine.id}
+                    title="Approve employee request and dismiss the fine completely"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>check_circle</span>
+                    <span className={styles.choiceTitle}>1. Approve</span>
+                    <span className={styles.choiceDesc}>Dismiss &amp; Waive Fine</span>
+                  </button>
+
+                  {/* 2. Consider: considers some fines amount */}
+                  <button
+                    type="button"
+                    className={`${styles.actionChoiceBtn} ${styles.actionConsider} ${isConsiderActionActive ? styles.actionConsiderActive : ''}`}
+                    onClick={() => setIsConsiderActionActive(!isConsiderActionActive)}
+                    disabled={actionLoading === selectedConsiderationFine.id}
+                    title="Consider partial relief and adjust fine amount"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>tune</span>
+                    <span className={styles.choiceTitle}>2. Consider</span>
+                    <span className={styles.choiceDesc}>Adjust Fine Amount</span>
+                  </button>
+
+                  {/* 3. Cancel: cancels the req and got the fine */}
+                  <button
+                    type="button"
+                    className={`${styles.actionChoiceBtn} ${styles.actionCancel}`}
+                    onClick={handleCancelConsiderationRequest}
+                    disabled={actionLoading === selectedConsiderationFine.id}
+                    title="Reject request and enforce full original fine"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>cancel</span>
+                    <span className={styles.choiceTitle}>3. Cancel</span>
+                    <span className={styles.choiceDesc}>Enforce Full Fine</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Inline Adjustment Card for '2. Consider' */}
+              {isConsiderActionActive && (
+                <div className={styles.inlineConsiderBox}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_change</span>
+                      Adjust Fine Amount (Consideration)
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      Original: {formatBDT(selectedConsiderationFine.amount)}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        New Reduced Fine Amount (BDT ৳)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={considerAmount}
+                        onChange={e => setConsiderAmount(e.target.value)}
+                        className={styles.formInput}
+                        placeholder="e.g. 100"
+                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(245, 158, 11, 0.4)' }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Quick discount:</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {[0.25, 0.5, 0.75].map(ratio => {
+                          const orig = Number(selectedConsiderationFine.amount) || 0;
+                          const discounted = Math.round(orig * (1 - ratio));
+                          return (
+                            <button
+                              key={ratio}
+                              type="button"
+                              onClick={() => setConsiderAmount(String(discounted))}
+                              style={{
+                                padding: '3px 6px',
+                                fontSize: '10px',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                background: 'rgba(245, 158, 11, 0.1)',
+                                color: '#f59e0b',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                              }}
+                            >
+                              -{ratio * 100}%
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary relief badge */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'rgba(0,0,0,0.25)',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      Relief Granted: <strong style={{ color: '#10b981' }}>-{formatBDT(Math.max(0, (Number(selectedConsiderationFine.amount) || 0) - (Number(considerAmount) || 0)))}</strong>
+                    </span>
+                    <span style={{ color: 'var(--text-main)' }}>
+                      Final Charge: <strong style={{ color: '#f59e0b' }}>{formatBDT(Number(considerAmount) || 0)}</strong>
+                    </span>
+                  </div>
+
+                  {/* Optional Note */}
+                  <div>
+                    <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                      HR Consideration Note (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={considerNote}
+                      onChange={e => setConsiderNote(e.target.value)}
+                      placeholder="e.g. Reduced after reviewing explanation"
+                      className={styles.formInput}
+                      style={{ background: 'rgba(0,0,0,0.2)' }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleApplyConsideredAmount}
+                    disabled={actionLoading === selectedConsiderationFine.id}
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>done</span>
+                    {actionLoading === selectedConsiderationFine.id ? 'Applying...' : `Confirm & Apply ${formatBDT(Number(considerAmount) || 0)} Fine`}
+                  </button>
                 </div>
               )}
             </div>

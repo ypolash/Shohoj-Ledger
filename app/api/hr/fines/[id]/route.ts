@@ -47,6 +47,9 @@ export async function PATCH(
     if (reason !== undefined) {
       dataToUpdate.reason = String(reason).trim();
     }
+    if (body.appealReason !== undefined) {
+      dataToUpdate.appealReason = body.appealReason ? String(body.appealReason).trim() : null;
+    }
 
     const updatedFine = await prisma.employeeFine.update({
       where: { id: params.id },
@@ -110,11 +113,12 @@ export async function PATCH(
 
         if (targetAtt) {
           const isCancelled = updatedFine.status === 'CANCELLED';
+          const newReviewStatus = body.attendanceReviewStatus || (isCancelled ? 'CONSIDERED' : targetAtt.reviewStatus);
           await prisma.attendance.update({
             where: { id: targetAtt.id },
             data: {
               punishmentAmount: isCancelled ? 0 : Number(updatedFine.amount),
-              reviewStatus: isCancelled ? 'CONSIDERED' : targetAtt.reviewStatus,
+              reviewStatus: newReviewStatus,
             }
           });
         }

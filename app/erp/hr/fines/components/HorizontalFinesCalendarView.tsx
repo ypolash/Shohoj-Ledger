@@ -9,8 +9,9 @@ interface EmployeeFine {
   amount: number | string;
   reason: string;
   date: string;
-  status: 'PENDING' | 'DEDUCTED' | 'CANCELLED';
+  status: 'PENDING' | 'DEDUCTED' | 'CANCELLED' | 'CONSIDERATION_REQUESTED' | 'WAIVED';
   createdAt?: string;
+  appealReason?: string | null;
   employee?: {
     firstName: string;
     lastName: string;
@@ -38,6 +39,7 @@ interface HorizontalFinesCalendarViewProps {
   onEditFine?: (fine: EmployeeFine) => void;
   onStatusChange?: (fineId: string, newStatus: string) => void;
   onDeleteFine?: (fineId: string) => void;
+  onReviewConsideration?: (fine: EmployeeFine) => void;
 }
 
 export function HorizontalFinesCalendarView({
@@ -47,7 +49,8 @@ export function HorizontalFinesCalendarView({
   onAddFine,
   onEditFine,
   onStatusChange,
-  onDeleteFine
+  onDeleteFine,
+  onReviewConsideration
 }: HorizontalFinesCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [viewSpan, setViewSpan] = useState<'MONTH' | '14_DAYS' | '7_DAYS'>('MONTH');
@@ -740,9 +743,9 @@ export function HorizontalFinesCalendarView({
                 <span style={{ color: 'var(--text-muted, #94a3b8)' }}>Status:</span>
                 <span style={{
                   fontWeight: 700,
-                  color: selectedFineForDetail.status === 'DEDUCTED' ? '#10b981' : selectedFineForDetail.status === 'PENDING' ? '#f59e0b' : '#64748b'
+                  color: selectedFineForDetail.status === 'DEDUCTED' ? '#10b981' : selectedFineForDetail.status === 'PENDING' ? '#f59e0b' : selectedFineForDetail.status === 'CONSIDERATION_REQUESTED' ? '#818cf8' : '#64748b'
                 }}>
-                  {selectedFineForDetail.status}
+                  {selectedFineForDetail.status === 'CONSIDERATION_REQUESTED' ? 'Consideration Requested' : selectedFineForDetail.status}
                 </span>
               </div>
 
@@ -759,10 +762,54 @@ export function HorizontalFinesCalendarView({
                   {selectedFineForDetail.reason || 'No violation notes specified'}
                 </div>
               </div>
+
+              {selectedFineForDetail.appealReason && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '4px' }}>
+                  <span style={{ color: '#818cf8', fontSize: '11px', fontWeight: 700 }}>Employee Request Message:</span>
+                  <div style={{
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    borderLeft: '3px solid #6366f1',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    color: '#c7d2fe',
+                    fontSize: '12px',
+                    fontStyle: 'italic',
+                    lineHeight: 1.4
+                  }}>
+                    &ldquo;{selectedFineForDetail.appealReason}&rdquo;
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Action Buttons */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              {selectedFineForDetail.status === 'CONSIDERATION_REQUESTED' && onReviewConsideration && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const f = selectedFineForDetail;
+                    setSelectedFineForDetail(null);
+                    onReviewConsideration(f);
+                  }}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(99, 102, 241, 0.45)',
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    color: '#818cf8',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>rate_review</span>
+                  Review Request
+                </button>
+              )}
               {selectedFineForDetail.status === 'PENDING' && onStatusChange && (
                 <>
                   <button

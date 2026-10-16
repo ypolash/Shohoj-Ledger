@@ -102,7 +102,7 @@ export async function POST(req: Request) {
       where: { id: fineId },
       include: {
         employee: {
-          select: { firstName: true, lastName: true, employeeId: true, companyId: true }
+          select: { firstName: true, lastName: true, employeeId: true, companyId: true, userId: true }
         }
       }
     });
@@ -159,12 +159,14 @@ export async function POST(req: Request) {
 
     // Notify company admins/HR about the consideration request
     const companyId = fine.companyId || (emp ? emp.companyId : null);
-    if (companyId) {
+    const targetUserId = fine.employee?.userId || (emp as any)?.userId;
+    if (companyId && targetUserId) {
       try {
         const empName = fine.employee ? `${fine.employee.firstName} ${fine.employee.lastName}` : "Staff member";
         await prisma.notification.create({
           data: {
             companyId,
+            userId: targetUserId,
             category: "FINE",
             title: `Fine Consideration Request: ৳${Number(fine.amount)}`,
             message: `${empName} requested fine consideration for ৳${Number(fine.amount)}: "${requestReason}"`,

@@ -224,7 +224,8 @@ export function HorizontalCalendarView({
       if (r.date && typeof r.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(r.date)) {
         rDateKey = r.date.slice(0, 10);
       } else if (r.date || r.checkInTime) {
-        const d = new Date(r.date || r.checkInTime);
+        const dateVal = (r.date || r.checkInTime) as string;
+        const d = new Date(dateVal);
         if (!isNaN(d.getTime())) {
           try {
             rDateKey = new Intl.DateTimeFormat('en-CA', {

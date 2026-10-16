@@ -27,57 +27,51 @@ export async function GET(request: Request) {
       return NextResponse.json({
         appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 37,
-        versionName: '1.7.2-beta',
+        versionCode: 38,
+        versionName: '1.7.3-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.2 Beta — Horizontal Calendar & Date-wise Fines',
+        title: 'Shohoj Staff v1.7.3 Beta — Calendar, Direct Fine Navigation & Streamlined Home',
         releaseNotes: [
-          '📅 Interactive Horizontal Calendar: Smooth horizontally scrollable day selector for quick date filtering',
+          '⚡ Direct Fine Review: Tapping disciplinary fine banner now opens the Fines section immediately',
+          '🧹 Clean Streamlined Home: Removed redundant duty schedule & metric cards for a distraction-free view',
+          '📅 Horizontal Calendar: Smooth interactive date selector on attendance section',
           '💸 Date-wise Fines Grouping: Fines automatically grouped chronologically by date with daily totals and status badges',
           '🤝 Fines Consideration Request: Tap any fine to open an instant review request modal',
           '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
           '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
           '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
           '🔝 Dynamic TopBar Avatar: Circular profile badge with tap-to-profile shortcut directly from TopBar',
-          '🎨 Nagad Item Inspiration: Refined tactile pill buttons (Clock In, Lunch Break, Clock Out) with smooth gradients and leading icons',
-          '🔘 Modern Emblem Action Badges: Circular translucent emblem badges on all Quick Action tiles and stat metrics',
-          '🏷️ Sleek Pill Status Chips: Redesigned status indicators (Clocked In, Late, Lunch Break, Duty Shift) as polished rounded pills',
-          '🌙 Shohoj Dark Theme Preserved: Retained original Emerald & Slate brand identity and system bar colors',
-          '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
-          '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
+          '🌙 Shohoj Dark Theme Preserved: Retained original Emerald & Slate brand identity and system bar colors'
         ],
-        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.2-beta.apk?v=37`,
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.3-beta.apk?v=38`,
         fileSize: '12.2 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.2 Beta)
+    // Default Public Production Version (Shohoj Staff v1.7.3 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 37,
-      versionName: '1.7.2-beta',
+      versionCode: 38,
+      versionName: '1.7.3-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.2 Beta Available',
+      title: 'Shohoj Staff v1.7.3 Beta Available',
       releaseNotes: [
-        '📅 Interactive Horizontal Calendar: Smooth horizontally scrollable day selector for quick date filtering',
+        '⚡ Direct Fine Review: Tapping disciplinary fine banner now opens the Fines section immediately',
+        '🧹 Clean Streamlined Home: Removed redundant duty schedule & metric cards for a distraction-free view',
+        '📅 Horizontal Calendar: Smooth interactive date selector on attendance section',
         '💸 Date-wise Fines Grouping: Fines automatically grouped chronologically by date with daily totals and status badges',
         '🤝 Fines Consideration Request: Tap any fine to open an instant review request modal',
         '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
         '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
         '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
         '🔝 Dynamic TopBar Avatar: Circular profile badge with tap-to-profile shortcut directly from TopBar',
-        '🎨 Nagad Item Inspiration: Refined tactile pill buttons (Clock In, Lunch Break, Clock Out) with smooth gradients and leading icons',
-        '🔘 Modern Emblem Action Badges: Circular translucent emblem badges on all Quick Action tiles and stat metrics',
-        '🏷️ Sleek Pill Status Chips: Redesigned status indicators (Clocked In, Late, Lunch Break, Duty Shift) as polished rounded pills',
-        '🌙 Shohoj Dark Theme Preserved: Retained original Emerald & Slate brand identity and system bar colors',
-        '⚠️ Disciplinary Fines Notification: Real-time high-priority alerts with sound and vibration when HR issues penalties',
-        '🍽️ Dedicated Lunch Break section with live countdown & grace period penalty protection'
+        '🌙 Shohoj Dark Theme Preserved: Retained original Emerald & Slate brand identity and system bar colors'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.2-beta.apk?v=37`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.3-beta.apk?v=38`,
       fileSize: '12.2 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()

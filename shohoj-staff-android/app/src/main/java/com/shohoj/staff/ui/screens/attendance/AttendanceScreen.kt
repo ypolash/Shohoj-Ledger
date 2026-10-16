@@ -30,6 +30,18 @@ fun AttendanceScreen(
     viewModel: AttendanceViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedCalendarDate by remember { mutableStateOf<String?>(null) }
+
+    val filteredRecords = remember(uiState.records, selectedCalendarDate) {
+        if (selectedCalendarDate == null) {
+            uiState.records
+        } else {
+            uiState.records.filter { r ->
+                val rKey = DateUtils.extractDateKey(r.date ?: r.checkInTime)
+                rKey == selectedCalendarDate
+            }
+        }
+    }
 
     val today = uiState.today
     val isCheckedIn = today?.checkInTime != null || today?.checkIn != null
@@ -596,6 +608,17 @@ fun AttendanceScreen(
                 }
             }
 
+            // Horizontal Calendar View
+            item {
+                HorizontalCalendarView(
+                    records = uiState.records,
+                    selectedDate = selectedCalendarDate,
+                    onDateSelected = { dateKey ->
+                        selectedCalendarDate = if (selectedCalendarDate == dateKey) null else dateKey
+                    }
+                )
+            }
+
             // History Records Title
             item {
                 Row(
@@ -603,10 +626,29 @@ fun AttendanceScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Attendance History",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = if (selectedCalendarDate != null) "Logs for $selectedCalendarDate" else "Attendance History",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
+                        )
+                        if (selectedCalendarDate != null) {
+                            TextButton(
+                                onClick = { selectedCalendarDate = null },
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                modifier = Modifier.height(26.dp)
+                            ) {
+                                Text(
+                                    text = "Clear Filter",
+                                    color = Emerald400,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = { viewModel.refreshData() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Slate400)
                     }
@@ -614,15 +656,15 @@ fun AttendanceScreen(
             }
 
             // Records List
-            if (uiState.records.isEmpty() && !uiState.isLoading) {
+            if (filteredRecords.isEmpty() && !uiState.isLoading) {
                 item {
                     EmptyStateView(
-                        title = "No Attendance Records",
-                        description = "Attendance logs will appear here once you clock in."
+                        title = if (selectedCalendarDate != null) "No Record for $selectedCalendarDate" else "No Attendance Records",
+                        description = if (selectedCalendarDate != null) "No attendance activity was logged on this date." else "Attendance logs will appear here once you clock in."
                     )
                 }
             } else {
-                items(uiState.records) { record ->
+                items(filteredRecords) { record ->
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

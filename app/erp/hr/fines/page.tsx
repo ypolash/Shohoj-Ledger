@@ -127,6 +127,16 @@ export default function FinesPage() {
   const [considerAmount, setConsiderAmount] = useState<string>('');
   const [considerNote, setConsiderNote] = useState<string>('');
   const [isConsiderActionActive, setIsConsiderActionActive] = useState<boolean>(false);
+  const considerBoxRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to adjustment controls when consideration section is toggled
+  useEffect(() => {
+    if (isConsiderActionActive) {
+      setTimeout(() => {
+        considerBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 60);
+    }
+  }, [isConsiderActionActive]);
 
   // Close export dropdown when clicking outside
   useEffect(() => {
@@ -940,113 +950,78 @@ export default function FinesPage() {
 
         <div className={styles.controlsBottomRow}>
           {/* Category & Status Tabs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-            {/* Category Toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', flex: 1 }}>
+            {/* Category / Type Tabs */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Type:
               </span>
-              <button
-                type="button"
-                onClick={() => setTypeFilter('ALL')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: typeFilter === 'ALL' ? '1px solid #2563eb' : '1px solid var(--border-main, #e2e8f0)',
-                  background: typeFilter === 'ALL' ? '#2563eb' : 'var(--surface-card, #ffffff)',
-                  color: typeFilter === 'ALL' ? '#ffffff' : 'var(--text-secondary, #475569)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                All Fines ({totalCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setTypeFilter('LATE')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  border: typeFilter === 'LATE' ? '1px solid #d97706' : '1px solid var(--border-main, #e2e8f0)',
-                  background: typeFilter === 'LATE' ? '#f59e0b' : 'var(--surface-card, #ffffff)',
-                  color: typeFilter === 'LATE' ? '#ffffff' : 'var(--text-secondary, #475569)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>schedule</span>
-                Late Arrival Fines ({lateCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setTypeFilter('OTHER')}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: typeFilter === 'OTHER' ? '1px solid #64748b' : '1px solid var(--border-main, #e2e8f0)',
-                  background: typeFilter === 'OTHER' ? '#64748b' : 'var(--surface-card, #ffffff)',
-                  color: typeFilter === 'OTHER' ? '#ffffff' : 'var(--text-secondary, #475569)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                Other Penalties ({otherCount})
-              </button>
+              <div className={styles.statusTabsList} role="tablist" aria-label="Filter fines by type">
+                {[
+                  { id: 'ALL', label: 'All Fines', icon: 'receipt_long', count: totalCount, colorKey: 'type_all' },
+                  { id: 'LATE', label: 'Late Arrival Fines', icon: 'schedule', count: lateCount, colorKey: 'type_late' },
+                  { id: 'OTHER', label: 'Other Penalties', icon: 'gavel', count: otherCount, colorKey: 'type_other' },
+                ].map((tab) => {
+                  const isActive = typeFilter === tab.id;
+                  return (
+                    <div key={tab.id} className={styles.statusSquareWrapper}>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => setTypeFilter(tab.id as any)}
+                        className={`${styles.statusSquareBtn} ${isActive ? styles.statusSquareBtnActive : ''} ${styles[`statusSquare_${tab.colorKey}`]}`}
+                        title={`${tab.label} (${tab.count})`}
+                        aria-label={`${tab.label} (${tab.count})`}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                          {tab.icon}
+                        </span>
+                        <span className={styles.statusSquareCount}>{tab.count}</span>
+                      </button>
+                      <span className={styles.statusSquareTooltip}>
+                        {tab.label} ({tab.count})
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Status Tabs */}
-            <div className={styles.statusTabsList}>
-            <button
-              onClick={() => setStatusFilter('ALL')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
-            >
-              All Penalties
-              <span style={{ opacity: 0.7 }}>({totalCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('PENDING')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'PENDING' ? styles.statusTabBtnActive : ''}`}
-            >
-              Pending
-              <span style={{ opacity: 0.7 }}>({pendingCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('CONSIDERATION_REQUESTED')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'CONSIDERATION_REQUESTED' ? styles.statusTabBtnActive : ''}`}
-              style={considerationCount > 0 ? { borderColor: 'rgba(99, 102, 241, 0.45)', color: statusFilter === 'CONSIDERATION_REQUESTED' ? '#ffffff' : '#818cf8' } : undefined}
-            >
-              Consideration
-              <span style={{ opacity: 0.85 }}>({considerationCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('DEDUCTED')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'DEDUCTED' ? styles.statusTabBtnActive : ''}`}
-            >
-              Deducted
-              <span style={{ opacity: 0.7 }}>({deductedCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('CANCELLED')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'CANCELLED' ? styles.statusTabBtnActive : ''}`}
-            >
-              Waived / Cancelled
-              <span style={{ opacity: 0.7 }}>({cancelledCount})</span>
-            </button>
+            <div className={styles.statusTabsList} role="tablist" aria-label="Filter fines by status">
+              {[
+                { id: 'ALL', label: 'All Penalties', icon: 'checklist', count: totalCount, colorKey: 'all' },
+                { id: 'PENDING', label: 'Pending', icon: 'hourglass_top', count: pendingCount, colorKey: 'pending' },
+                { id: 'CONSIDERATION_REQUESTED', label: 'Consideration', icon: 'rate_review', count: considerationCount, colorKey: 'consideration' },
+                { id: 'DEDUCTED', label: 'Deducted', icon: 'payments', count: deductedCount, colorKey: 'deducted' },
+                { id: 'CANCELLED', label: 'Waived / Cancelled', icon: 'cancel', count: cancelledCount, colorKey: 'cancelled' },
+              ].map((tab) => {
+                const isActive = statusFilter === tab.id;
+                return (
+                  <div key={tab.id} className={styles.statusSquareWrapper}>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setStatusFilter(tab.id as any)}
+                      className={`${styles.statusSquareBtn} ${isActive ? styles.statusSquareBtnActive : ''} ${styles[`statusSquare_${tab.colorKey}`]}`}
+                      title={`${tab.label} (${tab.count})`}
+                      aria-label={`${tab.label} (${tab.count})`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                        {tab.icon}
+                      </span>
+                      <span className={styles.statusSquareCount}>{tab.count}</span>
+                    </button>
+                    <span className={styles.statusSquareTooltip}>
+                      {tab.label} ({tab.count})
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
           {/* View Mode Toggle */}
           <div className={styles.viewToggleGroup}>
@@ -2124,7 +2099,7 @@ export default function FinesPage() {
 
               {/* Inline Adjustment Card for '2. Consider' */}
               {isConsiderActionActive && (
-                <div className={styles.inlineConsiderBox}>
+                <div className={styles.inlineConsiderBox} ref={considerBoxRef}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>price_change</span>

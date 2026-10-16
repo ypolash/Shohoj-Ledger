@@ -1271,66 +1271,89 @@ export default function AttendancePage() {
         />
 
         <div className={styles.controlsBottomRow}>
-          {/* Status Tabs */}
-          <div className={styles.statusTabsList}>
-            <button
-              onClick={() => setStatusFilter('ALL')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
-            >
-              All Logs
-              <span style={{ opacity: 0.7 }}>({records.length})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('PRESENT')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'PRESENT' ? styles.statusTabBtnActive : ''}`}
-            >
-              Present
-              <span style={{ opacity: 0.7 }}>({presentCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('LATE')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'LATE' ? styles.statusTabBtnActive : ''}`}
-            >
-              Late
-              <span style={{ opacity: 0.7 }}>({lateCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('ABSENT')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ABSENT' ? styles.statusTabBtnActive : ''}`}
-            >
-              Absent
-              <span style={{ opacity: 0.7 }}>({absentCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('HALF_DAY')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'HALF_DAY' ? styles.statusTabBtnActive : ''}`}
-            >
-              Half Day
-              <span style={{ opacity: 0.7 }}>({halfDayCount})</span>
-            </button>
+          {/* Status Tabs - Square Boxes with Icons and Hover Tooltips */}
+          <div className={styles.statusTabsList} role="tablist" aria-label="Filter attendance by status">
+            {[
+              {
+                id: 'ALL',
+                label: 'All Logs',
+                icon: 'checklist',
+                count: records.length,
+                colorKey: 'all',
+              },
+              {
+                id: 'PRESENT',
+                label: 'Present',
+                icon: 'check_circle',
+                count: presentCount,
+                colorKey: 'present',
+              },
+              {
+                id: 'LATE',
+                label: 'Late',
+                icon: 'schedule',
+                count: lateCount,
+                colorKey: 'late',
+              },
+              {
+                id: 'ABSENT',
+                label: 'Absent',
+                icon: 'person_off',
+                count: absentCount,
+                colorKey: 'absent',
+              },
+              {
+                id: 'HALF_DAY',
+                label: 'Half Day',
+                icon: 'timelapse',
+                count: halfDayCount,
+                colorKey: 'halfDay',
+              },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <div key={tab.id} className={styles.statusSquareWrapper}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setStatusFilter(tab.id)}
+                    className={`${styles.statusSquareBtn} ${isActive ? styles.statusSquareBtnActive : ''} ${styles[`statusSquare_${tab.colorKey}`]}`}
+                    title={`${tab.label} (${tab.count})`}
+                    aria-label={`${tab.label} (${tab.count})`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                      {tab.icon}
+                    </span>
+                    <span className={styles.statusSquareCount}>{tab.count}</span>
+                  </button>
+                  <span className={styles.statusSquareTooltip}>
+                    {tab.label} ({tab.count})
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
-          {/* View Mode Toggle */}
-          <div className={styles.viewModeSwitcher}>
+          {/* View Mode Toggle - Icon Only View */}
+          <div className={styles.viewModeSwitcher} role="group" aria-label="Attendance view mode">
             <button
               type="button"
               onClick={() => setViewMode('DATE_WISE')}
               className={`${styles.viewModeBtn} ${viewMode === 'DATE_WISE' ? styles.viewModeBtnActive : ''}`}
+              title="Date-wise View"
+              aria-label="Date-wise View"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_view_day</span>
-              Date-wise View
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calendar_view_day</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('HORIZONTAL_CALENDAR')}
               className={`${styles.viewModeBtn} ${viewMode === 'HORIZONTAL_CALENDAR' ? styles.viewModeBtnActive : ''}`}
+              title="Horizontal Calendar"
+              aria-label="Horizontal Calendar"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_month</span>
-              Horizontal Calendar
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calendar_month</span>
             </button>
           </div>
         </div>

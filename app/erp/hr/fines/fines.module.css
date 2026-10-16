@@ -489,11 +489,196 @@
 
 .statusTabsList {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
   background: var(--surface-hover, #f8fafc);
-  padding: 4px;
-  border-radius: 10px;
+  padding: 5px;
+  border-radius: 12px;
   border: 1px solid var(--border-main, #e2e8f0);
+}
+
+.statusSquareWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.statusSquareBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  aspect-ratio: 1;
+  padding: 3px 2px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 2px;
+  outline: none;
+}
+
+.statusSquareBtn:hover {
+  background: var(--surface-card, #ffffff);
+  border-color: var(--border-main, #e2e8f0);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.statusSquareCount {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--text-muted, #64748b);
+  transition: color 0.2s ease;
+}
+
+/* Distinct status icon colors */
+.statusSquare_all span:first-child {
+  color: var(--text-muted, #64748b);
+}
+.statusSquare_pending span:first-child {
+  color: #f59e0b;
+}
+.statusSquare_consideration span:first-child {
+  color: #818cf8;
+}
+.statusSquare_deducted span:first-child {
+  color: #ef4444;
+}
+.statusSquare_cancelled span:first-child {
+  color: #10b981;
+}
+
+/* Type filter icon colors */
+.statusSquare_type_all span:first-child {
+  color: #3b82f6;
+}
+.statusSquare_type_late span:first-child {
+  color: #f59e0b;
+}
+.statusSquare_type_other span:first-child {
+  color: #8b5cf6;
+}
+
+/* Active Selected States */
+.statusSquareBtnActive {
+  background: var(--surface-card, #ffffff) !important;
+  transform: translateY(-1px);
+}
+
+.statusSquareBtnActive .statusSquareCount {
+  color: var(--text-main, #0f172a);
+  font-weight: 800;
+}
+
+.statusSquare_all.statusSquareBtnActive {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 1px #e11d48, 0 3px 10px rgba(225, 29, 72, 0.25);
+}
+.statusSquare_all.statusSquareBtnActive span:first-child {
+  color: #e11d48;
+}
+
+.statusSquare_pending.statusSquareBtnActive {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px #f59e0b, 0 3px 10px rgba(245, 158, 11, 0.25);
+}
+.statusSquare_pending.statusSquareBtnActive span:first-child {
+  color: #f59e0b;
+}
+
+.statusSquare_consideration.statusSquareBtnActive {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px #6366f1, 0 3px 10px rgba(99, 102, 241, 0.35);
+}
+.statusSquare_consideration.statusSquareBtnActive span:first-child {
+  color: #818cf8;
+}
+
+.statusSquare_deducted.statusSquareBtnActive {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444, 0 3px 10px rgba(239, 68, 68, 0.25);
+}
+.statusSquare_deducted.statusSquareBtnActive span:first-child {
+  color: #ef4444;
+}
+
+.statusSquare_cancelled.statusSquareBtnActive {
+  border-color: #10b981;
+  box-shadow: 0 0 0 1px #10b981, 0 3px 10px rgba(16, 185, 129, 0.25);
+}
+.statusSquare_cancelled.statusSquareBtnActive span:first-child {
+  color: #10b981;
+}
+
+/* Type Filter Active States */
+.statusSquare_type_all.statusSquareBtnActive {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb, 0 3px 10px rgba(37, 99, 235, 0.25);
+}
+.statusSquare_type_all.statusSquareBtnActive span:first-child {
+  color: #3b82f6;
+}
+
+.statusSquare_type_late.statusSquareBtnActive {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px #f59e0b, 0 3px 10px rgba(245, 158, 11, 0.25);
+}
+.statusSquare_type_late.statusSquareBtnActive span:first-child {
+  color: #f59e0b;
+}
+
+.statusSquare_type_other.statusSquareBtnActive {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 1px #8b5cf6, 0 3px 10px rgba(139, 92, 246, 0.25);
+}
+.statusSquare_type_other.statusSquareBtnActive span:first-child {
+  color: #8b5cf6;
+}
+
+/* Tooltip on mouse hover */
+.statusSquareTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  z-index: 70;
+}
+
+.statusSquareTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.statusSquareWrapper:hover .statusSquareTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .statusTabBtn {
@@ -872,6 +1057,7 @@
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(8px);
   padding: 16px;
+  overflow-y: auto;
 }
 
 .modalBox {
@@ -879,6 +1065,10 @@
   border: 1px solid var(--border-main, #e2e8f0);
   width: 100%;
   max-width: 480px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  margin: auto;
   border-radius: 20px;
   padding: 28px;
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
@@ -1309,25 +1499,49 @@
   border-radius: 20px;
   width: 100%;
   max-width: 580px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  margin: auto;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), 0 0 25px rgba(99, 102, 241, 0.15);
   overflow: hidden;
   animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .considerationHeader {
-  padding: 20px 24px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(15, 23, 42, 0.4));
   border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .considerationBody {
-  padding: 24px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+}
+
+.considerationBody::-webkit-scrollbar {
+  width: 6px;
+}
+.considerationBody::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+.considerationBody::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.35);
+  border-radius: 4px;
+}
+.considerationBody::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.55);
 }
 
 .appealReasonCard {
@@ -1335,7 +1549,7 @@
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-left: 4px solid #6366f1;
   border-radius: 12px;
-  padding: 16px 18px;
+  padding: 12px 16px;
   position: relative;
 }
 
@@ -1348,13 +1562,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .appealReasonText {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-main, #f8fafc);
-  line-height: 1.55;
+  line-height: 1.5;
   font-style: italic;
   font-weight: 500;
 }
@@ -1362,21 +1576,21 @@
 .fineDetailGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px 14px;
   background: var(--surface-hover, rgba(255, 255, 255, 0.03));
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.07));
   border-radius: 14px;
-  padding: 16px;
+  padding: 12px 16px;
 }
 
 .fineDetailItem {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .fineDetailLabel {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted, #94a3b8);
   font-weight: 600;
   text-transform: uppercase;
@@ -1384,7 +1598,7 @@
 }
 
 .fineDetailValue {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main, #f8fafc);
 }
@@ -1393,7 +1607,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .actionChoiceBtn {
@@ -1401,14 +1615,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 14px 10px;
+  padding: 10px 8px;
   border-radius: 12px;
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
   background: var(--surface-hover, rgba(255, 255, 255, 0.03));
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .actionChoiceBtn:hover:not(:disabled) {

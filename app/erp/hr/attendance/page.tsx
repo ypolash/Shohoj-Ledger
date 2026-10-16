@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import styles from './attendance.module.css';
+import { HorizontalCalendarView } from './components/HorizontalCalendarView';
+import { HorizontalDateStrip } from './components/HorizontalDateStrip';
 
 interface AttendanceRecord {
   id: string;
@@ -28,6 +30,10 @@ interface Employee {
   firstName: string;
   lastName: string;
   employeeId?: string;
+  designation?: string;
+  department?: string;
+  designationRef?: { name: string };
+  departmentRef?: { name: string };
 }
 
 interface AllowedNetwork {
@@ -169,7 +175,7 @@ export default function AttendancePage() {
     }
   });
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [viewMode, setViewMode] = useState<'DATE_WISE' | 'FLAT_LIST'>('DATE_WISE');
+  const [viewMode, setViewMode] = useState<'DATE_WISE' | 'HORIZONTAL_CALENDAR'>('DATE_WISE');
   const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
   const [datePreset, setDatePreset] = useState<'ALL' | 'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'CUSTOM'>('TODAY');
   const [isLoading, setIsLoading] = useState(true);
@@ -1249,6 +1255,21 @@ export default function AttendancePage() {
           )}
         </div>
 
+        {/* Horizontal Calendar Date Ribbon Strip */}
+        <HorizontalDateStrip
+          selectedDate={filterDate}
+          onSelectDate={(dateKey) => {
+            setFilterDate(dateKey);
+            setDatePreset('CUSTOM' as any);
+          }}
+          onClearDate={() => {
+            setFilterDate('');
+            setDatePreset('ALL');
+          }}
+          records={records}
+          timezone={officeTiming.timezone}
+        />
+
         <div className={styles.controlsBottomRow}>
           {/* Status Tabs */}
           <div className={styles.statusTabsList}>
@@ -1305,11 +1326,11 @@ export default function AttendancePage() {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('FLAT_LIST')}
-              className={`${styles.viewModeBtn} ${viewMode === 'FLAT_LIST' ? styles.viewModeBtnActive : ''}`}
+              onClick={() => setViewMode('HORIZONTAL_CALENDAR')}
+              className={`${styles.viewModeBtn} ${viewMode === 'HORIZONTAL_CALENDAR' ? styles.viewModeBtnActive : ''}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>table_rows</span>
-              Flat List
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_month</span>
+              Horizontal Calendar
             </button>
           </div>
         </div>
@@ -1324,6 +1345,25 @@ export default function AttendancePage() {
             ))}
           </div>
         </div>
+      ) : viewMode === 'HORIZONTAL_CALENDAR' ? (
+        <HorizontalCalendarView
+          records={records}
+          employees={employees}
+          officeTiming={officeTiming}
+          punishmentRules={punishmentRules}
+          onAddRecord={(empId, dateKey) => {
+            setForm({
+              ...EMPTY_FORM,
+              employeeId: empId,
+              date: dateKey,
+            });
+            setError('');
+            setShowModal(true);
+          }}
+          onConsiderLate={handleOpenConsiderModal}
+          onAutoCheckout={handleOpenAutoCheckoutModal}
+          onDeleteRecord={setAttendanceToDelete}
+        />
       ) : filteredRecords.length === 0 ? (
         <div className={styles.emptyStateBox}>
           <div className={styles.emptyStateIcon}>
@@ -1375,7 +1415,7 @@ export default function AttendancePage() {
             </>
           )}
         </div>
-      ) : viewMode === 'DATE_WISE' ? (
+      ) : (
         /* Date-wise Grouped View */
         <div className={styles.dateGroupsContainer}>
           {/* Action & Count Summary Bar */}
@@ -1864,393 +1904,7 @@ export default function AttendancePage() {
             );
           })}
         </div>
-      ) : (
-        /* Flat Table View */
-        <div className={styles.tableCard}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className={styles.dataTable}>
-              <thead>
-                <tr className={styles.tableHeaderRow}>
-                  <th className={styles.tableHeaderCell}>Staff Personnel</th>
-                  <th className={styles.tableHeaderCell}>Log Date</th>
-                  <th className={styles.tableHeaderCell}>Check In</th>
-                  <th className={styles.tableHeaderCell}>Check Out</th>
-                  <th className={styles.tableHeaderCell}>Late Duration</th>
-                  <th className={styles.tableHeaderCell}>Late Fines</th>
-                  <th className={styles.tableHeaderCell}>Early Leave Time</th>
-                  <th className={styles.tableHeaderCell}>Status</th>
-                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRecords.slice(0, 100).map(r => {
-                  const emp = empMap[r.employeeId] || r.employee;
-                  const fullName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : (r.employeeName || 'Staff Personnel');
-                  const initials = emp && (emp.firstName || emp.lastName)
-                    ? `${(emp.firstName || '')[0] || ''}${(emp.lastName || '')[0] || ''}`.toUpperCase()
-                    : 'ST';
-
-                  const checkIn = r.checkIn || r.checkInTime || '—';
-                  const checkOut = r.checkOut || r.checkOutTime || '—';
-
-                  return (
-                    <tr key={r.id} className={styles.tableRow}>
-                      <td className={styles.tableCell}>
-                        <div className={styles.employeeProfileGroup}>
-                          <div className={styles.empAvatar}>{initials}</div>
-                          <div>
-                            <div className={styles.empName}>{fullName}</div>
-                            {emp?.employeeId && (
-                              <span className={styles.empIdBadge}>{emp.employeeId}</span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-main)', fontWeight: 500 }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px', color: 'var(--text-muted)' }}>calendar_today</span>
-                          <span>{formatDisplayDate(r.date, officeTiming.timezone)}</span>
-                        </div>
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        {r.status === 'ABSENT' ? (
-                          <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Unattended</span>
-                        ) : (
-                          <span className={styles.timeBadge}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--success)' }}>login</span>
-                            {formatDisplayTime(checkIn, officeTiming.timezone)}
-                          </span>
-                        )}
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        {r.status === 'ABSENT' ? (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                        ) : (
-                          <span className={styles.timeBadge}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>logout</span>
-                            {formatDisplayTime(checkOut, officeTiming.timezone)}
-                          </span>
-                        )}
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        {r.status === 'ABSENT' ? (
-                          <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 600 }}>Unattended</span>
-                        ) : r.reviewStatus === 'CONSIDERED' ? (
-                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
-                            {r.lateMinutes && r.lateMinutes > 0 ? (
-                              <span style={{
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                color: 'var(--warning, #f59e0b)',
-                                background: 'rgba(245, 158, 11, 0.1)',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                width: 'fit-content'
-                              }}>
-                                +{r.lateMinutes} min late
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
-                            )}
-                            <span style={{
-                              fontSize: '11px',
-                              fontWeight: 600,
-                              color: '#059669',
-                              background: 'rgba(16, 185, 129, 0.12)',
-                              border: '1px solid rgba(16, 185, 129, 0.3)',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              width: 'fit-content'
-                            }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-                              HR Considered {(() => {
-                                const match = r.punishmentReason?.match(/HR Considered (\d+)\s*min/i);
-                                if (match && match[1]) return `(${match[1]} min)`;
-                                const raw = calculateRawLateMinutes(r, officeTiming);
-                                if (raw > (r.lateMinutes || 0)) return `(${raw - (r.lateMinutes || 0)} min)`;
-                                return r.lateMinutes === 0 ? '(Waived)' : '';
-                              })()}
-                            </span>
-                            {r.punishmentReason && (
-                              <span style={{ fontSize: '10px', color: 'var(--text-muted)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.punishmentReason}>
-                                {r.punishmentReason.replace(/^HR Considered \d+ min:\s*/i, '')}
-                              </span>
-                            )}
-                          </div>
-                        ) : r.lateMinutes && r.lateMinutes > 0 ? (
-                          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '6px' }}>
-                            +{r.lateMinutes} min late
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min (On Time)</span>
-                        )}
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        {r.status === 'ABSENT' ? (
-                          (() => {
-                            const absentFine = getRecordAbsentFine(r, punishmentRules);
-                            return absentFine > 0 ? (
-                              <span style={{
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                color: '#ef4444',
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.25)',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-                                ৳{absentFine.toLocaleString()}
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                            );
-                          })()
-                        ) : r.reviewStatus === 'CONSIDERED' ? (
-                          r.punishmentAmount && Number(r.punishmentAmount) > 0 ? (
-                            <span style={{
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              color: '#ef4444',
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.25)',
-                              padding: '2px 8px',
-                              borderRadius: '6px'
-                            }}>
-                              ৳{Number(r.punishmentAmount).toLocaleString()}
-                            </span>
-                          ) : (
-                            <span style={{
-                              fontSize: '11px',
-                              fontWeight: 600,
-                              color: '#059669',
-                              background: 'rgba(16, 185, 129, 0.1)',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '3px'
-                            }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-                              Waived
-                            </span>
-                          )
-                        ) : r.lateMinutes && r.lateMinutes > 0 ? (
-                          (() => {
-                            const fine = getRecordLateFine(r, punishmentRules);
-                            return fine > 0 ? (
-                              <span style={{
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                color: '#ef4444',
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.25)',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-                                ৳{fine.toLocaleString()}
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>৳0</span>
-                            );
-                          })()
-                        ) : (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                        )}
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        {r.status === 'ABSENT' ? (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>—</span>
-                        ) : r.earlyLeaveMinutes && r.earlyLeaveMinutes > 0 ? (
-                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#ea580c', background: 'rgba(234, 88, 12, 0.1)', padding: '2px 8px', borderRadius: '6px', width: 'fit-content' }}>
-                              -{r.earlyLeaveMinutes} min early
-                            </span>
-                            {checkOut !== '—' && (
-                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                Left at {formatDisplayTime(checkOut, officeTiming.timezone)}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>0 min</span>
-                        )}
-                      </td>
-
-                      <td className={styles.tableCell}>
-                        <span className={`${styles.statusChip} ${getStatusClass(r.status)}`}>
-                          {r.status}
-                        </span>
-                      </td>
-
-                      <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (e.shiftKey) {
-                                handleConfirmAutoCheckoutDirect(r);
-                              } else {
-                                handleOpenAutoCheckoutModal(r, 'MANUAL');
-                              }
-                            }}
-                            disabled={autoCheckoutLoadingId === r.id}
-                            title={
-                              checkOut === '—'
-                                ? "Manual Out (Click to set time, or Shift+Click for instant shift end)"
-                                : `Manual Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
-                            }
-                            style={{
-                              padding: '6px',
-                              borderRadius: '8px',
-                              border: checkOut === '—'
-                                ? '1px solid rgba(16, 185, 129, 0.45)'
-                                : '1px solid rgba(16, 185, 129, 0.2)',
-                              background: checkOut === '—'
-                                ? 'rgba(16, 185, 129, 0.15)'
-                                : 'rgba(16, 185, 129, 0.05)',
-                              color: checkOut === '—' ? '#10b981' : '#059669',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.15s ease',
-                              boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
-                            }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                              {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
-                            </span>
-                          </button>
-
-                          {/* Half Day Out (Emergency Permit) Button */}
-                          {r.status !== 'ABSENT' && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenAutoCheckoutModal(r, 'HALF_DAY');
-                              }}
-                              disabled={autoCheckoutLoadingId === r.id}
-                              title={
-                                r.status === 'HALF_DAY'
-                                  ? `Permitted Half Day (Departed at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
-                                  : "Half Day Out (Emergency Leave Permit - Waive Early Penalty)"
-                              }
-                              style={{
-                                padding: '6px',
-                                borderRadius: '8px',
-                                border: r.status === 'HALF_DAY'
-                                  ? '1px solid rgba(245, 158, 11, 0.6)'
-                                  : '1px solid rgba(245, 158, 11, 0.35)',
-                                background: r.status === 'HALF_DAY'
-                                  ? 'rgba(245, 158, 11, 0.22)'
-                                  : 'rgba(245, 158, 11, 0.08)',
-                                color: '#f59e0b',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.15s ease',
-                                boxShadow: r.status === 'HALF_DAY' ? '0 0 8px rgba(245, 158, 11, 0.25)' : 'none'
-                              }}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                emergency
-                              </span>
-                            </button>
-                          )}
-
-                          {r.reviewStatus === 'CONSIDERED' ? (
-                            <button
-                              type="button"
-                              onClick={() => handleRevertConsiderLate(r)}
-                              title="Revert HR consideration to original clock-in log"
-                              style={{
-                                padding: '6px',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                background: 'rgba(16, 185, 129, 0.08)',
-                                color: '#059669',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>undo</span>
-                            </button>
-                          ) : r.status !== 'ABSENT' ? (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenConsiderModal(r)}
-                              title={r.lateMinutes && r.lateMinutes > 0 ? "Consider / Waive Late Arrival (Forgot check-in)" : "Adjust / Consider Late Arrival"}
-                              style={{
-                                padding: '6px',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
-                                background: 'rgba(245, 158, 11, 0.08)',
-                                color: '#f59e0b',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule_send</span>
-                            </button>
-                          ) : null}
-
-                          <button
-                            type="button"
-                            onClick={() => setAttendanceToDelete(r)}
-                            disabled={deletingAttendanceId === r.id}
-                            title="Delete attendance record"
-                            style={{
-                              padding: '6px',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(239, 68, 68, 0.2)',
-                              background: 'rgba(239, 68, 68, 0.08)',
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                              {deletingAttendanceId === r.id ? 'hourglass_empty' : 'delete'}
-                            </span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
       )}
-
       {/* 5. Record Attendance Modal */}
       {showModal && (
         <div

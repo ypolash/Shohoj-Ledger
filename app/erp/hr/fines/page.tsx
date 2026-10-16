@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import styles from './fines.module.css';
+import { HorizontalFinesCalendarView } from './components/HorizontalFinesCalendarView';
+import { HorizontalFinesDateStrip } from './components/HorizontalFinesDateStrip';
 
 interface EmployeeFine {
   id: string;
@@ -97,7 +99,8 @@ export default function FinesPage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'DEDUCTED' | 'CANCELLED'>('ALL');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'LATE' | 'OTHER'>('ALL');
   const [employeeFilter, setEmployeeFilter] = useState<string>('ALL');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [filterDate, setFilterDate] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'calendar'>('table');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
@@ -304,9 +307,15 @@ export default function FinesPage() {
         return false;
       }
 
+      // Date filter from horizontal calendar strip
+      if (filterDate) {
+        const fDateStr = f.date ? f.date.slice(0, 10) : '';
+        if (fDateStr !== filterDate) return false;
+      }
+
       return true;
     });
-  }, [fines, employeeMap, search, statusFilter, typeFilter, employeeFilter]);
+  }, [fines, employeeMap, search, statusFilter, typeFilter, employeeFilter, filterDate]);
 
   // Aggregate KPI metrics
   const totalCount = fines.length;
@@ -332,7 +341,8 @@ export default function FinesPage() {
     search.trim() ||
     statusFilter !== 'ALL' ||
     typeFilter !== 'ALL' ||
-    employeeFilter !== 'ALL'
+    employeeFilter !== 'ALL' ||
+    filterDate
   );
 
   const handleResetFilters = () => {
@@ -340,6 +350,7 @@ export default function FinesPage() {
     setStatusFilter('ALL');
     setTypeFilter('ALL');
     setEmployeeFilter('ALL');
+    setFilterDate('');
   };
 
   // Aggregate per-employee fine profiles
@@ -784,6 +795,14 @@ export default function FinesPage() {
           </div>
         </div>
 
+        {/* Horizontal Calendar Date Ribbon Strip */}
+        <HorizontalFinesDateStrip
+          selectedDate={filterDate}
+          onSelectDate={(dateKey) => setFilterDate(dateKey)}
+          onClearDate={() => setFilterDate('')}
+          fines={fines}
+        />
+
         <div className={styles.controlsBottomRow}>
           {/* Category & Status Tabs */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
@@ -901,6 +920,13 @@ export default function FinesPage() {
             >
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>grid_view</span>
             </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`${styles.viewToggleBtn} ${viewMode === 'calendar' ? styles.viewToggleBtnActive : ''}`}
+              title="Horizontal Calendar View"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>calendar_month</span>
+            </button>
           </div>
         </div>
       </section>
@@ -914,6 +940,22 @@ export default function FinesPage() {
             ))}
           </div>
         </div>
+      ) : viewMode === 'calendar' ? (
+        <HorizontalFinesCalendarView
+          fines={fines}
+          employees={employees}
+          onAddFine={(empId, dateStr) => {
+            setNewFine({
+              ...EMPTY_FORM,
+              employeeId: empId,
+              date: dateStr,
+            });
+            setError('');
+            setShowModal(true);
+          }}
+          onStatusChange={handleUpdateStatus}
+          onDeleteFine={handleDeleteFine}
+        />
       ) : filteredFines.length === 0 ? (
         <div className={styles.emptyStateBox}>
           <div className={styles.emptyStateIcon}>

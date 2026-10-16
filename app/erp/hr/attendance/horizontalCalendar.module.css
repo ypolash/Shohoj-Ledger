@@ -1,0 +1,830 @@
+/* ==========================================================================
+   HORIZONTAL CALENDAR & DATE STRIP - ENTERPRISE DESIGN SYSTEM
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Horizontal Date Strip (Quick Date Navigator in Controls)
+   -------------------------------------------------------------------------- */
+.dateStripWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--surface-hover, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  width: 100%;
+}
+
+.dateStripHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dateStripTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main, #f8fafc);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dateStripNavActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stripNavBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
+  background: var(--surface-card, #0f172a);
+  color: var(--text-main, #f8fafc);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.stripNavBtn:hover {
+  background: var(--surface-hover, #1e293b);
+  border-color: var(--primary, #3b82f6);
+  color: var(--primary, #3b82f6);
+  transform: translateY(-1px);
+}
+
+.stripTodayBtn {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
+  background: var(--surface-card, #0f172a);
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stripTodayBtn:hover {
+  color: var(--text-main, #f8fafc);
+  background: var(--surface-hover, #1e293b);
+  border-color: var(--border-main, rgba(255, 255, 255, 0.2));
+}
+
+.dateStripTrack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE & Edge */
+}
+
+.dateStripTrack::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+.dateStripCard {
+  flex: 0 0 auto;
+  min-width: 68px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  background: var(--surface-card, #0f172a);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  user-select: none;
+}
+
+.dateStripCard:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: var(--surface-hover, #1e293b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dateStripCardActive {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(16, 185, 129, 0.15) 100%) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.25);
+}
+
+.dateStripCardWeekend {
+  opacity: 0.82;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.stripDayName {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #94a3b8);
+}
+
+.dateStripCardActive .stripDayName {
+  color: #60a5fa;
+}
+
+.stripDayNum {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+  line-height: 1.1;
+}
+
+.dateStripCardActive .stripDayNum {
+  color: #ffffff;
+}
+
+.stripMonthName {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+}
+
+.stripTodayBadge {
+  position: absolute;
+  top: -5px;
+  font-size: 8px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2563eb, #10b981);
+  color: #ffffff;
+  padding: 1px 5px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stripDotsRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  height: 6px;
+}
+
+.stripDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.stripDotPresent { background-color: #10b981; }
+.stripDotLate { background-color: #f59e0b; }
+.stripDotAbsent { background-color: #ef4444; }
+.stripDotHalfDay { background-color: #a855f7; }
+
+/* --------------------------------------------------------------------------
+   Full Horizontal Calendar View (Matrix Sheet)
+   -------------------------------------------------------------------------- */
+.calendarContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.calendarToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--surface-card, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+}
+
+.calendarNavGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendarMonthTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+  margin: 0;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendarNavBtns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-hover, #1e293b);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+}
+
+.navArrowBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navArrowBtn:hover {
+  background: var(--surface-card, #0f172a);
+  color: var(--text-main, #f8fafc);
+}
+
+.navTodayBtn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--surface-card, #0f172a);
+  color: var(--text-main, #f8fafc);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.navTodayBtn:hover {
+  color: var(--primary, #3b82f6);
+}
+
+.calendarSpanControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-hover, #1e293b);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+}
+
+.spanBtn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.spanBtn:hover {
+  color: var(--text-main, #f8fafc);
+}
+
+.spanBtnActive {
+  background: var(--surface-card, #0f172a);
+  color: #3b82f6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.calendarSearchInput {
+  padding: 8px 12px 8px 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
+  background: var(--surface-hover, #1e293b);
+  color: var(--text-main, #f8fafc);
+  font-size: 13px;
+  outline: none;
+  width: 200px;
+  transition: all 0.2s ease;
+}
+
+.calendarSearchInput:focus {
+  border-color: #3b82f6;
+  width: 240px;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Calendar KPIs & Legend Row */
+.calendarSubBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--surface-card, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+}
+
+.legendList {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.kpiPillsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.kpiPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  background: var(--surface-hover, #1e293b);
+  color: var(--text-main, #f8fafc);
+}
+
+/* --------------------------------------------------------------------------
+   Matrix Grid Table
+   -------------------------------------------------------------------------- */
+.matrixCard {
+  background: var(--surface-card, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.2);
+}
+
+.matrixScrollWrapper {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE & Edge */
+}
+
+.matrixScrollWrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+.matrixTable {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 12px;
+}
+
+/* Sticky Headers & Columns */
+.headerEmployeeCol {
+  position: sticky;
+  left: 0;
+  z-index: 25;
+  background: var(--surface-card, #0f172a);
+  min-width: 240px;
+  max-width: 240px;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-right: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.headerDateCol {
+  min-width: 44px;
+  max-width: 44px;
+  padding: 8px 4px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-right: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
+  background: var(--surface-card, #0f172a);
+}
+
+.headerDateColToday {
+  background: rgba(37, 99, 235, 0.15) !important;
+  border-bottom: 2px solid #3b82f6 !important;
+}
+
+.headerDateColWeekend {
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+.dateColDayName {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.dateColDayNum {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+  margin-top: 3px;
+  line-height: 1;
+}
+
+.headerDateColToday .dateColDayNum {
+  color: #60a5fa;
+}
+
+.headerSummaryCol {
+  position: sticky;
+  right: 0;
+  z-index: 25;
+  background: var(--surface-card, #0f172a);
+  min-width: 220px;
+  padding: 12px 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-left: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Rows & Cells */
+.matrixRow {
+  transition: background 0.15s ease;
+}
+
+.matrixRow:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.02));
+}
+
+.stickyEmpCell {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  background: var(--surface-card, #0f172a);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
+  border-right: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.15);
+  min-width: 240px;
+  max-width: 240px;
+}
+
+.matrixRow:hover .stickyEmpCell {
+  background: var(--surface-hover, #1e293b);
+}
+
+.empCellProfile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.empMiniAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.empCellInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.empCellName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #f8fafc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empCellSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.empMiniBadge {
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #60a5fa;
+  background: rgba(37, 99, 235, 0.15);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* Day Cells */
+.matrixDayCell {
+  min-width: 44px;
+  max-width: 44px;
+  height: 48px;
+  padding: 2px;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.05));
+  border-right: 1px solid var(--border-main, rgba(255, 255, 255, 0.04));
+  position: relative;
+}
+
+.matrixDayCellToday {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.matrixDayCellWeekend {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+/* Interactive Cell Button / Badge */
+.cellBadgeBtn {
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+  padding: 2px;
+  position: relative;
+}
+
+.cellBadgeBtn:hover {
+  transform: scale(1.06);
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.cellStatusP {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.cellStatusL {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #f59e0b !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.cellStatusA {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+.cellStatusH {
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #c084fc !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
+}
+
+.cellStatusOff {
+  color: var(--text-muted, #64748b);
+  opacity: 0.6;
+}
+
+.cellStatusEmpty {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.cellBadgeLetter {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.cellSubText {
+  font-size: 8.5px;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+/* Sticky Summary Cell */
+.stickySummaryCell {
+  position: sticky;
+  right: 0;
+  z-index: 20;
+  background: var(--surface-card, #0f172a);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
+  border-left: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+}
+
+.matrixRow:hover .stickySummaryCell {
+  background: var(--surface-hover, #1e293b);
+}
+
+.summaryRowContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.summaryStatsGroup {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.statBadgeMini {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.statBadgeP { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.statBadgeL { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.statBadgeA { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.rateBadge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rateHigh { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.rateMid { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.rateLow { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+/* Totals Bottom Row */
+.totalsRow {
+  background: var(--surface-hover, #1e293b);
+  font-weight: 700;
+}
+
+.totalsEmpCell {
+  position: sticky;
+  left: 0;
+  z-index: 25;
+  background: var(--surface-hover, #1e293b);
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main, #f8fafc);
+  border-top: 2px solid var(--border-main, rgba(255, 255, 255, 0.12));
+  border-right: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.totalsDayCell {
+  border-top: 2px solid var(--border-main, rgba(255, 255, 255, 0.12));
+  border-right: 1px solid var(--border-main, rgba(255, 255, 255, 0.04));
+  padding: 8px 2px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+}
+
+.totalsSummaryCell {
+  position: sticky;
+  right: 0;
+  z-index: 25;
+  background: var(--surface-hover, #1e293b);
+  padding: 12px 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary, #3b82f6);
+  border-top: 2px solid var(--border-main, rgba(255, 255, 255, 0.12));
+  border-left: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+/* --------------------------------------------------------------------------
+   Hover Tooltip & Quick Action Popover
+   -------------------------------------------------------------------------- */
+.cellTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  z-index: 100;
+  min-width: 190px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.tooltipTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+.tooltipValue {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.tooltipArrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #090d16 transparent transparent transparent;
+}

@@ -93,7 +93,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     { name: 'Orders', icon: ShoppingCart, href: '/erp/orders' },
     { name: 'Finance', icon: DollarSign, href: '/erp/finance' },
     { name: 'Inventory', icon: Box, href: '/erp/inventory' },
-    { name: 'HR', icon: Briefcase, href: '/erp/hr' },
+    { name: 'HR & Payroll', icon: Briefcase, href: '/erp/hr' },
     { name: 'Marketing', icon: Megaphone, href: '/erp/marketing' },
     { name: 'Reports', icon: BarChart2, href: '/erp/reports' },
   ].filter(item => {

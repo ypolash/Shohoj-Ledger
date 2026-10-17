@@ -701,57 +701,89 @@ export default function EmployeesPage() {
         </div>
 
         <div className={styles.controlsBottomRow}>
-          {/* Status Tabs */}
-          <div className={styles.statusTabsList}>
-            <button
-              onClick={() => setStatusFilter('ALL')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
-            >
-              All Staff
-              <span style={{ opacity: 0.7 }}>({totalCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('ACTIVE')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ACTIVE' ? styles.statusTabBtnActive : ''}`}
-            >
-              Active
-              <span style={{ opacity: 0.7 }}>({activeCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('ON_LEAVE')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ON_LEAVE' ? styles.statusTabBtnActive : ''}`}
-            >
-              On Leave
-              <span style={{ opacity: 0.7 }}>({onLeaveCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('TERMINATED')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'TERMINATED' ? styles.statusTabBtnActive : ''}`}
-            >
-              Terminated
-              <span style={{ opacity: 0.7 }}>({terminatedCount})</span>
-            </button>
+          {/* Status Tabs - Square Boxes with Icons and Hover Tooltips */}
+          <div className={styles.statusTabsList} role="tablist" aria-label="Filter employees by status">
+            {[
+              {
+                id: 'ALL',
+                label: 'All Staff',
+                icon: 'badge',
+                count: totalCount,
+                colorKey: 'all',
+              },
+              {
+                id: 'ACTIVE',
+                label: 'Active',
+                icon: 'check_circle',
+                count: activeCount,
+                colorKey: 'active',
+              },
+              {
+                id: 'ON_LEAVE',
+                label: 'On Leave',
+                icon: 'beach_access',
+                count: onLeaveCount,
+                colorKey: 'leave',
+              },
+              {
+                id: 'TERMINATED',
+                label: 'Terminated',
+                icon: 'person_off',
+                count: terminatedCount,
+                colorKey: 'terminated',
+              },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <div key={tab.id} className={styles.statusSquareWrapper}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setStatusFilter(tab.id as any)}
+                    className={`${styles.statusSquareBtn} ${isActive ? styles.statusSquareBtnActive : ''} ${styles[`statusSquare_${tab.colorKey}`]}`}
+                    title={`${tab.label} (${tab.count})`}
+                    aria-label={`${tab.label} (${tab.count})`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                      {tab.icon}
+                    </span>
+                    <span className={styles.statusSquareCount}>{tab.count}</span>
+                  </button>
+                  <span className={styles.statusSquareTooltip}>
+                    {tab.label} ({tab.count})
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* View Switcher */}
-          <div className={styles.viewToggleGroup}>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
-              title="Table View"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
-              title="Card Grid View"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
-            </button>
+          <div className={styles.viewToggleGroup} role="group" aria-label="View layout mode">
+            <div className={styles.statusSquareWrapper}>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
+                title="Table View"
+                aria-label="Table View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
+              </button>
+              <span className={styles.statusSquareTooltip}>Table View</span>
+            </div>
+            <div className={styles.statusSquareWrapper}>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
+                title="Card Grid View"
+                aria-label="Card Grid View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
+              </button>
+              <span className={styles.statusSquareTooltip}>Card Grid View</span>
+            </div>
           </div>
         </div>
       </section>
@@ -942,26 +974,19 @@ export default function EmployeesPage() {
                         <button
                           type="button"
                           onClick={() => handleOpenCustomDuty(emp)}
-                          title="Set Custom Duty Time"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '5px 10px',
-                            borderRadius: '8px',
-                            background: emp.workShift ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.08)',
-                            color: emp.workShift ? '#10b981' : '#6366f1',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            border: `1px solid ${emp.workShift ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.2)'}`,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
+                          className={`${styles.actionIconBtn} ${
+                            emp.workShift ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
+                          }`}
+                          title={
+                            emp.workShift
+                              ? `Custom Duty Active: ${emp.workShift.startTime} - ${emp.workShift.endTime} (Click to edit)`
+                              : "Set Custom Duty Time"
+                          }
+                          aria-label="Set Custom Duty Time"
                         >
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
                             {emp.workShift ? 'schedule' : 'more_time'}
                           </span>
-                          Custom Duty
                         </button>
 
                         <button
@@ -970,23 +995,11 @@ export default function EmployeesPage() {
                             e.stopPropagation();
                             handleOpenEditModal(emp);
                           }}
+                          className={`${styles.actionIconBtn} ${styles.actionIconBtnEdit}`}
                           title="Edit Profile"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '5px 10px',
-                            borderRadius: '8px',
-                            background: 'rgba(37, 99, 235, 0.08)',
-                            color: 'var(--primary)',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            border: '1px solid rgba(37, 99, 235, 0.2)',
-                            cursor: 'pointer'
-                          }}
+                          aria-label="Edit Profile"
                         >
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
-                          Edit
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                         </button>
 
                         <button
@@ -995,23 +1008,11 @@ export default function EmployeesPage() {
                             e.stopPropagation();
                             setEmployeeToDelete(emp);
                           }}
+                          className={`${styles.actionIconBtn} ${styles.actionIconBtnDelete}`}
                           title="Delete Employee"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '5px 10px',
-                            borderRadius: '8px',
-                            background: 'rgba(239, 68, 68, 0.08)',
-                            color: '#ef4444',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                            cursor: 'pointer'
-                          }}
+                          aria-label="Delete Employee"
                         >
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
-                          Delete
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                         </button>
                       </div>
                     </td>
@@ -1118,25 +1119,20 @@ export default function EmployeesPage() {
                     <button
                       type="button"
                       onClick={() => handleOpenCustomDuty(emp)}
-                      title="Set Custom Duty Time"
-                      style={{
-                        padding: '5px 8px',
-                        borderRadius: '6px',
-                        background: emp.workShift ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.08)',
-                        color: emp.workShift ? '#10b981' : '#6366f1',
-                        border: `1px solid ${emp.workShift ? 'rgba(16, 185, 129, 0.3)' : 'rgba(99, 102, 241, 0.2)'}`,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        fontSize: '12px',
-                        fontWeight: 600
-                      }}
+                      className={`${styles.actionIconBtn} ${
+                        emp.workShift ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
+                      }`}
+                      style={{ width: '30px', height: '30px', borderRadius: '7px' }}
+                      title={
+                        emp.workShift
+                          ? `Custom Duty: ${emp.workShift.startTime} - ${emp.workShift.endTime}`
+                          : "Set Custom Duty Time"
+                      }
+                      aria-label="Set Custom Duty Time"
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
                         {emp.workShift ? 'schedule' : 'more_time'}
                       </span>
-                      Duty
                     </button>
 
                     <button
@@ -1145,23 +1141,12 @@ export default function EmployeesPage() {
                         e.stopPropagation();
                         handleOpenEditModal(emp);
                       }}
-                      style={{
-                        padding: '5px 8px',
-                        borderRadius: '6px',
-                        background: 'rgba(37, 99, 235, 0.08)',
-                        color: 'var(--primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        border: '1px solid rgba(37, 99, 235, 0.2)',
-                        cursor: 'pointer'
-                      }}
+                      className={`${styles.actionIconBtn} ${styles.actionIconBtnEdit}`}
+                      style={{ width: '30px', height: '30px', borderRadius: '7px' }}
                       title="Edit Profile"
+                      aria-label="Edit Profile"
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
-                      Edit
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                     </button>
 
                     <button
@@ -1170,23 +1155,12 @@ export default function EmployeesPage() {
                         e.stopPropagation();
                         setEmployeeToDelete(emp);
                       }}
-                      style={{
-                        padding: '5px 8px',
-                        borderRadius: '6px',
-                        background: 'rgba(239, 68, 68, 0.08)',
-                        color: '#ef4444',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2px',
-                        fontSize: '12px',
-                        fontWeight: 600
-                      }}
+                      className={`${styles.actionIconBtn} ${styles.actionIconBtnDelete}`}
+                      style={{ width: '30px', height: '30px', borderRadius: '7px' }}
                       title="Delete Employee"
+                      aria-label="Delete Employee"
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
-                      Delete
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                     </button>
                   </div>
                 </div>

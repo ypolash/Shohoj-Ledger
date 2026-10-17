@@ -75,6 +75,36 @@
   color: #ffffff;
 }
 
+/* Pulsing Alert Animation for Unconfigured Wi-Fi Network Button */
+.wifiUnconfiguredBtn {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #f59e0b !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  animation: wifiAlertPulse 1.8s infinite ease-in-out;
+  position: relative;
+}
+
+@keyframes wifiAlertPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+.wifiUnconfiguredBtn:hover {
+  background: rgba(245, 158, 11, 0.22) !important;
+  border-color: #f59e0b !important;
+  color: #fbbf24 !important;
+}
+
 .liveBadgeRow {
   display: flex;
   align-items: center;

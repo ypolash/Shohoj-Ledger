@@ -311,8 +311,8 @@
 
 .searchWrapper {
   position: relative;
-  flex: 1;
-  min-width: 260px;
+  width: 320px;
+  max-width: 100%;
 }
 
 .searchIcon {
@@ -389,11 +389,138 @@
 
 .statusTabsList {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
   background: var(--surface-hover, #f8fafc);
-  padding: 4px;
-  border-radius: 10px;
+  padding: 5px;
+  border-radius: 12px;
   border: 1px solid var(--border-main, #e2e8f0);
+}
+
+.statusSquareWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.statusSquareBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  aspect-ratio: 1;
+  padding: 3px 2px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 2px;
+  outline: none;
+}
+
+.statusSquareBtn:hover {
+  background: var(--surface-card, #ffffff);
+  border-color: var(--border-main, #e2e8f0);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.statusSquareCount {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--text-muted, #64748b);
+  transition: color 0.2s ease;
+}
+
+/* Distinct status icon colors */
+.statusSquare_all span:first-child {
+  color: #ec4899;
+}
+.statusSquare_active span:first-child {
+  color: #10b981;
+}
+.statusSquare_inactive span:first-child {
+  color: #94a3b8;
+}
+
+/* Active Selected States */
+.statusSquareBtnActive {
+  background: var(--surface-card, #ffffff) !important;
+  transform: translateY(-1px);
+}
+
+.statusSquareBtnActive .statusSquareCount {
+  color: var(--text-main, #0f172a);
+  font-weight: 800;
+}
+
+.statusSquare_all.statusSquareBtnActive {
+  border-color: #ec4899;
+  box-shadow: 0 0 0 1px #ec4899, 0 3px 10px rgba(236, 72, 153, 0.25);
+}
+.statusSquare_all.statusSquareBtnActive span:first-child {
+  color: #ec4899;
+}
+
+.statusSquare_active.statusSquareBtnActive {
+  border-color: #10b981;
+  box-shadow: 0 0 0 1px #10b981, 0 3px 10px rgba(16, 185, 129, 0.25);
+}
+.statusSquare_active.statusSquareBtnActive span:first-child {
+  color: #10b981;
+}
+
+.statusSquare_inactive.statusSquareBtnActive {
+  border-color: #64748b;
+  box-shadow: 0 0 0 1px #64748b, 0 3px 10px rgba(100, 116, 139, 0.25);
+}
+.statusSquare_inactive.statusSquareBtnActive span:first-child {
+  color: #64748b;
+}
+
+/* Tooltip on mouse hover */
+.statusSquareTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  z-index: 70;
+}
+
+.statusSquareTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.statusSquareWrapper:hover .statusSquareTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .statusTabBtn {
@@ -423,31 +550,45 @@
 
 .viewToggleGroup {
   display: flex;
+  align-items: center;
   gap: 4px;
   background: var(--surface-hover, #f8fafc);
-  padding: 3px;
-  border-radius: 10px;
+  padding: 5px;
+  border-radius: 12px;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
 .viewToggleBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
-  border: none;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted, #64748b);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.viewToggleBtn:hover {
+  color: var(--text-main, #0f172a);
+  background: var(--surface-card, #ffffff);
+  border-color: var(--border-main, #e2e8f0);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .viewToggleBtnActive {
-  background: var(--surface-card, #ffffff);
-  color: #db2777;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background: var(--surface-card, #ffffff) !important;
+  color: #ec4899 !important;
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 1px #ec4899, 0 3px 10px rgba(236, 72, 153, 0.25);
+  transform: translateY(-1px);
 }
 
 /* --------------------------------------------------------------------------

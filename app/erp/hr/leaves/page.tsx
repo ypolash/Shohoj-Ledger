@@ -484,57 +484,89 @@ export default function LeavesPage() {
         </div>
 
         <div className={styles.controlsBottomRow}>
-          {/* Status Tabs */}
-          <div className={styles.statusTabsList}>
-            <button
-              onClick={() => setStatusFilter('ALL')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
-            >
-              All Requests
-              <span style={{ opacity: 0.7 }}>({totalCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('PENDING')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'PENDING' ? styles.statusTabBtnActive : ''}`}
-            >
-              Pending
-              <span style={{ opacity: 0.7 }}>({pendingCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('APPROVED')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'APPROVED' ? styles.statusTabBtnActive : ''}`}
-            >
-              Approved
-              <span style={{ opacity: 0.7 }}>({approvedCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('REJECTED')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'REJECTED' ? styles.statusTabBtnActive : ''}`}
-            >
-              Rejected
-              <span style={{ opacity: 0.7 }}>({rejectedCount})</span>
-            </button>
+          {/* Status Tabs - Square Boxes with Icons and Hover Tooltips */}
+          <div className={styles.statusTabsList} role="tablist" aria-label="Filter leaves by status">
+            {[
+              {
+                id: 'ALL',
+                label: 'All Requests',
+                icon: 'beach_access',
+                count: totalCount,
+                colorKey: 'all',
+              },
+              {
+                id: 'PENDING',
+                label: 'Pending',
+                icon: 'hourglass_top',
+                count: pendingCount,
+                colorKey: 'pending',
+              },
+              {
+                id: 'APPROVED',
+                label: 'Approved',
+                icon: 'check_circle',
+                count: approvedCount,
+                colorKey: 'approved',
+              },
+              {
+                id: 'REJECTED',
+                label: 'Rejected',
+                icon: 'cancel',
+                count: rejectedCount,
+                colorKey: 'rejected',
+              },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <div key={tab.id} className={styles.statusSquareWrapper}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setStatusFilter(tab.id as any)}
+                    className={`${styles.statusSquareBtn} ${isActive ? styles.statusSquareBtnActive : ''} ${styles[`statusSquare_${tab.colorKey}`]}`}
+                    title={`${tab.label} (${tab.count})`}
+                    aria-label={`${tab.label} (${tab.count})`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                      {tab.icon}
+                    </span>
+                    <span className={styles.statusSquareCount}>{tab.count}</span>
+                  </button>
+                  <span className={styles.statusSquareTooltip}>
+                    {tab.label} ({tab.count})
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* View Mode Toggle */}
-          <div className={styles.viewToggleGroup}>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
-              title="Table View"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>table_rows</span>
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
-              title="Card Grid View"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>grid_view</span>
-            </button>
+          <div className={styles.viewToggleGroup} role="group" aria-label="View layout mode">
+            <div className={styles.statusSquareWrapper}>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
+                title="Table View"
+                aria-label="Table View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
+              </button>
+              <span className={styles.statusSquareTooltip}>Table View</span>
+            </div>
+            <div className={styles.statusSquareWrapper}>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
+                title="Card Grid View"
+                aria-label="Card Grid View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
+              </button>
+              <span className={styles.statusSquareTooltip}>Card Grid View</span>
+            </div>
           </div>
         </div>
       </section>

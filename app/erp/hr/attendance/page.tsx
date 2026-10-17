@@ -1051,13 +1051,17 @@ export default function AttendancePage() {
               setNetworkSuccess('');
               setShowNetworkModal(true);
             }}
-            className={styles.headerIconBtn}
-            title="Configure Allowed Office Wi-Fi / Networks"
+            className={`${styles.headerIconBtn} ${!isNetworkConfigured ? styles.wifiUnconfiguredBtn : ''}`}
+            title={
+              isNetworkConfigured
+                ? "Office Network Protected — Click to configure Wi-Fi / IP"
+                : "⚠️ Action Required: Office Network Not Configured (Click to set up Wi-Fi / IP)"
+            }
             aria-label="Configure Allowed Office Wi-Fi / Networks"
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: '20px', color: isNetworkConfigured ? '#059669' : '#d97706' }}
+              style={{ fontSize: '20px', color: isNetworkConfigured ? '#059669' : '#f59e0b' }}
             >
               {isNetworkConfigured ? 'wifi_lock' : 'wifi_off'}
             </span>
@@ -1087,69 +1091,6 @@ export default function AttendancePage() {
           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
           <span>{successMsg}</span>
         </div>
-      )}
-
-      {/* 2. Office Network Geofence Warning / Status Box */}
-      {!isLoadingNetworks && (
-        !isNetworkConfigured ? (
-          <div className={`${styles.networkBanner} ${styles.networkBannerWarning}`}>
-            <div className={styles.networkBannerContent}>
-              <div className={`${styles.networkBannerIconBox} ${styles.networkIconWarning}`}>
-                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>wifi_off</span>
-              </div>
-              <div className={styles.networkBannerTextGroup}>
-                <div className={styles.networkBannerTitleRow}>
-                  <h3 className={styles.networkBannerTitle}>Office Network Not Configured — Staff App Check-in Disabled</h3>
-                  <span className={`${styles.networkStatusPill} ${styles.pillWarning}`}>Action Required</span>
-                </div>
-                <p className={styles.networkBannerDesc}>
-                  No authorized office Wi-Fi network or IP address has been saved. The staff mobile app restricts check-in and check-out to registered office networks only. Employees will be <strong>blocked from clocking in or out</strong> via the mobile app until at least one authorized office network is saved.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setNetworkError('');
-                setNetworkSuccess('');
-                setShowNetworkModal(true);
-              }}
-              className={styles.networkBtnWarning}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>settings_ethernet</span>
-              Configure Network Settings
-            </button>
-          </div>
-        ) : (
-          <div className={`${styles.networkBanner} ${styles.networkBannerSuccess}`}>
-            <div className={styles.networkBannerContent}>
-              <div className={`${styles.networkBannerIconBox} ${styles.networkIconSuccess}`}>
-                <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>wifi_lock</span>
-              </div>
-              <div className={styles.networkBannerTextGroup}>
-                <div className={styles.networkBannerTitleRow}>
-                  <h3 className={styles.networkBannerTitle}>Office Network Protection Active — Staff Mobile Clock-in Protected</h3>
-                  <span className={`${styles.networkStatusPill} ${styles.pillSuccess}`}>
-                    {activeNetworks.length} Active {activeNetworks.length === 1 ? 'Network' : 'Networks'}
-                  </span>
-                </div>
-                <p className={styles.networkBannerDesc}>
-                  Staff mobile check-in and check-out is strictly restricted to saved networks ({activeNetworks.map(n => n.name || n.ssid || n.ipAddress).join(', ')}). Devices outside authorized office networks are prevented from recording mobile attendance.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setNetworkError('');
-                setNetworkSuccess('');
-                setShowNetworkModal(true);
-              }}
-              className={styles.networkBtnSuccess}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>tune</span>
-              Network Settings
-            </button>
-          </div>
-        )
       )}
 
 

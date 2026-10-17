@@ -264,49 +264,82 @@ export default function DepartmentsPage() {
         </div>
 
         <div className={styles.controlsBottomRow}>
-          {/* Status Tabs */}
-          <div className={styles.statusTabsList}>
-            <button
-              onClick={() => setStatusFilter('ALL')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ALL' ? styles.statusTabBtnActive : ''}`}
-            >
-              All Divisions
-              <span style={{ opacity: 0.7 }}>({totalCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('ACTIVE')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'ACTIVE' ? styles.statusTabBtnActive : ''}`}
-            >
-              Active
-              <span style={{ opacity: 0.7 }}>({activeCount})</span>
-            </button>
-
-            <button
-              onClick={() => setStatusFilter('INACTIVE')}
-              className={`${styles.statusTabBtn} ${statusFilter === 'INACTIVE' ? styles.statusTabBtnActive : ''}`}
-            >
-              Inactive
-              <span style={{ opacity: 0.7 }}>({inactiveCount})</span>
-            </button>
+          {/* Status Tabs - Square Boxes with Icons and Hover Tooltips */}
+          <div className={styles.statusTabsList} role="tablist" aria-label="Filter departments by status">
+            {[
+              {
+                id: 'ALL',
+                label: 'All Divisions',
+                icon: 'corporate_fare',
+                count: totalCount,
+                colorKey: 'all',
+              },
+              {
+                id: 'ACTIVE',
+                label: 'Active',
+                icon: 'check_circle',
+                count: activeCount,
+                colorKey: 'active',
+              },
+              {
+                id: 'INACTIVE',
+                label: 'Inactive',
+                icon: 'domain_disabled',
+                count: inactiveCount,
+                colorKey: 'inactive',
+              },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <div key={tab.id} className={styles.statusSquareWrapper}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setStatusFilter(tab.id as any)}
+                    className={`${styles.statusSquareBtn} ${isActive ? styles.statusSquareBtnActive : ''} ${styles[`statusSquare_${tab.colorKey}`]}`}
+                    title={`${tab.label} (${tab.count})`}
+                    aria-label={`${tab.label} (${tab.count})`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                      {tab.icon}
+                    </span>
+                    <span className={styles.statusSquareCount}>{tab.count}</span>
+                  </button>
+                  <span className={styles.statusSquareTooltip}>
+                    {tab.label} ({tab.count})
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* View Switcher */}
-          <div className={styles.viewToggleGroup}>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
-              title="Card Grid View"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
-              title="Table View"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
-            </button>
+          <div className={styles.viewToggleGroup} role="group" aria-label="View layout mode">
+            <div className={styles.statusSquareWrapper}>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
+                title="Card Grid View"
+                aria-label="Card Grid View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
+              </button>
+              <span className={styles.statusSquareTooltip}>Card Grid View</span>
+            </div>
+            <div className={styles.statusSquareWrapper}>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
+                title="Table View"
+                aria-label="Table View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
+              </button>
+              <span className={styles.statusSquareTooltip}>Table View</span>
+            </div>
           </div>
         </div>
       </section>

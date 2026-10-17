@@ -99,15 +99,17 @@
 
 .dateStripCard {
   flex: 0 0 auto;
-  min-width: 68px;
+  min-width: 72px;
+  min-height: 84px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
   background: var(--surface-card, #0f172a);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
@@ -118,18 +120,33 @@
   border-color: rgba(59, 130, 246, 0.4);
   background: var(--surface-hover, #1e293b);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .dateStripCardActive {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(16, 185, 129, 0.15) 100%) !important;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(16, 185, 129, 0.18) 100%) !important;
   border-color: #3b82f6 !important;
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
 }
 
 .dateStripCardWeekend {
   opacity: 0.82;
   background: rgba(15, 23, 42, 0.4);
+}
+
+.stripTodayBadge {
+  font-size: 8.5px;
+  font-weight: 800;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.4);
+  line-height: 1;
+  margin-bottom: 2px;
+  display: inline-block;
 }
 
 .stripDayName {
@@ -138,6 +155,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted, #94a3b8);
+  line-height: 1.1;
 }
 
 .dateStripCardActive .stripDayName {
@@ -145,10 +163,11 @@
 }
 
 .stripDayNum {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--text-main, #f8fafc);
   line-height: 1.1;
+  margin-top: 1px;
 }
 
 .dateStripCardActive .stripDayNum {
@@ -160,20 +179,7 @@
   font-weight: 600;
   color: var(--text-muted, #64748b);
   text-transform: uppercase;
-}
-
-.stripTodayBadge {
-  position: absolute;
-  top: -5px;
-  font-size: 8px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #2563eb, #10b981);
-  color: #ffffff;
-  padding: 1px 5px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  line-height: 1;
 }
 
 .stripDotsRow {

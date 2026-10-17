@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import styles from "./tasks.module.css";
+import { HorizontalTasksCalendarView } from "./components/HorizontalTasksCalendarView";
+import { HorizontalTasksDateStrip } from "./components/HorizontalTasksDateStrip";
 
 interface Employee {
   id: string;
@@ -114,7 +116,7 @@ export default function HRTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "table" | "calendar">("cards");
 
   // Filtering, Search & Sorting
   const [searchQuery, setSearchQuery] = useState("");
@@ -746,6 +748,16 @@ export default function HRTasksPage() {
                   format_list_bulleted
                 </span>
               </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("calendar")}
+                className={`${styles.viewToggleBtn} ${viewMode === "calendar" ? styles.viewToggleBtnActive : ""}`}
+                title="Horizontal Calendar Matrix View"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+                  calendar_month
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -850,18 +862,83 @@ export default function HRTasksPage() {
           </div>
         </div>
 
-        {/* Status Tab Chips */}
-        <div className={styles.statusTabs}>
-          {["ALL", "Pending", "In Progress", "Completed", "Blocked"].map((status) => (
-            <button
-              key={status}
-              type="button"
-              onClick={() => setSelectedStatus(status)}
-              className={`${styles.statusTab} ${selectedStatus === status ? styles.statusTabActive : ""}`}
-            >
-              {status === "ALL" ? "All Tasks" : status}
-            </button>
-          ))}
+        {/* Horizontal Calendar Date Ribbon Strip */}
+        <HorizontalTasksDateStrip
+          selectedDate={selectedDateFilter === "CUSTOM" ? customCalendarDate : selectedDateFilter === "TODAY" ? todayStr : ""}
+          onSelectDate={(dateKey) => {
+            setCustomCalendarDate(dateKey);
+            setSelectedDateFilter("CUSTOM");
+          }}
+          onClearDate={() => {
+            setCustomCalendarDate("");
+            setSelectedDateFilter("ALL");
+          }}
+          tasks={tasks}
+        />
+
+        {/* Status Tabs - Square Icon Box View with Counts & Floating Tooltips */}
+        <div className={styles.statusTabs} role="tablist" aria-label="Filter tasks by status">
+          {[
+            {
+              id: "ALL",
+              label: "All Tasks",
+              icon: "assignment",
+              count: metrics.total,
+              colorKey: "all",
+            },
+            {
+              id: "Pending",
+              label: "Pending",
+              icon: "hourglass_top",
+              count: metrics.pending,
+              colorKey: "pending",
+            },
+            {
+              id: "In Progress",
+              label: "In Progress",
+              icon: "pending_actions",
+              count: metrics.inProgress,
+              colorKey: "progress",
+            },
+            {
+              id: "Completed",
+              label: "Completed",
+              icon: "task_alt",
+              count: metrics.completed,
+              colorKey: "completed",
+            },
+            {
+              id: "Blocked",
+              label: "Blocked",
+              icon: "block",
+              count: tasks.filter((t) => t.status === "Blocked").length,
+              colorKey: "blocked",
+            },
+          ].map((tab) => {
+            const isActive = selectedStatus === tab.id;
+            return (
+              <div key={tab.id} className={styles.statusSquareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`${tab.label} (${tab.count})`}
+                  onClick={() => setSelectedStatus(tab.id)}
+                  className={`${styles.statusSquareBtn} ${styles[`statusSquare_${tab.colorKey}`]} ${
+                    isActive ? styles.statusSquareBtnActive : ""
+                  }`}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: "19px" }}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.statusSquareCount}>{tab.count}</span>
+                </button>
+                <div className={styles.statusSquareTooltip}>
+                  {tab.label} ({tab.count})
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -873,6 +950,25 @@ export default function HRTasksPage() {
           </div>
           <p style={{ marginTop: "12px", fontSize: "14px" }}>Loading staff tasks...</p>
         </div>
+      ) : viewMode === "calendar" ? (
+        /* Horizontal Calendar View (Independent of cards/table filters) */
+        <HorizontalTasksCalendarView
+          tasks={tasks}
+          employees={employees}
+          onAssignTask={(empId, dateStr) => {
+            setTaskForm({
+              ...EMPTY_TASK_FORM,
+              assignedToEmployeeId: empId,
+              dueDate: dateStr ? `${dateStr}T09:00` : "",
+            });
+            setNewTodoText("");
+            setIsAssignModalOpen(true);
+          }}
+          onEditTask={openEditModal}
+          onDeleteTask={openDeleteModal}
+          onStatusChange={handleInlineStatusChange}
+          onToggleChecklistItem={handleToggleCardTodo}
+        />
       ) : filteredTasks.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>
@@ -1109,7 +1205,7 @@ export default function HRTasksPage() {
             );
           })}
         </div>
-      ) : (
+      ) : viewMode === "table" ? (
         /* Table View */
         <div className={styles.tableCard}>
           <div className={styles.tableWrapper}>
@@ -1246,7 +1342,7 @@ export default function HRTasksPage() {
             </table>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Modal: Assign New Task */}
       {isAssignModalOpen && (

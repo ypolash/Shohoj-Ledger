@@ -222,7 +222,7 @@ export default function FreelancePage() {
       {/* Search & Filter Toolbar */}
       <div className={styles.toolbarCard}>
         <div className={styles.searchWrapper}>
-          <span className="material-symbols-outlined" style={{ color: '#94a3b8', fontSize: '18px' }}>search</span>
+          <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
           <input
             type="text"
             placeholder="Search freelancers by name, skill, or role..."
@@ -230,6 +230,11 @@ export default function FreelancePage() {
             onChange={(e) => setSearch(e.target.value)}
             className={styles.searchInput}
           />
+          {search && (
+            <button onClick={() => setSearch('')} className={styles.clearSearchBtn} title="Clear search">
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+            </button>
+          )}
         </div>
 
         <div className={styles.filterGroup}>
@@ -252,11 +257,12 @@ export default function FreelancePage() {
             <option value="INACTIVE">Inactive</option>
           </select>
 
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div className={styles.viewToggleGroup}>
             <button
               type="button"
               onClick={() => setViewMode('grid')}
               className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleBtnActive : ''}`}
+              title="Card Grid View"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
             </button>
@@ -264,6 +270,7 @@ export default function FreelancePage() {
               type="button"
               onClick={() => setViewMode('table')}
               className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleBtnActive : ''}`}
+              title="Table View"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_rows</span>
             </button>

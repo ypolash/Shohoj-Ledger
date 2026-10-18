@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { TaskRewardsComponent } from '../task-rewards/page';
 
 interface PerformanceReview {
   id: string;
@@ -65,8 +66,18 @@ export default function PerformancePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'reviews' | 'goals' | 'pips'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'goals' | 'rewards' | 'pips'>('reviews');
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'rewards' || tab === 'tasks') {
+        setActiveTab('rewards');
+      }
+    }
+  }, []);
 
   // Modals
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -250,10 +261,10 @@ export default function PerformancePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>
-            Performance & Appraisals Hub
+            Perfomence Hub
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
-            360 appraisals, quantifiable KPI goal tracking, and structured Performance Improvement Plans (PIP).
+            360 appraisals, quantifiable KPI goal tracking, merit-based task rewards & bounties, and structured PIPs.
           </p>
         </div>
 
@@ -299,10 +310,11 @@ export default function PerformancePage() {
 
       {/* Tabs & Filter Bar */}
       <div className="glass-card" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {[
             { key: 'reviews', label: 'Appraisal Reviews', icon: 'rate_review', count: reviews.length },
             { key: 'goals', label: 'KPI Goals & Targets', icon: 'track_changes', count: goals.length },
+            { key: 'rewards', label: 'Task Rewards & Bounties', icon: 'military_tech', count: undefined },
             { key: 'pips', label: 'Improvement Plans (PIP)', icon: 'rule', count: pips.length },
           ].map(tab => (
             <button
@@ -325,23 +337,27 @@ export default function PerformancePage() {
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{tab.icon}</span>
               {tab.label}
-              <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '10px', background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
-                {tab.count}
-              </span>
+              {tab.count !== undefined && (
+                <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '10px', background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '220px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
-          <input
-            type="text"
-            placeholder="Search employee..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', fontSize: '13px', outline: 'none', width: '100%' }}
-          />
-        </div>
+        {activeTab !== 'rewards' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '220px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
+            <input
+              type="text"
+              placeholder="Search employee..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ border: 'none', background: 'transparent', color: 'var(--text-main)', fontSize: '13px', outline: 'none', width: '100%' }}
+            />
+          </div>
+        )}
       </div>
 
       {/* TAB 1: REVIEWS TABLE */}
@@ -509,6 +525,13 @@ export default function PerformancePage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* TAB 4: TASK REWARDS & BOUNTIES */}
+      {activeTab === 'rewards' && (
+        <div style={{ width: '100%' }}>
+          <TaskRewardsComponent hideTitle={true} />
         </div>
       )}
 

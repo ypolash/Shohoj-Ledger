@@ -5697,33 +5697,97 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                     </button>
                   </div>
 
-                  {/* Financial Itemized Ledger Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-                    <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                      <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Base Production Contract</span>
-                      <strong style={{ fontSize: '14px', color: '#f8fafc', marginTop: '2px', display: 'block' }}>{formatCurrency(budget)}</strong>
+                  {/* Financial Itemized Ledger - Vertical List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                    {/* Item 1: Base Production Contract */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '11px 16px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#94a3b8' }}>description</span>
+                        <span style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 500 }}>Base Production Contract</span>
+                      </div>
+                      <strong style={{ fontSize: '14.5px', color: '#f8fafc', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(budget)}</strong>
                     </div>
 
-                    <div style={{ padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                      <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Additional Revision Fees</span>
-                      <strong style={{ fontSize: '14px', color: totalRevisionFees > 0 ? '#fbbf24' : '#94a3b8', marginTop: '2px', display: 'block' }}>
+                    {/* Item 2: Additional Revision Fees */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '11px 16px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: totalRevisionFees > 0 ? '#fbbf24' : '#94a3b8' }}>history_edu</span>
+                        <span style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 500 }}>Additional Revision Fees</span>
+                      </div>
+                      <strong style={{ fontSize: '14px', color: totalRevisionFees > 0 ? '#fbbf24' : '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
                         {totalRevisionFees > 0 ? `+${formatCurrency(totalRevisionFees)} (${billableRevisionsCount} rev)` : 'BDT 0 (Within Allowance)'}
                       </strong>
                     </div>
 
-                    <div style={{ padding: '10px 14px', background: 'rgba(56, 189, 248, 0.08)', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
-                      <span style={{ fontSize: '11px', color: '#38bdf8', display: 'block' }}>Total Invoiced Value</span>
-                      <strong style={{ fontSize: '14px', color: '#38bdf8', marginTop: '2px', display: 'block' }}>{formatCurrency(effectiveBudget)}</strong>
+                    {/* Item 3: Total Invoiced Value */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '11px 16px',
+                      background: 'rgba(56, 189, 248, 0.08)',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(56, 189, 248, 0.25)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#38bdf8' }}>receipt</span>
+                        <span style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 600 }}>Total Invoiced Value</span>
+                      </div>
+                      <strong style={{ fontSize: '15px', color: '#38bdf8', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(effectiveBudget)}</strong>
                     </div>
 
-                    <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-                      <span style={{ fontSize: '11px', color: '#34d399', display: 'block' }}>Payments Collected</span>
-                      <strong style={{ fontSize: '14px', color: '#34d399', marginTop: '2px', display: 'block' }}>{formatCurrency(totalReceived)}</strong>
+                    {/* Item 4: Payments Collected */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '11px 16px',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(16, 185, 129, 0.25)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#34d399' }}>payments</span>
+                        <span style={{ fontSize: '13px', color: '#34d399', fontWeight: 600 }}>Payments Collected</span>
+                      </div>
+                      <strong style={{ fontSize: '15px', color: '#34d399', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(totalReceived)}</strong>
                     </div>
 
-                    <div style={{ padding: '10px 14px', background: clientDue > 0 ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', border: clientDue > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)' }}>
-                      <span style={{ fontSize: '11px', color: clientDue > 0 ? '#ef4444' : '#34d399', display: 'block' }}>Bill Due (Receivable)</span>
-                      <strong style={{ fontSize: '14px', color: clientDue > 0 ? '#ef4444' : '#34d399', marginTop: '2px', display: 'block' }}>
+                    {/* Item 5: Bill Due (Receivable) */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '11px 16px',
+                      background: clientDue > 0 ? 'rgba(239, 68, 68, 0.09)' : 'rgba(16, 185, 129, 0.09)',
+                      borderRadius: '10px',
+                      border: clientDue > 0 ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: clientDue > 0 ? '#ef4444' : '#34d399' }}>
+                          {clientDue > 0 ? 'account_balance_wallet' : 'check_circle'}
+                        </span>
+                        <span style={{ fontSize: '13px', color: clientDue > 0 ? '#ef4444' : '#34d399', fontWeight: 700 }}>
+                          Bill Due (Receivable)
+                        </span>
+                      </div>
+                      <strong style={{ fontSize: '15px', color: clientDue > 0 ? '#ef4444' : '#34d399', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                         {clientDue > 0 ? formatCurrency(clientDue) : 'PAID & SETTLED ✓'}
                       </strong>
                     </div>
@@ -5731,82 +5795,109 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </div>
 
                 {/* ============================================================
-                    TALENT & TEAM SETTLEMENTS GRID: MODEL & EDITOR
+                    TALENT & TEAM SETTLEMENTS: MODEL & EDITOR (VERTICAL MODE)
                     ============================================================ */}
-                <div style={{ width: '100%', maxWidth: '840px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '12px', marginTop: '4px' }}>
-                  {/* Model Talent Settlement Card */}
+                <div style={{ width: '100%', maxWidth: '840px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+                  {/* Model Talent Settlement List Item */}
                   {(() => {
                     const totalRate = parseFloat(String(productData.modelRate || 0)) || 1000;
                     const paidSoFar = productData.modelPaidAmount !== undefined ? (parseFloat(String(productData.modelPaidAmount)) || 0) : (productData.modelPaid ? totalRate : 0);
                     const remainingDue = Math.max(0, totalRate - paidSoFar);
                     const isFullyPaid = Boolean(productData.modelPaid) || (totalRate > 0 && paidSoFar >= totalRate);
                     const isPartiallyPaid = !isFullyPaid && paidSoFar > 0;
-                    const percentPaid = totalRate > 0 ? Math.min(100, Math.round((paidSoFar / totalRate) * 100)) : 0;
 
                     return (
-                      <div style={{
-                        padding: '16px 20px',
-                        background: 'rgba(236, 72, 153, 0.06)',
-                        border: '1px solid rgba(236, 72, 153, 0.25)',
-                        borderRadius: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        onClick={() => handleOpenModelPartialPay()}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '12px 18px',
+                          background: 'rgba(236, 72, 153, 0.06)',
+                          border: '1px solid rgba(236, 72, 153, 0.25)',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          gap: '12px',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '10px',
+                            background: 'rgba(236, 72, 153, 0.15)',
+                            border: '1px solid rgba(236, 72, 153, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
                             <span className="material-symbols-outlined" style={{ color: '#f472b6', fontSize: '20px' }}>face_3</span>
-                            <div>
-                              <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Model Talent Settlement</strong>
-                              <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                                {productData.assignedModelName || 'Sarah Miller - Elite Agency'}
+                          </div>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>Model Talent Settlement</strong>
+                              <span style={{
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                background: isFullyPaid ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.15)',
+                                color: isFullyPaid ? '#34d399' : '#f87171',
+                                border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                fontSize: '10.5px',
+                                fontWeight: 700
+                              }}>
+                                {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `PARTIAL (${formatCurrency(remainingDue)} Due)` : '⏳ BILL DUE'}
                               </span>
                             </div>
+                            <span style={{ fontSize: '11.5px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                              {productData.assignedModelName || 'Sarah Miller - Elite Agency'}
+                            </span>
                           </div>
-                          <span style={{
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            background: isFullyPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.15)',
-                            color: isFullyPaid ? '#34d399' : '#3b82f6',
-                            border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(37, 99, 235, 0.35)',
-                            fontSize: '11px',
-                            fontWeight: 700
-                          }}>
-                            {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Bill Due: ${formatCurrency(remainingDue)})` : '⏳ BILL DUE'}
-                          </span>
                         </div>
 
-                        {/* Progress Bar if partially paid */}
-                        {paidSoFar > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
-                              <span>Paid: <strong style={{ color: '#34d399' }}>{formatCurrency(paidSoFar)}</strong></span>
-                              <span>Due: <strong style={{ color: remainingDue > 0 ? '#fbbf24' : '#34d399' }}>{formatCurrency(remainingDue)}</strong></span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Rate: {formatCurrency(totalRate)}</span>
+                              {!isEditingModelRate && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTempModelRate(String(totalRate));
+                                    setIsEditingModelRate(true);
+                                  }}
+                                  style={{
+                                    padding: '1px 5px',
+                                    borderRadius: '4px',
+                                    background: 'rgba(244, 114, 182, 0.12)',
+                                    border: '1px solid rgba(244, 114, 182, 0.3)',
+                                    color: '#f472b6',
+                                    fontSize: '10px',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Edit Model Rate"
+                                >
+                                  Edit
+                                </button>
+                              )}
                             </div>
-                            <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ width: `${percentPaid}%`, height: '100%', background: isFullyPaid ? '#10b981' : 'linear-gradient(90deg, #f59e0b, #ec4899)', borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
-                            </div>
-                          </div>
-                        )}
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                          <div>
                             {isEditingModelRate ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>BDT:</span>
+                              <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                                 <input
                                   type="number"
                                   value={tempModelRate}
                                   onChange={(e) => setTempModelRate(e.target.value)}
-                                  placeholder="Amount"
                                   style={{
-                                    width: '90px',
-                                    padding: '4px 8px',
+                                    width: '75px',
+                                    padding: '2px 6px',
                                     borderRadius: '6px',
-                                    background: 'rgba(0,0,0,0.5)',
+                                    background: 'rgba(0,0,0,0.6)',
                                     border: '1px solid #f472b6',
                                     color: '#f8fafc',
-                                    fontSize: '12px',
+                                    fontSize: '11px',
                                     outline: 'none'
                                   }}
                                   autoFocus
@@ -5818,441 +5909,277 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                                 <button
                                   type="button"
                                   onClick={() => handleSaveCustomModelRate(tempModelRate)}
-                                  style={{
-                                    padding: '4px 8px',
-                                    borderRadius: '6px',
-                                    background: '#ec4899',
-                                    border: 'none',
-                                    color: '#fff',
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    cursor: 'pointer'
-                                  }}
+                                  style={{ padding: '2px 6px', borderRadius: '6px', background: '#ec4899', border: 'none', color: '#fff', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
                                 >
-                                  ✓ Save
+                                  ✓
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setIsEditingModelRate(false)}
-                                  style={{
-                                    padding: '4px 6px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(255,255,255,0.1)',
-                                    border: 'none',
-                                    color: '#cbd5e1',
-                                    fontSize: '11px',
-                                    cursor: 'pointer'
-                                  }}
+                                  style={{ padding: '2px 5px', borderRadius: '6px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#cbd5e1', fontSize: '10px', cursor: 'pointer' }}
                                 >
                                   ✕
                                 </button>
                               </div>
                             ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Agreed Model Rate:</span>
-                                <strong style={{ color: '#f472b6', fontSize: '14px' }}>
-                                  {formatCurrency(totalRate)}
-                                </strong>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setTempModelRate(String(totalRate));
-                                    setIsEditingModelRate(true);
-                                  }}
-                                  style={{
-                                    padding: '2px 7px',
-                                    borderRadius: '6px',
-                                    background: 'rgba(244, 114, 182, 0.15)',
-                                    border: '1px solid rgba(244, 114, 182, 0.35)',
-                                    color: '#f472b6',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '2px'
-                                  }}
-                                  title="Edit Model Rate"
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
-                                  Edit
-                                </button>
-                              </div>
+                              <strong style={{ fontSize: '14px', color: isFullyPaid ? '#34d399' : '#fbbf24', display: 'block', marginTop: '2px' }}>
+                                {isFullyPaid ? `Paid: ${formatCurrency(paidSoFar)}` : `Due: ${formatCurrency(remainingDue)}`}
+                              </strong>
                             )}
                           </div>
-
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                            {!isFullyPaid && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={handleToggleModelPaid}
-                                  style={{
-                                    padding: '7px 12px',
-                                    borderRadius: '8px',
-                                    background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
-                                    border: 'none',
-                                    color: '#ffffff',
-                                    fontWeight: 700,
-                                    fontSize: '11px',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    boxShadow: '0 2px 8px rgba(236, 72, 153, 0.35)'
-                                  }}
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
-                                  Pay Full ({formatCurrency(remainingDue)})
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={handleOpenModelPartialPay}
-                                  style={{
-                                    padding: '7px 12px',
-                                    borderRadius: '8px',
-                                    background: 'rgba(236, 72, 153, 0.15)',
-                                    border: '1px solid rgba(236, 72, 153, 0.4)',
-                                    color: '#f472b6',
-                                    fontWeight: 700,
-                                    fontSize: '11px',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
-                                  }}
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>toll</span>
-                                  + Partial Pay
-                                </button>
-                              </>
-                            )}
-
-                            {paidSoFar > 0 && (
-                              <button
-                                type="button"
-                                onClick={handleResetModelPayment}
-                                style={{
-                                  padding: '7px 10px',
-                                  borderRadius: '8px',
-                                  background: 'rgba(255, 255, 255, 0.06)',
-                                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                                  color: '#cbd5e1',
-                                  fontWeight: 600,
-                                  fontSize: '11px',
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '3px'
-                                }}
-                                title="Reset / Revert Model Payment"
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>restart_alt</span>
-                                Reset
-                              </button>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenModelPartialPay();
+                            }}
+                            style={{
+                              padding: '7px 14px',
+                              borderRadius: '8px',
+                              background: isFullyPaid ? 'rgba(255, 255, 255, 0.08)' : 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                              border: isFullyPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              fontSize: '11.5px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              boxShadow: isFullyPaid ? 'none' : '0 2px 8px rgba(236, 72, 153, 0.35)'
+                            }}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                              {isFullyPaid ? 'tune' : 'payments'}
+                            </span>
+                            {isFullyPaid ? 'Payment Box' : 'Give Payment'}
+                          </button>
                         </div>
                       </div>
                     );
                   })()}
 
-                  {/* Multi-Editor Settlements & Performance Cards */}
+                  {/* Multi-Editor Settlements List View */}
                   {getAssignedEditorsSummary().length > 0 ? (
                     getAssignedEditorsSummary().map((summary, eIdx) => {
                       const isAllPaid = summary.allPaid;
                       const isPartiallyPaid = !isAllPaid && summary.totalPaid > 0;
-                      const percentPaid = summary.totalFee > 0 ? Math.min(100, Math.round((summary.totalPaid / summary.totalFee) * 100)) : 0;
 
                       return (
                         <div
                           key={summary.key || eIdx}
+                          onClick={() => handleOpenEditorPartialPay(summary)}
                           style={{
-                            padding: '16px 20px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 18px',
                             background: 'rgba(99, 102, 241, 0.06)',
                             border: '1px solid rgba(99, 102, 241, 0.25)',
-                            borderRadius: '16px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '12px'
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            gap: '12px',
+                            flexWrap: 'wrap'
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '10px',
+                              background: 'rgba(99, 102, 241, 0.15)',
+                              border: '1px solid rgba(99, 102, 241, 0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
                               <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
-                              <div>
-                                <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>
                                   Editor Settlement: {summary.name}
                                 </strong>
-                                <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                                  Assigned to: {summary.videoTitles.join(', ')} ({summary.count} {summary.count === 1 ? 'video' : 'videos'})
+                                <span style={{
+                                  padding: '2px 7px',
+                                  borderRadius: '6px',
+                                  background: isAllPaid ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.15)',
+                                  color: isAllPaid ? '#34d399' : '#f87171',
+                                  border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                  fontSize: '10.5px',
+                                  fontWeight: 700
+                                }}>
+                                  {isAllPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `PARTIAL (${formatCurrency(summary.remainingDue)} Due)` : '⏳ BILL DUE'}
                                 </span>
                               </div>
+                              <span style={{ fontSize: '11.5px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                                Assigned to: {summary.videoTitles.join(', ')} ({summary.count} {summary.count === 1 ? 'video' : 'videos'})
+                              </span>
                             </div>
-                            <span style={{
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              background: isAllPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.15)',
-                              color: isAllPaid ? '#34d399' : '#3b82f6',
-                              border: isAllPaid ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(37, 99, 235, 0.35)',
-                              fontSize: '11px',
-                              fontWeight: 700
-                            }}>
-                              {isAllPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Bill Due: ${formatCurrency(summary.remainingDue)})` : '⏳ BILL DUE'}
-                            </span>
                           </div>
 
-                          {/* Progress Bar if partially paid */}
-                          {summary.totalPaid > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
-                                <span>Paid: <strong style={{ color: '#34d399' }}>{formatCurrency(summary.totalPaid)}</strong></span>
-                                <span>Due: <strong style={{ color: summary.remainingDue > 0 ? '#fbbf24' : '#34d399' }}>{formatCurrency(summary.remainingDue)}</strong></span>
-                              </div>
-                              <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percentPaid}%`, height: '100%', background: isAllPaid ? '#10b981' : 'linear-gradient(90deg, #f59e0b, #818cf8)', borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
-                              </div>
-                            </div>
-                          )}
-
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Total Deliverable Fee:</span>
-                              <strong style={{ color: '#818cf8', fontSize: '14px' }}>
-                                {formatCurrency(summary.totalFee)}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Fee: {formatCurrency(summary.totalFee)}</span>
+                              <strong style={{ fontSize: '14px', color: isAllPaid ? '#34d399' : '#fbbf24', display: 'block', marginTop: '2px' }}>
+                                {isAllPaid ? `Paid: ${formatCurrency(summary.totalPaid)}` : `Due: ${formatCurrency(summary.remainingDue)}`}
                               </strong>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                              {!isAllPaid && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      const remainingToPay = summary.remainingDue;
-                                      const updatedList = (editingData.videoDeliverables || []).map(v => {
-                                        if (summary.deliverableIds.includes(v.id)) {
-                                          const fee = parseFloat(String(v.editorFee || 0)) || 0;
-                                          return {
-                                            ...v,
-                                            editorPaid: true,
-                                            editorPaidAmount: fee
-                                          };
-                                        }
-                                        return v;
-                                      });
-                                      const updatedEditing = { ...editingData, videoDeliverables: updatedList };
-                                      setEditingData(updatedEditing);
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (editorRating) {
+                                  setEditorRatingValue(editorRating.rating || 5);
+                                  setEditorRatingFeedbackText(editorRating.feedback || '');
+                                }
+                                setIsRateEditorModalOpen(true);
+                              }}
+                              style={{
+                                padding: '6px 9px',
+                                borderRadius: '8px',
+                                background: 'rgba(251, 191, 36, 0.1)',
+                                border: '1px solid rgba(251, 191, 36, 0.3)',
+                                color: '#fbbf24',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                              title="Rate Editor Performance"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>star</span>
+                              {editorRating ? `${editorRating.rating}/5` : 'Rate'}
+                            </button>
 
-                                      try {
-                                        if (remainingToPay > 0) {
-                                          await fetch(`/api/projects/${projectId}/talent-settlement`, {
-                                            method: "POST",
-                                            headers: { "Content-Type": "application/json" },
-                                            body: JSON.stringify({
-                                              type: "EDITOR",
-                                              name: `${summary.name} (${summary.count} videos)`,
-                                              amount: remainingToPay,
-                                              action: "PAY"
-                                            })
-                                          });
-                                        }
-                                        showToast(`✓ ${summary.name} marked as fully PAID (${formatCurrency(summary.totalFee)})`);
-                                      } catch (e) {
-                                        console.error(e);
-                                      }
-                                      await saveWorkflowState(currentStage, completedStages, { editing: updatedEditing });
-                                      fetchProject();
-                                    }}
-                                    style={{
-                                      padding: '7px 12px',
-                                      borderRadius: '8px',
-                                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                                      border: 'none',
-                                      color: '#ffffff',
-                                      fontWeight: 700,
-                                      fontSize: '11px',
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)'
-                                    }}
-                                  >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
-                                    Pay Full ({formatCurrency(summary.remainingDue)})
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenEditorPartialPay(summary)}
-                                    style={{
-                                      padding: '7px 12px',
-                                      borderRadius: '8px',
-                                      background: 'rgba(99, 102, 241, 0.15)',
-                                      border: '1px solid rgba(99, 102, 241, 0.4)',
-                                      color: '#c7d2fe',
-                                      fontWeight: 700,
-                                      fontSize: '11px',
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px'
-                                    }}
-                                  >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>toll</span>
-                                    + Partial Pay
-                                  </button>
-                                </>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (editorRating) {
-                                    setEditorRatingValue(editorRating.rating || 5);
-                                    setEditorRatingFeedbackText(editorRating.feedback || '');
-                                  }
-                                  setIsRateEditorModalOpen(true);
-                                }}
-                                style={{
-                                  padding: '7px 10px',
-                                  borderRadius: '8px',
-                                  background: 'rgba(99, 102, 241, 0.12)',
-                                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                                  color: '#c7d2fe',
-                                  fontWeight: 600,
-                                  fontSize: '11px',
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '3px'
-                                }}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#fbbf24' }}>star</span>
-                                {editorRating ? `${editorRating.rating}/5` : 'Rate'}
-                              </button>
-
-                              {summary.totalPaid > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleResetEditorPayment(summary)}
-                                  style={{
-                                    padding: '7px 10px',
-                                    borderRadius: '8px',
-                                    background: 'rgba(255, 255, 255, 0.06)',
-                                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                                    color: '#cbd5e1',
-                                    fontWeight: 600,
-                                    fontSize: '11px',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '3px'
-                                  }}
-                                  title="Reset / Revert Editor Payment"
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>restart_alt</span>
-                                  Reset
-                                </button>
-                              )}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEditorPartialPay(summary);
+                              }}
+                              style={{
+                                padding: '7px 14px',
+                                borderRadius: '8px',
+                                background: isAllPaid ? 'rgba(255, 255, 255, 0.08)' : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                border: isAllPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                                color: '#ffffff',
+                                fontWeight: 700,
+                                fontSize: '11.5px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                boxShadow: isAllPaid ? 'none' : '0 2px 8px rgba(99, 102, 241, 0.35)'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                {isAllPaid ? 'tune' : 'payments'}
+                              </span>
+                              {isAllPaid ? 'Payment Box' : 'Give Payment'}
+                            </button>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    /* Fallback Lead Editor Card */
+                    /* Fallback Lead Editor List Item */
                     (() => {
                       const totalFee = parseFloat(String(shootingData.editorFee || 0)) || 1500;
                       const paidSoFar = shootingData.editorPaidAmount !== undefined ? (parseFloat(String(shootingData.editorPaidAmount)) || 0) : (shootingData.editorPaid ? totalFee : 0);
                       const remainingDue = Math.max(0, totalFee - paidSoFar);
                       const isFullyPaid = Boolean(shootingData.editorPaid) || (totalFee > 0 && paidSoFar >= totalFee);
                       const isPartiallyPaid = !isFullyPaid && paidSoFar > 0;
-                      const percentPaid = totalFee > 0 ? Math.min(100, Math.round((paidSoFar / totalFee) * 100)) : 0;
 
                       return (
-                        <div style={{
-                          padding: '16px 20px',
-                          background: 'rgba(99, 102, 241, 0.06)',
-                          border: '1px solid rgba(99, 102, 241, 0.25)',
-                          borderRadius: '16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '12px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                          onClick={() => handleOpenLeadEditorPartialPay()}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 18px',
+                            background: 'rgba(99, 102, 241, 0.06)',
+                            border: '1px solid rgba(99, 102, 241, 0.25)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            gap: '12px',
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '10px',
+                              background: 'rgba(99, 102, 241, 0.15)',
+                              border: '1px solid rgba(99, 102, 241, 0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
                               <span className="material-symbols-outlined" style={{ color: '#818cf8', fontSize: '20px' }}>badge</span>
-                              <div>
-                                <strong style={{ fontSize: '13px', color: '#f8fafc', display: 'block' }}>Lead Editor Settlement</strong>
-                                <span style={{ fontSize: '11px', color: '#cbd5e1' }}>
-                                  {shootingData.assignedEditorName || 'Lead Editor'}
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>
+                                  Lead Editor Settlement
+                                </strong>
+                                <span style={{
+                                  padding: '2px 7px',
+                                  borderRadius: '6px',
+                                  background: isFullyPaid ? 'rgba(16, 185, 129, 0.18)' : 'rgba(239, 68, 68, 0.15)',
+                                  color: isFullyPaid ? '#34d399' : '#f87171',
+                                  border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(239, 68, 68, 0.3)',
+                                  fontSize: '10.5px',
+                                  fontWeight: 700
+                                }}>
+                                  {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `PARTIAL (${formatCurrency(remainingDue)} Due)` : '⏳ BILL DUE'}
                                 </span>
                               </div>
+                              <span style={{ fontSize: '11.5px', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                                {shootingData.assignedEditorName || 'Lead Video Editor'}
+                              </span>
                             </div>
-                            <span style={{
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              background: isFullyPaid ? 'rgba(16, 185, 129, 0.2)' : isPartiallyPaid ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.15)',
-                              color: isFullyPaid ? '#34d399' : isPartiallyPaid ? '#fbbf24' : '#f87171',
-                              border: isFullyPaid ? '1px solid rgba(16, 185, 129, 0.4)' : isPartiallyPaid ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)',
-                              fontSize: '11px',
-                              fontWeight: 700
-                            }}>
-                              {isFullyPaid ? '✓ PAID & SETTLED' : isPartiallyPaid ? `💳 PARTIAL (Due: ${formatCurrency(remainingDue)})` : '⏳ PAYMENT DUE'}
-                            </span>
                           </div>
 
-                          {paidSoFar > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8' }}>
-                                <span>Paid: <strong style={{ color: '#34d399' }}>{formatCurrency(paidSoFar)}</strong></span>
-                                <span>Due: <strong style={{ color: remainingDue > 0 ? '#fbbf24' : '#34d399' }}>{formatCurrency(remainingDue)}</strong></span>
-                              </div>
-                              <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percentPaid}%`, height: '100%', background: isFullyPaid ? '#10b981' : 'linear-gradient(90deg, #f59e0b, #818cf8)', borderRadius: '4px', transition: 'width 0.3s ease' }}></div>
-                              </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Fee: {formatCurrency(totalFee)}</span>
+                              <strong style={{ fontSize: '14px', color: isFullyPaid ? '#34d399' : '#fbbf24', display: 'block', marginTop: '2px' }}>
+                                {isFullyPaid ? `Paid: ${formatCurrency(paidSoFar)}` : `Due: ${formatCurrency(remainingDue)}`}
+                              </strong>
                             </div>
-                          )}
-
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px', fontSize: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                            <span style={{ color: '#94a3b8' }}>Editor Payment: <strong style={{ color: '#818cf8' }}>{formatCurrency(totalFee)}</strong></span>
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                              {!isFullyPaid && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={handleToggleEditorPaid}
-                                    style={{ padding: '7px 12px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', color: '#fff', border: 'none', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                  >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>payments</span>
-                                    Pay Full ({formatCurrency(remainingDue)})
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={handleOpenLeadEditorPartialPay}
-                                    style={{ padding: '7px 12px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.4)', color: '#c7d2fe', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                  >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>toll</span>
-                                    + Partial Pay
-                                  </button>
-                                </>
-                              )}
-
-                              {paidSoFar > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={handleResetLeadEditorPayment}
-                                  style={{ padding: '7px 10px', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#cbd5e1', fontWeight: 600, fontSize: '11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>restart_alt</span>
-                                  Reset
-                                </button>
-                              )}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenLeadEditorPartialPay();
+                              }}
+                              style={{
+                                padding: '7px 14px',
+                                borderRadius: '8px',
+                                background: isFullyPaid ? 'rgba(255, 255, 255, 0.08)' : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                border: isFullyPaid ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
+                                color: '#ffffff',
+                                fontWeight: 700,
+                                fontSize: '11.5px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                boxShadow: isFullyPaid ? 'none' : '0 2px 8px rgba(99, 102, 241, 0.35)'
+                              }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                {isFullyPaid ? 'tune' : 'payments'}
+                              </span>
+                              {isFullyPaid ? 'Payment Box' : 'Give Payment'}
+                            </button>
                           </div>
                         </div>
                       );
@@ -6298,19 +6225,6 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                   </div>
                 )}
 
-                {/* Dynamic Specifications & Custom Fields for Stage 7 */}
-                <div style={{ width: '100%', maxWidth: '840px', marginTop: '16px' }}>
-                  <DynamicStageFields
-                    stage={7}
-                    stageName={stageNames[7] || activePresetDef.stages[7]?.name || 'Complete & Settlements'}
-                    presetColor={activePresetDef.color}
-                    fields={customFields}
-                    fieldValues={customFieldValues}
-                    onUpdateFieldValue={handleUpdateFieldValue}
-                    onAddField={handleAddDynamicField}
-                    onRemoveField={handleRemoveDynamicField}
-                  />
-                </div>
 
                 {/* Action Buttons */}
                 <div className={styles.celebrationActions} style={{ width: '100%', maxWidth: '840px', display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '10px' }}>
@@ -8493,136 +8407,436 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
             ==================================================================== */}
         {isInvoiceModalOpen && (
           <div className={styles.modalOverlay} onClick={(e) => { if (e.target === e.currentTarget) setIsInvoiceModalOpen(false); }}>
-            <div className={styles.modalContent} style={{ maxWidth: '680px', background: '#ffffff', color: '#0f172a', borderRadius: '16px', padding: '30px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
+            <div
+              id="printable-tax-invoice"
+              className={styles.modalContent}
+              style={{
+                maxWidth: '780px',
+                background: 'linear-gradient(180deg, #111c2e 0%, #090e18 100%)',
+                color: '#f8fafc',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '22px',
+                padding: '30px',
+                boxShadow: '0 30px 80px -15px rgba(0, 0, 0, 0.95)',
+                position: 'relative'
+              }}
+            >
+              {/* Embedded Print Stylesheet */}
+              <style dangerouslySetInnerHTML={{
+                __html: `
+                  @media print {
+                    body * {
+                      visibility: hidden !important;
+                    }
+                    #printable-tax-invoice, #printable-tax-invoice * {
+                      visibility: visible !important;
+                    }
+                    #printable-tax-invoice {
+                      position: fixed !important;
+                      left: 0 !important;
+                      top: 0 !important;
+                      width: 100vw !important;
+                      max-width: 100vw !important;
+                      height: auto !important;
+                      background: #ffffff !important;
+                      color: #0f172a !important;
+                      padding: 36px 40px !important;
+                      border: none !important;
+                      box-shadow: none !important;
+                      border-radius: 0 !important;
+                    }
+                    .no-print {
+                      display: none !important;
+                    }
+                    .print-border-light {
+                      border-color: #e2e8f0 !important;
+                    }
+                    .print-bg-light {
+                      background: #f8fafc !important;
+                      color: #0f172a !important;
+                    }
+                    .print-text-dark {
+                      color: #0f172a !important;
+                    }
+                    .print-text-muted {
+                      color: #64748b !important;
+                    }
+                    .print-table-header {
+                      background: #f1f5f9 !important;
+                      color: #334155 !important;
+                    }
+                    .print-payment-row {
+                      background: #f0fdf4 !important;
+                      color: #16a34a !important;
+                    }
+                    .print-summary-box {
+                      background: #f8fafc !important;
+                      border-color: #cbd5e1 !important;
+                    }
+                  }
+                `
+              }} />
+
               {/* Invoice Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #f1f5f9', paddingBottom: '20px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#2563eb' }}>receipt_long</span>
-                    <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: '#0f172a' }}>OFFICIAL INVOICE</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '22px' }} className="print-border-light">
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px -4px rgba(59, 130, 246, 0.5)' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '26px', color: '#ffffff' }}>receipt_long</span>
                   </div>
-                  <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '4px' }}>
-                    Invoice #{project?.projectCode || project?.id?.substring(0, 8).toUpperCase()}
-                  </span>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, letterSpacing: '0.02em', color: '#f8fafc' }} className="print-text-dark">
+                        SHOHOJ LEDGER STUDIO
+                      </h2>
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginTop: '3px' }} className="print-text-muted">
+                      Official Commercial Media Production & Tax Invoice
+                    </span>
+                    <span style={{ fontSize: '11px', fontFamily: 'monospace', color: '#38bdf8', display: 'inline-block', marginTop: '2px' }} className="print-text-muted">
+                      REF #{project?.projectCode || project?.id?.substring(0, 8).toUpperCase() || 'INV-2026-001'}
+                    </span>
+                  </div>
                 </div>
+
                 <div style={{ textAlign: 'right' }}>
-                  <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block' }}>Shohoj Ledger Studio</strong>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Date: {new Date().toLocaleDateString()}</span>
+                  {/* Status Stamp */}
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '5px 14px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    marginBottom: '8px',
+                    background: clientDue <= 0 ? 'rgba(16, 185, 129, 0.14)' : 'rgba(239, 68, 68, 0.14)',
+                    color: clientDue <= 0 ? '#34d399' : '#f87171',
+                    border: `1px solid ${clientDue <= 0 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                      {clientDue <= 0 ? 'check_circle' : 'pending'}
+                    </span>
+                    {clientDue <= 0 ? 'PAID & SETTLED' : 'PAYMENT DUE'}
+                  </div>
+
+                  <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }} className="print-text-muted">
+                    Issue Date: <strong style={{ color: '#f8fafc' }} className="print-text-dark">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</strong>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }} className="print-text-muted">
+                    BIN / Commercial ID: 00482910-0102
+                  </div>
                 </div>
               </div>
 
-              {/* Client & Project Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', margin: '20px 0' }}>
-                <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Billed To</span>
-                  <strong style={{ display: 'block', fontSize: '15px', color: '#0f172a', marginTop: '4px' }}>
-                    {project?.clientName || 'Client / Commercial Partner'}
+              {/* Client & Project Details (2-Column Cards) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', margin: '20px 0' }}>
+                <div style={{ padding: '14px 16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }} className="print-bg-light print-border-light">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#38bdf8' }}>person</span>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }} className="print-text-muted">
+                      Billed To (Client)
+                    </span>
+                  </div>
+                  <strong style={{ display: 'block', fontSize: '15.5px', color: '#f8fafc', fontWeight: 700 }} className="print-text-dark">
+                    {project?.clientName || 'Commercial Partner / Client'}
                   </strong>
                   {project?.clientPhone && (
-                    <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                      Phone: {project.clientPhone}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }} className="print-text-muted">
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#64748b' }}>call</span>
+                      <span>{project.clientPhone}</span>
+                    </div>
                   )}
+                  <span style={{ display: 'block', fontSize: '11px', color: '#64748b', marginTop: '4px' }} className="print-text-muted">
+                    Category: Direct Commercial Production
+                  </span>
                 </div>
 
-                <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Project Reference</span>
-                  <strong style={{ display: 'block', fontSize: '15px', color: '#0f172a', marginTop: '4px' }}>
-                    {project?.name}
+                <div style={{ padding: '14px 16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }} className="print-bg-light print-border-light">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#a78bfa' }}>folder</span>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }} className="print-text-muted">
+                      Project Reference
+                    </span>
+                  </div>
+                  <strong style={{ display: 'block', fontSize: '15.5px', color: '#f8fafc', fontWeight: 700 }} className="print-text-dark">
+                    {project?.name || 'Untitled Production'}
                   </strong>
-                  <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                    Status: {project?.status || 'Completed'} (Stage 7 Final Delivery)
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#cbd5e1', marginTop: '4px' }} className="print-text-muted">
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#10b981' }}>verified</span>
+                    <span>Status: {project?.status || 'Active'} (Stage 7 Final Delivery)</span>
+                  </div>
+                  <span style={{ display: 'block', fontSize: '11px', color: '#64748b', marginTop: '4px' }} className="print-text-muted">
+                    Scope: {productData?.productName ? `Intake: ${productData.productName}` : 'Commercial Media Shoot & Post'}
                   </span>
                 </div>
               </div>
 
-              {/* Line Items Table */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', margin: '10px 0' }}>
-                <thead>
-                  <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#475569' }}>Description</th>
-                    <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: '12px', color: '#475569' }}>Quantity / Scope</th>
-                    <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: '12px', color: '#475569' }}>Amount (BDT)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '12px' }}>
-                      <strong style={{ color: '#0f172a' }}>Commercial Media Production & Shoot</strong>
-                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                        {productData.productName ? `Intake: ${productData.productName}` : 'Product photography, video shoot & post-production'}
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px', color: '#475569' }}>1 Project Scope</td>
-                    <td style={{ textAlign: 'right', padding: '12px', fontWeight: 700, color: '#0f172a' }}>{formatCurrency(budget)}</td>
-                  </tr>
-
-                  {totalRevisionFees > 0 && (
-                    <tr style={{ background: '#fefce8', borderBottom: '1px solid #fef08a' }}>
-                      <td style={{ padding: '12px' }}>
-                        <strong style={{ color: '#854d0e' }}>Additional Revision Fees ({billableRevisionsCount} rounds)</strong>
-                        <div style={{ fontSize: '11px', color: '#a16207', marginTop: '2px' }}>
-                          Client revision rounds beyond {demoData.freeRevisionsIncluded ?? 2} free allowance (@ {formatCurrency(demoData.costPerRevision ?? 1000)}/round)
-                        </div>
+              {/* Itemized Deliverables Table */}
+              <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.08)', margin: '14px 0' }} className="print-border-light">
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }} className="print-table-header">
+                      <th style={{ padding: '11px 16px', fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Description & Deliverables
+                      </th>
+                      <th style={{ padding: '11px 16px', fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
+                        Quantity / Scope
+                      </th>
+                      <th style={{ padding: '11px 16px', fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>
+                        Amount (BDT)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Base Scope */}
+                    <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }} className="print-border-light">
+                      <td style={{ padding: '14px 16px' }}>
+                        <strong style={{ display: 'block', fontSize: '14px', color: '#f8fafc' }} className="print-text-dark">
+                          Commercial Media Production & Post-Production
+                        </strong>
+                        <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginTop: '3px' }} className="print-text-muted">
+                          {productData?.productName ? `Production for ${productData.productName}` : 'Product photography, cinematography, video editing, color grading & master file delivery'}
+                        </span>
                       </td>
-                      <td style={{ padding: '12px', color: '#854d0e' }}>{billableRevisionsCount} Extra Rounds</td>
-                      <td style={{ textAlign: 'right', padding: '12px', fontWeight: 700, color: '#854d0e' }}>
-                        +{formatCurrency(totalRevisionFees)}
+                      <td style={{ padding: '14px 16px', textAlign: 'center', fontSize: '13px', color: '#cbd5e1' }} className="print-text-dark">
+                        1 Project Scope
+                      </td>
+                      <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 800, fontSize: '14px', color: '#f8fafc', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }} className="print-text-dark">
+                        {formatCurrency(budget)}
                       </td>
                     </tr>
-                  )}
 
-                  {payments && payments.length > 0 && (
-                    payments.map((p: any, i: number) => (
-                      <tr key={p.id || i} style={{ background: '#f0fdf4', borderBottom: '1px solid #dcfce7' }}>
-                        <td style={{ padding: '10px 12px', color: '#16a34a' }}>
-                          ✓ Payment Received ({p.paymentMethod || 'Bank'}) {p.notes ? `- ${p.notes}` : ''}
+                    {/* Additional Revision Fees (if any) */}
+                    {totalRevisionFees > 0 && (
+                      <tr style={{ background: 'rgba(245, 158, 11, 0.07)', borderBottom: '1px solid rgba(245, 158, 11, 0.15)' }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <strong style={{ display: 'block', fontSize: '13.5px', color: '#fbbf24' }}>
+                            Additional Revision Surcharges ({billableRevisionsCount} Billable Rounds)
+                          </strong>
+                          <span style={{ fontSize: '11.5px', color: '#fde68a', display: 'block', marginTop: '2px' }}>
+                            Beyond complimentary allowance ({demoData.freeRevisionsIncluded ?? 2} free rounds) @ {formatCurrency(demoData.costPerRevision ?? 1000)}/round
+                          </span>
                         </td>
-                        <td style={{ padding: '10px 12px', color: '#16a34a', fontSize: '11px' }}>{new Date(p.createdAt || Date.now()).toLocaleDateString()}</td>
-                        <td style={{ textAlign: 'right', padding: '10px 12px', color: '#16a34a', fontWeight: 700 }}>
-                          -{formatCurrency(p.amount)}
+                        <td style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12.5px', color: '#fde68a' }}>
+                          {billableRevisionsCount} Extra Rounds
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, fontSize: '14px', color: '#fbbf24', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                          +{formatCurrency(totalRevisionFees)}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-              {/* Totals Box */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', margin: '16px 0', borderTop: '2px solid #e2e8f0', paddingTop: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '13px', color: '#475569' }}>
-                  <span>Base Contract Total:</span>
-                  <strong>{formatCurrency(budget)}</strong>
-                </div>
-                {totalRevisionFees > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '13px', color: '#854d0e' }}>
-                    <span>Revision Surcharges:</span>
-                    <strong>+{formatCurrency(totalRevisionFees)}</strong>
+              {/* Payments & Advance Receipts Ledger */}
+              {payments && payments.length > 0 && (
+                <div style={{ marginTop: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#34d399' }}>payments</span>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Payment Receipts & Applied Credits
+                    </span>
                   </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '13px', color: '#16a34a' }}>
-                  <span>Total Paid / Advance:</span>
-                  <strong>-{formatCurrency(totalReceived)}</strong>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {payments.map((p: any, i: number) => (
+                      <div
+                        key={p.id || i}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 14px',
+                          background: 'rgba(16, 185, 129, 0.08)',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                          borderRadius: '10px'
+                        }}
+                        className="print-payment-row print-border-light"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#34d399' }}>check_circle</span>
+                          <div>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#34d399' }}>
+                              Payment Received ({p.paymentMethod || 'Direct'})
+                            </span>
+                            {p.notes && (
+                              <span style={{ fontSize: '11.5px', color: '#94a3b8', display: 'block', marginTop: '1px' }} className="print-text-muted">
+                                {p.notes}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <span style={{ fontSize: '11.5px', color: '#94a3b8' }} className="print-text-muted">
+                            {new Date(p.createdAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </span>
+                          <strong style={{ fontSize: '14px', fontWeight: 800, color: '#34d399', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                            -{formatCurrency(p.amount)}
+                          </strong>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', fontSize: '16px', fontWeight: 800, color: clientDue > 0 ? '#dc2626' : '#16a34a', borderTop: '2px solid #e2e8f0', paddingTop: '8px', marginTop: '4px' }}>
-                  <span>Outstanding Due:</span>
-                  <span>{clientDue > 0 ? formatCurrency(clientDue) : 'PAID & SETTLED (BDT 0)'}</span>
+              )}
+
+              {/* Financial Summary & Balance Due */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                <div
+                  style={{
+                    width: '340px',
+                    padding: '16px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                  className="print-summary-box print-border-light"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }} className="print-text-muted">
+                    <span>Base Contract Scope:</span>
+                    <strong style={{ color: '#f8fafc', fontVariantNumeric: 'tabular-nums' }} className="print-text-dark">{formatCurrency(budget)}</strong>
+                  </div>
+
+                  {totalRevisionFees > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#fbbf24' }}>
+                      <span>Revision Surcharges:</span>
+                      <strong style={{ fontVariantNumeric: 'tabular-nums' }}>+{formatCurrency(totalRevisionFees)}</strong>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#38bdf8' }}>
+                    <span>Total Invoiced:</span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(effectiveBudget)}</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#34d399' }}>
+                    <span>Total Payments Credited:</span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums' }}>-{formatCurrency(totalReceived)}</strong>
+                  </div>
+
+                  {/* Net Due Highlight Card */}
+                  <div
+                    style={{
+                      borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+                      paddingTop: '10px',
+                      marginTop: '4px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                    className="print-border-light"
+                  >
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: clientDue > 0 ? '#f87171' : '#34d399', display: 'block' }}>
+                        {clientDue > 0 ? 'Net Balance Due' : 'Account Balance'}
+                      </span>
+                      <span style={{ fontSize: '10.5px', color: '#64748b' }} className="print-text-muted">
+                        {clientDue > 0 ? 'Payable upon delivery' : 'All obligations settled'}
+                      </span>
+                    </div>
+
+                    <strong
+                      style={{
+                        fontSize: clientDue > 0 ? '19px' : '16px',
+                        fontWeight: 900,
+                        color: clientDue > 0 ? '#ef4444' : '#34d399',
+                        fontVariantNumeric: 'tabular-nums',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {clientDue > 0 ? formatCurrency(clientDue) : '✓ SETTLED (BDT 0)'}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+              {/* Legal Notes & Footer */}
+              <div style={{ marginTop: '18px', paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="print-border-light">
+                <span style={{ fontSize: '11px', color: '#64748b' }} className="print-text-muted">
+                  Thank you for your business. For accounts assistance, contact billing@shohojledger.com
+                </span>
+                <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }} className="print-text-muted">
+                  AUTH: SL-INV-{new Date().getFullYear()}
+                </span>
+              </div>
+
+              {/* Actions Toolbar (Screen Only) */}
+              <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '18px' }}>
                 <button
                   type="button"
                   onClick={() => setIsInvoiceModalOpen(false)}
-                  style={{ padding: '10px 18px', borderRadius: '10px', background: '#e2e8f0', border: 'none', color: '#475569', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#cbd5e1',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
                 >
                   Close
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const invoiceNum = project?.projectCode || project?.id?.substring(0, 8).toUpperCase() || 'INV-2026-001';
+                    navigator.clipboard.writeText(`INVOICE #${invoiceNum} - Project: ${project?.name} - Total: ${formatCurrency(effectiveBudget)} - Due: ${formatCurrency(clientDue)}`);
+                    showToast('✓ Invoice summary copied to clipboard');
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '10px',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#38bdf8',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)')}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>content_copy</span>
+                  Copy Summary
+                </button>
+
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  style={{ padding: '10px 22px', borderRadius: '10px', background: '#2563eb', border: 'none', color: '#ffffff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  style={{
+                    padding: '10px 22px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>
                   Print / Save as PDF
@@ -8656,164 +8870,232 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                 </button>
               </div>
 
-              <form onSubmit={handleConfirmPartialPayment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Balance Summary Card */}
-                <div style={{ padding: '14px 16px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Total Fee</span>
-                    <strong style={{ fontSize: '14px', color: '#f8fafc', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.totalFee)}</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Paid So Far</span>
-                    <strong style={{ fontSize: '14px', color: '#34d399', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.paidSoFar)}</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Remaining Due</span>
-                    <strong style={{ fontSize: '14px', color: '#fbbf24', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.remainingDue)}</strong>
-                  </div>
-                </div>
-
-                {/* Quick Presets */}
+              {/* Balance Summary Card */}
+              <div style={{ padding: '14px 16px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
-                    Quick Preset Amounts:
-                  </label>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {[
-                      { label: '25%', amount: Math.round(partialPayModal.remainingDue * 0.25) },
-                      { label: '50%', amount: Math.round(partialPayModal.remainingDue * 0.5) },
-                      { label: '75%', amount: Math.round(partialPayModal.remainingDue * 0.75) },
-                      { label: `Full Due (${formatCurrency(partialPayModal.remainingDue)})`, amount: partialPayModal.remainingDue }
-                    ].map((preset, pIdx) => (
-                      <button
-                        key={pIdx}
-                        type="button"
-                        onClick={() => setPartialPayInputAmount(String(preset.amount))}
-                        style={{
-                          padding: '5px 10px',
-                          borderRadius: '8px',
-                          background: String(preset.amount) === String(partialPayInputAmount) ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.06)',
-                          border: String(preset.amount) === String(partialPayInputAmount) ? '1px solid #818cf8' : '1px solid rgba(255, 255, 255, 0.12)',
-                          color: String(preset.amount) === String(partialPayInputAmount) ? '#c7d2fe' : '#94a3b8',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
+                  <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Total Fee</span>
+                  <strong style={{ fontSize: '14px', color: '#f8fafc', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.totalFee)}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Paid So Far</span>
+                  <strong style={{ fontSize: '14px', color: '#34d399', marginTop: '2px', display: 'block' }}>{formatCurrency(partialPayModal.paidSoFar)}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>Remaining Due</span>
+                  <strong style={{ fontSize: '14px', color: partialPayModal.remainingDue > 0 ? '#fbbf24' : '#34d399', marginTop: '2px', display: 'block' }}>
+                    {partialPayModal.remainingDue > 0 ? formatCurrency(partialPayModal.remainingDue) : '✓ Settled'}
+                  </strong>
+                </div>
+              </div>
+
+              {partialPayModal.remainingDue === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'center', padding: '6px 0 4px' }}>
+                  <div style={{ padding: '18px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '26px' }}>check_circle</span>
+                    </div>
+                    <div>
+                      <strong style={{ fontSize: '15px', color: '#34d399', display: 'block' }}>Fully Paid & Settled</strong>
+                      <span style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                        All payments for {partialPayModal.talentName} ({formatCurrency(partialPayModal.totalFee)}) have been recorded and settled.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '14px' }}>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (partialPayModal.type === 'MODEL') {
+                          await handleResetModelPayment();
+                        } else if (partialPayModal.type === 'EDITOR') {
+                          const summary = getAssignedEditorsSummary().find(s => s.name === partialPayModal.talentName) || {
+                            name: partialPayModal.talentName,
+                            deliverableIds: partialPayModal.deliverableIds || []
+                          };
+                          await handleResetEditorPayment(summary as any);
+                        }
+                        setPartialPayModal(prev => ({ ...prev, isOpen: false }));
+                      }}
+                      style={{
+                        padding: '9px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#f87171',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>restart_alt</span>
+                      Reset Payment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPartialPayModal(prev => ({ ...prev, isOpen: false }))}
+                      style={{
+                        padding: '9px 18px',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#cbd5e1',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
+              ) : (
+                <form onSubmit={handleConfirmPartialPayment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Quick Presets */}
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+                      Quick Preset Amounts:
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {[
+                        { label: '25%', amount: Math.round(partialPayModal.remainingDue * 0.25) },
+                        { label: '50%', amount: Math.round(partialPayModal.remainingDue * 0.5) },
+                        { label: '75%', amount: Math.round(partialPayModal.remainingDue * 0.75) },
+                        { label: `Full Due (${formatCurrency(partialPayModal.remainingDue)})`, amount: partialPayModal.remainingDue }
+                      ].map((preset, pIdx) => (
+                        <button
+                          key={pIdx}
+                          type="button"
+                          onClick={() => setPartialPayInputAmount(String(preset.amount))}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: '8px',
+                            background: String(preset.amount) === String(partialPayInputAmount) ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.06)',
+                            border: String(preset.amount) === String(partialPayInputAmount) ? '1px solid #818cf8' : '1px solid rgba(255, 255, 255, 0.12)',
+                            color: String(preset.amount) === String(partialPayInputAmount) ? '#c7d2fe' : '#94a3b8',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                {/* Amount Input */}
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
-                    Payment Amount to Pay Now (BDT) *
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max={partialPayModal.remainingDue}
-                    required
-                    placeholder="Enter amount (e.g. 500)"
-                    value={partialPayInputAmount}
-                    onChange={(e) => setPartialPayInputAmount(e.target.value)}
-                    className={styles.stageInput}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '10px',
-                      color: '#f8fafc',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      outline: 'none'
-                    }}
-                    autoFocus
-                  />
-                  {parseFloat(partialPayInputAmount) > partialPayModal.remainingDue && (
-                    <span style={{ fontSize: '11px', color: '#f87171', marginTop: '4px', display: 'block' }}>
-                      Warning: Amount exceeds remaining due of {formatCurrency(partialPayModal.remainingDue)}
-                    </span>
-                  )}
-                </div>
+                  {/* Amount Input */}
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+                      Payment Amount to Pay Now (BDT) *
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={partialPayModal.remainingDue}
+                      required
+                      placeholder="Enter amount (e.g. 500)"
+                      value={partialPayInputAmount}
+                      onChange={(e) => setPartialPayInputAmount(e.target.value)}
+                      className={styles.stageInput}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '10px',
+                        color: '#f8fafc',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        outline: 'none'
+                      }}
+                      autoFocus
+                    />
+                    {parseFloat(partialPayInputAmount) > partialPayModal.remainingDue && (
+                      <span style={{ fontSize: '11px', color: '#f87171', marginTop: '4px', display: 'block' }}>
+                        Warning: Amount exceeds remaining due of {formatCurrency(partialPayModal.remainingDue)}
+                      </span>
+                    )}
+                  </div>
 
-                {/* Payment Method */}
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
-                    Payment Method Channel
-                  </label>
-                  <select
-                    value={partialPayMethod}
-                    onChange={(e) => setPartialPayMethod(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      background: 'rgba(15, 23, 42, 0.9)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '10px',
-                      color: '#f8fafc',
-                      fontSize: '13px',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="bKash Merchant">bKash</option>
-                    <option value="Nagad">Nagad</option>
-                    <option value="Cash">Cash in Hand</option>
-                    <option value="Card / POS">Card / POS</option>
-                    <option value="Cheque">Cheque</option>
-                  </select>
-                </div>
+                  {/* Payment Method */}
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+                      Payment Method Channel
+                    </label>
+                    <select
+                      value={partialPayMethod}
+                      onChange={(e) => setPartialPayMethod(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        background: 'rgba(15, 23, 42, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '10px',
+                        color: '#f8fafc',
+                        fontSize: '13px',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="bKash Merchant">bKash</option>
+                      <option value="Nagad">Nagad</option>
+                      <option value="Cash">Cash in Hand</option>
+                      <option value="Card / POS">Card / POS</option>
+                      <option value="Cheque">Cheque</option>
+                    </select>
+                  </div>
 
-                {/* Modal Bottom Actions */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '14px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPartialPayModal(prev => ({ ...prev, isOpen: false }))}
-                    style={{
-                      padding: '9px 16px',
-                      borderRadius: '10px',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      color: '#cbd5e1',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancel
-                  </button>
+                  {/* Modal Bottom Actions */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '14px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPartialPayModal(prev => ({ ...prev, isOpen: false }))}
+                      style={{
+                        padding: '9px 16px',
+                        borderRadius: '10px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#cbd5e1',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmittingPartialPay || !partialPayInputAmount || parseFloat(partialPayInputAmount) <= 0}
-                    style={{
-                      padding: '9px 20px',
-                      borderRadius: '10px',
-                      background: partialPayModal.type === 'MODEL'
-                        ? 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'
-                        : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                      border: 'none',
-                      color: '#ffffff',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
-                      opacity: (isSubmittingPartialPay || !partialPayInputAmount || parseFloat(partialPayInputAmount) <= 0) ? 0.5 : 1
-                    }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
-                    {isSubmittingPartialPay ? 'Recording...' : `Confirm Payment (${formatCurrency(parseFloat(partialPayInputAmount) || 0)}) ✓`}
-                  </button>
-                </div>
-              </form>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingPartialPay || !partialPayInputAmount || parseFloat(partialPayInputAmount) <= 0}
+                      style={{
+                        padding: '9px 20px',
+                        borderRadius: '10px',
+                        background: partialPayModal.type === 'MODEL'
+                          ? 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)'
+                          : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                        border: 'none',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
+                        opacity: (isSubmittingPartialPay || !partialPayInputAmount || parseFloat(partialPayInputAmount) <= 0) ? 0.5 : 1
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
+                      {isSubmittingPartialPay ? 'Recording...' : `Confirm Payment (${formatCurrency(parseFloat(partialPayInputAmount) || 0)}) ✓`}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         )}

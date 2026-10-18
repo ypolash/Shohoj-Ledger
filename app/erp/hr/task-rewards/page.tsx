@@ -79,7 +79,7 @@ interface PayoutRecord {
   employee?: Employee;
 }
 
-export default function TaskRewardsPage() {
+export function TaskRewardsComponent({ hideTitle = false }: { hideTitle?: boolean }) {
   const [activeTab, setActiveTab] = useState<"tasks" | "reviews" | "wallets" | "payouts" | "settings">("tasks");
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<TaskReward[]>([]);
@@ -420,7 +420,8 @@ export default function TaskRewardsPage() {
   return (
     <div className={styles.container}>
       {/* Executive Header */}
-      <div className={styles.headerCard}>
+      {!hideTitle && (
+        <div className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <div className={styles.titleGroup}>
             <h1 className={styles.pageTitle}>
@@ -473,8 +474,8 @@ export default function TaskRewardsPage() {
             </button>
           </div>
         </div>
-
       </div>
+      )}
 
       {/* Tabs Navigation */}
       <div className={styles.tabsContainer}>
@@ -1556,4 +1557,8 @@ export default function TaskRewardsPage() {
       )}
     </div>
   );
+}
+
+export default function TaskRewardsPage() {
+  return <TaskRewardsComponent />;
 }

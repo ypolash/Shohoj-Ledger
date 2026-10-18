@@ -580,6 +580,7 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
   await prisma.leaveRequest.update({
     where: { id: leave.id },
     data: {
+      endDate: new Date(),
       status: isOverstayed ? "OVERSTAYED" : "COMPLETED",
       comments: isOverstayed
         ? `Break ended. Overstayed by ${overstayMinutes} min(s). Penalty fine: ৳${fineAmount}. ${cleanComments}`

@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     const longitude = body.longitude;
     const ipAddress = request.headers.get("x-forwarded-for")?.split(',')[0] || request.headers.get("x-real-ip") || '127.0.0.1';
 
-    // Enforce permitted Wi-Fi network validation for break operations
+    // Enforce permitted Wi-Fi network and location validation for break operations
     const validation = await validateAttendanceRequest(
       employee.companyId || "",
       latitude,
@@ -96,14 +96,14 @@ export async function POST(request: Request) {
       ssid,
       bssid,
       ipAddress,
-      false // do not strictly fail on GPS if employee is indoors on authorized Wi-Fi
+      true // strictly require GPS/location and authorized company Wi-Fi
     );
 
     if (!validation.isValid) {
       return NextResponse.json({
         success: false,
-        code: "FORBIDDEN_WIFI",
-        error: validation.error || "Lunch break operations are only permitted on authorized company Wi-Fi.",
+        code: "FORBIDDEN_NETWORK",
+        error: validation.error || "Lunch break operations are only permitted on authorized company Wi-Fi and office location.",
         details: validation.details
       }, { status: 403, headers: ESS_CORS_HEADERS });
     }

@@ -129,8 +129,8 @@ export default function DashboardIndex() {
                 Enterprise Dashboard
                 <span className={styles.roleBadge}>{role} Workspace</span>
               </h1>
-              <p style={{ fontSize: "13px", color: "var(--text-muted, #94a3b8)", margin: 0 }}>
-                {timeGreeting}, <strong>{userName}</strong>! Operational and financial telemetry tailored to your <strong>{role}</strong> role.
+              <p className={styles.headerSubtitle}>
+                {timeGreeting}, <strong>{userName}</strong>! Real-time operational intelligence and ledger telemetry.
               </p>
             </div>
 
@@ -145,21 +145,8 @@ export default function DashboardIndex() {
               {isPrivileged && (
                 <Link
                   href="/erp/settings/command-center"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    background: "rgba(59, 130, 246, 0.15)",
-                    color: "#60a5fa",
-                    border: "1px solid rgba(59, 130, 246, 0.3)",
-                    padding: "8px 14px",
-                    borderRadius: "12px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    transition: "all 0.2s ease"
-                  }}
-                  title="Configure user roles & passwords"
+                  className={styles.commandCenterBtn}
+                  title="Configure user roles & permissions"
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
                     shield_person

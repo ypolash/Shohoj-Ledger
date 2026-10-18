@@ -149,58 +149,89 @@ fun CommunityChannelsScreen(
             val dmUnread = uiState.channels.filter { it.type == "DIRECT_MESSAGE" }.sumOf { it.unreadCount }
             val totalPeople = (uiState.staffDirectory + uiState.memberDirectory).distinctBy { it.id }.size
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val tabs = listOf(
-                    Triple("Channels", channelsUnread, Icons.Default.Forum),
-                    Triple("Direct Messages", dmUnread, Icons.Default.Chat),
-                    Triple("Directory", totalPeople, Icons.Default.People)
-                )
+            // Modern Unified Segmented Tab Selector with Icons & Badges
+            val tabs = listOf(
+                Triple("Channels", channelsUnread, Icons.Default.Forum),
+                Triple("Direct Messages", dmUnread, Icons.Default.Chat),
+                Triple("Directory", totalPeople, Icons.Default.People)
+            )
 
-                tabs.forEachIndexed { index, (title, badgeCount, _) ->
-                    val isSelected = selectedTab == index
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { selectedTab = index },
-                        color = if (isSelected) Emerald500 else Slate900,
-                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
-                    ) {
-                        Row(
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                color = CardBackground,
+                shape = RoundedCornerShape(13.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    tabs.forEachIndexed { index, (title, badgeCount, icon) ->
+                        val isSelected = selectedTab == index
+                        val activeGradient = Brush.horizontalGradient(
+                            colors = listOf(Color(0xFF10B981), Color(0xFF047857))
+                        )
+
+                        Box(
                             modifier = Modifier
-                                .padding(vertical = 10.dp, horizontal = 4.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(10.dp))
+                                .then(
+                                    if (isSelected) {
+                                        Modifier
+                                            .background(activeGradient)
+                                            .border(1.dp, Color(0xFF6EE7B7).copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                                    } else {
+                                        Modifier.background(Color.Transparent)
+                                    }
+                                )
+                                .clickable { selectedTab = index }
+                                .padding(horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 11.5.sp,
-                                    color = if (isSelected) Slate950 else Slate300
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (index < 2 && badgeCount > 0) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(13.dp),
+                                    tint = if (isSelected) Slate950 else Slate400
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Surface(
-                                    color = if (isSelected) Slate950 else Emerald500,
-                                    shape = CircleShape
-                                ) {
-                                    Text(
-                                        text = if (badgeCount > 99) "99+" else badgeCount.toString(),
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = if (isSelected) Emerald400 else Slate950,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 9.sp
-                                        ),
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                    )
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                        fontSize = 11.sp,
+                                        color = if (isSelected) Slate950 else Slate300
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (index < 2 && badgeCount > 0) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Surface(
+                                        color = if (isSelected) Slate950 else Rose500,
+                                        shape = CircleShape
+                                    ) {
+                                        Text(
+                                            text = if (badgeCount > 99) "99+" else badgeCount.toString(),
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                color = if (isSelected) Emerald400 else Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 9.sp
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

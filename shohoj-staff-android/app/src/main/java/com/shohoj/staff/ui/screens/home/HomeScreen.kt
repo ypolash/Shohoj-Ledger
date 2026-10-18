@@ -383,97 +383,93 @@ fun HomeScreen(
                         }
 
                         if (uiState.activeBreak?.isPaused == true) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Button(
+                                onClick = { viewModel.resumeBreak() },
+                                enabled = !uiState.isStartingBreak,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = Slate950
+                                ),
+                                shape = RoundedCornerShape(14.dp),
+                                contentPadding = PaddingValues(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(Color(0xFF10B981), Color(0xFF047857))
+                                        ),
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color(0xFF6EE7B7).copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
                             ) {
-                                Button(
-                                    onClick = { viewModel.resumeBreak() },
-                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Emerald500,
-                                        contentColor = Slate950
-                                    ),
-                                    shape = RoundedCornerShape(24.dp),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(44.dp)
-                                ) {
-                                    if (uiState.isStartingBreak) {
-                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                    } else {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Resume Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                    }
-                                }
-
-                                Button(
-                                    onClick = { viewModel.endActiveBreak() },
-                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Rose500,
-                                        contentColor = Slate50
-                                    ),
-                                    shape = RoundedCornerShape(24.dp),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(44.dp)
-                                ) {
-                                    if (uiState.isEndingBreak) {
-                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                    } else {
-                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("End Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                    }
+                                if (uiState.isStartingBreak) {
+                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = Slate950
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Resume Break",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 14.sp,
+                                        color = Slate950,
+                                        letterSpacing = 0.5.sp,
+                                        maxLines = 1
+                                    )
                                 }
                             }
                         } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Button(
+                                onClick = { viewModel.pauseBreak() },
+                                enabled = !uiState.isStartingBreak,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = Slate950
+                                ),
+                                shape = RoundedCornerShape(14.dp),
+                                contentPadding = PaddingValues(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(Color(0xFFF59E0B), Color(0xFFD97706))
+                                        ),
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color(0xFFFCD34D).copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
                             ) {
-                                Button(
-                                    onClick = { viewModel.pauseBreak() },
-                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Amber500,
-                                        contentColor = Slate950
-                                    ),
-                                    shape = RoundedCornerShape(24.dp),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(44.dp)
-                                ) {
-                                    if (uiState.isStartingBreak) {
-                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                    } else {
-                                        Icon(Icons.Default.Pause, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Pause Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                    }
-                                }
-
-                                Button(
-                                    onClick = { viewModel.endActiveBreak() },
-                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Slate800,
-                                        contentColor = Slate50
-                                    ),
-                                    shape = RoundedCornerShape(24.dp),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(44.dp)
-                                ) {
-                                    if (uiState.isEndingBreak) {
-                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                    } else {
-                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                    }
+                                if (uiState.isStartingBreak) {
+                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Pause,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = Slate950
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Pause Break",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 14.sp,
+                                        color = Slate950,
+                                        letterSpacing = 0.5.sp,
+                                        maxLines = 1
+                                    )
                                 }
                             }
                         }

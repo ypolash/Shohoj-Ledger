@@ -32,7 +32,7 @@ export function QuickActions({ role }: QuickActionsProps) {
       borderColor: 'rgba(239, 68, 68, 0.3)'
     },
     {
-      label: 'Bank & Reserves',
+      label: 'Bank Reserves',
       sub: 'Liquidity Pools',
       icon: 'account_balance',
       roles: ['Owner', 'CEO', 'Accountant'],
@@ -43,8 +43,8 @@ export function QuickActions({ role }: QuickActionsProps) {
     },
     // CRM & Sales
     {
-      label: 'Customer Master',
-      sub: 'Directory & 360°',
+      label: 'Customers',
+      sub: 'Directory & CRM',
       icon: 'groups',
       roles: ['Owner', 'Sales', 'CEO'],
       href: '/erp/crm/customers',
@@ -54,7 +54,7 @@ export function QuickActions({ role }: QuickActionsProps) {
     },
     {
       label: 'Lead Pipeline',
-      sub: 'Prospects & Funnel',
+      sub: 'Deals & Funnel',
       icon: 'person_search',
       roles: ['Owner', 'Sales', 'CEO'],
       href: '/erp/crm/leads',
@@ -63,7 +63,7 @@ export function QuickActions({ role }: QuickActionsProps) {
       borderColor: 'rgba(99, 102, 241, 0.3)'
     },
     {
-      label: 'New Sales Order',
+      label: 'Sales Orders',
       sub: 'Create & Bill',
       icon: 'add_shopping_cart',
       roles: ['Owner', 'Sales', 'CEO'],
@@ -126,7 +126,7 @@ export function QuickActions({ role }: QuickActionsProps) {
     },
     // Projects
     {
-      label: 'Projects Workspace',
+      label: 'Projects',
       sub: 'Milestones & Tasks',
       icon: 'account_tree',
       roles: ['Project Manager'],
@@ -137,8 +137,8 @@ export function QuickActions({ role }: QuickActionsProps) {
     },
     // Reports
     {
-      label: 'Financial Reports',
-      sub: 'P&L, Balance Sheet',
+      label: 'Financial P&L',
+      sub: 'Balance & Reports',
       icon: 'bar_chart',
       roles: ['Owner', 'CEO', 'Accountant'],
       href: '/erp/reports/finance',
@@ -160,10 +160,10 @@ export function QuickActions({ role }: QuickActionsProps) {
           <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#60a5fa' }}>
             bolt
           </span>
-          Executive Quick Command
+          Quick Command Hub
         </div>
-        <span style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
-          {visibleActions.length} Shortcuts Available
+        <span className={styles.commandCountBadge}>
+          {visibleActions.length} Shortcuts
         </span>
       </div>
 

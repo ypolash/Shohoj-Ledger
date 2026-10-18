@@ -182,27 +182,7 @@ fun LeaveScreen(
                                 }
                             }
 
-                            // End Break Action Button
-                            Button(
-                                onClick = { viewModel.endActiveBreak() },
-                                enabled = !uiState.isEndingBreak,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Emerald500,
-                                    contentColor = Slate950
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(46.dp)
-                            ) {
-                                if (uiState.isEndingBreak) {
-                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                                } else {
-                                    Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                }
-                            }
+
                         }
                     }
                 }

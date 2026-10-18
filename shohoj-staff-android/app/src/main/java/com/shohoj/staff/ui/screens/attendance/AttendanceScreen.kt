@@ -23,6 +23,9 @@ import com.shohoj.staff.ui.components.*
 import com.shohoj.staff.ui.navigation.Screen
 import com.shohoj.staff.ui.theme.*
 import com.shohoj.staff.util.DateUtils
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun AttendanceScreen(
@@ -30,7 +33,10 @@ fun AttendanceScreen(
     viewModel: AttendanceViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedCalendarDate by remember { mutableStateOf<String?>(null) }
+    val todayDateKey = remember {
+        SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+    }
+    var selectedCalendarDate by remember { mutableStateOf<String?>(todayDateKey) }
 
     val filteredRecords = remember(uiState.records, selectedCalendarDate) {
         if (selectedCalendarDate == null) {
@@ -278,89 +284,93 @@ fun AttendanceScreen(
                                         }
 
                                         if (uiState.activeBreak?.isPaused == true) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            Button(
+                                                onClick = { viewModel.resumeBreak() },
+                                                enabled = !uiState.isStartingBreak,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color.Transparent,
+                                                    contentColor = Slate950
+                                                ),
+                                                shape = RoundedCornerShape(14.dp),
+                                                contentPadding = PaddingValues(),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(48.dp)
+                                                    .background(
+                                                        brush = Brush.horizontalGradient(
+                                                            colors = listOf(Color(0xFF10B981), Color(0xFF047857))
+                                                        ),
+                                                        shape = RoundedCornerShape(14.dp)
+                                                    )
+                                                    .border(
+                                                        width = 1.dp,
+                                                        color = Color(0xFF6EE7B7).copy(alpha = 0.5f),
+                                                        shape = RoundedCornerShape(14.dp)
+                                                    )
                                             ) {
-                                                Button(
-                                                    onClick = { viewModel.resumeBreak() },
-                                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Emerald500,
-                                                        contentColor = Slate950
-                                                    ),
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    modifier = Modifier.weight(1f).height(42.dp)
-                                                ) {
-                                                    if (uiState.isStartingBreak) {
-                                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                                    } else {
-                                                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("Resume Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                                    }
-                                                }
-
-                                                Button(
-                                                    onClick = { viewModel.endActiveBreak() },
-                                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Rose500,
-                                                        contentColor = Slate50
-                                                    ),
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    modifier = Modifier.weight(1f).height(42.dp)
-                                                ) {
-                                                    if (uiState.isEndingBreak) {
-                                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                                    } else {
-                                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("End Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                                    }
+                                                if (uiState.isStartingBreak) {
+                                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.PlayArrow,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(20.dp),
+                                                        tint = Slate950
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Text(
+                                                        text = "Resume Break",
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        fontSize = 14.sp,
+                                                        color = Slate950,
+                                                        letterSpacing = 0.5.sp,
+                                                        maxLines = 1
+                                                    )
                                                 }
                                             }
                                         } else {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            Button(
+                                                onClick = { viewModel.pauseBreak() },
+                                                enabled = !uiState.isStartingBreak,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color.Transparent,
+                                                    contentColor = Slate950
+                                                ),
+                                                shape = RoundedCornerShape(14.dp),
+                                                contentPadding = PaddingValues(),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(48.dp)
+                                                    .background(
+                                                        brush = Brush.horizontalGradient(
+                                                            colors = listOf(Color(0xFFF59E0B), Color(0xFFD97706))
+                                                        ),
+                                                        shape = RoundedCornerShape(14.dp)
+                                                    )
+                                                    .border(
+                                                        width = 1.dp,
+                                                        color = Color(0xFFFCD34D).copy(alpha = 0.5f),
+                                                        shape = RoundedCornerShape(14.dp)
+                                                    )
                                             ) {
-                                                Button(
-                                                    onClick = { viewModel.pauseBreak() },
-                                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = Amber500,
-                                                        contentColor = Slate950
-                                                    ),
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    modifier = Modifier.weight(1f).height(42.dp)
-                                                ) {
-                                                    if (uiState.isStartingBreak) {
-                                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                                    } else {
-                                                        Icon(Icons.Default.Pause, contentDescription = null, modifier = Modifier.size(16.dp))
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("Pause Break", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                                    }
-                                                }
-
-                                                Button(
-                                                    onClick = { viewModel.endActiveBreak() },
-                                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = if (uiState.activeBreakStatusColor == "ROSE") Rose500 else Slate800,
-                                                        contentColor = Slate50
-                                                    ),
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    modifier = Modifier.weight(1f).height(42.dp)
-                                                ) {
-                                                    if (uiState.isEndingBreak) {
-                                                        CircularProgressIndicator(color = Slate50, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                                                    } else {
-                                                        Icon(Icons.Default.StopCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("End Break Now", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                                    }
+                                                if (uiState.isStartingBreak) {
+                                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Pause,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(20.dp),
+                                                        tint = Slate950
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Text(
+                                                        text = "Pause Break",
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        fontSize = 14.sp,
+                                                        color = Slate950,
+                                                        letterSpacing = 0.5.sp,
+                                                        maxLines = 1
+                                                    )
                                                 }
                                             }
                                         }
@@ -630,8 +640,13 @@ fun AttendanceScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val isToday = selectedCalendarDate == todayDateKey
                         Text(
-                            text = if (selectedCalendarDate != null) "Logs for $selectedCalendarDate" else "Attendance History",
+                            text = when {
+                                isToday -> "Today's Logs"
+                                selectedCalendarDate != null -> "Logs for $selectedCalendarDate"
+                                else -> "Attendance History"
+                            },
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Slate50)
                         )
                         if (selectedCalendarDate != null) {
@@ -641,7 +656,7 @@ fun AttendanceScreen(
                                 modifier = Modifier.height(26.dp)
                             ) {
                                 Text(
-                                    text = "Clear Filter",
+                                    text = "Show All Logs",
                                     color = Emerald400,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold
@@ -670,67 +685,168 @@ fun AttendanceScreen(
                             .fillMaxWidth()
                             .background(CardBackground, RoundedCornerShape(14.dp))
                             .border(1.dp, CardBorder, RoundedCornerShape(14.dp))
-                            .padding(16.dp)
+                            .padding(14.dp)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            // Header: Date & Status Badge
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = DateUtils.formatDate(record.date ?: record.checkInTime),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Slate50
-                                    )
-                                )
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    if ((record.lateMinutes ?: 0) > 0) {
-                                        Text(
-                                            text = "+${record.lateMinutes}m late",
-                                            color = Amber500,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .background(Color(0xFF1E293B), RoundedCornerShape(7.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.DateRange,
+                                            contentDescription = null,
+                                            tint = Slate400,
+                                            modifier = Modifier.size(15.dp)
                                         )
                                     }
-                                    StatusBadge(status = record.effectiveStatus)
+                                    Text(
+                                        text = DateUtils.formatDate(record.date ?: record.checkInTime),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Slate50
+                                        )
+                                    )
                                 }
+
+                                StatusBadge(status = record.effectiveStatus)
                             }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(text = "Check In", style = MaterialTheme.typography.labelSmall.copy(color = Slate500))
-                                    Text(
-                                        text = DateUtils.formatTime(record.displayCheckIn),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = Slate300, fontWeight = FontWeight.Medium)
-                                    )
-                                }
+                            HorizontalDivider(
+                                color = CardBorder.copy(alpha = 0.6f),
+                                thickness = 1.dp
+                            )
 
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(text = "Check Out", style = MaterialTheme.typography.labelSmall.copy(color = Slate500))
-                                    Text(
-                                        text = DateUtils.formatTime(record.displayCheckOut),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = Slate300, fontWeight = FontWeight.Medium)
-                                    )
-                                }
+                            // Vertical mode entries
+                            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                // 1. Check In
+                                AttendanceVerticalRow(
+                                    icon = Icons.Default.Login,
+                                    iconTint = Emerald400,
+                                    iconBg = Emerald400.copy(alpha = 0.12f),
+                                    label = "Check In",
+                                    value = DateUtils.formatTime(record.displayCheckIn),
+                                    valueColor = if (record.displayCheckIn != null) Slate100 else Slate500
+                                )
 
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(text = "Work Duration", style = MaterialTheme.typography.labelSmall.copy(color = Slate500))
-                                    Text(
-                                        text = DateUtils.formatMinutesToHours(record.totalWorkingMinutes),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = Emerald400, fontWeight = FontWeight.SemiBold)
-                                    )
-                                }
+                                // 2. Check Out
+                                val hasCheckedOut = record.displayCheckOut != null
+                                AttendanceVerticalRow(
+                                    icon = Icons.Default.Logout,
+                                    iconTint = if (hasCheckedOut) Rose400 else Slate500,
+                                    iconBg = if (hasCheckedOut) Rose400.copy(alpha = 0.12f) else Slate500.copy(alpha = 0.10f),
+                                    label = "Check Out",
+                                    value = DateUtils.formatTime(record.displayCheckOut),
+                                    valueColor = if (hasCheckedOut) Slate100 else Slate500
+                                )
+
+                                // 3. Lunch Break
+                                val lunchVal = record.displayLunchBreak
+                                val hasLunch = lunchVal != "--:--"
+                                AttendanceVerticalRow(
+                                    icon = Icons.Default.Restaurant,
+                                    iconTint = Amber400,
+                                    iconBg = Amber400.copy(alpha = 0.12f),
+                                    label = "Lunch Break",
+                                    value = lunchVal,
+                                    valueColor = if (hasLunch) Amber400 else Slate500
+                                )
+
+                                // 4. Late Time
+                                val isLate = (record.lateMinutes ?: 0) > 0
+                                AttendanceVerticalRow(
+                                    icon = Icons.Default.Schedule,
+                                    iconTint = if (isLate) Amber500 else Emerald400,
+                                    iconBg = if (isLate) Amber500.copy(alpha = 0.14f) else Emerald400.copy(alpha = 0.12f),
+                                    label = "Late Time",
+                                    value = record.displayLateTime,
+                                    valueColor = if (isLate) Amber500 else Emerald400,
+                                    isHighlight = isLate
+                                )
+
+                                // 5. Work Duration
+                                AttendanceVerticalRow(
+                                    icon = Icons.Default.Timer,
+                                    iconTint = Emerald400,
+                                    iconBg = Emerald400.copy(alpha = 0.12f),
+                                    label = "Work Duration",
+                                    value = DateUtils.formatMinutesToHours(record.totalWorkingMinutes),
+                                    valueColor = Emerald400
+                                )
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AttendanceVerticalRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    iconBg: Color,
+    label: String,
+    value: String,
+    valueColor: Color,
+    isHighlight: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF0F172A).copy(alpha = 0.45f), RoundedCornerShape(9.dp))
+            .border(0.5.dp, CardBorder.copy(alpha = 0.5f), RoundedCornerShape(9.dp))
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(iconBg, RoundedCornerShape(6.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(13.dp)
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Slate400,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal
+                )
+            )
+        }
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = valueColor,
+                fontSize = 12.sp,
+                fontWeight = if (isHighlight) FontWeight.Bold else FontWeight.SemiBold
+            )
+        )
     }
 }

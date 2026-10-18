@@ -40,6 +40,21 @@ const formatCurrency = (val: number | string) => {
   }).format(Number(val) || 0);
 };
 
+const renderCurrencyValue = (val: number | string) => {
+  const num = Number(val) || 0;
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(num);
+
+  return (
+    <div className={styles.kpiValueWrapper}>
+      <span className={styles.kpiCurrencyPrefix}>BDT</span>
+      <span className={styles.kpiValueNumber}>{formatted}</span>
+    </div>
+  );
+};
+
 export function KPICards({ data, role }: KPICardsProps) {
   if (!data) return null;
 
@@ -59,14 +74,14 @@ export function KPICards({ data, role }: KPICardsProps) {
   const prevM = mData.length > 1 ? mData[mData.length - 2] : null;
 
   const calculateTrend = (curr: number, prev: number) => {
-    if (!prev && !curr) return { text: '0.0%', isPositive: true, isNeutral: true };
-    if (!prev && curr > 0) return { text: '+100%', isPositive: true, isNeutral: false };
-    if (prev > 0 && curr === 0) return { text: '-100%', isPositive: false, isNeutral: false };
-    if (!prev) return { text: '0.0%', isPositive: true, isNeutral: true };
+    if (!prev && !curr) return { text: 'Stable', isPositive: true, isNeutral: true };
+    if (!prev && curr > 0) return { text: '+100% MoM', isPositive: true, isNeutral: false };
+    if (prev > 0 && curr === 0) return { text: '0.0% MoM', isPositive: false, isNeutral: true };
+    if (!prev) return { text: 'Stable', isPositive: true, isNeutral: true };
     const diff = ((curr - prev) / prev) * 100;
     const sign = diff >= 0 ? '+' : '';
     return {
-      text: `${sign}${diff.toFixed(1)}%`,
+      text: `${sign}${diff.toFixed(1)}% MoM`,
       isPositive: diff >= 0,
       isNeutral: diff === 0
     };
@@ -93,13 +108,13 @@ export function KPICards({ data, role }: KPICardsProps) {
       {showFinance && (
         <div className={`${styles.kpiCard} ${styles.kpiGlowIncome}`}>
           <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-              <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '24px' }}>
+            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+              <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '22px' }}>
                 trending_up
               </span>
             </div>
             <span className={`${styles.trendBadge} ${incomeTrend.isNeutral ? styles.trendNeutral : incomeTrend.isPositive ? styles.trendPositive : styles.trendNegative}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
                 {incomeTrend.isNeutral ? 'remove' : incomeTrend.isPositive ? 'arrow_upward' : 'arrow_downward'}
               </span>
               {incomeTrend.text}
@@ -107,11 +122,11 @@ export function KPICards({ data, role }: KPICardsProps) {
           </div>
           <div className={styles.kpiBody}>
             <span className={styles.kpiLabel}>Total Inflow (Revenue)</span>
-            <div className={styles.kpiValue}>{formatCurrency(data.totalIncome)}</div>
+            {renderCurrencyValue(data.totalIncome)}
           </div>
           <div className={styles.kpiFooter}>
             <span>Net Margin: <strong style={{ color: Number(netMargin) >= 0 ? '#34d399' : '#f87171' }}>{netMargin}%</strong></span>
-            <span>Recorded Cash</span>
+            <span className={styles.kpiTag}>Recorded Cash</span>
           </div>
         </div>
       )}
@@ -120,13 +135,13 @@ export function KPICards({ data, role }: KPICardsProps) {
       {showFinance && (
         <div className={`${styles.kpiCard} ${styles.kpiGlowExpense}`}>
           <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-              <span className="material-symbols-outlined" style={{ color: '#f87171', fontSize: '24px' }}>
+            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+              <span className="material-symbols-outlined" style={{ color: '#f87171', fontSize: '22px' }}>
                 trending_down
               </span>
             </div>
             <span className={`${styles.trendBadge} ${expenseTrend.isNeutral ? styles.trendNeutral : expenseTrend.isPositive ? styles.trendNegative : styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
                 {expenseTrend.isNeutral ? 'remove' : expenseTrend.isPositive ? 'arrow_upward' : 'arrow_downward'}
               </span>
               {expenseTrend.text}
@@ -134,11 +149,11 @@ export function KPICards({ data, role }: KPICardsProps) {
           </div>
           <div className={styles.kpiBody}>
             <span className={styles.kpiLabel}>Total Operating Outflow</span>
-            <div className={styles.kpiValue}>{formatCurrency(data.totalExpenses)}</div>
+            {renderCurrencyValue(data.totalExpenses)}
           </div>
           <div className={styles.kpiFooter}>
             <span>Approved & Posted</span>
-            <span>Operational Cost</span>
+            <span className={styles.kpiTag}>Operational Cost</span>
           </div>
         </div>
       )}
@@ -147,23 +162,23 @@ export function KPICards({ data, role }: KPICardsProps) {
       {showFinance && (
         <div className={`${styles.kpiCard} ${styles.kpiGlowPrimary}`}>
           <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <span className="material-symbols-outlined" style={{ color: '#60a5fa', fontSize: '24px' }}>
+            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+              <span className="material-symbols-outlined" style={{ color: '#60a5fa', fontSize: '22px' }}>
                 account_balance
               </span>
             </div>
             <span className={`${styles.trendBadge} ${styles.trendPositive}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>shield</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>shield</span>
               Liquid
             </span>
           </div>
           <div className={styles.kpiBody}>
             <span className={styles.kpiLabel}>Net Reserve Balance</span>
-            <div className={styles.kpiValue}>{formatCurrency(data.reserveBalance)}</div>
+            {renderCurrencyValue(data.reserveBalance)}
           </div>
           <div className={styles.kpiFooter}>
             <span>Liquid Capital</span>
-            <span>Available Reserves</span>
+            <span className={styles.kpiTag}>Available Reserves</span>
           </div>
         </div>
       )}
@@ -172,23 +187,23 @@ export function KPICards({ data, role }: KPICardsProps) {
       {showFinance && (
         <div className={`${styles.kpiCard} ${styles.kpiGlowWarning}`}>
           <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-              <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '24px' }}>
+            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+              <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '22px' }}>
                 receipt_long
               </span>
             </div>
             <span className={`${styles.trendBadge} ${styles.trendNeutral}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>schedule</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>
               Pending
             </span>
           </div>
           <div className={styles.kpiBody}>
             <span className={styles.kpiLabel}>Outstanding Payables & Loans</span>
-            <div className={styles.kpiValue}>{formatCurrency(totalPayables)}</div>
+            {renderCurrencyValue(totalPayables)}
           </div>
           <div className={styles.kpiFooter}>
             <span>Loans: {formatCurrency(data.outstandingLoans)}</span>
-            <span>Advances: {formatCurrency(data.activeAdvances)}</span>
+            <span className={styles.kpiTag}>Advances: {formatCurrency(data.activeAdvances)}</span>
           </div>
         </div>
       )}
@@ -251,7 +266,7 @@ export function KPICards({ data, role }: KPICardsProps) {
           </div>
           <div className={styles.kpiBody}>
             <span className={styles.kpiLabel}>Inventory Valuation</span>
-            <div className={styles.kpiValue}>{formatCurrency(data.inventoryValue || 0)}</div>
+            {renderCurrencyValue(data.inventoryValue || 0)}
           </div>
           <div className={styles.kpiFooter}>
             <span>Warehouse Assets</span>

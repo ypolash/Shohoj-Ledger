@@ -28,7 +28,13 @@ class AttendanceRepository(
             val statusBody = if (statusRes.isSuccessful) statusRes.body() else null
 
             val todayRecord = if (statusBody?.record != null) {
-                statusBody.record.copy(dutySchedule = statusBody.record.dutySchedule ?: statusBody.dutySchedule)
+                statusBody.record.copy(
+                    dutySchedule = statusBody.record.dutySchedule ?: statusBody.dutySchedule,
+                    lunchBreakStart = statusBody.record.lunchBreakStart ?: statusBody.lunchBreakStart,
+                    lunchBreakEnd = statusBody.record.lunchBreakEnd ?: statusBody.lunchBreakEnd,
+                    lunchBreakMinutes = statusBody.record.lunchBreakMinutes ?: statusBody.lunchBreakMinutes,
+                    lunchBreakStatus = statusBody.record.lunchBreakStatus ?: statusBody.lunchBreakStatus
+                )
             } else if (statusBody != null && (statusBody.checkInTime != null || statusBody.status != null)) {
                 AttendanceRecord(
                     employeeId = empId,
@@ -38,7 +44,11 @@ class AttendanceRepository(
                     lateMinutes = statusBody.lateMinutes ?: 0,
                     isLate = statusBody.isLate ?: (statusBody.status == "LATE" || (statusBody.lateMinutes ?: 0) > 0),
                     isCheckedIn = statusBody.checkInTime != null && statusBody.checkOutTime == null,
-                    dutySchedule = statusBody.dutySchedule
+                    dutySchedule = statusBody.dutySchedule,
+                    lunchBreakStart = statusBody.lunchBreakStart,
+                    lunchBreakEnd = statusBody.lunchBreakEnd,
+                    lunchBreakMinutes = statusBody.lunchBreakMinutes,
+                    lunchBreakStatus = statusBody.lunchBreakStatus
                 )
             } else records.firstOrNull()
 

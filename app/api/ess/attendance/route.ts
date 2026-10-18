@@ -44,13 +44,69 @@ export async function GET(request: Request) {
 
     const { dutySchedule } = await getEffectiveDutySchedule(employee.id, employee.companyId);
 
-    const mapRecord = (rec: any) => ({
-      ...rec,
-      checkIn: rec.checkInTime,
-      checkOut: rec.checkOutTime,
-      isCheckedIn: !!rec.checkInTime && !rec.checkOutTime,
-      dutySchedule,
+    // Fetch employee's break records to attach lunch break info
+    const breakLeaves = await prisma.leaveRequest.findMany({
+      where: {
+        employeeId: employee.id,
+        OR: [
+          { type: { contains: "Break", mode: "insensitive" } },
+          { type: { contains: "Lunch", mode: "insensitive" } },
+          { comments: { contains: "TIMER_CONFIG" } },
+          { comments: { contains: "Short Break" } },
+          { comments: { contains: "Lunch" } },
+        ]
+      },
+      orderBy: { createdAt: "desc" },
+      take: 60,
     });
+
+    const findBreakForDate = (dateVal: any) => {
+      if (!dateVal) return null;
+      try {
+        const d = new Date(dateVal);
+        const targetDateStr = d.toISOString().slice(0, 10);
+        return breakLeaves.find((bl) => {
+          const blDate = bl.startDate || bl.createdAt;
+          if (!blDate) return false;
+          return new Date(blDate).toISOString().slice(0, 10) === targetDateStr;
+        });
+      } catch {
+        return null;
+      }
+    };
+
+    const mapRecord = (rec: any) => {
+      const dayBreak = findBreakForDate(rec.date || rec.checkInTime);
+      let lunchBreakStart: string | null = null;
+      let lunchBreakEnd: string | null = null;
+      let lunchBreakMinutes: number | null = null;
+      let lunchBreakStatus: string | null = null;
+
+      if (dayBreak) {
+        lunchBreakStart = dayBreak.startDate ? dayBreak.startDate.toISOString() : (dayBreak.createdAt ? dayBreak.createdAt.toISOString() : null);
+        lunchBreakEnd = dayBreak.endDate ? dayBreak.endDate.toISOString() : null;
+        lunchBreakStatus = dayBreak.status;
+        if (dayBreak.startDate && dayBreak.endDate) {
+          lunchBreakMinutes = Math.max(1, Math.round((new Date(dayBreak.endDate).getTime() - new Date(dayBreak.startDate).getTime()) / 60000));
+        } else if (dutySchedule?.breakTime && dutySchedule.breakTime > 0) {
+          lunchBreakMinutes = dutySchedule.breakTime;
+        }
+      } else if (dutySchedule?.breakTime && dutySchedule.breakTime > 0) {
+        lunchBreakMinutes = dutySchedule.breakTime;
+      }
+
+      return {
+        ...rec,
+        checkIn: rec.checkInTime,
+        checkOut: rec.checkOutTime,
+        isCheckedIn: !!rec.checkInTime && !rec.checkOutTime,
+        dutySchedule,
+        lunchBreakStart,
+        lunchBreakEnd,
+        lunchBreakMinutes,
+        lunchBreakStatus,
+      };
+    };
 
     return NextResponse.json({
       records: records.map(mapRecord),

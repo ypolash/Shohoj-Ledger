@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -95,6 +96,19 @@ fun HorizontalCalendarView(
 
     val currentHeaderTitle = remember(anchorCalendar) {
         headerMonthFormat.format(anchorCalendar.time)
+    }
+
+    val todayIndex = remember(days) {
+        val idx = days.indexOfFirst { it.isToday }
+        if (idx >= 0) idx else 0
+    }
+
+    val lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, todayIndex - 1))
+
+    LaunchedEffect(anchorCalendar, todayKey, selectedDate) {
+        val targetIdx = days.indexOfFirst { it.dateKey == (selectedDate ?: todayKey) }
+        val scrollIdx = if (targetIdx >= 0) targetIdx else todayIndex
+        lazyListState.animateScrollToItem(maxOf(0, scrollIdx - 1))
     }
 
     Box(
@@ -190,6 +204,7 @@ fun HorizontalCalendarView(
 
             // Horizontal Scrollable Date Ribbon (zero clunky scrollbars)
             LazyRow(
+                state = lazyListState,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {

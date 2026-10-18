@@ -935,31 +935,6 @@ export default function StaffPortalPage() {
                   Pause Break
                 </button>
               )}
-
-              <button
-                onClick={handleEndActiveBreak}
-                disabled={isEndingBreak || isStartingLunchBreak}
-                className="btn"
-                style={{
-                  background: activeBreak.isOverstay
-                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-                    : 'rgba(255, 255, 255, 0.12)',
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  padding: '12px 22px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.35)'
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>stop_circle</span>
-                {isEndingBreak ? 'Ending Break...' : 'End Break'}
-              </button>
             </div>
           </div>
         )}

@@ -115,8 +115,42 @@ export async function GET(req: Request) {
       }
     }
 
+    // Fetch today's break request if any
+    const todayBreak = await prisma.leaveRequest.findFirst({
+      where: {
+        employeeId: employee.id,
+        OR: [
+          { type: { contains: "Break", mode: "insensitive" } },
+          { type: { contains: "Lunch", mode: "insensitive" } },
+          { comments: { contains: "TIMER_CONFIG" } },
+          { comments: { contains: "Short Break" } },
+          { comments: { contains: "Lunch" } },
+        ],
+        createdAt: { gte: startOfServerDay, lte: endOfServerDay },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
     const checkInTimeIso = attendance?.checkInTime ? attendance.checkInTime.toISOString() : null;
     const checkOutTimeIso = attendance?.checkOutTime ? attendance.checkOutTime.toISOString() : null;
+
+    let lunchBreakStart: string | null = null;
+    let lunchBreakEnd: string | null = null;
+    let lunchBreakMinutes: number | null = null;
+    let lunchBreakStatus: string | null = null;
+
+    if (todayBreak) {
+      lunchBreakStart = todayBreak.startDate ? todayBreak.startDate.toISOString() : (todayBreak.createdAt ? todayBreak.createdAt.toISOString() : null);
+      lunchBreakEnd = todayBreak.endDate ? todayBreak.endDate.toISOString() : null;
+      lunchBreakStatus = todayBreak.status;
+      if (todayBreak.startDate && todayBreak.endDate) {
+        lunchBreakMinutes = Math.max(1, Math.round((new Date(todayBreak.endDate).getTime() - new Date(todayBreak.startDate).getTime()) / 60000));
+      } else if (dutySchedule?.breakTime && dutySchedule.breakTime > 0) {
+        lunchBreakMinutes = dutySchedule.breakTime;
+      }
+    } else if (dutySchedule?.breakTime && dutySchedule.breakTime > 0) {
+      lunchBreakMinutes = dutySchedule.breakTime;
+    }
 
     return NextResponse.json({
       success: true,
@@ -126,6 +160,10 @@ export async function GET(req: Request) {
       lateMinutes: attendance?.lateMinutes || 0,
       isLate: attendance?.isLate || false,
       dutySchedule,
+      lunchBreakStart,
+      lunchBreakEnd,
+      lunchBreakMinutes,
+      lunchBreakStatus,
       record: attendance ? {
         id: attendance.id,
         employeeId: employee.employeeId,
@@ -137,6 +175,10 @@ export async function GET(req: Request) {
         isLate: attendance.isLate || false,
         isCheckedIn: !!attendance.checkInTime && !attendance.checkOutTime,
         dutySchedule,
+        lunchBreakStart,
+        lunchBreakEnd,
+        lunchBreakMinutes,
+        lunchBreakStatus,
       } : null,
     });
 

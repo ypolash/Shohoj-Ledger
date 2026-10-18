@@ -81,7 +81,11 @@ data class AttendanceRecord(
     @SerializedName("totalWorkingMinutes") val totalWorkingMinutes: Int? = null,
     @SerializedName("isCheckedIn") val isCheckedIn: Boolean? = null,
     @SerializedName("isLate") val isLate: Boolean? = false,
-    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null
+    @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null,
+    @SerializedName("lunchBreakStart") val lunchBreakStart: String? = null,
+    @SerializedName("lunchBreakEnd") val lunchBreakEnd: String? = null,
+    @SerializedName("lunchBreakMinutes") val lunchBreakMinutes: Int? = null,
+    @SerializedName("lunchBreakStatus") val lunchBreakStatus: String? = null
 ) {
     val displayCheckIn: String?
         get() = checkInTime ?: checkIn
@@ -91,6 +95,35 @@ data class AttendanceRecord(
 
     val effectiveStatus: String
         get() = status ?: if (isLate == true) "LATE" else "PRESENT"
+
+    val displayLunchBreak: String
+        get() {
+            if (!lunchBreakStart.isNullOrBlank() && !lunchBreakEnd.isNullOrBlank()) {
+                val start = com.shohoj.staff.util.DateUtils.formatTime(lunchBreakStart)
+                val end = com.shohoj.staff.util.DateUtils.formatTime(lunchBreakEnd)
+                val durationStr = if (lunchBreakMinutes != null && lunchBreakMinutes > 0) " (${lunchBreakMinutes}m)" else ""
+                return "$start - $end$durationStr"
+            }
+            if (!lunchBreakStart.isNullOrBlank()) {
+                val start = com.shohoj.staff.util.DateUtils.formatTime(lunchBreakStart)
+                val statusText = when (lunchBreakStatus) {
+                    "PAUSED" -> " (Paused)"
+                    "IN_PROGRESS", "ACTIVE" -> " (Active)"
+                    else -> ""
+                }
+                return "$start$statusText"
+            }
+            if (lunchBreakMinutes != null && lunchBreakMinutes > 0) {
+                return "${lunchBreakMinutes} mins"
+            }
+            return "--:--"
+        }
+
+    val displayLateTime: String
+        get() {
+            val mins = lateMinutes ?: 0
+            return if (mins > 0) "+${mins}m late" else "On Time"
+        }
 }
 
 data class AttendanceSummary(
@@ -116,6 +149,10 @@ data class MobileAttendanceStatusResponse(
     @SerializedName("lateMinutes") val lateMinutes: Int? = null,
     @SerializedName("isLate") val isLate: Boolean? = null,
     @SerializedName("dutySchedule") val dutySchedule: DutyScheduleDto? = null,
+    @SerializedName("lunchBreakStart") val lunchBreakStart: String? = null,
+    @SerializedName("lunchBreakEnd") val lunchBreakEnd: String? = null,
+    @SerializedName("lunchBreakMinutes") val lunchBreakMinutes: Int? = null,
+    @SerializedName("lunchBreakStatus") val lunchBreakStatus: String? = null,
     @SerializedName("record") val record: AttendanceRecord? = null,
     @SerializedName("message") val message: String? = null
 )

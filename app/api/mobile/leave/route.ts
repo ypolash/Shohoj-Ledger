@@ -174,14 +174,14 @@ export async function POST(request: Request) {
         ssid,
         bssid,
         ipAddress,
-        false
+        true
       );
 
       if (!validation.isValid) {
         return NextResponse.json({
           success: false,
-          code: "FORBIDDEN_WIFI",
-          error: validation.error || "Break actions are only allowed on authorized company Wi-Fi.",
+          code: "FORBIDDEN_NETWORK",
+          error: validation.error || "Break actions are only allowed on authorized company Wi-Fi and location.",
           details: validation.details
         }, { status: 403, headers: ESS_CORS_HEADERS });
       }

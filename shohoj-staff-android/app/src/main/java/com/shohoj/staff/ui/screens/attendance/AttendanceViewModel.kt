@@ -251,11 +251,27 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             val location = LocationHelper.getCurrentLocation(getApplication())
             val wifi = WifiHelper.getWifiDetails(getApplication())
 
+            if (location == null) {
+                _uiState.value = _uiState.value.copy(
+                    isStartingBreak = false,
+                    error = "GPS / Location is required to start lunch break. Please turn on your location/GPS."
+                )
+                return@launch
+            }
+
+            if (!wifi.isConnected || (wifi.ssid.isNullOrBlank() && wifi.bssid.isNullOrBlank())) {
+                _uiState.value = _uiState.value.copy(
+                    isStartingBreak = false,
+                    error = "Lunch break is only permitted when connected to authorized company Wi-Fi."
+                )
+                return@launch
+            }
+
             val result = leaveRepo.requestBreak(
                 leaveTypeId = null,
                 reason = reason,
-                latitude = location?.latitude,
-                longitude = location?.longitude,
+                latitude = location.latitude,
+                longitude = location.longitude,
                 ssid = wifi.ssid,
                 bssid = wifi.bssid
             )
@@ -286,10 +302,26 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             val location = LocationHelper.getCurrentLocation(getApplication())
             val wifi = WifiHelper.getWifiDetails(getApplication())
 
+            if (location == null) {
+                _uiState.value = _uiState.value.copy(
+                    isStartingBreak = false,
+                    error = "GPS / Location is required. Please turn on your location/GPS."
+                )
+                return@launch
+            }
+
+            if (!wifi.isConnected || (wifi.ssid.isNullOrBlank() && wifi.bssid.isNullOrBlank())) {
+                _uiState.value = _uiState.value.copy(
+                    isStartingBreak = false,
+                    error = "Break operations are only permitted on authorized company Wi-Fi."
+                )
+                return@launch
+            }
+
             val result = leaveRepo.pauseBreak(
                 leaveId = breakInfo.leaveId,
-                latitude = location?.latitude,
-                longitude = location?.longitude,
+                latitude = location.latitude,
+                longitude = location.longitude,
                 ssid = wifi.ssid,
                 bssid = wifi.bssid
             )
@@ -321,10 +353,26 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             val location = LocationHelper.getCurrentLocation(getApplication())
             val wifi = WifiHelper.getWifiDetails(getApplication())
 
+            if (location == null) {
+                _uiState.value = _uiState.value.copy(
+                    isStartingBreak = false,
+                    error = "GPS / Location is required. Please turn on your location/GPS."
+                )
+                return@launch
+            }
+
+            if (!wifi.isConnected || (wifi.ssid.isNullOrBlank() && wifi.bssid.isNullOrBlank())) {
+                _uiState.value = _uiState.value.copy(
+                    isStartingBreak = false,
+                    error = "Break operations are only permitted on authorized company Wi-Fi."
+                )
+                return@launch
+            }
+
             val result = leaveRepo.resumeBreak(
                 leaveId = breakInfo.leaveId,
-                latitude = location?.latitude,
-                longitude = location?.longitude,
+                latitude = location.latitude,
+                longitude = location.longitude,
                 ssid = wifi.ssid,
                 bssid = wifi.bssid
             )

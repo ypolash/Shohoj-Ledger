@@ -27,51 +27,45 @@ export async function GET(request: Request) {
       return NextResponse.json({
         appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 38,
-        versionName: '1.7.3-beta',
+        versionCode: 39,
+        versionName: '1.7.4-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.3 Beta — Calendar, Direct Fine Navigation & Streamlined Home',
+        title: 'Shohoj Staff v1.7.4 Beta — Vertical Attendance History & Enhanced Break Policy',
         releaseNotes: [
-          '⚡ Direct Fine Review: Tapping disciplinary fine banner now opens the Fines section immediately',
-          '🧹 Clean Streamlined Home: Removed redundant duty schedule & metric cards for a distraction-free view',
-          '📅 Horizontal Calendar: Smooth interactive date selector on attendance section',
-          '💸 Date-wise Fines Grouping: Fines automatically grouped chronologically by date with daily totals and status badges',
-          '🤝 Fines Consideration Request: Tap any fine to open an instant review request modal',
-          '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
-          '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
-          '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
-          '🔝 Dynamic TopBar Avatar: Circular profile badge with tap-to-profile shortcut directly from TopBar',
-          '🌙 Shohoj Dark Theme Preserved: Retained original Emerald & Slate brand identity and system bar colors'
+          '📊 Vertical Attendance History: Redesigned attendance cards into sleek vertical mode with Check In, Check Out, Lunch Break times, Late Time, and Work Duration',
+          '🍽️ Lunch Break Telemetry: Attendance history now displays lunch break start/end intervals and taken duration',
+          '⏱️ Punctuality Indicator: Dedicated Late Time metric with instant on-time and late penalty visibility',
+          '🔒 Enforced Break Policy: Strict company Wi-Fi network and GPS location validation for all lunch & break requests',
+          '✨ Modern Resume Button: Refined button styling with glowing emerald borders and non-wrapping typography',
+          '📆 Synchronized Calendar: Horizontal attendance calendar defaults and auto-scrolls to today',
+          '💬 Community Tabs UI: Redesigned segmented pill tab container with subtle glowing indicators'
         ],
-        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.3-beta.apk?v=38`,
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.4-beta.apk?v=39`,
         fileSize: '12.2 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.3 Beta)
+    // Default Public Production Version (Shohoj Staff v1.7.4 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 38,
-      versionName: '1.7.3-beta',
+      versionCode: 39,
+      versionName: '1.7.4-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.3 Beta Available',
+      title: 'Shohoj Staff v1.7.4 Beta Available',
       releaseNotes: [
-        '⚡ Direct Fine Review: Tapping disciplinary fine banner now opens the Fines section immediately',
-        '🧹 Clean Streamlined Home: Removed redundant duty schedule & metric cards for a distraction-free view',
-        '📅 Horizontal Calendar: Smooth interactive date selector on attendance section',
-        '💸 Date-wise Fines Grouping: Fines automatically grouped chronologically by date with daily totals and status badges',
-        '🤝 Fines Consideration Request: Tap any fine to open an instant review request modal',
-        '💬 Staff Task Comments: Staff can now directly add comments and status updates to assigned tasks',
-        '🖼️ Real-Time Profile Photo Sync: Profile picture changes in ERP instantly reflect in the Staff app without re-logging in',
-        '👤 High-Definition Profile Avatar: Redesigned Profile Screen header with smooth circular avatar & fallback initials',
-        '🔝 Dynamic TopBar Avatar: Circular profile badge with tap-to-profile shortcut directly from TopBar',
-        '🌙 Shohoj Dark Theme Preserved: Retained original Emerald & Slate brand identity and system bar colors'
+        '📊 Vertical Attendance History: Redesigned attendance cards into sleek vertical mode with Check In, Check Out, Lunch Break times, Late Time, and Work Duration',
+        '🍽️ Lunch Break Telemetry: Attendance history now displays lunch break start/end intervals and taken duration',
+        '⏱️ Punctuality Indicator: Dedicated Late Time metric with instant on-time and late penalty visibility',
+        '🔒 Enforced Break Policy: Strict company Wi-Fi network and GPS location validation for all lunch & break requests',
+        '✨ Modern Resume Button: Refined button styling with glowing emerald borders and non-wrapping typography',
+        '📆 Synchronized Calendar: Horizontal attendance calendar defaults and auto-scrolls to today',
+        '💬 Community Tabs UI: Redesigned segmented pill tab container with subtle glowing indicators'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.3-beta.apk?v=38`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.4-beta.apk?v=39`,
       fileSize: '12.2 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()

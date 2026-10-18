@@ -59,6 +59,9 @@ export function Topbar() {
     const fetchNotifications = async () => {
       try {
         const res = await fetch('/api/erp/notifications?limit=5');
+        if (!res.ok) return;
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) return;
         const data = await res.json();
         if (data.success) {
           setNotifications(data.data || []);

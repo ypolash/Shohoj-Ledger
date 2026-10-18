@@ -605,25 +605,27 @@ export default function AttendancePage() {
       ]);
 
       if (attRes && attRes.ok) {
-        const attData = await attRes.json();
-        setRecords(Array.isArray(attData) ? attData : []);
+        const attData = await attRes.json().catch(() => null);
+        if (attData) setRecords(Array.isArray(attData) ? attData : []);
       }
       if (empRes && empRes.ok) {
-        const empData = await empRes.json();
-        setEmployees(Array.isArray(empData) ? empData : []);
+        const empData = await empRes.json().catch(() => null);
+        if (empData) setEmployees(Array.isArray(empData) ? empData : []);
       }
       if (hrRes && hrRes.ok) {
-        const hrData = await hrRes.json();
-        const raw = hrData.data || hrData;
-        const tz = raw.companySetting?.timezone;
-        setOfficeTiming({
-          shiftStart: raw.attendanceConfig?.shiftStart || raw.companySetting?.shiftStartTime || '09:30',
-          shiftEnd: raw.attendanceConfig?.shiftEnd || raw.companySetting?.shiftEndTime || '18:00',
-          gracePeriod: raw.attendanceConfig?.gracePeriod ?? raw.companySetting?.gracePeriodMinutes ?? 15,
-          timezone: (!tz || tz === 'UTC' || tz === 'UTC / GMT') ? 'Asia/Dhaka' : tz,
-        });
-        if (Array.isArray(raw.punishmentSettings)) {
-          setPunishmentRules(raw.punishmentSettings);
+        const hrData = await hrRes.json().catch(() => null);
+        if (hrData) {
+          const raw = hrData.data || hrData;
+          const tz = raw.companySetting?.timezone;
+          setOfficeTiming({
+            shiftStart: raw.attendanceConfig?.shiftStart || raw.companySetting?.shiftStartTime || '09:30',
+            shiftEnd: raw.attendanceConfig?.shiftEnd || raw.companySetting?.shiftEndTime || '18:00',
+            gracePeriod: raw.attendanceConfig?.gracePeriod ?? raw.companySetting?.gracePeriodMinutes ?? 15,
+            timezone: (!tz || tz === 'UTC' || tz === 'UTC / GMT') ? 'Asia/Dhaka' : tz,
+          });
+          if (Array.isArray(raw.punishmentSettings)) {
+            setPunishmentRules(raw.punishmentSettings);
+          }
         }
       }
 

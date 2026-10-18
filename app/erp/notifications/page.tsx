@@ -12,6 +12,9 @@ export default function NotificationsInboxPage() {
     try {
       setLoading(true);
       const res = await fetch('/api/erp/notifications?limit=50&filter=all');
+      if (!res.ok) return;
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) return;
       const data = await res.json();
       if (data.success) {
         setNotifications(data.data || []);

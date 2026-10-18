@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { PageContainer } from "@/components/layout/PageContainer/PageContainer";
 import styles from "./dashboard.module.css";
 
@@ -51,6 +50,15 @@ export default function DashboardIndex() {
     if (isRefresh) setRefreshing(true);
     try {
       const res = await fetch("/api/overview");
+      if (!res.ok) {
+        console.warn(`Dashboard overview fetch returned status ${res.status}`);
+        return;
+      }
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.warn("Dashboard overview returned non-JSON response");
+        return;
+      }
       const json = await res.json();
       setData(json);
     } catch (err) {
@@ -65,16 +73,35 @@ export default function DashboardIndex() {
     fetchOverview();
   }, [fetchOverview]);
 
-  // Current formatted date and greeting
-  const today = new Date();
-  const dateString = today.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric"
+  // Live local clock and date state
+  const [mounted, setMounted] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    setMounted(true);
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayDate = currentTime;
+
+  const timeString = displayDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
   });
 
-  const hour = today.getHours();
+  const dayName = displayDate.toLocaleDateString("en-US", { weekday: "long" });
+  const dateFormatted = displayDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const hour = displayDate.getHours();
   const timeGreeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
@@ -126,49 +153,29 @@ export default function DashboardIndex() {
                 </span>
               </div>
               <h1 className={styles.headerTitle}>
-                Enterprise Dashboard
+                {timeGreeting}, {userName}!
                 <span className={styles.roleBadge}>{role} Workspace</span>
               </h1>
               <p className={styles.headerSubtitle}>
-                {timeGreeting}, <strong>{userName}</strong>! Real-time operational intelligence and ledger telemetry.
+                Real-time operational intelligence and enterprise ledger telemetry.
               </p>
             </div>
 
-            <div className={styles.headerActions}>
-              <div className={styles.headerDateBadge}>
-                <span className="material-symbols-outlined" style={{ fontSize: "16px", color: "#60a5fa" }}>
-                  calendar_today
+            <div className={styles.headerDateTimeGroup}>
+              <div className={styles.clockBadge} title="Live Local Time">
+                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "#38bdf8" }}>
+                  schedule
                 </span>
-                <span>{dateString}</span>
+                <span>{timeString}</span>
               </div>
 
-              {isPrivileged && (
-                <Link
-                  href="/erp/settings/command-center"
-                  className={styles.commandCenterBtn}
-                  title="Configure user roles & permissions"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
-                    shield_person
-                  </span>
-                  <span>Command Center</span>
-                </Link>
-              )}
-
-              <button
-                className={styles.refreshBtn}
-                onClick={() => fetchOverview(true)}
-                disabled={refreshing}
-                title="Refresh Live Metrics"
-              >
-                <span
-                  className={`material-symbols-outlined ${refreshing ? styles.spinning : ""}`}
-                  style={{ fontSize: "18px" }}
-                >
-                  refresh
+              <div className={styles.dateBadge} title="Current Date">
+                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "#60a5fa" }}>
+                  calendar_today
                 </span>
-                <span>{refreshing ? "Syncing..." : "Sync"}</span>
-              </button>
+                <span className={styles.dayText}>{dayName},</span>
+                <span className={styles.dateText}>{dateFormatted}</span>
+              </div>
             </div>
           </div>
         </div>

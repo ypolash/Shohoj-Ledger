@@ -31,15 +31,6 @@ interface KPICardsProps {
   role: string;
 }
 
-const formatCurrency = (val: number | string) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'BDT',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(Number(val) || 0);
-};
-
 const renderCurrencyValue = (val: number | string) => {
   const num = Number(val) || 0;
   const formatted = new Intl.NumberFormat('en-US', {
@@ -63,7 +54,6 @@ export function KPICards({ data, role }: KPICardsProps) {
   const hasRole = (allowed: string[]) => allowed.some((r: string) => userRoles.includes(r));
 
   const showFinance = hasRole(['Owner', 'CEO', 'Accountant']);
-  const showHR = hasRole(['Owner', 'CEO', 'HR']);
   const businessType = (data.businessType || 'Product + Service').toUpperCase();
   const showProjects = hasRole(['Owner', 'CEO', 'Project Manager']) && businessType !== 'PRODUCT';
   const showInventory = hasRole(['Owner', 'CEO', 'Inventory']) && businessType !== 'SERVICE';
@@ -94,13 +84,6 @@ export function KPICards({ data, role }: KPICardsProps) {
   const netMargin = data.totalIncome > 0
     ? (((data.totalIncome - data.totalExpenses) / data.totalIncome) * 100).toFixed(1)
     : '0.0';
-
-  const totalPayables = (data.activeAdvances || 0) + (data.outstandingLoans || 0);
-
-  // HR calculations
-  const totalEmp = data.totalEmployees || 0;
-  const attToday = data.attendanceToday || 0;
-  const attendancePercent = totalEmp > 0 ? Math.round((attToday / totalEmp) * 100) : 0;
 
   return (
     <div className={styles.kpiGrid}>
@@ -181,75 +164,6 @@ export function KPICards({ data, role }: KPICardsProps) {
             <span className={styles.kpiTag}>Available Reserves</span>
           </div>
         </div>
-      )}
-
-      {/* 4. Payables & Liabilities */}
-      {showFinance && (
-        <div className={`${styles.kpiCard} ${styles.kpiGlowWarning}`}>
-          <div className={styles.kpiTopRow}>
-            <div className={styles.kpiIconWrapper} style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
-              <span className="material-symbols-outlined" style={{ color: '#fbbf24', fontSize: '22px' }}>
-                receipt_long
-              </span>
-            </div>
-            <span className={`${styles.trendBadge} ${styles.trendNeutral}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>
-              Pending
-            </span>
-          </div>
-          <div className={styles.kpiBody}>
-            <span className={styles.kpiLabel}>Outstanding Payables & Loans</span>
-            {renderCurrencyValue(totalPayables)}
-          </div>
-          <div className={styles.kpiFooter}>
-            <span>Loans: {formatCurrency(data.outstandingLoans)}</span>
-            <span className={styles.kpiTag}>Advances: {formatCurrency(data.activeAdvances)}</span>
-          </div>
-        </div>
-      )}
-
-      {/* 5. HR Metrics */}
-      {showHR && (
-        <>
-          <div className={`${styles.kpiCard} ${styles.kpiGlowPrimary}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={styles.kpiIconWrapper} style={{ background: 'rgba(14, 165, 233, 0.15)', border: '1px solid rgba(14, 165, 233, 0.3)' }}>
-                <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '24px' }}>badge</span>
-              </div>
-              <span className={`${styles.trendBadge} ${styles.trendPositive}`}>
-                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>group</span>
-                Active
-              </span>
-            </div>
-            <div className={styles.kpiBody}>
-              <span className={styles.kpiLabel}>Total Workforce</span>
-              <div className={styles.kpiValue}>{totalEmp} Employees</div>
-            </div>
-            <div className={styles.kpiFooter}>
-              <span>Registered Staff</span>
-              <span>All Departments</span>
-            </div>
-          </div>
-
-          <div className={`${styles.kpiCard} ${styles.kpiGlowIncome}`}>
-            <div className={styles.kpiTopRow}>
-              <div className={styles.kpiIconWrapper} style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                <span className="material-symbols-outlined" style={{ color: '#34d399', fontSize: '24px' }}>how_to_reg</span>
-              </div>
-              <span className={`${styles.trendBadge} ${attendancePercent >= 80 ? styles.trendPositive : styles.trendWarning}`}>
-                {attendancePercent}%
-              </span>
-            </div>
-            <div className={styles.kpiBody}>
-              <span className={styles.kpiLabel}>Attendance Today</span>
-              <div className={styles.kpiValue}>{attToday} Present</div>
-            </div>
-            <div className={styles.kpiFooter}>
-              <span>Out of {totalEmp} Staff</span>
-              <span>Today's Shift</span>
-            </div>
-          </div>
-        </>
       )}
 
       {/* 6. Inventory Metric */}

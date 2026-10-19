@@ -81,10 +81,24 @@ export default function LeavesPage() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
+  const [selectedReasonLeave, setSelectedReasonLeave] = useState<LeaveRequest | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Close reason modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedReasonLeave(null);
+      }
+    };
+    if (selectedReasonLeave) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedReasonLeave]);
 
   // Map employee IDs to rich employee records
   const employeeMap = useMemo(() => {
@@ -322,6 +336,9 @@ export default function LeavesPage() {
         return styles.typeMaternity;
       case 'PATERNITY':
         return styles.typePaternity;
+      case 'SHORT BREAK':
+      case 'SHORT BRECK':
+        return styles.typeShortBreak;
       default:
         return styles.typeDefault;
     }
@@ -338,6 +355,10 @@ export default function LeavesPage() {
         return styles.statusRejected;
       case 'CANCELLED':
         return styles.statusCancelled;
+      case 'OVERSTAYED':
+        return styles.statusOverstayed;
+      case 'COMPLETED':
+        return styles.statusCompleted;
       default:
         return styles.statusCancelled;
     }
@@ -357,6 +378,9 @@ export default function LeavesPage() {
         return 'child_care';
       case 'UNPAID':
         return 'money_off';
+      case 'SHORT BREAK':
+      case 'SHORT BRECK':
+        return 'timer';
       default:
         return 'event_note';
     }
@@ -607,15 +631,24 @@ export default function LeavesPage() {
         /* TABLE VIEW */
         <div className={styles.tableCard}>
           <table className={styles.dataTable}>
+            <colgroup>
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '19%' }} />
+              <col style={{ width: '18%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '9%' }} />
+            </colgroup>
             <thead>
               <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap' }}>Employee</th>
-                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap' }}>Leave Type</th>
-                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap' }}>Date Range & Duration</th>
-                <th className={styles.tableHeaderCell} style={{ maxWidth: '240px' }}>Reason / Context</th>
-                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>Applied Date</th>
-                <th className={styles.tableHeaderCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>Status</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right', whiteSpace: 'nowrap', width: '1%' }}>Actions</th>
+                <th className={styles.tableHeaderCell}>Employee</th>
+                <th className={styles.tableHeaderCell}>Leave Type</th>
+                <th className={styles.tableHeaderCell}>Date Range & Duration</th>
+                <th className={styles.tableHeaderCell}>Reason / Context</th>
+                <th className={styles.tableHeaderCell}>Applied Date</th>
+                <th className={styles.tableHeaderCell}>Status</th>
+                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -630,36 +663,42 @@ export default function LeavesPage() {
                 const isPending = l.status === 'PENDING';
                 const isApproved = l.status === 'APPROVED';
                 const isRejected = l.status === 'REJECTED';
+                const isCompleted = l.status === 'COMPLETED';
+                const isOverstayed = l.status === 'OVERSTAYED';
                 const isActionBusy = actionLoading === l.id;
 
                 return (
                   <tr key={l.id} className={styles.tableRow}>
                     {/* Employee Profile */}
-                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap' }}>
+                    <td className={styles.tableCell}>
                       <div className={styles.employeeProfileGroup}>
                         <div className={styles.empAvatar}>{initials}</div>
                         <div className={styles.empDetailsGroup}>
-                          <span className={styles.empName}>{firstName} {lastName}</span>
-                          <span className={styles.empDesignation}>{designation}</span>
-                          <span className={styles.empIdBadge}>#{empCode}</span>
+                          <span className={styles.empName} title={`${firstName} ${lastName}`}>
+                            {firstName} {lastName}
+                          </span>
+                          <div className={styles.empMetaLine}>
+                            <span className={styles.empDesignation} title={designation}>{designation}</span>
+                            <span className={styles.empIdBadge}>#{empCode}</span>
+                          </div>
                         </div>
                       </div>
                     </td>
 
                     {/* Leave Type */}
-                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap' }}>
-                      <span className={`${styles.leaveTypeChip} ${getTypeBadgeClass(l.type)}`}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                    <td className={styles.tableCell}>
+                      <span className={`${styles.leaveTypeChip} ${getTypeBadgeClass(l.type)}`} title={l.type}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
                           {getTypeIcon(l.type)}
                         </span>
-                        {l.type}
+                        <span className={styles.leaveTypeText}>{l.type}</span>
                       </span>
                     </td>
 
                     {/* Date Range & Duration */}
-                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap' }}>
+                    <td className={styles.tableCell}>
                       <div className={styles.dateRangeBox}>
-                        <span className={styles.dateRangeText}>
+                        <span className={styles.dateRangeText} title={`${formatDate(l.startDate)} → ${formatDate(l.endDate)}`}>
                           {formatDate(l.startDate)} → {formatDate(l.endDate)}
                         </span>
                         <span className={styles.durationBadge}>
@@ -670,31 +709,41 @@ export default function LeavesPage() {
 
                     {/* Reason */}
                     <td className={`${styles.tableCell} ${styles.reasonCell}`}>
-                      <span className={styles.reasonText} title={l.reason}>
-                        {l.reason || '—'}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReasonLeave(l)}
+                        className={styles.reasonBtn}
+                        title="Click to view full reason & details"
+                      >
+                        <span className={styles.reasonText}>
+                          {l.reason || '—'}
+                        </span>
+                        <span className={`material-symbols-outlined ${styles.reasonExpandIcon}`}>
+                          open_in_full
+                        </span>
+                      </button>
                     </td>
 
                     {/* Applied Date */}
-                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    <td className={styles.tableCell}>
+                      <span className={styles.appliedDateText}>
                         {formatDate(l.createdAt)}
                       </span>
                     </td>
 
                     {/* Status Pill */}
-                    <td className={styles.tableCell} style={{ whiteSpace: 'nowrap', width: '1%' }}>
+                    <td className={styles.tableCell}>
                       <span className={`${styles.statusChip} ${getStatusChipClass(l.status)}`}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
-                          {isApproved ? 'check_circle' : isPending ? 'schedule' : 'cancel'}
+                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
+                          {isApproved ? 'check_circle' : isPending ? 'schedule' : isRejected ? 'cancel' : isCompleted ? 'task_alt' : isOverstayed ? 'warning' : 'info'}
                         </span>
-                        {l.status}
+                        <span>{l.status}</span>
                       </span>
                     </td>
 
                     {/* Actions */}
-                    <td className={styles.tableCell} style={{ textAlign: 'right', whiteSpace: 'nowrap', width: '1%' }}>
-                      <div className={styles.actionBtnGroup} style={{ justifyContent: 'flex-end' }}>
+                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                      <div className={styles.actionBtnGroup}>
                         {isPending ? (
                           <>
                             <button
@@ -703,8 +752,8 @@ export default function LeavesPage() {
                               className={styles.approveBtn}
                               title="Approve Leave Request"
                             >
-                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>check</span>
-                              {isActionBusy ? '...' : 'Approve'}
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>
+                              <span className={styles.btnLabel}>{isActionBusy ? '...' : 'Approve'}</span>
                             </button>
                             <button
                               onClick={() => handleAction(l.id, 'REJECTED')}
@@ -712,8 +761,8 @@ export default function LeavesPage() {
                               className={styles.rejectBtn}
                               title="Reject Leave Request"
                             >
-                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>close</span>
-                              {isActionBusy ? '...' : 'Reject'}
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
+                              <span className={styles.btnLabel}>{isActionBusy ? '...' : 'Reject'}</span>
                             </button>
                           </>
                         ) : isApproved ? (
@@ -722,10 +771,10 @@ export default function LeavesPage() {
                             disabled={isActionBusy}
                             className={styles.rejectBtn}
                             title="Revoke / Reject"
-                            style={{ opacity: 0.8 }}
+                            style={{ opacity: 0.85 }}
                           >
-                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>undo</span>
-                            Revoke
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>undo</span>
+                            <span className={styles.btnLabel}>Revoke</span>
                           </button>
                         ) : isRejected ? (
                           <button
@@ -733,13 +782,13 @@ export default function LeavesPage() {
                             disabled={isActionBusy}
                             className={styles.approveBtn}
                             title="Re-approve"
-                            style={{ opacity: 0.8 }}
+                            style={{ opacity: 0.85 }}
                           >
-                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>check</span>
-                            Re-approve
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>
+                            <span className={styles.btnLabel}>Re-approve</span>
                           </button>
                         ) : (
-                          <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>—</span>
                         )}
                       </div>
                     </td>
@@ -812,7 +861,12 @@ export default function LeavesPage() {
                 </div>
 
                 {/* Reason Quote */}
-                <div className={styles.cardReasonBox}>
+                <div
+                  className={styles.cardReasonBox}
+                  onClick={() => setSelectedReasonLeave(l)}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to view full reason & details"
+                >
                   &ldquo;{l.reason || 'No specific justification recorded'}&rdquo;
                 </div>
 
@@ -1004,6 +1058,148 @@ export default function LeavesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Reason / Context Full Text Modal */}
+      {selectedReasonLeave && (
+        <div
+          className={styles.modalBackdrop}
+          onClick={e => {
+            if (e.target === e.currentTarget) setSelectedReasonLeave(null);
+          }}
+        >
+          <div className={styles.reasonModalBox}>
+            <div className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className={styles.kpiIconBox} style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#4f46e5' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>notes</span>
+                </div>
+                <div>
+                  <h2 className={styles.modalTitle}>Leave Reason & Context</h2>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Full justification statement submitted by employee
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedReasonLeave(null)}
+                className={styles.modalCloseBtn}
+                title="Close"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
+
+            {/* Quick Meta Summary Card */}
+            {(() => {
+              const emp = employeeMap.get(selectedReasonLeave.employeeId) || selectedReasonLeave.employee;
+              const firstName = emp?.firstName || 'Unknown';
+              const lastName = emp?.lastName || '';
+              const empCode = (emp as any)?.employeeId || selectedReasonLeave.employeeId.slice(0, 8);
+              const designation = emp?.designation || 'Staff Member';
+              const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'EM';
+              const duration = getDurationDays(selectedReasonLeave.startDate, selectedReasonLeave.endDate);
+
+              return (
+                <div className={styles.reasonMetaCard}>
+                  <div className={styles.employeeProfileGroup}>
+                    <div className={styles.empAvatar}>{initials}</div>
+                    <div className={styles.empDetailsGroup}>
+                      <span className={styles.empName}>{firstName} {lastName}</span>
+                      <div className={styles.empMetaLine}>
+                        <span className={styles.empDesignation}>{designation}</span>
+                        <span className={styles.empIdBadge}>#{empCode}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.reasonMetaRight}>
+                    <span className={`${styles.leaveTypeChip} ${getTypeBadgeClass(selectedReasonLeave.type)}`}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
+                        {getTypeIcon(selectedReasonLeave.type)}
+                      </span>
+                      {selectedReasonLeave.type}
+                    </span>
+                    <span className={`${styles.statusChip} ${getStatusChipClass(selectedReasonLeave.status)}`}>
+                      {selectedReasonLeave.status}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Timeframe Info */}
+            <div className={styles.reasonTimelineRow}>
+              <div className={styles.reasonTimelineItem}>
+                <span className={styles.reasonTimelineLabel}>Leave Duration:</span>
+                <span className={styles.reasonTimelineValue}>
+                  {formatDate(selectedReasonLeave.startDate)} → {formatDate(selectedReasonLeave.endDate)}
+                  {' '}({getDurationDays(selectedReasonLeave.startDate, selectedReasonLeave.endDate)} {getDurationDays(selectedReasonLeave.startDate, selectedReasonLeave.endDate) === 1 ? 'Day' : 'Days'})
+                </span>
+              </div>
+              <div className={styles.reasonTimelineItem}>
+                <span className={styles.reasonTimelineLabel}>Applied On:</span>
+                <span className={styles.reasonTimelineValue}>
+                  {formatDate(selectedReasonLeave.createdAt)}
+                </span>
+              </div>
+            </div>
+
+            {/* Full Reason Content */}
+            <div className={styles.reasonContentBox}>
+              <div className={styles.reasonContentLabel}>
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>chat</span>
+                Submitted Statement / Context
+              </div>
+              <div className={styles.reasonFullText}>
+                {selectedReasonLeave.reason ? (
+                  selectedReasonLeave.reason
+                ) : (
+                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    No written reason or justification provided with this leave application.
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className={styles.modalFooter}>
+              {selectedReasonLeave.status === 'PENDING' && (
+                <div style={{ display: 'flex', gap: '8px', marginRight: 'auto' }}>
+                  <button
+                    onClick={() => {
+                      handleAction(selectedReasonLeave.id, 'APPROVED');
+                      setSelectedReasonLeave(null);
+                    }}
+                    className={styles.approveBtn}
+                    style={{ height: '32px', padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleAction(selectedReasonLeave.id, 'REJECTED');
+                      setSelectedReasonLeave(null);
+                    }}
+                    className={styles.rejectBtn}
+                    style={{ height: '32px', padding: '6px 12px', fontSize: '12px' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
+                    Reject
+                  </button>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectedReasonLeave(null)}
+                className={styles.secondaryBtn}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

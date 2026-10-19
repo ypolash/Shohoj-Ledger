@@ -38,6 +38,7 @@ data class AttendanceUiState(
     val activeBreakStatusText: String = "",
     val activeBreakStatusColor: String = "EMERALD",
     val activeBreakFineText: String? = null,
+    val isBreakTimerFinished: Boolean = false,
     val isStartingBreak: Boolean = false,
     val isEndingBreak: Boolean = false,
     val successMessage: String? = null,
@@ -136,6 +137,7 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             )
 
             startBreakCountdownTicker(activeBreak)
+            com.shohoj.staff.util.BreakManager.syncBreak(activeBreak, getApplication())
         }
     }
 
@@ -145,20 +147,29 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             _uiState.value = _uiState.value.copy(
                 activeBreakCountdown = "",
                 activeBreakStatusText = "",
-                activeBreakFineText = null
+                activeBreakFineText = null,
+                isBreakTimerFinished = false
             )
             return
         }
 
+        val configuredBreakMin = _uiState.value.todayRoster?.breakTime
+            ?: _uiState.value.dutySchedule?.breakTime 
+            ?: (if (breakInfo.durationMinutes > 0) breakInfo.durationMinutes else 60)
+        val configuredGraceMin = _uiState.value.todayRoster?.gracePeriod
+            ?: _uiState.value.dutySchedule?.gracePeriod 
+            ?: (if (breakInfo.gracePeriodMinutes > 0) breakInfo.gracePeriodMinutes else 15)
+
         if (breakInfo.isPaused || breakInfo.status == "PAUSED") {
-            val remSec = maxOf(0L, breakInfo.remainingSeconds)
+            val remSec = if (breakInfo.remainingSeconds > 0) breakInfo.remainingSeconds else configuredBreakMin * 60L
             val mins = remSec / 60
             val secs = remSec % 60
             _uiState.value = _uiState.value.copy(
                 activeBreakCountdown = String.format("%02d:%02d", mins, secs),
                 activeBreakStatusText = "Break Paused",
                 activeBreakStatusColor = "AMBER",
-                activeBreakFineText = "Timer is paused. Click 'Resume Break' to continue."
+                activeBreakFineText = "Timer is paused. Click 'Resume Break' to continue.",
+                isBreakTimerFinished = false
             )
             return
         }
@@ -167,11 +178,11 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             while (isActive) {
                 val now = System.currentTimeMillis()
                 val targetEnd = parseIsoDate(breakInfo.targetEndTime)
-                    ?: (parseIsoDate(breakInfo.startTime)?.plus(breakInfo.durationMinutes * 60 * 1000L))
-                    ?: (now + (breakInfo.remainingSeconds * 1000L))
+                    ?: (parseIsoDate(breakInfo.startTime)?.plus(configuredBreakMin * 60 * 1000L))
+                    ?: (now + (if (breakInfo.remainingSeconds > 0) breakInfo.remainingSeconds * 1000L else configuredBreakMin * 60 * 1000L))
 
                 val graceEnd = parseIsoDate(breakInfo.graceEndTime)
-                    ?: (targetEnd + (breakInfo.gracePeriodMinutes * 60 * 1000L))
+                    ?: (targetEnd + (configuredGraceMin * 60 * 1000L))
 
                 if (now < targetEnd) {
                     val remSec = maxOf(0L, (targetEnd - now) / 1000L)
@@ -181,7 +192,8 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         activeBreakCountdown = String.format("%02d:%02d", mins, secs),
                         activeBreakStatusText = "Break in Progress",
                         activeBreakStatusColor = "EMERALD",
-                        activeBreakFineText = null
+                        activeBreakFineText = null,
+                        isBreakTimerFinished = false
                     )
                 } else if (now <= graceEnd) {
                     val graceRemSec = maxOf(0L, (graceEnd - now) / 1000L)
@@ -191,7 +203,8 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         activeBreakCountdown = String.format("%02d:%02d", mins, secs),
                         activeBreakStatusText = "Grace Period Tolerance",
                         activeBreakStatusColor = "AMBER",
-                        activeBreakFineText = "Return soon to avoid ৳${breakInfo.fineAmount.toInt()} fine"
+                        activeBreakFineText = "Return soon to avoid ৳${breakInfo.fineAmount.toInt()} fine",
+                        isBreakTimerFinished = true
                     )
                 } else {
                     val overstaySec = (now - graceEnd) / 1000L
@@ -207,7 +220,8 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         activeBreakCountdown = String.format("+%02d:%02d", mins, secs),
                         activeBreakStatusText = "OVERSTAYED by ${overstayMins}m",
                         activeBreakStatusColor = "ROSE",
-                        activeBreakFineText = "Penalty Fine: ৳${fine.toInt()}"
+                        activeBreakFineText = "Penalty Fine: ৳${fine.toInt()}",
+                        isBreakTimerFinished = true
                     )
                 }
 
@@ -267,9 +281,14 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                 return@launch
             }
 
+            val breakMin = _uiState.value.todayRoster?.breakTime ?: _uiState.value.dutySchedule?.breakTime ?: 60
+            val graceMin = _uiState.value.todayRoster?.gracePeriod ?: _uiState.value.dutySchedule?.gracePeriod ?: 15
+
             val result = leaveRepo.requestBreak(
                 leaveTypeId = null,
                 reason = reason,
+                breakDurationMinutes = breakMin,
+                gracePeriodMinutes = graceMin,
                 latitude = location.latitude,
                 longitude = location.longitude,
                 ssid = wifi.ssid,
@@ -283,6 +302,7 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         successMessage = res.message ?: "Lunch break started successfully."
                     )
                     startBreakCountdownTicker(res.activeBreak)
+                    com.shohoj.staff.util.BreakManager.syncBreak(res.activeBreak, getApplication())
                     refreshData()
                 },
                 onFailure = { ex ->
@@ -334,6 +354,7 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         successMessage = res.message ?: "Break paused successfully."
                     )
                     startBreakCountdownTicker(res.activeBreak)
+                    com.shohoj.staff.util.BreakManager.syncBreak(res.activeBreak, getApplication())
                     refreshData()
                 },
                 onFailure = { ex ->
@@ -384,6 +405,7 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
                         successMessage = res.message ?: "Break resumed successfully."
                     )
                     startBreakCountdownTicker(res.activeBreak)
+                    com.shohoj.staff.util.BreakManager.syncBreak(res.activeBreak, getApplication())
                     refreshData()
                 },
                 onFailure = { ex ->
@@ -413,6 +435,7 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
             result.fold(
                 onSuccess = { response ->
                     breakTickerJob?.cancel()
+                    com.shohoj.staff.util.BreakManager.syncBreak(null, getApplication())
                     _uiState.value = _uiState.value.copy(
                         isEndingBreak = false,
                         activeBreak = null,

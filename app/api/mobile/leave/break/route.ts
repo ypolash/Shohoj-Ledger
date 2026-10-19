@@ -211,34 +211,57 @@ export async function POST(request: Request) {
         });
       }
 
-      const empWithShift = await prisma.employee.findUnique({
-        where: { id: employee.id },
-        include: { workShift: true },
-      });
+      // Determine break allowance & grace period from mobile request or employee's Custom Duty / WorkShift
+      let shiftBreakTime: number | null = null;
+      let shiftGracePeriod: number | null = null;
 
-      const shiftBreakTime = (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0)
-        ? empWithShift.workShift.breakTime
-        : 60;
-      const shiftGracePeriod = (empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0)
-        ? empWithShift.workShift.gracePeriod
-        : 15;
+      if (body.breakDurationMinutes && Number(body.breakDurationMinutes) > 0) {
+        shiftBreakTime = Number(body.breakDurationMinutes);
+      } else if (body.breakTime && Number(body.breakTime) > 0) {
+        shiftBreakTime = Number(body.breakTime);
+      }
+
+      if (body.gracePeriodMinutes && Number(body.gracePeriodMinutes) > 0) {
+        shiftGracePeriod = Number(body.gracePeriodMinutes);
+      } else if (body.gracePeriod && Number(body.gracePeriod) > 0) {
+        shiftGracePeriod = Number(body.gracePeriod);
+      }
+
+      if (!shiftBreakTime || !shiftGracePeriod) {
+        try {
+          const { getEffectiveDutySchedule } = await import("@/lib/hr/dutyResolver");
+          const { dutySchedule } = await getEffectiveDutySchedule(employee.id, employee.companyId);
+          if (!shiftBreakTime && dutySchedule?.breakTime && dutySchedule.breakTime > 0) {
+            shiftBreakTime = dutySchedule.breakTime;
+          }
+          if (!shiftGracePeriod && dutySchedule?.gracePeriod && dutySchedule.gracePeriod > 0) {
+            shiftGracePeriod = dutySchedule.gracePeriod;
+          }
+        } catch (e) {
+          const empWithShift = await prisma.employee.findUnique({
+            where: { id: employee.id },
+            include: { workShift: true },
+          });
+          if (!shiftBreakTime && empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0) {
+            shiftBreakTime = empWithShift.workShift.breakTime;
+          }
+          if (!shiftGracePeriod && empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0) {
+            shiftGracePeriod = empWithShift.workShift.gracePeriod;
+          }
+        }
+      }
 
       const parsedConfig = lt ? parseLeaveTypeConfig(lt) : {
-        breakDurationMinutes: shiftBreakTime,
-        gracePeriodMinutes: shiftGracePeriod,
+        breakDurationMinutes: 60,
+        gracePeriodMinutes: 15,
         fineAmount: 50,
         fineType: "FIXED",
         autoFine: true,
         maxPerDay: 2,
       };
 
-      const effectiveDuration = (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0)
-        ? empWithShift.workShift.breakTime
-        : (parsedConfig.breakDurationMinutes || 60);
-
-      const effectiveGrace = (empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0)
-        ? empWithShift.workShift.gracePeriod
-        : (parsedConfig.gracePeriodMinutes || 15);
+      const effectiveDuration = shiftBreakTime || parsedConfig.breakDurationMinutes || 60;
+      const effectiveGrace = shiftGracePeriod || parsedConfig.gracePeriodMinutes || 15;
 
       const effectiveFine = parsedConfig.fineAmount || 50;
       const effectiveFineType = parsedConfig.fineType || "FIXED";

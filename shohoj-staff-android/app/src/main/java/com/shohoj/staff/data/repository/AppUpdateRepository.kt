@@ -130,7 +130,7 @@ class AppUpdateRepository(
         return 0
     }
 
-    fun downloadAndInstallApk(downloadUrl: String, fileName: String = "shohoj-staff-v1.7.4-beta.apk") {
+    fun downloadAndInstallApk(downloadUrl: String, fileName: String = "shohoj-staff-v1.7.5-beta.apk") {
         val fullUrl = resolveUrl(downloadUrl)
 
         // Trigger system DownloadManager with status bar notification

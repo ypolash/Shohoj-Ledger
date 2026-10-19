@@ -149,6 +149,53 @@ export function parsePauseState(comments?: string | null): PauseState | null {
   return null;
 }
 
+export async function resolveBreakMetrics(leave: any, parsedType?: any) {
+  let shiftBreakTime: number | null = null;
+  let shiftGracePeriod: number | null = null;
+
+  if (leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0) {
+    shiftBreakTime = leave.employee.workShift.breakTime;
+  }
+  if (leave.employee?.workShift?.gracePeriod && leave.employee.workShift.gracePeriod > 0) {
+    shiftGracePeriod = leave.employee.workShift.gracePeriod;
+  }
+
+  if ((!shiftBreakTime || !shiftGracePeriod) && leave.employeeId) {
+    try {
+      const { getEffectiveDutySchedule } = await import("./dutyResolver");
+      const { dutySchedule } = await getEffectiveDutySchedule(leave.employeeId, leave.companyId, leave.startDate);
+      if (!shiftBreakTime && dutySchedule?.breakTime && dutySchedule.breakTime > 0) {
+        shiftBreakTime = dutySchedule.breakTime;
+      }
+      if (!shiftGracePeriod && dutySchedule?.gracePeriod && dutySchedule.gracePeriod > 0) {
+        shiftGracePeriod = dutySchedule.gracePeriod;
+      }
+    } catch (e) {}
+  }
+
+  let commentConfig: any = null;
+  if (leave.comments && leave.comments.includes("[TIMER_CONFIG:")) {
+    commentConfig = parseLeaveTypeConfig({ description: leave.comments });
+  }
+
+  let durationMinutes = shiftBreakTime || commentConfig?.breakDurationMinutes || parsedType?.breakDurationMinutes || 60;
+  if (leave.endDate && leave.startDate) {
+    const explicitMinutes = Math.round((new Date(leave.endDate).getTime() - new Date(leave.startDate).getTime()) / (60 * 1000));
+    if (explicitMinutes > 0) {
+      durationMinutes = explicitMinutes;
+    }
+  }
+  const gracePeriodMinutes = shiftGracePeriod || commentConfig?.gracePeriodMinutes || parsedType?.gracePeriodMinutes || 15;
+
+  return {
+    shiftBreakTime,
+    shiftGracePeriod,
+    commentConfig,
+    durationMinutes,
+    gracePeriodMinutes,
+  };
+}
+
 export async function getActiveBreakForEmployee(employeeId: string, companyId?: string | null) {
   try {
     const now = new Date();
@@ -204,23 +251,7 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
     }
 
     const startTime = new Date(leave.startDate || leave.createdAt);
-    
-    // Determine configured duration and grace from employee workshift or parsed config
-    const shiftBreakTime = leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0
-      ? leave.employee.workShift.breakTime
-      : null;
-    const shiftGracePeriod = leave.employee?.workShift?.gracePeriod && leave.employee.workShift.gracePeriod > 0
-      ? leave.employee.workShift.gracePeriod
-      : null;
-
-    let durationMinutes = parsedType?.breakDurationMinutes || shiftBreakTime || 60;
-    if (leave.endDate && leave.startDate) {
-      const explicitMinutes = Math.round((new Date(leave.endDate).getTime() - new Date(leave.startDate).getTime()) / (60 * 1000));
-      if (explicitMinutes > 0) {
-        durationMinutes = explicitMinutes;
-      }
-    }
-    const gracePeriodMinutes = parsedType?.gracePeriodMinutes || shiftGracePeriod || 5;
+    const { durationMinutes, gracePeriodMinutes } = await resolveBreakMetrics(leave, parsedType);
 
     const durationMs = durationMinutes * 60 * 1000;
     const graceMs = gracePeriodMinutes * 60 * 1000;
@@ -271,7 +302,7 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
               companyId: leave.companyId || companyId || "",
               employeeId,
               amount: estimatedFine,
-              reason: `Auto-Fine: Overstayed ${leave.type} by ${overstayMinutes}m (Allowed: ${durationMinutes}m + ${gracePeriodMinutes}m grace) [Req: ${leaveShortId}]`,
+              reason: `Auto-Fine: Not connected to office Wi-Fi within allowed break time (+${overstayMinutes}m overstay) [Req: ${leaveShortId}]`,
               date: new Date(),
               status: "PENDING",
               systemSource: "MOBILE"
@@ -282,7 +313,7 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
             where: { id: existingFine.id },
             data: {
               amount: estimatedFine,
-              reason: `Auto-Fine: Overstayed ${leave.type} by ${overstayMinutes}m (Allowed: ${durationMinutes}m + ${gracePeriodMinutes}m grace) [Req: ${leaveShortId}]`,
+              reason: `Auto-Fine: Not connected to office Wi-Fi within allowed break time (+${overstayMinutes}m overstay) [Req: ${leaveShortId}]`,
             }
           });
         }
@@ -290,6 +321,17 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
         console.error("[getActiveBreakForEmployee] Error creating/updating auto-fine:", fineErr);
       }
     }
+
+    let allowedSsids: string[] = [];
+    try {
+      const allowedNetworks = await prisma.allowedNetwork.findMany({
+        where: {
+          companyId: leave.companyId || companyId || "",
+          isActive: true,
+        },
+      });
+      allowedSsids = allowedNetworks.map(n => n.ssid).filter(Boolean) as string[];
+    } catch {}
 
     return {
       leaveId: leave.id,
@@ -312,6 +354,7 @@ export async function getActiveBreakForEmployee(employeeId: string, companyId?: 
       isOverstay: isOverstayed,
       overstayMinutes,
       estimatedFine,
+      allowedSsids,
     };
   } catch (error) {
     console.error("[getActiveBreakForEmployee] error:", error);
@@ -356,21 +399,7 @@ export async function processBreakPause(leaveId: string, employeeId: string, com
 
   const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
   const startTime = new Date(leave.startDate || leave.createdAt);
-  
-  const shiftBreakTime = leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0
-    ? leave.employee.workShift.breakTime
-    : null;
-  const shiftGracePeriod = leave.employee?.workShift?.gracePeriod && leave.employee.workShift.gracePeriod > 0
-    ? leave.employee.workShift.gracePeriod
-    : null;
-
-  let durationMinutes = parsedType?.breakDurationMinutes || shiftBreakTime || 60;
-  if (leave.endDate && leave.startDate) {
-    const explicitMinutes = Math.round((new Date(leave.endDate).getTime() - new Date(leave.startDate).getTime()) / (60 * 1000));
-    if (explicitMinutes > 0) {
-      durationMinutes = explicitMinutes;
-    }
-  }
+  const { durationMinutes } = await resolveBreakMetrics(leave, parsedType);
 
   const durationMs = durationMinutes * 60 * 1000;
   const targetEndTime = new Date(startTime.getTime() + durationMs);
@@ -438,10 +467,7 @@ export async function processBreakResume(leaveId: string, employeeId: string, co
   }
 
   const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
-  const shiftBreakTime = leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0
-    ? leave.employee.workShift.breakTime
-    : null;
-  const durationMinutes = parsedType?.breakDurationMinutes || shiftBreakTime || 60;
+  const { durationMinutes } = await resolveBreakMetrics(leave, parsedType);
 
   const pauseState = parsePauseState(leave.comments);
   const remainingSeconds = pauseState ? pauseState.remainingSeconds : Math.max(0, Math.floor((new Date(leave.endDate).getTime() - new Date(leave.updatedAt).getTime()) / 1000));
@@ -506,22 +532,7 @@ export async function processBreakEnd(leaveId: string, employeeId: string, compa
 
   const parsedType = parseLeaveTypeConfig(leaveTypeObj || { name: leave.type, description: leave.comments });
   const startTime = new Date(leave.startDate || leave.createdAt);
-  
-  const shiftBreakTime = leave.employee?.workShift?.breakTime && leave.employee.workShift.breakTime > 0
-    ? leave.employee.workShift.breakTime
-    : null;
-  const shiftGracePeriod = leave.employee?.workShift?.gracePeriod && leave.employee.workShift.gracePeriod > 0
-    ? leave.employee.workShift.gracePeriod
-    : null;
-
-  let durationMinutes = parsedType?.breakDurationMinutes || shiftBreakTime || 60;
-  if (leave.endDate && leave.startDate) {
-    const explicitMinutes = Math.round((new Date(leave.endDate).getTime() - new Date(leave.startDate).getTime()) / (60 * 1000));
-    if (explicitMinutes > 0) {
-      durationMinutes = explicitMinutes;
-    }
-  }
-  const gracePeriodMinutes = parsedType?.gracePeriodMinutes || shiftGracePeriod || 5;
+  const { durationMinutes, gracePeriodMinutes } = await resolveBreakMetrics(leave, parsedType);
 
   const durationMs = durationMinutes * 60 * 1000;
   const graceMs = gracePeriodMinutes * 60 * 1000;

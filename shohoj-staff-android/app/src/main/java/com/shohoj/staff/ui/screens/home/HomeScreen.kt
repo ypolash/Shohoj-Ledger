@@ -352,8 +352,9 @@ fun HomeScreen(
                                     color = if (uiState.activeBreakStatusColor == "ROSE") Rose400 else Slate50
                                 )
                             )
+                            val allowanceMin = uiState.todayRoster?.breakTime ?: uiState.dutySchedule?.breakTime ?: uiState.customDuty?.breakTime ?: uiState.activeBreak?.durationMinutes ?: 60
                             Text(
-                                text = if (uiState.activeBreakStatusColor == "ROSE") "Overstay Countdown" else "Time Remaining",
+                                text = if (uiState.activeBreakStatusColor == "ROSE") "Overstay Countdown" else "Time Remaining (Set Allowance: ${allowanceMin}m)",
                                 color = Slate400,
                                 fontSize = 11.sp
                             )
@@ -382,13 +383,19 @@ fun HomeScreen(
                             }
                         }
 
-                        if (uiState.activeBreak?.isPaused == true) {
+                        val isTimerFinished = uiState.isBreakTimerFinished || 
+                            (uiState.activeBreak?.isPaused == false && 
+                             (uiState.activeBreakStatusColor == "ROSE" || 
+                              uiState.activeBreakStatusText.startsWith("OVERSTAYED") || 
+                              uiState.activeBreakStatusText == "Grace Period Tolerance"))
+
+                        if (isTimerFinished) {
                             Button(
-                                onClick = { viewModel.resumeBreak() },
-                                enabled = !uiState.isStartingBreak,
+                                onClick = { viewModel.endActiveBreak() },
+                                enabled = !uiState.isEndingBreak,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.Transparent,
-                                    contentColor = Slate950
+                                    contentColor = Color.White
                                 ),
                                 shape = RoundedCornerShape(14.dp),
                                 contentPadding = PaddingValues(),
@@ -397,79 +404,210 @@ fun HomeScreen(
                                     .height(48.dp)
                                     .background(
                                         brush = Brush.horizontalGradient(
-                                            colors = listOf(Color(0xFF10B981), Color(0xFF047857))
+                                            colors = listOf(Color(0xFFEF4444), Color(0xFFDC2626))
                                         ),
                                         shape = RoundedCornerShape(14.dp)
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = Color(0xFF6EE7B7).copy(alpha = 0.5f),
+                                        color = Color(0xFFFCA5A5).copy(alpha = 0.5f),
                                         shape = RoundedCornerShape(14.dp)
                                     )
                             ) {
-                                if (uiState.isStartingBreak) {
-                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                if (uiState.isEndingBreak) {
+                                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
                                 } else {
                                     Icon(
-                                        imageVector = Icons.Default.PlayArrow,
+                                        imageVector = Icons.Default.Restaurant,
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp),
-                                        tint = Slate950
+                                        tint = Color.White
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "Resume Break",
+                                        text = "End Lunch Break",
                                         fontWeight = FontWeight.ExtraBold,
                                         fontSize = 14.sp,
-                                        color = Slate950,
+                                        color = Color.White,
                                         letterSpacing = 0.5.sp,
                                         maxLines = 1
                                     )
                                 }
                             }
-                        } else {
-                            Button(
-                                onClick = { viewModel.pauseBreak() },
-                                enabled = !uiState.isStartingBreak,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = Slate950
-                                ),
-                                shape = RoundedCornerShape(14.dp),
-                                contentPadding = PaddingValues(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp)
-                                    .background(
-                                        brush = Brush.horizontalGradient(
-                                            colors = listOf(Color(0xFFF59E0B), Color(0xFFD97706))
-                                        ),
-                                        shape = RoundedCornerShape(14.dp)
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = Color(0xFFFCD34D).copy(alpha = 0.5f),
-                                        shape = RoundedCornerShape(14.dp)
-                                    )
+                        } else if (uiState.activeBreak?.isPaused == true) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                if (uiState.isStartingBreak) {
-                                    CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.Pause,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = Slate950
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Pause Break",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 14.sp,
-                                        color = Slate950,
-                                        letterSpacing = 0.5.sp,
-                                        maxLines = 1
-                                    )
+                                Button(
+                                    onClick = { viewModel.resumeBreak() },
+                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = Slate950
+                                    ),
+                                    shape = RoundedCornerShape(14.dp),
+                                    contentPadding = PaddingValues(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .background(
+                                            brush = Brush.horizontalGradient(
+                                                colors = listOf(Color(0xFF10B981), Color(0xFF047857))
+                                            ),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFF6EE7B7).copy(alpha = 0.5f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                ) {
+                                    if (uiState.isStartingBreak) {
+                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = Slate950
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Resume Break",
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 14.sp,
+                                            color = Slate950,
+                                            letterSpacing = 0.5.sp,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { viewModel.endActiveBreak() },
+                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFEF4444).copy(alpha = 0.15f),
+                                        contentColor = Color(0xFFF87171)
+                                    ),
+                                    shape = RoundedCornerShape(14.dp),
+                                    contentPadding = PaddingValues(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFFEF4444).copy(alpha = 0.35f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                ) {
+                                    if (uiState.isEndingBreak) {
+                                        CircularProgressIndicator(color = Color(0xFFF87171), strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Restaurant,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color(0xFFF87171)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "End Break",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = Color(0xFFF87171),
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.pauseBreak() },
+                                    enabled = !uiState.isStartingBreak && !uiState.isEndingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = Slate950
+                                    ),
+                                    shape = RoundedCornerShape(14.dp),
+                                    contentPadding = PaddingValues(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .background(
+                                            brush = Brush.horizontalGradient(
+                                                colors = listOf(Color(0xFFF59E0B), Color(0xFFD97706))
+                                            ),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFFFCD34D).copy(alpha = 0.5f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                ) {
+                                    if (uiState.isStartingBreak) {
+                                        CircularProgressIndicator(color = Slate950, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Pause,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = Slate950
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Pause Break",
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 14.sp,
+                                            color = Slate950,
+                                            letterSpacing = 0.5.sp,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { viewModel.endActiveBreak() },
+                                    enabled = !uiState.isEndingBreak && !uiState.isStartingBreak,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFEF4444).copy(alpha = 0.15f),
+                                        contentColor = Color(0xFFF87171)
+                                    ),
+                                    shape = RoundedCornerShape(14.dp),
+                                    contentPadding = PaddingValues(),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFFEF4444).copy(alpha = 0.35f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                ) {
+                                    if (uiState.isEndingBreak) {
+                                        CircularProgressIndicator(color = Color(0xFFF87171), strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Restaurant,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color(0xFFF87171)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "End Break",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = Color(0xFFF87171),
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
                             }
                         }

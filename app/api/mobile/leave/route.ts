@@ -217,12 +217,8 @@ export async function POST(request: Request) {
         ? empWithShift.workShift.gracePeriod
         : 15;
 
-      const duration = (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0)
-        ? empWithShift.workShift.breakTime
-        : (parsedType?.breakDurationMinutes || 60);
-      const grace = (empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0)
-        ? empWithShift.workShift.gracePeriod
-        : (parsedType?.gracePeriodMinutes || 15);
+      const duration = parsedType?.breakDurationMinutes || (empWithShift?.workShift?.breakTime && empWithShift.workShift.breakTime > 0 ? empWithShift.workShift.breakTime : 60);
+      const grace = parsedType?.gracePeriodMinutes || (empWithShift?.workShift?.gracePeriod && empWithShift.workShift.gracePeriod > 0 ? empWithShift.workShift.gracePeriod : 15);
       const fine = parsedType?.fineAmount || 50;
       const fineType = parsedType?.fineType || "FIXED";
 

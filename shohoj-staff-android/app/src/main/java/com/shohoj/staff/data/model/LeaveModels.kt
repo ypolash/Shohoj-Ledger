@@ -19,7 +19,11 @@ data class LeaveApplyRequest(
     @SerializedName("startDate") val startDate: String,
     @SerializedName("endDate") val endDate: String,
     @SerializedName("reason") val reason: String,
-    @SerializedName("employeeId") val employeeId: String? = null
+    @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("ssid") val ssid: String? = null,
+    @SerializedName("bssid") val bssid: String? = null
 )
 
 data class LeaveCategoryBalance(
@@ -69,7 +73,9 @@ data class ActiveBreakInfo(
     @SerializedName("consumedSeconds") val consumedSeconds: Long = 0,
     @SerializedName("isOverstayed") val isOverstayed: Boolean = false,
     @SerializedName("overstayMinutes") val overstayMinutes: Int = 0,
-    @SerializedName("estimatedFine") val estimatedFine: Double = 0.0
+    @SerializedName("estimatedFine") val estimatedFine: Double = 0.0,
+    @SerializedName("allowedSsids") val allowedSsids: List<String> = emptyList(),
+    @SerializedName("isWifiAllowed") val isWifiAllowed: Boolean? = null
 )
 
 data class LeaveListResponse(
@@ -96,6 +102,8 @@ data class RequestBreakRequest(
     @SerializedName("leaveTypeId") val leaveTypeId: String? = null,
     @SerializedName("reason") val reason: String = "Lunch Break",
     @SerializedName("employeeId") val employeeId: String? = null,
+    @SerializedName("breakDurationMinutes") val breakDurationMinutes: Int? = null,
+    @SerializedName("gracePeriodMinutes") val gracePeriodMinutes: Int? = null,
     @SerializedName("latitude") val latitude: Double? = null,
     @SerializedName("longitude") val longitude: Double? = null,
     @SerializedName("ssid") val ssid: String? = null,

@@ -97,6 +97,7 @@ class LeaveViewModel(application: Application) : AndroidViewModel(application) {
                         isShortBreakSelected = isShort
                     )
 
+                    com.shohoj.staff.util.BreakManager.syncBreak(activeBreak, getApplication())
                     startBreakCountdownTicker(activeBreak)
                 },
                 onFailure = { ex ->
@@ -246,19 +247,48 @@ class LeaveViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.value = state.copy(isSubmitting = true, error = null)
 
+            var lat: Double? = null
+            var lng: Double? = null
+            var ssid: String? = null
+            var bssid: String? = null
+
+            if (state.isShortBreakSelected) {
+                val location = com.shohoj.staff.util.LocationHelper.getCurrentLocation(getApplication())
+                val wifi = com.shohoj.staff.util.WifiHelper.getWifiDetails(getApplication())
+
+                if (location == null) {
+                    _uiState.value = state.copy(isSubmitting = false, error = "GPS / Location is required to verify office presence.")
+                    return@launch
+                }
+
+                if (!wifi.isConnected || (wifi.ssid.isNullOrBlank() && wifi.bssid.isNullOrBlank())) {
+                    _uiState.value = state.copy(isSubmitting = false, error = "Short breaks can only be started while connected to authorized company Wi-Fi.")
+                    return@launch
+                }
+
+                lat = location.latitude
+                lng = location.longitude
+                ssid = wifi.ssid
+                bssid = wifi.bssid
+            }
+
             val result = leaveRepo.applyLeave(
                 type = state.applyType,
                 leaveTypeId = state.applyLeaveTypeId,
                 startDate = state.applyStartDate,
                 endDate = state.applyEndDate,
-                reason = reasonToSubmit
+                reason = reasonToSubmit,
+                latitude = lat,
+                longitude = lng,
+                ssid = ssid,
+                bssid = bssid
             )
 
             result.fold(
                 onSuccess = { response ->
                     val isAutoApproved = response.autoApproved || state.isShortBreakSelected
                     val msg = if (isAutoApproved) {
-                        "Short Break auto-approved! Timer is running now."
+                        "Short Break auto-approved! Left-side chat head timer is running now."
                     } else {
                         "Leave application submitted successfully!"
                     }
@@ -269,6 +299,10 @@ class LeaveViewModel(application: Application) : AndroidViewModel(application) {
                         applyReason = "",
                         successMessage = msg
                     )
+
+                    if (response.activeBreak != null) {
+                        com.shohoj.staff.util.BreakManager.syncBreak(response.activeBreak, getApplication())
+                    }
                     loadLeaves()
                 },
                 onFailure = { ex ->
@@ -285,10 +319,38 @@ class LeaveViewModel(application: Application) : AndroidViewModel(application) {
         val breakInfo = _uiState.value.activeBreak ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isEndingBreak = true, error = null, successMessage = null)
-            val result = leaveRepo.endBreak(breakInfo.leaveId)
+
+            val location = com.shohoj.staff.util.LocationHelper.getCurrentLocation(getApplication())
+            val wifi = com.shohoj.staff.util.WifiHelper.getWifiDetails(getApplication())
+
+            if (location == null) {
+                _uiState.value = _uiState.value.copy(
+                    isEndingBreak = false,
+                    error = "GPS / Location is required to verify office presence."
+                )
+                return@launch
+            }
+
+            if (!wifi.isConnected || (wifi.ssid.isNullOrBlank() && wifi.bssid.isNullOrBlank())) {
+                _uiState.value = _uiState.value.copy(
+                    isEndingBreak = false,
+                    error = "Cannot End Break: You must connect to authorized company Wi-Fi."
+                )
+                return@launch
+            }
+
+            val result = leaveRepo.endBreak(
+                leaveId = breakInfo.leaveId,
+                latitude = location.latitude,
+                longitude = location.longitude,
+                ssid = wifi.ssid,
+                bssid = wifi.bssid
+            )
+
             result.fold(
                 onSuccess = { response ->
                     timerJob?.cancel()
+                    com.shohoj.staff.util.BreakManager.syncBreak(null, getApplication())
                     _uiState.value = _uiState.value.copy(
                         isEndingBreak = false,
                         activeBreak = null,

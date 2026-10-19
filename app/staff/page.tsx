@@ -593,15 +593,19 @@ export default function StaffPortalPage() {
     try {
       const res = await fetch('/api/mobile/leave/break', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-employee-id': emp.employeeId || emp.id || ''
+        },
         body: JSON.stringify({
-          employeeId: emp.employeeId,
+          employeeId: emp.employeeId || emp.id,
+          leaveId: activeBreak?.leaveId,
           action: 'END_BREAK'
         })
       });
       const json = await res.json();
       if (json.success) {
-        alert(json.message || 'Break ended successfully!');
+        alert(json.message || '🍽️ Lunch break ended successfully! Welcome back to duty.');
         setActiveBreak(null);
         await fetchDashboardData(emp.id, emp);
       } else {
@@ -888,16 +892,17 @@ export default function StaffPortalPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              {activeBreak.isPaused ? (
+              {(!activeBreak.isPaused && ((activeBreak.remainingSeconds !== undefined && activeBreak.remainingSeconds <= 0) || activeBreak.isInGrace || activeBreak.isOverstay || activeBreak.isOverstayed)) ? (
+                /* Once the lunch timer finishes (or in grace/overstay), the pause button is gone and the End Lunch Break button is shown */
                 <button
-                  onClick={handleResumeBreak}
+                  onClick={handleEndActiveBreak}
                   disabled={isStartingLunchBreak || isEndingBreak}
                   className="btn"
                   style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                     color: '#ffffff',
                     fontWeight: 800,
-                    padding: '12px 22px',
+                    padding: '12px 24px',
                     borderRadius: '12px',
                     fontSize: '14px',
                     cursor: 'pointer',
@@ -905,35 +910,84 @@ export default function StaffPortalPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
+                    boxShadow: '0 4px 16px rgba(239, 68, 68, 0.45)'
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
-                  Resume Break
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>restaurant</span>
+                  {isEndingBreak ? 'Ending Break...' : 'End Lunch Break'}
                 </button>
               ) : (
-                <button
-                  onClick={handlePauseBreak}
-                  disabled={isStartingLunchBreak || isEndingBreak}
-                  className="btn"
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: '#0f172a',
-                    fontWeight: 800,
-                    padding: '12px 22px',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)'
-                  }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>pause</span>
-                  Pause Break
-                </button>
+                /* While timer is active and running: show Pause/Resume and End Lunch Break */
+                <>
+                  {activeBreak.isPaused ? (
+                    <button
+                      onClick={handleResumeBreak}
+                      disabled={isStartingLunchBreak || isEndingBreak}
+                      className="btn"
+                      style={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#ffffff',
+                        fontWeight: 800,
+                        padding: '12px 22px',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_arrow</span>
+                      Resume Break
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handlePauseBreak}
+                      disabled={isStartingLunchBreak || isEndingBreak}
+                      className="btn"
+                      style={{
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        color: '#0f172a',
+                        fontWeight: 800,
+                        padding: '12px 22px',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>pause</span>
+                      Pause Break
+                    </button>
+                  )}
+                  <button
+                    onClick={handleEndActiveBreak}
+                    disabled={isStartingLunchBreak || isEndingBreak}
+                    className="btn"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#f87171',
+                      fontWeight: 700,
+                      padding: '12px 18px',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>restaurant</span>
+                    {isEndingBreak ? 'Ending...' : 'End Lunch Break'}
+                  </button>
+                </>
               )}
             </div>
           </div>

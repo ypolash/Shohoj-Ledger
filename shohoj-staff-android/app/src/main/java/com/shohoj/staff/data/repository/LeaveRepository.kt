@@ -42,7 +42,11 @@ class LeaveRepository(
         leaveTypeId: String? = null,
         startDate: String,
         endDate: String,
-        reason: String
+        reason: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        ssid: String? = null,
+        bssid: String? = null
     ): Result<LeaveApplyResponse> = withContext(Dispatchers.IO) {
         try {
             val empId = sessionManager?.employeeId ?: sessionManager?.getEmployee()?.employeeId ?: sessionManager?.getEmployee()?.id
@@ -52,7 +56,11 @@ class LeaveRepository(
                 startDate = startDate,
                 endDate = endDate,
                 reason = reason,
-                employeeId = empId
+                employeeId = empId,
+                latitude = latitude,
+                longitude = longitude,
+                ssid = ssid,
+                bssid = bssid
             )
 
             // 1. Try mobile dedicated leave endpoint
@@ -93,6 +101,8 @@ class LeaveRepository(
     suspend fun requestBreak(
         leaveTypeId: String? = null,
         reason: String = "Lunch Break",
+        breakDurationMinutes: Int? = null,
+        gracePeriodMinutes: Int? = null,
         latitude: Double? = null,
         longitude: Double? = null,
         ssid: String? = null,
@@ -105,6 +115,8 @@ class LeaveRepository(
                 leaveTypeId = leaveTypeId,
                 reason = reason,
                 employeeId = empId,
+                breakDurationMinutes = breakDurationMinutes,
+                gracePeriodMinutes = gracePeriodMinutes,
                 latitude = latitude,
                 longitude = longitude,
                 ssid = ssid,

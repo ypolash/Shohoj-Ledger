@@ -27,46 +27,40 @@ export async function GET(request: Request) {
       return NextResponse.json({
         appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 39,
-        versionName: '1.7.4-beta',
+        versionCode: 40,
+        versionName: '1.7.5-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.4 Beta — Vertical Attendance History & Enhanced Break Policy',
+        title: 'Shohoj Staff v1.7.5 Beta — Left-Side Chat Head Timer & Office Wi-Fi Policy',
         releaseNotes: [
-          '📊 Vertical Attendance History: Redesigned attendance cards into sleek vertical mode with Check In, Check Out, Lunch Break times, Late Time, and Work Duration',
-          '🍽️ Lunch Break Telemetry: Attendance history now displays lunch break start/end intervals and taken duration',
-          '⏱️ Punctuality Indicator: Dedicated Late Time metric with instant on-time and late penalty visibility',
-          '🔒 Enforced Break Policy: Strict company Wi-Fi network and GPS location validation for all lunch & break requests',
-          '✨ Modern Resume Button: Refined button styling with glowing emerald borders and non-wrapping typography',
-          '📆 Synchronized Calendar: Horizontal attendance calendar defaults and auto-scrolls to today',
-          '💬 Community Tabs UI: Redesigned segmented pill tab container with subtle glowing indicators'
+          '⏱️ Left-Side Chat Head Timer: Floating draggable countdown widget placed on the app left side across all screens',
+          '📶 Enforced Office Wi-Fi Reconnect: Real-time Wi-Fi compliance checking requiring employees to reconnect to company Wi-Fi within break time to avoid fines',
+          '🍽️ Custom Duty Break Sync: Break allowance and grace period dynamically match employee custom shift settings',
+          '🛑 Timer Expiry Flow: Pause button auto-hides upon timer completion, transitioning cleanly to End Break'
         ],
-        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.4-beta.apk?v=39`,
-        fileSize: '12.2 MB',
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.5-beta.apk?v=40`,
+        fileSize: '12.4 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.4 Beta)
+    // Default Public Production Version (Shohoj Staff v1.7.5 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 39,
-      versionName: '1.7.4-beta',
+      versionCode: 40,
+      versionName: '1.7.5-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.4 Beta Available',
+      title: 'Shohoj Staff v1.7.5 Beta Available',
       releaseNotes: [
-        '📊 Vertical Attendance History: Redesigned attendance cards into sleek vertical mode with Check In, Check Out, Lunch Break times, Late Time, and Work Duration',
-        '🍽️ Lunch Break Telemetry: Attendance history now displays lunch break start/end intervals and taken duration',
-        '⏱️ Punctuality Indicator: Dedicated Late Time metric with instant on-time and late penalty visibility',
-        '🔒 Enforced Break Policy: Strict company Wi-Fi network and GPS location validation for all lunch & break requests',
-        '✨ Modern Resume Button: Refined button styling with glowing emerald borders and non-wrapping typography',
-        '📆 Synchronized Calendar: Horizontal attendance calendar defaults and auto-scrolls to today',
-        '💬 Community Tabs UI: Redesigned segmented pill tab container with subtle glowing indicators'
+        '⏱️ Left-Side Chat Head Timer: Floating draggable countdown widget placed on the app left side across all screens',
+        '📶 Enforced Office Wi-Fi Reconnect: Real-time Wi-Fi compliance checking requiring employees to reconnect to company Wi-Fi within break time to avoid fines',
+        '🍽️ Custom Duty Break Sync: Break allowance and grace period dynamically match employee custom shift settings',
+        '🛑 Timer Expiry Flow: Pause button auto-hides upon timer completion, transitioning cleanly to End Break'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.4-beta.apk?v=39`,
-      fileSize: '12.2 MB',
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.5-beta.apk?v=40`,
+      fileSize: '12.4 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()
     });

@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -82,6 +83,14 @@ class MainActivity : ComponentActivity() {
                         NotificationSyncManager.scheduleBackgroundSync(this@MainActivity)
                         app.startLiveNotificationPoller()
 
+                        // Initialize break timer sync for left-side chat head
+                        scope.launch {
+                            try {
+                                val breakData = app.leaveRepository.getLeaveData().getOrNull()
+                                com.shohoj.staff.util.BreakManager.syncBreak(breakData?.activeBreak, this@MainActivity)
+                            } catch (_: Exception) {}
+                        }
+
                         // Check if background running permissions need to be requested
                         if (!app.sessionManager.hasDismissedBackgroundPermissionPrompt &&
                             !BackgroundPermissionHelper.isIgnoringBatteryOptimizations(this@MainActivity)
@@ -121,33 +130,38 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    ShohojNavGraph(
-                        navController = navController,
-                        startDestination = startDestination
-                    )
-
-                    // In-app Update Notification Popup Dialog
-                    updateDialogInfo?.let { info ->
-                        AppUpdateDialog(
-                            updateInfo = info,
-                            currentVersionName = currentVersionName,
-                            onDownload = { downloadUrl ->
-                                app.appUpdateRepository.downloadAndInstallApk(downloadUrl)
-                            },
-                            onDismiss = {
-                                updateDialogInfo = null
-                            }
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        ShohojNavGraph(
+                            navController = navController,
+                            startDestination = startDestination
                         )
-                    }
 
-                    // Background Run Permission Setup Dialog
-                    if (showBackgroundPrompt) {
-                        BackgroundPermissionDialog(
-                            onDismiss = {
-                                showBackgroundPrompt = false
-                                app.sessionManager.hasDismissedBackgroundPermissionPrompt = true
-                            }
-                        )
+                        // Floating Chat Head Break Timer on the Left Side of the App
+                        com.shohoj.staff.ui.components.ChatHeadBreakTimer()
+
+                        // In-app Update Notification Popup Dialog
+                        updateDialogInfo?.let { info ->
+                            AppUpdateDialog(
+                                updateInfo = info,
+                                currentVersionName = currentVersionName,
+                                onDownload = { downloadUrl ->
+                                    app.appUpdateRepository.downloadAndInstallApk(downloadUrl)
+                                },
+                                onDismiss = {
+                                    updateDialogInfo = null
+                                }
+                            )
+                        }
+
+                        // Background Run Permission Setup Dialog
+                        if (showBackgroundPrompt) {
+                            BackgroundPermissionDialog(
+                                onDismiss = {
+                                    showBackgroundPrompt = false
+                                    app.sessionManager.hasDismissedBackgroundPermissionPrompt = true
+                                }
+                            )
+                        }
                     }
                 }
             }

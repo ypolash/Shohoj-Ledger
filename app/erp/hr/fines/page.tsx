@@ -1102,7 +1102,8 @@ export default function FinesPage() {
       ) : viewMode === 'table' ? (
         /* TABLE VIEW */
         <div className={styles.tableCard}>
-          <table className={styles.dataTable}>
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
             <thead>
               <tr className={styles.tableHeaderRow}>
                 <th className={styles.tableHeaderCell}>Date</th>
@@ -1286,6 +1287,7 @@ export default function FinesPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         /* CARD GRID VIEW */

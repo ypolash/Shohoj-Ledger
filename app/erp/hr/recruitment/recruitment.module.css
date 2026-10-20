@@ -315,7 +315,7 @@
 .toolbarCard {
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 14px 18px;
   display: flex;
   justify-content: space-between;
@@ -339,7 +339,7 @@
   gap: 8px;
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 7px 14px;
   min-width: 250px;
   transition: all 0.2s ease;
@@ -366,7 +366,7 @@
 
 .jobSelect {
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(30, 41, 59, 0.7);
   color: #f1f5f9;
@@ -382,7 +382,7 @@
   gap: 4px;
   background: rgba(30, 41, 59, 0.45);
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -391,7 +391,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 12px;
   font-weight: 600;
   border: none;
@@ -645,9 +645,9 @@
    Candidates Table View
    -------------------------------------------------------------------------- */
 .tableCard {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: var(--surface-main, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
@@ -660,39 +660,46 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 
 .table th {
-  background: rgba(30, 41, 59, 0.5);
-  padding: 14px 18px;
+  background: #10b981;
+  padding: 9px 12px;
   text-align: left;
-  font-weight: 600;
-  color: #94a3b8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #059669;
   white-space: nowrap;
 }
 
 .table td {
-  padding: 14px 18px;
-  color: #e2e8f0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  color: var(--text-main, #f8fafc);
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
   vertical-align: middle;
+  white-space: nowrap;
+  font-size: 0.825rem;
 }
 
 .table tr:hover td {
-  background: rgba(30, 41, 59, 0.3);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.03));
 }
 
 .stageBadge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 11.5px;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 0;
+  font-size: 0.725rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------------

@@ -840,187 +840,192 @@ export default function EmployeesPage() {
           )}
         </div>
       ) : viewMode === 'table' ? (
-        /* Table View */
+        /* Table View (Finance Design System) */
         <div className={styles.tableCard}>
-          <table className={styles.dataTable}>
-            <thead>
-              <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Staff Member</th>
-                <th className={styles.tableHeaderCell}>Department</th>
-                <th className={styles.tableHeaderCell}>Designation</th>
-                <th className={styles.tableHeaderCell}>Basic Salary</th>
-                <th className={styles.tableHeaderCell}>Joined Date</th>
-                <th className={styles.tableHeaderCell}>Status</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEmployees.map(emp => {
-                const initials = `${emp.firstName?.[0] || ''}${emp.lastName?.[0] || ''}`.toUpperCase() || 'EM';
-                const deptName = emp.departmentRef?.name || emp.department || 'Unassigned';
-                const desigName = emp.designationRef?.name || emp.designation || 'Staff';
-                const status = emp.status || 'ACTIVE';
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
+                <tr className={styles.tableHeaderRow}>
+                  <th className={styles.tableHeaderCell}>ID</th>
+                  <th className={styles.tableHeaderCell}>Staff Member</th>
+                  <th className={styles.tableHeaderCell}>Department</th>
+                  <th className={styles.tableHeaderCell}>Designation</th>
+                  <th className={styles.tableHeaderCell}>Basic Salary</th>
+                  <th className={styles.tableHeaderCell}>Joined Date</th>
+                  <th className={styles.tableHeaderCell}>Status</th>
+                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmployees.map(emp => {
+                  const initials = `${emp.firstName?.[0] || ''}${emp.lastName?.[0] || ''}`.toUpperCase() || 'EM';
+                  const deptName = emp.departmentRef?.name || emp.department || 'Unassigned';
+                  const desigName = emp.designationRef?.name || emp.designation || 'Staff';
+                  const status = emp.status || 'ACTIVE';
 
-                return (
-                  <tr
-                    key={emp.id}
-                    className={styles.tableRow}
-                    onClick={() => handleRowClick(emp)}
-                  >
-                    <td className={styles.tableCell}>
-                      <div className={styles.employeeProfileGroup}>
-                        <div className={styles.empAvatar} style={{ overflow: 'hidden' }}>
-                          {emp.profile?.photo || emp.photo || emp.avatar ? (
-                            <img
-                              src={emp.profile?.photo || emp.photo || emp.avatar || ''}
-                              alt=""
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            initials
-                          )}
-                        </div>
-                        <div>
+                  return (
+                    <tr
+                      key={emp.id}
+                      className={styles.tableRow}
+                      onClick={() => handleRowClick(emp)}
+                    >
+                      <td className={styles.tableCell}>
+                        {emp.employeeId ? (
+                          <span className={styles.empIdBadge}>{emp.employeeId}</span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>—</span>
+                        )}
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        <div className={styles.employeeProfileGroup}>
+                          <div className={styles.empAvatar} style={{ overflow: 'hidden' }}>
+                            {emp.profile?.photo || emp.photo || emp.avatar ? (
+                              <img
+                                src={emp.profile?.photo || emp.photo || emp.avatar || ''}
+                                alt=""
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              initials
+                            )}
+                          </div>
                           <div className={styles.empName}>
                             {emp.firstName} {emp.lastName}
                           </div>
-                          <div className={styles.empContact}>{emp.email}</div>
-                          {emp.employeeId && (
-                            <span className={styles.empIdBadge}>{emp.employeeId}</span>
-                          )}
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span className={styles.deptPill}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--primary)' }}>
-                          corporate_fare
-                        </span>
-                        {deptName}
-                      </span>
-                    </td>
-
-                    <td className={styles.tableCell}>
-                      <span style={{ fontWeight: 500, color: 'var(--text-main)' }}>{desigName}</span>
-                    </td>
-
-                    <td className={styles.tableCell}>
-                      {emp.employmentType === 'Project-Based' ? (
-                        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            background: 'rgba(139, 92, 246, 0.12)',
-                            color: '#8b5cf6',
-                            border: '1px solid rgba(139, 92, 246, 0.25)',
-                            width: 'fit-content'
-                          }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>folder_special</span>
-                            Project-Based
+                      <td className={styles.tableCell}>
+                        <span className={styles.deptPill}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '13px', color: 'var(--primary)' }}>
+                            corporate_fare
                           </span>
-                          {Number(emp.basicSalary) > 0 && (
-                            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
-                              {formatCurrency(emp.basicSalary || 0)} / proj
+                          {deptName}
+                        </span>
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        <span style={{ fontWeight: 500, color: 'var(--text-main)', fontSize: '0.825rem' }}>{desigName}</span>
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        {emp.employmentType === 'Project-Based' ? (
+                          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              background: 'rgba(139, 92, 246, 0.12)',
+                              color: '#8b5cf6',
+                              border: '1px solid rgba(139, 92, 246, 0.25)',
+                              width: 'fit-content'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>folder_special</span>
+                              Project-Based
                             </span>
+                            {Number(emp.basicSalary) > 0 && (
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                {formatCurrency(emp.basicSalary || 0)} / proj
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className={styles.salaryText}>
+                            {formatCurrency(emp.basicSalary || 0)}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                          {emp.joinDate ? new Date(emp.joinDate).toLocaleDateString() : '—'}
+                        </span>
+                      </td>
+
+                      <td className={styles.tableCell}>
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
+                          <span className={`${styles.statusChip} ${getStatusClass(status)}`}>
+                            {status}
+                          </span>
+                          {emp.workShift && (
+                            <div style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              color: '#10b981',
+                              background: 'rgba(16, 185, 129, 0.1)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              border: '1px solid rgba(16, 185, 129, 0.2)',
+                              width: 'fit-content'
+                            }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>schedule</span>
+                              {emp.workShift.startTime} - {emp.workShift.endTime}
+                            </div>
                           )}
                         </div>
-                      ) : (
-                        <span className={styles.salaryText}>
-                          {formatCurrency(emp.basicSalary || 0)}
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span style={{ color: 'var(--text-secondary)' }}>
-                        {emp.joinDate ? new Date(emp.joinDate).toLocaleDateString() : '—'}
-                      </span>
-                    </td>
+                      <td className={styles.tableCell} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenCustomDuty(emp)}
+                            className={`${styles.actionIconBtn} ${
+                              emp.workShift ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
+                            }`}
+                            title={
+                              emp.workShift
+                                ? `Custom Duty Active: ${emp.workShift.startTime} - ${emp.workShift.endTime} (Click to edit)`
+                                : "Set Custom Duty Time"
+                            }
+                            aria-label="Set Custom Duty Time"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                              {emp.workShift ? 'schedule' : 'more_time'}
+                            </span>
+                          </button>
 
-                    <td className={styles.tableCell}>
-                      <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '3px' }}>
-                        <span className={`${styles.statusChip} ${getStatusClass(status)}`}>
-                          {status}
-                        </span>
-                        {emp.workShift && (
-                          <div style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            fontSize: '10.5px',
-                            fontWeight: 600,
-                            color: '#10b981',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
-                            width: 'fit-content'
-                          }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>schedule</span>
-                            {emp.workShift.startTime} - {emp.workShift.endTime}
-                          </div>
-                        )}
-                      </div>
-                    </td>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(emp);
+                            }}
+                            className={`${styles.actionIconBtn} ${styles.actionIconBtnEdit}`}
+                            title="Edit Profile"
+                            aria-label="Edit Profile"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>
+                          </button>
 
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenCustomDuty(emp)}
-                          className={`${styles.actionIconBtn} ${
-                            emp.workShift ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
-                          }`}
-                          title={
-                            emp.workShift
-                              ? `Custom Duty Active: ${emp.workShift.startTime} - ${emp.workShift.endTime} (Click to edit)`
-                              : "Set Custom Duty Time"
-                          }
-                          aria-label="Set Custom Duty Time"
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                            {emp.workShift ? 'schedule' : 'more_time'}
-                          </span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenEditModal(emp);
-                          }}
-                          className={`${styles.actionIconBtn} ${styles.actionIconBtnEdit}`}
-                          title="Edit Profile"
-                          aria-label="Edit Profile"
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEmployeeToDelete(emp);
-                          }}
-                          className={`${styles.actionIconBtn} ${styles.actionIconBtnDelete}`}
-                          title="Delete Employee"
-                          aria-label="Delete Employee"
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEmployeeToDelete(emp);
+                            }}
+                            className={`${styles.actionIconBtn} ${styles.actionIconBtnDelete}`}
+                            title="Delete Employee"
+                            aria-label="Delete Employee"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         /* Grid / Card View */

@@ -306,7 +306,7 @@
 .controlsCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 16px 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   display: flex;
@@ -341,7 +341,7 @@
 .searchInput {
   width: 100%;
   padding: 10px 14px 10px 40px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-hover, #f8fafc);
   color: var(--text-main, #0f172a);
@@ -381,7 +381,7 @@
 
 .selectDropdown {
   padding: 9px 14px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-card, #ffffff);
   color: var(--text-main, #0f172a);
@@ -407,7 +407,7 @@
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -432,7 +432,7 @@
   gap: 8px;
   background: var(--surface-hover, #f8fafc);
   padding: 5px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
@@ -452,7 +452,7 @@
   min-width: 44px;
   aspect-ratio: 1;
   padding: 3px 2px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -604,7 +604,7 @@
   gap: 4px;
   background: var(--surface-hover, #f8fafc);
   padding: 5px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
@@ -613,7 +613,7 @@
   height: 44px;
   min-width: 44px;
   aspect-ratio: 1;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted, #64748b);
@@ -642,57 +642,67 @@
 }
 
 /* --------------------------------------------------------------------------
-   Table View - Fitted to screen without horizontal scrolling
+   Table View - Flat Green Table
    -------------------------------------------------------------------------- */
 .tableCard {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.04);
-  overflow-x: hidden;
-  overflow-y: hidden;
+  background: var(--surface-main, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-radius: 0;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
   width: 100%;
-  max-width: 100%;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
 }
 
 .dataTable {
   width: 100%;
-  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 12px;
+  text-align: left;
+  font-size: 0.875rem;
 }
 
 .tableHeaderRow {
-  background: var(--surface-hover, #f8fafc);
-  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  background: #10b981;
+  border-bottom: 1px solid #059669;
 }
 
 .tableHeaderCell {
-  padding: 10px 8px;
-  text-align: left;
+  padding: 9px 12px;
   font-weight: 700;
-  font-size: 11px;
-  color: var(--text-muted, #64748b);
+  color: #ffffff;
+  font-size: 0.725rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  user-select: none;
 }
 
 .tableRow {
-  border-bottom: 1px solid var(--border-main, #e2e8f0);
-  transition: all 0.15s ease;
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
 }
 
 .tableRow:hover {
-  background: var(--surface-hover, #f8fafc);
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.03));
 }
 
 .tableCell {
-  padding: 8px 8px;
+  padding: 8px 12px;
+  color: var(--text-main, #f8fafc);
   vertical-align: middle;
-  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.825rem;
 }
 
 .employeeProfileGroup {
@@ -1021,52 +1031,52 @@
 
 /* Status Chips */
 .statusChip {
-  font-size: 10px;
+  font-size: 0.725rem;
   font-weight: 700;
-  padding: 2.5px 7px;
-  border-radius: 12px;
+  padding: 3px 8px;
+  border-radius: 0;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   display: inline-flex;
   align-items: center;
-  gap: 3.5px;
+  gap: 4px;
   white-space: nowrap;
 }
 
 .statusPending {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: #f59e0b;
+  color: #ffffff;
+  border: 1px solid #f59e0b;
 }
 
 .statusApproved {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #10b981;
 }
 
 .statusRejected {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #ef4444;
 }
 
 .statusCancelled {
-  background: rgba(100, 116, 139, 0.1);
-  color: #64748b;
-  border: 1px solid rgba(100, 116, 139, 0.2);
+  background: #64748b;
+  color: #ffffff;
+  border: 1px solid #64748b;
 }
 
 .statusOverstayed {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #dc2626;
 }
 
 .statusCompleted {
-  background: rgba(100, 116, 139, 0.12);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.25);
+  background: #475569;
+  color: #ffffff;
+  border: 1px solid #475569;
 }
 
 /* Quick Action Buttons */

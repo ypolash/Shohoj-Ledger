@@ -630,17 +630,9 @@ export default function LeavesPage() {
       ) : viewMode === 'table' ? (
         /* TABLE VIEW */
         <div className={styles.tableCard}>
-          <table className={styles.dataTable}>
-            <colgroup>
-              <col style={{ width: '22%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '19%' }} />
-              <col style={{ width: '18%' }} />
-              <col style={{ width: '9%' }} />
-              <col style={{ width: '9%' }} />
-              <col style={{ width: '9%' }} />
-            </colgroup>
-            <thead>
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
               <tr className={styles.tableHeaderRow}>
                 <th className={styles.tableHeaderCell}>Employee</th>
                 <th className={styles.tableHeaderCell}>Leave Type</th>
@@ -797,6 +789,7 @@ export default function LeavesPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         /* CARD GRID VIEW */

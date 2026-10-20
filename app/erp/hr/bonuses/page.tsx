@@ -150,7 +150,7 @@ export default function BonusesPage() {
           { label: 'Beneficiary Count', value: stats.count ?? 0, icon: 'diversity_3', color: '#3b82f6' },
           { label: 'Target Period', value: `${MONTHS[Number(selectedMonth) - 1]} ${selectedYear}`, icon: 'calendar_month', color: '#8b5cf6' },
         ].map((kpi, i) => (
-          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>{kpi.label}</span>
               <span className="material-symbols-outlined" style={{ color: kpi.color, fontSize: '20px' }}>{kpi.icon}</span>
@@ -161,9 +161,9 @@ export default function BonusesPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-card" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+      <div className="glass-card" style={{ padding: '14px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '240px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: 0, padding: '6px 12px', minWidth: '240px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
             <input
               type="text"
@@ -199,12 +199,12 @@ export default function BonusesPage() {
       </div>
 
       {/* Table */}
-      <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+      <div className="glass-card" style={{ borderRadius: 0, overflowX: 'auto', padding: 0 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+            <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
               {['Employee', 'Period', 'Type', 'Amount', 'Reason / Description', 'Date'].map(h => (
-                <th key={h} style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -218,7 +218,7 @@ export default function BonusesPage() {
             ) : (
               filtered.map(b => (
                 <tr key={b.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                  <td style={{ padding: '14px 18px' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
                     <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                       {b.employee?.firstName} {b.employee?.lastName}
                     </div>
@@ -226,21 +226,21 @@ export default function BonusesPage() {
                       {b.employee?.designationRef?.name || 'Staff'} · <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{b.employee?.employeeId}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                     {MONTHS[b.month - 1]} {b.year}
                   </td>
-                  <td style={{ padding: '14px 18px' }}>
-                    <span style={{ padding: '3px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
+                    <span style={{ padding: '3px 8px', borderRadius: 0, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
                       {b.type}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--success)', fontSize: '14px' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 700, color: 'var(--success)', whiteSpace: 'nowrap' }}>
                     +{formatBDT(Number(b.amount))}
                   </td>
-                  <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
                     {b.reason || 'Bonus incentive'}
                   </td>
-                  <td style={{ padding: '14px 18px', color: 'var(--text-muted)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                     {new Date(b.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
@@ -380,7 +380,7 @@ const inputStyle: React.CSSProperties = {
 
 const selectStyle: React.CSSProperties = {
   padding: '8px 12px',
-  borderRadius: '10px',
+  borderRadius: 0,
   border: '1px solid var(--border-main)',
   background: 'var(--surface-input)',
   color: 'var(--text-main)',

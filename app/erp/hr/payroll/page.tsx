@@ -558,9 +558,9 @@ export default function PayrollPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-card" suppressHydrationWarning style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+      <div className="glass-card" suppressHydrationWarning style={{ padding: '16px 20px', borderRadius: '0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div suppressHydrationWarning style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
-          <div suppressHydrationWarning style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '240px' }}>
+          <div suppressHydrationWarning style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '0', padding: '6px 12px', minWidth: '240px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
             <input
               type="text"
@@ -578,7 +578,7 @@ export default function PayrollPage() {
                 value={selectedMonth}
                 onChange={e => setSelectedMonth(e.target.value)}
                 suppressHydrationWarning
-                style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '13px' }}
+                style={{ padding: '8px 12px', borderRadius: '0', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '13px' }}
               >
                 {MONTHS.map((m, i) => (
                   <option key={i + 1} value={String(i + 1)}>{m}</option>
@@ -587,7 +587,7 @@ export default function PayrollPage() {
             ) : (
               <div style={{
                 padding: '7px 12px',
-                borderRadius: '10px',
+                borderRadius: '0',
                 background: 'rgba(37, 99, 235, 0.1)',
                 color: 'var(--primary)',
                 fontWeight: 600,
@@ -606,7 +606,7 @@ export default function PayrollPage() {
               value={selectedYear}
               onChange={e => setSelectedYear(e.target.value)}
               suppressHydrationWarning
-              style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '13px' }}
+              style={{ padding: '8px 12px', borderRadius: '0', border: '1px solid var(--border-main)', background: 'var(--surface-input)', color: 'var(--text-main)', fontSize: '13px' }}
             >
               {['2024', '2025', '2026', '2027'].map(y => (
                 <option key={y} value={y}>{y}</option>
@@ -622,7 +622,7 @@ export default function PayrollPage() {
               onClick={() => setStatusFilter(st)}
               style={{
                 padding: '6px 14px',
-                borderRadius: '8px',
+                borderRadius: '0',
                 fontSize: '12px',
                 fontWeight: 600,
                 border: '1px solid',
@@ -640,13 +640,13 @@ export default function PayrollPage() {
 
       {/* MONTHLY VIEW: Main Payroll Table */}
       {viewMode === 'monthly' && (
-        <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+        <div className="glass-card" style={{ borderRadius: '0', overflow: 'hidden', padding: 0 }}>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
-                <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+                <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
                   {['Employee', 'Period', 'Basic Salary', 'Gross', 'Deductions', 'Net Payable', 'Status', 'Actions'].map((h, i) => (
-                    <th key={h} style={{ padding: '14px 18px', textAlign: i === 7 ? 'right' : 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                    <th key={h} style={{ padding: '9px 12px', textAlign: i === 7 ? 'right' : 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -682,7 +682,7 @@ export default function PayrollPage() {
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                         title="Click to view detailed payroll review"
                       >
-                        <td style={{ padding: '14px 18px' }}>
+                        <td style={{ padding: '8px 12px' }}>
                           <div>
                             <div style={{ fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               {p.employee?.firstName} {p.employee?.lastName}
@@ -696,31 +696,31 @@ export default function PayrollPage() {
                           </div>
                         </td>
 
-                        <td style={{ padding: '14px 18px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-secondary)', fontWeight: 500 }}>
                           {MONTHS[p.month - 1]} {p.year}
                         </td>
 
-                        <td style={{ padding: '14px 18px', color: 'var(--text-main)', fontWeight: 500 }}>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-main)', fontWeight: 500 }}>
                           {formatCurrency(Number(p.basicSalary))}
                         </td>
 
-                        <td style={{ padding: '14px 18px', color: 'var(--text-main)', fontWeight: 500 }}>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-main)', fontWeight: 500 }}>
                           {formatCurrency(Number(p.grossSalary))}
                         </td>
 
-                        <td style={{ padding: '14px 18px', color: '#ef4444', fontWeight: 500 }}>
+                        <td style={{ padding: '8px 12px', color: '#ef4444', fontWeight: 500 }}>
                           -{formatCurrency(deductions)}
                         </td>
 
-                        <td style={{ padding: '14px 18px', color: 'var(--success)', fontWeight: 700, fontSize: '14px' }}>
+                        <td style={{ padding: '8px 12px', color: 'var(--success)', fontWeight: 700, fontSize: '14px' }}>
                           {formatCurrency(Number(p.netSalary))}
                         </td>
 
-                        <td style={{ padding: '14px 18px' }}>
+                        <td style={{ padding: '8px 12px' }}>
                           <span style={{
-                            padding: '4px 10px',
-                            borderRadius: '20px',
-                            fontSize: '11px',
+                            padding: '3px 8px',
+                            borderRadius: '0',
+                            fontSize: '0.725rem',
                             fontWeight: 700,
                             color: sc.color,
                             background: sc.bg,
@@ -914,10 +914,10 @@ export default function PayrollPage() {
           </div>
 
           {/* 2. Annual Staff Payroll Register Table */}
-          <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
-            <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="glass-card" style={{ borderRadius: '0', overflow: 'hidden', padding: 0 }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
+                <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
                   Annual Staff Payroll Register ({selectedYear})
                 </h2>
                 <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -930,18 +930,18 @@ export default function PayrollPage() {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                 <thead>
-                  <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
-                    <th style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Staff Member</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>Active Months</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Annual Basic</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Annual Gross</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Annual Deductions</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Annual Net Paid</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)' }}>Avg / Month</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'center', fontWeight: 600, color: 'var(--text-muted)' }}>Status</th>
-                    <th style={{ padding: '14px 18px', textAlign: 'center', fontWeight: 600, color: 'var(--text-muted)' }}>Actions</th>
+                  <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
+                    <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Staff Member</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Active Months</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Annual Basic</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Annual Gross</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Annual Deductions</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Annual Net Paid</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Avg / Month</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Status</th>
+                    <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -949,8 +949,8 @@ export default function PayrollPage() {
                     Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i} style={{ borderBottom: '1px solid var(--border-main)' }}>
                         {Array.from({ length: 9 }).map((_, j) => (
-                          <td key={j} style={{ padding: '16px 18px' }}>
-                            <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.6 }} />
+                          <td key={j} style={{ padding: '12px 18px' }}>
+                            <div style={{ height: '14px', borderRadius: '4px', background: 'var(--surface-hover)', opacity: 0.6 }} />
                           </td>
                         ))}
                       </tr>
@@ -979,7 +979,7 @@ export default function PayrollPage() {
                             onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'var(--surface-hover)'; }}
                             onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = ''; }}
                           >
-                            <td style={{ padding: '14px 18px' }}>
+                            <td style={{ padding: '8px 12px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <div style={{
                                   width: '32px',
@@ -1007,7 +1007,7 @@ export default function PayrollPage() {
                               </div>
                             </td>
 
-                            <td style={{ padding: '14px 18px' }}>
+                            <td style={{ padding: '8px 12px' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)' }}>
                                   {empGroup.records.length} / 12 Months
@@ -1023,7 +1023,7 @@ export default function PayrollPage() {
                                         style={{
                                           width: '18px',
                                           height: '18px',
-                                          borderRadius: '4px',
+                                          borderRadius: '0',
                                           fontSize: '9px',
                                           display: 'inline-flex',
                                           alignItems: 'center',
@@ -1042,39 +1042,39 @@ export default function PayrollPage() {
                               </div>
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'right', color: 'var(--text-main)', fontWeight: 500 }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-main)', fontWeight: 500 }}>
                               {formatCurrency(empGroup.totalBasic)}
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'right', color: 'var(--text-main)', fontWeight: 500 }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-main)', fontWeight: 500 }}>
                               {formatCurrency(empGroup.totalGross)}
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'right', color: '#ef4444', fontWeight: 500 }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', color: '#ef4444', fontWeight: 500 }}>
                               -{formatCurrency(empGroup.totalDeductions)}
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'right', color: 'var(--success)', fontWeight: 800, fontSize: '14px' }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--success)', fontWeight: 800, fontSize: '14px' }}>
                               {formatCurrency(empGroup.totalNet)}
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>
                               {formatCurrency(avgNet)}
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'center' }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                               {empGroup.allPaid ? (
-                                <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                <span style={{ padding: '3px 8px', borderRadius: '0', fontSize: '0.725rem', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                                   ALL PAID
                                 </span>
                               ) : (
-                                <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                                <span style={{ padding: '3px 8px', borderRadius: '0', fontSize: '0.725rem', fontWeight: 700, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
                                   HAS PENDING
                                 </span>
                               )}
                             </td>
 
-                            <td style={{ padding: '14px 18px', textAlign: 'center' }}>
+                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                               <button
                                 type="button"
                                 onClick={() => setExpandedEmpId(isExpanded ? null : empKey)}

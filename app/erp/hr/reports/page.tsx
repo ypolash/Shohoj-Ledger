@@ -111,7 +111,7 @@ export default function ReportsPage() {
           { label: 'Total Payroll Disbursed', value: formatBDT(data?.totalPayrollBurden), icon: 'account_balance', color: '#8b5cf6' },
           { label: 'Processed Salary Records', value: data?.salarySheet?.length ?? 0, icon: 'receipt_long', color: '#f59e0b' },
         ].map((kpi, i) => (
-          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>{kpi.label}</span>
               <span className="material-symbols-outlined" style={{ color: kpi.color, fontSize: '20px' }}>{kpi.icon}</span>
@@ -122,7 +122,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="glass-card" style={{ padding: '12px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="glass-card" style={{ padding: '12px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[
             { key: 'salary', label: 'Master Salary Sheet', icon: 'payments' },
@@ -137,7 +137,7 @@ export default function ReportsPage() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 16px',
-                borderRadius: '10px',
+                borderRadius: 0,
                 fontSize: '13px',
                 fontWeight: 600,
                 border: '1px solid',
@@ -153,7 +153,7 @@ export default function ReportsPage() {
           ))}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '220px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: 0, padding: '6px 12px', minWidth: '220px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
           <input
             type="text"
@@ -167,12 +167,12 @@ export default function ReportsPage() {
 
       {/* TAB 1: MASTER SALARY SHEET */}
       {activeTab === 'salary' && (
-        <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+        <div className="glass-card" style={{ borderRadius: 0, overflowX: 'auto', padding: 0 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+              <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
                 {['ID', 'Employee Name', 'Department', 'Basic Salary', 'Gross', 'Deductions', 'Net Disbursed', 'Status', 'Payment Ref'].map(h => (
-                  <th key={h} style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                  <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -188,19 +188,19 @@ export default function ReportsPage() {
                   .filter((s: any) => !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.employeeId.toLowerCase().includes(search.toLowerCase()))
                   .map((s: any) => (
                     <tr key={s.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                      <td style={{ padding: '14px 18px', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 600 }}>{s.employeeId}</td>
-                      <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-main)' }}>{s.name}</td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>{s.department}</td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-main)' }}>{formatBDT(s.basicSalary)}</td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-main)' }}>{formatBDT(s.grossSalary)}</td>
-                      <td style={{ padding: '14px 18px', color: '#ef4444' }}>-{formatBDT(s.deductions)}</td>
-                      <td style={{ padding: '14px 18px', fontWeight: 700, color: 'var(--success)' }}>{formatBDT(s.netSalary)}</td>
-                      <td style={{ padding: '14px 18px' }}>
-                        <span style={{ padding: '3px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 700, background: s.status === 'PAID' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)', color: s.status === 'PAID' ? '#10b981' : '#f59e0b' }}>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 600, whiteSpace: 'nowrap' }}>{s.employeeId}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{s.name}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{s.department}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{formatBDT(s.basicSalary)}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{formatBDT(s.grossSalary)}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: '#ef4444', whiteSpace: 'nowrap' }}>-{formatBDT(s.deductions)}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 700, color: 'var(--success)', whiteSpace: 'nowrap' }}>{formatBDT(s.netSalary)}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: 0, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', background: s.status === 'PAID' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)', color: s.status === 'PAID' ? '#10b981' : '#f59e0b' }}>
                           {s.status}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-muted)', fontSize: '12px' }}>{s.transactionRef}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{s.transactionRef}</td>
                     </tr>
                   ))
               )}
@@ -211,12 +211,12 @@ export default function ReportsPage() {
 
       {/* TAB 2: ATTENDANCE & PUNCTUALITY MASTER */}
       {activeTab === 'attendance' && (
-        <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+        <div className="glass-card" style={{ borderRadius: 0, overflowX: 'auto', padding: 0 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+              <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
                 {['Employee ID', 'Employee Name', 'Department', 'Present Days', 'Late Days', 'Total Late (Mins)', 'Absences', 'Penalties BDT'].map(h => (
-                  <th key={h} style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                  <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -232,14 +232,14 @@ export default function ReportsPage() {
                   .filter((a: any) => !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.employeeId.toLowerCase().includes(search.toLowerCase()))
                   .map((a: any) => (
                     <tr key={a.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                      <td style={{ padding: '14px 18px', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 600 }}>{a.employeeId}</td>
-                      <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-main)' }}>{a.name}</td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>{a.department}</td>
-                      <td style={{ padding: '14px 18px', color: '#10b981', fontWeight: 700 }}>{a.presentDays} days</td>
-                      <td style={{ padding: '14px 18px', color: a.lateDays > 0 ? '#f59e0b' : 'var(--text-muted)', fontWeight: 600 }}>{a.lateDays}</td>
-                      <td style={{ padding: '14px 18px', color: a.totalLateMinutes > 0 ? '#f59e0b' : 'var(--text-muted)' }}>{a.totalLateMinutes} mins</td>
-                      <td style={{ padding: '14px 18px', color: a.absentDays > 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600 }}>{a.absentDays}</td>
-                      <td style={{ padding: '14px 18px', color: a.penaltiesBDT > 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600 }}>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 600, whiteSpace: 'nowrap' }}>{a.employeeId}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{a.name}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{a.department}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: '#10b981', fontWeight: 700, whiteSpace: 'nowrap' }}>{a.presentDays} days</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: a.lateDays > 0 ? '#f59e0b' : 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{a.lateDays}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: a.totalLateMinutes > 0 ? '#f59e0b' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{a.totalLateMinutes} mins</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: a.absentDays > 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{a.absentDays}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: a.penaltiesBDT > 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                         {formatBDT(a.penaltiesBDT)}
                       </td>
                     </tr>
@@ -254,10 +254,10 @@ export default function ReportsPage() {
       {activeTab === 'departments' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
           {data?.departmentAnalytics?.map((dept: any) => (
-            <div key={dept.id} className="glass-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div key={dept.id} className="glass-card" style={{ padding: '20px', borderRadius: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>{dept.departmentName}</div>
-                <span style={{ padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: 700, background: 'var(--surface-hover)', color: 'var(--primary)' }}>
+                <span style={{ padding: '4px 10px', borderRadius: 0, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', background: 'var(--surface-hover)', color: 'var(--primary)' }}>
                   {dept.headcount} Staff
                 </span>
               </div>
@@ -282,7 +282,7 @@ export default function ReportsPage() {
 
 const selectStyle: React.CSSProperties = {
   padding: '8px 14px',
-  borderRadius: '10px',
+  borderRadius: 0,
   border: '1px solid var(--border-main)',
   background: 'var(--surface-input)',
   color: 'var(--text-main)',

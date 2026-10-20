@@ -198,7 +198,7 @@
 .toolbarCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -235,7 +235,7 @@
   width: 100%;
   padding: 10px 14px 10px 42px;
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 13.5px;
   background: var(--surface-bg, #f8fafc);
   color: var(--text-main, #0f172a);
@@ -259,7 +259,7 @@
 .selectInput {
   padding: 9px 12px;
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 13px;
   background: var(--surface-bg, #f8fafc);
   color: var(--text-main, #0f172a);
@@ -276,7 +276,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--surface-bg, #f8fafc);
 }
@@ -317,7 +317,7 @@
 
 .dateFilterTab {
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: 0;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-bg, #f8fafc);
   color: var(--text-secondary, #475569);
@@ -350,7 +350,7 @@
 .dateTabCount {
   font-size: 11px;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: 0;
   background: rgba(0, 0, 0, 0.1);
   font-weight: 700;
 }
@@ -366,7 +366,7 @@
   gap: 6px;
   background: var(--surface-bg, #f8fafc);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 4px 10px;
   transition: all 0.15s ease;
 }
@@ -1415,7 +1415,116 @@
 .tableProgressFill {
   height: 100%;
   background: #10b981;
-  border-radius: 3px;
+  border-radius: 0;
   transition: width 0.2s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Table View - Flat Green Table
+   -------------------------------------------------------------------------- */
+.tableCard {
+  background: var(--surface-main, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
+  width: 100%;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.table thead tr {
+  background: #10b981;
+  border-bottom: 1px solid #059669;
+}
+
+.table th {
+  padding: 9px 12px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.03));
+}
+
+.table td {
+  padding: 8px 12px;
+  color: var(--text-main, #f8fafc);
+  vertical-align: middle;
+  white-space: nowrap;
+  font-size: 0.825rem;
+}
+
+.badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.statusPending {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.statusInProgress {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.statusCompleted {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.statusBlocked {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.typeBadgeChecklist {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.typeBadgePlain {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
 }
 

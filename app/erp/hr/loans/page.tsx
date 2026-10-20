@@ -153,7 +153,7 @@ export default function LoansPage() {
           { label: 'Active EMI Accounts', value: stats.activeLoans ?? 0, icon: 'credit_card', color: '#f59e0b' },
           { label: 'Total Loan Files', value: loans.length, icon: 'receipt_long', color: '#10b981' },
         ].map((kpi, i) => (
-          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>{kpi.label}</span>
               <span className="material-symbols-outlined" style={{ color: kpi.color, fontSize: '20px' }}>{kpi.icon}</span>
@@ -164,8 +164,8 @@ export default function LoansPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-card" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '240px' }}>
+      <div className="glass-card" style={{ padding: '14px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: 0, padding: '6px 12px', minWidth: '240px' }}>
           <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
           <input
             type="text"
@@ -183,7 +183,7 @@ export default function LoansPage() {
               onClick={() => setStatusFilter(st)}
               style={{
                 padding: '6px 14px',
-                borderRadius: '8px',
+                borderRadius: 0,
                 fontSize: '12px',
                 fontWeight: 600,
                 border: '1px solid',
@@ -200,12 +200,12 @@ export default function LoansPage() {
       </div>
 
       {/* Table */}
-      <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+      <div className="glass-card" style={{ borderRadius: 0, overflowX: 'auto', padding: 0 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+            <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
               {['Loan Ref', 'Employee', 'Principal Amount', 'Monthly EMI', 'Remaining Balance', 'Tenure', 'Status', 'Date'].map(h => (
-                <th key={h} style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -219,10 +219,10 @@ export default function LoansPage() {
             ) : (
               filtered.map(l => (
                 <tr key={l.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                  <td style={{ padding: '14px 18px', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 700 }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 700, whiteSpace: 'nowrap' }}>
                     {l.loanNumber || 'LN-EM'}
                   </td>
-                  <td style={{ padding: '14px 18px' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
                     <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                       {l.employee?.firstName} {l.employee?.lastName}
                     </div>
@@ -230,28 +230,28 @@ export default function LoansPage() {
                       {l.employee?.designationRef?.name || 'Staff'} · <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{l.employee?.employeeId}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                     {formatBDT(Number(l.amount))}
                   </td>
-                  <td style={{ padding: '14px 18px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {formatBDT(Number(l.monthlyEmi || 0))} / mo
                   </td>
-                  <td style={{ padding: '14px 18px', fontWeight: 700, color: Number(l.remainingAmount) > 0 ? '#ef4444' : '#10b981' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 700, color: Number(l.remainingAmount) > 0 ? '#ef4444' : '#10b981', whiteSpace: 'nowrap' }}>
                     {formatBDT(Number(l.remainingAmount))}
                   </td>
-                  <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                     {l.tenureMonths || 12} Mos
                   </td>
-                  <td style={{ padding: '14px 18px' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
                     <span style={{
-                      padding: '3px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 700,
+                      padding: '3px 8px', borderRadius: 0, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase',
                       background: l.status === 'COMPLETED' || Number(l.remainingAmount) === 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(59, 130, 246, 0.12)',
                       color: l.status === 'COMPLETED' || Number(l.remainingAmount) === 0 ? '#10b981' : '#3b82f6'
                     }}>
                       {Number(l.remainingAmount) === 0 ? 'COMPLETED' : l.status}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 18px', color: 'var(--text-muted)' }}>
+                  <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                     {l.disbursedDate ? new Date(l.disbursedDate).toLocaleDateString() : '—'}
                   </td>
                 </tr>

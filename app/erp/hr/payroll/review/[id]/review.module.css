@@ -277,7 +277,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
   color: var(--text-muted, #64748b);
@@ -299,7 +299,8 @@
   background: var(--primary, #2563eb);
   border-color: var(--primary, #2563eb);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  border-radius: 0;
 }
 
 .tabBtn.active span.material-symbols-outlined {
@@ -308,7 +309,7 @@
 
 .tabBadge {
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 11px;
   font-weight: 700;
   background: var(--surface-hover, #f1f5f9);
@@ -498,7 +499,7 @@
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 .auditTable {
@@ -508,21 +509,25 @@
 }
 
 .auditTable th {
-  background: var(--surface-hover, #f8fafc);
-  color: var(--text-muted, #64748b);
-  font-weight: 600;
+  background: #10b981;
+  color: #ffffff;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 0.725rem;
   letter-spacing: 0.05em;
-  padding: 12px 16px;
+  padding: 9px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--border-main, #e2e8f0);
+  border-bottom: 1px solid #059669;
+  white-space: nowrap;
 }
 
 .auditTable td {
-  padding: 14px 16px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border-main, #e2e8f0);
   color: var(--text-main, #0f172a);
+  font-size: 0.825rem;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .auditTable tr:last-child td {

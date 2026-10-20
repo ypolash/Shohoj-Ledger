@@ -451,71 +451,73 @@ export default function DesignationsPage() {
       ) : (
         /* Data Table View */
         <div className={styles.tableCard}>
-          <table className={styles.dataTable}>
-            <thead>
-              <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Job Title / Designation</th>
-                <th className={styles.tableHeaderCell}>Grade</th>
-                <th className={styles.tableHeaderCell}>Seniority Level</th>
-                <th className={styles.tableHeaderCell}>Assigned Staff</th>
-                <th className={styles.tableHeaderCell}>Status</th>
-                <th className={styles.tableHeaderCell}>Description</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDesignations.map(d => {
-                const empCount = d._count?.employees || 0;
-                const isActive = d.isActive !== false;
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
+                <tr className={styles.tableHeaderRow}>
+                  <th className={styles.tableHeaderCell}>Job Title / Designation</th>
+                  <th className={styles.tableHeaderCell}>Grade</th>
+                  <th className={styles.tableHeaderCell}>Seniority Level</th>
+                  <th className={styles.tableHeaderCell}>Assigned Staff</th>
+                  <th className={styles.tableHeaderCell}>Status</th>
+                  <th className={styles.tableHeaderCell}>Description</th>
+                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDesignations.map(d => {
+                  const empCount = d._count?.employees || 0;
+                  const isActive = d.isActive !== false;
 
-                return (
-                  <tr key={d.id} className={styles.tableRow}>
-                    <td className={styles.tableCell}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div className={styles.roleIconBox} style={{ width: '34px', height: '34px' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                            work
-                          </span>
+                  return (
+                    <tr key={d.id} className={styles.tableRow}>
+                      <td className={styles.tableCell}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div className={styles.roleIconBox} style={{ width: '34px', height: '34px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                              work
+                            </span>
+                          </div>
+                          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{d.name}</span>
                         </div>
-                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{d.name}</span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      {d.grade ? <span className={styles.gradeChip}>Grade {d.grade}</span> : '—'}
-                    </td>
+                      <td className={styles.tableCell}>
+                        {d.grade ? <span className={styles.gradeChip}>Grade {d.grade}</span> : '—'}
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      {d.level ? <span className={styles.levelChip}>{d.level}</span> : '—'}
-                    </td>
+                      <td className={styles.tableCell}>
+                        {d.level ? <span className={styles.levelChip}>{d.level}</span> : '—'}
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{empCount} Staff</span>
-                    </td>
+                      <td className={styles.tableCell}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{empCount} Staff</span>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span className={`${styles.statusChip} ${isActive ? styles.statusActive : styles.statusInactive}`}>
-                        {isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.statusChip} ${isActive ? styles.statusActive : styles.statusInactive}`}>
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
 
-                    <td className={styles.tableCell} style={{ color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {d.description || '—'}
-                    </td>
+                      <td className={styles.tableCell} style={{ color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {d.description || '—'}
+                      </td>
 
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                      <Link
-                        href={`/erp/hr/employees?designation=${encodeURIComponent(d.name)}`}
-                        style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', fontSize: '12px' }}
-                      >
-                        View Personnel →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                        <Link
+                          href={`/erp/hr/employees?designation=${encodeURIComponent(d.name)}`}
+                          style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', fontSize: '12px' }}
+                        >
+                          View Personnel →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

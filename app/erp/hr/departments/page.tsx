@@ -478,71 +478,73 @@ export default function DepartmentsPage() {
       ) : (
         /* Data Table View */
         <div className={styles.tableCard}>
-          <table className={styles.dataTable}>
-            <thead>
-              <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Department Name</th>
-                <th className={styles.tableHeaderCell}>Code</th>
-                <th className={styles.tableHeaderCell}>Head of Department (HOD)</th>
-                <th className={styles.tableHeaderCell}>Staff Allocated</th>
-                <th className={styles.tableHeaderCell}>Status</th>
-                <th className={styles.tableHeaderCell}>Description</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDepartments.map(dept => {
-                const empCount = dept._count?.employees || 0;
-                const isActive = dept.isActive !== false;
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
+                <tr className={styles.tableHeaderRow}>
+                  <th className={styles.tableHeaderCell}>Department Name</th>
+                  <th className={styles.tableHeaderCell}>Code</th>
+                  <th className={styles.tableHeaderCell}>Head of Department (HOD)</th>
+                  <th className={styles.tableHeaderCell}>Staff Allocated</th>
+                  <th className={styles.tableHeaderCell}>Status</th>
+                  <th className={styles.tableHeaderCell}>Description</th>
+                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDepartments.map(dept => {
+                  const empCount = dept._count?.employees || 0;
+                  const isActive = dept.isActive !== false;
 
-                return (
-                  <tr key={dept.id} className={styles.tableRow}>
-                    <td className={styles.tableCell}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div className={styles.deptIconBox} style={{ width: '34px', height: '34px' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                            {getDeptIcon(dept.name)}
-                          </span>
+                  return (
+                    <tr key={dept.id} className={styles.tableRow}>
+                      <td className={styles.tableCell}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div className={styles.deptIconBox} style={{ width: '34px', height: '34px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                              {getDeptIcon(dept.name)}
+                            </span>
+                          </div>
+                          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{dept.name}</span>
                         </div>
-                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{dept.name}</span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      {dept.code ? <span className={styles.deptCodeTag}>{dept.code}</span> : '—'}
-                    </td>
+                      <td className={styles.tableCell}>
+                        {dept.code ? <span className={styles.deptCodeTag}>{dept.code}</span> : '—'}
+                      </td>
 
-                    <td className={styles.tableCell} style={{ color: 'var(--text-secondary)' }}>
-                      {dept.head ? `${dept.head.firstName} ${dept.head.lastName}` : <span style={{ color: 'var(--text-muted)' }}>Vacant</span>}
-                    </td>
+                      <td className={styles.tableCell} style={{ color: 'var(--text-secondary)' }}>
+                        {dept.head ? `${dept.head.firstName} ${dept.head.lastName}` : <span style={{ color: 'var(--text-muted)' }}>Vacant</span>}
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{empCount} Staff</span>
-                    </td>
+                      <td className={styles.tableCell}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{empCount} Staff</span>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span className={`${styles.statusChip} ${isActive ? styles.statusActive : styles.statusInactive}`}>
-                        {isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.statusChip} ${isActive ? styles.statusActive : styles.statusInactive}`}>
+                          {isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
 
-                    <td className={styles.tableCell} style={{ color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {dept.description || '—'}
-                    </td>
+                      <td className={styles.tableCell} style={{ color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {dept.description || '—'}
+                      </td>
 
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                      <Link
-                        href={`/erp/hr/employees?department=${encodeURIComponent(dept.name)}`}
-                        style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', fontSize: '12px' }}
-                      >
-                        View Staff →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                        <Link
+                          href={`/erp/hr/employees?department=${encodeURIComponent(dept.name)}`}
+                          style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none', fontSize: '12px' }}
+                        >
+                          View Staff →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

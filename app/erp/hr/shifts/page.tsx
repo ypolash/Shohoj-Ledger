@@ -577,7 +577,7 @@ export default function ShiftsAndDutyRosterPage() {
           {/* Controls Bar: Date navigation, Search, Department */}
           <div className="glass-card" style={{
             padding: '16px 20px',
-            borderRadius: '14px',
+            borderRadius: 0,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -592,7 +592,7 @@ export default function ShiftsAndDutyRosterPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 background: 'var(--surface-hover)',
-                borderRadius: '8px',
+                borderRadius: 0,
                 border: '1px solid var(--border-main)',
                 overflow: 'hidden'
               }}>
@@ -653,7 +653,7 @@ export default function ShiftsAndDutyRosterPage() {
                   onChange={(e) => setStartDate(e.target.value)}
                   style={{
                     padding: '6px 10px',
-                    borderRadius: '8px',
+                    borderRadius: 0,
                     border: '1px solid var(--border-main)',
                     background: 'var(--surface-hover)',
                     color: 'var(--text-main)',
@@ -671,7 +671,7 @@ export default function ShiftsAndDutyRosterPage() {
                     onClick={() => setDaysCount(cnt)}
                     style={{
                       padding: '6px 10px',
-                      borderRadius: '6px',
+                      borderRadius: 0,
                       border: '1px solid var(--border-main)',
                       background: daysCount === cnt ? 'var(--primary)' : 'var(--surface-hover)',
                       color: daysCount === cnt ? '#ffffff' : 'var(--text-secondary)',
@@ -698,7 +698,7 @@ export default function ShiftsAndDutyRosterPage() {
                   style={{
                     width: '100%',
                     padding: '7px 12px 7px 32px',
-                    borderRadius: '8px',
+                    borderRadius: 0,
                     border: '1px solid var(--border-main)',
                     background: 'var(--surface-hover)',
                     color: 'var(--text-main)',
@@ -713,7 +713,7 @@ export default function ShiftsAndDutyRosterPage() {
                   onChange={(e) => setSelectedDepartment(e.target.value)}
                   style={{
                     padding: '7px 12px',
-                    borderRadius: '8px',
+                    borderRadius: 0,
                     border: '1px solid var(--border-main)',
                     background: 'var(--surface-hover)',
                     color: 'var(--text-main)',
@@ -731,7 +731,7 @@ export default function ShiftsAndDutyRosterPage() {
 
           {/* Roster Matrix Table */}
           <div className="glass-card" style={{
-            borderRadius: '14px',
+            borderRadius: 0,
             overflow: 'hidden',
             background: 'var(--surface-card)',
             border: '1px solid var(--border-main)',
@@ -754,11 +754,11 @@ export default function ShiftsAndDutyRosterPage() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3b82f6' }} />
+                  <span style={{ width: '10px', height: '10px', borderRadius: 0, background: '#3b82f6' }} />
                   <span style={{ color: 'var(--text-secondary)' }}>Standard Shift</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px rgba(245, 158, 11, 0.6)' }} />
+                  <span style={{ width: '10px', height: '10px', borderRadius: 0, background: '#f59e0b', boxShadow: '0 0 6px rgba(245, 158, 11, 0.6)' }} />
                   <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Custom Duty Time (Override)</span>
                 </div>
               </div>
@@ -768,16 +768,17 @@ export default function ShiftsAndDutyRosterPage() {
             <div style={{ overflowX: 'auto', maxHeight: '650px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: `${300 + dateColumns.length * 130}px` }}>
                 <thead>
-                  <tr style={{ background: 'var(--surface-main)', borderBottom: '1px solid var(--border-main)', position: 'sticky', top: 0, zIndex: 10 }}>
+                  <tr style={{ background: '#10b981', borderBottom: '1px solid #059669', position: 'sticky', top: 0, zIndex: 10 }}>
                     <th style={{
-                      padding: '12px 16px',
-                      fontSize: '12px',
+                      padding: '9px 12px',
+                      fontSize: '0.725rem',
                       fontWeight: 700,
-                      color: 'var(--text-muted)',
+                      color: '#ffffff',
                       textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
                       position: 'sticky',
                       left: 0,
-                      background: 'var(--surface-main)',
+                      background: '#10b981',
                       zIndex: 11,
                       minWidth: '220px',
                       boxShadow: '2px 0 6px rgba(0,0,0,0.1)'
@@ -788,25 +789,23 @@ export default function ShiftsAndDutyRosterPage() {
                       <th
                         key={col.dateStr}
                         style={{
-                          padding: '10px 8px',
+                          padding: '9px 8px',
                           textAlign: 'center',
-                          fontSize: '12px',
+                          fontSize: '0.725rem',
                           fontWeight: 700,
                           minWidth: '120px',
-                          borderLeft: '1px solid var(--border-main)',
+                          borderLeft: '1px solid rgba(255,255,255,0.2)',
                           background: col.isToday
-                            ? 'rgba(37, 99, 235, 0.12)'
-                            : col.isWeekend
-                            ? 'rgba(255, 255, 255, 0.02)'
-                            : 'transparent',
-                          color: col.isToday ? 'var(--primary)' : 'var(--text-main)'
+                            ? '#059669'
+                            : '#10b981',
+                          color: '#ffffff'
                         }}
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                          <span style={{ fontSize: '11px', textTransform: 'uppercase', color: col.isToday ? 'var(--primary)' : 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>
                             {col.dayName}
                           </span>
-                          <span style={{ fontSize: '13px', fontWeight: col.isToday ? 800 : 600 }}>
+                          <span style={{ fontSize: '13px', fontWeight: col.isToday ? 800 : 600, color: '#ffffff' }}>
                             {col.label}
                           </span>
                         </div>

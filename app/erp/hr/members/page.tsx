@@ -504,85 +504,87 @@ export default function MembersPage() {
       ) : (
         /* Data Table View */
         <div className={styles.tableCard}>
-          <table className={styles.dataTable}>
-            <thead>
-              <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Member Profile</th>
-                <th className={styles.tableHeaderCell}>Role / Capacity</th>
-                <th className={styles.tableHeaderCell}>Contact Email</th>
-                <th className={styles.tableHeaderCell}>Phone Number</th>
-                <th className={styles.tableHeaderCell}>Join Date</th>
-                <th className={styles.tableHeaderCell}>Status</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.map(member => {
-                const initials = member.name
-                  .split(' ')
-                  .map(n => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2) || 'MB';
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
+                <tr className={styles.tableHeaderRow}>
+                  <th className={styles.tableHeaderCell}>Member Profile</th>
+                  <th className={styles.tableHeaderCell}>Role / Capacity</th>
+                  <th className={styles.tableHeaderCell}>Contact Email</th>
+                  <th className={styles.tableHeaderCell}>Phone Number</th>
+                  <th className={styles.tableHeaderCell}>Join Date</th>
+                  <th className={styles.tableHeaderCell}>Status</th>
+                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMembers.map(member => {
+                  const initials = member.name
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2) || 'MB';
 
-                const isActive = member.status === 'ACTIVE';
+                  const isActive = member.status === 'ACTIVE';
 
-                return (
-                  <tr key={member.id} className={styles.tableRow}>
-                    <td className={styles.tableCell}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div className={styles.memberAvatar} style={{ width: '34px', height: '34px', fontSize: '12px' }}>
-                          {initials}
+                  return (
+                    <tr key={member.id} className={styles.tableRow}>
+                      <td className={styles.tableCell}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div className={styles.memberAvatar} style={{ width: '34px', height: '34px', fontSize: '12px' }}>
+                            {initials}
+                          </div>
+                          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{member.name}</span>
                         </div>
-                        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{member.name}</span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span className={styles.memberRoleBadge}>{member.role}</span>
-                    </td>
+                      <td className={styles.tableCell}>
+                        <span className={styles.memberRoleBadge}>{member.role}</span>
+                      </td>
 
-                    <td className={styles.tableCell} style={{ color: 'var(--text-secondary)' }}>
-                      {member.email || '—'}
-                    </td>
+                      <td className={styles.tableCell} style={{ color: 'var(--text-secondary)' }}>
+                        {member.email || '—'}
+                      </td>
 
-                    <td className={styles.tableCell} style={{ color: 'var(--text-secondary)' }}>
-                      {member.phone || '—'}
-                    </td>
+                      <td className={styles.tableCell} style={{ color: 'var(--text-secondary)' }}>
+                        {member.phone || '—'}
+                      </td>
 
-                    <td className={styles.tableCell} style={{ color: 'var(--text-muted)' }}>
-                      {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString() : '—'}
-                    </td>
+                      <td className={styles.tableCell} style={{ color: 'var(--text-muted)' }}>
+                        {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString() : '—'}
+                      </td>
 
-                    <td className={styles.tableCell}>
-                      <span className={`${styles.statusChip} ${isActive ? styles.statusActive : styles.statusInactive}`}>
-                        {member.status || 'ACTIVE'}
-                      </span>
-                    </td>
+                      <td className={styles.tableCell}>
+                        <span className={`${styles.statusChip} ${isActive ? styles.statusActive : styles.statusInactive}`}>
+                          {member.status || 'ACTIVE'}
+                        </span>
+                      </td>
 
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <button
-                          onClick={e => openEditModal(e, member)}
-                          className={styles.iconBtn}
-                          title="Edit"
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
-                        </button>
-                        <button
-                          onClick={e => handleDelete(e, member.id, member.name)}
-                          className={`${styles.iconBtn} ${styles.deleteBtn}`}
-                          title="Delete"
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <button
+                            onClick={e => openEditModal(e, member)}
+                            className={styles.iconBtn}
+                            title="Edit"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
+                          </button>
+                          <button
+                            onClick={e => handleDelete(e, member.id, member.name)}
+                            className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                            title="Delete"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

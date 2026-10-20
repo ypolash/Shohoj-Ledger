@@ -164,7 +164,7 @@
 .toolbarCard {
   background: var(--surface-card, #0f172a);
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
-  border-radius: 16px;
+  border-radius: 0;
   padding: 14px 18px;
   display: flex;
   align-items: center;
@@ -192,7 +192,7 @@
 .searchInput {
   width: 100%;
   padding: 10px 14px 10px 40px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
   background: var(--surface-hover, rgba(255, 255, 255, 0.04));
   color: var(--text-main, #f8fafc);
@@ -240,7 +240,7 @@
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
   color: var(--text-main, #f8fafc);
   padding: 9px 14px;
-  border-radius: 12px;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 500;
   outline: none;
@@ -259,7 +259,7 @@
   gap: 4px;
   background: var(--surface-hover, rgba(255, 255, 255, 0.04));
   padding: 4px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
 }
 
@@ -269,7 +269,7 @@
   min-width: 38px;
   aspect-ratio: 1;
   padding: 0;
-  border-radius: 9px;
+  border-radius: 0;
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted, #94a3b8);
@@ -293,6 +293,70 @@
   color: #60a5fa !important;
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   Table View - Flat Green Table
+   -------------------------------------------------------------------------- */
+.tableCard {
+  background: var(--surface-main, #0f172a);
+  border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
+  width: 100%;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.tableHeaderRow {
+  background: #10b981;
+  border-bottom: 1px solid #059669;
+}
+
+.tableHeaderCell {
+  padding: 9px 12px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--border-main, rgba(255, 255, 255, 0.06));
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.03));
+}
+
+.tableCell {
+  padding: 8px 12px;
+  color: var(--text-main, #f8fafc);
+  vertical-align: middle;
+  white-space: nowrap;
+  font-size: 0.825rem;
 }
 
 /* Cards Grid */

@@ -450,108 +450,110 @@ export default function FreelancePage() {
         </div>
       ) : (
         /* Table View */
-        <div style={{ background: 'var(--surface-card, #0f172a)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}>
-                <th style={{ padding: '12px 16px' }}>Freelancer</th>
-                <th style={{ padding: '12px 16px' }}>Specialty</th>
-                <th style={{ padding: '12px 16px' }}>Rate</th>
-                <th style={{ padding: '12px 16px' }}>Skills</th>
-                <th style={{ padding: '12px 16px' }}>Contact</th>
-                <th style={{ padding: '12px 16px' }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredFreelancers.map(f => (
-                <tr key={f.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', color: '#f8fafc' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 700 }}>{f.name}</td>
-                  <td style={{ padding: '12px 16px', color: '#60a5fa' }}>{f.role}</td>
-                  <td style={{ padding: '12px 16px', color: '#34d399', fontWeight: 700 }}>{formatCurrency(f.rate)}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      {(f.skills || []).slice(0, 3).map((s, i) => (
-                        <span key={i} className={styles.skillPill}>{s}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 16px', color: '#cbd5e1', fontSize: '12px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                      {f.phone ? (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#38bdf8', fontWeight: 600 }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#38bdf8' }}>call</span>
-                          <span>{f.phone}</span>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '11px' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>phone_disabled</span>
-                          <span>No Mobile</span>
-                        </div>
-                      )}
-
-                      {f.email && (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#94a3b8', fontSize: '11px' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span>
-                          <span style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.email}</span>
-                        </div>
-                      )}
-
-                      {f.address && (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#a78bfa', fontSize: '11px' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#a78bfa' }}>location_on</span>
-                          <span>{f.address}</span>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span className={styles.statusBadge} style={{
-                      background: f.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: f.status === 'ACTIVE' ? '#34d399' : '#f87171',
-                      border: f.status === 'ACTIVE' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      {f.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setForm({
-                          id: f.id,
-                          name: f.name,
-                          role: f.role,
-                          rate: String(f.rate),
-                          email: f.email || '',
-                          phone: f.phone || '',
-                          address: f.address || '',
-                          skills: (f.skills || []).join(', '),
-                          portfolioUrl: f.portfolioUrl || '',
-                          status: f.status,
-                          notes: f.notes || ''
-                        });
-                        setIsEditing(true);
-                        setShowModal(true);
-                      }}
-                      style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', marginRight: '8px' }}
-                      title="Edit"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(f.id, f.name)}
-                      style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
-                      title="Delete"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                    </button>
-                  </td>
+        <div className={styles.tableCard}>
+          <div className={styles.tableWrapper}>
+            <table className={styles.dataTable}>
+              <thead>
+                <tr className={styles.tableHeaderRow}>
+                  <th className={styles.tableHeaderCell}>Freelancer</th>
+                  <th className={styles.tableHeaderCell}>Specialty</th>
+                  <th className={styles.tableHeaderCell}>Rate</th>
+                  <th className={styles.tableHeaderCell}>Skills</th>
+                  <th className={styles.tableHeaderCell}>Contact</th>
+                  <th className={styles.tableHeaderCell}>Status</th>
+                  <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredFreelancers.map(f => (
+                  <tr key={f.id} className={styles.tableRow}>
+                    <td className={styles.tableCell} style={{ fontWeight: 700 }}>{f.name}</td>
+                    <td className={styles.tableCell} style={{ color: '#60a5fa' }}>{f.role}</td>
+                    <td className={styles.tableCell} style={{ color: '#34d399', fontWeight: 700 }}>{formatCurrency(f.rate)}</td>
+                    <td className={styles.tableCell}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {(f.skills || []).slice(0, 3).map((s, i) => (
+                          <span key={i} className={styles.skillPill}>{s}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className={styles.tableCell} style={{ color: '#cbd5e1', fontSize: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        {f.phone ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#38bdf8', fontWeight: 600 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#38bdf8' }}>call</span>
+                            <span>{f.phone}</span>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '11px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>phone_disabled</span>
+                            <span>No Mobile</span>
+                          </div>
+                        )}
+
+                        {f.email && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#94a3b8', fontSize: '11px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>mail</span>
+                            <span style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.email}</span>
+                          </div>
+                        )}
+
+                        {f.address && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#a78bfa', fontSize: '11px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#a78bfa' }}>location_on</span>
+                            <span>{f.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className={styles.tableCell}>
+                      <span className={styles.statusBadge} style={{
+                        background: f.status === 'ACTIVE' ? '#10b981' : '#64748b',
+                        color: '#ffffff',
+                        border: f.status === 'ACTIVE' ? '1px solid #10b981' : '1px solid #64748b'
+                      }}>
+                        {f.status}
+                      </span>
+                    </td>
+                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({
+                            id: f.id,
+                            name: f.name,
+                            role: f.role,
+                            rate: String(f.rate),
+                            email: f.email || '',
+                            phone: f.phone || '',
+                            address: f.address || '',
+                            skills: (f.skills || []).join(', '),
+                            portfolioUrl: f.portfolioUrl || '',
+                            status: f.status,
+                            notes: f.notes || ''
+                          });
+                          setIsEditing(true);
+                          setShowModal(true);
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', marginRight: '8px' }}
+                        title="Edit"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(f.id, f.name)}
+                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
+                        title="Delete"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

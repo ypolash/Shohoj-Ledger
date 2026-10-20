@@ -298,7 +298,7 @@ export default function PerformancePage() {
           { label: 'Goals Achieved', value: stats.achievedGoals ?? 0, icon: 'emoji_events', color: '#10b981' },
           { label: 'Active PIPs', value: stats.activePips ?? 0, icon: 'healing', color: '#ef4444' },
         ].map((kpi, i) => (
-          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div key={i} className="glass-card" style={{ padding: '16px 20px', borderRadius: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>{kpi.label}</span>
               <span className="material-symbols-outlined" style={{ color: kpi.color, fontSize: '20px' }}>{kpi.icon}</span>
@@ -309,7 +309,7 @@ export default function PerformancePage() {
       </div>
 
       {/* Tabs & Filter Bar */}
-      <div className="glass-card" style={{ padding: '14px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+      <div className="glass-card" style={{ padding: '14px 20px', borderRadius: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {[
             { key: 'reviews', label: 'Appraisal Reviews', icon: 'rate_review', count: reviews.length },
@@ -325,7 +325,7 @@ export default function PerformancePage() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 16px',
-                borderRadius: '10px',
+                borderRadius: 0,
                 fontSize: '13px',
                 fontWeight: 600,
                 border: '1px solid',
@@ -338,7 +338,7 @@ export default function PerformancePage() {
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{tab.icon}</span>
               {tab.label}
               {tab.count !== undefined && (
-                <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '10px', background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: 0, background: 'var(--surface-hover)', color: 'var(--text-muted)' }}>
                   {tab.count}
                 </span>
               )}
@@ -347,7 +347,7 @@ export default function PerformancePage() {
         </div>
 
         {activeTab !== 'rewards' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: '10px', padding: '6px 12px', minWidth: '220px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-input)', border: '1px solid var(--border-main)', borderRadius: 0, padding: '6px 12px', minWidth: '220px' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--text-muted)' }}>search</span>
             <input
               type="text"
@@ -362,12 +362,12 @@ export default function PerformancePage() {
 
       {/* TAB 1: REVIEWS TABLE */}
       {activeTab === 'reviews' && (
-        <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+        <div className="glass-card" style={{ borderRadius: 0, overflowX: 'auto', padding: 0 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+              <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
                 {['Employee', 'Appraisal Period', 'Rating', 'Reviewer', 'Key Strengths & Feedback', 'Date'].map(h => (
-                  <th key={h} style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                  <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -381,7 +381,7 @@ export default function PerformancePage() {
               ) : (
                 filteredReviews.map(r => (
                   <tr key={r.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                    <td style={{ padding: '14px 18px' }}>
+                    <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
                         {r.employee?.firstName} {r.employee?.lastName}
                       </div>
@@ -389,23 +389,23 @@ export default function PerformancePage() {
                         {r.employee?.designationRef?.name || r.employee?.designation || 'Staff'} · <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{r.employee?.employeeId}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                       {r.period}
                     </td>
-                    <td style={{ padding: '14px 18px' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', fontWeight: 700 }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>star</span>
+                    <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: 0, background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', fontWeight: 700, fontSize: '0.725rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>star</span>
                         {r.overallRating} / 5.0
                       </div>
                     </td>
-                    <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                       {r.reviewer ? `${r.reviewer.firstName} ${r.reviewer.lastName}` : 'HR Manager'}
                     </td>
-                    <td style={{ padding: '14px 18px', maxWidth: '300px' }}>
+                    <td style={{ padding: '8px 12px', fontSize: '0.825rem', maxWidth: '300px' }}>
                       <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '12px' }}>{r.strengths || 'Consistent execution'}</div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{r.feedback || 'Exceeds role expectations'}</div>
                     </td>
-                    <td style={{ padding: '14px 18px', color: 'var(--text-muted)' }}>
+                    <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {new Date(r.reviewDate).toLocaleDateString()}
                     </td>
                   </tr>
@@ -486,12 +486,12 @@ export default function PerformancePage() {
             </button>
           </div>
 
-          <div className="glass-card" style={{ borderRadius: '16px', overflow: 'hidden', padding: 0 }}>
+          <div className="glass-card" style={{ borderRadius: 0, overflowX: 'auto', padding: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ background: 'var(--surface-hover)', borderBottom: '1px solid var(--border-main)' }}>
+                <tr style={{ background: '#10b981', borderBottom: '1px solid #059669' }}>
                   {['Employee', 'Timeline', 'Objectives & Target Milestones', 'Status'].map(h => (
-                    <th key={h} style={{ padding: '14px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                    <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 700, color: '#ffffff', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -505,17 +505,17 @@ export default function PerformancePage() {
                 ) : (
                   pips.map(p => (
                     <tr key={p.id} style={{ borderBottom: '1px solid var(--border-main)' }}>
-                      <td style={{ padding: '14px 18px', fontWeight: 600, color: 'var(--text-main)' }}>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                         {p.employee?.firstName} {p.employee?.lastName} ({p.employee?.employeeId})
                       </td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-secondary)' }}>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                         {new Date(p.startDate).toLocaleDateString()} ➔ {new Date(p.endDate).toLocaleDateString()}
                       </td>
-                      <td style={{ padding: '14px 18px', color: 'var(--text-main)' }}>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', color: 'var(--text-main)' }}>
                         {p.objectives}
                       </td>
-                      <td style={{ padding: '14px 18px' }}>
-                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+                      <td style={{ padding: '8px 12px', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: 0, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
                           {p.status}
                         </span>
                       </td>

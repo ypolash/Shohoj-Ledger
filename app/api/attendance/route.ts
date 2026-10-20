@@ -7,6 +7,7 @@ import { requireModule } from "@/lib/modules/moduleGuard";
 import { calculateAttendanceStatus, calculateEarlyLeaveStatus, parseDateTimeInTimezone, runOfficeOff } from "@/lib/attendance";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { isRegularStaff, isFreelancerOrModel } from "@/lib/staff/staffFilter";
 
 export async function GET(request: Request) {
   const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
@@ -129,7 +130,8 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(attendances);
+    const regularAttendances = attendances.filter(a => isRegularStaff(a.employee));
+    return NextResponse.json(regularAttendances);
   } catch (error) {
     console.error('Failed to fetch attendance:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -153,10 +155,17 @@ export async function POST(request: Request) {
 
     // SECURITY HOTFIX: Validate employee belongs to authenticated company
     const employee = await prisma.employee.findFirst({
-      where: { id: data.employeeId, companyId: companyIdForGuard }
+      where: { id: data.employeeId, companyId: companyIdForGuard },
+      include: {
+        departmentRef: true,
+        designationRef: true,
+      }
     });
     if (!employee) {
       return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 403 });
+    }
+    if (isFreelancerOrModel(employee)) {
+      return NextResponse.json({ error: 'Freelancers and Models do not use standard staff attendance logging.' }, { status: 400 });
     }
 
     let status = data.status || 'PRESENT';

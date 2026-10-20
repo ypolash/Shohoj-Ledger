@@ -6,6 +6,7 @@ import { syncLeaveRequestWithAttendance } from "@/lib/attendance";
 import { requireModule } from "@/lib/modules/moduleGuard";
 
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { isRegularStaff, isFreelancerOrModel } from "@/lib/staff/staffFilter";
 
 export async function GET(request: Request) {
   const rbacGuard = await requirePermission("ATTENDANCE_VIEW");
@@ -29,12 +30,24 @@ export async function GET(request: Request) {
       where,
       include: {
         employee: {
-          select: { firstName: true, lastName: true, designation: true }
+          select: {
+            id: true,
+            employeeId: true,
+            firstName: true,
+            lastName: true,
+            designation: true,
+            department: true,
+            employmentType: true,
+            departmentRef: { select: { name: true } },
+            designationRef: { select: { name: true } },
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
-    return NextResponse.json(leaves);
+
+    const regularLeaves = leaves.filter(l => isRegularStaff(l.employee));
+    return NextResponse.json(regularLeaves);
   } catch (error) {
     console.error('Failed to fetch leave requests:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -58,10 +71,14 @@ export async function POST(request: Request) {
 
     // SECURITY HOTFIX: Validate employee belongs to authenticated company
     const employee = await prisma.employee.findFirst({
-      where: { id: data.employeeId, companyId: companyIdForGuard }
+      where: { id: data.employeeId, companyId: companyIdForGuard },
+      include: { departmentRef: true, designationRef: true }
     });
     if (!employee) {
       return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 403 });
+    }
+    if (isFreelancerOrModel(employee)) {
+      return NextResponse.json({ error: 'Leave requests are only available for regular staff members.' }, { status: 400 });
     }
 
     const referer = request.headers.get("referer") || "";

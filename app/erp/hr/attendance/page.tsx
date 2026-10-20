@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from './attendance.module.css';
 import { HorizontalCalendarView } from './components/HorizontalCalendarView';
 import { HorizontalDateStrip } from './components/HorizontalDateStrip';
+import { isRegularStaff } from '@/lib/staff/staffFilter';
 
 interface AttendanceRecord {
   id: string;
@@ -600,17 +601,21 @@ export default function AttendancePage() {
     try {
       const [attRes, empRes, hrRes] = await Promise.all([
         fetch(filterEmpId ? `/api/attendance?employeeId=${filterEmpId}` : '/api/attendance', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/employees?all=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/employees', { cache: 'no-store' }).catch(() => null),
         fetch('/api/hr/settings', { cache: 'no-store' }).catch(() => null),
       ]);
 
       if (attRes && attRes.ok) {
         const attData = await attRes.json().catch(() => null);
-        if (attData) setRecords(Array.isArray(attData) ? attData : []);
+        if (attData && Array.isArray(attData)) {
+          setRecords(attData.filter((r: any) => isRegularStaff(r.employee)));
+        }
       }
       if (empRes && empRes.ok) {
         const empData = await empRes.json().catch(() => null);
-        if (empData) setEmployees(Array.isArray(empData) ? empData : []);
+        if (empData && Array.isArray(empData)) {
+          setEmployees(empData.filter((e: any) => isRegularStaff(e)));
+        }
       }
       if (hrRes && hrRes.ok) {
         const hrData = await hrRes.json().catch(() => null);

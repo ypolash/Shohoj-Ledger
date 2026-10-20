@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withCompany } from "@/lib/company/companyFilter";
+import { isRegularStaff } from "@/lib/staff/staffFilter";
 
 export async function GET(request: Request) {
   const companyFilter = await withCompany();
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
-    const [employees, salaryPayments, attendances, leaveRequests, departments] = await Promise.all([
+    const [rawEmployees, rawSalaryPayments, attendances, leaveRequests, departments] = await Promise.all([
       prisma.employee.findMany({
         where: { companyId },
         include: {
@@ -54,6 +55,9 @@ export async function GET(request: Request) {
         }
       })
     ]);
+
+    const employees = rawEmployees.filter(e => isRegularStaff(e));
+    const salaryPayments = rawSalaryPayments.filter(p => isRegularStaff(p.employee));
 
     // 1. Master Salary Sheet
     const salarySheet = salaryPayments.map(p => ({

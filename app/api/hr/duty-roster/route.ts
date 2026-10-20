@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { isRegularStaff } from "@/lib/staff/staffFilter";
 
 export async function GET(req: Request) {
   try {
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
       ? new Date(`${endDateParam}T23:59:59.999Z`) 
       : new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 12, 23, 59, 59, 999));
 
-    // 1. Fetch active employees (excluding temporary freelance and models)
+    // 1. Fetch active employees (strictly permanent and salaried staff only)
     const rawEmployees = await prisma.employee.findMany({
       where: {
         companyId,
@@ -46,6 +47,8 @@ export async function GET(req: Request) {
         location: true,
         email: true,
         workShiftId: true,
+        departmentRef: { select: { name: true } },
+        designationRef: { select: { name: true } },
         workShift: {
           select: {
             id: true,
@@ -60,32 +63,7 @@ export async function GET(req: Request) {
       orderBy: { firstName: "asc" }
     });
 
-    const isTemporary = (emp: any) => {
-      const empId = (emp.employeeId || '').toUpperCase().trim();
-      if (empId.startsWith('EMP-')) return false;
-      if (empId.startsWith('FL-') || empId.startsWith('MDL-')) return true;
-      const loc = typeof emp.location === 'string' ? emp.location : '';
-      if (loc.includes('FREELANCER') || loc.includes('MODEL_TALENT')) return true;
-      const email = (emp.email || '').toLowerCase().trim();
-      if (email.startsWith('freelance.') || email.startsWith('model.')) return true;
-      const type = (emp.employmentType || '').toLowerCase().trim();
-      if (['freelance', 'freelancer', 'contractor', 'model', 'talent'].includes(type)) return true;
-      const dept = (emp.department || '').toLowerCase().trim();
-      if (['freelance', 'model talent', 'modeling agency', 'independent / freelance'].includes(dept)) return true;
-      const desig = (emp.designation || '').toLowerCase().trim();
-      if (
-        desig === 'model' ||
-        desig.startsWith('freelance') ||
-        desig.includes('freelance ') ||
-        desig.includes('freelancer') ||
-        desig.includes('catalog model') ||
-        desig.includes('fashion model') ||
-        desig.includes('commercial model')
-      ) return true;
-      return false;
-    };
-
-    const employees = rawEmployees.filter(emp => !isTemporary(emp));
+    const employees = rawEmployees.filter(emp => isRegularStaff(emp));
 
     // 2. Fetch duty rosters in the date range
     const rosters = await prisma.attendanceRoster.findMany({
@@ -170,15 +148,28 @@ export async function POST(req: Request) {
     } = body;
 
     // Resolve target employee list
-    const targetEmployeeIds: string[] = [];
+    const candidateEmployeeIds: string[] = [];
     if (Array.isArray(employeeIds) && employeeIds.length > 0) {
-      targetEmployeeIds.push(...employeeIds);
+      candidateEmployeeIds.push(...employeeIds);
     } else if (employeeId) {
-      targetEmployeeIds.push(employeeId);
+      candidateEmployeeIds.push(employeeId);
     }
 
-    if (targetEmployeeIds.length === 0) {
+    if (candidateEmployeeIds.length === 0) {
       return NextResponse.json({ error: "At least one employee must be selected" }, { status: 400 });
+    }
+
+    // Strictly validate that only regular staff can be scheduled on attendance rosters
+    const validStaff = await prisma.employee.findMany({
+      where: {
+        id: { in: candidateEmployeeIds },
+        companyId
+      },
+      include: { departmentRef: true, designationRef: true }
+    });
+    const targetEmployeeIds = validStaff.filter(e => isRegularStaff(e)).map(e => e.id);
+    if (targetEmployeeIds.length === 0) {
+      return NextResponse.json({ error: "Duty rosters can only be assigned to regular staff members." }, { status: 400 });
     }
 
     // Resolve target dates list

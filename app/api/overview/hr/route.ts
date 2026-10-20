@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withCompany } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { STAFF_PRISMA_EXCLUDE } from "@/lib/staff/staffFilter";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,8 @@ export async function GET() {
     // if the company filter is empty, bypassed, or invalid.
     const hasValidCompanyId = baseCompanyFilter && typeof (baseCompanyFilter as any).companyId === 'string';
     const companyFilter = hasValidCompanyId 
-      ? baseCompanyFilter 
-      : { ...baseCompanyFilter, companyId: { not: null } };
+      ? { ...baseCompanyFilter, ...STAFF_PRISMA_EXCLUDE }
+      : { ...baseCompanyFilter, companyId: { not: null }, ...STAFF_PRISMA_EXCLUDE };
 
     // 1. Total Employees
     const totalEmployees = await prisma.employee.count({

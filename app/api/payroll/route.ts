@@ -5,6 +5,7 @@ import { calculatePayroll } from '@/lib/payroll';
 import { getSession } from '@/lib/session';
 import { requireModule } from "@/lib/modules/moduleGuard";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { isRegularStaff } from "@/lib/staff/staffFilter";
 
 export async function POST(request: Request) {
   const rbacGuard = await requirePermission("PAYROLL_GENERATE");
@@ -43,8 +44,14 @@ export async function POST(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const employee = await prisma.employee.findFirst({ where: { companyId, id: employeeId, systemSource } });
+    const employee = await prisma.employee.findFirst({
+      where: { companyId, id: employeeId, systemSource },
+      include: { departmentRef: true, designationRef: true }
+    });
     if (!employee) return NextResponse.json({ error: 'Employee not found or access denied' }, { status: 404 });
+    if (!isRegularStaff(employee)) {
+      return NextResponse.json({ error: 'Freelancers and Models are compensated via project settlements, not monthly staff payroll.' }, { status: 400 });
+    }
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
@@ -316,7 +323,7 @@ export async function GET(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const payments = await prisma.salaryPayment.findMany({
+    const rawPayments = await prisma.salaryPayment.findMany({
       where: { ...companyFilter, employee: { systemSource } },
       include: { 
         employee: {
@@ -328,6 +335,8 @@ export async function GET(request: Request) {
       },
       orderBy: { createdAt: 'desc' }
     });
+
+    const payments = rawPayments.filter(p => isRegularStaff(p.employee));
 
     // Calculate Summary Metrics for the given month/year
     const currentMonthPayments = payments.filter(p => p.month === month && p.year === year);

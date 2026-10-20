@@ -5,6 +5,7 @@ import { withCompany } from "@/lib/company/companyFilter";
 import { requireModule } from "@/lib/modules/moduleGuard";
 import { getSession } from "@/lib/session";
 import { calculatePayroll } from '@/lib/payroll';
+import { isRegularStaff } from '@/lib/staff/staffFilter';
 
 // Handle Bulk Generation
 export async function POST(request: Request) {
@@ -36,41 +37,41 @@ export async function POST(request: Request) {
     const referer = request.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    let targetEmployeeIds: string[] = [];
-
-    const nonProjectBasedCondition = {
-      OR: [
-        { employmentType: null },
-        { employmentType: { not: 'Project-Based' } }
-      ]
-    };
+    let targetEmployeeCandidates: any[] = [];
 
     if (employeeIds && Array.isArray(employeeIds) && employeeIds.length > 0) {
-      targetEmployeeIds = employeeIds;
+      targetEmployeeCandidates = await prisma.employee.findMany({
+        where: {
+          ...companyFilter,
+          id: { in: employeeIds },
+          status: 'ACTIVE',
+        },
+        include: { departmentRef: true, designationRef: true }
+      });
     } else if (departmentId) {
-      const employeesInDept = await prisma.employee.findMany({
+      targetEmployeeCandidates = await prisma.employee.findMany({
         where: {
           ...companyFilter,
           departmentId,
           status: 'ACTIVE',
           systemSource,
-          ...nonProjectBasedCondition
         },
-        select: { id: true }
+        include: { departmentRef: true, designationRef: true }
       });
-      targetEmployeeIds = employeesInDept.map(e => e.id);
     } else {
-      const allActiveEmployees = await prisma.employee.findMany({
+      targetEmployeeCandidates = await prisma.employee.findMany({
         where: {
           ...companyFilter,
           status: 'ACTIVE',
           systemSource,
-          ...nonProjectBasedCondition
         },
-        select: { id: true }
+        include: { departmentRef: true, designationRef: true }
       });
-      targetEmployeeIds = allActiveEmployees.map(e => e.id);
     }
+
+    const targetEmployeeIds = targetEmployeeCandidates
+      .filter(e => isRegularStaff(e))
+      .map(e => e.id);
 
     if (targetEmployeeIds.length === 0) {
       return NextResponse.json({ error: 'No employees found to generate payroll for' }, { status: 404 });

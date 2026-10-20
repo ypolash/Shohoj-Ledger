@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
+import { isRegularStaff, isFreelancerOrModel } from "@/lib/staff/staffFilter";
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +18,16 @@ export async function GET(req: Request) {
         },
         include: {
           employee: {
-            select: { firstName: true, lastName: true, employeeId: true }
+            select: {
+              firstName: true,
+              lastName: true,
+              employeeId: true,
+              employmentType: true,
+              department: true,
+              designation: true,
+              departmentRef: { select: { name: true } },
+              designationRef: { select: { name: true } },
+            }
           },
           payrollRun: {
             select: { period: { select: { name: true } } }
@@ -37,7 +47,16 @@ export async function GET(req: Request) {
         },
         include: {
           employee: {
-            select: { firstName: true, lastName: true, employeeId: true }
+            select: {
+              firstName: true,
+              lastName: true,
+              employeeId: true,
+              employmentType: true,
+              department: true,
+              designation: true,
+              departmentRef: { select: { name: true } },
+              designationRef: { select: { name: true } },
+            }
           }
         },
         orderBy: { date: "desc" },
@@ -56,12 +75,14 @@ export async function GET(req: Request) {
 
     const finesMap = new Map<string, any>();
     for (const f of existingFines) {
-      finesMap.set(f.id, f);
+      if (isRegularStaff(f.employee)) {
+        finesMap.set(f.id, f);
+      }
     }
 
     // Auto-sync attendance records into EmployeeFine so they display on HR Fines tab
     for (const att of lateAttendances) {
-      if (!att.employeeId) continue;
+      if (!att.employeeId || !isRegularStaff(att.employee)) continue;
 
       let fineAmt = 0;
       let isWaived = false;
@@ -106,7 +127,16 @@ export async function GET(req: Request) {
             },
             include: {
               employee: {
-                select: { firstName: true, lastName: true, employeeId: true }
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  employeeId: true,
+                  employmentType: true,
+                  department: true,
+                  designation: true,
+                  departmentRef: { select: { name: true } },
+                  designationRef: { select: { name: true } },
+                }
               },
               payrollRun: {
                 select: { period: { select: { name: true } } }
@@ -120,9 +150,9 @@ export async function GET(req: Request) {
       }
     }
 
-    const allFines = Array.from(finesMap.values()).sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    const allFines = Array.from(finesMap.values())
+      .filter(f => isRegularStaff(f.employee))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json({ fines: allFines });
   } catch (error) {
@@ -147,6 +177,14 @@ export async function POST(req: Request) {
 
     if (!employeeId || !amount || !reason) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const targetEmp = await prisma.employee.findFirst({
+      where: { id: employeeId, companyId },
+      include: { departmentRef: true, designationRef: true }
+    });
+    if (!targetEmp || !isRegularStaff(targetEmp)) {
+      return NextResponse.json({ error: "Disciplinary fines can only be issued to regular staff members." }, { status: 400 });
     }
 
     const fine = await prisma.employeeFine.create({

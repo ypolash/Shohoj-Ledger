@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isRegularStaff } from "@/lib/staff/staffFilter";
 
 export interface AttendanceCalculationResult {
   isLate: boolean;
@@ -630,16 +631,20 @@ export async function evaluateDailyAbsenceAndPenalties(companyId: string, target
     orderBy: { amount: "desc" }
   });
 
-  // 5. Fetch Active Employees
-  const employees = await prisma.employee.findMany({
+  // 5. Fetch Active Employees (Permanent & Regular Staff only - exclude Freelancers and Models)
+  const rawEmployees = await prisma.employee.findMany({
     where: {
       companyId,
       status: "ACTIVE"
     },
     include: {
-      workShift: true
+      workShift: true,
+      departmentRef: true,
+      designationRef: true,
     }
   });
+
+  const employees = rawEmployees.filter(e => isRegularStaff(e));
 
   // 6. Fetch Existing Attendance Records for this date
   const existingAttendances = await prisma.attendance.findMany({

@@ -6,7 +6,7 @@
   position: relative;
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: var(--radius-xl, 12px);
+  border-radius: var(--radius-md, 6px);
   overflow: hidden;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
   transition: box-shadow 0.2s ease;
@@ -36,8 +36,8 @@
 }
 
 .th {
-  padding: 14px 16px;
-  font-size: 0.75rem;
+  padding: 9px 12px;
+  font-size: 0.725rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -83,33 +83,35 @@
 }
 
 .td {
-  padding: 14px 16px;
+  padding: 8px 12px;
   color: var(--text-main);
   vertical-align: middle;
   border-bottom: 1px solid var(--border-light, var(--border-main));
+  white-space: nowrap;
+  font-size: 0.825rem;
 }
 
 .compact .th {
-  padding: 10px 12px;
+  padding: 7px 10px;
 }
 
 .compact .td {
-  padding: 10px 12px;
+  padding: 6px 10px;
 }
 
 /* Checkbox Column */
 .checkboxCell {
-  width: 44px;
-  padding-left: 16px !important;
-  padding-right: 8px !important;
+  width: 40px;
+  padding-left: 14px !important;
+  padding-right: 6px !important;
   text-align: center;
 }
 
 .customCheckbox {
   appearance: none;
   -webkit-appearance: none;
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   border: 1.5px solid var(--border-main);
   border-radius: 4px;
   outline: none;
@@ -146,16 +148,17 @@
 .referenceBadge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.8rem;
+  font-size: 0.775rem;
   font-weight: 700;
   color: var(--primary);
   background: var(--primary-glow);
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 2px 7px;
+  border-radius: 5px;
   text-decoration: none;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .referenceBadge:hover {
@@ -163,38 +166,44 @@
 }
 
 .dateDisplay {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .dateMain {
   font-weight: 500;
   color: var(--text-main);
-  font-size: 0.85rem;
+  font-size: 0.825rem;
+  white-space: nowrap;
 }
 
 .dateSub {
   font-size: 0.725rem;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* Source / Payer */
 .sourceIdentity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  max-width: 280px;
+  white-space: nowrap;
 }
 
 .sourceAvatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.775rem;
+  font-size: 0.7rem;
   color: white;
   flex-shrink: 0;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -202,136 +211,131 @@
 
 .sourceDetails {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .sourceName {
   font-weight: 600;
   color: var(--text-main);
-  font-size: 0.875rem;
+  font-size: 0.825rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sourceMemo {
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   color: var(--text-muted);
-  max-width: 220px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
 }
 
 /* Category Badge */
 .categoryBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.775rem;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.725rem;
   font-weight: 600;
   background: var(--surface-hover);
   color: var(--text-main);
   border: 1px solid var(--border-main);
+  white-space: nowrap;
 }
 
-/* Financial Breakdown & Collection Gauge */
+/* Financial Breakdown (Single Line) */
 .financialBreakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 150px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .amountReceived {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   color: var(--success);
+  white-space: nowrap;
+}
+
+.amountDue {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #ef4444;
+  white-space: nowrap;
 }
 
 .amountMeta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.725rem;
-  color: var(--text-muted);
+  display: none;
 }
 
 .collectionBarTrack {
-  width: 100%;
-  height: 5px;
-  background: var(--border-main);
-  border-radius: 9999px;
-  overflow: hidden;
+  display: none;
 }
 
 .collectionBarFill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.3s ease;
-}
-
-.collectionPaid {
-  background: #10b981;
-}
-
-.collectionPartial {
-  background: #f59e0b;
-}
-
-.collectionUnpaid {
-  background: #ef4444;
+  display: none;
 }
 
 /* Status Pill */
 .statusBadge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 0;
+  font-size: 0.725rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .statusPaid {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #10b981;
 }
 
 .statusPartial {
-  background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: #f59e0b;
+  color: #ffffff;
+  border: 1px solid #f59e0b;
 }
 
 .statusUnpaid {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #ef4444;
 }
 
 .statusDot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background-color: currentColor;
+  background-color: #ffffff;
 }
 
 /* Actions Column */
 .actionGroup {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .iconBtn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -501,13 +505,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
+  padding: 8px 16px;
   background: var(--surface-main);
   border-top: 1px solid var(--border-main);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .pageSizeSelector {

@@ -3,7 +3,7 @@
 .tableContainer {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 14px;
+  border-radius: var(--radius-md, 6px);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;

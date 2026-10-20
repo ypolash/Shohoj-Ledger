@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import styles from './FinanceFilters.module.css';
 
 interface FinanceFiltersProps {
   period: string;
@@ -29,6 +30,44 @@ const MONTHS = [
   { value: "10", label: "October" },
   { value: "11", label: "November" },
   { value: "12", label: "December" },
+];
+
+const PERIOD_TABS = [
+  {
+    id: 'this_month',
+    label: 'This Month',
+    shortLabel: 'Month',
+    icon: 'calendar_month',
+    colorKey: 'this_month',
+  },
+  {
+    id: 'last_month',
+    label: 'Last Month',
+    shortLabel: 'Last',
+    icon: 'history',
+    colorKey: 'last_month',
+  },
+  {
+    id: 'this_quarter',
+    label: 'This Quarter',
+    shortLabel: 'Quarter',
+    icon: 'pie_chart',
+    colorKey: 'this_quarter',
+  },
+  {
+    id: 'this_year',
+    label: 'Full Year',
+    shortLabel: 'Year',
+    icon: 'date_range',
+    colorKey: 'this_year',
+  },
+  {
+    id: 'all',
+    label: 'All Time',
+    shortLabel: 'All',
+    icon: 'all_inclusive',
+    colorKey: 'all',
+  },
 ];
 
 export function FinanceFilters({
@@ -63,145 +102,98 @@ export function FinanceFilters({
   };
 
   return (
-    <div 
-      className="glass-card" 
-      style={{ 
-        padding: '14px 20px', 
-        borderRadius: '12px', 
-        marginBottom: '24px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        gap: '16px', 
-        flexWrap: 'wrap',
-        border: '1px solid var(--border-light)'
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--primary)' }}>calendar_month</span>
+    <div className={`glass-card ${styles.container}`}>
+      <div className={styles.leftGroup}>
+        <div className={styles.periodTitle}>
+          <span className={`material-symbols-outlined ${styles.periodTitleIcon}`}>calendar_month</span>
           Period View:
         </div>
 
-        {/* Quick Period Buttons */}
-        <div style={{ display: 'flex', background: 'var(--surface-main)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-light)', gap: '2px' }}>
-          {[
-            { id: 'this_month', label: 'This Month' },
-            { id: 'last_month', label: 'Last Month' },
-            { id: 'this_quarter', label: 'This Quarter' },
-            { id: 'this_year', label: 'Full Year' },
-            { id: 'all', label: 'All Time' }
-          ].map(p => {
-            const isActive = period === p.id && month === 'ALL';
+        {/* Quick Period Buttons - Square Icon View */}
+        <div className={styles.periodTabsList} role="tablist" aria-label="Filter ledger by period">
+          {PERIOD_TABS.map((tab) => {
+            const isActive = period === tab.id && month === 'ALL';
             return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handlePeriodSelect(p.id)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  fontSize: '12px',
-                  fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer',
-                  background: isActive ? 'var(--primary)' : 'transparent',
-                  color: isActive ? '#fff' : 'var(--text-muted)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {p.label}
-              </button>
+              <div key={tab.id} className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => handlePeriodSelect(tab.id)}
+                  className={`${styles.squareBtn} ${isActive ? styles.squareBtnActive : ''} ${styles[`square_${tab.colorKey}`]}`}
+                  title={tab.label}
+                  aria-label={tab.label}
+                >
+                  <span className={`material-symbols-outlined ${styles.squareIcon}`}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.squareLabel}>{tab.shortLabel}</span>
+                </button>
+                <span className={styles.squareTooltip}>
+                  {tab.label}
+                </span>
+              </div>
             );
           })}
         </div>
 
-        {/* Specific Month Select */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Month:</span>
-          <select 
-            value={month}
-            onChange={(e) => handleMonthSelect(e.target.value)}
-            style={{ 
-              padding: '6px 12px', 
-              borderRadius: '6px', 
-              border: '1px solid var(--border-light)', 
-              background: 'var(--surface-main)', 
-              color: 'var(--text-main)', 
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer'
-            }}
-          >
-            {MONTHS.map(m => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
-        </div>
+        {/* Dropdown Filters with Icons */}
+        <div className={styles.dropdownGroup}>
+          {/* Specific Month Select */}
+          <div className={styles.selectWrapper}>
+            <span className={`material-symbols-outlined ${styles.selectIcon}`}>calendar_today</span>
+            <span className={styles.selectLabel}>Month:</span>
+            <select 
+              value={month}
+              onChange={(e) => handleMonthSelect(e.target.value)}
+              className={styles.selectField}
+              aria-label="Filter by month"
+            >
+              {MONTHS.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Year Select */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Year:</span>
-          <select 
-            value={year}
-            onChange={(e) => onYearChange(parseInt(e.target.value, 10))}
-            style={{ 
-              padding: '6px 12px', 
-              borderRadius: '6px', 
-              border: '1px solid var(--border-light)', 
-              background: 'var(--surface-main)', 
-              color: 'var(--text-main)', 
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer'
-            }}
-          >
-            {yearsList.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
+          {/* Year Select */}
+          <div className={styles.selectWrapper}>
+            <span className={`material-symbols-outlined ${styles.selectIcon}`}>event</span>
+            <span className={styles.selectLabel}>Year:</span>
+            <select 
+              value={year}
+              onChange={(e) => onYearChange(parseInt(e.target.value, 10))}
+              className={styles.selectField}
+              aria-label="Filter by year"
+            >
+              {yearsList.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Account Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Account:</span>
-          <select 
-            value={account}
-            onChange={(e) => onAccountChange(e.target.value)}
-            style={{ 
-              padding: '6px 12px', 
-              borderRadius: '6px', 
-              border: '1px solid var(--border-light)', 
-              background: 'var(--surface-main)', 
-              color: 'var(--text-main)', 
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer'
-            }}
-          >
-            <option value="ALL">All Accounts</option>
-            <option value="BANK">Bank Accounts</option>
-            <option value="CASH">Cash in Hand</option>
-            <option value="BKASH">bKash / MFS</option>
-          </select>
+          {/* Account Filter */}
+          <div className={styles.selectWrapper}>
+            <span className={`material-symbols-outlined ${styles.selectIcon}`}>account_balance</span>
+            <span className={styles.selectLabel}>Account:</span>
+            <select 
+              value={account}
+              onChange={(e) => onAccountChange(e.target.value)}
+              className={styles.selectField}
+              aria-label="Filter by account"
+            >
+              <option value="ALL">All Accounts</option>
+              <option value="BANK">Bank Accounts</option>
+              <option value="CASH">Cash in Hand</option>
+              <option value="BKASH">bKash / MFS</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Active Filter Indicator Badge */}
       {periodLabel && (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '6px', 
-          padding: '4px 10px', 
-          borderRadius: '20px', 
-          background: 'rgba(59, 130, 246, 0.1)', 
-          border: '1px solid rgba(59, 130, 246, 0.25)', 
-          color: '#60a5fa', 
-          fontSize: '12px',
-          fontWeight: 600
-        }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>visibility</span>
+        <div className={styles.activeBadge}>
+          <span className={`material-symbols-outlined ${styles.badgeIcon}`}>visibility</span>
           Showing: {periodLabel}
         </div>
       )}

@@ -1,0 +1,275 @@
+.container {
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1px solid var(--border-light);
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.leftGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.periodTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.periodTitleIcon {
+  font-size: 18px;
+  color: var(--primary);
+}
+
+/* Square Box Icon View Tabs */
+.periodTabsList {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-main);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+}
+
+.squareWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.squareBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  aspect-ratio: 1;
+  padding: 3px 2px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 2px;
+  outline: none;
+}
+
+.squareBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-main);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.squareIcon {
+  font-size: 19px;
+  transition: color 0.2s ease, transform 0.2s ease;
+  color: var(--text-muted);
+}
+
+.squareBtn:hover .squareIcon {
+  transform: scale(1.1);
+}
+
+.squareLabel {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+/* Distinct hover icon colors */
+.square_this_month:hover .squareIcon {
+  color: #3b82f6;
+}
+.square_last_month:hover .squareIcon {
+  color: #8b5cf6;
+}
+.square_this_quarter:hover .squareIcon {
+  color: #06b6d4;
+}
+.square_this_year:hover .squareIcon {
+  color: #10b981;
+}
+.square_all:hover .squareIcon {
+  color: #f59e0b;
+}
+
+/* Active Selected States */
+.squareBtnActive {
+  background: var(--surface-hover) !important;
+  transform: translateY(-1px);
+}
+
+.squareBtnActive .squareLabel {
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+.square_this_month.squareBtnActive {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6, 0 3px 12px rgba(59, 130, 246, 0.28) !important;
+}
+.square_this_month.squareBtnActive .squareIcon {
+  color: #3b82f6 !important;
+}
+
+.square_last_month.squareBtnActive {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 1px #8b5cf6, 0 3px 12px rgba(139, 92, 246, 0.28) !important;
+}
+.square_last_month.squareBtnActive .squareIcon {
+  color: #8b5cf6 !important;
+}
+
+.square_this_quarter.squareBtnActive {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 1px #06b6d4, 0 3px 12px rgba(6, 182, 212, 0.28) !important;
+}
+.square_this_quarter.squareBtnActive .squareIcon {
+  color: #06b6d4 !important;
+}
+
+.square_this_year.squareBtnActive {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px #10b981, 0 3px 12px rgba(16, 185, 129, 0.28) !important;
+}
+.square_this_year.squareBtnActive .squareIcon {
+  color: #10b981 !important;
+}
+
+.square_all.squareBtnActive {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 1px #f59e0b, 0 3px 12px rgba(245, 158, 11, 0.28) !important;
+}
+.square_all.squareBtnActive .squareIcon {
+  color: #f59e0b !important;
+}
+
+/* Floating Tooltip */
+.squareTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  z-index: 70;
+}
+
+.squareTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.squareWrapper:hover .squareTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Dropdown Filters */
+.dropdownGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.selectWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-main);
+  padding: 3px 10px 3px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.selectWrapper:hover,
+.selectWrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.selectIcon {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.selectLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.selectField {
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+}
+
+.selectField option {
+  background: var(--surface-card);
+  color: var(--text-main);
+}
+
+/* Active Filter Indicator Badge */
+.activeBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeIcon {
+  font-size: 15px;
+}

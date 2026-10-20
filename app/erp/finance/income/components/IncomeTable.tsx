@@ -405,7 +405,7 @@ export function IncomeTable({
 
                     {/* Date */}
                     <td className={styles.td}>
-                      <div className={styles.dateDisplay}>
+                      <div className={styles.dateDisplay} title={`${new Date(inc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} ${new Date(inc.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`}>
                         <span className={styles.dateMain}>
                           {new Date(inc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                         </span>
@@ -417,7 +417,7 @@ export function IncomeTable({
 
                     {/* Reference */}
                     <td className={styles.td}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                         <Link 
                           href={`/erp/finance/income/${inc.id}`}
                           className={styles.referenceBadge}
@@ -427,7 +427,7 @@ export function IncomeTable({
                         </Link>
                         <button
                           onClick={(e) => handleCopyText(`INC-${inc.id.slice(0, 8).toUpperCase()}`, inc.id, e)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px', display: 'inline-flex', alignItems: 'center' }}
                           title="Copy reference code"
                         >
                           {copiedId === inc.id ? <Check size={12} color="var(--success)" /> : <Copy size={12} />}
@@ -437,7 +437,7 @@ export function IncomeTable({
 
                     {/* Source / Payer */}
                     <td className={styles.td}>
-                      <div className={styles.sourceIdentity}>
+                      <div className={styles.sourceIdentity} title={`${inc.description || inc.source || 'General Revenue'}${inc.description && inc.source && inc.description !== inc.source ? ` (${inc.source})` : ''}`}>
                         <div className={styles.sourceAvatar} style={{ background: gradient }}>
                           {initials}
                         </div>
@@ -446,8 +446,8 @@ export function IncomeTable({
                             {inc.description || inc.source || 'General Revenue'}
                           </span>
                           {inc.description && inc.source && inc.description !== inc.source && (
-                            <span className={styles.sourceMemo} title={inc.source}>
-                              {inc.source}
+                            <span className={styles.sourceMemo}>
+                              · {inc.source}
                             </span>
                           )}
                         </div>
@@ -463,28 +463,15 @@ export function IncomeTable({
 
                     {/* Received / Total Breakdown */}
                     <td className={styles.td}>
-                      <div className={styles.financialBreakdown}>
-                        <div className={styles.amountReceived}>
+                      <div className={styles.financialBreakdown} title={`Received: BDT ${receivedAmount} | Total: BDT ${totalAmount}${dueAmount > 0 ? ` | Due: BDT ${dueAmount}` : ''}`}>
+                        <span className={styles.amountReceived}>
                           {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(receivedAmount)}
-                        </div>
-                        <div className={styles.amountMeta}>
-                          <span>Total: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(totalAmount)}</span>
-                          {dueAmount > 0 && (
-                            <span style={{ color: '#ef4444', fontWeight: 700 }}>Bill Due: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(dueAmount)}</span>
-                          )}
-                        </div>
-                        <div className={styles.collectionBarTrack}>
-                          <div 
-                            className={`${styles.collectionBarFill} ${
-                              percentCollected === 100 
-                                ? styles.collectionPaid 
-                                : percentCollected > 0 
-                                  ? styles.collectionPartial 
-                                  : styles.collectionUnpaid
-                            }`}
-                            style={{ width: `${percentCollected}%` }}
-                          />
-                        </div>
+                        </span>
+                        {dueAmount > 0 && (
+                          <span className={styles.amountDue}>
+                            (Due {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(dueAmount)})
+                          </span>
+                        )}
                       </div>
                     </td>
 

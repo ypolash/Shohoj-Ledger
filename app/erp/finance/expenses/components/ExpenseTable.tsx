@@ -399,7 +399,7 @@ export function ExpenseTable({
 
                     {/* Date */}
                     <td className={styles.td}>
-                      <div className={styles.dateDisplay}>
+                      <div className={styles.dateDisplay} title={`${new Date(exp.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} ${new Date(exp.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`}>
                         <span className={styles.dateMain}>
                           {new Date(exp.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                         </span>
@@ -411,7 +411,7 @@ export function ExpenseTable({
 
                     {/* Reference */}
                     <td className={styles.td}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                         <Link 
                           href={`/erp/finance/expenses/${exp.id}`}
                           className={styles.referenceBadge}
@@ -421,7 +421,7 @@ export function ExpenseTable({
                         </Link>
                         <button
                           onClick={(e) => handleCopyText(`EXP-${exp.id.slice(0, 8).toUpperCase()}`, exp.id, e)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px', display: 'inline-flex', alignItems: 'center' }}
                           title="Copy reference code"
                         >
                           {copiedId === exp.id ? <Check size={12} color="var(--success)" /> : <Copy size={12} />}
@@ -431,7 +431,7 @@ export function ExpenseTable({
 
                     {/* Category & Memo */}
                     <td className={styles.td}>
-                      <div className={styles.payeeIdentity}>
+                      <div className={styles.payeeIdentity} title={`${exp.description || exp.category || 'General Expense'}${exp.description && exp.category ? ` (${exp.category})` : ''}`}>
                         <div className={styles.payeeAvatar} style={{ background: gradient }}>
                           {initials}
                         </div>
@@ -440,8 +440,8 @@ export function ExpenseTable({
                             {exp.description || exp.category || 'General Expense'}
                           </span>
                           {exp.description && exp.category && (
-                            <span className={styles.payeeMemo} title={exp.category}>
-                              {exp.category}
+                            <span className={styles.payeeMemo}>
+                              · {exp.category}
                             </span>
                           )}
                         </div>

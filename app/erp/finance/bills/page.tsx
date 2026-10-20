@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import styles from './BillsFilters.module.css';
 import { 
   Receipt, 
   Calendar, 
@@ -483,103 +484,138 @@ export default function BillsDuePage() {
 
       {/* Filter & Search Bar */}
       <div className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-        {/* Type & Talent Filter Pills */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button
-            onClick={() => { setTypeFilter('ALL'); setTalentFilter('ALL'); }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: (typeFilter === 'ALL' && talentFilter === 'ALL') ? '1px solid #3b82f6' : '1px solid var(--border-light)',
-              background: (typeFilter === 'ALL' && talentFilter === 'ALL') ? 'rgba(59, 130, 246, 0.2)' : 'var(--surface-hover)',
-              color: (typeFilter === 'ALL' && talentFilter === 'ALL') ? '#60a5fa' : 'var(--text-muted)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            All Dues ({kpis.totalCount})
-          </button>
+        {/* Type & Talent Filter Square Icon View */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className={styles.tabsContainer} role="tablist" aria-label="Filter dues by category">
+            {[
+              {
+                id: 'ALL',
+                label: 'All Dues',
+                shortLabel: 'All Dues',
+                icon: <Receipt size={18} />,
+                count: kpis.totalCount,
+                amount: kpis.totalDue,
+                colorKey: 'all',
+                isActive: typeFilter === 'ALL' && talentFilter === 'ALL',
+                onClick: () => { setTypeFilter('ALL'); setTalentFilter('ALL'); }
+              },
+              {
+                id: 'PAYABLE_ALL',
+                label: 'All Payables (Vendor & Talent)',
+                shortLabel: 'All Payables',
+                icon: <ArrowUpRight size={18} />,
+                count: kpis.payableCount,
+                amount: kpis.totalPayableDue,
+                colorKey: 'payable',
+                isActive: typeFilter === 'PAYABLE' && talentFilter === 'ALL',
+                onClick: () => { setTypeFilter('PAYABLE'); setTalentFilter('ALL'); }
+              },
+              {
+                id: 'MODEL',
+                label: 'Model Due (Talent & Models)',
+                shortLabel: 'Model Due',
+                icon: <Camera size={18} />,
+                count: kpis.modelCount,
+                amount: kpis.modelDue,
+                colorKey: 'model',
+                isActive: talentFilter === 'MODEL',
+                onClick: () => { setTypeFilter('PAYABLE'); setTalentFilter(talentFilter === 'MODEL' ? 'ALL' : 'MODEL'); }
+              },
+              {
+                id: 'FREELANCE',
+                label: 'Freelance Due (Crew & Freelancers)',
+                shortLabel: 'Freelance Due',
+                icon: <Laptop size={18} />,
+                count: kpis.freelanceCount,
+                amount: kpis.freelanceDue,
+                colorKey: 'freelance',
+                isActive: talentFilter === 'FREELANCE',
+                onClick: () => { setTypeFilter('PAYABLE'); setTalentFilter(talentFilter === 'FREELANCE' ? 'ALL' : 'FREELANCE'); }
+              },
+              {
+                id: 'RECEIVABLE',
+                label: 'Receivable from Clients',
+                shortLabel: 'Receivable',
+                icon: <ArrowDownLeft size={18} />,
+                count: kpis.receivableCount,
+                amount: kpis.totalReceivableDue,
+                colorKey: 'receivable',
+                isActive: typeFilter === 'RECEIVABLE',
+                onClick: () => { setTypeFilter('RECEIVABLE'); setTalentFilter('ALL'); }
+              }
+            ].map((tab) => (
+              <div key={tab.id} className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={tab.isActive}
+                  aria-label={`${tab.label} (${tab.count})`}
+                  onClick={tab.onClick}
+                  className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${tab.isActive ? styles.squareBtnActive : ''}`}
+                >
+                  <span className={styles.squareIcon}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.squareCount}>{tab.count}</span>
+                </button>
+                <div className={styles.squareTooltip}>
+                  <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
+                  {tab.amount > 0 && (
+                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                      ৳{tab.amount.toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
 
-          <button
-            onClick={() => { setTypeFilter('PAYABLE'); setTalentFilter('ALL'); }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: (typeFilter === 'PAYABLE' && talentFilter === 'ALL') ? '1px solid #2563eb' : '1px solid var(--border-light)',
-              background: (typeFilter === 'PAYABLE' && talentFilter === 'ALL') ? 'rgba(37, 99, 235, 0.25)' : 'var(--surface-hover)',
-              color: (typeFilter === 'PAYABLE' && talentFilter === 'ALL') ? '#3b82f6' : 'var(--text-muted)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            All Payables (Blue: {kpis.payableCount})
-          </button>
+          {/* Active Filter Notice */}
+          {(() => {
+            let activeLabel = 'All Dues';
+            let activeCount = kpis.totalCount;
+            let activeAmount = kpis.totalDue;
+            let isCustom = false;
 
-          {/* Model Due Pill */}
-          <button
-            onClick={() => { setTypeFilter('PAYABLE'); setTalentFilter(talentFilter === 'MODEL' ? 'ALL' : 'MODEL'); }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: talentFilter === 'MODEL' ? '1px solid #ec4899' : '1px solid var(--border-light)',
-              background: talentFilter === 'MODEL' ? 'rgba(236, 72, 153, 0.25)' : 'var(--surface-hover)',
-              color: talentFilter === 'MODEL' ? '#f472b6' : 'var(--text-muted)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Camera size={13} color={talentFilter === 'MODEL' ? '#f472b6' : '#94a3b8'} />
-            <span>Model Due ({kpis.modelCount})</span>
-            {kpis.modelDue > 0 && (
-              <span style={{ fontSize: '11px', opacity: 0.85 }}>• ৳{kpis.modelDue.toLocaleString()}</span>
-            )}
-          </button>
+            if (talentFilter === 'MODEL') {
+              activeLabel = 'Model Due';
+              activeCount = kpis.modelCount;
+              activeAmount = kpis.modelDue;
+              isCustom = true;
+            } else if (talentFilter === 'FREELANCE') {
+              activeLabel = 'Freelance Due';
+              activeCount = kpis.freelanceCount;
+              activeAmount = kpis.freelanceDue;
+              isCustom = true;
+            } else if (typeFilter === 'PAYABLE') {
+              activeLabel = 'All Payables';
+              activeCount = kpis.payableCount;
+              activeAmount = kpis.totalPayableDue;
+              isCustom = true;
+            } else if (typeFilter === 'RECEIVABLE') {
+              activeLabel = 'Client Receivables';
+              activeCount = kpis.receivableCount;
+              activeAmount = kpis.totalReceivableDue;
+              isCustom = true;
+            }
 
-          {/* Freelance Due Pill */}
-          <button
-            onClick={() => { setTypeFilter('PAYABLE'); setTalentFilter(talentFilter === 'FREELANCE' ? 'ALL' : 'FREELANCE'); }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: talentFilter === 'FREELANCE' ? '1px solid #06b6d4' : '1px solid var(--border-light)',
-              background: talentFilter === 'FREELANCE' ? 'rgba(6, 182, 212, 0.25)' : 'var(--surface-hover)',
-              color: talentFilter === 'FREELANCE' ? '#38bdf8' : 'var(--text-muted)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <Laptop size={13} color={talentFilter === 'FREELANCE' ? '#38bdf8' : '#94a3b8'} />
-            <span>Freelance Due ({kpis.freelanceCount})</span>
-            {kpis.freelanceDue > 0 && (
-              <span style={{ fontSize: '11px', opacity: 0.85 }}>• ৳{kpis.freelanceDue.toLocaleString()}</span>
-            )}
-          </button>
-
-          <button
-            onClick={() => { setTypeFilter('RECEIVABLE'); setTalentFilter('ALL'); }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: typeFilter === 'RECEIVABLE' ? '1px solid #ef4444' : '1px solid var(--border-light)',
-              background: typeFilter === 'RECEIVABLE' ? 'rgba(239, 68, 68, 0.25)' : 'var(--surface-hover)',
-              color: typeFilter === 'RECEIVABLE' ? '#ef4444' : 'var(--text-muted)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            Receivable from Clients (Red: {kpis.receivableCount})
-          </button>
+            return (
+              <div className={styles.activeFilterNotice}>
+                <span style={{ opacity: 0.75 }}>Showing:</span>
+                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{activeLabel} ({activeCount})</span>
+                {activeAmount > 0 && <span>• ৳{activeAmount.toLocaleString()}</span>}
+                {isCustom && (
+                  <button
+                    type="button"
+                    onClick={() => { setTypeFilter('ALL'); setTalentFilter('ALL'); }}
+                    style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: '0 2px', textDecoration: 'underline', fontSize: '11px', marginLeft: '4px' }}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Search & Category Filter */}
@@ -649,34 +685,34 @@ export default function BillsDuePage() {
       </div>
 
       {/* Bills Due Table */}
-      <div className="glass-card" style={{ padding: '0px', borderRadius: '14px', overflow: 'hidden' }}>
+      <div className="glass-card" style={{ padding: '0px', borderRadius: '6px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1050px' }}>
           <thead>
             <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <th style={{ padding: '16px 20px', fontWeight: 600 }}>Bill # / Reference</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600 }}>Payee / Client / Talent</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600 }}>Type &amp; Category</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600 }}>Due Date</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'right' }}>Total Contract / Invoiced</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'right' }}>Settled Amount</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'right' }}>Balance Due</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'center' }}>Status</th>
-              <th style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'center' }}>Actions</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Bill # / Reference</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Payee / Client / Talent</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Type</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Due Date</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Contract</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Settled</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Due</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>Status</th>
+              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>Actions</th>
             </tr>
           </thead>
-          <tbody style={{ fontSize: '13px' }}>
+          <tbody style={{ fontSize: '12.5px' }}>
             {isLoading ? (
               <tr>
-                <td colSpan={9} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px', opacity: 0.7 }} />
+                <td colSpan={9} style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 8px', opacity: 0.7 }} />
                   <div>Loading live accounts due ledger...</div>
                 </td>
               </tr>
             ) : filteredBills.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <Receipt size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                  <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '15px' }}>No dues or bills found</div>
+                <td colSpan={9} style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <Receipt size={32} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
+                  <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>No dues or bills found</div>
                   <div style={{ fontSize: '12px', marginTop: '4px' }}>All project accounts and vendor bills are fully settled.</div>
                 </td>
               </tr>
@@ -687,44 +723,38 @@ export default function BillsDuePage() {
                 const isPaid = bill.status === "PAID" || bill.dueAmount <= 0;
 
                 // Color definition per user instruction:
-                // Payable to others -> BLUE (#2563eb / #3b82f6)
-                // Receivable by us -> RED (#ef4444 / #dc2626)
+                // Payable to others -> BLUE (#3b82f6)
+                // Receivable by us -> RED (#ef4444)
                 const dueColor = isPayable ? '#3b82f6' : '#ef4444';
-                const dueBg = isPayable ? 'rgba(37, 99, 235, 0.12)' : 'rgba(239, 68, 68, 0.12)';
-                const dueBorder = isPayable ? 'rgba(37, 99, 235, 0.3)' : 'rgba(239, 68, 68, 0.3)';
 
                 return (
                   <tr key={bill.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                     {/* Bill # */}
-                    <td style={{ padding: '16px 20px', fontWeight: 700, color: isPayable ? '#60a5fa' : '#f87171' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color: isPayable ? '#60a5fa' : '#f87171', whiteSpace: 'nowrap' }}>
                       {bill.billNumber}
                     </td>
 
                     {/* Payee / Client / Entity */}
-                    <td style={{ padding: '16px 20px' }}>
-                      <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '13.5px' }}>
-                        {bill.entityName}
+                    <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '280px', overflow: 'hidden' }} title={`${bill.entityName}${bill.projectName ? ` · Project: ${bill.projectName}` : ''}${bill.notes ? ` (${bill.notes})` : ''}`}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {bill.entityName}
+                        </span>
+                        {bill.projectName && (
+                          <span style={{ fontSize: '11px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>
+                            · {bill.projectName}
+                          </span>
+                        )}
                       </div>
-                      {bill.projectName && (
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <FolderOpen size={12} color="#38bdf8" />
-                          <span>Project: {bill.projectName}</span>
-                        </div>
-                      )}
-                      {bill.notes && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                          {bill.notes}
-                        </div>
-                      )}
                     </td>
 
                     {/* Type & Category */}
-                    <td style={{ padding: '16px 20px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                    <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center' }} title={bill.category}>
                         {bill.talentType === 'MODEL' ? (
                           <span style={{ 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
+                            padding: '2px 7px', 
+                            borderRadius: '4px', 
                             background: 'rgba(236, 72, 153, 0.15)', 
                             border: '1px solid rgba(236, 72, 153, 0.4)',
                             fontSize: '11px', 
@@ -734,12 +764,12 @@ export default function BillsDuePage() {
                             alignItems: 'center',
                             gap: '4px'
                           }}>
-                            <Camera size={11} /> Model Due
+                            <Camera size={11} /> Model
                           </span>
                         ) : bill.talentType === 'EDITOR' || bill.category.toLowerCase().includes('editor') || bill.category.toLowerCase().includes('freelance') ? (
                           <span style={{ 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
+                            padding: '2px 7px', 
+                            borderRadius: '4px', 
                             background: 'rgba(6, 182, 212, 0.15)', 
                             border: '1px solid rgba(6, 182, 212, 0.4)',
                             fontSize: '11px', 
@@ -749,131 +779,130 @@ export default function BillsDuePage() {
                             alignItems: 'center',
                             gap: '4px'
                           }}>
-                            <Laptop size={11} /> Freelance Due
+                            <Laptop size={11} /> Freelance
                           </span>
                         ) : (
                           <span style={{ 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
+                            padding: '2px 7px', 
+                            borderRadius: '4px', 
                             background: isPayable ? 'rgba(37, 99, 235, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
                             border: `1px solid ${isPayable ? 'rgba(37, 99, 235, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
                             fontSize: '11px', 
                             fontWeight: 700, 
                             color: isPayable ? '#3b82f6' : '#ef4444' 
                           }}>
-                            {isPayable ? '💳 Payable (Liability)' : '📥 Receivable (Asset)'}
+                            {isPayable ? 'Payable' : 'Receivable'}
                           </span>
                         )}
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          {bill.category}
-                        </span>
                       </div>
                     </td>
 
                     {/* Due Date */}
-                    <td style={{ padding: '16px 20px', color: isPaid ? 'var(--text-muted)' : '#f59e0b', fontWeight: 600 }}>
+                    <td style={{ padding: '8px 12px', color: isPaid ? 'var(--text-muted)' : '#f59e0b', fontWeight: 600, whiteSpace: 'nowrap' }}>
                       {bill.dueDate || bill.issueDate}
                     </td>
 
                     {/* Total Amount */}
-                    <td style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'right', color: 'var(--text-main)' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 600, textAlign: 'right', color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                       ৳ {bill.amount.toLocaleString()}
                     </td>
 
                     {/* Paid Amount */}
-                    <td style={{ padding: '16px 20px', fontWeight: 600, textAlign: 'right', color: '#10b981' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 600, textAlign: 'right', color: '#10b981', whiteSpace: 'nowrap' }}>
                       ৳ {bill.paidAmount.toLocaleString()}
                     </td>
 
-                    {/* Balance Due (Blue for Payable, Red for Receivable) */}
-                    <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                      <div style={{ 
-                        display: 'inline-block',
-                        padding: '4px 10px',
-                        borderRadius: '8px',
-                        background: isPaid ? 'rgba(16, 185, 129, 0.15)' : dueBg,
-                        border: `1px solid ${isPaid ? 'rgba(16, 185, 129, 0.3)' : dueBorder}`,
-                        fontWeight: 800,
+                    {/* Balance Due (Single Line) */}
+                    <td style={{ padding: '8px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <span style={{ 
+                        fontWeight: 700,
                         fontSize: '13px',
                         color: isPaid ? '#10b981' : dueColor
                       }}>
                         ৳ {bill.dueAmount.toLocaleString()}
-                      </div>
+                      </span>
                     </td>
 
-                    {/* Status Badge */}
-                    <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                    {/* Status Badge (Solid Rectangular) */}
+                    <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {isPaid ? (
-                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: '0', fontSize: '11px', fontWeight: 700, background: '#10b981', color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           ✓ Settled
                         </span>
                       ) : bill.status === 'PARTIAL' ? (
-                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: '0', fontSize: '11px', fontWeight: 700, background: '#f59e0b', color: '#ffffff' }}>
                           Partial Paid
                         </span>
                       ) : (
                         <span style={{ 
-                          padding: '4px 10px', 
-                          borderRadius: '12px', 
+                          padding: '3px 8px', 
+                          borderRadius: '0', 
                           fontSize: '11px', 
                           fontWeight: 700, 
-                          background: isPayable ? 'rgba(37, 99, 235, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
-                          color: isPayable ? '#3b82f6' : '#ef4444' 
+                          background: isPayable ? '#2563eb' : '#ef4444', 
+                          color: '#ffffff' 
                         }}>
-                          {isPayable ? '⏳ Bill Due' : '⏳ Client Due'}
+                          {isPayable ? 'Bill Due' : 'Client Due'}
                         </span>
                       )}
                     </td>
 
                     {/* Actions */}
-                    <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                        {!isPaid && (
-                          <button
-                            onClick={() => {
-                              setActiveModalBill(bill);
-                              setPaymentAmount(bill.dueAmount.toString());
-                              setPaymentNotes("");
-                            }}
-                            style={{
-                              padding: '6px 12px',
-                              borderRadius: '8px',
-                              background: isPayable 
-                                ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' 
-                                : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                              color: '#ffffff',
-                              border: 'none',
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              boxShadow: isPayable 
-                                ? '0 2px 8px rgba(37, 99, 235, 0.3)' 
-                                : '0 2px 8px rgba(16, 185, 129, 0.3)'
-                            }}
-                          >
-                            {isPayable ? 'Pay Bill' : 'Collect Due'}
-                          </button>
-                        )}
+                    <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center', width: '118px' }}>
+                        <div style={{ width: '84px', display: 'flex', justifyContent: 'center' }}>
+                          {!isPaid && (
+                            <button
+                              onClick={() => {
+                                setActiveModalBill(bill);
+                                setPaymentAmount(bill.dueAmount.toString());
+                                setPaymentNotes("");
+                              }}
+                              style={{
+                                width: '84px',
+                                height: '28px',
+                                padding: '4px 0',
+                                borderRadius: '4px',
+                                background: isPayable ? '#2563eb' : '#10b981',
+                                color: '#ffffff',
+                                border: 'none',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              {isPayable ? 'Pay Bill' : 'Collect Due'}
+                            </button>
+                          )}
+                        </div>
 
-                        {bill.link && (
-                          <button
-                            onClick={() => router.push(bill.link!)}
-                            title="Open Project Workspace"
-                            style={{
-                              padding: '6px 8px',
-                              borderRadius: '8px',
-                              background: 'rgba(255, 255, 255, 0.06)',
-                              border: '1px solid rgba(255, 255, 255, 0.12)',
-                              color: '#cbd5e1',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            <ExternalLink size={14} />
-                          </button>
-                        )}
+                        <div style={{ width: '28px', display: 'flex', justifyContent: 'center' }}>
+                          {bill.link && (
+                            <button
+                              onClick={() => router.push(bill.link!)}
+                              title="Open Project Workspace"
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                padding: '0',
+                                borderRadius: '4px',
+                                background: 'var(--surface-hover)',
+                                border: '1px solid var(--border-light)',
+                                color: '#cbd5e1',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <ExternalLink size={13} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>

@@ -47,7 +47,7 @@ export function LoanTable({
   };
 
   return (
-    <div className="glass-card" style={{ padding: '24px', borderRadius: '14px', background: 'var(--surface-card, #0f172a)', border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+    <div className="glass-card" style={{ padding: '24px', borderRadius: '0', background: 'var(--surface-card, #0f172a)', border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))', boxShadow: 'none' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main, #f8fafc)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -63,7 +63,7 @@ export function LoanTable({
           onClick={onOpenRecordModal}
           style={{
             padding: '8px 16px',
-            borderRadius: '8px',
+            borderRadius: '0',
             background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
             border: 'none',
             color: '#ffffff',
@@ -73,7 +73,7 @@ export function LoanTable({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)',
+            boxShadow: 'none',
             transition: 'all 0.15s ease'
           }}
         >
@@ -85,15 +85,15 @@ export function LoanTable({
       <div style={{ overflowX: 'auto', width: '100%' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-hover, rgba(255,255,255,0.03))', color: 'var(--text-muted, #94a3b8)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <th style={{ padding: '14px 16px', fontWeight: 600, borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Bank / Institution</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Facility Type</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Interest Rate</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'right', borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Principal Amount</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'right', borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Outstanding</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'center', borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Repayment Progress</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'center', borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Status</th>
-              <th style={{ padding: '14px 16px', fontWeight: 600, textAlign: 'right', borderBottom: '1px solid var(--border-main, rgba(255,255,255,0.08))' }}>Actions</th>
+            <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Bank / Institution</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Facility Type</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Interest Rate</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Principal Amount</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Outstanding</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'center', borderBottom: '1px solid #059669' }}>Repayment Progress</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'center', borderBottom: '1px solid #059669' }}>Status</th>
+              <th style={{ padding: '14px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Actions</th>
             </tr>
           </thead>
           <tbody style={{ fontSize: '13px' }}>

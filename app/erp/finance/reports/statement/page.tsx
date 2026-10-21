@@ -698,7 +698,7 @@ export default function ComprehensiveFinanceReportPage() {
       {/* ====================================================================
           MINIMALIST TRANSACTION LEDGER (MATCHING HR TABLE STYLE)
           ==================================================================== */}
-      <div className="glass-card" style={{ padding: "20px", borderRadius: "14px", border: "1px solid var(--border-main)" }}>
+      <div className="glass-card" style={{ padding: "20px", borderRadius: "0", border: "1px solid var(--border-main)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--text-main)" }}>
@@ -718,7 +718,7 @@ export default function ComprehensiveFinanceReportPage() {
                 placeholder="Search ledger..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ padding: "6px 10px 6px 30px", borderRadius: "6px", background: "var(--surface-main)", border: "1px solid var(--border-main)", color: "var(--text-main)", fontSize: "12px", width: "180px" }}
+                style={{ padding: "6px 10px 6px 30px", borderRadius: "0", background: "var(--surface-main)", border: "1px solid var(--border-main)", color: "var(--text-main)", fontSize: "12px", width: "180px" }}
               />
             </div>
 
@@ -726,7 +726,7 @@ export default function ComprehensiveFinanceReportPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              style={{ padding: "6px 10px", borderRadius: "6px", background: "var(--surface-main)", border: "1px solid var(--border-main)", color: "var(--text-main)", fontSize: "12px", fontWeight: 500 }}
+              style={{ padding: "6px 10px", borderRadius: "0", background: "var(--surface-main)", border: "1px solid var(--border-main)", color: "var(--text-main)", fontSize: "12px", fontWeight: 500 }}
             >
               <option value="ALL">All Types</option>
               <option value="INCOME">Income</option>
@@ -742,14 +742,14 @@ export default function ComprehensiveFinanceReportPage() {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--border-main)", textAlign: "left", color: "var(--text-muted)", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                <th style={{ padding: "10px 8px" }}>Date</th>
-                <th style={{ padding: "10px 8px" }}>Type</th>
-                <th style={{ padding: "10px 8px" }}>Category</th>
-                <th style={{ padding: "10px 8px" }}>Details / Payee</th>
-                <th style={{ padding: "10px 8px" }}>Method</th>
-                <th style={{ padding: "10px 8px", textAlign: "right" }}>Amount</th>
-                <th style={{ padding: "10px 8px", textAlign: "center" }}>Status</th>
+              <tr style={{ background: "#10b981", color: "#ffffff", borderBottom: "1px solid #059669", textAlign: "left", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <th style={{ padding: "10px 8px", color: "#ffffff", borderBottom: "1px solid #059669" }}>Date</th>
+                <th style={{ padding: "10px 8px", color: "#ffffff", borderBottom: "1px solid #059669" }}>Type</th>
+                <th style={{ padding: "10px 8px", color: "#ffffff", borderBottom: "1px solid #059669" }}>Category</th>
+                <th style={{ padding: "10px 8px", color: "#ffffff", borderBottom: "1px solid #059669" }}>Details / Payee</th>
+                <th style={{ padding: "10px 8px", color: "#ffffff", borderBottom: "1px solid #059669" }}>Method</th>
+                <th style={{ padding: "10px 8px", color: "#ffffff", textAlign: "right", borderBottom: "1px solid #059669" }}>Amount</th>
+                <th style={{ padding: "10px 8px", color: "#ffffff", textAlign: "center", borderBottom: "1px solid #059669" }}>Status</th>
               </tr>
             </thead>
             <tbody>

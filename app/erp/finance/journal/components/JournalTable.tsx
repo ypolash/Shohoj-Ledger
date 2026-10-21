@@ -12,19 +12,19 @@ export function JournalTable() {
   ];
 
   return (
-    <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto' }}>
+    <div className="glass-card" style={{ borderRadius: '0', overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Entry No</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Reference</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Description</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Debit (BDT)</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Credit (BDT)</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'center' }}>Balanced</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'center' }}>Status</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Entry No</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Date</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Reference</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Description</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Debit (BDT)</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Credit (BDT)</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'center', borderBottom: '1px solid #059669' }}>Balanced</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'center', borderBottom: '1px solid #059669' }}>Status</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Actions</th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>
@@ -47,7 +47,7 @@ export function JournalTable() {
               </td>
               <td style={{ padding: '16px', textAlign: 'center' }}>
                 <span style={{ 
-                  padding: '4px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                  padding: '4px 8px', borderRadius: '0', fontSize: '10px', fontWeight: 600,
                   background: jv.status === 'Posted' ? 'var(--success-glow)' : 'var(--warning-glow)',
                   color: jv.status === 'Posted' ? 'var(--success)' : 'var(--warning)'
                 }}>
@@ -56,7 +56,7 @@ export function JournalTable() {
               </td>
               <td style={{ padding: '16px', textAlign: 'right' }}>
                 <Link href={'/erp/finance/journal/' + jv.id} style={{ 
-                  padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, 
+                  padding: '6px 12px', borderRadius: '0', fontSize: '11px', fontWeight: 600, 
                   background: 'var(--surface-main)', color: 'var(--text-main)', border: '1px solid var(--border-main)', 
                   textDecoration: 'none', display: 'inline-block' 
                 }}>

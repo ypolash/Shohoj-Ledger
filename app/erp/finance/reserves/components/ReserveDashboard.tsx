@@ -12,21 +12,21 @@ export function ReserveDashboard({ totalReserve = 0, transactions = [], onAction
             ৳ {new Intl.NumberFormat('en-US').format(totalReserve)}
           </div>
           <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
-            <button onClick={() => onAction && onAction('DEPOSIT')} style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Deposit</button>
-            <button onClick={() => onAction && onAction('WITHDRAWAL')} style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'transparent', color: 'var(--text-main)', border: '1px solid var(--border-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Withdraw</button>
+            <button onClick={() => onAction && onAction('DEPOSIT')} style={{ flex: 1, padding: '8px', borderRadius: '0', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Deposit</button>
+            <button onClick={() => onAction && onAction('WITHDRAWAL')} style={{ flex: 1, padding: '8px', borderRadius: '0', background: 'transparent', color: 'var(--text-main)', border: '1px solid var(--border-main)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Withdraw</button>
           </div>
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', overflowX: 'auto' }}>
+      <div className="glass-card" style={{ padding: '24px', borderRadius: '0', overflowX: 'auto' }}>
         <h2 style={{ margin: '0 0 24px 0', fontSize: '18px', fontWeight: 600 }}>Reserve Transactions</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Type</th>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Reason</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Amount (BDT)</th>
+            <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Date</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Type</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Reason</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Amount (BDT)</th>
             </tr>
           </thead>
           <tbody style={{ fontSize: '13px' }}>

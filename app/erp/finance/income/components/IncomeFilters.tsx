@@ -41,7 +41,7 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
 
   const selectStyle: React.CSSProperties = {
     padding: '8px 14px',
-    borderRadius: '8px',
+    borderRadius: '0',
     border: '1px solid var(--border-main)',
     background: 'var(--surface-main)',
     fontSize: '0.85rem',
@@ -49,7 +49,7 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
     outline: 'none',
     cursor: 'pointer',
     minWidth: '150px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+    boxShadow: 'none'
   };
 
   return (
@@ -59,10 +59,10 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
       gap: '12px',
       padding: '16px 20px',
       background: 'var(--surface-main)',
-      borderRadius: '12px',
+      borderRadius: '0',
       border: '1px solid var(--border-main)',
       marginBottom: '16px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+      boxShadow: 'none'
     }}>
       {/* Top Filter Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -140,7 +140,7 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
               alignItems: 'center',
               gap: '6px',
               padding: '6px 12px',
-              borderRadius: '6px',
+              borderRadius: '0',
               background: 'transparent',
               border: '1px dashed var(--border-main)',
               color: 'var(--text-muted)',
@@ -168,7 +168,7 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
               alignItems: 'center',
               gap: '4px',
               padding: '3px 8px',
-              borderRadius: '6px',
+              borderRadius: '0',
               background: 'var(--surface-hover)',
               border: '1px solid var(--border-main)',
               fontSize: '0.75rem',
@@ -189,7 +189,7 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
               alignItems: 'center',
               gap: '4px',
               padding: '3px 8px',
-              borderRadius: '6px',
+              borderRadius: '0',
               background: 'var(--surface-hover)',
               border: '1px solid var(--border-main)',
               fontSize: '0.75rem',
@@ -210,7 +210,7 @@ export function IncomeFilters({ filters, onFilterChange, onResetFilters }: Incom
               alignItems: 'center',
               gap: '4px',
               padding: '3px 8px',
-              borderRadius: '6px',
+              borderRadius: '0',
               background: 'var(--surface-hover)',
               border: '1px solid var(--border-main)',
               fontSize: '0.75rem',

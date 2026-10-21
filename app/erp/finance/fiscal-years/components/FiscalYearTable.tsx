@@ -21,7 +21,7 @@ export function FiscalYearTable() {
   ];
 
   return (
-    <div className="glass-card" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+    <div className="glass-card" style={{ borderRadius: '0', overflow: 'hidden' }}>
       {fiscalYears.map((fy, i) => (
         <div key={fy.id} style={{ borderBottom: i !== fiscalYears.length - 1 ? '1px solid var(--border-main)' : 'none' }}>
           
@@ -47,7 +47,7 @@ export function FiscalYearTable() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
               <span style={{ 
-                padding: '4px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 600,
+                padding: '4px 12px', borderRadius: '0', fontSize: '11px', fontWeight: 600,
                 background: fy.status === 'Open' ? 'var(--success-glow)' : 'var(--surface-hover)',
                 color: fy.status === 'Open' ? 'var(--success)' : 'var(--text-muted)'
               }}>
@@ -61,12 +61,12 @@ export function FiscalYearTable() {
             <div style={{ padding: '0 24px 24px 60px', background: 'var(--surface-main)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', borderBottom: '1px solid var(--border-light)' }}>
-                    <th style={{ padding: '12px', fontWeight: 600 }}>Period</th>
-                    <th style={{ padding: '12px', fontWeight: 600 }}>Start Date</th>
-                    <th style={{ padding: '12px', fontWeight: 600 }}>End Date</th>
-                    <th style={{ padding: '12px', fontWeight: 600, textAlign: 'center' }}>Status</th>
-                    <th style={{ padding: '12px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                  <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Period</th>
+                    <th style={{ padding: '12px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Start Date</th>
+                    <th style={{ padding: '12px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>End Date</th>
+                    <th style={{ padding: '12px', fontWeight: 700, color: '#ffffff', textAlign: 'center', borderBottom: '1px solid #059669' }}>Status</th>
+                    <th style={{ padding: '12px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody style={{ fontSize: '13px' }}>
@@ -77,7 +77,7 @@ export function FiscalYearTable() {
                       <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{p.end}</td>
                       <td style={{ padding: '12px', textAlign: 'center' }}>
                         <span style={{ 
-                          padding: '4px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
+                          padding: '4px 8px', borderRadius: '0', fontSize: '10px', fontWeight: 600,
                           background: p.status === 'Open' ? 'var(--success-glow)' : p.status === 'Closed' ? 'var(--warning-glow)' : 'var(--danger-glow)',
                           color: p.status === 'Open' ? 'var(--success)' : p.status === 'Closed' ? 'var(--warning)' : 'var(--danger)'
                         }}>
@@ -86,9 +86,9 @@ export function FiscalYearTable() {
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>
                         {p.status === 'Open' ? (
-                          <button style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'var(--warning-glow)', color: 'var(--warning)', border: 'none', cursor: 'pointer' }}>Close</button>
+                          <button style={{ padding: '4px 12px', borderRadius: '0', fontSize: '11px', fontWeight: 600, background: 'var(--warning-glow)', color: 'var(--warning)', border: 'none', cursor: 'pointer' }}>Close</button>
                         ) : p.status === 'Closed' ? (
-                          <button style={{ padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'var(--danger-glow)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}>Lock</button>
+                          <button style={{ padding: '4px 12px', borderRadius: '0', fontSize: '11px', fontWeight: 600, background: 'var(--danger-glow)', color: 'var(--danger)', border: 'none', cursor: 'pointer' }}>Lock</button>
                         ) : null}
                       </td>
                     </tr>

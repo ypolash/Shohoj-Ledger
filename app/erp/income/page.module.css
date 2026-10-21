@@ -47,7 +47,7 @@
 /* Table */
 .tableContainer {
   overflow-x: auto;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
 }
 
 .table {
@@ -58,16 +58,16 @@
 
 .table th {
   padding: var(--spacing-3) var(--spacing-4);
-  color: var(--text-muted);
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--surface-light);
+  background: #10b981;
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid #059669;
 }
 
 .table td {

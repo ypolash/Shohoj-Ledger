@@ -4,17 +4,17 @@ import React from 'react';
 
 export function GeneralLedgerTable() {
   return (
-    <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto', marginBottom: '24px' }}>
+    <div className="glass-card" style={{ borderRadius: '0', overflowX: 'auto', marginBottom: '24px' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Account</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Journal Ref</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Memo / Description</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Debit</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Credit</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Running Balance</th>
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Date</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Account</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Journal Ref</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Memo / Description</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Debit</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Credit</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Running Balance</th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>

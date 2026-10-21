@@ -630,7 +630,7 @@ export default function BillsDuePage() {
               style={{
                 width: '100%',
                 padding: '8px 12px 8px 36px',
-                borderRadius: '8px',
+                borderRadius: '0',
                 border: '1px solid var(--border-light)',
                 background: 'var(--surface-hover)',
                 color: 'var(--text-main)',
@@ -647,7 +647,7 @@ export default function BillsDuePage() {
             onChange={(e) => setCategoryFilter(e.target.value)}
             style={{
               padding: '8px 12px',
-              borderRadius: '8px',
+              borderRadius: '0',
               border: '1px solid var(--border-light)',
               background: 'var(--surface-hover)',
               color: 'var(--text-main)',
@@ -667,7 +667,7 @@ export default function BillsDuePage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
               padding: '8px 12px',
-              borderRadius: '8px',
+              borderRadius: '0',
               border: '1px solid var(--border-light)',
               background: 'var(--surface-hover)',
               color: 'var(--text-main)',
@@ -685,19 +685,19 @@ export default function BillsDuePage() {
       </div>
 
       {/* Bills Due Table */}
-      <div className="glass-card" style={{ padding: '0px', borderRadius: '6px', overflow: 'hidden' }}>
+      <div className="glass-card" style={{ padding: '0px', borderRadius: '0', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1050px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Bill # / Reference</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Payee / Client / Talent</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Type</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, whiteSpace: 'nowrap' }}>Due Date</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Contract</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Settled</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Due</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>Status</th>
-              <th style={{ padding: '9px 12px', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>Actions</th>
+            <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Bill # / Reference</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Payee / Client / Talent</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Type</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Due Date</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Contract</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Settled</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Due</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Status</th>
+              <th style={{ padding: '9px 12px', fontWeight: 700, color: '#ffffff', textAlign: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #059669' }}>Actions</th>
             </tr>
           </thead>
           <tbody style={{ fontSize: '12.5px' }}>

@@ -4,14 +4,14 @@ import React from 'react';
 
 export function TrialBalanceTable() {
   return (
-    <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto', marginBottom: '24px' }}>
+    <div className="glass-card" style={{ borderRadius: '0', overflowX: 'auto', marginBottom: '24px' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Account Code</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Account Name</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Debit (BDT)</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Credit (BDT)</th>
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Account Code</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Account Name</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Debit (BDT)</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Credit (BDT)</th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>

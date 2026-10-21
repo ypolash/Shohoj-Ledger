@@ -72,22 +72,22 @@ export function ExpenseSearch({ onSearch, initialValue = "" }: ExpenseSearchProp
         style={{
           width: '100%',
           padding: '10px 65px 10px 42px',
-          borderRadius: '10px',
+          borderRadius: '0',
           border: '1px solid var(--border-main)',
           background: 'var(--surface-main)',
           fontSize: '0.875rem',
           color: 'var(--text-main)',
           outline: 'none',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          boxShadow: 'none',
           transition: 'all 0.15s ease'
         }}
         onFocus={(e) => {
           e.target.style.borderColor = 'var(--primary)';
-          e.target.style.boxShadow = '0 0 0 3px var(--primary-glow)';
+          e.target.style.boxShadow = 'none';
         }}
         onBlur={(e) => {
           e.target.style.borderColor = 'var(--border-main)';
-          e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+          e.target.style.boxShadow = 'none';
         }}
       />
       
@@ -106,7 +106,7 @@ export function ExpenseSearch({ onSearch, initialValue = "" }: ExpenseSearchProp
             style={{
               background: 'var(--surface-hover)',
               border: 'none',
-              borderRadius: '50%',
+              borderRadius: '0',
               width: '20px',
               height: '20px',
               display: 'flex',
@@ -123,7 +123,7 @@ export function ExpenseSearch({ onSearch, initialValue = "" }: ExpenseSearchProp
           <kbd style={{
             fontSize: '0.7rem',
             padding: '2px 5px',
-            borderRadius: '4px',
+            borderRadius: '0',
             background: 'var(--surface-hover)',
             border: '1px solid var(--border-main)',
             color: 'var(--text-muted)',

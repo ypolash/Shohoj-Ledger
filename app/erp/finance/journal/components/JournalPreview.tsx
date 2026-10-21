@@ -19,7 +19,7 @@ export function JournalPreview() {
   };
 
   return (
-    <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+    <div className="glass-card" style={{ padding: '24px', borderRadius: '0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>{journal.entryNo}</h2>
@@ -27,7 +27,7 @@ export function JournalPreview() {
         </div>
         <div style={{ textAlign: 'right' }}>
           <span style={{ 
-            padding: '6px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
+            padding: '6px 12px', borderRadius: '0', fontSize: '12px', fontWeight: 600,
             background: 'var(--success-glow)', color: 'var(--success)'
           }}>
             {journal.status}
@@ -36,7 +36,7 @@ export function JournalPreview() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', padding: '16px', background: 'var(--surface-hover)', borderRadius: '8px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', padding: '16px', background: 'var(--surface-hover)', borderRadius: '0', marginBottom: '24px' }}>
         <div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Reference</div>
           <div style={{ fontSize: '13px', fontWeight: 600, marginTop: '4px', color: 'var(--text-main)' }}>{journal.reference}</div>
@@ -53,11 +53,11 @@ export function JournalPreview() {
 
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid var(--border-main)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '12px 16px', fontWeight: 600 }}>Account</th>
-            <th style={{ padding: '12px 16px', fontWeight: 600 }}>Memo</th>
-            <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Debit</th>
-            <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Credit</th>
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+            <th style={{ padding: '12px 16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Account</th>
+            <th style={{ padding: '12px 16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Memo</th>
+            <th style={{ padding: '12px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Debit</th>
+            <th style={{ padding: '12px 16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Credit</th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>

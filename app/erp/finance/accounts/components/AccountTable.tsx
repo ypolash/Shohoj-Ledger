@@ -15,17 +15,17 @@ export function AccountTable() {
   ];
 
   return (
-    <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto' }}>
+    <div className="glass-card" style={{ borderRadius: '0', overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Code</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Account Name</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Type</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Parent Node</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Current Balance</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'center' }}>Status</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Code</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Account Name</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Type</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Parent Node</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Current Balance</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'center', borderBottom: '1px solid #059669' }}>Status</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Actions</th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>
@@ -42,7 +42,7 @@ export function AccountTable() {
               </td>
               <td style={{ padding: '16px', textAlign: 'center' }}>
                 <span style={{ 
-                  padding: '4px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                  padding: '4px 8px', borderRadius: '0', fontSize: '10px', fontWeight: 600,
                   background: acc.status === 'Active' ? 'var(--success-glow)' : 'var(--border-light)',
                   color: acc.status === 'Active' ? 'var(--success)' : 'var(--text-muted)'
                 }}>
@@ -51,7 +51,7 @@ export function AccountTable() {
               </td>
               <td style={{ padding: '16px', textAlign: 'right' }}>
                 <Link href={'/erp/finance/accounts/' + acc.id} style={{ 
-                  padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, 
+                  padding: '6px 12px', borderRadius: '0', fontSize: '11px', fontWeight: 600, 
                   background: 'var(--surface-main)', color: 'var(--text-main)', border: '1px solid var(--border-main)', 
                   textDecoration: 'none', display: 'inline-block' 
                 }}>

@@ -4,19 +4,19 @@ import React from 'react';
 
 export function AccountStatementTable() {
   return (
-    <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto', marginBottom: '24px' }}>
+    <div className="glass-card" style={{ borderRadius: '0', overflowX: 'auto', marginBottom: '24px' }}>
       <div style={{ padding: '24px', borderBottom: '1px solid var(--border-light)' }}>
         <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>1000 - Cash on Hand</h2>
         <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Statement Period: July 1 - July 31, 2026</p>
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Date</th>
-            <th style={{ padding: '16px', fontWeight: 600 }}>Description</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Debit (In)</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Credit (Out)</th>
-            <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Balance</th>
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Date</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Description</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Debit (In)</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Credit (Out)</th>
+            <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Balance</th>
           </tr>
         </thead>
         <tbody style={{ fontSize: '13px' }}>

@@ -8,17 +8,17 @@ export default function AgingReportPage() {
       <ExportToolbar title="A/R & A/P Aging Summary" />
       <ReportFilters />
       
-      <div className="glass-card" style={{ borderRadius: '12px', overflowX: 'auto' }}>
+      <div className="glass-card" style={{ borderRadius: '0', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-              <th style={{ padding: '16px', fontWeight: 600 }}>Customer / Vendor</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Current</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>1-30 Days</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>31-60 Days</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>61-90 Days</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>&gt; 90 Days</th>
-              <th style={{ padding: '16px', fontWeight: 600, textAlign: 'right' }}>Total</th>
+            <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '1px solid #059669', fontSize: '11px', textTransform: 'uppercase' }}>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', borderBottom: '1px solid #059669' }}>Customer / Vendor</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Current</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>1-30 Days</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>31-60 Days</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>61-90 Days</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>&gt; 90 Days</th>
+              <th style={{ padding: '16px', fontWeight: 700, color: '#ffffff', textAlign: 'right', borderBottom: '1px solid #059669' }}>Total</th>
             </tr>
           </thead>
           <tbody style={{ fontSize: '13px' }}>

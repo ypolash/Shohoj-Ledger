@@ -75,7 +75,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
           font: { family: 'inherit', size: 12 },
           boxWidth: 12,
           boxHeight: 12,
-          borderRadius: 4,
+          borderRadius: 0,
           useBorderRadius: true
         }
       },
@@ -86,7 +86,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         borderColor: isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
         padding: 12,
-        cornerRadius: 8,
+        cornerRadius: 0,
         displayColors: true,
         boxPadding: 4,
         callbacks: {
@@ -120,7 +120,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         label: 'Revenue Inflow',
         data: monthly.map((d: any) => d.revenue) || [],
         backgroundColor: '#3b82f6',
-        borderRadius: 8,
+        borderRadius: 0,
         barPercentage: 0.5,
         categoryPercentage: 0.7
       },
@@ -128,7 +128,7 @@ export function BusinessCharts({ data, role }: BusinessChartsProps) {
         label: 'Expense Outflow',
         data: monthly.map((d: any) => d.expense) || [],
         backgroundColor: '#ef4444',
-        borderRadius: 8,
+        borderRadius: 0,
         barPercentage: 0.5,
         categoryPercentage: 0.7
       }

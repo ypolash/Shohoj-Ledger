@@ -47,7 +47,7 @@ export function NotificationsWidget({ data }: { data?: any }) {
                 background: 'rgba(239, 68, 68, 0.2)',
                 color: '#f87171',
                 padding: '2px 8px',
-                borderRadius: '10px',
+                borderRadius: '0',
                 border: '1px solid rgba(239, 68, 68, 0.3)'
               }}
             >
@@ -85,7 +85,7 @@ export function NotificationsWidget({ data }: { data?: any }) {
                   gap: '12px',
                   padding: '12px 14px',
                   background: 'rgba(30, 41, 59, 0.45)',
-                  borderRadius: '12px',
+                  borderRadius: '0',
                   border: '1px solid rgba(255, 255, 255, 0.06)',
                   borderLeft: `3px solid ${p.border}`
                 }}
@@ -94,7 +94,7 @@ export function NotificationsWidget({ data }: { data?: any }) {
                   style={{
                     width: '28px',
                     height: '28px',
-                    borderRadius: '8px',
+                    borderRadius: '0',
                     background: p.bg,
                     display: 'flex',
                     alignItems: 'center',

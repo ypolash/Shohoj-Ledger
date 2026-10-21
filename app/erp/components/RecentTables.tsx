@@ -44,7 +44,7 @@ export function RecentTables({ data, role }: RecentTablesProps) {
               background: 'rgba(59, 130, 246, 0.15)',
               color: '#60a5fa',
               padding: '2px 8px',
-              borderRadius: '10px',
+              borderRadius: '0',
               border: '1px solid rgba(59, 130, 246, 0.25)'
             }}
           >
@@ -96,7 +96,7 @@ export function RecentTables({ data, role }: RecentTablesProps) {
                           style={{
                             width: '34px',
                             height: '34px',
-                            borderRadius: '10px',
+                            borderRadius: '0',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -150,7 +150,7 @@ export function RecentTables({ data, role }: RecentTablesProps) {
                           fontSize: '11px',
                           fontWeight: 600,
                           padding: '3px 8px',
-                          borderRadius: '6px',
+                          borderRadius: '0',
                           background: 'rgba(16, 185, 129, 0.12)',
                           color: '#34d399',
                           border: '1px solid rgba(16, 185, 129, 0.25)'
@@ -181,7 +181,7 @@ export function RecentTables({ data, role }: RecentTablesProps) {
                           padding: '6px 12px',
                           background: '#2563eb',
                           color: '#ffffff',
-                          borderRadius: '8px'
+                          borderRadius: '0'
                         }}
                       >
                         + Record Income
@@ -195,7 +195,7 @@ export function RecentTables({ data, role }: RecentTablesProps) {
                           background: 'rgba(30, 41, 59, 0.8)',
                           color: '#f8fafc',
                           border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px'
+                          borderRadius: '0'
                         }}
                       >
                         + New Expense

@@ -55,7 +55,7 @@
   padding: 3px 10px;
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 20px;
+  border-radius: 0;
 }
 
 .statusPulseDot {
@@ -99,7 +99,7 @@
   background: rgba(59, 130, 246, 0.12);
   border: 1px solid rgba(96, 165, 250, 0.25);
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: 0;
   letter-spacing: 0.01em;
 }
 
@@ -131,16 +131,14 @@
   gap: 8px;
   font-size: 14.5px;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #ffffff;
+  background: #10b981;
+  border: 1px solid #059669;
   padding: 6px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.03em;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
   width: 100%;
   box-sizing: border-box;
 }
@@ -151,26 +149,25 @@
   justify-content: center;
   gap: 8px;
   font-size: 13px;
-  font-weight: 500;
-  color: #e2e8f0;
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  color: #0f172a;
+  background: #f59e0b;
+  border: 1px solid #d97706;
   padding: 6px 14px;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border-radius: 0;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
   width: 100%;
   box-sizing: border-box;
 }
 
 .dayText {
-  color: #60a5fa;
-  font-weight: 600;
+  color: #0f172a;
+  font-weight: 700;
 }
 
 .dateText {
-  color: #cbd5e1;
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .headerDateBadge {
@@ -183,7 +180,7 @@
   background: rgba(15, 23, 42, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 7px 13px;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 .commandCenterBtn {
@@ -194,7 +191,7 @@
   color: #60a5fa;
   border: 1px solid rgba(59, 130, 246, 0.28);
   padding: 7px 13px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 12.5px;
   font-weight: 600;
   text-decoration: none;
@@ -216,7 +213,7 @@
   color: #f1f5f9;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 7px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -265,7 +262,7 @@
   flex-wrap: wrap;
   background: rgba(15, 23, 42, 0.6);
   padding: 4px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -273,7 +270,7 @@
   font-size: 13px;
   font-weight: 500;
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--text-muted, #94a3b8);
   background: transparent;
   border: none;
@@ -299,7 +296,7 @@
 .quickCommandBar {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 18px;
+  border-radius: 0;
   padding: 18px 22px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -333,7 +330,7 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: 0;
 }
 
 .actionsGrid {
@@ -349,7 +346,7 @@
   padding: 11px 14px;
   background: rgba(30, 41, 59, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 13px;
+  border-radius: 0;
   color: var(--text-main, #f8fafc);
   text-decoration: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -367,7 +364,7 @@
 .actionIconBox {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -413,7 +410,7 @@
   position: relative;
   background: linear-gradient(145deg, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.75) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 0;
   padding: 20px 22px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -460,7 +457,7 @@
 .kpiIconWrapper {
   width: 40px;
   height: 40px;
-  border-radius: 11px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -474,7 +471,7 @@
   font-size: 11.5px;
   font-weight: 600;
   padding: 3px 9px;
-  border-radius: 20px;
+  border-radius: 0;
 }
 
 .trendPositive {
@@ -551,7 +548,7 @@
 .kpiTag {
   background: rgba(255, 255, 255, 0.04);
   padding: 2px 7px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 11px;
   color: #64748b;
 }
@@ -592,7 +589,7 @@
 .chartPanel {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.75) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 24px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -642,7 +639,7 @@
   display: flex;
   background: rgba(15, 23, 42, 0.7);
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -650,7 +647,7 @@
   font-size: 12px;
   font-weight: 500;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--text-muted, #94a3b8);
   background: transparent;
   border: none;
@@ -676,7 +673,7 @@
   padding: 12px 18px;
   background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  border-radius: 0;
   flex-wrap: wrap;
 }
 
@@ -689,7 +686,7 @@
 .chartSummaryDot {
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .chartSummaryContent {
@@ -734,7 +731,7 @@
 .panelCard {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.75) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 22px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

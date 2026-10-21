@@ -91,7 +91,7 @@ export function TasksWidget({ data }: { data?: any }) {
               background: 'rgba(245, 158, 11, 0.15)',
               color: '#fbbf24',
               padding: '2px 8px',
-              borderRadius: '10px'
+              borderRadius: '0'
             }}
           >
             {tasks.filter(t => !t.completed).length} pending
@@ -114,7 +114,7 @@ export function TasksWidget({ data }: { data?: any }) {
                   padding: '12px 14px',
                   background: t.completed ? 'rgba(15, 23, 42, 0.3)' : 'rgba(30, 41, 59, 0.45)',
                   border: '1px solid rgba(255, 255, 255, 0.06)',
-                  borderRadius: '12px',
+                  borderRadius: '0',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   opacity: t.completed ? 0.6 : 1
@@ -125,7 +125,7 @@ export function TasksWidget({ data }: { data?: any }) {
                     style={{
                       width: '18px',
                       height: '18px',
-                      borderRadius: '5px',
+                      borderRadius: '0',
                       border: t.completed ? '1px solid #10b981' : '1px solid #64748b',
                       background: t.completed ? '#10b981' : 'transparent',
                       display: 'flex',
@@ -168,7 +168,7 @@ export function TasksWidget({ data }: { data?: any }) {
                             color: '#38bdf8',
                             background: 'rgba(56, 189, 248, 0.12)',
                             padding: '1px 6px',
-                            borderRadius: '4px',
+                            borderRadius: '0',
                             fontWeight: 500,
                           }}
                         >
@@ -187,7 +187,7 @@ export function TasksWidget({ data }: { data?: any }) {
                     fontSize: '10px',
                     fontWeight: 600,
                     padding: '3px 7px',
-                    borderRadius: '6px',
+                    borderRadius: '0',
                     background: pStyle.bg,
                     color: pStyle.color,
                     border: `1px solid ${pStyle.border}`,

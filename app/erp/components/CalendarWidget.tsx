@@ -35,7 +35,7 @@ export function CalendarWidget({ data }: { data?: any }) {
               background: 'rgba(99, 102, 241, 0.15)',
               color: '#818cf8',
               padding: '2px 8px',
-              borderRadius: '10px'
+              borderRadius: '0'
             }}
           >
             {events.length}
@@ -55,7 +55,7 @@ export function CalendarWidget({ data }: { data?: any }) {
                 padding: '10px 12px',
                 background: 'rgba(30, 41, 59, 0.45)',
                 border: '1px solid rgba(255, 255, 255, 0.06)',
-                borderRadius: '12px'
+                borderRadius: '0'
               }}
             >
               <div
@@ -66,7 +66,7 @@ export function CalendarWidget({ data }: { data?: any }) {
                   justifyContent: 'center',
                   background: 'rgba(99, 102, 241, 0.15)',
                   border: '1px solid rgba(99, 102, 241, 0.3)',
-                  borderRadius: '10px',
+                  borderRadius: '0',
                   width: '44px',
                   height: '44px',
                   flexShrink: 0

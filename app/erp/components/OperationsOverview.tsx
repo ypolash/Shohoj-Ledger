@@ -44,7 +44,7 @@ export function OperationsOverview({ data, role }: OperationsOverviewProps) {
           style={{
             padding: '12px 14px',
             background: 'rgba(30, 41, 59, 0.45)',
-            borderRadius: '12px',
+            borderRadius: '0',
             border: '1px solid rgba(255, 255, 255, 0.06)'
           }}
         >
@@ -65,7 +65,7 @@ export function OperationsOverview({ data, role }: OperationsOverviewProps) {
               width: '100%',
               height: '6px',
               background: 'rgba(15, 23, 42, 0.6)',
-              borderRadius: '3px',
+              borderRadius: '0',
               overflow: 'hidden'
             }}
           >
@@ -76,7 +76,7 @@ export function OperationsOverview({ data, role }: OperationsOverviewProps) {
                 background: attendanceRate >= 80
                   ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)'
                   : 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)',
-                borderRadius: '3px',
+                borderRadius: '0',
                 transition: 'width 0.5s ease'
               }}
             />
@@ -88,7 +88,7 @@ export function OperationsOverview({ data, role }: OperationsOverviewProps) {
           style={{
             padding: '12px 14px',
             background: 'rgba(30, 41, 59, 0.45)',
-            borderRadius: '12px',
+            borderRadius: '0',
             border: '1px solid rgba(255, 255, 255, 0.06)',
             display: 'flex',
             justifyContent: 'space-between',
@@ -114,7 +114,7 @@ export function OperationsOverview({ data, role }: OperationsOverviewProps) {
           style={{
             padding: '12px 14px',
             background: 'rgba(30, 41, 59, 0.45)',
-            borderRadius: '12px',
+            borderRadius: '0',
             border: '1px solid rgba(255, 255, 255, 0.06)',
             display: 'flex',
             justifyContent: 'space-between',

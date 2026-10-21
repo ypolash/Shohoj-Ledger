@@ -163,14 +163,14 @@ export default function DashboardIndex() {
 
             <div className={styles.headerDateTimeGroup}>
               <div className={styles.clockBadge} title="Live Local Time">
-                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "#38bdf8" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "#ffffff" }}>
                   schedule
                 </span>
                 <span>{timeString}</span>
               </div>
 
               <div className={styles.dateBadge} title="Current Date">
-                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "#60a5fa" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "#0f172a" }}>
                   calendar_today
                 </span>
                 <span className={styles.dayText}>{dayName},</span>

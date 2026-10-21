@@ -65,7 +65,7 @@ export function RecentActivity({ role, data }: RecentActivityProps) {
               background: 'rgba(59, 130, 246, 0.15)',
               color: '#60a5fa',
               padding: '2px 8px',
-              borderRadius: '10px'
+              borderRadius: '0'
             }}
           >
             {activities.length} recent
@@ -96,7 +96,7 @@ export function RecentActivity({ role, data }: RecentActivityProps) {
                 style={{
                   width: '36px',
                   height: '36px',
-                  borderRadius: '10px',
+                  borderRadius: '0',
                   background: act.bg,
                   border: `1px solid ${act.color}`,
                   display: 'flex',
@@ -131,7 +131,7 @@ export function RecentActivity({ role, data }: RecentActivityProps) {
                         fontSize: '10px',
                         fontWeight: 600,
                         padding: '1px 6px',
-                        borderRadius: '4px',
+                        borderRadius: '0',
                         background: act.bg,
                         color: act.color,
                         textTransform: 'uppercase'

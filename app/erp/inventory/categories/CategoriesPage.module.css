@@ -45,7 +45,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 3px 10px;
-  border-radius: 9999px;
+  border-radius: 0;
   background: rgba(59, 130, 246, 0.12);
   color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.25);
@@ -69,7 +69,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 18px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 700;
   color: #ffffff;
@@ -92,7 +92,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-main);
@@ -121,7 +121,7 @@
 .kpiCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 18px 20px;
   display: flex;
   align-items: center;
@@ -141,7 +141,7 @@
 .kpiIcon {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,7 +181,7 @@
 .toolbarCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 14px 18px;
   display: flex;
   align-items: center;
@@ -209,7 +209,7 @@
 .searchInput {
   width: 100%;
   padding: 9px 14px 9px 36px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
   background: var(--surface-hover);
   color: var(--text-main);
@@ -231,7 +231,7 @@
   gap: 4px;
   background: var(--surface-hover);
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
 }
 
@@ -240,7 +240,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 7px;
+  border-radius: 0;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -269,7 +269,7 @@
 .categoryCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 18px;
+  border-radius: 0;
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -295,7 +295,7 @@
 .catIconBox {
   width: 46px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -325,7 +325,7 @@
   font-size: 0.725rem;
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--surface-hover);
   color: var(--text-secondary);
   border: 1px solid var(--border-main);
@@ -363,7 +363,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 3px 9px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--surface-hover);
   color: var(--text-main);
   border: 1px solid var(--border-main);
@@ -378,7 +378,7 @@
 .iconBtn {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -407,7 +407,7 @@
 .tablePanel {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 18px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
@@ -425,13 +425,13 @@
 
 .th {
   padding: 14px 18px;
-  background: var(--surface-hover);
-  color: var(--text-muted);
+  background: #10b981;
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border-main);
+  border-bottom: 1px solid #059669;
 }
 
 .td {
@@ -462,7 +462,7 @@
 .formCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -499,7 +499,7 @@
 .formInput, .formSelect, .formTextarea {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
   background: var(--surface-hover);
   color: var(--text-main);
@@ -518,7 +518,7 @@
 .livePreviewBox {
   background: var(--surface-hover);
   border: 1px dashed var(--border-main);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 20px;
   display: flex;
   flex-direction: column;

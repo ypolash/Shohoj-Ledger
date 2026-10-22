@@ -207,7 +207,7 @@ export default function InventoryDashboardPage() {
                   textTransform: 'uppercase', 
                   letterSpacing: '0.04em',
                   padding: '3px 8px',
-                  borderRadius: '9999px',
+                  borderRadius: '0',
                   color: kpi.color, 
                   borderColor: `${kpi.color}30`, 
                   background: `${kpi.color}15`,
@@ -281,7 +281,7 @@ export default function InventoryDashboardPage() {
                   <tr key={i} className={styles.tr}>
                     {Array.from({ length: 4 }).map((_, j) => (
                       <td key={j} className={styles.td}>
-                        <div style={{ height: '14px', borderRadius: '6px', background: 'var(--surface-hover)', opacity: 0.7 }} />
+                        <div style={{ height: '14px', borderRadius: '0', background: 'var(--surface-hover)', opacity: 0.7 }} />
                       </td>
                     ))}
                   </tr>
@@ -307,7 +307,7 @@ export default function InventoryDashboardPage() {
                           alignItems: 'center',
                           gap: '6px',
                           padding: '8px 16px',
-                          borderRadius: '10px',
+                          borderRadius: '0',
                           fontSize: '13px',
                           fontWeight: 600,
                           cursor: 'pointer',

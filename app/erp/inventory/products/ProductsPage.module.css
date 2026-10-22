@@ -140,14 +140,17 @@
 /* ==========================================================================
    Toolbar & Filters
    ========================================================================== */
+/* ==========================================================================
+   Toolbar & Filters (0px Radius & Square Icon View Tabs)
+   ========================================================================== */
 .toolbarContainer {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 12px;
+  border-radius: 0;
   padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
@@ -156,52 +159,190 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 
-.statusTabs {
+/* Square Box Icon View Tabs */
+.tabsContainer {
   display: flex;
   align-items: center;
   gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  background: var(--surface-main, rgba(15, 23, 42, 0.6));
+  padding: 4px;
+  border-radius: 0;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
 }
 
-.statusTab {
+.squareWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.squareBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  padding: 4px 2px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 2px;
+  outline: none;
+}
+
+.squareBtn:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--border-main, rgba(255, 255, 255, 0.15));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.squareIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+  color: var(--text-muted, #94a3b8);
+}
+
+.squareBtn:hover .squareIcon {
+  transform: scale(1.1);
+}
+
+.squareCount {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--text-muted, #94a3b8);
+  transition: color 0.2s ease;
+}
+
+/* Distinct hover colors */
+.square_all:hover .squareIcon {
+  color: #3b82f6;
+}
+.square_in_stock:hover .squareIcon {
+  color: #10b981;
+}
+.square_low_stock:hover .squareIcon {
+  color: #f59e0b;
+}
+.square_out_of_stock:hover .squareIcon {
+  color: #ef4444;
+}
+.square_inactive:hover .squareIcon {
+  color: #94a3b8;
+}
+
+/* Active Selected States */
+.squareBtnActive {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
+  transform: translateY(-1px);
+}
+
+.squareBtnActive .squareCount {
+  color: var(--text-main, #ffffff);
+  font-weight: 800;
+}
+
+.square_all.squareBtnActive {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6, 0 3px 12px rgba(59, 130, 246, 0.28) !important;
+}
+.square_all.squareBtnActive .squareIcon {
+  color: #3b82f6 !important;
+}
+
+.square_in_stock.squareBtnActive {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px #10b981, 0 3px 12px rgba(16, 185, 129, 0.28) !important;
+}
+.square_in_stock.squareBtnActive .squareIcon {
+  color: #10b981 !important;
+}
+
+.square_low_stock.squareBtnActive {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 1px #f59e0b, 0 3px 12px rgba(245, 158, 11, 0.28) !important;
+}
+.square_low_stock.squareBtnActive .squareIcon {
+  color: #f59e0b !important;
+}
+
+.square_out_of_stock.squareBtnActive {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444, 0 3px 12px rgba(239, 68, 68, 0.28) !important;
+}
+.square_out_of_stock.squareBtnActive .squareIcon {
+  color: #ef4444 !important;
+}
+
+.square_inactive.squareBtnActive {
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 1px #94a3b8, 0 3px 12px rgba(148, 163, 184, 0.28) !important;
+}
+.square_inactive.squareBtnActive .squareIcon {
+  color: #94a3b8 !important;
+}
+
+/* Floating Tooltip */
+.squareTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0f172a;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  z-index: 70;
+}
+
+.squareTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.squareWrapper:hover .squareTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.activeFilterNotice {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 0;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.statusTab:hover {
-  background: var(--surface-hover);
-  color: var(--text-main);
-}
-
-.statusTabActive {
-  background: var(--surface-hover) !important;
-  color: var(--primary) !important;
-  border-color: var(--border-main) !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.statusTabCount {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  background: var(--border-main);
-  color: var(--text-main);
 }
 
 .toolbarBottomRow {
@@ -233,7 +374,7 @@
 .searchInput {
   width: 100%;
   padding: 8px 34px 8px 36px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
   background: var(--surface-hover);
   color: var(--text-main);
@@ -275,7 +416,7 @@
 
 .selectInput {
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
   background: var(--surface-hover);
   color: var(--text-main);
@@ -296,7 +437,7 @@
 .tablePanel {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
@@ -316,12 +457,12 @@
 .th {
   padding: 12px 16px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: #ffffff;
   font-size: 0.725rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--surface-hover);
-  border-bottom: 1px solid var(--border-main);
+  background: #10b981;
+  border-bottom: 1px solid #059669;
   white-space: nowrap;
 }
 
@@ -358,7 +499,7 @@
 .productAvatar {
   width: 38px;
   height: 38px;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--surface-hover);
   border: 1px solid var(--border-main);
@@ -414,7 +555,7 @@
 
 .categoryTag {
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--surface-hover);
   border: 1px solid var(--border-main);
   font-size: 0.7rem;
@@ -433,7 +574,7 @@
   background: rgba(37, 99, 235, 0.08);
   border: 1px solid rgba(37, 99, 235, 0.2);
   padding: 2px 6px;
-  border-radius: 5px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -448,7 +589,7 @@
   align-items: center;
   gap: 6px;
   padding: 3px 9px;
-  border-radius: 20px;
+  border-radius: 0;
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
@@ -501,7 +642,7 @@
 .iconBtn {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
   border: none;
   color: var(--text-muted);

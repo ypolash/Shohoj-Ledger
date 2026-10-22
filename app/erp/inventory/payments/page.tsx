@@ -191,24 +191,53 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {/* Toolbar & Filter Tabs with Integrated Summary */}
+      {/* Toolbar & Filter Tabs with Integrated Summary (Square Icon View & 0px Radius) */}
       <div className={styles.toolbarCard}>
         <div className={styles.statusTabsRow}>
-          <div className={styles.tabsLeft}>
-            <button
-              onClick={() => setActiveTab("due")}
-              className={`${styles.statusTab} ${activeTab === "due" ? styles.statusTabActiveAmber : ''}`}
-            >
-              <Clock size={14} />
-              <span>Outstanding Dues ({duePurchases.length})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("paid")}
-              className={`${styles.statusTab} ${activeTab === "paid" ? styles.statusTabActiveGreen : ''}`}
-            >
-              <CheckCircle2 size={14} />
-              <span>Settled Invoices ({paidPurchases.length})</span>
-            </button>
+          <div className={styles.tabsContainer}>
+            <div className={styles.squareWrapper}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "due"}
+                aria-label={`Outstanding Dues (${duePurchases.length})`}
+                onClick={() => setActiveTab("due")}
+                className={`${styles.squareBtn} ${styles.square_due} ${activeTab === "due" ? styles.squareBtnActive : ''}`}
+              >
+                <span className={styles.squareIcon}>
+                  <Clock size={18} />
+                </span>
+                <span className={styles.squareCount}>{duePurchases.length}</span>
+              </button>
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>Outstanding Dues ({duePurchases.length})</div>
+                <div style={{ fontSize: '10px', color: '#f59e0b', marginTop: '2px' }}>
+                  ৳{totalDuesOutstanding.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.squareWrapper}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "paid"}
+                aria-label={`Settled Invoices (${paidPurchases.length})`}
+                onClick={() => setActiveTab("paid")}
+                className={`${styles.squareBtn} ${styles.square_paid} ${activeTab === "paid" ? styles.squareBtnActive : ''}`}
+              >
+                <span className={styles.squareIcon}>
+                  <CheckCircle2 size={18} />
+                </span>
+                <span className={styles.squareCount}>{paidPurchases.length}</span>
+              </button>
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>Settled Invoices ({paidPurchases.length})</div>
+                <div style={{ fontSize: '10px', color: '#10b981', marginTop: '2px' }}>
+                  ৳{totalSettledPayments.toLocaleString()}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className={styles.summaryBadges}>

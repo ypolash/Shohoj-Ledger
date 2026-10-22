@@ -18,7 +18,10 @@ import {
   Check, 
   MoreVertical, 
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle,
+  AlertOctagon,
+  Archive
 } from 'lucide-react';
 
 import ProductModal from '../components/ProductModal';
@@ -435,53 +438,84 @@ export default function ProductsPage() {
 
       {/* Toolbar & Filters (Status Tabs, Search, Category, Sort) */}
       <div className={styles.toolbarContainer}>
-        {/* Status Tabs */}
+        {/* Status Tabs (Square Icon View) */}
         <div className={styles.toolbarTopRow}>
-          <div className={styles.statusTabs}>
-            <button 
-              className={`${styles.statusTab} ${statusFilter === 'ALL' ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter('ALL')}
-            >
-              All Products
-              <span className={styles.statusTabCount}>{statusCounts.all}</span>
-            </button>
+          <div className={styles.tabsContainer}>
+            {[
+              {
+                id: 'ALL',
+                label: 'All Products',
+                icon: <Package size={18} />,
+                count: statusCounts.all,
+                colorKey: 'all',
+              },
+              {
+                id: 'IN_STOCK',
+                label: 'In Stock Products',
+                icon: <CheckCircle2 size={18} />,
+                count: statusCounts.inStock,
+                colorKey: 'in_stock',
+              },
+              {
+                id: 'LOW_STOCK',
+                label: 'Low Stock Alert',
+                icon: <AlertTriangle size={18} />,
+                count: statusCounts.lowStock,
+                colorKey: 'low_stock',
+              },
+              {
+                id: 'OUT_OF_STOCK',
+                label: 'Out of Stock Products',
+                icon: <AlertOctagon size={18} />,
+                count: statusCounts.outOfStock,
+                colorKey: 'out_of_stock',
+              },
+              ...(statusCounts.inactive > 0 ? [{
+                id: 'INACTIVE',
+                label: 'Inactive Products',
+                icon: <Archive size={18} />,
+                count: statusCounts.inactive,
+                colorKey: 'inactive',
+              }] : [])
+            ].map(tab => (
+              <div key={tab.id} className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === tab.id}
+                  aria-label={`${tab.label} (${tab.count})`}
+                  onClick={() => setStatusFilter(tab.id as any)}
+                  className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${statusFilter === tab.id ? styles.squareBtnActive : ''}`}
+                >
+                  <span className={styles.squareIcon}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.squareCount}>{tab.count}</span>
+                </button>
+                <div className={styles.squareTooltip}>
+                  <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
+                </div>
+              </div>
+            ))}
+          </div>
 
-            <button 
-              className={`${styles.statusTab} ${statusFilter === 'IN_STOCK' ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter('IN_STOCK')}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />
-              In Stock
-              <span className={styles.statusTabCount}>{statusCounts.inStock}</span>
-            </button>
-
-            <button 
-              className={`${styles.statusTab} ${statusFilter === 'LOW_STOCK' ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter('LOW_STOCK')}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--warning)' }} />
-              Low Stock
-              <span className={styles.statusTabCount}>{statusCounts.lowStock}</span>
-            </button>
-
-            <button 
-              className={`${styles.statusTab} ${statusFilter === 'OUT_OF_STOCK' ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter('OUT_OF_STOCK')}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger)' }} />
-              Out of Stock
-              <span className={styles.statusTabCount}>{statusCounts.outOfStock}</span>
-            </button>
-
-            {statusCounts.inactive > 0 && (
-              <button 
-                className={`${styles.statusTab} ${statusFilter === 'INACTIVE' ? styles.statusTabActive : ''}`}
-                onClick={() => setStatusFilter('INACTIVE')}
-              >
-                Inactive
-                <span className={styles.statusTabCount}>{statusCounts.inactive}</span>
-              </button>
-            )}
+          {/* Active Filter Notice */}
+          <div className={styles.activeFilterNotice}>
+            <span>
+              {statusFilter === 'ALL' && 'All Products'}
+              {statusFilter === 'IN_STOCK' && 'In Stock'}
+              {statusFilter === 'LOW_STOCK' && 'Low Stock Alert'}
+              {statusFilter === 'OUT_OF_STOCK' && 'Out of Stock'}
+              {statusFilter === 'INACTIVE' && 'Inactive Products'}
+            </span>
+            <span style={{ opacity: 0.5 }}>•</span>
+            <span style={{ fontWeight: 700 }}>
+              {statusFilter === 'ALL' && statusCounts.all}
+              {statusFilter === 'IN_STOCK' && statusCounts.inStock}
+              {statusFilter === 'LOW_STOCK' && statusCounts.lowStock}
+              {statusFilter === 'OUT_OF_STOCK' && statusCounts.outOfStock}
+              {statusFilter === 'INACTIVE' && statusCounts.inactive} Products
+            </span>
           </div>
         </div>
 

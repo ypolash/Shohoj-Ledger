@@ -121,7 +121,7 @@
 .kpiCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 18px 20px;
   display: flex;
   align-items: center;
@@ -141,7 +141,7 @@
 .kpiIcon {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -176,53 +176,194 @@
 }
 
 /* ==========================================================================
-   Status Tabs & Filter Toolbar
+   Status Tabs & Filter Toolbar (0px Radius & Square Icon View)
    ========================================================================== */
 .toolbarCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 16px;
-  padding: 14px 18px;
+  border-radius: 0;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .statusTabsRow {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--border-main);
-  padding-bottom: 12px;
+  gap: 12px;
 }
 
-.statusTab {
+/* Square Box Icon View Tabs */
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-main, rgba(15, 23, 42, 0.6));
+  padding: 4px;
+  border-radius: 0;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+}
+
+.squareWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.squareBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  padding: 4px 2px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 2px;
+  outline: none;
+}
+
+.squareBtn:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--border-main, rgba(255, 255, 255, 0.15));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.squareIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+  color: var(--text-muted, #94a3b8);
+}
+
+.squareBtn:hover .squareIcon {
+  transform: scale(1.1);
+}
+
+.squareCount {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.2px;
+  color: var(--text-muted, #94a3b8);
+  transition: color 0.2s ease;
+}
+
+/* Distinct hover colors */
+.square_all:hover .squareIcon { color: #3b82f6; }
+.square_confirmed:hover .squareIcon { color: #10b981; }
+.square_approved:hover .squareIcon { color: #8b5cf6; }
+.square_open:hover .squareIcon { color: #f59e0b; }
+.square_delivered:hover .squareIcon { color: #06b6d4; }
+.square_cancelled:hover .squareIcon { color: #ef4444; }
+
+/* Active Selected States */
+.squareBtnActive {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
+  transform: translateY(-1px);
+}
+
+.squareBtnActive .squareCount {
+  color: var(--text-main, #ffffff);
+  font-weight: 800;
+}
+
+.square_all.squareBtnActive {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6, 0 3px 12px rgba(59, 130, 246, 0.28) !important;
+}
+.square_all.squareBtnActive .squareIcon { color: #3b82f6 !important; }
+
+.square_confirmed.squareBtnActive {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px #10b981, 0 3px 12px rgba(16, 185, 129, 0.28) !important;
+}
+.square_confirmed.squareBtnActive .squareIcon { color: #10b981 !important; }
+
+.square_approved.squareBtnActive {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 1px #8b5cf6, 0 3px 12px rgba(139, 92, 246, 0.28) !important;
+}
+.square_approved.squareBtnActive .squareIcon { color: #8b5cf6 !important; }
+
+.square_open.squareBtnActive {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 1px #f59e0b, 0 3px 12px rgba(245, 158, 11, 0.28) !important;
+}
+.square_open.squareBtnActive .squareIcon { color: #f59e0b !important; }
+
+.square_delivered.squareBtnActive {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 1px #06b6d4, 0 3px 12px rgba(6, 182, 212, 0.28) !important;
+}
+.square_delivered.squareBtnActive .squareIcon { color: #06b6d4 !important; }
+
+.square_cancelled.squareBtnActive {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444, 0 3px 12px rgba(239, 68, 68, 0.28) !important;
+}
+.square_cancelled.squareBtnActive .squareIcon { color: #ef4444 !important; }
+
+/* Tooltip */
+.squareTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0f172a;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  z-index: 70;
+}
+
+.squareTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+.squareWrapper:hover .squareTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.activeFilterNotice {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 0;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--surface-hover);
-  border: 1px solid var(--border-main);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.statusTab:hover {
-  color: var(--text-main);
-  border-color: var(--primary);
-}
-
-.statusTabActive {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
 }
 
 .filterControlsRow {
@@ -231,6 +372,8 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-main);
 }
 
 .searchBox {
@@ -252,7 +395,7 @@
 .searchInput {
   width: 100%;
   padding: 9px 14px 9px 36px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
   background: var(--surface-hover);
   color: var(--text-main);
@@ -274,7 +417,7 @@
 .tablePanel {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 18px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
@@ -292,13 +435,13 @@
 
 .th {
   padding: 14px 18px;
-  background: var(--surface-hover);
-  color: var(--text-muted);
+  background: #10b981;
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border-main);
+  border-bottom: 1px solid #059669;
 }
 
 .td {
@@ -331,7 +474,7 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 9px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.75rem;
   font-weight: 600;
   background: var(--surface-hover);
@@ -344,7 +487,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 0;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: capitalize;

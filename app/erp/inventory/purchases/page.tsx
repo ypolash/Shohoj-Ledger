@@ -16,7 +16,8 @@ import {
   Truck, 
   DollarSign, 
   Layers, 
-  User 
+  User,
+  XCircle 
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import NewPurchaseModal from "./components/NewPurchaseModal";
@@ -64,6 +65,23 @@ export default function PurchasesPage() {
     await fetchPurchases();
     setTimeout(() => setIsRefreshing(false), 500);
   };
+
+  const purchaseCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      ALL: purchases.length,
+      APPROVED: 0,
+      RECEIVED: 0,
+      DRAFT: 0,
+      CANCELLED: 0
+    };
+    purchases.forEach(p => {
+      const s = (p.status || "APPROVED").toUpperCase();
+      if (counts[s] !== undefined) {
+        counts[s]++;
+      }
+    });
+    return counts;
+  }, [purchases]);
 
   const filteredPurchases = useMemo(() => {
     return purchases.filter((p) => {
@@ -172,19 +190,81 @@ export default function PurchasesPage() {
         </div>
       )}
 
-      {/* Toolbar & Filter Tabs */}
+      {/* Toolbar & Filter Tabs (Square Icon View & 0px Radius) */}
       <div className={styles.toolbarCard}>
-        {/* Status Tabs */}
+        {/* Status Tabs (Square Icon View) */}
         <div className={styles.statusTabsRow}>
-          {(['ALL', 'APPROVED', 'RECEIVED', 'DRAFT', 'CANCELLED'] as const).map(tab => (
-            <button
-              key={tab}
-              className={`${styles.statusTab} ${statusFilter === tab ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter(tab)}
-            >
-              {tab === 'ALL' ? 'All Purchases' : tab}
-            </button>
-          ))}
+          <div className={styles.tabsContainer}>
+            {[
+              {
+                id: 'ALL',
+                label: 'All Purchases',
+                icon: <ShoppingBag size={18} />,
+                count: purchaseCounts.ALL,
+                colorKey: 'all',
+              },
+              {
+                id: 'APPROVED',
+                label: 'Approved Orders',
+                icon: <CheckCircle2 size={18} />,
+                count: purchaseCounts.APPROVED || 0,
+                colorKey: 'approved',
+              },
+              {
+                id: 'RECEIVED',
+                label: 'Received Stock',
+                icon: <Package size={18} />,
+                count: purchaseCounts.RECEIVED || 0,
+                colorKey: 'received',
+              },
+              {
+                id: 'DRAFT',
+                label: 'Draft Orders',
+                icon: <FileText size={18} />,
+                count: purchaseCounts.DRAFT || 0,
+                colorKey: 'draft',
+              },
+              {
+                id: 'CANCELLED',
+                label: 'Cancelled Orders',
+                icon: <XCircle size={18} />,
+                count: purchaseCounts.CANCELLED || 0,
+                colorKey: 'cancelled',
+              }
+            ].map(tab => (
+              <div key={tab.id} className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === tab.id}
+                  aria-label={`${tab.label} (${tab.count})`}
+                  onClick={() => setStatusFilter(tab.id as any)}
+                  className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${statusFilter === tab.id ? styles.squareBtnActive : ''}`}
+                >
+                  <span className={styles.squareIcon}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.squareCount}>{tab.count}</span>
+                </button>
+                <div className={styles.squareTooltip}>
+                  <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Active Filter Notice */}
+          <div className={styles.activeFilterNotice}>
+            <span>
+              {statusFilter === 'ALL' && 'All Purchases'}
+              {statusFilter === 'APPROVED' && 'Approved Orders'}
+              {statusFilter === 'RECEIVED' && 'Received Stock'}
+              {statusFilter === 'DRAFT' && 'Draft Orders'}
+              {statusFilter === 'CANCELLED' && 'Cancelled Orders'}
+            </span>
+            <span style={{ opacity: 0.5 }}>•</span>
+            <span style={{ fontWeight: 700 }}>{purchaseCounts[statusFilter] || 0} Orders</span>
+          </div>
         </div>
 
         {/* Search */}

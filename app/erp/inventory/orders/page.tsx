@@ -19,7 +19,10 @@ import {
   ExternalLink,
   Download,
   X,
-  User
+  User,
+  ShieldCheck,
+  Truck,
+  XCircle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import styles from './OrdersPage.module.css';
@@ -78,6 +81,25 @@ export default function InventoryOrdersPage() {
 
   const pendingCount = useMemo(() => {
     return orders.filter(o => !['Completed', 'Delivered', 'APPROVED', 'Cancelled'].includes(o.status)).length;
+  }, [orders]);
+
+  // Order counts per status
+  const orderCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      ALL: orders.length,
+      Confirmed: 0,
+      Approved: 0,
+      Open: 0,
+      Delivered: 0,
+      Cancelled: 0,
+    };
+    orders.forEach(o => {
+      const s = o.status;
+      if (counts[s] !== undefined) {
+        counts[s]++;
+      }
+    });
+    return counts;
   }, [orders]);
 
   // Filtered Orders
@@ -227,19 +249,82 @@ export default function InventoryOrdersPage() {
         </div>
       </header>
 
-      {/* Toolbar & Filters */}
+      {/* Toolbar & Filters (Square Icon View & 0px Radius) */}
       <div className={styles.toolbarCard}>
-        {/* Status Tabs */}
+        {/* Status Tabs (Square Icon View) */}
         <div className={styles.statusTabsRow}>
-          {(['ALL', 'Confirmed', 'Approved', 'Open', 'Delivered', 'Cancelled'] as const).map(tab => (
-            <button
-              key={tab}
-              className={`${styles.statusTab} ${statusFilter === tab ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter(tab)}
-            >
-              {tab === 'ALL' ? 'All Orders' : tab}
-            </button>
-          ))}
+          <div className={styles.tabsContainer}>
+            {[
+              {
+                id: 'ALL',
+                label: 'All Orders',
+                icon: <ShoppingCart size={18} />,
+                count: orderCounts.ALL,
+                colorKey: 'all',
+              },
+              {
+                id: 'Confirmed',
+                label: 'Confirmed Orders',
+                icon: <CheckCircle2 size={18} />,
+                count: orderCounts.Confirmed || 0,
+                colorKey: 'confirmed',
+              },
+              {
+                id: 'Approved',
+                label: 'Approved Orders',
+                icon: <ShieldCheck size={18} />,
+                count: orderCounts.Approved || 0,
+                colorKey: 'approved',
+              },
+              {
+                id: 'Open',
+                label: 'Open Orders',
+                icon: <Clock size={18} />,
+                count: orderCounts.Open || 0,
+                colorKey: 'open',
+              },
+              {
+                id: 'Delivered',
+                label: 'Delivered Orders',
+                icon: <Truck size={18} />,
+                count: orderCounts.Delivered || 0,
+                colorKey: 'delivered',
+              },
+              {
+                id: 'Cancelled',
+                label: 'Cancelled Orders',
+                icon: <XCircle size={18} />,
+                count: orderCounts.Cancelled || 0,
+                colorKey: 'cancelled',
+              }
+            ].map(tab => (
+              <div key={tab.id} className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === tab.id}
+                  aria-label={`${tab.label} (${tab.count})`}
+                  onClick={() => setStatusFilter(tab.id as any)}
+                  className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${statusFilter === tab.id ? styles.squareBtnActive : ''}`}
+                >
+                  <span className={styles.squareIcon}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.squareCount}>{tab.count}</span>
+                </button>
+                <div className={styles.squareTooltip}>
+                  <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Active Filter Notice */}
+          <div className={styles.activeFilterNotice}>
+            <span>{statusFilter === 'ALL' ? 'All Orders' : `${statusFilter} Orders`}</span>
+            <span style={{ opacity: 0.5 }}>•</span>
+            <span style={{ fontWeight: 700 }}>{orderCounts[statusFilter] || 0} Orders</span>
+          </div>
         </div>
 
         {/* Search & Actions */}

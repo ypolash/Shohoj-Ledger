@@ -19,7 +19,8 @@ import {
   ArrowLeftRight, 
   FileText, 
   TrendingUp, 
-  X 
+  X,
+  AlertOctagon
 } from 'lucide-react';
 import styles from './StockControl.module.css';
 import invStyles from '../inventory.module.css';
@@ -303,22 +304,78 @@ export default function StockControlPage() {
         </div>
       </div>
 
-      {/* Toolbar & Filters */}
+      {/* Toolbar & Filters (Square Icon View & 0px Radius) */}
       <div className={styles.toolbarCard}>
-        {/* Status Tabs */}
+        {/* Status Tabs (Square Icon View) */}
         <div className={styles.statusTabsRow}>
-          {(['ALL', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'] as const).map(tab => (
-            <button
-              key={tab}
-              className={`${styles.statusTab} ${statusFilter === tab ? styles.statusTabActive : ''}`}
-              onClick={() => setStatusFilter(tab)}
-            >
-              {tab === 'ALL' && 'All Products'}
-              {tab === 'IN_STOCK' && `In Stock (${optimalCount})`}
-              {tab === 'LOW_STOCK' && `Low Stock (${lowStockCount})`}
-              {tab === 'OUT_OF_STOCK' && `Out of Stock (${outOfStockCount})`}
-            </button>
-          ))}
+          <div className={styles.tabsContainer}>
+            {[
+              {
+                id: 'ALL',
+                label: 'All Products',
+                icon: <Package size={18} />,
+                count: products.length,
+                colorKey: 'all',
+              },
+              {
+                id: 'IN_STOCK',
+                label: 'In Stock Products',
+                icon: <CheckCircle2 size={18} />,
+                count: optimalCount,
+                colorKey: 'in_stock',
+              },
+              {
+                id: 'LOW_STOCK',
+                label: 'Low Stock Alert',
+                icon: <AlertTriangle size={18} />,
+                count: lowStockCount,
+                colorKey: 'low_stock',
+              },
+              {
+                id: 'OUT_OF_STOCK',
+                label: 'Out of Stock Products',
+                icon: <AlertOctagon size={18} />,
+                count: outOfStockCount,
+                colorKey: 'out_of_stock',
+              }
+            ].map(tab => (
+              <div key={tab.id} className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === tab.id}
+                  aria-label={`${tab.label} (${tab.count})`}
+                  onClick={() => setStatusFilter(tab.id as any)}
+                  className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${statusFilter === tab.id ? styles.squareBtnActive : ''}`}
+                >
+                  <span className={styles.squareIcon}>
+                    {tab.icon}
+                  </span>
+                  <span className={styles.squareCount}>{tab.count}</span>
+                </button>
+                <div className={styles.squareTooltip}>
+                  <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Active Filter Notice */}
+          <div className={styles.activeFilterNotice}>
+            <span>
+              {statusFilter === 'ALL' && 'All Products'}
+              {statusFilter === 'IN_STOCK' && 'In Stock'}
+              {statusFilter === 'LOW_STOCK' && 'Low Stock Alert'}
+              {statusFilter === 'OUT_OF_STOCK' && 'Out of Stock'}
+            </span>
+            <span style={{ opacity: 0.5 }}>•</span>
+            <span style={{ fontWeight: 700 }}>
+              {statusFilter === 'ALL' && products.length}
+              {statusFilter === 'IN_STOCK' && optimalCount}
+              {statusFilter === 'LOW_STOCK' && lowStockCount}
+              {statusFilter === 'OUT_OF_STOCK' && outOfStockCount} Products
+            </span>
+          </div>
         </div>
 
         {/* Search */}

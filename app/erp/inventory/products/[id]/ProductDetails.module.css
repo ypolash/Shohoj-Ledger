@@ -38,7 +38,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -68,7 +68,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 18px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 700;
   color: #ffffff;
@@ -90,7 +90,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-main);
@@ -111,7 +111,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 600;
   color: #ef4444;
@@ -132,7 +132,7 @@
 .heroCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 28px;
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -162,7 +162,7 @@
   width: 100%;
   aspect-ratio: 1/1;
   max-width: 260px;
-  border-radius: 18px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--surface-hover);
   border: 1px solid var(--border-main);
@@ -223,7 +223,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 0;
   background: rgba(59, 130, 246, 0.12);
   color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.25);
@@ -238,7 +238,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 0;
 }
 
 .statusActive {
@@ -276,7 +276,7 @@
   background: var(--surface-hover);
   border: 1px solid var(--border-main);
   padding: 5px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.8rem;
   color: var(--text-secondary);
   font-family: monospace;
@@ -304,7 +304,7 @@
 .stockHealthBanner {
   background: var(--surface-hover);
   border: 1px solid var(--border-main);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 16px 20px;
   display: flex;
   align-items: center;
@@ -347,7 +347,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -390,7 +390,7 @@
 .kpiCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -424,7 +424,7 @@
 .kpiIconBox {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -448,7 +448,7 @@
 
 .kpiBadge {
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   font-weight: 700;
   font-size: 0.75rem;
 }
@@ -494,7 +494,7 @@
   font-size: 0.725rem;
   font-weight: 700;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--surface-hover);
   color: var(--text-secondary);
 }
@@ -510,7 +510,7 @@
 .panelCard {
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 18px;
+  border-radius: 0;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -539,7 +539,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--surface-hover);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -576,7 +576,7 @@
 
 .txFilterBtn {
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 0.775rem;
   font-weight: 600;
   background: var(--surface-hover);
@@ -600,7 +600,7 @@
 
 .tableWrapper {
   overflow-x: auto;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
 }
 
@@ -613,13 +613,13 @@
 
 .th {
   padding: 12px 16px;
-  background: var(--surface-hover);
-  color: var(--text-muted);
+  background: #10b981;
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border-main);
+  border-bottom: 1px solid #059669;
 }
 
 .td {
@@ -640,7 +640,7 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 0.725rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -659,7 +659,7 @@
 .emptyIcon {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: 0;
   background: var(--surface-hover);
   display: flex;
   align-items: center;
@@ -688,7 +688,7 @@
   max-width: 500px;
   background: var(--surface-main);
   border: 1px solid var(--border-main);
-  border-radius: 20px;
+  border-radius: 0;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -726,7 +726,7 @@
 .formInput, .formSelect, .formTextarea {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid var(--border-main);
   background: var(--surface-hover);
   color: var(--text-main);

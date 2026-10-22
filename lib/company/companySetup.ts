@@ -33,22 +33,26 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
     logoUrl
   } = payload;
 
+  const normalizedEmail = ownerEmail?.trim().toLowerCase();
+
   return await prisma.$transaction(async (tx) => {
     try {
       // 1. Pre-validation: Check for duplicate email across the global user scope
-      const existingUser = await tx.user.findUnique({
-        where: { email: ownerEmail }
+      const existingUser = await tx.user.findFirst({
+        where: {
+          email: { equals: normalizedEmail, mode: "insensitive" }
+        }
       });
       
       if (existingUser) {
-        throw new Error("Email is already registered to another account.");
+        throw new Error(`Email is already registered to another account.`);
       }
 
       // 2. User Creation (initially without companyId)
       const newOwner = await tx.user.create({
         data: {
           name: ownerName,
-          email: ownerEmail,
+          email: normalizedEmail,
           role: "Owner", // Keep string enum backward compatible
           platformRole: "USER"
         }
@@ -143,7 +147,7 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
           data: {
             companyId: company.id,
             name: ownerName,
-            email: ownerEmail,
+            email: normalizedEmail,
             role: "Owner",
             status: "ACTIVE"
           }
@@ -160,7 +164,7 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
         await tx.account.create({
           data: {
             userId: newOwner.id,
-            accountId: ownerEmail,
+            accountId: normalizedEmail,
             providerId: "credentials",
             password: hashedPassword
           }

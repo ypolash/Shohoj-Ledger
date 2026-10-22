@@ -138,8 +138,29 @@ export default function SignupPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep(currentStep)) return;
+
+    // When moving from Step 3 (Admin Security) to Step 4 (Launchpad):
+    // Pre-check email availability so the user doesn't hit a wall at Phase 4!
+    if (currentStep === 3) {
+      try {
+        const emailToCheck = formData.ownerEmail.trim().toLowerCase();
+        const res = await fetch(`/api/auth/check-email?email=${encodeURIComponent(emailToCheck)}`);
+        const data = await res.json();
+        if (data && data.available === false) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            ownerEmail: "This email address is already registered to an account."
+          }));
+          setApiError("This email address is already registered. Please log in or use a different email.");
+          return;
+        }
+      } catch (e) {
+        // Continue if offline or network error
+      }
+    }
+
     setApiError(null);
     setCurrentStep((prev) => Math.min(4, prev + 1));
   };
@@ -174,6 +195,12 @@ export default function SignupPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.code === "EMAIL_ALREADY_EXISTS" || (data.message && data.message.toLowerCase().includes("already registered"))) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            ownerEmail: "This email address is already registered to an account."
+          }));
+        }
         throw new Error(data.message || data.error || "A validation error occurred. Please check your details.");
       }
 
@@ -205,8 +232,24 @@ export default function SignupPage() {
       {/* Floating Error Alert */}
       {apiError && (
         <div className={styles.errorBanner}>
-          <AlertCircle size={18} />
-          <span>{apiError}</span>
+          <AlertCircle size={18} style={{ flexShrink: 0 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", justifyContent: "space-between", width: "100%" }}>
+            <span>{apiError}</span>
+            {(apiError.toLowerCase().includes("already registered") || apiError.toLowerCase().includes("log in") || apiError.toLowerCase().includes("sign in")) && (
+              <a
+                href="/login"
+                style={{
+                  color: "#38bdf8",
+                  textDecoration: "underline",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  marginLeft: "auto"
+                }}
+              >
+                Sign in to your account →
+              </a>
+            )}
+          </div>
         </div>
       )}
 

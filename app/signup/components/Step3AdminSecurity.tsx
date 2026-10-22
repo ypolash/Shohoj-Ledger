@@ -85,7 +85,24 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
               }}
             />
           </div>
-          {errors.ownerEmail && <span style={errorTextStyle}>{errors.ownerEmail}</span>}
+          {errors.ownerEmail && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "4px" }}>
+              <span style={errorTextStyle}>{errors.ownerEmail}</span>
+              {errors.ownerEmail.toLowerCase().includes("already registered") && (
+                <a
+                  href="/login"
+                  style={{
+                    fontSize: "0.78rem",
+                    color: "#38bdf8",
+                    fontWeight: 700,
+                    textDecoration: "underline"
+                  }}
+                >
+                  Sign in instead →
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         <div>

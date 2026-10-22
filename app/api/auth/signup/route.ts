@@ -64,9 +64,27 @@ export async function POST(request: Request) {
     }, { status: 201 });
 
   } catch (error: any) {
-    // If the error is a known validation issue (e.g. Email already exists)
-    if (error.message === "User with this email already exists." || error.message === "Company name is required." || error.message === "Owner credentials are required.") {
-      return NextResponse.json({ error: "Validation Error", message: error.message }, { status: 400 });
+    const errorMsg = error?.message || "";
+    const isDuplicateEmail = 
+      errorMsg.toLowerCase().includes("already registered") || 
+      errorMsg.toLowerCase().includes("already exists") ||
+      error?.code === "P2002";
+
+    if (isDuplicateEmail) {
+      return NextResponse.json({
+        error: "Validation Error",
+        message: "This email address is already registered to an existing account. Please log in to your account or use a different email.",
+        code: "EMAIL_ALREADY_EXISTS"
+      }, { status: 400 });
+    }
+
+    if (
+      errorMsg === "Company name is required." || 
+      errorMsg === "Owner credentials are required." ||
+      errorMsg.includes("required") ||
+      errorMsg.includes("Validation")
+    ) {
+      return NextResponse.json({ error: "Validation Error", message: errorMsg }, { status: 400 });
     }
 
     // Otherwise, route through the central error handler for secure logging

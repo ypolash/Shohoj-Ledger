@@ -1,0 +1,713 @@
+/* ==========================================================================
+   Create Order Page - Redesigned Progressive Flow (0px Radius Theme)
+   ========================================================================== */
+
+.pageContainer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 0 48px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.topNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 0;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backBtn:hover {
+  background: var(--surface-main);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.05));
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headerText h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.headerText p {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Step 1: Two Button Icon Cards */
+.selectorCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.selectorTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customerButtonsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .customerButtonsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.customerChoiceBtn {
+  background: var(--surface-hover);
+  border: 2px solid var(--border-main);
+  border-radius: 0;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  outline: none;
+}
+
+.customerChoiceBtn:hover {
+  background: var(--surface-main);
+  border-color: var(--border-focus);
+}
+
+.customerChoiceBtnActive {
+  background: rgba(37, 99, 235, 0.06) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
+}
+
+.choiceIconBox {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.choiceIconBoxNew {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.customerChoiceBtnActive .choiceIconBoxNew {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.choiceIconBoxExisting {
+  background: rgba(37, 99, 235, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.customerChoiceBtnActive .choiceIconBoxExisting {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.choiceText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.choiceTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.choiceSubtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.choiceCheckBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  background: var(--primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* New Customer Form */
+.newCustomerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-main);
+  animation: fadeIn 0.25s ease;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.requiredAsterisk {
+  color: #ef4444;
+}
+
+.inputField {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 0;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.inputField:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.inputField::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Save / Proceed Action Bar - Right Aligned */
+.saveCustomerBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+}
+
+.saveCustomerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  transition: all 0.15s ease;
+}
+
+.saveCustomerBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.saveCustomerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.guestProceedBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.guestProceedBtn:hover:not(:disabled) {
+  background: var(--surface-main);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.guestProceedBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Existing Customer Search */
+.existingCustomerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-main);
+  animation: fadeIn 0.25s ease;
+}
+
+.searchWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  border-radius: 0;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Results dropdown / cards */
+.searchResultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 8px;
+  background: var(--surface-main);
+}
+
+.customerResultItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  background: var(--surface-hover);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.customerResultItem:hover {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.resultInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resultAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.resultDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resultName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.resultMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectPill {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 0;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+/* Confirmed Customer Ribbon */
+.confirmedBanner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(37, 99, 235, 0.08));
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: fadeIn 0.3s ease;
+}
+
+.confirmedInfo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.confirmedIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
+  background: #10b981;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.confirmedTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.confirmedDetails {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.changeCustomerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 0;
+  background: var(--surface-main);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.changeCustomerBtn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   Order Form (Appears popping up from below)
+   ========================================================================== */
+.orderPopupCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  animation: slideUpFromBottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-main);
+  padding-bottom: 12px;
+}
+
+/* Products Table */
+.productsTable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+}
+
+.productsTable th {
+  padding: 12px 16px;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  border-bottom: 1px solid #059669;
+}
+
+.productsTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-main);
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.productsTable tr:last-child td {
+  border-bottom: none;
+}
+
+.qtyInput, .priceInput {
+  width: 90px;
+  padding: 8px 10px;
+  border-radius: 0;
+  border: 1px solid var(--border-main);
+  background: var(--surface-main);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.qtyInput::-webkit-outer-spin-button,
+.qtyInput::-webkit-inner-spin-button,
+.priceInput::-webkit-outer-spin-button,
+.priceInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qtyInput:focus, .priceInput:focus {
+  border-color: var(--primary);
+}
+
+.deleteItemBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.deleteItemBtn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+/* Financial Totals Card */
+.totalsCard {
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-left: auto;
+  width: 100%;
+  max-width: 380px;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.grandTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-main);
+  padding-top: 10px;
+  border-top: 1.5px dashed var(--border-main);
+}
+
+.grandTotalAmount {
+  color: var(--primary);
+  font-family: monospace;
+  font-size: 22px;
+}
+
+/* Submit Bar */
+.submitBar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding-top: 12px;
+}
+
+.submitOrderBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 30px;
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  transition: all 0.15s ease;
+}
+
+.submitOrderBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.submitOrderBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

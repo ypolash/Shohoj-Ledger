@@ -16,6 +16,8 @@ import { SalesOrderShipment } from "../components/SalesOrderShipment";
 
 import { useUI } from "@/lib/contexts/UIContext";
 
+import styles from './SalesOrderDetail.module.css';
+
 export default function SalesOrderDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -96,220 +98,263 @@ export default function SalesOrderDetailPage() {
   };
 
   if (loading) {
-    return <PageContainer><div style={{ padding: '48px', textAlign: 'center' }}>Loading Order...</div></PageContainer>;
+    return (
+      <PageContainer>
+        <div style={{ padding: '64px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '15px', fontWeight: 600 }}>
+          Loading Sales Order...
+        </div>
+      </PageContainer>
+    );
   }
 
   if (!order) return null;
 
+  const amountDue = (order.grandTotal || order.totalAmount || 0) - (order.amountPaid || 0);
+
+  const getShipmentColor = (st: string) => {
+    switch (st) {
+      case 'DELIVERED': return '#10b981';
+      case 'PARTIALLY_DELIVERED': return '#a855f7';
+      case 'APPROVED': return '#06b6d4';
+      case 'OPEN': return '#3b82f6';
+      default: return '#f59e0b';
+    }
+  };
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: 'view_agenda' },
+    { id: 'payments', label: 'Payments', icon: 'payments' },
+    { id: 'shipments', label: 'Shipments', icon: 'local_shipping' },
+    { id: 'timeline', label: 'Timeline', icon: 'timeline' },
+    { id: 'history', label: 'History', icon: 'history' }
+  ];
+
   return (
     <PageContainer>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <button 
-          onClick={() => router.push('/erp/crm/sales-orders')}
-          className="ios-back-button"
-          style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px', marginBottom: '16px' }}
-        >
-          Back to Sales Orders
-        </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <PageHeader 
-              title={order.salesOrderNumber || order.orderNo || `Order ${order.id.substring(0,8)}`}
-              description={`Customer: ${order.customer?.name || order.customer?.customerName || 'Unknown'} ${order.referenceNumber ? `| Ref: ${order.referenceNumber}` : ''}`}
-            />
-            <div style={{ marginTop: '-8px' }}>
-              <SalesOrderStatus status={order.status} />
+      <div className={styles.pageWrapper}>
+        
+        {/* Top Header Block */}
+        <div className={styles.headerBlock}>
+          <div className={styles.topRow}>
+            <button 
+              onClick={() => router.push('/erp/crm/sales-orders')}
+              className={styles.backBtn}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_back</span>
+              Back to Sales Orders
+            </button>
+          </div>
+
+          <div className={styles.titleRow}>
+            <div className={styles.orderIdentity}>
+              <div className={styles.orderTitleGroup}>
+                <h1 className={styles.orderNumber}>
+                  {order.salesOrderNumber || order.orderNo || `Order ${order.id.substring(0,8)}`}
+                </h1>
+                <SalesOrderStatus status={order.status} />
+              </div>
+              <p className={styles.orderCustomer}>
+                Customer: <span className={styles.customerHighlight}>{order.customer?.name || order.customer?.customerName || 'Unknown'}</span>
+                {order.referenceNumber && <span>• Ref: <strong>{order.referenceNumber}</strong></span>}
+              </p>
+            </div>
+
+            {/* Actions Bar */}
+            <div className={styles.actionGroup}>
+              {order.status === 'DRAFT' && (
+                <button 
+                  onClick={() => handleStatusAction('APPROVE')}
+                  className={`${styles.actionBtn} ${styles.btnApprove}`}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
+                  Approve Order
+                </button>
+              )}
+              
+              {order.status === 'APPROVED' && (
+                <button 
+                  onClick={() => handleStatusAction('RESERVE')}
+                  className={`${styles.actionBtn} ${styles.btnReserve}`}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>inventory_2</span>
+                  Reserve Stock
+                </button>
+              )}
+              
+              {(order.status === 'OPEN' || order.status === 'PARTIALLY_DELIVERED') && (
+                <button 
+                  onClick={() => handleStatusAction('CLOSE')}
+                  className={`${styles.actionBtn} ${styles.btnFulfill}`}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>local_shipping</span>
+                  Fulfill Order
+                </button>
+              )}
+
+              <button 
+                onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/invoice`)}
+                className={`${styles.actionBtn} ${styles.btnInvoice}`}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
+                Generate Invoice
+              </button>
+
+              <button 
+                onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/edit`)}
+                className={`${styles.actionBtn} ${styles.btnEdit}`}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                Edit
+              </button>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {order.status === 'DRAFT' && (
-            <button 
-              onClick={() => handleStatusAction('APPROVE')}
-              style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check_circle</span>
-              Approve Order
-            </button>
-          )}
-          
-          {order.status === 'APPROVED' && (
-            <button 
-              onClick={() => handleStatusAction('RESERVE')}
-              style={{ padding: '8px 16px', background: 'var(--info-glow)', border: '1px solid var(--info)', color: 'var(--info)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>inventory_2</span>
-              Reserve Stock
-            </button>
-          )}
-          
-          {(order.status === 'OPEN' || order.status === 'PARTIALLY_DELIVERED') && (
-            <button 
-              onClick={() => handleStatusAction('CLOSE')}
-              style={{ padding: '8px 16px', background: 'var(--success-glow)', border: '1px solid var(--success)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>local_shipping</span>
-              Fulfill Order
-            </button>
-          )}
-          <button 
-            onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/invoice`)}
-            style={{ padding: '8px 16px', background: 'var(--surface-hover)', border: '1px solid var(--border-main)', color: 'var(--text-main)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
-            Generate Invoice
-          </button>
-          <button 
-            onClick={() => router.push(`/erp/crm/sales-orders/${order.id}/edit`)}
-            style={{ padding: '8px 16px', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-            Edit
-          </button>
-        </div>
-      </div>
+        {/* KPI Metric Cards */}
+        <div className={styles.kpiGrid}>
+          {/* Card 1: Amount Due */}
+          <div className={styles.kpiCard} style={{ borderLeft: '4px solid #3b82f6' }}>
+            <div className={styles.kpiLabel}>
+              <span>Amount Due</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#3b82f6' }}>account_balance_wallet</span>
+            </div>
+            <div className={styles.kpiValue}>
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency || 'BDT', maximumFractionDigits: 0 }).format(amountDue)}
+            </div>
+          </div>
 
-      {/* KPI Header Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--primary)' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Amount Due</div>
-          <div style={{ marginTop: '8px', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>
-            {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency || 'BDT', maximumFractionDigits: 0 }).format((order.grandTotal || order.totalAmount || 0) - (order.amountPaid || 0))}
+          {/* Card 2: Order Date */}
+          <div className={styles.kpiCard} style={{ borderLeft: '4px solid #06b6d4' }}>
+            <div className={styles.kpiLabel}>
+              <span>Order Date</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#06b6d4' }}>calendar_today</span>
+            </div>
+            <div className={styles.kpiValue} style={{ fontSize: '16px' }}>
+              {new Date(order.orderDate || order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' })}
+            </div>
+          </div>
+
+          {/* Card 3: Payment Status */}
+          <div className={styles.kpiCard} style={{ 
+            borderLeft: `4px solid ${order.paymentStatus === 'Paid' ? '#10b981' : order.paymentStatus === 'Partial' ? '#06b6d4' : '#f59e0b'}` 
+          }}>
+            <div className={styles.kpiLabel}>
+              <span>Payment Status</span>
+              <span className="material-symbols-outlined" style={{ 
+                fontSize: '16px', 
+                color: order.paymentStatus === 'Paid' ? '#10b981' : order.paymentStatus === 'Partial' ? '#06b6d4' : '#f59e0b' 
+              }}>paid</span>
+            </div>
+            <div className={styles.kpiValue} style={{ 
+              fontSize: '16px', 
+              color: order.paymentStatus === 'Paid' ? '#10b981' : order.paymentStatus === 'Partial' ? '#06b6d4' : '#f59e0b' 
+            }}>
+              {order.paymentStatus || 'Unpaid'}
+            </div>
+          </div>
+
+          {/* Card 4: Shipment Status */}
+          <div className={styles.kpiCard} style={{ borderLeft: `4px solid ${getShipmentColor(order.status)}` }}>
+            <div className={styles.kpiLabel}>
+              <span>Shipment Status</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: getShipmentColor(order.status) }}>local_shipping</span>
+            </div>
+            <div>
+              <select 
+                value={order.status || 'DRAFT'}
+                onChange={(e) => handleShipmentStatusChange(e.target.value)}
+                className={styles.shipmentSelect}
+                style={{
+                  color: getShipmentColor(order.status)
+                }}
+              >
+                <option value="DRAFT" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Pending</option>
+                <option value="OPEN" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Open / Processing</option>
+                <option value="APPROVED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Approved for Delivery</option>
+                <option value="PARTIALLY_DELIVERED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Partially Delivered</option>
+                <option value="DELIVERED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Delivered</option>
+                <option value="CANCELLED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Cancelled</option>
+              </select>
+            </div>
           </div>
         </div>
-        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--info)' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>Order Date</div>
-          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
-            {new Date(order.orderDate || order.createdAt).toLocaleDateString()}
-          </div>
-        </div>
-        <div className="glass-card" style={{ padding: '16px', borderRadius: '12px', borderLeft: `4px solid ${order.paymentStatus === 'Paid' ? 'var(--success)' : order.paymentStatus === 'Partial' ? 'var(--info)' : 'var(--warning)'}` }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Payment Status</div>
-          <div style={{ marginTop: '8px', fontSize: '16px', fontWeight: 600, color: order.paymentStatus === 'Paid' ? 'var(--success)' : order.paymentStatus === 'Partial' ? 'var(--info)' : 'var(--warning)' }}>
-            {order.paymentStatus || 'Unpaid'}
-          </div>
-        </div>
-        <div className="glass-card" style={{ 
-          padding: '16px', 
-          borderRadius: '12px', 
-          borderLeft: `4px solid ${
-            order.status === 'DELIVERED' 
-              ? 'var(--success)' 
-              : order.status === 'PARTIALLY_DELIVERED' 
-              ? '#a855f7' 
-              : order.status === 'APPROVED' 
-              ? 'var(--info)' 
-              : 'var(--warning)'
-          }` 
-        }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Shipment Status</span>
-            <span className="material-symbols-outlined" style={{ fontSize: '14px', opacity: 0.7 }}>edit_note</span>
-          </div>
-          <div style={{ marginTop: '4px' }}>
-            <select 
-              value={order.status || 'DRAFT'}
-              onChange={(e) => handleShipmentStatusChange(e.target.value)}
-              style={{
-                background: 'var(--surface-hover)',
-                border: '1px solid var(--border-main)',
-                borderRadius: '6px',
-                padding: '6px 10px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: order.status === 'DELIVERED' 
-                  ? 'var(--success)' 
-                  : order.status === 'PARTIALLY_DELIVERED' 
-                  ? '#c084fc' 
-                  : order.status === 'APPROVED' 
-                  ? 'var(--info)' 
-                  : 'var(--warning)',
-                cursor: 'pointer',
-                outline: 'none',
-                width: '100%'
-              }}
+
+        {/* Tab Navigation (0px Radius, Emerald Green Active) */}
+        <div className={styles.tabsContainer}>
+          {tabs.map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`${styles.tabItem} ${activeTab === tab.id ? styles.tabActive : ''}`}
             >
-              <option value="DRAFT" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Pending</option>
-              <option value="OPEN" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Open / Processing</option>
-              <option value="APPROVED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Approved for Delivery</option>
-              <option value="PARTIALLY_DELIVERED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Partially Delivered</option>
-              <option value="DELIVERED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Delivered</option>
-              <option value="CANCELLED" style={{ background: 'var(--surface-main)', color: 'var(--text-main)' }}>Cancelled</option>
-            </select>
-          </div>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '32px', borderBottom: '1px solid var(--border-main)', marginBottom: '24px', overflowX: 'auto', paddingBottom: '2px' }}>
-        {['overview', 'payments', 'shipments', 'timeline', 'history'].map(tab => (
-          <div 
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '12px 0',
-              cursor: 'pointer',
-              color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
-              borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
-              fontWeight: activeTab === tab ? 600 : 500,
-              textTransform: 'capitalize',
-              fontSize: '14px',
-              transition: 'all var(--transition-fast)',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {tab}
-          </div>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div style={{ minHeight: '500px' }}>
-        {activeTab === 'overview' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <SalesOrderItems items={
-              order.items || (order.lines ? order.lines.map((line: any) => ({
-                id: line.id,
-                description: line.remarks || line.product?.name || '',
-                quantity: Number(line.quantity),
-                unitPrice: Number(line.unitPrice),
-                discount: Number(line.discountAmount) || 0,
-                total: Number(line.lineTotal) || 0
-              })) : [])
-            } readOnly={true} />
-            
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '32px', flexWrap: 'wrap' }}>
-              <div className="glass-card" style={{ padding: '24px', borderRadius: '12px', background: 'var(--surface-main)' }}>
-                <QuotationTotals 
-                  subtotal={order.subtotal || 0} 
-                  totalDiscount={order.discountAmount || 0} 
-                  totalTax={order.taxAmount || 0} 
-                  grandTotal={order.grandTotal || order.totalAmount || 0} 
-                />
+        {/* Tab Content Area */}
+        <div className={styles.tabContent}>
+          {activeTab === 'overview' && (
+            <div className={styles.overviewLayout}>
+              <SalesOrderItems items={
+                order.items || (order.lines ? order.lines.map((line: any) => ({
+                  id: line.id,
+                  description: line.remarks || line.product?.name || '',
+                  quantity: Number(line.quantity),
+                  unitPrice: Number(line.unitPrice),
+                  discount: Number(line.discountAmount) || 0,
+                  total: Number(line.lineTotal) || 0
+                })) : [])
+              } readOnly={true} />
+              
+              <div className={styles.totalsWrapper}>
+                <div className={styles.totalsCard}>
+                  <QuotationTotals 
+                    subtotal={order.subtotal || 0} 
+                    totalDiscount={order.discountAmount || 0} 
+                    totalTax={order.taxAmount || 0} 
+                    grandTotal={order.grandTotal || order.totalAmount || 0} 
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'payments' && <SalesOrderPayments order={order} onRefresh={() => { fetch(`/api/crm/sales-orders/${params.id}`).then(res => res.json()).then(data => { setOrder(data.order || data); }); }} />}
-        {activeTab === 'shipments' && <SalesOrderShipment order={order} onRefresh={() => { fetch(`/api/crm/sales-orders/${params.id}`).then(res => res.json()).then(data => { setOrder(data.order || data); }); }} />}
+          {activeTab === 'payments' && (
+            <div className={styles.contentCard}>
+              <SalesOrderPayments order={order} onRefresh={() => { fetch(`/api/crm/sales-orders/${params.id}`).then(res => res.json()).then(data => { setOrder(data.order || data); }); }} />
+            </div>
+          )}
 
-        {activeTab === 'timeline' && (
-          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
-            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fulfillment Timeline</h4>
-            <SalesOrderTimeline />
-          </div>
-        )}
+          {activeTab === 'shipments' && (
+            <div className={styles.contentCard}>
+              <SalesOrderShipment order={order} onRefresh={() => { fetch(`/api/crm/sales-orders/${params.id}`).then(res => res.json()).then(data => { setOrder(data.order || data); }); }} />
+            </div>
+          )}
 
-        {activeTab === 'history' && (
-          <div className="glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
-            <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Audit Logs</h4>
-            <SalesOrderHistory history={order.history} />
-          </div>
-        )}
+          {activeTab === 'timeline' && (
+            <div className={styles.contentCard}>
+              <div className={styles.contentCardHeader}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#10b981' }}>timeline</span>
+                Fulfillment Timeline
+              </div>
+              <SalesOrderTimeline />
+            </div>
+          )}
+
+          {activeTab === 'history' && (
+            <div className={styles.contentCard}>
+              <div className={styles.contentCardHeader}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#10b981' }}>history</span>
+                Audit Logs
+              </div>
+              <SalesOrderHistory history={order.history} />
+            </div>
+          )}
+        </div>
+
       </div>
-
     </PageContainer>
   );
 }

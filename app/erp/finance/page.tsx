@@ -8,7 +8,6 @@ import { FinanceMonthlyChart } from './components/FinanceMonthlyChart';
 import { BalanceWidget } from './components/BalanceWidget';
 import { OutstandingWidget } from './components/OutstandingWidget';
 import { RecentTransactions } from './components/RecentTransactions';
-import { FinanceQuickActions } from './components/FinanceQuickActions';
 
 export default function FinanceDashboardPage() {
   const [financeData, setFinanceData] = useState<any>(null);
@@ -95,11 +94,7 @@ export default function FinanceDashboardPage() {
         availableYears={financeData?.periodInfo?.availableYears || [currentYear]}
         periodLabel={financeData?.periodInfo?.label}
       />
-      
-      {/* Top Section: Quick Actions */}
-      <div style={{ marginBottom: '24px' }}>
-        <FinanceQuickActions />
-      </div>
+
 
       {/* KPI Cards Row (Filtered in real time by selected month/period) */}
       <div style={{ marginBottom: '24px', position: 'relative' }}>

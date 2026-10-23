@@ -64,32 +64,54 @@ export function SalesOrderItems({ items, products = [], readOnly, onItemsChange 
     onItemsChange(newItems);
   };
 
-  const inputStyle = {
-    width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border-main)',
-    background: 'var(--bg-main)', fontSize: '13px', color: 'var(--text-main)', outline: 'none'
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 10px',
+    borderRadius: '0px',
+    border: '1px solid var(--border-main)',
+    background: 'var(--surface-main)',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--text-main)',
+    outline: 'none',
+    MozAppearance: 'textfield',
+    appearance: 'textfield'
   };
 
   return (
-    <div className="glass-card" style={{ overflowX: 'auto', borderRadius: '12px' }}>
+    <div style={{ 
+      overflowX: 'auto', 
+      borderRadius: '0px', 
+      border: '1px solid var(--border-main)', 
+      background: 'var(--surface-card)',
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)'
+    }}>
+      <style>{`
+        .sales-order-table-input::-webkit-outer-spin-button,
+        .sales-order-table-input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+      `}</style>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-hover)', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>
-            <th style={{ padding: '12px 24px', fontWeight: 600, minWidth: '260px' }}>Product (Inventory Item)</th>
-            <th style={{ padding: '12px 24px', fontWeight: 600, width: '100px' }}>Quantity</th>
-            <th style={{ padding: '12px 24px', fontWeight: 600, width: '150px' }}>Unit Price</th>
-            <th style={{ padding: '12px 24px', fontWeight: 600, width: '120px' }}>Discount</th>
-            <th style={{ padding: '12px 24px', fontWeight: 600, width: '150px', textAlign: 'right' }}>Total</th>
-            {!readOnly && <th style={{ padding: '12px 24px', width: '50px' }}></th>}
+          <tr style={{ background: '#10b981', color: '#ffffff', borderBottom: '2px solid #059669' }}>
+            <th style={{ padding: '14px 20px', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', minWidth: '260px' }}>Product (Inventory Item)</th>
+            <th style={{ padding: '14px 20px', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', width: '110px' }}>Quantity</th>
+            <th style={{ padding: '14px 20px', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', width: '150px' }}>Unit Price</th>
+            <th style={{ padding: '14px 20px', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', width: '130px' }}>Discount</th>
+            <th style={{ padding: '14px 20px', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', width: '150px', textAlign: 'right' }}>Total</th>
+            {!readOnly && <th style={{ padding: '14px 20px', width: '50px' }}></th>}
           </tr>
         </thead>
-        <tbody style={{ fontSize: '14px' }}>
+        <tbody style={{ fontSize: '13px' }}>
           {items.map((item, index) => (
-            <tr key={item.id || index} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '12px 24px' }}>
+            <tr key={item.id || index} style={{ borderBottom: '1px solid var(--border-main)', transition: 'background 0.15s ease' }}>
+              <td style={{ padding: '14px 20px' }}>
                 {readOnly ? (
                   <div>
-                    <span style={{ fontWeight: 600 }}>{item.description || item.product?.name || 'Selected Product'}</span>
-                    {item.productId && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {item.productId}</div>}
+                    <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{item.description || item.product?.name || 'Selected Product'}</span>
+                    {item.productId && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>ID: {item.productId}</div>}
                   </div>
                 ) : (
                   <select 
@@ -107,28 +129,57 @@ export function SalesOrderItems({ items, products = [], readOnly, onItemsChange 
                   </select>
                 )}
               </td>
-              <td style={{ padding: '12px 24px' }}>
-                {readOnly ? item.quantity : (
-                  <input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} style={inputStyle} min="1" />
+              <td style={{ padding: '14px 20px' }}>
+                {readOnly ? (
+                  <span style={{ fontWeight: 600 }}>{item.quantity}</span>
+                ) : (
+                  <input 
+                    type="number" 
+                    className="sales-order-table-input"
+                    value={item.quantity} 
+                    onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} 
+                    style={inputStyle} 
+                    min="1" 
+                  />
                 )}
               </td>
-              <td style={{ padding: '12px 24px' }}>
-                {readOnly ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(item.unitPrice) : (
-                  <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} style={inputStyle} min="0" />
+              <td style={{ padding: '14px 20px' }}>
+                {readOnly ? (
+                  <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(item.unitPrice)}</span>
+                ) : (
+                  <input 
+                    type="number" 
+                    className="sales-order-table-input"
+                    value={item.unitPrice} 
+                    onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} 
+                    style={inputStyle} 
+                    min="0" 
+                  />
                 )}
               </td>
-              <td style={{ padding: '12px 24px' }}>
-                {readOnly ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(item.discount) : (
-                  <input type="number" value={item.discount} onChange={(e) => handleItemChange(index, 'discount', e.target.value)} style={inputStyle} min="0" />
+              <td style={{ padding: '14px 20px' }}>
+                {readOnly ? (
+                  <span style={{ color: item.discount > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: 600 }}>
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(item.discount)}
+                  </span>
+                ) : (
+                  <input 
+                    type="number" 
+                    className="sales-order-table-input"
+                    value={item.discount} 
+                    onChange={(e) => handleItemChange(index, 'discount', e.target.value)} 
+                    style={inputStyle} 
+                    min="0" 
+                  />
                 )}
               </td>
-              <td style={{ padding: '12px 24px', fontWeight: 600, textAlign: 'right' }}>
+              <td style={{ padding: '14px 20px', fontWeight: 800, textAlign: 'right', color: 'var(--text-main)', fontSize: '14px' }}>
                 {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'BDT' }).format(item.total)}
               </td>
               {!readOnly && (
-                <td style={{ padding: '12px 24px' }}>
-                  <button type="button" onClick={() => removeItem(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }} title="Remove Item">
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
+                <td style={{ padding: '14px 20px' }}>
+                  <button type="button" onClick={() => removeItem(index)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px' }} title="Remove Item">
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                   </button>
                 </td>
               )}
@@ -137,9 +188,26 @@ export function SalesOrderItems({ items, products = [], readOnly, onItemsChange 
         </tbody>
       </table>
       {!readOnly && (
-        <div style={{ padding: '16px 24px' }}>
-          <button type="button" onClick={addItem} style={{ padding: '8px 16px', color: 'var(--primary)', background: 'var(--primary-glow)', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-            + Add Product Line
+        <div style={{ padding: '16px 20px', background: 'var(--surface-hover)', borderTop: '1px solid var(--border-main)' }}>
+          <button 
+            type="button" 
+            onClick={addItem} 
+            style={{ 
+              padding: '8px 18px', 
+              color: '#ffffff', 
+              background: '#10b981', 
+              border: 'none', 
+              borderRadius: '0px', 
+              fontSize: '13px', 
+              fontWeight: 700, 
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+            Add Product Line
           </button>
         </div>
       )}

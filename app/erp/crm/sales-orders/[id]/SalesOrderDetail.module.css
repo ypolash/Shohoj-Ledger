@@ -1,0 +1,322 @@
+/* ==========================================================================
+   Sales Order Detail Page - Redesigned Enterprise Theme (0px Radius)
+   ========================================================================== */
+
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Section */
+.headerBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 0;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backBtn:hover {
+  background: var(--surface-main);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.orderIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orderTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.orderNumber {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.orderCustomer {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customerHighlight {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* Action Buttons */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.btnApprove {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.btnApprove:hover {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.btnReserve {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+  border-color: #06b6d4;
+}
+
+.btnReserve:hover {
+  background: #06b6d4;
+  color: #ffffff;
+}
+
+.btnFulfill {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.btnFulfill:hover {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.btnInvoice {
+  background: var(--surface-main);
+  color: var(--text-main);
+  border-color: var(--border-main);
+}
+
+.btnInvoice:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-muted);
+}
+
+.btnEdit {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.btnEdit:hover {
+  filter: brightness(1.1);
+}
+
+/* KPI Cards Grid */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.kpiCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.kpiLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.shipmentSelect {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 0;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shipmentSelect:focus {
+  border-color: var(--primary);
+}
+
+/* Tabs Bar */
+.tabsContainer {
+  display: flex;
+  gap: 2px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 4px;
+  overflow-x: auto;
+}
+
+.tabItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tabItem:hover {
+  color: var(--text-main);
+  background: var(--surface-hover);
+}
+
+.tabActive {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  font-weight: 800;
+}
+
+/* Content Area */
+.tabContent {
+  min-height: 480px;
+}
+
+/* Overview Layout */
+.overviewLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.totalsWrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.totalsCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* Content Card Generic */
+.contentCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-main);
+  border-radius: 0;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.contentCardHeader {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

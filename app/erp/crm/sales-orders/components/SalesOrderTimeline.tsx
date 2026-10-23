@@ -29,7 +29,7 @@ export function SalesOrderTimeline() {
             )}
             
             <div style={{ 
-              width: '32px', height: '32px', borderRadius: '50%', 
+              width: '32px', height: '32px', borderRadius: '0px', 
               background: `color-mix(in srgb, ${color} 15%, transparent)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               zIndex: 1, border: `1px solid ${color}`
@@ -37,9 +37,9 @@ export function SalesOrderTimeline() {
               <span className="material-symbols-outlined" style={{ fontSize: '16px', color: color }}>{icon}</span>
             </div>
             
-            <div style={{ flex: 1, background: 'var(--surface-hover)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+            <div style={{ flex: 1, background: 'var(--surface-hover)', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border-main)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>{act.title}</span>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>{act.title}</span>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(act.date).toLocaleString()}</span>
               </div>
               {act.detail && <div style={{ marginTop: '4px', fontSize: '13px', color: 'var(--text-main)' }}>{act.detail}</div>}

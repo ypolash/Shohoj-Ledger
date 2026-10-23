@@ -13,8 +13,6 @@ import {
   Edit3, 
   Trash2, 
   RefreshCw, 
-  Grid, 
-  List, 
   CheckCircle2, 
   AlertCircle,
   X,
@@ -41,7 +39,6 @@ export default function CategoriesPage() {
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   // Modal State for Quick Add / Edit
   const [showModal, setShowModal] = useState(false);
@@ -243,7 +240,7 @@ export default function CategoriesPage() {
         </div>
       )}
 
-      {/* Toolbar (Search & View Toggle) */}
+      {/* Toolbar (Search) */}
       <div className={styles.toolbarCard}>
         <div className={styles.searchBox}>
           <Search size={16} className={styles.searchIcon} />
@@ -255,26 +252,9 @@ export default function CategoriesPage() {
             className={styles.searchInput}
           />
         </div>
-
-        <div className={styles.viewToggles}>
-          <button 
-            className={`${styles.viewToggleBtn} ${viewMode === 'grid' ? styles.viewToggleActive : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            <Grid size={15} />
-            <span>Grid</span>
-          </button>
-          <button 
-            className={`${styles.viewToggleBtn} ${viewMode === 'table' ? styles.viewToggleActive : ''}`}
-            onClick={() => setViewMode('table')}
-          >
-            <List size={15} />
-            <span>Table</span>
-          </button>
-        </div>
       </div>
 
-      {/* Category Content: Grid or Table */}
+      {/* Category Content: Table */}
       {isLoading ? (
         <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
           <RefreshCw size={28} className="animate-spin" style={{ margin: '0 auto 12px' }} color="var(--primary)" />
@@ -292,76 +272,6 @@ export default function CategoriesPage() {
           <button className={styles.btnPrimary} onClick={() => openAddModal()} style={{ marginTop: '8px' }}>
             <Plus size={16} /> Create Category
           </button>
-        </div>
-      ) : viewMode === 'grid' ? (
-        /* Grid Cards View */
-        <div className={styles.categoryGrid}>
-          {filteredCategories.map(cat => (
-            <div key={cat.id} className={styles.categoryCard}>
-              <div>
-                <div className={styles.catCardHeader}>
-                  <div className={styles.catIconBox}>
-                    <Folder size={22} />
-                  </div>
-                  <div className={styles.catTitleArea}>
-                    <h3 className={styles.catName}>{cat.name}</h3>
-                    {cat.parent ? (
-                      <span className={styles.parentBadge}>
-                        <ChevronRight size={11} /> {cat.parent.name}
-                      </span>
-                    ) : (
-                      <span className={styles.parentBadge} style={{ color: 'var(--primary)' }}>
-                        Root Category
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <p className={styles.catDescription} style={{ marginTop: '12px' }}>
-                  {cat.description || "No description provided for this category."}
-                </p>
-              </div>
-
-              <div className={styles.catCardFooter}>
-                <div className={styles.catStats}>
-                  <span className={styles.statPill} title="Products in this category">
-                    <Package size={13} color="var(--primary)" />
-                    {cat._count?.products || 0} items
-                  </span>
-                  {cat._count?.children > 0 && (
-                    <span className={styles.statPill} title="Sub-categories">
-                      <FolderPlus size={13} color="#8b5cf6" />
-                      {cat._count.children} sub
-                    </span>
-                  )}
-                </div>
-
-                <div className={styles.catActions}>
-                  <button 
-                    className={styles.iconBtn} 
-                    onClick={() => openAddModal(cat.id)}
-                    title="Add Sub-Category"
-                  >
-                    <FolderPlus size={14} />
-                  </button>
-                  <button 
-                    className={styles.iconBtn} 
-                    onClick={() => openEditModal(cat)}
-                    title="Edit Category"
-                  >
-                    <Edit3 size={14} />
-                  </button>
-                  <button 
-                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`} 
-                    onClick={() => handleDelete(cat)}
-                    title="Delete Category"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       ) : (
         /* Table View */

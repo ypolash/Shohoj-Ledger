@@ -52,16 +52,18 @@ export function SalesOrderStatus({ status }: SalesOrderStatusProps) {
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '4px',
-      padding: '4px 8px',
-      borderRadius: '12px',
+      gap: '6px',
+      padding: '4px 10px',
+      borderRadius: '0px',
       fontSize: '11px',
-      fontWeight: 600,
+      fontWeight: 700,
       background: bg,
       color: color,
-      textTransform: 'uppercase'
+      border: `1px solid ${color}`,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em'
     }}>
-      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{icon}</span>
+      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>{icon}</span>
       {status || 'Draft'}
     </span>
   );

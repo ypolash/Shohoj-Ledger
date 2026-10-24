@@ -39,7 +39,7 @@ export async function GET() {
     // 3. Departments
     const departments = await prisma.department.count({
       where: {
-        ...companyFilter,
+        ...baseCompanyFilter,
         isActive: true
       }
     });

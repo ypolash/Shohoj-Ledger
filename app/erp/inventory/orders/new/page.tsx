@@ -55,7 +55,7 @@ function CreateOrderContent() {
   const returnUrl = fromParam || '/erp/inventory/orders';
   const isFromOrdersHub = fromParam === '/erp/orders' || fromParam?.startsWith('/erp/orders');
 
-  const orderFormRef = useRef<HTMLDivElement>(null);
+  const orderFormRef = useRef<HTMLFormElement>(null);
 
   // Data
   const [crmCustomers, setCrmCustomers] = useState<any[]>([]);

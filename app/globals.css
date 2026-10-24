@@ -315,6 +315,17 @@ body {
   scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
 }
 
+/* Utility to completely hide scrollbar while preserving scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Base interactive resets */
 button, input, select, textarea {
   font-family: inherit;

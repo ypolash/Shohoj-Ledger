@@ -265,7 +265,7 @@ export function ProductForm({
       {error && (
         <div style={{
           padding: '12px 16px',
-          borderRadius: '10px',
+          borderRadius: '0',
           background: 'rgba(239, 68, 68, 0.1)',
           border: '1px solid rgba(239, 68, 68, 0.3)',
           color: 'var(--danger, #ef4444)',
@@ -294,7 +294,7 @@ export function ProductForm({
           <div style={{
             background: 'var(--surface-main)',
             border: '1px solid var(--border-main)',
-            borderRadius: '14px',
+            borderRadius: '0',
             padding: '20px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
@@ -327,7 +327,7 @@ export function ProductForm({
                     style={{ 
                       width: '110px', 
                       height: '135px', 
-                      borderRadius: '10px', 
+                      borderRadius: '0', 
                       border: form.imageUrl ? '1px solid var(--border-main)' : '2px dashed var(--border-main)', 
                       background: form.imageUrl ? 'var(--surface-hover)' : 'var(--surface-main)', 
                       display: 'flex', 
@@ -369,7 +369,7 @@ export function ProductForm({
                         <div style={{
                           width: '32px',
                           height: '32px',
-                          borderRadius: '8px',
+                          borderRadius: '0',
                           background: 'var(--surface-hover)',
                           display: 'flex',
                           alignItems: 'center',
@@ -431,7 +431,7 @@ export function ProductForm({
                       style={{
                         width: '100%',
                         padding: '10px 14px',
-                        borderRadius: '8px',
+                        borderRadius: '0',
                         border: '1px solid var(--border-main)',
                         background: 'var(--surface-hover)',
                         color: 'var(--text-main)',
@@ -455,7 +455,7 @@ export function ProductForm({
                       style={{
                         width: '100%',
                         padding: '10px 14px',
-                        borderRadius: '8px',
+                        borderRadius: '0',
                         border: '1px solid var(--border-main)',
                         background: 'var(--surface-hover)',
                         color: 'var(--text-main)',
@@ -481,7 +481,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -509,7 +509,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -563,7 +563,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -586,7 +586,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -603,7 +603,7 @@ export function ProductForm({
           <div style={{
             background: 'var(--surface-main)',
             border: '1px solid var(--border-main)',
-            borderRadius: '14px',
+            borderRadius: '0',
             padding: '20px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
@@ -640,7 +640,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: '#ef4444',
@@ -665,7 +665,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: '#10b981',
@@ -681,7 +681,7 @@ export function ProductForm({
               {(purchase > 0 || selling > 0) && (
                 <div style={{
                   padding: '10px 14px',
-                  borderRadius: '8px',
+                  borderRadius: '0',
                   background: marginAmount >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
                   border: `1px solid ${marginAmount >= 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
                   display: 'flex',
@@ -710,7 +710,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -734,7 +734,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -754,7 +754,7 @@ export function ProductForm({
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      borderRadius: '8px',
+                      borderRadius: '0',
                       border: '1px solid var(--border-main)',
                       background: 'var(--surface-hover)',
                       color: 'var(--text-main)',
@@ -776,7 +776,7 @@ export function ProductForm({
           <div style={{
             background: 'var(--surface-main)',
             border: '1px solid var(--border-main)',
-            borderRadius: '14px',
+            borderRadius: '0',
             padding: '20px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
@@ -810,7 +810,7 @@ export function ProductForm({
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    borderRadius: '8px',
+                    borderRadius: '0',
                     border: '1px solid var(--border-main)',
                     background: 'var(--surface-hover)',
                     color: 'var(--text-main)',
@@ -837,7 +837,7 @@ export function ProductForm({
                         style={{
                           width: '100%',
                           padding: '8px 12px',
-                          borderRadius: '6px',
+                          borderRadius: '0',
                           border: '1px solid var(--border-main)',
                           background: 'var(--surface-hover)',
                           color: 'var(--text-main)',
@@ -860,7 +860,7 @@ export function ProductForm({
             <div style={{
               background: 'var(--surface-main)',
               border: '1px solid var(--border-main)',
-              borderRadius: '14px',
+              borderRadius: '0',
               padding: '20px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
             }}>
@@ -882,7 +882,7 @@ export function ProductForm({
               {/* Simulated Product Card */}
               <div style={{
                 background: 'var(--surface-hover)',
-                borderRadius: '12px',
+                borderRadius: '0',
                 border: '1px solid var(--border-main)',
                 padding: '16px',
                 display: 'flex',
@@ -893,7 +893,7 @@ export function ProductForm({
                   <div style={{
                     width: '100%',
                     height: '140px',
-                    borderRadius: '8px',
+                    borderRadius: '0',
                     overflow: 'hidden',
                     background: 'var(--surface-main)',
                     display: 'flex',
@@ -924,7 +924,7 @@ export function ProductForm({
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     padding: '3px 8px',
-                    borderRadius: '9999px',
+                    borderRadius: '0',
                     background: form.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.15)' : 'var(--surface-main)',
                     color: form.status === 'ACTIVE' ? '#10b981' : 'var(--text-muted)',
                     border: '1px solid var(--border-main)'
@@ -937,7 +937,7 @@ export function ProductForm({
                   <span style={{
                     fontSize: '0.725rem',
                     padding: '2px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '0',
                     background: 'var(--surface-main)',
                     border: '1px solid var(--border-main)',
                     color: 'var(--text-muted)'
@@ -948,7 +948,7 @@ export function ProductForm({
                   <span style={{
                     fontSize: '0.725rem',
                     padding: '2px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '0',
                     background: 'var(--surface-main)',
                     border: '1px solid var(--border-main)',
                     color: 'var(--text-muted)'
@@ -991,7 +991,7 @@ export function ProductForm({
             onClick={onCancel}
             style={{
               padding: '10px 20px',
-              borderRadius: '8px',
+              borderRadius: '0',
               border: '1px solid var(--border-main)',
               background: 'var(--surface-hover)',
               color: 'var(--text-main)',
@@ -1009,7 +1009,7 @@ export function ProductForm({
           disabled={submitting}
           style={{
             padding: '10px 24px',
-            borderRadius: '8px',
+            borderRadius: '0',
             border: 'none',
             background: 'var(--primary)',
             color: 'white',

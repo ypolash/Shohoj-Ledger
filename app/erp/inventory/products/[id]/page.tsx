@@ -294,53 +294,56 @@ export default function ProductDetailsPage() {
         <button 
           onClick={() => router.push('/erp/inventory/products')}
           className={styles.backBtn}
+          title="Back to Products"
+          aria-label="Back to Products"
         >
           <ArrowLeft size={16} />
-          <span>Back to Products</span>
         </button>
 
         <div className={styles.headerActions}>
           <button 
-            className={styles.btnSecondary}
+            className={styles.iconBtn}
             onClick={handleRefresh}
             title="Refresh Data"
+            aria-label="Refresh Data"
           >
-            <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={styles.iconBtn}
             onClick={() => window.print()}
             title="Print Product Sheet"
+            aria-label="Print Product Sheet"
           >
-            <Printer size={15} />
-            <span>Print</span>
+            <Printer size={16} />
           </button>
 
           <button 
-            className={styles.btnSecondary}
+            className={styles.iconBtn}
             onClick={() => setShowStockModal(true)}
+            title="Adjust Stock"
+            aria-label="Adjust Stock"
           >
-            <Sliders size={15} />
-            <span>Adjust Stock</span>
+            <Sliders size={16} />
           </button>
 
           <button 
-            className={styles.btnPrimary}
+            className={`${styles.iconBtn} ${styles.iconBtnPrimary}`}
             onClick={() => setShowEditModal(true)}
+            title="Edit Product"
+            aria-label="Edit Product"
           >
-            <Edit3 size={15} />
-            <span>Edit Product</span>
+            <Edit3 size={16} />
           </button>
 
           <button 
-            className={styles.btnDanger}
+            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
             onClick={handleDelete}
             title="Delete Product"
+            aria-label="Delete Product"
           >
-            <Trash2 size={15} />
-            <span>Delete</span>
+            <Trash2 size={16} />
           </button>
         </div>
       </div>

@@ -46,7 +46,7 @@ export default function ProductModal({
         style={{ 
           width: '100%', 
           maxWidth: '780px', 
-          borderRadius: '20px', 
+          borderRadius: '0', 
           background: 'var(--surface-main)',
           border: '1px solid var(--border-main)',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -70,7 +70,7 @@ export default function ProductModal({
             <div style={{
               width: '38px',
               height: '38px',
-              borderRadius: '10px',
+              borderRadius: '0',
               background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
               color: 'white',
               display: 'flex',
@@ -98,7 +98,7 @@ export default function ProductModal({
               cursor: 'pointer', 
               color: 'var(--text-muted)',
               padding: '6px',
-              borderRadius: '8px',
+              borderRadius: '0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'

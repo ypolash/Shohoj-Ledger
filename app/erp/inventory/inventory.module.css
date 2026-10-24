@@ -367,3 +367,29 @@
   margin: 0 0 16px 0;
   line-height: 1.45;
 }
+
+/* --------------------------------------------------------------------------
+   Sub-Navigation Floating Bar Scrollbar Suppression
+   -------------------------------------------------------------------------- */
+.subNavHeader {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+.subNavHeader::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.subNavLinkList {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+.subNavLinkList::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+

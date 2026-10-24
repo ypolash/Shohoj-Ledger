@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import styles from "./inventory.module.css";
+
 interface NavItem {
   name: string;
   href: string;
@@ -70,6 +72,7 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
       {/* Top Floating Pill Navigation */}
       <div style={{ padding: "20px 24px 0 24px", flexShrink: 0, background: "var(--surface-bg)" }}>
         <header
+          className={`${styles.subNavHeader} no-scrollbar`}
           style={{
             background: "var(--surface-card)",
             borderRadius: "50px",
@@ -80,6 +83,8 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
             alignItems: "center",
             gap: "12px",
             overflowX: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
           }}
         >
           {/* Left Side Pill Badge (Current Section) */}
@@ -110,6 +115,7 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
 
           {/* Navigation Links */}
           <nav
+            className={`${styles.subNavLinkList} no-scrollbar`}
             style={{
               display: "flex",
               alignItems: "center",
@@ -117,6 +123,8 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
               flex: 1,
               flexWrap: "nowrap",
               overflowX: "auto",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
             {navigation.map((item) => {

@@ -117,18 +117,18 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
     <Modal isOpen={isOpen} onClose={onClose} title="Bulk Product Upload" size="md">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '16px 0' }}>
         
-        <div style={{ padding: '16px', background: 'var(--surface-hover)', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+        <div style={{ padding: '16px', background: 'var(--surface-hover)', borderRadius: '0', border: '1px solid var(--border-main)' }}>
           <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-main)' }}>Step 1: Download Template</h4>
           <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
             Start by downloading our standard CSV template. Fill in your product details carefully. <b>Product Code</b> and <b>Name</b> are required for every row.
           </p>
-          <button onClick={handleDownloadTemplate} className="btn btn-secondary" style={{ fontSize: '13px', padding: '6px 12px' }}>
+          <button onClick={handleDownloadTemplate} className="btn btn-secondary" style={{ fontSize: '13px', padding: '6px 12px', borderRadius: '0' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', marginRight: '6px' }}>download</span>
             Download Template
           </button>
         </div>
 
-        <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid var(--border-main)' }}>
+        <div style={{ padding: '16px', borderRadius: '0', border: '1px solid var(--border-main)' }}>
           <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--text-main)' }}>Step 2: Upload File</h4>
           <input 
             type="file" 
@@ -141,7 +141,7 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
             <button 
               onClick={() => fileInputRef.current?.click()} 
               className="btn btn-secondary" 
-              style={{ fontSize: '13px', padding: '6px 12px' }}
+              style={{ fontSize: '13px', padding: '6px 12px', borderRadius: '0' }}
               disabled={isUploading}
             >
               Choose File
@@ -152,26 +152,27 @@ export default function BulkProductUploadModal({ isOpen, onClose, onSuccess }: B
           </div>
 
           {error && (
-            <div style={{ marginTop: '16px', padding: '12px', background: 'var(--danger-subtle)', color: 'var(--danger)', borderRadius: '8px', fontSize: '13px', border: '1px solid var(--danger)' }}>
+            <div style={{ marginTop: '16px', padding: '12px', background: 'var(--danger-subtle)', color: 'var(--danger)', borderRadius: '0', fontSize: '13px', border: '1px solid var(--danger)' }}>
               {error}
             </div>
           )}
 
           {!error && parsedData.length > 0 && (
-            <div style={{ marginTop: '16px', padding: '12px', background: 'var(--success-subtle)', color: 'var(--success)', borderRadius: '8px', fontSize: '13px', border: '1px solid var(--success)' }}>
+            <div style={{ marginTop: '16px', padding: '12px', background: 'var(--success-subtle)', color: 'var(--success)', borderRadius: '0', fontSize: '13px', border: '1px solid var(--success)' }}>
               Ready to import <b>{parsedData.length}</b> products!
             </div>
           )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-          <button className="btn btn-secondary" onClick={onClose} disabled={isUploading}>
+          <button className="btn btn-secondary" onClick={onClose} disabled={isUploading} style={{ borderRadius: '0' }}>
             Cancel
           </button>
           <button 
             className="btn btn-primary" 
             onClick={handleUpload} 
             disabled={parsedData.length === 0 || isUploading}
+            style={{ borderRadius: '0' }}
           >
             {isUploading ? 'Uploading...' : 'Upload Products'}
           </button>

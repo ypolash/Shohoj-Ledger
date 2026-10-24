@@ -21,7 +21,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   AlertOctagon,
-  Archive
+  Archive,
+  Filter,
+  ArrowUpDown,
+  Palette
 } from 'lucide-react';
 
 import ProductModal from '../components/ProductModal';
@@ -94,6 +97,55 @@ export default function ProductsPage() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<{ id: string; name: string; top: number; right: number } | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Table Header Color Customization
+  const [headerColor, setHeaderColor] = useState('#10b981');
+  const [headerBorder, setHeaderBorder] = useState('#059669');
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const colorPickerRef = React.useRef<HTMLDivElement>(null);
+
+  const COLOR_PRESETS = [
+    { name: 'Emerald', bg: '#10b981', border: '#059669' },
+    { name: 'Royal Blue', bg: '#2563eb', border: '#1d4ed8' },
+    { name: 'Violet', bg: '#7c3aed', border: '#6d28d9' },
+    { name: 'Slate Dark', bg: '#1e293b', border: '#0f172a' },
+    { name: 'Teal', bg: '#0d9488', border: '#0f766e' },
+    { name: 'Rose', bg: '#e11d48', border: '#be123c' },
+    { name: 'Amber', bg: '#d97706', border: '#b45309' },
+    { name: 'Midnight', bg: '#0b1120', border: '#1e293b' },
+  ];
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('products_header_color');
+      const savedBorder = localStorage.getItem('products_header_border');
+      if (saved) setHeaderColor(saved);
+      if (savedBorder) setHeaderBorder(savedBorder);
+    } catch (e) {}
+  }, []);
+
+  const selectHeaderColor = (bg: string, border: string) => {
+    setHeaderColor(bg);
+    setHeaderBorder(border);
+    try {
+      localStorage.setItem('products_header_color', bg);
+      localStorage.setItem('products_header_border', border);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+        setColorPickerOpen(false);
+      }
+    };
+    if (colorPickerOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [colorPickerOpen]);
 
   // Initial loads
   useEffect(() => {
@@ -420,7 +472,7 @@ export default function ProductsPage() {
       {successMsg && (
         <div style={{
           padding: '12px 18px',
-          borderRadius: '10px',
+          borderRadius: '0',
           background: 'rgba(16, 185, 129, 0.12)',
           border: '1px solid rgba(16, 185, 129, 0.3)',
           color: 'var(--success, #10b981)',
@@ -436,69 +488,91 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Toolbar & Filters (Status Tabs, Search, Category, Sort) */}
+      {/* Toolbar & Filters (Single Compact Row) */}
       <div className={styles.toolbarContainer}>
         {/* Status Tabs (Square Icon View) */}
-        <div className={styles.toolbarTopRow}>
-          <div className={styles.tabsContainer}>
-            {[
-              {
-                id: 'ALL',
-                label: 'All Products',
-                icon: <Package size={18} />,
-                count: statusCounts.all,
-                colorKey: 'all',
-              },
-              {
-                id: 'IN_STOCK',
-                label: 'In Stock Products',
-                icon: <CheckCircle2 size={18} />,
-                count: statusCounts.inStock,
-                colorKey: 'in_stock',
-              },
-              {
-                id: 'LOW_STOCK',
-                label: 'Low Stock Alert',
-                icon: <AlertTriangle size={18} />,
-                count: statusCounts.lowStock,
-                colorKey: 'low_stock',
-              },
-              {
-                id: 'OUT_OF_STOCK',
-                label: 'Out of Stock Products',
-                icon: <AlertOctagon size={18} />,
-                count: statusCounts.outOfStock,
-                colorKey: 'out_of_stock',
-              },
-              ...(statusCounts.inactive > 0 ? [{
-                id: 'INACTIVE',
-                label: 'Inactive Products',
-                icon: <Archive size={18} />,
-                count: statusCounts.inactive,
-                colorKey: 'inactive',
-              }] : [])
-            ].map(tab => (
-              <div key={tab.id} className={styles.squareWrapper}>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={statusFilter === tab.id}
-                  aria-label={`${tab.label} (${tab.count})`}
-                  onClick={() => setStatusFilter(tab.id as any)}
-                  className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${statusFilter === tab.id ? styles.squareBtnActive : ''}`}
-                >
-                  <span className={styles.squareIcon}>
-                    {tab.icon}
-                  </span>
-                  <span className={styles.squareCount}>{tab.count}</span>
-                </button>
-                <div className={styles.squareTooltip}>
-                  <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
-                </div>
+        <div className={styles.tabsContainer}>
+          {[
+            {
+              id: 'ALL',
+              label: 'All Products',
+              icon: <Package size={15} />,
+              count: statusCounts.all,
+              colorKey: 'all',
+            },
+            {
+              id: 'IN_STOCK',
+              label: 'In Stock Products',
+              icon: <CheckCircle2 size={15} />,
+              count: statusCounts.inStock,
+              colorKey: 'in_stock',
+            },
+            {
+              id: 'LOW_STOCK',
+              label: 'Low Stock Alert',
+              icon: <AlertTriangle size={15} />,
+              count: statusCounts.lowStock,
+              colorKey: 'low_stock',
+            },
+            {
+              id: 'OUT_OF_STOCK',
+              label: 'Out of Stock Products',
+              icon: <AlertOctagon size={15} />,
+              count: statusCounts.outOfStock,
+              colorKey: 'out_of_stock',
+            },
+            ...(statusCounts.inactive > 0 ? [{
+              id: 'INACTIVE',
+              label: 'Inactive Products',
+              icon: <Archive size={15} />,
+              count: statusCounts.inactive,
+              colorKey: 'inactive',
+            }] : [])
+          ].map(tab => (
+            <div key={tab.id} className={styles.squareWrapper}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === tab.id}
+                aria-label={`${tab.label} (${tab.count})`}
+                onClick={() => setStatusFilter(tab.id as any)}
+                className={`${styles.squareBtn} ${styles[`square_${tab.colorKey}`]} ${statusFilter === tab.id ? styles.squareBtnActive : ''}`}
+              >
+                <span className={styles.squareIcon}>
+                  {tab.icon}
+                </span>
+                <span className={styles.squareCount}>{tab.count}</span>
+              </button>
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>{tab.label} ({tab.count})</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
+        {/* Search */}
+        <div className={styles.searchWrapper}>
+          <Search size={14} className={styles.searchIcon} />
+          <input 
+            type="text"
+            placeholder="Search by name, code, SKU, barcode, brand..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className={styles.searchInput}
+          />
+          {search && (
+            <button 
+              className={styles.searchClearBtn}
+              onClick={() => setSearch('')}
+              title="Clear search"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Active Notice & Action Controls (Filter, Sort, Color Switcher) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Active Filter Notice */}
           <div className={styles.activeFilterNotice}>
             <span>
@@ -517,57 +591,165 @@ export default function ProductsPage() {
               {statusFilter === 'INACTIVE' && statusCounts.inactive} Products
             </span>
           </div>
-        </div>
 
-        {/* Search, Category Filter, and Sort */}
-        <div className={styles.toolbarBottomRow}>
-          <div className={styles.searchWrapper}>
-            <Search size={16} className={styles.searchIcon} />
-            <input 
-              type="text"
-              placeholder="Search by name, code, SKU, barcode, brand..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className={styles.searchInput}
-            />
-            {search && (
-              <button 
-                className={styles.searchClearBtn}
-                onClick={() => setSearch('')}
-                title="Clear search"
+          {/* Right Controls: Filter, Sort, Color Switcher */}
+          <div className={styles.tabsContainer}>
+            {/* Category Filter Icon View */}
+            <div className={styles.squareWrapper}>
+              <div 
+                className={`${styles.squareBtn} ${styles.square_all} ${categoryFilter ? styles.iconFilterActive : ''}`}
               >
-                <X size={14} />
+                <span className={styles.squareIcon}>
+                  <Filter size={15} />
+                </span>
+                <span className={styles.squareCount}>
+                  {categoryFilter ? 'Cat' : categories.length}
+                </span>
+
+                <select 
+                  value={categoryFilter} 
+                  onChange={e => setCategoryFilter(e.target.value)}
+                  className={styles.hiddenSelectOverlay}
+                  aria-label="Filter by Category"
+                  title="Filter by Category"
+                >
+                  <option value="">All Categories ({categories.length})</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>
+                  {categoryFilter 
+                    ? `Category: ${categories.find(c => c.id === categoryFilter)?.name}` 
+                    : `All Categories (${categories.length})`}
+                </div>
+              </div>
+            </div>
+
+            {/* Sort Filter Icon View */}
+            <div className={styles.squareWrapper}>
+              <div 
+                className={`${styles.squareBtn} ${styles.square_all} ${sortBy !== 'newest' ? styles.iconFilterActive : ''}`}
+              >
+                <span className={styles.squareIcon}>
+                  <ArrowUpDown size={15} />
+                </span>
+                <span className={styles.squareCount}>
+                  Sort
+                </span>
+
+                <select 
+                  value={sortBy} 
+                  onChange={e => setSortBy(e.target.value as any)}
+                  className={styles.hiddenSelectOverlay}
+                  aria-label="Sort products"
+                  title="Sort products"
+                >
+                  <option value="newest">Sort: Default / Newest</option>
+                  <option value="name_asc">Name: A to Z</option>
+                  <option value="name_desc">Name: Z to A</option>
+                  <option value="stock_desc">Stock: High to Low</option>
+                  <option value="stock_asc">Stock: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="price_asc">Price: Low to High</option>
+                </select>
+              </div>
+
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>
+                  Sort: {
+                    sortBy === 'name_asc' ? 'Name: A to Z' :
+                    sortBy === 'name_desc' ? 'Name: Z to A' :
+                    sortBy === 'stock_desc' ? 'Stock: High to Low' :
+                    sortBy === 'stock_asc' ? 'Stock: Low to High' :
+                    sortBy === 'price_desc' ? 'Price: High to Low' :
+                    sortBy === 'price_asc' ? 'Price: Low to High' :
+                    'Default / Newest'
+                  }
+                </div>
+              </div>
+            </div>
+
+            {/* Color Switcher Icon View */}
+            <div className={styles.squareWrapper} ref={colorPickerRef}>
+              <button
+                type="button"
+                className={`${styles.squareBtn} ${colorPickerOpen ? styles.squareBtnActive : ''}`}
+                onClick={() => setColorPickerOpen(prev => !prev)}
+                title={`Header Color: ${headerColor}`}
+                aria-label="Change table header color"
+              >
+                <span className={styles.squareIcon} style={{ color: headerColor }}>
+                  <Palette size={15} />
+                </span>
+                <span 
+                  style={{ 
+                    width: '12px', 
+                    height: '3px', 
+                    background: headerColor, 
+                    display: 'inline-block',
+                    marginTop: '2px' 
+                  }} 
+                />
               </button>
-            )}
-          </div>
 
-          <div className={styles.filterControls}>
-            {/* Category Dropdown */}
-            <select 
-              value={categoryFilter} 
-              onChange={e => setCategoryFilter(e.target.value)}
-              className={styles.selectInput}
-            >
-              <option value="">All Categories ({categories.length})</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              {/* Color Switcher Popover */}
+              {colorPickerOpen && (
+                <div className={styles.colorPopover}>
+                  <div className={styles.colorPopoverHeader}>
+                    <span>Header Color</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setColorPickerOpen(false)} 
+                      className={styles.colorPopoverClose}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <div className={styles.colorPresetsGrid}>
+                    {COLOR_PRESETS.map(preset => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        className={`${styles.colorPresetBtn} ${headerColor === preset.bg ? styles.colorPresetBtnActive : ''}`}
+                        style={{ background: preset.bg }}
+                        onClick={() => {
+                          selectHeaderColor(preset.bg, preset.border);
+                          setColorPickerOpen(false);
+                        }}
+                        title={preset.name}
+                      >
+                        {headerColor === preset.bg && <Check size={12} color="#ffffff" />}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.customColorRow}>
+                    <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input 
+                        type="color" 
+                        value={headerColor} 
+                        onChange={e => {
+                          const val = e.target.value;
+                          selectHeaderColor(val, val);
+                        }}
+                        style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                      />
+                      <span>Custom</span>
+                    </label>
+                    <span style={{ fontFamily: 'monospace', fontSize: '10px', color: 'var(--text-secondary)' }}>
+                      {headerColor}
+                    </span>
+                  </div>
+                </div>
+              )}
 
-            {/* Sort Dropdown */}
-            <select 
-              value={sortBy} 
-              onChange={e => setSortBy(e.target.value as any)}
-              className={styles.selectInput}
-            >
-              <option value="newest">Sort: Default / Newest</option>
-              <option value="name_asc">Name: A to Z</option>
-              <option value="name_desc">Name: Z to A</option>
-              <option value="stock_desc">Stock: High to Low</option>
-              <option value="stock_asc">Stock: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="price_asc">Price: Low to High</option>
-            </select>
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>Header Color</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -575,7 +757,10 @@ export default function ProductsPage() {
       {/* Main Table Panel */}
       <div className={styles.tablePanel}>
         <div className={styles.tableWrapper}>
-          <table className={styles.table}>
+          <table 
+            className={styles.table}
+            style={{ '--table-header-bg': headerColor, '--table-header-border': headerBorder } as React.CSSProperties}
+          >
             <thead>
               <tr>
                 <th className={styles.th} style={{ width: '40px', textAlign: 'center' }}>
@@ -588,7 +773,8 @@ export default function ProductsPage() {
                 </th>
                 <th className={styles.th} style={{ width: '60px' }}>Item</th>
                 <th className={styles.th}>Product Details</th>
-                <th className={styles.th}>Code / SKU</th>
+                <th className={styles.th}>Code</th>
+                <th className={styles.th}>SKU</th>
                 <th className={styles.th}>Unit</th>
                 <th className={styles.th}>Current Stock</th>
                 <th className={styles.th}>Sell Price</th>
@@ -600,14 +786,14 @@ export default function ProductsPage() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className={styles.tr}>
-                    <td colSpan={9} style={{ padding: '16px 20px' }}>
-                      <div style={{ height: '18px', borderRadius: '6px', background: 'var(--surface-hover)', animation: 'pulse 1.5s infinite ease-in-out' }} />
+                    <td colSpan={10} style={{ padding: '8px 12px' }}>
+                      <div style={{ height: '18px', borderRadius: '0', background: 'var(--surface-hover)', animation: 'pulse 1.5s infinite ease-in-out' }} />
                     </td>
                   </tr>
                 ))
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>
+                  <td colSpan={10}>
                     <div className={styles.emptyState}>
                       <div className={styles.emptyIcon}>
                         <Package size={28} />
@@ -625,9 +811,6 @@ export default function ProductsPage() {
                 filteredProducts.map(p => {
                   const isSelected = selectedIds.includes(p.id);
                   const badge = getStockBadge(p);
-                  const margin = p.sellingPrice && p.purchasePrice 
-                    ? Math.round(((p.sellingPrice - p.purchasePrice) / p.sellingPrice) * 100) 
-                    : null;
 
                   return (
                     <tr 
@@ -668,46 +851,42 @@ export default function ProductsPage() {
                           <span className={styles.productNameLink}>
                             {p.name}
                           </span>
-                          <div className={styles.productMeta}>
-                            <span className={styles.categoryTag}>
-                              {p.category?.name || 'Uncategorized'}
-                            </span>
-                            {p.brand && <span>· {p.brand}</span>}
-                          </div>
                         </div>
                       </td>
 
-                      {/* Code & SKU */}
+                      {/* Code */}
                       <td className={styles.td}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>
-                            {p.productCode}
+                        <span className={styles.productCode}>
+                          {p.productCode}
+                        </span>
+                      </td>
+
+                      {/* SKU */}
+                      <td className={styles.td}>
+                        {p.sku ? (
+                          <span 
+                            className={styles.skuChip} 
+                            onClick={(e) => handleCopySku(p.sku!, e)}
+                            title="Click to copy SKU"
+                          >
+                            {copiedSku === p.sku ? <Check size={11} color="var(--success)" /> : <Copy size={11} />}
+                            {p.sku}
                           </span>
-                          {p.sku ? (
-                            <span 
-                              className={styles.skuChip} 
-                              onClick={(e) => handleCopySku(p.sku!, e)}
-                              title="Click to copy SKU"
-                            >
-                              {copiedSku === p.sku ? <Check size={11} color="var(--success)" /> : <Copy size={11} />}
-                              {p.sku}
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>—</span>
-                          )}
-                        </div>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
+                        )}
                       </td>
 
                       {/* Unit */}
                       <td className={styles.td}>
-                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem', whiteSpace: 'nowrap' }}>
                           {p.unit || 'pcs'}
                         </span>
                       </td>
 
                       {/* Current Stock */}
                       <td className={styles.td}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div className={styles.stockCell}>
                           <span 
                             className={styles.stockPill}
                             style={{
@@ -722,25 +901,15 @@ export default function ProductsPage() {
                             />
                             {p.currentStock} {p.unit || 'pcs'} · {badge.label}
                           </span>
-                          {p.minStock > 0 && (
-                            <span style={{ fontSize: '0.685rem', color: 'var(--text-muted)' }}>
-                              Min: {p.minStock} {p.unit || 'pcs'}
-                            </span>
-                          )}
                         </div>
                       </td>
 
-                      {/* Sell Price & Margin */}
+                      {/* Sell Price */}
                       <td className={styles.td}>
                         <div className={styles.priceCell}>
                           <span className={styles.sellPrice}>
                             ৳{Number(p.sellingPrice).toLocaleString()}
                           </span>
-                          {margin !== null && margin > 0 && (
-                            <span className={styles.marginTag}>
-                              +{margin}% margin
-                            </span>
-                          )}
                         </div>
                       </td>
 
@@ -748,13 +917,14 @@ export default function ProductsPage() {
                       <td className={styles.td}>
                         <span 
                           style={{
-                            padding: '3px 9px',
-                            borderRadius: '20px',
+                            padding: '2px 8px',
+                            borderRadius: '0',
                             fontSize: '0.725rem',
                             fontWeight: 700,
                             color: p.status === 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)',
                             background: p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.12)' : 'var(--surface-hover)',
-                            border: `1px solid ${p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.25)' : 'var(--border-main)'}`
+                            border: `1px solid ${p.status === 'ACTIVE' ? 'rgba(16, 185, 129, 0.25)' : 'var(--border-main)'}`,
+                            whiteSpace: 'nowrap'
                           }}
                         >
                           {p.status}
@@ -851,7 +1021,7 @@ export default function ProductsPage() {
           top: `${menuOpen.top + 4}px`,
           background: 'var(--surface-main)',
           border: '1px solid var(--border-main)',
-          borderRadius: '10px',
+          borderRadius: '0',
           boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
           padding: '6px',
           zIndex: 9999,
@@ -862,7 +1032,7 @@ export default function ProductsPage() {
           animation: 'fadeIn 0.15s ease'
         }}>
           <button 
-            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--text-main)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--text-main)', borderRadius: '0', display: 'flex', alignItems: 'center', gap: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => {
@@ -875,7 +1045,7 @@ export default function ProductsPage() {
           </button>
 
           <button 
-            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--text-main)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--text-main)', borderRadius: '0', display: 'flex', alignItems: 'center', gap: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => {
@@ -890,7 +1060,7 @@ export default function ProductsPage() {
           </button>
 
           <button 
-            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--danger)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.825rem', color: 'var(--danger)', borderRadius: '0', display: 'flex', alignItems: 'center', gap: '8px' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
             onClick={() => handleDelete(menuOpen.id, menuOpen.name)}

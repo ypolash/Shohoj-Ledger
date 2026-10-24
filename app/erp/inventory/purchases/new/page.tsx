@@ -15,8 +15,6 @@ import {
   Package,
   FileText,
   CheckCircle2,
-  Eye,
-  Edit3,
   UserPlus
 } from "lucide-react";
 import styles from "./NewPurchasePage.module.css";
@@ -517,73 +515,18 @@ export default function DedicatedNewPurchasePage() {
           <div className={styles.titleInfo}>
             <h1>
               <ShoppingBag size={22} color="var(--primary)" />
-              New Purchase Order & Live Invoice
+              New Purchase Order
             </h1>
-            <p>Draft procurements, track supplier obligations, and generate real-time purchase invoices.</p>
+            <p>Draft procurements, track supplier obligations, and manage purchase records.</p>
           </div>
         </div>
 
         <div className={styles.topActions}>
-          {/* Theme Palette Switcher */}
-          <div className={styles.themeSelector} title="Change Invoice Accent Theme">
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 700, paddingRight: "4px" }}>
-              Theme:
-            </span>
-            <div
-              className={`${styles.themeDot} ${activeTheme === "Blue" ? styles.themeDotActive : ""}`}
-              style={{ background: "#2563eb" }}
-              onClick={() => setActiveTheme("Blue")}
-              title="Corporate Blue"
-            />
-            <div
-              className={`${styles.themeDot} ${activeTheme === "Emerald" ? styles.themeDotActive : ""}`}
-              style={{ background: "#059669" }}
-              onClick={() => setActiveTheme("Emerald")}
-              title="Modern Emerald"
-            />
-            <div
-              className={`${styles.themeDot} ${activeTheme === "Indigo" ? styles.themeDotActive : ""}`}
-              style={{ background: "#6366f1" }}
-              onClick={() => setActiveTheme("Indigo")}
-              title="Indigo Velvet"
-            />
-            <div
-              className={`${styles.themeDot} ${activeTheme === "Amber" ? styles.themeDotActive : ""}`}
-              style={{ background: "#d97706" }}
-              onClick={() => setActiveTheme("Amber")}
-              title="Executive Amber"
-            />
-            <div
-              className={`${styles.themeDot} ${activeTheme === "Slate" ? styles.themeDotActive : ""}`}
-              style={{ background: "#334155" }}
-              onClick={() => setActiveTheme("Slate")}
-              title="Minimal Slate"
-            />
-          </div>
-
-          {/* Mobile View Mode Switcher */}
-          <div className={styles.viewModeToggle}>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTabMobile === "form" ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTabMobile("form")}
-            >
-              <Edit3 size={14} /> Form
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTabMobile === "preview" ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTabMobile("preview")}
-            >
-              <Eye size={14} /> Live Invoice
-            </button>
-          </div>
-
           <button
             type="button"
             onClick={handlePrint}
             className={styles.btnSecondary}
-            title="Print or Export Live Invoice"
+            title="Print Purchase Order"
           >
             <Printer size={16} />
             <span>Print PO</span>
@@ -606,7 +549,7 @@ export default function DedicatedNewPurchasePage() {
         <div
           style={{
             padding: "14px 20px",
-            borderRadius: "14px",
+            borderRadius: "0",
             background: "rgba(239, 68, 68, 0.15)",
             border: "1px solid rgba(239, 68, 68, 0.3)",
             color: "#ef4444",
@@ -625,7 +568,7 @@ export default function DedicatedNewPurchasePage() {
         <div
           style={{
             padding: "14px 20px",
-            borderRadius: "14px",
+            borderRadius: "0",
             background: "rgba(16, 185, 129, 0.15)",
             border: "1px solid rgba(16, 185, 129, 0.3)",
             color: "#10b981",
@@ -948,7 +891,7 @@ export default function DedicatedNewPurchasePage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  borderRadius: "10px"
+                  borderRadius: "0"
                 }}
               >
                 <Plus size={15} />
@@ -1046,246 +989,6 @@ export default function DedicatedNewPurchasePage() {
             </div>
           </div>
         </div>
-
-        {/* Right Column: Live Reactive Invoice Sheet */}
-        <div
-          className={`${styles.previewColumn} ${
-            activeTabMobile === "form" ? styles.hideMobile : ""
-          }`}
-        >
-          {/* Live Preview Toolbar Header */}
-          <div className={styles.previewToolbar}>
-            <div className={styles.liveBadge}>
-              <span className={styles.liveDot} />
-              <span>Real-Time Live Invoice</span>
-            </div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>Preview Style:</span>
-              <strong style={{ color: "var(--text-main)" }}>{activeTheme}</strong>
-            </div>
-          </div>
-
-          {/* The Actual Rendered Paper Invoice Sheet */}
-          <div
-            id="print-invoice-sheet"
-            className={`${styles.invoiceSheet} ${
-              activeTheme === "Emerald"
-                ? styles.themeEmerald
-                : activeTheme === "Indigo"
-                ? styles.themeIndigo
-                : activeTheme === "Amber"
-                ? styles.themeAmber
-                : activeTheme === "Slate"
-                ? styles.themeSlate
-                : styles.themeBlue
-            }`}
-          >
-            <div>
-              {/* Document Header */}
-              <div className={styles.docHeader}>
-                <div className={styles.docCompanyLogoArea}>
-                  <div className={styles.docLogoIcon}>SL</div>
-                  <div>
-                    <div className={styles.docCompanyName}>SHOHOJ LEDGER ERP</div>
-                    <div className={styles.docCompanyMeta}>
-                      Enterprise Procurement & Supply Chain<br />
-                      Dhaka, Bangladesh • BIN: 009283719-0101
-                    </div>
-                  </div>
-                </div>
-
-                <div className={styles.docTypeArea}>
-                  <div className={styles.docTypeTitle}>PURCHASE ORDER</div>
-                  <div className={styles.docPoNumber}>{poNumber || "PO-SHO-DRAFT"}</div>
-                  <div className={styles.docStatusBadge}>
-                    <span>●</span> {status}
-                  </div>
-                </div>
-              </div>
-
-              {/* Vendor Info & Order Spec Grid */}
-              <div className={styles.docInfoGrid}>
-                {/* Vendor / Bill To */}
-                <div className={styles.docInfoBox}>
-                  <div className={styles.docInfoBoxTitle}>VENDOR / SUPPLIER</div>
-                  <div className={styles.docVendorName}>
-                    {selectedSupplier?.name || "— No Supplier Selected —"}
-                  </div>
-                  {selectedSupplier?.contactPerson && (
-                    <div className={styles.docMetaRow}>
-                      <span>Attn:</span>
-                      <strong>{selectedSupplier.contactPerson}</strong>
-                    </div>
-                  )}
-                  <div className={styles.docMetaRow}>
-                    <span>Phone:</span>
-                    <span>{selectedSupplier?.phone || "—"}</span>
-                  </div>
-                  <div className={styles.docMetaRow}>
-                    <span>Email:</span>
-                    <span>{selectedSupplier?.email || "—"}</span>
-                  </div>
-                  <div className={styles.docMetaRow}>
-                    <span>Address:</span>
-                    <span>{selectedSupplier?.address || "Bangladesh"}</span>
-                  </div>
-                </div>
-
-                {/* PO Specifications */}
-                <div className={styles.docInfoBox}>
-                  <div className={styles.docInfoBoxTitle}>ORDER SPECIFICATIONS</div>
-                  <div className={styles.docMetaRow}>
-                    <span>PO Date:</span>
-                    <strong>{new Date(orderDate).toLocaleDateString()}</strong>
-                  </div>
-                  <div className={styles.docMetaRow}>
-                    <span>Supplier Ref / Bill:</span>
-                    <strong>{supplierRef || "N/A"}</strong>
-                  </div>
-                  <div className={styles.docMetaRow}>
-                    <span>Payment Terms:</span>
-                    <strong>{paymentTerms}</strong>
-                  </div>
-                  <div className={styles.docMetaRow}>
-                    <span>Destination:</span>
-                    <strong>Main Warehouse</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Itemized Table */}
-              <table className={styles.docTable}>
-                <thead>
-                  <tr>
-                    <th style={{ width: "8%" }} className={styles.textCenter}>#</th>
-                    <th style={{ width: "44%" }}>Item Description</th>
-                    <th style={{ width: "14%" }} className={styles.textCenter}>Qty</th>
-                    <th style={{ width: "16%" }} className={styles.textRight}>Unit Price (৳)</th>
-                    <th style={{ width: "18%" }} className={styles.textRight}>Line Total (৳)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, i) => (
-                    <tr key={item.id}>
-                      <td className={styles.textCenter} style={{ color: "#94a3b8", fontWeight: 600 }}>
-                        {String(i + 1).padStart(2, "0")}
-                      </td>
-                      <td>
-                        <div className={styles.docItemTitle}>
-                          {item.productName || (item.productId ? "Selected Item" : "— Select Item —")}
-                        </div>
-                        {item.productCode && (
-                          <div className={styles.docItemCode}>Code: {item.productCode}</div>
-                        )}
-                        {item.remarks && (
-                          <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "2px" }}>
-                            {item.remarks}
-                          </div>
-                        )}
-                      </td>
-                      <td className={styles.textCenter}>
-                        <strong>{item.quantity}</strong> {item.unit}
-                      </td>
-                      <td className={styles.textRight} style={{ fontFamily: "monospace" }}>
-                        ৳{Number(item.unitPrice || 0).toLocaleString()}
-                      </td>
-                      <td className={styles.textRight} style={{ fontFamily: "monospace", fontWeight: 700 }}>
-                        ৳{Number(item.lineTotal || 0).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                  {items.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className={styles.textCenter} style={{ padding: "24px", color: "#94a3b8" }}>
-                        No items added yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-
-              {/* In-Words & Financial Breakdown */}
-              <div className={styles.docBottomGrid}>
-                {/* Left: In Words & Instructions */}
-                <div>
-                  <div className={styles.inWordsBox}>
-                    <div className={styles.inWordsLabel}>Total Amount in Words:</div>
-                    <div className={styles.inWordsText}>{numberToWordsBDT(grandTotalAmount)}</div>
-                  </div>
-
-                  {notes && (
-                    <div className={styles.docRemarks}>
-                      <strong style={{ color: "#0f172a" }}>Delivery Remarks:</strong> {notes}
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: "10px", fontSize: "0.7rem", color: "#64748b", whiteSpace: "pre-line" }}>
-                    <strong style={{ color: "#0f172a" }}>Terms:</strong> {termsAndConditions}
-                  </div>
-                </div>
-
-                {/* Right: Totals Breakdown */}
-                <div>
-                  <table className={styles.docTotalsTable}>
-                    <tbody>
-                      <tr>
-                        <td>Subtotal:</td>
-                        <td className={styles.textRight} style={{ fontFamily: "monospace", fontWeight: 600 }}>
-                          ৳{subtotalAmount.toLocaleString()}
-                        </td>
-                      </tr>
-                      {Number(overallDiscount) > 0 && (
-                        <tr>
-                          <td style={{ color: "#ef4444" }}>Discount:</td>
-                          <td className={styles.textRight} style={{ fontFamily: "monospace", color: "#ef4444" }}>
-                            -৳{Number(overallDiscount).toLocaleString()}
-                          </td>
-                        </tr>
-                      )}
-                      {Number(shippingFee) > 0 && (
-                        <tr>
-                          <td>Freight & Shipping:</td>
-                          <td className={styles.textRight} style={{ fontFamily: "monospace" }}>
-                            +৳{Number(shippingFee).toLocaleString()}
-                          </td>
-                        </tr>
-                      )}
-                      <tr className={styles.docGrandTotalRow}>
-                        <td>TOTAL DUE:</td>
-                        <td className={styles.textRight} style={{ fontFamily: "monospace" }}>
-                          ৳{grandTotalAmount.toLocaleString()}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Signatures & Certification */}
-            <div>
-              <div className={styles.docSignatures}>
-                <div className={styles.signBlock}>
-                  <div className={styles.signLine}>Procurement Mgr</div>
-                  <div className={styles.signLabel}>Prepared By</div>
-                  <div className={styles.signSub}>Shohoj Ledger Purchasing</div>
-                </div>
-
-                <div className={styles.signBlock}>
-                  <div className={styles.signLine} style={{ color: "var(--inv-accent, #2563eb)" }}>
-                    Verified & Stamp
-                  </div>
-                  <div className={styles.signLabel}>Authorized Signatory</div>
-                  <div className={styles.signSub}>Financial Controller</div>
-                </div>
-              </div>
-
-              <div className={styles.docFooterNote}>
-                Generated electronically by Shohoj Ledger ERP. Recognized as an official procurement commitment.
-              </div>
-            </div>
-          </div>
-        </div>
       </form>
 
       {/* Quick New Supplier Modal */}
@@ -1308,7 +1011,7 @@ export default function DedicatedNewPurchasePage() {
             style={{
               width: "100%",
               maxWidth: "500px",
-              borderRadius: "18px",
+              borderRadius: "0",
               background: "var(--surface-main, #1e293b)",
               border: "1px solid var(--border-main)",
               padding: "24px",

@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     });
 
     // 2. Fetch all incomes & expenses for fallback/reconciliation
-    const [allIncomes, allExpenses, reserveTxs, activeLoansData, pendingExpensesData] = await Promise.all([
+    const [allIncomes, allExpenses, reserveTxs, activeLoansData, pendingExpensesData, purchaseOrders, supplierLedgers] = await Promise.all([
       prisma.income.findMany({
         where: whereClause,
         select: { id: true, amount: true, received: true, createdAt: true, category: true, paymentStatus: true }
@@ -67,12 +67,38 @@ export async function GET(request: Request) {
       prisma.expense.aggregate({
         where: { ...whereClause, approvalStatus: { in: ["PENDING", "UNPAID"] } },
         _sum: { amount: true }
+      }),
+      prisma.purchaseOrder.findMany({
+        where: whereClause,
+        select: { id: true, totalAmount: true }
+      }),
+      prisma.ledgerEntry.findMany({
+        where: {
+          ...whereClause,
+          module: "INVENTORY",
+          voucherType: { in: ["SUPPLIER_PAYMENT", "PURCHASE_PAYMENT"] }
+        },
+        select: { referenceId: true, debit: true }
       })
     ]);
 
+    const poPaymentsMap: Record<string, number> = {};
+    supplierLedgers.forEach((l: any) => {
+      if (l.referenceId) {
+        poPaymentsMap[l.referenceId] = (poPaymentsMap[l.referenceId] || 0) + Number(l.debit || 0);
+      }
+    });
+
+    let pendingPurchasesDue = 0;
+    purchaseOrders.forEach((po: any) => {
+      const tot = Number(po.totalAmount || 0);
+      const paid = poPaymentsMap[po.id] || 0;
+      pendingPurchasesDue += Math.max(0, tot - paid);
+    });
+
     // Active Loans & Bills Due
     const activeLoans = Number(activeLoansData._sum.remainingAmount || 0);
-    const billsDue = Number(pendingExpensesData._sum.amount || 0);
+    const billsDue = Number(pendingExpensesData._sum.amount || 0) + pendingPurchasesDue;
 
     // Reserve Balance
     let reserveBalance = 0;

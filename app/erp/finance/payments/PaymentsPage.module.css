@@ -1,0 +1,339 @@
+/* Finance Supplier Payments Scoped Styles (0px Radius Design System) */
+
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Header Section
+   ========================================================================== */
+.headerWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleGroup h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.025em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 0px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary, #2563eb);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.titleGroup p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 0px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  text-decoration: none;
+}
+
+.btnPrimary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 0px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btnSecondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Toolbar Card
+   ========================================================================== */
+.toolbarCard {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main);
+  border-radius: 0px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.statusTabsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.squareWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.squareBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 0px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.squareBtn:hover {
+  transform: translateY(-1px);
+  border-color: var(--text-muted);
+}
+
+.square_due {
+  color: #f59e0b;
+}
+
+.square_paid {
+  color: #10b981;
+}
+
+.squareBtnActive {
+  background: var(--surface-hover);
+  border-color: currentColor;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.squareIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.squareCount {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.squareTooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-card, #1e293b);
+  color: var(--text-main, #ffffff);
+  border: 1px solid var(--border-main);
+  border-radius: 0px;
+  padding: 6px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+}
+
+.squareWrapper:hover .squareTooltip {
+  display: block;
+}
+
+.summaryBadges {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.filterControlsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+  max-width: 460px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border-radius: 0px;
+  border: 1px solid var(--border-main);
+  background: var(--surface-input, rgba(15, 23, 42, 0.03));
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: var(--primary, #2563eb);
+}
+
+/* ==========================================================================
+   Table Panel
+   ========================================================================== */
+.tablePanel {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-main);
+  border-radius: 0px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.thead {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-bottom: 2px solid #047857;
+}
+
+.th {
+  padding: 13px 18px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.tr {
+  border-bottom: 1px solid var(--border-main);
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.td {
+  padding: 14px 18px;
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.poCode {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--primary, #2563eb);
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   Drawer Form
+   ========================================================================== */
+.drawerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.detailsBox {
+  background: var(--surface-hover);
+  border: 1px solid var(--border-main);
+  border-radius: 0px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

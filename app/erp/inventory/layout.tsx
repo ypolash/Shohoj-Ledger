@@ -42,7 +42,6 @@ const baseNavigation: NavItem[] = [
     segment: "purchases",
     matchSegments: ["purchase-orders", "goods-receipt", "returns"] 
   },
-  { name: "Payments", href: "/erp/inventory/payments", icon: "payments", segment: "payments" },
   { name: "Settings", href: "/erp/inventory/settings", icon: "settings", segment: "settings" },
 ];
 

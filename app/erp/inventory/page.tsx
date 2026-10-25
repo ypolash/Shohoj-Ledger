@@ -111,7 +111,7 @@ export default function InventoryDashboardPage() {
       color: '#10b981',
       iconBg: 'rgba(16, 185, 129, 0.12)',
       iconColor: '#10b981',
-      href: '/erp/inventory/reports'
+      href: '/erp/finance'
     }
   ];
 

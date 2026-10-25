@@ -250,6 +250,54 @@ export async function GET(req: Request) {
       }
     });
 
+    // 4. Fetch Inventory Purchases / Supplier Payables (PAYABLE by us)
+    const [purchaseOrders, supplierLedgers] = await Promise.all([
+      prisma.purchaseOrder.findMany({
+        where: { companyId },
+        include: { supplier: { select: { id: true, name: true, phone: true } } },
+        orderBy: { createdAt: "desc" }
+      }),
+      prisma.ledgerEntry.findMany({
+        where: {
+          companyId,
+          module: "INVENTORY",
+          voucherType: { in: ["SUPPLIER_PAYMENT", "PURCHASE_PAYMENT"] }
+        },
+        select: { referenceId: true, debit: true }
+      })
+    ]);
+
+    const paymentsMap: Record<string, number> = {};
+    supplierLedgers.forEach((l: any) => {
+      if (l.referenceId) {
+        paymentsMap[l.referenceId] = (paymentsMap[l.referenceId] || 0) + Number(l.debit || 0);
+      }
+    });
+
+    purchaseOrders.forEach((po: any) => {
+      const total = Number(po.totalAmount || 0);
+      const paid = paymentsMap[po.id] || 0;
+      const due = Math.max(0, total - paid);
+
+      if (due > 0) {
+        bills.push({
+          id: `po-${po.id}`,
+          billNumber: po.purchaseOrderNumber || `PO-${po.id.slice(0, 6).toUpperCase()}`,
+          entityName: po.supplier?.name || "Inventory Supplier",
+          category: "Inventory Purchase",
+          type: "PAYABLE",
+          issueDate: new Date(po.createdAt).toISOString().split("T")[0],
+          dueDate: po.expectedDeliveryDate ? new Date(po.expectedDeliveryDate).toISOString().split("T")[0] : new Date(po.createdAt).toISOString().split("T")[0],
+          amount: total,
+          paidAmount: paid,
+          dueAmount: due,
+          status: paid > 0 ? "PARTIAL" : "UNPAID",
+          notes: po.remarks || `Purchase order payable to ${po.supplier?.name || "supplier"}`,
+          link: `/erp/finance/payments`
+        });
+      }
+    });
+
     // Sort by Due Amount / Date descending
     bills.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
 

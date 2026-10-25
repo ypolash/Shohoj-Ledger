@@ -414,24 +414,6 @@ export default function SuppliersPage() {
       )
     },
     {
-      key: 'paymentTerms',
-      header: 'Payment Terms',
-      width: '130px',
-      render: (s) => (
-        <span style={{ 
-          fontSize: '12px', 
-          fontWeight: 600, 
-          color: 'var(--text-main)', 
-          background: 'var(--surface-hover)', 
-          padding: '4px 10px', 
-          borderRadius: '0px', 
-          border: '1px solid var(--border-main)' 
-        }}>
-          {s.paymentTerms || 'Standard'}
-        </span>
-      )
-    },
-    {
       key: 'orders',
       header: 'Purchase Orders',
       width: '130px',
@@ -602,19 +584,6 @@ export default function SuppliersPage() {
               </button>
             ))}
 
-            {categories.length > 0 && (
-              <select
-                value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
-                className={styles.formSelect}
-                style={{ width: 'auto', padding: '6px 12px', fontSize: '13px', borderRadius: '0px' }}
-              >
-                <option value="ALL">All Categories</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            )}
           </div>
         }
       />
@@ -672,7 +641,7 @@ export default function SuppliersPage() {
 
                   <div className={styles.logoUploadDetails}>
                     <span className={styles.logoUploadTitle}>
-                      {form.logoUrl ? 'Logo Uploaded' : 'Upload or set Logo URL'}
+                      {form.logoUrl ? 'Logo Uploaded' : 'Upload Supplier Logo'}
                     </span>
                     <span className={styles.logoUploadSubtitle}>
                       PNG, JPG, SVG, WebP supported
@@ -709,17 +678,8 @@ export default function SuppliersPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Optional direct URL input */}
-                <input 
-                  type="url"
-                  placeholder="Or paste direct image URL (https://...)"
-                  value={form.logoUrl}
-                  onChange={e => setForm({ ...form, logoUrl: e.target.value })}
-                  className={styles.formInput}
-                  style={{ borderRadius: '0px', marginTop: '6px', fontSize: '12px' }}
-                />
               </div>
+
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Supplier / Business Name *</label>
@@ -771,40 +731,6 @@ export default function SuppliersPage() {
                     className={styles.formInput}
                     style={{ borderRadius: '0px' }}
                   />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Payment Terms</label>
-                  <select
-                    value={form.paymentTerms}
-                    onChange={e => setForm({ ...form, paymentTerms: e.target.value })}
-                    className={styles.formSelect}
-                    style={{ borderRadius: '0px' }}
-                  >
-                    <option value="Immediate / COD">Immediate / Cash on Delivery</option>
-                    <option value="Net 15">Net 15 Days</option>
-                    <option value="Net 30">Net 30 Days</option>
-                    <option value="Net 45">Net 45 Days</option>
-                    <option value="Net 60">Net 60 Days</option>
-                    <option value="Advance 100%">100% Advance Payment</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Supplier Category</label>
-                  <select
-                    value={form.categoryId}
-                    onChange={e => setForm({ ...form, categoryId: e.target.value })}
-                    className={styles.formSelect}
-                    style={{ borderRadius: '0px' }}
-                  >
-                    <option value="">— Select Category (Optional) —</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -963,19 +889,6 @@ export default function SuppliersPage() {
                 </span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '0px', background: 'var(--surface-hover)' }}>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Payment Terms</span>
-                <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main)' }}>
-                  {viewingSupplier.paymentTerms || 'Standard'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '0px', background: 'var(--surface-hover)' }}>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Category</span>
-                <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-main)' }}>
-                  {viewingSupplier.category?.name || 'Uncategorized'}
-                </span>
-              </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '0px', background: 'var(--surface-hover)' }}>
                 <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Linked Orders</span>

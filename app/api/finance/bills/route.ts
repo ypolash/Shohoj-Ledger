@@ -279,7 +279,7 @@ export async function GET(req: Request) {
       const paid = paymentsMap[po.id] || 0;
       const due = Math.max(0, total - paid);
 
-      if (due > 0) {
+      if (due > 0 || (paid > 0 && total > 0)) {
         bills.push({
           id: `po-${po.id}`,
           billNumber: po.purchaseOrderNumber || `PO-${po.id.slice(0, 6).toUpperCase()}`,
@@ -291,7 +291,7 @@ export async function GET(req: Request) {
           amount: total,
           paidAmount: paid,
           dueAmount: due,
-          status: paid > 0 ? "PARTIAL" : "UNPAID",
+          status: due === 0 ? "PAID" : paid > 0 ? "PARTIAL" : "UNPAID",
           notes: po.remarks || `Purchase order payable to ${po.supplier?.name || "supplier"}`,
           link: `/erp/finance/payments`
         });
@@ -310,10 +310,10 @@ export async function GET(req: Request) {
     bills.forEach((b) => {
       if (b.type === "PAYABLE") {
         totalPayableDue += b.dueAmount;
-        payableCount++;
+        if (b.dueAmount > 0) payableCount++;
       } else {
         totalReceivableDue += b.dueAmount;
-        receivableCount++;
+        if (b.dueAmount > 0) receivableCount++;
       }
     });
 

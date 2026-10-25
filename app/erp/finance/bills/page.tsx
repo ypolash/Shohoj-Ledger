@@ -298,6 +298,33 @@ export default function BillsDuePage() {
           const d = await res.json();
           showToast(d.error || "Failed to settle expense");
         }
+      } else if (activeModalBill.id.startsWith("po-")) {
+        // Inventory Purchase Order / Supplier Bill Settlement
+        const poId = activeModalBill.id.replace("po-", "");
+        let method = "CASH";
+        if (paymentMethod === "Bank Transfer") method = "BANK";
+        else if (paymentMethod === "bKash" || paymentMethod === "Nagad") method = "MOBILE";
+
+        const res = await fetch(`/api/inventory/purchases/${poId}/payments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: payVal,
+            paymentMethod: method,
+            notes: paymentNotes || `Bill payment for ${activeModalBill.billNumber}`
+          })
+        });
+
+        if (res.ok) {
+          showToast(`✓ Supplier bill payment of ৳${payVal.toLocaleString()} recorded and posted to ledger!`);
+          setActiveModalBill(null);
+          setPaymentAmount("");
+          setPaymentNotes("");
+          fetchBills();
+        } else {
+          const d = await res.json();
+          showToast(d.error || "Failed to process supplier bill payment");
+        }
       } else {
         // Direct feedback
         showToast("Payment recorded successfully");

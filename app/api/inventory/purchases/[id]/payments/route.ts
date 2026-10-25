@@ -56,8 +56,9 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     const session = await getSession();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const rbacGuard = await requirePermission("MANAGE_STOCK");
-    if (rbacGuard) return rbacGuard;
+    const stockGuard = await requirePermission("MANAGE_STOCK");
+    const financeGuard = await requirePermission("FINANCE_MANAGE");
+    if (stockGuard && financeGuard) return stockGuard;
 
     const body = await req.json();
     const { amount, paymentMethod, referenceNumber, paymentDate, notes } = body;

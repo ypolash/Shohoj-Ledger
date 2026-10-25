@@ -20,6 +20,7 @@ export async function GET(req: Request) {
       totalProducts,
       totalWarehouses,
       totalAssets,
+      totalSuppliers,
       stockTransactions,
       recentAudits,
       purchaseOrders,
@@ -28,6 +29,7 @@ export async function GET(req: Request) {
       prisma.product.count({ where: { companyId, systemSource } }),
       prisma.warehouse.count({ where: { companyId, systemSource } }),
       prisma.asset.count({ where: { companyId, systemSource, status: "ACTIVE" } }),
+      prisma.supplier.count({ where: { companyId } }),
       prisma.stockTransaction.findMany({ 
         where: { companyId, product: { systemSource } }, 
         include: { product: { select: { minStock: true, purchasePrice: true } } }
@@ -75,6 +77,7 @@ export async function GET(req: Request) {
       kpis: {
         totalProducts,
         totalWarehouses,
+        totalSuppliers,
         totalAssets,
         lowStockCount,
         outOfStockCount,

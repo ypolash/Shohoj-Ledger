@@ -102,7 +102,12 @@ export default function StockControlPage() {
       }
       if (wRes.ok) {
         const d = await wRes.json();
-        setWarehouses(d.warehouses || []);
+        const loadedWarehouses = d.warehouses || [];
+        setWarehouses(loadedWarehouses);
+        setForm(prev => ({
+          ...prev,
+          warehouseId: prev.warehouseId || loadedWarehouses[0]?.id || ''
+        }));
       }
     } catch (e) {
       console.error(e);
@@ -118,15 +123,16 @@ export default function StockControlPage() {
   };
 
   const openModal = (type = 'IN', productId = '') => {
-    setForm({
-      productId: productId || (products[0]?.id || ''),
-      warehouseId: warehouses[0]?.id || '',
+    setForm(prev => ({
+      ...prev,
+      productId: productId || prev.productId || (products[0]?.id || ''),
+      warehouseId: prev.warehouseId || warehouses[0]?.id || '',
       type,
       quantity: '',
       reference: '',
       notes: '',
       toWarehouseId: ''
-    });
+    }));
     setError('');
     setShowModal(true);
   };
@@ -145,12 +151,15 @@ export default function StockControlPage() {
     setSubmitting(true);
     setError('');
 
+    const targetWarehouseId = form.warehouseId || warehouses[0]?.id || undefined;
+
     try {
       const res = await fetch('/api/inventory/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          warehouseId: targetWarehouseId,
           quantity: Number(form.quantity),
           toWarehouseId: form.type === 'TRANSFER' ? form.toWarehouseId : undefined
         })
@@ -583,16 +592,16 @@ export default function StockControlPage() {
                 </select>
               </div>
 
-              {showWarehouses && (
+              {(showWarehouses || warehouses.length > 1) && (
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Warehouse *</label>
                   <select 
-                    value={form.warehouseId}
+                    value={form.warehouseId || warehouses[0]?.id || ''}
                     onChange={e => setForm({ ...form, warehouseId: e.target.value })}
-                    required={showWarehouses}
+                    required={showWarehouses || warehouses.length > 1}
                     className={styles.formSelect}
                   >
-                    <option value="">— Select Warehouse —</option>
+                    {warehouses.length === 0 && <option value="">— Main Warehouse —</option>}
                     {warehouses.map(w => (
                       <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
                     ))}

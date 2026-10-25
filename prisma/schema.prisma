@@ -2357,6 +2357,7 @@ model Supplier {
   id                 String                     @id @default(uuid())
   companyId          String
   name               String
+  logoUrl            String?
   contactPerson      String?
   email              String?
   phone              String?

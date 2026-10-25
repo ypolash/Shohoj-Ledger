@@ -64,7 +64,12 @@ export default function StockMovementPage() {
       }
       if (wRes.ok) {
         const d = await wRes.json();
-        setWarehouses(d.warehouses || []);
+        const loadedWarehouses = d.warehouses || [];
+        setWarehouses(loadedWarehouses);
+        setForm(prev => ({
+          ...prev,
+          warehouseId: prev.warehouseId || loadedWarehouses[0]?.id || ''
+        }));
       }
     } catch (e) {
       console.error(e);
@@ -102,12 +107,15 @@ export default function StockMovementPage() {
     setSubmitting(true);
     setError('');
 
+    const targetWarehouseId = form.warehouseId || warehouses[0]?.id || undefined;
+
     try {
       const res = await fetch('/api/inventory/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          warehouseId: targetWarehouseId,
           quantity: Number(form.quantity),
           toWarehouseId: form.type === 'TRANSFER' ? form.toWarehouseId : undefined
         })
@@ -205,18 +213,18 @@ export default function StockMovementPage() {
             </select>
           </div>
 
-          {/* Warehouse Selection if enabled */}
-          {showWarehouses && (
+          {/* Warehouse Selection if enabled or multiple exist */}
+          {(showWarehouses || warehouses.length > 1) && (
             <div className={styles.formGrid}>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Origin / Target Warehouse *</label>
                 <select
-                  value={form.warehouseId}
+                  value={form.warehouseId || warehouses[0]?.id || ''}
                   onChange={e => setForm({ ...form, warehouseId: e.target.value })}
-                  required={showWarehouses}
+                  required={showWarehouses || warehouses.length > 1}
                   className={styles.formSelect}
                 >
-                  <option value="">— Select Warehouse —</option>
+                  {warehouses.length === 0 && <option value="">— Main Warehouse —</option>}
                   {warehouses.map(w => (
                     <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
                   ))}

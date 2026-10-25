@@ -64,6 +64,16 @@ export default function InventoryDashboardPage() {
       href: '/erp/inventory/products'
     },
     {
+      label: 'Suppliers',
+      value: kpis.totalSuppliers ?? 0,
+      badge: 'Supply Partners',
+      icon: 'local_shipping',
+      color: '#06b6d4',
+      iconBg: 'rgba(6, 182, 212, 0.12)',
+      iconColor: '#06b6d4',
+      href: '/erp/inventory/suppliers'
+    },
+    {
       label: 'Warehouses',
       value: kpis.totalWarehouses ?? 0,
       badge: 'Storage Sites',

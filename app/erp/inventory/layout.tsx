@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 
 import styles from "./inventory.module.css";
 
@@ -10,22 +10,44 @@ interface NavItem {
   name: string;
   href: string;
   icon: string;
+  segment: string | null;
   exact?: boolean;
   matchAlso?: string;
+  matchSegments?: string[];
 }
 
 const baseNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/erp/inventory", icon: "dashboard", exact: true },
-  { name: "Products", href: "/erp/inventory/products", icon: "inventory_2", exact: false },
-  { name: "Categories", href: "/erp/inventory/categories", icon: "category", exact: false },
-  { name: "Orders", href: "/erp/inventory/orders", icon: "shopping_cart", exact: false },
-  { name: "Stock Control", href: "/erp/inventory/stock", icon: "move_down", exact: false },
-  { name: "Purchases", href: "/erp/inventory/purchases", icon: "shopping_bag", exact: false },
-  { name: "Payments", href: "/erp/inventory/payments", icon: "payments", exact: false },
-  { name: "Settings", href: "/erp/inventory/settings", icon: "settings", exact: false },
+  { name: "Dashboard", href: "/erp/inventory", icon: "dashboard", segment: null, exact: true },
+  { 
+    name: "Products", 
+    href: "/erp/inventory/products", 
+    icon: "inventory_2", 
+    segment: "products",
+    matchSegments: ["brands", "units", "barcodes", "serials", "batches"] 
+  },
+  { name: "Categories", href: "/erp/inventory/categories", icon: "category", segment: "categories" },
+  { name: "Suppliers", href: "/erp/inventory/suppliers", icon: "local_shipping", segment: "suppliers" },
+  { name: "Orders", href: "/erp/inventory/orders", icon: "shopping_cart", segment: "orders" },
+  { 
+    name: "Stock", 
+    href: "/erp/inventory/stock", 
+    icon: "move_down", 
+    segment: "stock",
+    matchSegments: ["adjustments", "transfers"] 
+  },
+  { 
+    name: "Purchases", 
+    href: "/erp/inventory/purchases", 
+    icon: "shopping_bag", 
+    segment: "purchases",
+    matchSegments: ["purchase-orders", "goods-receipt", "returns"] 
+  },
+  { name: "Payments", href: "/erp/inventory/payments", icon: "payments", segment: "payments" },
+  { name: "Settings", href: "/erp/inventory/settings", icon: "settings", segment: "settings" },
 ];
 
 export default function InventoryLayout({ children }: { children: React.ReactNode }) {
+  const segment = useSelectedLayoutSegment();
   const pathname = usePathname() || "";
   const [showWarehouses, setShowWarehouses] = useState(false);
 
@@ -48,19 +70,31 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
       name: "Warehouses",
       href: "/erp/inventory/warehouses",
       icon: "warehouse",
+      segment: "warehouses",
       exact: false,
     });
   }
 
   const isItemActive = (item: NavItem) => {
-    if (item.exact) {
-      return pathname === item.href;
+    if (segment !== undefined) {
+      if (item.exact || item.segment === null) {
+        if (segment === null) return true;
+      } else if (item.segment && segment === item.segment) {
+        return true;
+      } else if (item.matchSegments && segment && item.matchSegments.includes(segment)) {
+        return true;
+      }
     }
-    if (pathname.startsWith(item.href)) {
-      return true;
-    }
-    if (item.matchAlso && pathname.startsWith(item.matchAlso)) {
-      return true;
+    if (pathname) {
+      if (item.exact) {
+        return pathname === item.href;
+      }
+      if (pathname.startsWith(item.href)) {
+        return true;
+      }
+      if (item.matchAlso && pathname.startsWith(item.matchAlso)) {
+        return true;
+      }
     }
     return false;
   };
@@ -69,64 +103,26 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      {/* Top Floating Pill Navigation */}
-      <div style={{ padding: "20px 24px 0 24px", flexShrink: 0, background: "var(--surface-bg)" }}>
-        <header
-          className={`${styles.subNavHeader} no-scrollbar`}
-          style={{
-            background: "var(--surface-card)",
-            borderRadius: "50px",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-            border: "1px solid var(--border-main)",
-            padding: "6px 12px 6px 6px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            overflowX: "auto",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
-        >
-          {/* Left Side Pill Badge (Current Section) */}
+      {/* Top Floating Navigation Bar */}
+      <div style={{ padding: "16px 20px 0 20px", flexShrink: 0, background: "var(--surface-bg)" }}>
+        <header className={styles.subNavHeader}>
+          {/* Left Side Icon Badge (Circle Mode) */}
           <div
-            style={{
-              flexShrink: 0,
-              background: "var(--text-main)",
-              color: "var(--bg-main)",
-              padding: "7px 18px",
-              borderRadius: "50px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontWeight: 700,
-              fontSize: "14px",
-              whiteSpace: "nowrap",
-            }}
+            className={styles.circleBadge}
+            suppressHydrationWarning
+            title={currentActiveItem ? `Inventory · ${currentActiveItem.name}` : "Inventory & Supply"}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "17px" }}
+              suppressHydrationWarning
+            >
               {currentActiveItem?.icon || "inventory_2"}
-            </span>
-            <span>
-              {currentActiveItem && currentActiveItem.name !== "Dashboard"
-                ? `Inventory · ${currentActiveItem.name}`
-                : "Inventory & Supply"}
             </span>
           </div>
 
-          {/* Navigation Links */}
-          <nav
-            className={`${styles.subNavLinkList} no-scrollbar`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              flex: 1,
-              flexWrap: "nowrap",
-              overflowX: "auto",
-              scrollbarWidth: "none",
-              msOverflowStyle: "none",
-            }}
-          >
+          {/* Navigation Links (Compact to fit on one screen) */}
+          <nav className={styles.subNavLinkList}>
             {navigation.map((item) => {
               const active = isItemActive(item);
 
@@ -134,29 +130,13 @@ export default function InventoryLayout({ children }: { children: React.ReactNod
                 <Link
                   key={item.name}
                   href={item.href}
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: active ? 600 : 500,
-                    color: active ? "#ffffff" : "var(--text-secondary)",
-                    textDecoration: "none",
-                    transition: "all 0.15s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 14px",
-                    borderRadius: "20px",
-                    background: active
-                      ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
-                      : "transparent",
-                    boxShadow: active ? "0 2px 8px rgba(37, 99, 235, 0.35)" : "none",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
+                  suppressHydrationWarning
+                  className={`${styles.navLinkItem} ${active ? styles.navLinkItemActive : ""}`}
                 >
                   <span
                     className="material-symbols-outlined"
                     style={{
-                      fontSize: "17px",
+                      fontSize: "15px",
                       color: active ? "#ffffff" : "var(--text-muted)",
                     }}
                   >

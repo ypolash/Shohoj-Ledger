@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const suppliers = await prisma.supplier.findMany({
+    let suppliers = await prisma.supplier.findMany({
       where: {
         companyId,
         systemSource,
@@ -33,6 +33,20 @@ export async function GET(req: Request) {
       },
       orderBy: { name: "asc" }
     });
+
+    if (suppliers.length === 0) {
+      suppliers = await prisma.supplier.findMany({
+        where: {
+          companyId,
+          ...(categoryId ? { categoryId } : {})
+        },
+        include: {
+          category: { select: { id: true, name: true } },
+          _count: { select: { purchaseOrders: true } }
+        },
+        orderBy: { name: "asc" }
+      });
+    }
 
     return NextResponse.json({ suppliers });
   } catch (error) {
@@ -54,30 +68,50 @@ export async function POST(req: Request) {
     if (rbacGuard) return rbacGuard;
 
     const body = await req.json();
-    const { name, contactPerson, email, phone, address, paymentTerms, status, categoryId } = body;
+    const { 
+      name, 
+      logoUrl,
+      contactPerson, 
+      email, 
+      phone, 
+      address, 
+      paymentTerms, 
+      status, 
+      categoryId,
+      taxNumber,
+      currency 
+    } = body;
 
     if (!name?.trim()) return NextResponse.json({ error: "Supplier name is required" }, { status: 400 });
 
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const existing = await prisma.supplier.findFirst({ where: { companyId, systemSource, name: name.trim() } });
+    const existing = await prisma.supplier.findFirst({ 
+      where: { 
+        companyId, 
+        name: name.trim() 
+      } 
+    });
     if (existing) return NextResponse.json({ error: "A supplier with this name already exists" }, { status: 400 });
 
     // Auto-generate a supplier code
-    const count = await prisma.supplier.count({ where: { companyId, systemSource } });
+    const count = await prisma.supplier.count({ where: { companyId } });
     const supplierCode = `SUP-${String(count + 1).padStart(4, "0")}`;
 
-    const supplier = await prisma.supplier.create({
+    const supplier = await (prisma.supplier as any).create({
       data: {
         companyId,
         supplierCode,
         name: name.trim(),
-        contactPerson: contactPerson || null,
-        email: email || null,
-        phone: phone || null,
-        address: address || null,
-        paymentTerms: paymentTerms || null,
+        logoUrl: logoUrl?.trim() || null,
+        contactPerson: contactPerson?.trim() || null,
+        email: email?.trim() || null,
+        phone: phone?.trim() || null,
+        address: address?.trim() || null,
+        paymentTerms: paymentTerms?.trim() || null,
+        taxNumber: taxNumber?.trim() || null,
+        currency: currency || "BDT",
         status: status || "ACTIVE",
         systemSource,
         ...(categoryId ? { categoryId } : {})

@@ -1,6 +1,90 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+export interface TableHeaderTheme {
+  id: string;
+  name: string;
+  bg: string;
+  color: string;
+  borderColor: string;
+  swatch: string;
+}
+
+export const TABLE_HEADER_THEMES: Record<string, TableHeaderTheme> = {
+  green: {
+    id: "green",
+    name: "Emerald Green",
+    bg: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+    color: "#ffffff",
+    borderColor: "#047857",
+    swatch: "#10b981",
+  },
+  forest: {
+    id: "forest",
+    name: "Deep Forest",
+    bg: "linear-gradient(135deg, #064e3b 0%, #047857 100%)",
+    color: "#ffffff",
+    borderColor: "#064e3b",
+    swatch: "#047857",
+  },
+  blue: {
+    id: "blue",
+    name: "Classic Blue",
+    bg: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+    color: "#ffffff",
+    borderColor: "#1e40af",
+    swatch: "#2563eb",
+  },
+  teal: {
+    id: "teal",
+    name: "Modern Teal",
+    bg: "linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)",
+    color: "#ffffff",
+    borderColor: "#115e59",
+    swatch: "#14b8a6",
+  },
+  indigo: {
+    id: "indigo",
+    name: "Royal Indigo",
+    bg: "linear-gradient(135deg, #3730a3 0%, #4f46e5 100%)",
+    color: "#ffffff",
+    borderColor: "#312e81",
+    swatch: "#4f46e5",
+  },
+  purple: {
+    id: "purple",
+    name: "Vibrant Purple",
+    bg: "linear-gradient(135deg, #6b21a8 0%, #9333ea 100%)",
+    color: "#ffffff",
+    borderColor: "#581c87",
+    swatch: "#9333ea",
+  },
+  amber: {
+    id: "amber",
+    name: "Warm Amber",
+    bg: "linear-gradient(135deg, #b45309 0%, #d97706 100%)",
+    color: "#ffffff",
+    borderColor: "#92400e",
+    swatch: "#d97706",
+  },
+  rose: {
+    id: "rose",
+    name: "Rose Crimson",
+    bg: "linear-gradient(135deg, #be123c 0%, #e11d48 100%)",
+    color: "#ffffff",
+    borderColor: "#9f1239",
+    swatch: "#e11d48",
+  },
+  slate: {
+    id: "slate",
+    name: "Midnight Slate",
+    bg: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+    color: "#f8fafc",
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    swatch: "#334155",
+  },
+};
 
 /**
  * Column definition for InventoryDataTable
@@ -30,6 +114,9 @@ export interface InventoryDataTableProps<T = any> {
   searchPlaceholder?: string;
   filterSlot?: React.ReactNode;
   actionsSlot?: React.ReactNode;
+  // Color Customization
+  showColorSwitcher?: boolean;
+  defaultHeaderTheme?: string;
   // Pagination
   page?: number;
   totalPages?: number;
@@ -39,8 +126,8 @@ export interface InventoryDataTableProps<T = any> {
 }
 
 /**
- * Reusable Universal Inventory Data Table Component (Version 2.4)
- * Provides glassmorphism container, floating headers, hover elevation, and status badge integration.
+ * Reusable Universal Inventory Data Table Component (Version 2.5)
+ * Provides 0px radius enterprise styling, green header by default, dynamic color switcher, and elevation.
  */
 export function InventoryDataTable<T extends { id?: string | number }>({
   columns,
@@ -55,6 +142,8 @@ export function InventoryDataTable<T extends { id?: string | number }>({
   searchPlaceholder = "Search inventory records...",
   filterSlot,
   actionsSlot,
+  showColorSwitcher = true,
+  defaultHeaderTheme = "green",
   page = 1,
   totalPages = 1,
   totalItems,
@@ -62,6 +151,55 @@ export function InventoryDataTable<T extends { id?: string | number }>({
   onPageChange,
 }: InventoryDataTableProps<T>) {
   const [hoveredRowId, setHoveredRowId] = useState<string | number | null>(null);
+  const [headerThemeKey, setHeaderThemeKey] = useState<string>(defaultHeaderTheme);
+  const [showColorMenu, setShowColorMenu] = useState(false);
+  const colorMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sync theme with localStorage
+  useEffect(() => {
+    const readTheme = () => {
+      const saved = localStorage.getItem("inventory_table_header_theme");
+      if (saved && TABLE_HEADER_THEMES[saved]) {
+        setHeaderThemeKey(saved);
+      } else {
+        setHeaderThemeKey(defaultHeaderTheme);
+      }
+    };
+
+    readTheme();
+    window.addEventListener("storage", readTheme);
+    window.addEventListener("inventoryTableHeaderThemeChanged", readTheme);
+
+    return () => {
+      window.removeEventListener("storage", readTheme);
+      window.removeEventListener("inventoryTableHeaderThemeChanged", readTheme);
+    };
+  }, [defaultHeaderTheme]);
+
+  // Click outside listener for color switcher menu
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (colorMenuRef.current && !colorMenuRef.current.contains(e.target as Node)) {
+        setShowColorMenu(false);
+      }
+    };
+    if (showColorMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showColorMenu]);
+
+  const selectTheme = (themeId: string) => {
+    setHeaderThemeKey(themeId);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("inventory_table_header_theme", themeId);
+      window.dispatchEvent(new Event("inventoryTableHeaderThemeChanged"));
+    }
+  };
+
+  const currentTheme = TABLE_HEADER_THEMES[headerThemeKey] || TABLE_HEADER_THEMES.green;
 
   const startIndex = (page - 1) * itemsPerPage + 1;
   const endIndex = totalItems ? Math.min(page * itemsPerPage, totalItems) : data.length;
@@ -69,12 +207,12 @@ export function InventoryDataTable<T extends { id?: string | number }>({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
       {/* Top Smart Toolbar */}
-      {(onSearchChange || filterSlot || actionsSlot) && (
+      {(onSearchChange || filterSlot || actionsSlot || showColorSwitcher) && (
         <div
           className="glass-panel"
           style={{
             padding: "14px 18px",
-            borderRadius: "14px",
+            borderRadius: "0px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -109,7 +247,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                   style={{
                     width: "100%",
                     padding: "9px 12px 9px 38px",
-                    borderRadius: "10px",
+                    borderRadius: "0px",
                     border: "1px solid var(--border-main, rgba(255, 255, 255, 0.12))",
                     background: "var(--surface-input, rgba(15, 23, 42, 0.6))",
                     color: "var(--text-main, #f8fafc)",
@@ -123,7 +261,160 @@ export function InventoryDataTable<T extends { id?: string | number }>({
             {filterSlot}
           </div>
 
-          {actionsSlot && <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>{actionsSlot}</div>}
+          {/* Right Toolbar Actions & Color Switcher */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", position: "relative" }}>
+            {actionsSlot}
+
+            {showColorSwitcher && (
+              <div ref={colorMenuRef} style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowColorMenu((prev) => !prev)}
+                  title={`Header Color: ${currentTheme.name} (Click to switch)`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "7px 11px",
+                    borderRadius: "0px",
+                    border: "1px solid var(--border-main, rgba(255, 255, 255, 0.15))",
+                    background: "var(--surface-input, rgba(15, 23, 42, 0.6))",
+                    color: "var(--text-main, #f8fafc)",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      borderRadius: "0px",
+                      background: currentTheme.swatch,
+                      display: "inline-block",
+                      boxShadow: `0 0 6px ${currentTheme.swatch}`,
+                      border: "1px solid rgba(255, 255, 255, 0.4)",
+                    }}
+                  />
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                    palette
+                  </span>
+                  <span style={{ fontSize: "12px" }}>{currentTheme.name}</span>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{
+                      fontSize: "16px",
+                      transform: showColorMenu ? "rotate(180deg)" : "none",
+                      transition: "transform 0.15s ease",
+                    }}
+                  >
+                    expand_more
+                  </span>
+                </button>
+
+                {/* Color Switcher Dropdown (0px Radius) */}
+                {showColorMenu && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      top: "calc(100% + 4px)",
+                      zIndex: 60,
+                      minWidth: "210px",
+                      background: "var(--surface-card, #1e293b)",
+                      border: "1px solid var(--border-main, rgba(255, 255, 255, 0.15))",
+                      borderRadius: "0px",
+                      boxShadow: "0 12px 30px rgba(0, 0, 0, 0.5)",
+                      padding: "8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "3px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: "4px 8px 6px 8px",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: "var(--text-muted, #94a3b8)",
+                        borderBottom: "1px solid var(--border-main, rgba(255, 255, 255, 0.08))",
+                        marginBottom: "4px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>Table Header Theme</span>
+                      <span style={{ fontSize: "9px", opacity: 0.8 }}>0px Style</span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2px", maxHeight: "280px", overflowY: "auto" }}>
+                      {Object.values(TABLE_HEADER_THEMES).map((theme) => {
+                        const isSelected = theme.id === headerThemeKey;
+                        return (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => {
+                              selectTheme(theme.id);
+                              setShowColorMenu(false);
+                            }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "10px",
+                              padding: "7px 10px",
+                              borderRadius: "0px",
+                              border: isSelected ? `1px solid ${theme.swatch}` : "1px solid transparent",
+                              background: isSelected ? "rgba(255, 255, 255, 0.1)" : "transparent",
+                              color: isSelected ? "#ffffff" : "var(--text-secondary, #cbd5e1)",
+                              fontSize: "12px",
+                              fontWeight: isSelected ? 700 : 500,
+                              cursor: "pointer",
+                              textAlign: "left",
+                              transition: "all 0.12s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.background = "transparent";
+                              }
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                borderRadius: "0px",
+                                background: theme.bg,
+                                border: "1px solid rgba(255, 255, 255, 0.3)",
+                                flexShrink: 0,
+                                display: "inline-block",
+                                boxShadow: isSelected ? `0 0 6px ${theme.swatch}` : "none",
+                              }}
+                            />
+                            <span style={{ flex: 1 }}>{theme.name}</span>
+                            {isSelected && (
+                              <span className="material-symbols-outlined" style={{ fontSize: "16px", color: theme.swatch }}>
+                                check
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -131,7 +422,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
       <div
         className="glass-panel"
         style={{
-          borderRadius: "16px",
+          borderRadius: "0px",
           overflow: "hidden",
           border: "1px solid var(--border-main, rgba(255, 255, 255, 0.08))",
           background: "var(--surface-main, rgba(15, 23, 42, 0.65))",
@@ -143,8 +434,9 @@ export function InventoryDataTable<T extends { id?: string | number }>({
             <thead>
               <tr
                 style={{
-                  background: "var(--surface-hover, rgba(30, 41, 59, 0.85))",
-                  borderBottom: "1px solid var(--border-main, rgba(255, 255, 255, 0.1))",
+                  background: currentTheme.bg,
+                  borderBottom: `2px solid ${currentTheme.borderColor}`,
+                  transition: "background 0.25s ease, border-color 0.25s ease",
                 }}
               >
                 {columns.map((col) => (
@@ -153,13 +445,14 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                     style={{
                       padding: "14px 18px",
                       fontSize: "12px",
-                      fontWeight: 600,
-                      color: "var(--text-muted, #94a3b8)",
+                      fontWeight: 700,
+                      color: currentTheme.color,
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
                       textAlign: col.align || "left",
                       width: col.width,
                       whiteSpace: "nowrap",
+                      textShadow: currentTheme.color === "#ffffff" ? "0 1px 2px rgba(0,0,0,0.25)" : "none",
                     }}
                   >
                     {col.header}
@@ -176,7 +469,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                         <div
                           style={{
                             height: "16px",
-                            borderRadius: "6px",
+                            borderRadius: "0px",
                             background: "var(--surface-hover, rgba(255, 255, 255, 0.06))",
                             animation: "pulse 1.5s infinite ease-in-out",
                             opacity: 0.6,
@@ -193,7 +486,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                       style={{
                         width: "64px",
                         height: "64px",
-                        borderRadius: "50%",
+                        borderRadius: "0px",
                         background: "var(--surface-hover, rgba(255, 255, 255, 0.05))",
                         display: "flex",
                         alignItems: "center",
@@ -277,7 +570,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                 style={{
                   padding: "6px 12px",
                   fontSize: "12px",
-                  borderRadius: "8px",
+                  borderRadius: "0px",
                   cursor: page === 1 ? "not-allowed" : "pointer",
                   opacity: page === 1 ? 0.5 : 1,
                   display: "flex",
@@ -294,7 +587,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                   fontSize: "12px",
                   color: "var(--text-main, #f8fafc)",
                   fontWeight: 600,
-                  borderRadius: "6px",
+                  borderRadius: "0px",
                   background: "var(--surface-input, rgba(15, 23, 42, 0.5))",
                 }}
               >
@@ -307,7 +600,7 @@ export function InventoryDataTable<T extends { id?: string | number }>({
                 style={{
                   padding: "6px 12px",
                   fontSize: "12px",
-                  borderRadius: "8px",
+                  borderRadius: "0px",
                   cursor: page === totalPages ? "not-allowed" : "pointer",
                   opacity: page === totalPages ? 0.5 : 1,
                   display: "flex",

@@ -18,22 +18,46 @@ export async function POST(req: Request) {
     // type can be OPENING, IN, OUT, ADJUSTMENT, DAMAGE, RETURN, TRANSFER
     // quantity should be passed as absolute value by client, we apply the sign here
 
+    const referer = req.headers.get("referer") || "";
+    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
+
     let finalWarehouseId = warehouseId;
     if (!finalWarehouseId) {
-      const defaultW = await prisma.warehouse.findFirst({ where: { companyId, isDefault: true } }) || 
-                       await prisma.warehouse.findFirst({ where: { companyId } });
-      if (defaultW) finalWarehouseId = defaultW.id;
+      let defaultW = await prisma.warehouse.findFirst({ where: { companyId, isDefault: true } }) || 
+                     await prisma.warehouse.findFirst({ where: { companyId } });
+      if (!defaultW) {
+        defaultW = await prisma.warehouse.create({
+          data: {
+            companyId,
+            code: "WH-MAIN",
+            name: "Main Warehouse",
+            isDefault: true,
+            status: "ACTIVE",
+            systemSource
+          }
+        });
+      }
+      finalWarehouseId = defaultW.id;
     }
 
-    if (!finalWarehouseId || !productId || !type || !quantity) {
-      return NextResponse.json({ error: "Warehouse, Product, Type, and Quantity are required" }, { status: 400 });
+    if (!productId) {
+      return NextResponse.json({ error: "Product is required" }, { status: 400 });
+    }
+    if (!type) {
+      return NextResponse.json({ error: "Transaction type is required" }, { status: 400 });
+    }
+    if (quantity === undefined || quantity === null || quantity === "" || Number(quantity) <= 0) {
+      return NextResponse.json({ error: "Valid positive quantity is required" }, { status: 400 });
+    }
+    if (!finalWarehouseId) {
+      return NextResponse.json({ error: "Warehouse is required" }, { status: 400 });
     }
 
     if (type === "TRANSFER" && !toWarehouseId) {
       return NextResponse.json({ error: "Destination warehouse required for transfer" }, { status: 400 });
     }
 
-    const absoluteQty = Math.abs(Number(quantity));
+    const absoluteQty = Math.abs(Math.round(Number(quantity)));
     let signedQty = 0;
     
     if (["IN", "OPENING", "RETURN"].includes(type)) {
@@ -41,7 +65,7 @@ export async function POST(req: Request) {
     } else if (["OUT", "DAMAGE"].includes(type)) {
       signedQty = -absoluteQty;
     } else if (type === "ADJUSTMENT") {
-      signedQty = Number(quantity); // Can be positive or negative from client
+      signedQty = Math.round(Number(quantity)); // Can be positive or negative from client
     }
 
     const product = await prisma.product.findFirst({

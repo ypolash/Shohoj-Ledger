@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     const referer = req.headers.get("referer") || "";
     const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
 
-    const warehouses = await prisma.warehouse.findMany({
+    let warehouses = await prisma.warehouse.findMany({
       where: { companyId, systemSource },
       include: {
         manager: { select: { firstName: true, lastName: true } },
@@ -23,6 +23,37 @@ export async function GET(req: Request) {
       },
       orderBy: { name: 'asc' }
     });
+
+    if (warehouses.length === 0) {
+      const anyWarehouses = await prisma.warehouse.findMany({
+        where: { companyId },
+        include: {
+          manager: { select: { firstName: true, lastName: true } },
+          _count: { select: { stockTransactions: true } }
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      if (anyWarehouses.length > 0) {
+        warehouses = anyWarehouses;
+      } else {
+        const defaultW = await prisma.warehouse.create({
+          data: {
+            companyId,
+            code: "WH-MAIN",
+            name: "Main Warehouse",
+            isDefault: true,
+            status: "ACTIVE",
+            systemSource
+          },
+          include: {
+            manager: { select: { firstName: true, lastName: true } },
+            _count: { select: { stockTransactions: true } }
+          }
+        });
+        warehouses = [defaultW];
+      }
+    }
 
     return NextResponse.json({ warehouses });
   } catch (error) {

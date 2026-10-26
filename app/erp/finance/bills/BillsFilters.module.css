@@ -7,7 +7,7 @@
   padding: 0;
   border-radius: 0;
   border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
-  height: 48px;
+  height: 38px;
   box-sizing: border-box;
 }
 
@@ -17,9 +17,9 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  width: 48px;
-  min-width: 48px;
-  max-width: 48px;
+  width: 38px;
+  min-width: 38px;
+  max-width: 38px;
   box-sizing: border-box;
 }
 
@@ -36,15 +36,15 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  min-width: 48px;
-  max-width: 48px;
-  padding: 4px 2px;
+  min-width: 38px;
+  max-width: 38px;
+  padding: 2px 1px;
   border-radius: 0;
   border: none;
   background: transparent;
   cursor: pointer;
   transition: all 0.15s ease;
-  gap: 3px;
+  gap: 2px;
   outline: none;
   box-sizing: border-box;
 }
@@ -66,14 +66,14 @@
 }
 
 .squareCount {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.2px;
   color: var(--text-muted, #94a3b8);
   transition: color 0.15s ease;
   white-space: nowrap;
-  max-width: 44px;
+  max-width: 34px;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
@@ -117,7 +117,7 @@
 
 .square_all.squareBtnActive {
   background: rgba(59, 130, 246, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #3b82f6 !important;
+  box-shadow: inset 0 -2.5px 0 0 #3b82f6 !important;
 }
 .square_all.squareBtnActive .squareIcon {
   color: #3b82f6 !important;
@@ -125,7 +125,7 @@
 
 .square_payable.squareBtnActive {
   background: rgba(37, 99, 235, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #2563eb !important;
+  box-shadow: inset 0 -2.5px 0 0 #2563eb !important;
 }
 .square_payable.squareBtnActive .squareIcon {
   color: #60a5fa !important;
@@ -133,7 +133,7 @@
 
 .square_model.squareBtnActive {
   background: rgba(236, 72, 153, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #ec4899 !important;
+  box-shadow: inset 0 -2.5px 0 0 #ec4899 !important;
 }
 .square_model.squareBtnActive .squareIcon {
   color: #f472b6 !important;
@@ -141,7 +141,7 @@
 
 .square_freelance.squareBtnActive {
   background: rgba(6, 182, 212, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #06b6d4 !important;
+  box-shadow: inset 0 -2.5px 0 0 #06b6d4 !important;
 }
 .square_freelance.squareBtnActive .squareIcon {
   color: #38bdf8 !important;
@@ -149,7 +149,7 @@
 
 .square_receivable.squareBtnActive {
   background: rgba(239, 68, 68, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #ef4444 !important;
+  box-shadow: inset 0 -2.5px 0 0 #ef4444 !important;
 }
 .square_receivable.squareBtnActive .squareIcon {
   color: #ef4444 !important;
@@ -157,7 +157,7 @@
 
 .categoryFilterActive {
   background: rgba(168, 85, 247, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #a855f7 !important;
+  box-shadow: inset 0 -2.5px 0 0 #a855f7 !important;
 }
 .categoryFilterActive .squareIcon {
   color: #c084fc !important;
@@ -169,7 +169,7 @@
 
 .statusFilterActive {
   background: rgba(16, 185, 129, 0.15) !important;
-  box-shadow: inset 0 -3px 0 0 #10b981 !important;
+  box-shadow: inset 0 -2.5px 0 0 #10b981 !important;
 }
 .statusFilterActive .squareIcon {
   color: #34d399 !important;

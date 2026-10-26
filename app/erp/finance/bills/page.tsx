@@ -513,7 +513,7 @@ export default function BillsDuePage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="glass-card" style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+      <div className="glass-card" style={{ padding: '12px 16px', borderRadius: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         {/* Type & Talent Filter Square Icon View */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div className={styles.tabsContainer} role="tablist" aria-label="Filter dues by category">
@@ -522,7 +522,7 @@ export default function BillsDuePage() {
                 id: 'ALL',
                 label: 'All Dues',
                 shortLabel: 'All Dues',
-                icon: <Receipt size={18} />,
+                icon: <Receipt size={15} />,
                 count: kpis.totalCount,
                 amount: kpis.totalDue,
                 colorKey: 'all',
@@ -533,7 +533,7 @@ export default function BillsDuePage() {
                 id: 'PAYABLE_ALL',
                 label: 'All Payables (Vendor & Talent)',
                 shortLabel: 'All Payables',
-                icon: <ArrowUpRight size={18} />,
+                icon: <ArrowUpRight size={15} />,
                 count: kpis.payableCount,
                 amount: kpis.totalPayableDue,
                 colorKey: 'payable',
@@ -544,7 +544,7 @@ export default function BillsDuePage() {
                 id: 'MODEL',
                 label: 'Model Due (Talent & Models)',
                 shortLabel: 'Model Due',
-                icon: <Camera size={18} />,
+                icon: <Camera size={15} />,
                 count: kpis.modelCount,
                 amount: kpis.modelDue,
                 colorKey: 'model',
@@ -555,7 +555,7 @@ export default function BillsDuePage() {
                 id: 'FREELANCE',
                 label: 'Freelance Due (Crew & Freelancers)',
                 shortLabel: 'Freelance Due',
-                icon: <Laptop size={18} />,
+                icon: <Laptop size={15} />,
                 count: kpis.freelanceCount,
                 amount: kpis.freelanceDue,
                 colorKey: 'freelance',
@@ -566,7 +566,7 @@ export default function BillsDuePage() {
                 id: 'RECEIVABLE',
                 label: 'Receivable from Clients',
                 shortLabel: 'Receivable',
-                icon: <ArrowDownLeft size={18} />,
+                icon: <ArrowDownLeft size={15} />,
                 count: kpis.receivableCount,
                 amount: kpis.totalReceivableDue,
                 colorKey: 'receivable',
@@ -604,8 +604,8 @@ export default function BillsDuePage() {
 
         {/* Search & Right Filters (Square Icon View) */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', width: '280px', height: '48px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <div style={{ position: 'relative', width: '260px', height: '38px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text"
               placeholder="Search by Bill #, Client, Talent, Project..."
@@ -613,13 +613,13 @@ export default function BillsDuePage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: '100%',
-                height: '48px',
-                padding: '0 32px 0 36px',
+                height: '38px',
+                padding: '0 28px 0 32px',
                 borderRadius: '0',
                 border: '1px solid var(--border-light)',
                 background: 'var(--surface-hover)',
                 color: 'var(--text-main)',
-                fontSize: '13px',
+                fontSize: '12.5px',
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
@@ -631,15 +631,15 @@ export default function BillsDuePage() {
                 aria-label="Clear search"
                 style={{
                   position: 'absolute',
-                  right: '10px',
+                  right: '8px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
                   border: 'none',
                   color: 'var(--text-muted)',
                   cursor: 'pointer',
-                  fontSize: '13px',
-                  padding: '4px'
+                  fontSize: '11px',
+                  padding: '3px'
                 }}
               >
                 ✕
@@ -655,7 +655,7 @@ export default function BillsDuePage() {
                 className={`${styles.squareBtn} ${styles.square_category} ${categoryFilter !== 'ALL' ? styles.categoryFilterActive : ''}`}
               >
                 <span className={styles.squareIcon}>
-                  <Tag size={18} />
+                  <Tag size={15} />
                 </span>
                 <span className={styles.squareCount}>
                   {categoryFilter !== 'ALL' ? 'Cat' : 'All'}
@@ -689,7 +689,7 @@ export default function BillsDuePage() {
                 className={`${styles.squareBtn} ${styles.square_status} ${statusFilter !== 'ALL' ? styles.statusFilterActive : ''}`}
               >
                 <span className={styles.squareIcon}>
-                  <SlidersHorizontal size={18} />
+                  <SlidersHorizontal size={15} />
                 </span>
                 <span className={styles.squareCount}>
                   {statusFilter === 'ALL' ? 'All' : statusFilter === 'PENDING' ? 'Due' : statusFilter === 'PARTIAL' ? 'Part' : 'Unpaid'}
@@ -733,7 +733,7 @@ export default function BillsDuePage() {
                   aria-label="Reset all filters"
                 >
                   <span className={styles.squareIcon}>
-                    <RotateCcw size={18} />
+                    <RotateCcw size={15} />
                   </span>
                   <span className={styles.squareCount} style={{ color: '#f43f5e' }}>Clear</span>
                 </button>

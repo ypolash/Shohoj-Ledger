@@ -19,7 +19,6 @@ const navigation: NavItem[] = [
   { name: "Expense", href: "/erp/finance/expenses", exact: false, badgeIcon: "trending_down" },
   { name: "Loans", href: "/erp/finance/loans", exact: false, badgeIcon: "account_balance" },
   { name: "Bills Due", href: "/erp/finance/bills", exact: false, badgeIcon: "pending_actions" },
-  { name: "Supplier Dues", href: "/erp/finance/payments", exact: false, badgeIcon: "payments" },
   { name: "Advance", href: "/erp/finance/advances", exact: false, badgeIcon: "payments" },
   { name: "Settlement", href: "/erp/finance/settlements", exact: false, badgeIcon: "receipt_long" },
   { name: "Export Report", href: "/erp/finance/reports/statement", matchAlso: "/erp/finance/reports", exact: false, badgeIcon: "download" },

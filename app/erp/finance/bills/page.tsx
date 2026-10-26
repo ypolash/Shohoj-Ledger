@@ -28,7 +28,10 @@ import {
   ArrowDownLeft,
   Camera,
   Video,
-  Laptop
+  Laptop,
+  Tag,
+  SlidersHorizontal,
+  RotateCcw
 } from 'lucide-react';
 import { BillItem } from '@/app/api/finance/bills/route';
 
@@ -597,56 +600,10 @@ export default function BillsDuePage() {
             ))}
           </div>
 
-          {/* Active Filter Notice */}
-          {(() => {
-            let activeLabel = 'All Dues';
-            let activeCount = kpis.totalCount;
-            let activeAmount = kpis.totalDue;
-            let isCustom = false;
-
-            if (talentFilter === 'MODEL') {
-              activeLabel = 'Model Due';
-              activeCount = kpis.modelCount;
-              activeAmount = kpis.modelDue;
-              isCustom = true;
-            } else if (talentFilter === 'FREELANCE') {
-              activeLabel = 'Freelance Due';
-              activeCount = kpis.freelanceCount;
-              activeAmount = kpis.freelanceDue;
-              isCustom = true;
-            } else if (typeFilter === 'PAYABLE') {
-              activeLabel = 'All Payables';
-              activeCount = kpis.payableCount;
-              activeAmount = kpis.totalPayableDue;
-              isCustom = true;
-            } else if (typeFilter === 'RECEIVABLE') {
-              activeLabel = 'Client Receivables';
-              activeCount = kpis.receivableCount;
-              activeAmount = kpis.totalReceivableDue;
-              isCustom = true;
-            }
-
-            return (
-              <div className={styles.activeFilterNotice}>
-                <span style={{ opacity: 0.75 }}>Showing:</span>
-                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{activeLabel} ({activeCount})</span>
-                {activeAmount > 0 && <span>• ৳{activeAmount.toLocaleString()}</span>}
-                {isCustom && (
-                  <button
-                    type="button"
-                    onClick={() => { setTypeFilter('ALL'); setTalentFilter('ALL'); }}
-                    style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: '0 2px', textDecoration: 'underline', fontSize: '11px', marginLeft: '4px' }}
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-            );
-          })()}
         </div>
 
-        {/* Search & Category Filter */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        {/* Search & Right Filters (Square Icon View) */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', width: '280px' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
@@ -656,7 +613,8 @@ export default function BillsDuePage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px 12px 8px 36px',
+                height: '48px',
+                padding: '0 32px 0 36px',
                 borderRadius: '0',
                 border: '1px solid var(--border-light)',
                 background: 'var(--surface-hover)',
@@ -666,48 +624,128 @@ export default function BillsDuePage() {
                 boxSizing: 'border-box'
               }}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  padding: '4px'
+                }}
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          {/* Category Dropdown */}
-          <select 
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '0',
-              border: '1px solid var(--border-light)',
-              background: 'var(--surface-hover)',
-              color: 'var(--text-main)',
-              fontSize: '13px',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="ALL">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          {/* Right Icon View Tabs: Category & Status */}
+          <div className={styles.tabsContainer}>
+            {/* Category Filter Icon View */}
+            <div className={styles.squareWrapper}>
+              <div 
+                className={`${styles.squareBtn} ${styles.square_category} ${categoryFilter !== 'ALL' ? styles.categoryFilterActive : ''}`}
+              >
+                <span className={styles.squareIcon}>
+                  <Tag size={16} />
+                </span>
+                <span className={styles.squareCount}>
+                  {categoryFilter !== 'ALL' 
+                    ? (categoryFilter.length > 5 ? categoryFilter.slice(0, 4) + '..' : categoryFilter) 
+                    : (categories.length > 0 ? categories.length : 'All')}
+                </span>
 
-          <select 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '0',
-              border: '1px solid var(--border-light)',
-              background: 'var(--surface-hover)',
-              color: 'var(--text-main)',
-              fontSize: '13px',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="PENDING">Pending &amp; Due Only</option>
-            <option value="PARTIAL">Partially Settled</option>
-            <option value="UNPAID">Unpaid</option>
-          </select>
+                <select 
+                  value={categoryFilter} 
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className={styles.hiddenSelectOverlay}
+                  aria-label="Filter by Category"
+                  title="Filter by Category"
+                >
+                  <option value="ALL">All Categories ({categories.length})</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>
+                  {categoryFilter !== 'ALL' ? `Category: ${categoryFilter}` : `All Categories (${categories.length})`}
+                </div>
+                <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Click to select category</div>
+              </div>
+            </div>
+
+            {/* Status Filter Icon View */}
+            <div className={styles.squareWrapper}>
+              <div 
+                className={`${styles.squareBtn} ${styles.square_status} ${statusFilter !== 'ALL' ? styles.statusFilterActive : ''}`}
+              >
+                <span className={styles.squareIcon}>
+                  <SlidersHorizontal size={16} />
+                </span>
+                <span className={styles.squareCount}>
+                  {statusFilter === 'ALL' ? 'All' : statusFilter === 'PENDING' ? 'Due' : statusFilter === 'PARTIAL' ? 'Part' : 'Unpaid'}
+                </span>
+
+                <select 
+                  value={statusFilter} 
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={styles.hiddenSelectOverlay}
+                  aria-label="Filter by Status"
+                  title="Filter by Status"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="PENDING">Pending &amp; Due Only</option>
+                  <option value="PARTIAL">Partially Settled</option>
+                  <option value="UNPAID">Unpaid</option>
+                </select>
+              </div>
+
+              <div className={styles.squareTooltip}>
+                <div style={{ fontWeight: 700 }}>
+                  {statusFilter === 'ALL' ? 'All Statuses' : statusFilter === 'PENDING' ? 'Status: Pending & Due' : statusFilter === 'PARTIAL' ? 'Status: Partially Settled' : 'Status: Unpaid'}
+                </div>
+                <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Click to filter status</div>
+              </div>
+            </div>
+
+            {/* Clear Filters Reset Button */}
+            {(categoryFilter !== 'ALL' || statusFilter !== 'ALL' || talentFilter !== 'ALL' || typeFilter !== 'ALL' || searchQuery.trim() !== '') && (
+              <div className={styles.squareWrapper}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategoryFilter('ALL');
+                    setStatusFilter('ALL');
+                    setTypeFilter('ALL');
+                    setTalentFilter('ALL');
+                    setSearchQuery('');
+                  }}
+                  className={`${styles.squareBtn} ${styles.square_reset}`}
+                  aria-label="Reset all filters"
+                >
+                  <span className={styles.squareIcon}>
+                    <RotateCcw size={15} />
+                  </span>
+                  <span className={styles.squareCount} style={{ color: '#f43f5e' }}>Clear</span>
+                </button>
+                <div className={styles.squareTooltip}>
+                  <div style={{ fontWeight: 700, color: '#f43f5e' }}>Reset All Filters</div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Click to clear search &amp; filter selections</div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -168,6 +168,62 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* Distinct hover colors for Category, Status & Reset */
+.square_category:hover .squareIcon {
+  color: #c084fc;
+}
+.square_status:hover .squareIcon {
+  color: #34d399;
+}
+.square_reset:hover .squareIcon {
+  color: #f43f5e;
+}
+
+/* Category & Status Active States */
+.categoryFilterActive {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 0 1px #a855f7, 0 3px 12px rgba(168, 85, 247, 0.28) !important;
+  transform: translateY(-1px);
+}
+.categoryFilterActive .squareIcon {
+  color: #c084fc !important;
+}
+.categoryFilterActive .squareCount {
+  color: #e9d5ff !important;
+  font-weight: 800;
+}
+
+.statusFilterActive {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px #10b981, 0 3px 12px rgba(16, 185, 129, 0.28) !important;
+  transform: translateY(-1px);
+}
+.statusFilterActive .squareIcon {
+  color: #34d399 !important;
+}
+.statusFilterActive .squareCount {
+  color: #a7f3d0 !important;
+  font-weight: 800;
+}
+
+/* Hidden select overlay to enable native dropdown popup on click */
+.hiddenSelectOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 5;
+  border: none;
+  background: transparent;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
 .activeFilterNotice {
   display: inline-flex;
   align-items: center;

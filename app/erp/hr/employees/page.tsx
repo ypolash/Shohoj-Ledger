@@ -54,6 +54,101 @@ interface Designation {
 const isTemporaryStaff = (emp: any) => !isRegularStaff(emp);
 
 /**
+ * Resolves and sanitizes employee photo URLs.
+ * Supports /uploads/..., relative paths, full http(s) URLs, base64 data URIs,
+ * and fixes missing leading slashes for local assets.
+ */
+function sanitizePhotoUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('uploads/')) {
+    return `/${trimmed}`;
+  }
+  return `/${trimmed}`;
+}
+
+/**
+ * Robust Employee Avatar component:
+ * Resolves photo across emp.profile?.photo, emp.photo, emp.avatar,
+ * gracefully handles image load failures via onError to show clean initials,
+ * and maintains circular / rounded clipping.
+ */
+function EmployeeAvatar({
+  employee,
+  size = 26,
+  borderRadius = 6,
+  fontSize = '0.7rem',
+  className,
+  style,
+}: {
+  employee?: Partial<Employee> | null;
+  size?: number | string;
+  borderRadius?: number | string;
+  fontSize?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const rawPhoto = employee?.profile?.photo || employee?.photo || employee?.avatar;
+  const photoUrl = useMemo(() => sanitizePhotoUrl(rawPhoto), [rawPhoto]);
+
+  // Reset error state if photo URL changes
+  useEffect(() => {
+    setHasError(false);
+  }, [photoUrl]);
+
+  const initials = useMemo(() => {
+    const f = employee?.firstName?.[0] || '';
+    const l = employee?.lastName?.[0] || '';
+    return `${f}${l}`.toUpperCase() || 'EM';
+  }, [employee?.firstName, employee?.lastName]);
+
+  const shouldRenderImg = !!photoUrl && !hasError;
+
+  return (
+    <div
+      className={className}
+      style={{
+        width: typeof size === 'number' ? `${size}px` : size,
+        height: typeof size === 'number' ? `${size}px` : size,
+        borderRadius: typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius,
+        overflow: 'hidden',
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontSize,
+        ...style,
+      }}
+    >
+      {shouldRenderImg ? (
+        <img
+          src={photoUrl}
+          alt={employee ? `${employee.firstName || ''} ${employee.lastName || ''}`.trim() : 'Avatar'}
+          onError={() => setHasError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      ) : (
+        initials
+      )}
+    </div>
+  );
+}
+
+/**
  * ERP HR — Redesigned Employee Directory & Workforce Hub
  * Enterprise directory with live metrics, multi-dimensional filters,
  * dual Table/Card view modes, CSV roster export, and empty state CTA.
@@ -848,17 +943,13 @@ export default function EmployeesPage() {
 
                       <td className={styles.tableCell}>
                         <div className={styles.employeeProfileGroup}>
-                          <div className={styles.empAvatar} style={{ overflow: 'hidden' }}>
-                            {emp.profile?.photo || emp.photo || emp.avatar ? (
-                              <img
-                                src={emp.profile?.photo || emp.photo || emp.avatar || ''}
-                                alt=""
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                            ) : (
-                              initials
-                            )}
-                          </div>
+                          <EmployeeAvatar
+                            employee={emp}
+                            size={28}
+                            borderRadius={6}
+                            fontSize="0.7rem"
+                            className={styles.empAvatar}
+                          />
                           <div className={styles.empName}>
                             {emp.firstName} {emp.lastName}
                           </div>
@@ -1013,17 +1104,13 @@ export default function EmployeesPage() {
               >
                 <div className={styles.cardTopRow}>
                   <div className={styles.employeeProfileGroup}>
-                    <div className={styles.empAvatar} style={{ overflow: 'hidden' }}>
-                      {emp.profile?.photo || emp.photo || emp.avatar ? (
-                        <img
-                          src={emp.profile?.photo || emp.photo || emp.avatar || ''}
-                          alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        initials
-                      )}
-                    </div>
+                    <EmployeeAvatar
+                      employee={emp}
+                      size={28}
+                      borderRadius={6}
+                      fontSize="0.7rem"
+                      className={styles.empAvatar}
+                    />
                     <div className={styles.cardMainInfo}>
                       <span className={styles.empName}>{emp.firstName} {emp.lastName}</span>
                       <span className={styles.cardRole}>{desigName}</span>
@@ -1706,7 +1793,7 @@ export default function EmployeesPage() {
                   }}>
                     {editPhoto ? (
                       <img
-                        src={editPhoto}
+                        src={sanitizePhotoUrl(editPhoto)}
                         alt="Profile Preview"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
@@ -2330,42 +2417,22 @@ export default function EmployeesPage() {
                 flexShrink: 0,
                 overflow: 'hidden'
               }}>
-                {selectedEmployee.profile?.photo || selectedEmployee.photo || selectedEmployee.avatar ? (
-                  <img
-                    src={selectedEmployee.profile?.photo || selectedEmployee.photo || selectedEmployee.avatar || ''}
-                    alt={`${selectedEmployee.firstName} ${selectedEmployee.lastName}`}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      position: 'absolute',
-                      inset: 0
-                    }}
-                  />
-                ) : (
-                  <>
-                    {/* Inner Glow Aura */}
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'radial-gradient(circle at 50% 45%, rgba(99, 102, 241, 0.35) 0%, transparent 75%)',
-                      pointerEvents: 'none'
-                    }} />
-
-                    {/* Avatar Initials Badge */}
-                    <div style={{
-                      fontSize: '28px',
-                      fontWeight: 900,
-                      background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      letterSpacing: '1px',
-                      zIndex: 1
-                    }}>
-                      {`${selectedEmployee.firstName?.[0] || ''}${selectedEmployee.lastName?.[0] || ''}`.toUpperCase() || 'EM'}
-                    </div>
-                  </>
-                )}
+                <EmployeeAvatar
+                  employee={selectedEmployee}
+                  size="100%"
+                  borderRadius={0}
+                  fontSize="28px"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'transparent',
+                    fontWeight: 900,
+                    color: '#ffffff',
+                    letterSpacing: '1px',
+                  }}
+                />
 
                 {/* Status Indicator Chip */}
                 <div style={{

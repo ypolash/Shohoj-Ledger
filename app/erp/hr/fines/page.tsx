@@ -89,6 +89,27 @@ function formatDate(dStr: string): string {
 }
 
 /**
+ * Get current year-month key e.g. "2026-10"
+ */
+function getCurrentMonthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Format year-month key into readable label e.g. "October 2026"
+ */
+function formatMonthLabel(monthKey: string): string {
+  if (!monthKey || monthKey === 'ALL') return 'All Time';
+  const parts = monthKey.split('-');
+  if (parts.length < 2) return monthKey;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const d = new Date(year, month - 1, 1);
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+}
+
+/**
  * ERP HR — Redesigned Disciplinary Fines & Penalties Hub
  * Enterprise penalty governance with live deduction tracking, multi-dimensional search & filtering,
  * dual table/card views, policy rules visualizer, and instant CSV export.
@@ -113,6 +134,7 @@ export default function FinesPage() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [profileSearch, setProfileSearch] = useState('');
+  const [profilePeriod, setProfilePeriod] = useState<string>(() => getCurrentMonthKey());
   const [profileFilter, setProfileFilter] = useState<'PENALIZED' | 'PENDING' | 'DEDUCTED' | 'ALL'>('PENALIZED');
   const [profileSort, setProfileSort] = useState<'amount_desc' | 'amount_asc' | 'count_desc' | 'name_asc'>('amount_desc');
   const [expandedEmpId, setExpandedEmpId] = useState<string | null>(null);
@@ -495,7 +517,47 @@ export default function FinesPage() {
     setFilterDate('');
   };
 
-  // Aggregate per-employee fine profiles
+  // Extract all distinct months available in fines data (sorted descending)
+  const availableMonths = useMemo(() => {
+    const currentKey = getCurrentMonthKey();
+    const set = new Set<string>();
+    set.add(currentKey);
+    fines.forEach(f => {
+      const raw = f.date || f.createdAt || '';
+      if (raw.length >= 7) {
+        set.add(raw.slice(0, 7));
+      }
+    });
+    return Array.from(set).sort().reverse();
+  }, [fines]);
+
+  // Fines filtered specifically for Employee Profiles modal view (defaults to current month)
+  const profileFines = useMemo(() => {
+    if (profilePeriod === 'ALL') return fines;
+    return fines.filter(f => {
+      const raw = f.date || f.createdAt || '';
+      return raw.slice(0, 7) === profilePeriod;
+    });
+  }, [fines, profilePeriod]);
+
+  // Profile modal KPI stat totals (scoped to selected period / current month)
+  const profileTotalGrossAmount = useMemo(() => {
+    return profileFines.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+  }, [profileFines]);
+
+  const profilePendingAmount = useMemo(() => {
+    return profileFines
+      .filter(f => f.status === 'PENDING' || f.status === 'CONSIDERATION_REQUESTED')
+      .reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+  }, [profileFines]);
+
+  const profileDeductedAmount = useMemo(() => {
+    return profileFines
+      .filter(f => f.status === 'DEDUCTED')
+      .reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+  }, [profileFines]);
+
+  // Aggregate per-employee fine profiles (scoped to selected period / current month)
   const employeeSummaries = useMemo<EmployeeFineSummary[]>(() => {
     const map = new Map<string, EmployeeFineSummary>();
 
@@ -522,7 +584,7 @@ export default function FinesPage() {
       });
     });
 
-    fines.forEach(f => {
+    profileFines.forEach(f => {
       let summary = map.get(f.employeeId);
       if (!summary) {
         const emp = f.employee;
@@ -570,7 +632,7 @@ export default function FinesPage() {
     });
 
     return Array.from(map.values());
-  }, [employees, fines]);
+  }, [employees, profileFines]);
 
   const penalizedStaffList = useMemo(() => {
     return employeeSummaries.filter(e => e.totalCount > 0);
@@ -688,7 +750,7 @@ export default function FinesPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `employee_fines_profile_summary_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `employee_fines_profile_${profilePeriod === 'ALL' ? 'all_time' : profilePeriod}_summary_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1624,7 +1686,7 @@ export default function FinesPage() {
                     Employee Disciplinary Profiles &amp; Fine Totals
                   </h2>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Showing cumulative penalties &amp; deduction breakdown across {penalizedEmployeesCount} staff members
+                    Showing {profilePeriod === 'ALL' ? 'cumulative (all time)' : `${formatMonthLabel(profilePeriod)} (Current Month)`} penalties &amp; deduction breakdown across {penalizedEmployeesCount} staff members
                   </div>
                 </div>
               </div>
@@ -1667,29 +1729,29 @@ export default function FinesPage() {
                 <div className={styles.profileStatCard}>
                   <span className={styles.profileStatLabel}>Total Fines Incurred</span>
                   <span className={styles.profileStatValue} style={{ color: 'var(--text-main)' }}>
-                    {formatBDT(totalGrossAmount)}
+                    {formatBDT(profileTotalGrossAmount)}
                   </span>
                 </div>
 
                 <div className={styles.profileStatCard}>
                   <span className={styles.profileStatLabel}>Settled / Deducted</span>
                   <span className={styles.profileStatValue} style={{ color: '#059669' }}>
-                    {formatBDT(deductedAmount)}
+                    {formatBDT(profileDeductedAmount)}
                   </span>
                 </div>
 
                 <div className={styles.profileStatCard}>
                   <span className={styles.profileStatLabel}>Pending Deductions</span>
                   <span className={styles.profileStatValue} style={{ color: '#f59e0b' }}>
-                    {formatBDT(pendingAmount)}
+                    {formatBDT(profilePendingAmount)}
                   </span>
                 </div>
               </div>
 
-              {/* Controls Bar: Search, Filter Tabs, Sort */}
+              {/* Controls Bar: Search, Month Filter, Filter Tabs, Sort */}
               <div className={styles.profileControlsRow}>
                 {/* Search */}
-                <div className={styles.searchWrapper} style={{ flex: '1 1 240px', minWidth: '220px' }}>
+                <div className={styles.searchWrapper} style={{ flex: '1 1 200px', minWidth: '180px' }}>
                   <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
                   <input
                     type="text"
@@ -1703,6 +1765,25 @@ export default function FinesPage() {
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
                     </button>
                   )}
+                </div>
+
+                {/* Period / Month Selector */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Period:
+                  </span>
+                  <select
+                    value={profilePeriod}
+                    onChange={e => setProfilePeriod(e.target.value)}
+                    className={styles.selectDropdown}
+                    style={{ padding: '6px 10px', fontSize: '12px', fontWeight: 600 }}
+                  >
+                    <option value={getCurrentMonthKey()}>Current Month ({formatMonthLabel(getCurrentMonthKey())})</option>
+                    {availableMonths.filter(m => m !== getCurrentMonthKey()).map(m => (
+                      <option key={m} value={m}>{formatMonthLabel(m)}</option>
+                    ))}
+                    <option value="ALL">All Time (Cumulative)</option>
+                  </select>
                 </div>
 
                 {/* Filter Tabs */}

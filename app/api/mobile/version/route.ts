@@ -27,41 +27,43 @@ export async function GET(request: Request) {
       return NextResponse.json({
         appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 42,
-        versionName: '1.7.7-beta',
+        versionCode: 43,
+        versionName: '1.7.8-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.7 Beta — Task Checklist Fix & Enhancements',
+        title: 'Shohoj Staff v1.7.8 Beta — Break Dismiss & Ledger Updates',
         releaseNotes: [
+          '🍽️ Single-Click Break Dismiss: Ending break instantly dismisses countdown banner and hides prompt for the day',
           '✅ Task Checklist Fix: Resolved issue where ticking task checklist checkboxes would revert after 2 seconds',
           '⚡ Robust Mobile Task Sync: Added multi-layer authentication fallback and resilient state merging for task updates',
           '🔄 Absent Approval Data Sync: Instant synchronization of HR absent approvals, regularizations, and fine waivers to mobile',
           '⏱️ Left-Side Chat Head Timer: Floating draggable countdown widget placed on the app left side across all screens',
           '📶 Enforced Office Wi-Fi Reconnect: Real-time Wi-Fi compliance checking requiring employees to reconnect to company Wi-Fi within break time'
         ],
-        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.7-beta.apk?v=42`,
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.8-beta.apk?v=43`,
         fileSize: '12.8 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.7 Beta)
+    // Default Public Production Version (Shohoj Staff v1.7.8 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 42,
-      versionName: '1.7.7-beta',
+      versionCode: 43,
+      versionName: '1.7.8-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.7 Beta Available',
+      title: 'Shohoj Staff v1.7.8 Beta Available',
       releaseNotes: [
+        '🍽️ Single-Click Break Dismiss: Ending break instantly dismisses countdown banner and hides prompt for the day',
         '✅ Task Checklist Fix: Resolved issue where ticking task checklist checkboxes would revert after 2 seconds',
         '⚡ Robust Mobile Task Sync: Added multi-layer authentication fallback and resilient state merging for task updates',
         '🔄 Absent Approval Data Sync: Instant synchronization of HR absent approvals, regularizations, and fine waivers to mobile',
         '⏱️ Left-Side Chat Head Timer: Floating draggable countdown widget placed on the app left side across all screens',
         '📶 Enforced Office Wi-Fi Reconnect: Real-time Wi-Fi compliance checking requiring employees to reconnect to company Wi-Fi within break time'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.7-beta.apk?v=42`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.8-beta.apk?v=43`,
       fileSize: '12.8 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()

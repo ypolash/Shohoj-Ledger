@@ -468,6 +468,127 @@ export async function PATCH(request: Request) {
           where: { attendanceId: id, type: 'LATE_CONSIDERATION' }
         });
       } catch {}
+    } else if (action === 'APPROVE_ABSENT_TO_PRESENT' || action === 'CONVERT_ABSENT_TO_PRESENT') {
+      const compSetting = activeCompanyId ? await prisma.companySetting.findUnique({
+        where: { companyId: activeCompanyId },
+        select: { timezone: true, shiftEndTime: true, shiftStartTime: true }
+      }) : null;
+      let timezone = compSetting?.timezone || "Asia/Dhaka";
+      if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
+        timezone = "Asia/Dhaka";
+      }
+      try { Intl.DateTimeFormat(undefined, { timeZone: timezone }); } catch { timezone = "Asia/Dhaka"; }
+
+      const shiftStartStr = compSetting?.shiftStartTime || "09:30";
+      const shiftEndStr = compSetting?.shiftEndTime || "18:30";
+
+      const attDate = existing.date || new Date();
+      const dateStr = new Date(attDate).toISOString().slice(0, 10);
+
+      const inTimeStr = data.checkInTime || shiftStartStr;
+      const outTimeStr = data.checkOutTime || shiftEndStr;
+
+      const finalCheckIn = parseDateTimeInTimezone(dateStr, inTimeStr, timezone) || attDate;
+      const finalCheckOut = parseDateTimeInTimezone(dateStr, outTimeStr, timezone) || finalCheckIn;
+      const totalWorkingMinutes = Math.max(0, Math.floor((finalCheckOut.getTime() - finalCheckIn.getTime()) / 60000));
+
+      const waiveFine = data.waiveFine !== false;
+      const fineAmt = waiveFine ? (typeof data.customFineAmount === 'number' ? Math.max(0, data.customFineAmount) : 0) : Number(existing.punishmentAmount || 0);
+      const note = reason || data.reason || 'Staff attendance approved by HR: Absent converted to Present';
+
+      updateData = {
+        status: 'PRESENT',
+        isLate: false,
+        lateMinutes: 0,
+        checkInTime: finalCheckIn,
+        checkOutTime: finalCheckOut,
+        totalWorkingMinutes,
+        earlyLeaveMinutes: 0,
+        punishmentAmount: fineAmt,
+        punishmentReason: fineAmt === 0 ? `${note} (Penalty Fine Considered & Waived)` : note,
+        reviewStatus: 'CONSIDERED',
+        ...(existing.companyId ? {} : { companyId: activeCompanyId })
+      };
+
+      // Create attendance adjustment record
+      try {
+        await prisma.attendanceAdjustment.create({
+          data: {
+            attendanceId: id,
+            employeeId: existing.employeeId,
+            type: 'ABSENT_TO_PRESENT',
+            reason: note,
+            status: 'APPROVED',
+          }
+        });
+      } catch (adjErr) {
+        console.warn('AttendanceAdjustment creation error:', adjErr);
+      }
+
+      // Synchronize EmployeeFine records & active payroll
+      if (activeCompanyId && existing.employeeId) {
+        try {
+          const startOfAttDay = new Date(attDate);
+          startOfAttDay.setHours(0, 0, 0, 0);
+          const endOfAttDay = new Date(attDate);
+          endOfAttDay.setHours(23, 59, 59, 999);
+
+          const matchingFines = await prisma.employeeFine.findMany({
+            where: {
+              companyId: activeCompanyId,
+              employeeId: existing.employeeId,
+              date: { gte: startOfAttDay, lte: endOfAttDay }
+            }
+          });
+
+          for (const fine of matchingFines) {
+            if (fineAmt === 0) {
+              await prisma.employeeFine.update({
+                where: { id: fine.id },
+                data: {
+                  amount: 0,
+                  status: 'CANCELLED',
+                  reason: `${fine.reason} (Fine Considered & Waived: Absent -> Present)`,
+                  appealReason: note
+                }
+              });
+
+              // Revert payroll deduction if fine was pending
+              const fineDate = new Date(fine.date || fine.createdAt);
+              const month = fineDate.getMonth() + 1;
+              const year = fineDate.getFullYear();
+
+              const activePayment = await prisma.salaryPayment.findFirst({
+                where: {
+                  companyId: activeCompanyId,
+                  employeeId: existing.employeeId,
+                  month,
+                  year,
+                  status: { in: ['DRAFT', 'CALCULATED', 'SUBMITTED', 'APPROVED'] }
+                }
+              });
+
+              if (activePayment && Number(fine.amount) > 0) {
+                const newNet = Number(activePayment.netSalary) + Number(fine.amount);
+                await prisma.salaryPayment.update({
+                  where: { id: activePayment.id },
+                  data: { netSalary: newNet }
+                });
+              }
+            } else {
+              await prisma.employeeFine.update({
+                where: { id: fine.id },
+                data: {
+                  amount: fineAmt,
+                  reason: note
+                }
+              });
+            }
+          }
+        } catch (fineSyncErr) {
+          console.warn('Sync to EmployeeFine on absent->present error:', fineSyncErr);
+        }
+      }
     } else if (action === 'AUTO_CHECKOUT' || action === 'MANUAL_CHECKOUT' || action === 'HALF_DAY_OUT') {
       const compSetting = activeCompanyId ? await prisma.companySetting.findUnique({
         where: { companyId: activeCompanyId },

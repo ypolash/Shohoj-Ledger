@@ -220,6 +220,17 @@ export default function AttendancePage() {
   const [considerSubmitting, setConsiderSubmitting] = useState(false);
   const [punishmentRules, setPunishmentRules] = useState<any[]>([]);
 
+  // Approve Absent to Present modal state
+  const [approveAbsentModalOpen, setApproveAbsentModalOpen] = useState(false);
+  const [recordToApproveAbsent, setRecordToApproveAbsent] = useState<AttendanceRecord | null>(null);
+  const [approveCheckInTime, setApproveCheckInTime] = useState('09:30');
+  const [approveCheckOutTime, setApproveCheckOutTime] = useState('18:30');
+  const [approveWaiveFine, setApproveWaiveFine] = useState(true);
+  const [approveCustomFine, setApproveCustomFine] = useState('0');
+  const [approveReason, setApproveReason] = useState('Staff attended office on time (Check-in omitted)');
+  const [approveSubmitting, setApproveSubmitting] = useState(false);
+  const [approvingAbsentId, setApprovingAbsentId] = useState<string | null>(null);
+
   // Check-out modal state (Manual Out & Half Day Out)
   const [autoCheckoutRecord, setAutoCheckoutRecord] = useState<AttendanceRecord | null>(null);
   const [checkoutMode, setCheckoutMode] = useState<'MANUAL' | 'HALF_DAY'>('MANUAL');
@@ -536,6 +547,58 @@ export default function AttendancePage() {
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch {
       alert('Network error reverting consideration');
+    }
+  };
+
+  const handleOpenApproveAbsentModal = (rec: AttendanceRecord) => {
+    setRecordToApproveAbsent(rec);
+    const shiftStart = officeTiming?.shiftStartTime || '09:30';
+    const shiftEnd = officeTiming?.shiftEndTime || '18:30';
+    setApproveCheckInTime(shiftStart);
+    setApproveCheckOutTime(shiftEnd);
+    setApproveWaiveFine(true);
+    const absentFine = getRecordAbsentFine(rec, punishmentRules);
+    setApproveCustomFine(String(absentFine || 0));
+    setApproveReason('Staff was present on duty (Check-in omitted)');
+    setApproveAbsentModalOpen(true);
+  };
+
+  const handleConfirmApproveAbsent = async () => {
+    if (!recordToApproveAbsent) return;
+    setApproveSubmitting(true);
+    setApprovingAbsentId(recordToApproveAbsent.id);
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: recordToApproveAbsent.id,
+          action: 'APPROVE_ABSENT_TO_PRESENT',
+          checkInTime: approveCheckInTime,
+          checkOutTime: approveCheckOutTime,
+          waiveFine: approveWaiveFine,
+          customFineAmount: approveWaiveFine ? 0 : Number(approveCustomFine),
+          reason: approveReason.trim() || 'Staff was present on duty (Check-in omitted)'
+        })
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        alert(d.error || 'Failed to approve attendance');
+        return;
+      }
+      const empName = recordToApproveAbsent.employee
+        ? `${recordToApproveAbsent.employee.firstName} ${recordToApproveAbsent.employee.lastName}`
+        : 'Staff';
+      setSuccessMsg(`${empName} marked as Present! Absence penalty considered & waived.`);
+      setApproveAbsentModalOpen(false);
+      setRecordToApproveAbsent(null);
+      await loadData(false);
+      setTimeout(() => setSuccessMsg(''), 4500);
+    } catch {
+      alert('Network error while approving attendance');
+    } finally {
+      setApproveSubmitting(false);
+      setApprovingAbsentId(null);
     }
   };
 
@@ -1332,6 +1395,7 @@ export default function AttendancePage() {
             setShowModal(true);
           }}
           onConsiderLate={handleOpenConsiderModal}
+          onApproveAbsent={handleOpenApproveAbsentModal}
           onAutoCheckout={handleOpenAutoCheckoutModal}
           onDeleteRecord={setAttendanceToDelete}
         />
@@ -1712,44 +1776,77 @@ export default function AttendancePage() {
 
                               <td className={styles.tableCell} style={{ textAlign: 'right' }}>
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (e.shiftKey) {
-                                        handleConfirmAutoCheckoutDirect(r);
-                                      } else {
-                                        handleOpenAutoCheckoutModal(r, 'MANUAL');
+                                  {/* Approve Absent to Present Action Button */}
+                                  {r.status === 'ABSENT' ? (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenApproveAbsentModal(r);
+                                      }}
+                                      disabled={approvingAbsentId === r.id}
+                                      title="Approve as Present & Waive Absence Penalty Fine"
+                                      style={{
+                                        padding: '6px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(16, 185, 129, 0.55)',
+                                        background: 'rgba(16, 185, 129, 0.18)',
+                                        color: '#10b981',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        fontWeight: 700,
+                                        fontSize: '11.5px',
+                                        transition: 'all 0.15s ease',
+                                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)'
+                                      }}
+                                    >
+                                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                        {approvingAbsentId === r.id ? 'hourglass_empty' : 'how_to_reg'}
+                                      </span>
+                                      <span>Approve Present</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (e.shiftKey) {
+                                          handleConfirmAutoCheckoutDirect(r);
+                                        } else {
+                                          handleOpenAutoCheckoutModal(r, 'MANUAL');
+                                        }
+                                      }}
+                                      disabled={autoCheckoutLoadingId === r.id}
+                                      title={
+                                        checkOut === '—'
+                                          ? "Manual Out (Click to set time, or Shift+Click for instant shift end)"
+                                          : `Manual Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
                                       }
-                                    }}
-                                    disabled={autoCheckoutLoadingId === r.id}
-                                    title={
-                                      checkOut === '—'
-                                        ? "Manual Out (Click to set time, or Shift+Click for instant shift end)"
-                                        : `Manual Out (Currently checked out at ${formatDisplayTime(checkOut, officeTiming.timezone)})`
-                                    }
-                                    style={{
-                                      padding: '6px',
-                                      borderRadius: '8px',
-                                      border: checkOut === '—'
-                                        ? '1px solid rgba(16, 185, 129, 0.45)'
-                                        : '1px solid rgba(16, 185, 129, 0.2)',
-                                      background: checkOut === '—'
-                                        ? 'rgba(16, 185, 129, 0.15)'
-                                        : 'rgba(16, 185, 129, 0.05)',
-                                      color: checkOut === '—' ? '#10b981' : '#059669',
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      transition: 'all 0.15s ease',
-                                      boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
-                                    }}
-                                  >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                      {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
-                                    </span>
-                                  </button>
+                                      style={{
+                                        padding: '6px',
+                                        borderRadius: '8px',
+                                        border: checkOut === '—'
+                                          ? '1px solid rgba(16, 185, 129, 0.45)'
+                                          : '1px solid rgba(16, 185, 129, 0.2)',
+                                        background: checkOut === '—'
+                                          ? 'rgba(16, 185, 129, 0.15)'
+                                          : 'rgba(16, 185, 129, 0.05)',
+                                        color: checkOut === '—' ? '#10b981' : '#059669',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.15s ease',
+                                        boxShadow: checkOut === '—' ? '0 0 8px rgba(16, 185, 129, 0.25)' : 'none'
+                                      }}
+                                    >
+                                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                                        {autoCheckoutLoadingId === r.id ? 'hourglass_empty' : 'logout'}
+                                      </span>
+                                    </button>
+                                  )}
 
                                   {/* Half Day Out (Emergency Permit) Button */}
                                   {r.status !== 'ABSENT' && (
@@ -2743,6 +2840,330 @@ export default function AttendancePage() {
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified</span>
                 {considerSubmitting ? 'Saving...' : 'Apply Consideration'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Approve Absent to Present Modal */}
+      {approveAbsentModalOpen && recordToApproveAbsent && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => {
+            if (!approveSubmitting) {
+              setApproveAbsentModalOpen(false);
+              setRecordToApproveAbsent(null);
+            }
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface-card, #1e293b)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.12))',
+              maxWidth: '540px',
+              width: '100%',
+              padding: '26px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'rgba(16, 185, 129, 0.18)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>how_to_reg</span>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main, #fff)' }}>
+                    Approve Attendance (Absent → Present)
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                    Verify employee presence and consider/waive absence penalties &amp; disciplinary fines.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setApproveAbsentModalOpen(false); setRecordToApproveAbsent(null); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                  display: 'flex'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
+
+            {/* Employee Card & Absence Penalty Overview */}
+            {(() => {
+              const emp = recordToApproveAbsent.employee;
+              const empName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : 'Staff Member';
+              const empCode = emp?.employeeId || recordToApproveAbsent.employeeId.slice(0, 8);
+              const absentFine = getRecordAbsentFine(recordToApproveAbsent, punishmentRules);
+              const attDateStr = formatDisplayDate(recordToApproveAbsent.date, officeTiming.timezone);
+
+              return (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#f87171',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '13px'
+                    }}>
+                      {empName.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main, #fff)' }}>
+                        {empName} <span style={{ fontSize: '11px', color: '#94a3b8' }}>#{empCode}</span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>calendar_today</span>
+                        {attDateStr}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Current Fine / Penalty
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 800, color: '#ef4444' }}>
+                      ৳{absentFine.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Check-In / Check-Out Times */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', display: 'block', marginBottom: '6px' }}>
+                  Check-In Time
+                </label>
+                <input
+                  type="time"
+                  value={approveCheckInTime}
+                  onChange={e => setApproveCheckInTime(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    color: '#fff',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', display: 'block', marginBottom: '6px' }}>
+                  Check-Out Time
+                </label>
+                <input
+                  type="time"
+                  value={approveCheckOutTime}
+                  onChange={e => setApproveCheckOutTime(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    color: '#fff',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Fine Consideration / Waiver Toggle */}
+            <div style={{
+              background: approveWaiveFine ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+              border: approveWaiveFine ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={approveWaiveFine}
+                  onChange={e => setApproveWaiveFine(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#10b981', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '13px', fontWeight: 700, color: approveWaiveFine ? '#10b981' : 'var(--text-main, #fff)' }}>
+                  Waive &amp; Consider Absence Fine (100% Consideration — ৳0.00)
+                </span>
+              </label>
+              <div style={{ fontSize: '11.5px', color: '#94a3b8', paddingLeft: '26px' }}>
+                When checked, any disciplinary fine logged for this absence is cancelled/waived, and active payroll deduction is restored.
+              </div>
+
+              {!approveWaiveFine && (
+                <div style={{ paddingLeft: '26px', marginTop: '6px' }}>
+                  <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>
+                    Custom Fine Amount (BDT)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={approveCustomFine}
+                    onChange={e => setApproveCustomFine(e.target.value)}
+                    style={{
+                      width: '140px',
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      color: '#fff',
+                      fontSize: '12px'
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Approval Reason & Quick Templates */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', display: 'block', marginBottom: '6px' }}>
+                HR Consideration Note / Reason *
+              </label>
+              <input
+                type="text"
+                value={approveReason}
+                onChange={e => setApproveReason(e.target.value)}
+                placeholder="Reason for approving presence..."
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  color: '#fff',
+                  fontSize: '13px'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', alignSelf: 'center' }}>Presets:</span>
+                {[
+                  'Staff attended office on time (Check-in omitted)',
+                  'On-site client duty / Outdoor assignment',
+                  'Biometric scanner technical glitch',
+                  'Authorized work from office'
+                ].map(preset => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setApproveReason(preset)}
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: 'var(--text-secondary, #cbd5e1)',
+                      fontSize: '11px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {preset.split(' (')[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+              <button
+                type="button"
+                onClick={() => { setApproveAbsentModalOpen(false); setRecordToApproveAbsent(null); }}
+                disabled={approveSubmitting}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-main, rgba(255, 255, 255, 0.15))',
+                  background: 'transparent',
+                  color: 'var(--text-main, #fff)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmApproveAbsent}
+                disabled={approveSubmitting}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#059669',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)',
+                  opacity: approveSubmitting ? 0.7 : 1
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                  {approveSubmitting ? 'hourglass_empty' : 'how_to_reg'}
+                </span>
+                {approveSubmitting ? 'Approving...' : 'Approve as Present & Waive Fine'}
               </button>
             </div>
           </div>

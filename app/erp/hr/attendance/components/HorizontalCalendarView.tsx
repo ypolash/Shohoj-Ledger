@@ -47,6 +47,7 @@ interface HorizontalCalendarViewProps {
   onAddRecord: (employeeId: string, date: string) => void;
   onViewRecord?: (record: AttendanceRecord) => void;
   onConsiderLate?: (record: AttendanceRecord) => void;
+  onApproveAbsent?: (record: AttendanceRecord) => void;
   onAutoCheckout?: (record: AttendanceRecord, mode: 'MANUAL' | 'HALF_DAY') => void;
   onDeleteRecord?: (record: AttendanceRecord) => void;
 }
@@ -60,6 +61,7 @@ export function HorizontalCalendarView({
   onAddRecord,
   onViewRecord,
   onConsiderLate,
+  onApproveAbsent,
   onAutoCheckout,
   onDeleteRecord
 }: HorizontalCalendarViewProps) {
@@ -907,7 +909,35 @@ export function HorizontalCalendarView({
                 </button>
               )}
 
-              {onAutoCheckout && !selectedRecordForDetail.checkOut && !selectedRecordForDetail.checkOutTime && (
+              {onApproveAbsent && selectedRecordForDetail.status === 'ABSENT' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rec = selectedRecordForDetail;
+                    setSelectedRecordForDetail(null);
+                    onApproveAbsent(rec);
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(16, 185, 129, 0.45)',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    color: '#10b981',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>how_to_reg</span>
+                  Approve as Present &amp; Waive Fine
+                </button>
+              )}
+
+              {onAutoCheckout && selectedRecordForDetail.status !== 'ABSENT' && !selectedRecordForDetail.checkOut && !selectedRecordForDetail.checkOutTime && (
                 <button
                   type="button"
                   onClick={() => {

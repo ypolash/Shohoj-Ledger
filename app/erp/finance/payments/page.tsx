@@ -21,6 +21,7 @@ export default function FinancePaymentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   // Drawer state for updating payments
   const [selectedDueItem, setSelectedDueItem] = useState<any | null>(null);
@@ -62,6 +63,7 @@ export default function FinancePaymentsPage() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     loadData();
   }, [loadData]);
 
@@ -160,9 +162,10 @@ export default function FinancePaymentsPage() {
             className={styles.btnSecondary}
             onClick={handleRefresh}
             title="Refresh payment balances"
-            disabled={isLoading}
+            disabled={mounted ? (isLoading || isRefreshing) : undefined}
+            suppressHydrationWarning
           >
-            <RefreshCw size={15} className={isRefreshing || isLoading ? "animate-spin" : ""} />
+            <RefreshCw size={15} className={mounted && (isRefreshing || isLoading) ? "animate-spin" : ""} />
             <span>Refresh</span>
           </button>
         </div>

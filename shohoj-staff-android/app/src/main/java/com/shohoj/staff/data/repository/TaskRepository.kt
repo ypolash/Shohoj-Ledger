@@ -36,16 +36,23 @@ class TaskRepository(
 
     suspend fun updateTaskStatus(taskId: String, newStatus: String): Result<TaskItem> = withContext(Dispatchers.IO) {
         try {
-            val response = apiClient.getService().updateTaskStatus(
-                taskId = taskId,
-                request = TaskStatusUpdateRequest(status = newStatus)
-            )
+            val service = apiClient.getService()
+            val request = TaskStatusUpdateRequest(status = newStatus)
+            
+            // 1. Try mobile status endpoint
+            val response = service.updateTaskStatus(taskId = taskId, request = request)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                val err = response.errorBody()?.string() ?: "Failed to update task status"
-                Result.failure(Exception(err))
+                return@withContext Result.success(response.body()!!)
             }
+
+            // 2. Fallback to ESS endpoint
+            val essResponse = service.updateEssTaskStatus(taskId = taskId, request = request)
+            if (essResponse.isSuccessful && essResponse.body() != null) {
+                return@withContext Result.success(essResponse.body()!!)
+            }
+
+            val err = response.errorBody()?.string() ?: essResponse.errorBody()?.string() ?: "Failed to update task status"
+            Result.failure(Exception(err))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -53,16 +60,23 @@ class TaskRepository(
 
     suspend fun updateTaskChecklist(taskId: String, checklist: com.shohoj.staff.data.model.TaskChecklist, newStatus: String? = null): Result<TaskItem> = withContext(Dispatchers.IO) {
         try {
-            val response = apiClient.getService().updateTaskStatus(
-                taskId = taskId,
-                request = TaskStatusUpdateRequest(status = newStatus, checklist = checklist)
-            )
+            val service = apiClient.getService()
+            val request = TaskStatusUpdateRequest(status = newStatus, checklist = checklist)
+
+            // 1. Try mobile status endpoint
+            val response = service.updateTaskStatus(taskId = taskId, request = request)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                val err = response.errorBody()?.string() ?: "Failed to update checklist"
-                Result.failure(Exception(err))
+                return@withContext Result.success(response.body()!!)
             }
+
+            // 2. Fallback to ESS endpoint
+            val essResponse = service.updateEssTaskStatus(taskId = taskId, request = request)
+            if (essResponse.isSuccessful && essResponse.body() != null) {
+                return@withContext Result.success(essResponse.body()!!)
+            }
+
+            val err = response.errorBody()?.string() ?: essResponse.errorBody()?.string() ?: "Failed to update checklist"
+            Result.failure(Exception(err))
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -143,6 +143,12 @@ interface ShohojApiService {
         @Body request: TaskStatusUpdateRequest
     ): Response<TaskItem>
 
+    @PATCH("api/ess/tasks/{id}")
+    suspend fun updateEssTaskStatus(
+        @Path("id") taskId: String,
+        @Body request: TaskStatusUpdateRequest
+    ): Response<TaskItem>
+
     @POST("api/mobile/tasks/{id}/comments")
     suspend fun addTaskComment(
         @Path("id") taskId: String,

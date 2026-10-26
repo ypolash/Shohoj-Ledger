@@ -102,13 +102,42 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             result.fold(
                 onSuccess = { serverTask ->
                     _uiState.value = _uiState.value.copy(
-                        tasks = _uiState.value.tasks.map { if (it.id == taskId) serverTask else it }
+                        tasks = _uiState.value.tasks.map { existing ->
+                            if (existing.id == taskId) {
+                                // Safely merge checklist without wiping out rapid local clicks
+                                val safeChecklist = if (serverTask.checklist != null && serverTask.checklist.items.isNotEmpty()) {
+                                    val currentLocalItems = existing.checklist?.items ?: updatedItems
+                                    val mergedItems = serverTask.checklist.items.map { sItem ->
+                                        val lItem = currentLocalItems.find { it.id == sItem.id }
+                                        if (lItem != null && lItem.completed != sItem.completed) {
+                                            lItem
+                                        } else {
+                                            sItem
+                                        }
+                                    }
+                                    serverTask.checklist.copy(items = mergedItems)
+                                } else {
+                                    existing.checklist ?: updatedChecklist
+                                }
+                                existing.copy(
+                                    checklist = safeChecklist,
+                                    status = if (!serverTask.status.isNullOrBlank()) serverTask.status else existing.status
+                                )
+                            } else existing
+                        }
                     )
                 },
                 onFailure = { ex ->
-                    // Revert to previous state on failure
+                    // Revert only this specific item on failure, without wiping other toggled items
                     _uiState.value = _uiState.value.copy(
-                        tasks = currentTasks,
+                        tasks = _uiState.value.tasks.map { existing ->
+                            if (existing.id == taskId) {
+                                val revertedItems = (existing.checklist?.items ?: emptyList()).map { item ->
+                                    if (item.id == itemId) item.copy(completed = !isCompleted) else item
+                                }
+                                existing.copy(checklist = existing.checklist?.copy(items = revertedItems))
+                            } else existing
+                        },
                         error = ex.localizedMessage ?: "Failed to update checklist item"
                     )
                 }

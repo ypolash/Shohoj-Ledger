@@ -46,9 +46,10 @@ export async function GET(request: Request) {
                     channel === 'beta' || 
                     channel === 'private';
 
-  // 3. If preview/private channel requested, serve v1.7.5-beta
+  // 3. If preview/private channel requested, serve v1.7.6-beta
   if (!targetPath && isPreview) {
     const previewCandidates = [
+      path.join(downloadsDir, 'shohoj-staff-v1.7.6-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.7.5-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.7.4-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.7.3-beta.apk'),
@@ -68,6 +69,7 @@ export async function GET(request: Request) {
   // 4. Fallback resolution cascade to latest stable / beta APK
   if (!targetPath) {
     const publicCandidates = [
+      path.join(downloadsDir, 'shohoj-staff-v1.7.6-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.7.5-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.7.4-beta.apk'),
       path.join(downloadsDir, 'shohoj-staff-v1.7.3-beta.apk'),

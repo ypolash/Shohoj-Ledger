@@ -27,39 +27,41 @@ export async function GET(request: Request) {
       return NextResponse.json({
         appName: 'Shohoj Staff (Beta Preview)',
         appId: 'com.shohoj.staff',
-        versionCode: 40,
-        versionName: '1.7.5-beta',
+        versionCode: 41,
+        versionName: '1.7.6-beta',
         channel: 'preview',
         minVersion: '1.0.0',
-        title: 'Shohoj Staff v1.7.5 Beta — Left-Side Chat Head Timer & Office Wi-Fi Policy',
+        title: 'Shohoj Staff v1.7.6 Beta — Absent Approval Data Sync & Enhancements',
         releaseNotes: [
+          '🔄 Absent Approval Data Sync: Instant synchronization of HR absent approvals, regularizations, and fine waivers to mobile',
           '⏱️ Left-Side Chat Head Timer: Floating draggable countdown widget placed on the app left side across all screens',
           '📶 Enforced Office Wi-Fi Reconnect: Real-time Wi-Fi compliance checking requiring employees to reconnect to company Wi-Fi within break time to avoid fines',
           '🍽️ Custom Duty Break Sync: Break allowance and grace period dynamically match employee custom shift settings',
           '🛑 Timer Expiry Flow: Pause button auto-hides upon timer completion, transitioning cleanly to End Break'
         ],
-        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.5-beta.apk?v=40`,
+        downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.6-beta.apk?v=41`,
         fileSize: '12.4 MB',
         isForceUpdate: false,
         publishedAt: new Date().toISOString()
       });
     }
 
-    // Default Public Production Version (Shohoj Staff v1.7.5 Beta)
+    // Default Public Production Version (Shohoj Staff v1.7.6 Beta)
     return NextResponse.json({
       appName: 'Shohoj Staff',
       appId: 'com.shohoj.staff',
-      versionCode: 40,
-      versionName: '1.7.5-beta',
+      versionCode: 41,
+      versionName: '1.7.6-beta',
       minVersion: '1.0.0',
-      title: 'Shohoj Staff v1.7.5 Beta Available',
+      title: 'Shohoj Staff v1.7.6 Beta Available',
       releaseNotes: [
+        '🔄 Absent Approval Data Sync: Instant synchronization of HR absent approvals, regularizations, and fine waivers to mobile',
         '⏱️ Left-Side Chat Head Timer: Floating draggable countdown widget placed on the app left side across all screens',
         '📶 Enforced Office Wi-Fi Reconnect: Real-time Wi-Fi compliance checking requiring employees to reconnect to company Wi-Fi within break time to avoid fines',
         '🍽️ Custom Duty Break Sync: Break allowance and grace period dynamically match employee custom shift settings',
         '🛑 Timer Expiry Flow: Pause button auto-hides upon timer completion, transitioning cleanly to End Break'
       ],
-      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.5-beta.apk?v=40`,
+      downloadUrl: `${baseUrl}/downloads/shohoj-staff-v1.7.6-beta.apk?v=41`,
       fileSize: '12.4 MB',
       isForceUpdate: false,
       publishedAt: new Date().toISOString()

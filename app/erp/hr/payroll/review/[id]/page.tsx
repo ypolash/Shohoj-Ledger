@@ -72,6 +72,7 @@ interface PayrollAuditReviewData {
     endDate: string;
     reason?: string;
     status: string;
+    comments?: string | null;
   }>;
   bonuses: Array<{
     id: string;
@@ -1996,29 +1997,69 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                       <th>Leave Type</th>
                       <th>Duration</th>
                       <th>Reason for Leave</th>
+                      <th style={{ width: '130px' }}>Fine Amount</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {leaves.map(l => (
-                      <tr key={l.id}>
-                        <td style={{ fontWeight: 600 }}>{l.type}</td>
-                        <td>{formatDate(l.startDate)} → {formatDate(l.endDate)}</td>
-                        <td style={{ color: 'var(--text-muted)' }}>{l.reason || 'Personal Leave'}</td>
-                        <td>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            background: l.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-                            color: l.status === 'APPROVED' ? '#10b981' : '#f59e0b'
-                          }}>
-                            {l.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {leaves.map(l => {
+                      const leaveShortId = l.id ? l.id.substring(0, 8) : '';
+                      // Look for matching fine linked via request ID in reason or date matching
+                      const matchedFine = fines.find(f =>
+                        (leaveShortId && f.reason?.includes(`[Req: ${leaveShortId}]`)) ||
+                        (f.reason?.toLowerCase().includes('break') && l.startDate && f.date && new Date(f.date).toDateString() === new Date(l.startDate).toDateString())
+                      );
+                      const commentFineMatch = l.comments?.match(/Penalty fine:\s*৳?(\d+(?:\.\d+)?)/i);
+                      const extractedFineAmount = matchedFine
+                        ? Number(matchedFine.amount)
+                        : commentFineMatch
+                        ? Number(commentFineMatch[1])
+                        : 0;
+
+                      return (
+                        <tr key={l.id}>
+                          <td style={{ fontWeight: 600 }}>{l.type}</td>
+                          <td>{formatDate(l.startDate)} → {formatDate(l.endDate)}</td>
+                          <td style={{ color: 'var(--text-muted)' }}>{l.reason || 'Personal Leave'}</td>
+                          <td>
+                            {extractedFineAmount > 0 ? (
+                              <span style={{
+                                fontWeight: 700,
+                                color: '#ef4444',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>gavel</span>
+                                {formatBDT(extractedFineAmount)}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>—</span>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              background: l.status === 'APPROVED' || l.status === 'COMPLETED'
+                                ? 'rgba(16, 185, 129, 0.1)'
+                                : l.status === 'OVERSTAYED'
+                                ? 'rgba(239, 68, 68, 0.1)'
+                                : 'rgba(245, 158, 11, 0.1)',
+                              color: l.status === 'APPROVED' || l.status === 'COMPLETED'
+                                ? '#10b981'
+                                : l.status === 'OVERSTAYED'
+                                ? '#ef4444'
+                                : '#f59e0b'
+                            }}>
+                              {l.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

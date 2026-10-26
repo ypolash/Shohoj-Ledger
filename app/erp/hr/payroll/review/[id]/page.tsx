@@ -218,6 +218,7 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
   const [newFineAmount, setNewFineAmount] = useState<string | number>('');
   const [newFineReason, setNewFineReason] = useState<string>('');
   const [newFineDate, setNewFineDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [fineViewMode, setFineViewMode] = useState<'table' | 'cards'>('table');
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
@@ -973,6 +974,50 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                 <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Total Fine Deductions: </span>
                 <strong style={{ fontSize: '16px', color: '#ef4444' }}>{formatBDT(telemetry.totalFineAmount)}</strong>
               </div>
+
+              {/* View Mode Toggle: Table / Cards */}
+              <div style={{ display: 'inline-flex', border: '1px solid var(--border-main)', borderRadius: '6px', overflow: 'hidden' }}>
+                <button
+                  type="button"
+                  onClick={() => setFineViewMode('table')}
+                  style={{
+                    padding: '5px 10px',
+                    fontSize: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: fineViewMode === 'table' ? 'var(--primary, #2563eb)' : 'var(--surface-card, #ffffff)',
+                    color: fineViewMode === 'table' ? '#ffffff' : 'var(--text-muted)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="Table View"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>table_rows</span>
+                  <span>Table</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFineViewMode('cards')}
+                  style={{
+                    padding: '5px 10px',
+                    fontSize: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: fineViewMode === 'cards' ? 'var(--primary, #2563eb)' : 'var(--surface-card, #ffffff)',
+                    color: fineViewMode === 'cards' ? '#ffffff' : 'var(--text-muted)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                  title="Card Grid View"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>grid_view</span>
+                  <span>Cards</span>
+                </button>
+              </div>
               {telemetry.totalFineAmount > 0 && (
                 <button
                   type="button"
@@ -1078,6 +1123,330 @@ export default function PayrollReviewPage({ params }: { params: Promise<{ id: st
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add_circle</span>
                 <span>Levy Disciplinary Fine</span>
               </button>
+            </div>
+          ) : fineViewMode === 'table' ? (
+            <div className={styles.tableWrapper}>
+              <table className={styles.auditTable}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '130px' }}>Date</th>
+                    <th style={{ width: '160px' }}>Penalty Type</th>
+                    <th>Why They Got Fined (Violation Reason)</th>
+                    <th style={{ width: '130px' }}>Fine Amount</th>
+                    <th style={{ width: '120px' }}>Status</th>
+                    <th style={{ width: '190px', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fines.map(fine => {
+                    const isEditing = editingFineId === fine.id;
+                    const isReducing = reducingFineId === fine.id;
+                    const fineNum = Number(fine.amount) || 0;
+
+                    if (isReducing) {
+                      return (
+                        <tr key={`${fine.id}-reducing`} style={{ background: 'var(--surface-hover, #f8fafc)' }}>
+                          <td colSpan={6} style={{ padding: '16px' }}>
+                            <div className={styles.fineReduceBox} style={{ maxWidth: '680px', margin: '0 auto' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.3)', paddingBottom: '6px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#b45309', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>trending_down</span>
+                                  Reduce Disciplinary Fine
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Current: {formatBDT(fine.amount)}</span>
+                              </div>
+
+                              {/* Quick Reduction Presets */}
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '5px' }}>
+                                  Quick Reduction Presets:
+                                </label>
+                                <div className={styles.reducePresetRow}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSelectReducePreset(fine, 25)}
+                                    className={`${styles.reducePresetBtn} ${reducePreset === 25 ? styles.active : ''}`}
+                                  >
+                                    -25% Off
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSelectReducePreset(fine, 50)}
+                                    className={`${styles.reducePresetBtn} ${reducePreset === 50 ? styles.active : ''}`}
+                                  >
+                                    -50% Off
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSelectReducePreset(fine, 75)}
+                                    className={`${styles.reducePresetBtn} ${reducePreset === 75 ? styles.active : ''}`}
+                                  >
+                                    -75% Off
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSelectReducePreset(fine, 100)}
+                                    className={`${styles.reducePresetBtn} ${reducePreset === 100 ? styles.active : ''}`}
+                                    style={{ color: '#dc2626' }}
+                                  >
+                                    Waive 100% (৳0)
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Custom inputs */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <div>
+                                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                                    Reduce By Discount (BDT)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max={fineNum}
+                                    value={reduceDiscountAmount}
+                                    onChange={e => handleDiscountAmountChange(fine, e.target.value)}
+                                    style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 700 }}
+                                  />
+                                </div>
+                                <div>
+                                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                                    New Reduced Fine (BDT)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max={fineNum}
+                                    value={reduceNewAmount}
+                                    onChange={e => handleNewAmountChange(fine, e.target.value)}
+                                    style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: '#dc2626', fontSize: '12px', fontWeight: 700 }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Live Comparison Badge */}
+                              <div className={styles.reduceComparison}>
+                                <div>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Current: </span>
+                                  <strong style={{ textDecoration: 'line-through', color: '#94a3b8' }}>{formatBDT(fineNum)}</strong>
+                                  <span style={{ margin: '0 6px', color: '#10b981' }}>➔</span>
+                                  <span style={{ color: '#10b981', fontWeight: 700 }}>
+                                    New: {formatBDT(reduceNewAmount)}
+                                  </span>
+                                </div>
+                                <div style={{ color: '#10b981', fontWeight: 700, fontSize: '11px' }}>
+                                  +{formatBDT(Number(fineNum) - Number(reduceNewAmount || 0))} Net Pay
+                                </div>
+                              </div>
+
+                              {/* Reduction Reason Note */}
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                                  Reduction Note / Reason
+                                </label>
+                                <input
+                                  type="text"
+                                  value={reduceReason}
+                                  onChange={e => setReduceReason(e.target.value)}
+                                  placeholder="e.g. Good conduct pardon, first offense grace"
+                                  style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px' }}
+                                />
+                              </div>
+
+                              {/* Reduction Buttons */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                <button
+                                  type="button"
+                                  disabled={fineActionLoading}
+                                  onClick={() => handleConfirmReduceFine(fine)}
+                                  className="btn btn-primary"
+                                  style={{ padding: '6px 14px', fontSize: '12px', background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                                >
+                                  {fineActionLoading ? 'Saving...' : 'Apply Fine Reduction'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setReducingFineId(null)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    if (isEditing) {
+                      return (
+                        <tr key={`${fine.id}-editing`} style={{ background: 'var(--surface-hover, #f8fafc)' }}>
+                          <td colSpan={6} style={{ padding: '16px' }}>
+                            <div style={{ maxWidth: '650px', margin: '0 auto', background: 'var(--surface-card)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(239, 68, 68, 0.2)', paddingBottom: '6px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                                  Edit Disciplinary Fine
+                                </span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {fine.id.slice(0, 8)}</span>
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                                  Fine Amount (BDT)
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={editFineAmount}
+                                  onChange={e => setEditFineAmount(e.target.value)}
+                                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '13px', fontWeight: 700 }}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                                  Reason / Description
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={editFineReason}
+                                  onChange={e => setEditFineReason(e.target.value)}
+                                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px', resize: 'vertical' }}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px' }}>
+                                  Status
+                                </label>
+                                <select
+                                  value={editFineStatus}
+                                  onChange={e => setEditFineStatus(e.target.value)}
+                                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border-main)', background: 'var(--surface-card)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 600 }}
+                                >
+                                  <option value="PENDING">PENDING (Will Deduct on Pay)</option>
+                                  <option value="DEDUCTED">DEDUCTED (Applied to Payroll)</option>
+                                  <option value="CANCELLED">CANCELLED (Waived / Void)</option>
+                                </select>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                                <button
+                                  type="button"
+                                  disabled={fineActionLoading}
+                                  onClick={() => handleSaveEditFine(fine.id)}
+                                  className="btn btn-primary"
+                                  style={{ padding: '6px 14px', fontSize: '12px', background: '#dc2626', borderColor: '#dc2626', fontWeight: 600 }}
+                                >
+                                  {fineActionLoading ? 'Saving...' : 'Save Changes'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingFineId(null)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={fineActionLoading}
+                                  onClick={() => handleDeleteFine(fine.id)}
+                                  style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px' }}
+                                  title="Delete or waive this fine"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return (
+                      <tr key={fine.id}>
+                        <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                          {formatDate(fine.date || fine.createdAt)}
+                        </td>
+                        <td>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#ef4444' }}>flag</span>
+                            Disciplinary Fine
+                          </span>
+                        </td>
+                        <td style={{ whiteSpace: 'normal', minWidth: '260px' }}>
+                          <span style={{ fontWeight: 500, color: 'var(--text-main)', lineHeight: 1.5 }}>
+                            {fine.reason || 'No detailed reason specified by supervisor.'}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 700, color: '#dc2626' }}>
+                          {formatBDT(fine.amount)}
+                        </td>
+                        <td>
+                          <span style={{
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            display: 'inline-block',
+                            background: fine.status === 'DEDUCTED' ? 'rgba(16, 185, 129, 0.12)' : fine.status === 'CANCELLED' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                            color: fine.status === 'DEDUCTED' ? '#10b981' : fine.status === 'CANCELLED' ? '#ef4444' : '#f59e0b',
+                          }}>
+                            {fine.status}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
+                            {fineNum > 0 && fine.status !== 'CANCELLED' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartReduceFine(fine)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#b45309', borderColor: 'rgba(245, 158, 11, 0.4)', fontWeight: 700 }}
+                                  title="Reduce this fine amount"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>trending_down</span>
+                                  <span>Reduce</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickWaiveFine(fine)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)', fontWeight: 600 }}
+                                  title="Waive 100% of this fine"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>price_check</span>
+                                  <span>Waive</span>
+                                </button>
+                              </>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditFine(fine)}
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--primary, #3b82f6)', fontWeight: 600 }}
+                              title="Edit fine amount or reason"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span>
+                              <span>Edit</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ) : (
             <div className={styles.fineCardGrid}>

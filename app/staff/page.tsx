@@ -50,6 +50,7 @@ export default function StaffPortalPage() {
   const [activeBreak, setActiveBreak] = useState<any>(null);
   const [isEndingBreak, setIsEndingBreak] = useState(false);
   const [isStartingLunchBreak, setIsStartingLunchBreak] = useState(false);
+  const [hasEndedBreakToday, setHasEndedBreakToday] = useState(false);
 
   // New Leave Form
   const [availableLeaveTypes, setAvailableLeaveTypes] = useState<any[]>([]);
@@ -136,6 +137,9 @@ export default function StaffPortalPage() {
             setActiveBreak(bData.activeBreak);
           } else {
             setActiveBreak(null);
+          }
+          if (bData.hasEndedBreakToday) {
+            setHasEndedBreakToday(true);
           }
         })
         .catch(() => {});
@@ -384,6 +388,19 @@ export default function StaffPortalPage() {
     return () => clearInterval(interval);
   }, [activeBreak?.isBreakActive]);
 
+  useEffect(() => {
+    try {
+      const todayKey = new Date().toISOString().split('T')[0];
+      const targetEmp = currentUser?.employeeId || currentUser?.id || employeeId;
+      if (targetEmp) {
+        const stored = localStorage.getItem(`staff_lunch_break_ended_${targetEmp}_${todayKey}`);
+        if (stored === 'true') {
+          setHasEndedBreakToday(true);
+        }
+      }
+    } catch {}
+  }, [currentUser, employeeId]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -607,6 +624,11 @@ export default function StaffPortalPage() {
       if (json.success) {
         alert(json.message || '🍽️ Lunch break ended successfully! Welcome back to duty.');
         setActiveBreak(null);
+        setHasEndedBreakToday(true);
+        try {
+          const todayKey = new Date().toISOString().split('T')[0];
+          localStorage.setItem(`staff_lunch_break_ended_${emp.employeeId || emp.id}_${todayKey}`, 'true');
+        } catch {}
         await fetchDashboardData(emp.id, emp);
       } else {
         alert(json.error || 'Failed to end break');
@@ -719,8 +741,8 @@ export default function StaffPortalPage() {
           <button onClick={() => setIsAuthenticated(false)} className="btn" style={{ background: 'rgba(255,255,255,0.1)' }}>Logout</button>
         </div>
 
-        {/* Dedicated Lunch Break Card (Visible & Clickable at Any Time when not on break) */}
-        {(!activeBreak || !activeBreak.isBreakActive) && (
+        {/* Dedicated Lunch Break Card (Visible & Clickable at Any Time when not on break and not already ended today) */}
+        {(!activeBreak || !activeBreak.isBreakActive) && !hasEndedBreakToday && (
           <div style={{
             background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(30, 41, 59, 0.85) 100%)',
             border: '1px solid rgba(245, 158, 11, 0.35)',

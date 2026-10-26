@@ -30,6 +30,22 @@ export async function GET(request: Request) {
 
     const activeBreak = await getActiveBreakForEmployee(employee.id, employee.companyId);
 
+    // Check if employee has already completed/ended a break today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEndedBreak = await prisma.leaveRequest.findFirst({
+      where: {
+        employeeId: employee.id,
+        createdAt: { gte: todayStart },
+        status: { in: ["COMPLETED", "OVERSTAYED"] },
+        OR: [
+          { type: { contains: "Lunch", mode: "insensitive" } },
+          { type: { contains: "Break", mode: "insensitive" } },
+          { reason: { contains: "Break", mode: "insensitive" } },
+        ]
+      }
+    });
+
     // Fetch all available short break / timer leave categories
     const breakCategories = await prisma.leaveType.findMany({
       where: {
@@ -47,6 +63,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       hasActiveBreak: Boolean(activeBreak),
+      hasEndedBreakToday: Boolean(todayEndedBreak),
       activeBreak,
       breakCategories: parsedCategories,
     }, { headers: ESS_CORS_HEADERS });
@@ -161,6 +178,7 @@ export async function POST(request: Request) {
       const result = await processBreakEnd(targetLeaveId, employee.id, employee.companyId);
       return NextResponse.json({
         ...result,
+        hasEndedBreakToday: true,
         message: result.fineApplied
           ? `Break ended. Overstayed by ${result.overstayMinutes}m. A fine of ৳${result.fineAmount} has been registered.`
           : "Break completed successfully within the allocated time.",

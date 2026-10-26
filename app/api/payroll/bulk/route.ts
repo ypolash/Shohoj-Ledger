@@ -338,6 +338,29 @@ export async function PATCH(request: Request) {
         }
       });
 
+      // Synchronize disciplinary fines: Mark pending fines as DEDUCTED upon salary payment
+      if (status === 'PAID' && existingPayment.employeeId) {
+        try {
+          const payMonth = existingPayment.month;
+          const payYear = existingPayment.year;
+          const endOfMonth = new Date(payYear, payMonth, 0, 23, 59, 59, 999);
+
+          await prisma.employeeFine.updateMany({
+            where: {
+              companyId: companyId!,
+              employeeId: existingPayment.employeeId,
+              status: 'PENDING',
+              date: { lte: endOfMonth }
+            },
+            data: {
+              status: 'DEDUCTED'
+            }
+          });
+        } catch (fineSyncErr) {
+          console.warn('Failed to update employeeFine status on bulk salary payment:', fineSyncErr);
+        }
+      }
+
       await prisma.payrollAudit.create({
         data: {
           companyId: companyId!,

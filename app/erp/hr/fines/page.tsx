@@ -553,11 +553,11 @@ export default function FinesPage() {
       summary.totalAmount += amt;
       summary.fines.push(f);
 
-      if (f.status === 'PENDING') {
+      if (f.status === 'PENDING' || f.status === 'CONSIDERATION_REQUESTED') {
         summary.pendingAmount += amt;
       } else if (f.status === 'DEDUCTED') {
         summary.deductedAmount += amt;
-      } else if (f.status === 'CANCELLED') {
+      } else if (f.status === 'CANCELLED' || f.status === 'WAIVED') {
         summary.cancelledAmount += amt;
       }
 

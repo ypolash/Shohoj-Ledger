@@ -9,12 +9,11 @@ export async function GET(req: Request) {
     const companyId = await getCompanyId();
     if (!companyId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Fetch existing disciplinary fines across ERP and LEGACY sources
-    const [existingFines, lateAttendances, punishmentRules] = await Promise.all([
+    // Fetch existing disciplinary fines across all sources (ERP, LEGACY, MOBILE, etc.)
+    const [rawFines, lateAttendances, punishmentRules] = await Promise.all([
       prisma.employeeFine.findMany({
         where: {
           companyId,
-          systemSource: { in: ["ERP", "LEGACY"] }
         },
         include: {
           employee: {
@@ -60,7 +59,7 @@ export async function GET(req: Request) {
           }
         },
         orderBy: { date: "desc" },
-        take: 200
+        take: 500
       }),
       // Fetch active late penalty tier rules
       prisma.punishmentSetting.findMany({
@@ -73,6 +72,31 @@ export async function GET(req: Request) {
       })
     ]);
 
+    // Self-healing: Deduplicate any phantom records accumulated from past GET requests
+    const seenIncidents = new Map<string, any>();
+    const duplicateIdsToDelete: string[] = [];
+    const existingFines: any[] = [];
+
+    for (const f of rawFines) {
+      const fDateStr = new Date(f.date).toISOString().slice(0, 10);
+      const normReason = (f.reason || '').trim().toLowerCase();
+      const dedupKey = `${f.employeeId}_${fDateStr}_${normReason}`;
+
+      if (seenIncidents.has(dedupKey)) {
+        duplicateIdsToDelete.push(f.id);
+      } else {
+        seenIncidents.set(dedupKey, f);
+        existingFines.push(f);
+      }
+    }
+
+    // Asynchronously prune phantom duplicates in the background if detected
+    if (duplicateIdsToDelete.length > 0) {
+      prisma.employeeFine.deleteMany({
+        where: { id: { in: duplicateIdsToDelete } }
+      }).catch(err => console.warn("Background duplicate cleanup warning:", err));
+    }
+
     const finesMap = new Map<string, any>();
     for (const f of existingFines) {
       if (isRegularStaff(f.employee)) {
@@ -80,7 +104,7 @@ export async function GET(req: Request) {
       }
     }
 
-    // Auto-sync attendance records into EmployeeFine so they display on HR Fines tab
+    // Auto-sync unrecorded attendance penalties into EmployeeFine with strict idempotency
     for (const att of lateAttendances) {
       if (!att.employeeId || !isRegularStaff(att.employee)) continue;
 
@@ -105,11 +129,19 @@ export async function GET(req: Request) {
 
       const attDateStr = new Date(att.date).toISOString().slice(0, 10);
 
-      // Check if fine already exists for this attendance day
+      // Check if fine already exists for this attendance day (matching employee and date)
       const alreadyHasFine = existingFines.find(f => {
         if (f.employeeId !== att.employeeId) return false;
         const fDateStr = new Date(f.date).toISOString().slice(0, 10);
-        return fDateStr === attDateStr && (f.reason || '').toLowerCase().includes('late');
+        if (fDateStr !== attDateStr) return false;
+
+        const fReason = (f.reason || '').toLowerCase();
+        const attReason = (att.punishmentReason || '').toLowerCase();
+        if (fReason === attReason) return true;
+        if (fReason.includes('late') && (att.isLate || attReason.includes('late'))) return true;
+        if (fReason.includes('absence') && (att.status === 'ABSENT' || attReason.includes('absence'))) return true;
+        if (fReason.includes('check-in') && attReason.includes('check-in')) return true;
+        return true; // Any attendance penalty for this employee on this date matches
       });
 
       if (!alreadyHasFine) {
@@ -143,6 +175,7 @@ export async function GET(req: Request) {
               }
             }
           });
+          existingFines.push(createdFine);
           finesMap.set(createdFine.id, createdFine);
         } catch (createErr) {
           console.warn("Auto-sync late fine error:", createErr);

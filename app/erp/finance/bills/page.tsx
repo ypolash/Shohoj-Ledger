@@ -803,7 +803,7 @@ export default function BillsDuePage() {
                         <span style={{ fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {bill.entityName}
                         </span>
-                        {bill.projectName && (
+                        {bill.projectName && bill.projectName.trim().toLowerCase() !== bill.entityName.trim().toLowerCase() && (
                           <span style={{ fontSize: '11px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>
                             · {bill.projectName}
                           </span>

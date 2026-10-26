@@ -604,8 +604,8 @@ export default function BillsDuePage() {
 
         {/* Search & Right Filters (Square Icon View) */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', width: '280px' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <div style={{ position: 'relative', width: '280px', height: '48px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text"
               placeholder="Search by Bill #, Client, Talent, Project..."
@@ -655,12 +655,10 @@ export default function BillsDuePage() {
                 className={`${styles.squareBtn} ${styles.square_category} ${categoryFilter !== 'ALL' ? styles.categoryFilterActive : ''}`}
               >
                 <span className={styles.squareIcon}>
-                  <Tag size={16} />
+                  <Tag size={18} />
                 </span>
                 <span className={styles.squareCount}>
-                  {categoryFilter !== 'ALL' 
-                    ? (categoryFilter.length > 5 ? categoryFilter.slice(0, 4) + '..' : categoryFilter) 
-                    : (categories.length > 0 ? categories.length : 'All')}
+                  {categoryFilter !== 'ALL' ? 'Cat' : 'All'}
                 </span>
 
                 <select 
@@ -691,7 +689,7 @@ export default function BillsDuePage() {
                 className={`${styles.squareBtn} ${styles.square_status} ${statusFilter !== 'ALL' ? styles.statusFilterActive : ''}`}
               >
                 <span className={styles.squareIcon}>
-                  <SlidersHorizontal size={16} />
+                  <SlidersHorizontal size={18} />
                 </span>
                 <span className={styles.squareCount}>
                   {statusFilter === 'ALL' ? 'All' : statusFilter === 'PENDING' ? 'Due' : statusFilter === 'PARTIAL' ? 'Part' : 'Unpaid'}
@@ -735,7 +733,7 @@ export default function BillsDuePage() {
                   aria-label="Reset all filters"
                 >
                   <span className={styles.squareIcon}>
-                    <RotateCcw size={15} />
+                    <RotateCcw size={18} />
                   </span>
                   <span className={styles.squareCount} style={{ color: '#f43f5e' }}>Clear</span>
                 </button>

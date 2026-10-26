@@ -1,17 +1,31 @@
 /* Square Box Icon View Tabs for Bills Due Ledger */
 .tabsContainer {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
   background: var(--surface-main, rgba(15, 23, 42, 0.6));
-  padding: 4px;
+  padding: 0;
   border-radius: 0;
-  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
+  height: 48px;
+  box-sizing: border-box;
 }
 
 .squareWrapper {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+  box-sizing: border-box;
+}
+
+/* Dividing line between each icon button */
+.squareWrapper:not(:last-child) {
+  border-right: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
 }
 
 .squareBtn {
@@ -20,36 +34,35 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  height: 100%;
   min-width: 48px;
+  max-width: 48px;
   padding: 4px 2px;
   border-radius: 0;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  gap: 2px;
+  transition: all 0.15s ease;
+  gap: 3px;
   outline: none;
+  box-sizing: border-box;
 }
 
 .squareBtn:hover {
-  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
-  border-color: var(--border-main, rgba(255, 255, 255, 0.15));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08));
 }
 
 .squareIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.15s ease, transform 0.15s ease;
   color: var(--text-muted, #94a3b8);
 }
 
 .squareBtn:hover .squareIcon {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 .squareCount {
@@ -58,7 +71,12 @@
   line-height: 1;
   letter-spacing: -0.2px;
   color: var(--text-muted, #94a3b8);
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+  max-width: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 
 /* Distinct hover colors */
@@ -77,11 +95,19 @@
 .square_receivable:hover .squareIcon {
   color: #ef4444;
 }
+.square_category:hover .squareIcon {
+  color: #c084fc;
+}
+.square_status:hover .squareIcon {
+  color: #34d399;
+}
+.square_reset:hover .squareIcon {
+  color: #f43f5e;
+}
 
-/* Active Selected States */
+/* Active Selected States (Seamless Inset Bottom Accent) */
 .squareBtnActive {
   background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
-  transform: translateY(-1px);
 }
 
 .squareBtnActive .squareCount {
@@ -90,43 +116,67 @@
 }
 
 .square_all.squareBtnActive {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 1px #3b82f6, 0 3px 12px rgba(59, 130, 246, 0.28) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #3b82f6 !important;
 }
 .square_all.squareBtnActive .squareIcon {
   color: #3b82f6 !important;
 }
 
 .square_payable.squareBtnActive {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 1px #2563eb, 0 3px 12px rgba(37, 99, 235, 0.28) !important;
+  background: rgba(37, 99, 235, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #2563eb !important;
 }
 .square_payable.squareBtnActive .squareIcon {
   color: #60a5fa !important;
 }
 
 .square_model.squareBtnActive {
-  border-color: #ec4899 !important;
-  box-shadow: 0 0 0 1px #ec4899, 0 3px 12px rgba(236, 72, 153, 0.28) !important;
+  background: rgba(236, 72, 153, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #ec4899 !important;
 }
 .square_model.squareBtnActive .squareIcon {
   color: #f472b6 !important;
 }
 
 .square_freelance.squareBtnActive {
-  border-color: #06b6d4 !important;
-  box-shadow: 0 0 0 1px #06b6d4, 0 3px 12px rgba(6, 182, 212, 0.28) !important;
+  background: rgba(6, 182, 212, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #06b6d4 !important;
 }
 .square_freelance.squareBtnActive .squareIcon {
   color: #38bdf8 !important;
 }
 
 .square_receivable.squareBtnActive {
-  border-color: #ef4444 !important;
-  box-shadow: 0 0 0 1px #ef4444, 0 3px 12px rgba(239, 68, 68, 0.28) !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #ef4444 !important;
 }
 .square_receivable.squareBtnActive .squareIcon {
   color: #ef4444 !important;
+}
+
+.categoryFilterActive {
+  background: rgba(168, 85, 247, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #a855f7 !important;
+}
+.categoryFilterActive .squareIcon {
+  color: #c084fc !important;
+}
+.categoryFilterActive .squareCount {
+  color: #e9d5ff !important;
+  font-weight: 800;
+}
+
+.statusFilterActive {
+  background: rgba(16, 185, 129, 0.15) !important;
+  box-shadow: inset 0 -3px 0 0 #10b981 !important;
+}
+.statusFilterActive .squareIcon {
+  color: #34d399 !important;
+}
+.statusFilterActive .squareCount {
+  color: #a7f3d0 !important;
+  font-weight: 800;
 }
 
 /* Floating Tooltip */
@@ -168,46 +218,6 @@
   transform: translateX(-50%) translateY(0);
 }
 
-/* Distinct hover colors for Category, Status & Reset */
-.square_category:hover .squareIcon {
-  color: #c084fc;
-}
-.square_status:hover .squareIcon {
-  color: #34d399;
-}
-.square_reset:hover .squareIcon {
-  color: #f43f5e;
-}
-
-/* Category & Status Active States */
-.categoryFilterActive {
-  background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
-  border-color: #a855f7 !important;
-  box-shadow: 0 0 0 1px #a855f7, 0 3px 12px rgba(168, 85, 247, 0.28) !important;
-  transform: translateY(-1px);
-}
-.categoryFilterActive .squareIcon {
-  color: #c084fc !important;
-}
-.categoryFilterActive .squareCount {
-  color: #e9d5ff !important;
-  font-weight: 800;
-}
-
-.statusFilterActive {
-  background: var(--surface-hover, rgba(255, 255, 255, 0.08)) !important;
-  border-color: #10b981 !important;
-  box-shadow: 0 0 0 1px #10b981, 0 3px 12px rgba(16, 185, 129, 0.28) !important;
-  transform: translateY(-1px);
-}
-.statusFilterActive .squareIcon {
-  color: #34d399 !important;
-}
-.statusFilterActive .squareCount {
-  color: #a7f3d0 !important;
-  font-weight: 800;
-}
-
 /* Hidden select overlay to enable native dropdown popup on click */
 .hiddenSelectOverlay {
   position: absolute;
@@ -222,17 +232,4 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-}
-
-.activeFilterNotice {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 0;
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  color: #60a5fa;
-  font-size: 11.5px;
-  font-weight: 600;
 }

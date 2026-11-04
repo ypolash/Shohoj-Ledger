@@ -5638,3 +5638,115 @@ model TaskRewardSetting {
   @@index([companyId])
 }
 
+
+
+model AcademyStudent {
+  id            String    @id @default(uuid())
+  studentId     String
+  name          String
+  email         String?
+  phone         String?
+  gender        String?
+  guardianName  String?
+  guardianPhone String?
+  className     String?
+  schoolOrCollege String?
+  status        String    @default("ACTIVE")
+  admissionDate DateTime?
+  companyId     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([studentId])
+}
+
+model AcademyTeacher {
+  id          String    @id @default(uuid())
+  teacherId   String
+  name        String
+  email       String?
+  phone       String?
+  designation String?
+  department  String?
+  salary           Decimal?  @default(0)
+  compensationType String?   @default("SALARY")
+  projectRate      Decimal?  @default(0)
+  status      String    @default("ACTIVE")
+  joiningDate DateTime?
+  companyId   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([teacherId])
+}
+
+model AcademySubject {
+  id          String   @id @default(uuid())
+  code        String
+  name        String
+  department  String?
+  creditHours Int?     @default(3)
+  description String?
+  status      String   @default("ACTIVE")
+  companyId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([code])
+}
+
+model AcademyClass {
+  id          String   @id @default(uuid())
+  name        String
+  section     String?
+  subjectCode String?
+  subjectName String?
+  teacherId   String?
+  teacherName String?
+  schedule    String?
+  room        String?
+  capacity    Int?     @default(40)
+  companyId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model AcademyFee {
+  id          String    @id @default(uuid())
+  studentId   String
+  studentName String
+  feeType     String    // Tuition, Admission, Exam, Laboratory, Library
+  amount      Decimal   @default(0)
+  paidAmount  Decimal   @default(0)
+  dueAmount   Decimal   @default(0)
+  status      String    @default("PENDING") // PENDING, PAID, PARTIAL, OVERDUE
+  dueDate     DateTime?
+  paymentDate DateTime?
+  companyId   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([studentId])
+  @@index([status])
+}
+
+model AcademyDepartment {
+  id               String   @id @default(uuid())
+  name             String
+  code             String?
+  description      String?
+  headOfDepartment String?
+  companyId        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([name])
+}
+

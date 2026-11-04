@@ -6594,6 +6594,16 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Project Category</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Education & Training"
+                      value={editForm.category}
+                      onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value }))}
+                      className={styles.inputField}
+                    />
+                  </div>
+                  <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Estimated Budget (BDT)</label>
                     <input
                       type="number"
@@ -6602,7 +6612,9 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                       className={styles.inputField}
                     />
                   </div>
+                </div>
 
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Project Status</label>
                     <select
@@ -6626,25 +6638,25 @@ export default function ProjectWorkspacePage({ params }: { params?: Promise<{ id
                       <option value="Cancelled">Cancelled</option>
                     </select>
                   </div>
-                </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Progress (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={editForm.progress ?? 0}
-                    onChange={(e) => {
-                      const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-                      setEditForm(f => ({
-                        ...f,
-                        progress: String(val),
-                        status: val === 100 ? 'Completed' : (f.status === 'Completed' ? 'In Progress' : f.status)
-                      }));
-                    }}
-                    className={styles.inputField}
-                  />
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>Progress (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.progress ?? 0}
+                      onChange={(e) => {
+                        const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                        setEditForm(f => ({
+                          ...f,
+                          progress: String(val),
+                          status: val === 100 ? 'Completed' : (f.status === 'Completed' ? 'In Progress' : f.status)
+                        }));
+                      }}
+                      className={styles.inputField}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

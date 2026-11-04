@@ -82,6 +82,7 @@ export default function ProjectDashboardPage() {
   const [form, setForm] = useState({
     name: '',
     projectCode: '',
+    category: '',
     clientName: '',
     clientPhone: '',
     priority: 'Medium',
@@ -196,6 +197,7 @@ export default function ProjectDashboardPage() {
       const payload = {
         name: form.name.trim(),
         projectCode: form.projectCode.trim(),
+        category: form.category ? form.category.trim() : undefined,
         clientName: form.clientName.trim() || undefined,
         clientPhone: form.clientPhone.trim() || undefined,
         priority: form.priority,
@@ -227,6 +229,7 @@ export default function ProjectDashboardPage() {
       setForm({
         name: '',
         projectCode: '',
+        category: '',
         clientName: '',
         clientPhone: '',
         priority: 'Medium',
@@ -703,6 +706,39 @@ export default function ProjectDashboardPage() {
                       onChange={(e) => handleFormChange('clientPhone', e.target.value)}
                       className={styles.fieldInput}
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.formRow2}>
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>Project Category</label>
+                  <div className={styles.inputWrapper}>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>category</span>
+                    <input
+                      type="text"
+                      placeholder="e.g. Education & Training"
+                      value={form.category}
+                      onChange={(e) => handleFormChange('category', e.target.value)}
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.fieldLabel}>Priority Level</label>
+                  <div className={styles.selectWrapper}>
+                    <span className={`material-symbols-outlined ${styles.inputIcon}`}>flag</span>
+                    <select
+                      value={form.priority}
+                      onChange={(e) => handleFormChange('priority', e.target.value)}
+                      className={styles.fieldSelect}
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                    <span className={`material-symbols-outlined ${styles.selectChevron}`}>expand_more</span>
                   </div>
                 </div>
               </div>

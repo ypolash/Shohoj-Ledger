@@ -22,7 +22,8 @@ import {
   User,
   LogOut,
   ChevronsUpDown,
-  Moon
+  Moon,
+  GraduationCap
 } from 'lucide-react';
 import { OfficeOffModal } from '@/components/hr/OfficeOffModal';
 
@@ -88,6 +89,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/erp' },
     { name: 'Projects', icon: Folder, href: '/erp/projects' },
+    { name: 'Student & Teacher', icon: GraduationCap, href: '/erp/education' },
     { name: 'Community', icon: MessageSquare, href: '/erp/community' },
     { name: 'CRM', icon: Users, href: '/erp/crm' },
     { name: 'Orders', icon: ShoppingCart, href: '/erp/orders' },

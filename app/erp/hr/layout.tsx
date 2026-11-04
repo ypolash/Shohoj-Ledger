@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -40,6 +41,18 @@ const row2Nav: NavItem[] = [
  */
 export default function HRLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
+  const [isEducationPreset, setIsEducationPreset] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings/project-presets')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.defaultPreset === 'education_academic') {
+          setIsEducationPreset(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isItemActive = (item: NavItem) => {
     if (item.exact) {
@@ -86,6 +99,13 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
       </Link>
     );
   };
+
+  const activeRow1Nav = row1Nav.filter(item => {
+    if (isEducationPreset && item.name === 'Models') {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -137,7 +157,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
             flexWrap: 'wrap',
             flex: 1,
           }}>
-            {row1Nav.map(renderNavLink)}
+            {activeRow1Nav.map(renderNavLink)}
           </nav>
         </div>
 

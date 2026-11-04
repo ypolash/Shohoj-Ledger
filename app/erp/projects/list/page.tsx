@@ -183,6 +183,7 @@ export default function ProjectListPage() {
           endDate: form.endDate ? form.endDate : undefined,
           expectedShootingDate: form.expectedProductionDate ? form.expectedProductionDate : undefined,
           expectedEditingDate: form.expectedDeliveryDate ? form.expectedDeliveryDate : undefined,
+          category: activePresetDef.category,
           estimatedBudget: form.estimatedBudget ? Number(form.estimatedBudget) : undefined,
           description: finalDescription || undefined
         })
@@ -475,7 +476,7 @@ export default function ProjectListPage() {
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '12px', fontWeight: 700, color: isSelected ? '#ffffff' : '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {preset.name.replace(" & Media Agency", "").replace(" & Software Development", "").replace(" & Ad Agency", "").replace(" & Real Estate", "")}
+                            {preset.name.replace(" & Media Agency", "").replace(" & Software Development", "").replace(" & Ad Agency", "").replace(" & Real Estate", "").replace(" & Academic Academy", " & Academy")}
                           </div>
                         </div>
                       </div>

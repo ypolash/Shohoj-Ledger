@@ -37,6 +37,9 @@ export async function provisionIndustryTemplate(
   } else if (normalized.includes("consult") || normalized.includes("professional")) {
     departments = ["Advisory & Strategy", "Client Relations", "Research & Analytics", "Finance & Compliance", "Operations"];
     jobTitles = ["Principal Consultant", "Senior Associate", "Business Analyst", "Compliance Officer", "Client Engagement Lead"];
+  } else if (normalized.includes("educat") || normalized.includes("academic") || normalized.includes("school") || normalized.includes("training") || normalized.includes("college") || normalized.includes("university")) {
+    departments = ["Academic Affairs", "Faculty & Instructors", "Student Admissions", "Examinations & Grading", "Finance & Accounts", "Administration"];
+    jobTitles = ["Academic Dean / Director", "Course Coordinator", "Senior Lecturer / Instructor", "Teaching Assistant", "Admissions Officer", "Registrar"];
   }
 
   return { departments, jobTitles };

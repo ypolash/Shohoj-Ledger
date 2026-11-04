@@ -70,18 +70,20 @@ export default function HRDashboardPage() {
   const [onboardingMode, setOnboardingMode] = useState<'BASIC' | 'PROFESSIONAL'>('PROFESSIONAL');
   const [showSalaryModal, setShowSalaryModal] = useState(false);
   const [salarySearch, setSalarySearch] = useState('');
+  const [isEducationPreset, setIsEducationPreset] = useState(false);
 
   const loadAll = useCallback(async (isManual = false) => {
     if (isManual) setIsSyncing(true);
     else setIsLoading(true);
 
     try {
-      const [empRes, deptRes, leaveRes, attRes, onboardingRes] = await Promise.all([
+      const [empRes, deptRes, leaveRes, attRes, onboardingRes, presetRes] = await Promise.all([
         fetch('/api/employees').catch(() => null),
         fetch('/api/departments').catch(() => null),
         fetch('/api/leaves').catch(() => null),
         fetch('/api/attendance').catch(() => null),
         fetch('/api/settings/onboarding').catch(() => null),
+        fetch('/api/settings/project-presets').catch(() => null),
       ]);
 
       if (empRes && empRes.ok) {
@@ -99,6 +101,12 @@ export default function HRDashboardPage() {
       if (attRes && attRes.ok) {
         const attData = await attRes.json();
         setAttendances(Array.isArray(attData) ? attData : []);
+      }
+      if (presetRes && presetRes.ok) {
+        try {
+          const pData = await presetRes.json();
+          if (pData.success && pData.defaultPreset === 'education_academic') setIsEducationPreset(true);
+        } catch {}
       }
       if (onboardingRes && onboardingRes.ok) {
         const onboardingData = await onboardingRes.json();

@@ -7,7 +7,8 @@ export type ProjectPresetId =
   | "construction_realestate"
   | "manufacturing_engineering"
   | "consulting_professional"
-  | "event_management";
+  | "event_management"
+  | "education_academic";
 
 export type DynamicFieldType = 
   | "text"
@@ -924,6 +925,129 @@ export const PROJECT_PRESETS: Record<ProjectPresetId, ProjectPreset> = {
       { id: "runOfShowSheetUrl", label: "Run of Show (Minute-by-Minute Cue Sheet) URL", type: "url", stage: 4, section: "Show Schedule", placeholder: "https://docs.google.com/spreadsheets/..." },
       { id: "eventMediaArchiveUrl", label: "Official Photo & Video Archive Link", type: "url", stage: 7, section: "Media Delivery", placeholder: "https://photos.app.goo.gl/..." }
     ]
+  },
+
+  // 8. EDUCATION & ACADEMIC ACADEMY
+  education_academic: {
+    id: "education_academic",
+    name: "Education & Academic Academy",
+    tagline: "Curriculum, Courses, Cohorts & Student Certifications",
+    category: "Education & Training",
+    icon: "school",
+    color: "#06b6d4",
+    accentColor: "#22d3ee",
+    bg: "rgba(6, 182, 212, 0.12)",
+    badgeBg: "rgba(6, 182, 212, 0.2)",
+    description: "Tailored for schools, training institutes, universities, academies, and course creators. Manages course syllabi, curriculum authoring, faculty & mentor allocation, cohort enrollment, classroom/online delivery, exams & grading, and graduation certifications.",
+    stages: {
+      1: {
+        stage: 1,
+        name: "Curriculum Design & Course Syllabus",
+        shortName: "Syllabus",
+        badge: "CURRICULUM DRAFT",
+        description: "Course outline, learning outcomes, credit hours, prerequisites, and syllabus approval.",
+        icon: "menu_book",
+        color: "#94a3b8",
+        bg: "rgba(148, 163, 184, 0.15)"
+      },
+      2: {
+        stage: 2,
+        name: "Tuition Advance & Budget Approval",
+        shortName: "Budget",
+        badge: "BUDGET APPROVED",
+        description: "Student tuition deposit, institution grant lock, faculty budget allocation, and schedule lock.",
+        icon: "payments",
+        color: "#38bdf8",
+        bg: "rgba(56, 189, 248, 0.15)"
+      },
+      3: {
+        stage: 3,
+        name: "Instructors, Faculty & Classroom Setup",
+        shortName: "Faculty",
+        badge: "FACULTY ASSIGNED",
+        description: "Lead lecturer assignment, TA/mentor contracts, LMS setup, lab schedules, and guest speakers.",
+        icon: "co_present",
+        color: "#fbbf24",
+        bg: "rgba(251, 191, 36, 0.15)"
+      },
+      4: {
+        stage: 4,
+        name: "Student Admissions & Cohort Enrollment",
+        shortName: "Enrollment",
+        badge: "COHORT ONBOARDED",
+        description: "Student registration, batch orientation, student portal invites, and study material distribution.",
+        icon: "groups",
+        color: "#22d3ee",
+        bg: "rgba(34, 211, 238, 0.15)"
+      },
+      5: {
+        stage: 5,
+        name: "Lectures, Workshops & Course Delivery",
+        shortName: "Delivery",
+        badge: "INSTRUCTION ACTIVE",
+        description: "Classroom lectures, lab sessions, weekly assignments, student attendance, and mid-term evaluations.",
+        icon: "cast_for_education",
+        color: "#c084fc",
+        bg: "rgba(192, 132, 252, 0.15)"
+      },
+      6: {
+        stage: 6,
+        name: "Examinations, Grading & Assessment",
+        shortName: "Grading",
+        badge: "ASSESSMENTS REVIEW",
+        description: "Final examinations, term papers, capstone projects grading, grade curve approval, and moderation.",
+        icon: "fact_check",
+        color: "#f59e0b",
+        bg: "rgba(245, 158, 11, 0.15)"
+      },
+      7: {
+        stage: 7,
+        name: "Certifications, Graduation & Wrap-Up",
+        shortName: "Graduation",
+        badge: "CERTIFIED & WRAPPED",
+        description: "Certificate generation, transcripts issuance, instructor balance payments, feedback surveys, and archive.",
+        icon: "workspace_premium",
+        color: "#34d399",
+        bg: "rgba(52, 211, 153, 0.15)"
+      }
+    },
+    deliverableSchema: {
+      itemTypeName: "Course Module / Learning Deliverable",
+      itemTypePlural: "Course Modules & Syllabus Items",
+      defaultAspectOrTypeOptions: [
+        "Theoretical Lecture / Class",
+        "Practical Lab / Hands-on Workshop",
+        "Student Assignment / Homework",
+        "Mid-Term / Final Examination",
+        "Capstone Project / Thesis",
+        "Guest Masterclass / Webinar",
+        "Tutorial / Doubt Clearing Session"
+      ],
+      aspectOrTypeLabel: "Module / Activity Type",
+      primaryRoleTitle: "Lead Professor / Instructor",
+      secondaryRoleTitle: "Teaching Assistant / Lab Mentor",
+      workingFileLabel: "Lesson Plan / Lecture Slides URL",
+      demoFileLabel: "Class Recording / Draft Material URL",
+      finalDeliveryLabel: "Published Courseware / Portal Link"
+    },
+    defaultChecklists: {
+      1: ["Course learning objectives and prerequisites drafted", "Weekly module syllabus approved by academic committee", "Recommended textbooks and reading materials list finalized"],
+      2: ["Course delivery budget and pricing / tuition fee confirmed", "Institutional grant or student fee collection active", "Academic calendar and term schedule published"],
+      3: ["Lead instructor and teaching assistants appointed", "LMS (Learning Management System) course shell provisioned", "Classroom or virtual meeting rooms reserved"],
+      4: ["Student enrollment verified and ID cards / portal accounts issued", "Welcome email and student handbook sent", "Batch orientation session completed"],
+      5: ["Syllabus completion tracked weekly according to timeline", "Student attendance logged consistently", "Mid-term progress reports shared with students"],
+      6: ["Final exams or capstone projects submitted and plagiarism checked", "Grading rubric applied and grades entered", "Academic committee approval for final marks obtained"],
+      7: ["Digital certificates and transcripts generated and issued", "Instructor and TA honorariums / stipends reconciled", "Student course evaluation survey analyzed", "Course archives backed up"]
+    },
+    defaultFields: [
+      { id: "courseCode", label: "Course / Program Code", type: "text", stage: 1, section: "Academic Identity", placeholder: "e.g. CS-401 or DATA-2026" },
+      { id: "targetCohort", label: "Batch / Cohort Identifier", type: "text", stage: 1, section: "Academic Identity", placeholder: "e.g. Fall 2026 - Batch 04" },
+      { id: "totalCreditHours", label: "Total Credit Hours / Session Count", type: "number", stage: 1, section: "Course Scope", placeholder: "e.g. 45" },
+      { id: "enrollmentCapacity", label: "Maximum Student Capacity", type: "number", stage: 4, section: "Admissions", placeholder: "e.g. 60" },
+      { id: "lmsPortalUrl", label: "LMS / Virtual Classroom Link", type: "url", stage: 4, section: "Delivery Platform", placeholder: "https://classroom.google.com/..." },
+      { id: "passingGradePercent", label: "Minimum Passing Grade (%)", type: "number", stage: 6, section: "Grading Criteria", placeholder: "e.g. 60" },
+      { id: "credentialVerificationUrl", label: "Certificate Verification Registry Link", type: "url", stage: 7, section: "Credentials", placeholder: "https://academy.edu/verify/..." }
+    ]
   }
 };
 
@@ -955,6 +1079,9 @@ export function mapIndustryToProjectPreset(industryId?: string): ProjectPresetId
   }
   if (id.includes("manufactur") || id.includes("factory") || id.includes("wholesale") || id.includes("product")) {
     return "manufacturing_engineering";
+  }
+  if (id.includes("educat") || id.includes("academic") || id.includes("school") || id.includes("training") || id.includes("college") || id.includes("university")) {
+    return "education_academic";
   }
   if (id.includes("consult") || id.includes("legal") || id.includes("health") || id.includes("professional") || id.includes("finance")) {
     return "consulting_professional";

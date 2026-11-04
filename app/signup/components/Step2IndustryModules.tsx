@@ -20,7 +20,8 @@ import {
   Handshake,
   Video,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  GraduationCap
 } from "lucide-react";
 import { 
   PROJECT_PRESETS, 
@@ -56,7 +57,8 @@ const INDUSTRY_TEMPLATES = [
   { id: "manufacturing", name: "Manufacturing & Plant", desc: "BOM, Assembly & Batch Control", icon: <Factory size={20} /> },
   { id: "wholesale", name: "Wholesale & Logistics", desc: "Warehouses, Fleet & Distributions", icon: <Truck size={20} /> },
   { id: "healthcare", name: "Healthcare & Pharma", desc: "Clinical Ledgers & Inventory Safety", icon: <HeartPulse size={20} /> },
-  { id: "consulting", name: "Consulting & Professional", desc: "Retainers, Billable Hours & Audits", icon: <Building2 size={20} /> }
+  { id: "consulting", name: "Consulting & Professional", desc: "Retainers, Billable Hours & Audits", icon: <Building2 size={20} /> },
+  { id: "education", name: "Education & Academy", desc: "Curriculum, Cohorts & Certifications", icon: <GraduationCap size={20} /> }
 ];
 
 export function Step2IndustryModules({ formData, errors, updateForm, onBack, onNext }: Step2Props) {

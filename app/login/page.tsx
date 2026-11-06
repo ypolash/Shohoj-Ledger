@@ -29,6 +29,10 @@ export default function LoginPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.success) {
+        if (data?.requiresVerification) {
+          router.push(`/verify-email?email=${encodeURIComponent(data.email || email.trim())}`);
+          return;
+        }
         setError(data?.message || "Invalid credentials. Please try again.");
         setIsLoading(false);
         return;

@@ -40,25 +40,30 @@ export class EmailService {
           throw new Error("Nodemailer module is not installed in dependencies.");
         }
         const nodemailer = nodemailerModule.default || nodemailerModule;
+        const cleanPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT) || 587,
+          port: Number(process.env.SMTP_PORT) || 465,
           secure: process.env.SMTP_SECURE === "true" || process.env.SMTP_PORT === "465",
           auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user: process.env.SMTP_USER?.trim(),
+            pass: cleanPass,
           },
-          connectionTimeout: 4000,
-          greetingTimeout: 3000,
-          socketTimeout: 5000,
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         });
 
         const info = await transporter.sendMail({
           from: fromAddress,
+          replyTo: process.env.SMTP_USER,
           to: options.to,
           subject: options.subject,
           html: options.html,
           text: options.text || options.html.replace(/<[^>]*>?/gm, ""),
+          headers: {
+            "X-Entity-Ref-ID": `${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          },
         });
 
         console.log(`[EMAIL DISPATCHED] To: ${options.to} | Subject: "${options.subject}" | MessageId: ${info.messageId}`);
@@ -93,9 +98,27 @@ export class EmailService {
     code: string;
     verificationUrl: string;
   }) {
-    const subject = `Verify your email address - Shohoj Ledger`;
+    const subject = `${code} is your Shohoj Ledger verification code`;
     const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const isProductionUrl = appUrl.startsWith("https://") && !appUrl.includes("localhost") && !appUrl.includes("127.0.0.1");
     const fullUrl = verificationUrl.startsWith("http") ? verificationUrl : `${appUrl}${verificationUrl}`;
+
+    const buttonHtml = isProductionUrl
+      ? `
+        <p style="text-align: center;">Or click the button below to verify automatically:</p>
+        <div class="btn-wrapper">
+          <a href="${fullUrl}" class="button">Verify Email Address</a>
+        </div>
+      `
+      : `
+        <p style="text-align: center; color: #94a3b8; font-size: 13px; margin: 20px 0;">
+          Please copy and paste this 6-digit code on the verification screen in your browser.
+        </p>
+      `;
+
+    const plainText = isProductionUrl
+      ? `Welcome ${userName || "User"}!\n\nYour 6-digit verification code is: ${code}\n\nValid for 24 hours.\n\nOr verify directly at: ${fullUrl}`
+      : `Welcome ${userName || "User"}!\n\nYour 6-digit verification code is: ${code}\n\nValid for 24 hours. Please enter this code in your verification screen.`;
 
     const html = `
       <!DOCTYPE html>
@@ -132,10 +155,7 @@ export class EmailService {
               <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Valid for 24 hours</div>
             </div>
 
-            <p style="text-align: center;">Or click the button below to verify automatically:</p>
-            <div class="btn-wrapper">
-              <a href="${fullUrl}" class="button">Verify Email Address</a>
-            </div>
+            ${buttonHtml}
 
             <p style="font-size: 13px; color: #94a3b8;">If you did not create an account with Shohoj Ledger, you can safely ignore this email.</p>
           </div>
@@ -151,7 +171,7 @@ export class EmailService {
       to,
       subject,
       html,
-      text: `Welcome ${userName}! Your verification code is: ${code}. Or verify at: ${fullUrl}`,
+      text: plainText,
     });
   }
 

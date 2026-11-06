@@ -47,6 +47,27 @@ export async function POST(req: Request) {
 
         if (isMatch) {
           console.log("✓ Authentication: Password verified (User)");
+
+          // Email Verification Gate: Require verified email
+          if (!user.emailVerified && user.platformRole !== "SUPER_ADMIN") {
+            console.log("✗ Email verification required for:", user.email);
+
+            // Dispatch a fresh 6-digit OTP code to their email
+            try {
+              const { sendVerificationEmail } = await import("@/lib/auth/emailVerification");
+              await sendVerificationEmail(user.email, user.id, user.name);
+            } catch (vErr) {
+              console.warn("Failed to dispatch verification email on login:", vErr);
+            }
+
+            return NextResponse.json({
+              success: false,
+              requiresVerification: true,
+              email: user.email,
+              message: "Your email address is not verified yet. A 6-digit verification code has been dispatched to your email. Please verify to sign in.",
+            }, { status: 403 });
+          }
+
           // Password matches, login as ADMIN
           const context = await getCompanyContext(user.id, "ADMIN");
           console.log("✓ Company Context resolved:", context.companyId ? "Yes" : "No");

@@ -39,7 +39,7 @@ function VerifyEmailContent() {
   const [error, setError] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
 
-  // Initialize from codeParam if present
+  // Auto-verify if codeParam or tokenParam is present in URL
   useEffect(() => {
     if (codeParam) {
       const clean = codeParam.replace(/\D/g, "").slice(0, 6);
@@ -50,8 +50,11 @@ function VerifyEmailContent() {
           executeVerification(clean, emailParam);
         }
       }
+    } else if (tokenParam) {
+      // Auto-verify direct verification token from email button link
+      executeVerification("", emailParam);
     }
-  }, [codeParam, emailParam]);
+  }, [codeParam, tokenParam, emailParam]);
 
   // Resend cooldown timer
   useEffect(() => {
@@ -78,7 +81,7 @@ function VerifyEmailContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: otpCode.trim(),
+          code: otpCode.trim() || undefined,
           token: tokenParam || undefined,
           email: (targetEmail || email).trim() || undefined,
         }),

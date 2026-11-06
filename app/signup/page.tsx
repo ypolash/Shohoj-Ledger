@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { Canvas3DBackground } from "./components/Canvas3DBackground";
@@ -53,18 +54,36 @@ const STEP_META = [
 ];
 
 export default function SignupPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [isSuccess, setIsSuccess] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [successData, setSuccessData] = useState<{ 
     companyName: string; 
     ownerEmail: string;
     verificationCode?: string;
     verificationUrl?: string;
   } | null>(null);
+
+  // Auto-redirect to verification page after signup
+  useEffect(() => {
+    if (!isSuccess || !successData?.verificationUrl) return;
+
+    if (redirectCountdown <= 0) {
+      router.push(successData.verificationUrl);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRedirectCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isSuccess, redirectCountdown, successData, router]);
 
   // Unified Form State
   const [formData, setFormData] = useState({
@@ -204,12 +223,14 @@ export default function SignupPage() {
         throw new Error(data.message || data.error || "A validation error occurred. Please check your details.");
       }
 
+      const targetVerifyUrl = `/verify-email?email=${encodeURIComponent(data.data?.ownerEmail || formData.ownerEmail)}`;
       setSuccessData({
         companyName: data.data?.companyName || formData.companyName,
         ownerEmail: data.data?.ownerEmail || formData.ownerEmail,
         verificationCode: data.data?.verificationCode,
-        verificationUrl: data.data?.verificationUrl,
+        verificationUrl: targetVerifyUrl,
       });
+      setRedirectCountdown(3);
       setIsSuccess(true);
     } catch (err: any) {
       setApiError(err.message);
@@ -429,7 +450,7 @@ export default function SignupPage() {
                     boxShadow: "0 10px 25px rgba(0, 242, 254, 0.4)"
                   }}
                 >
-                  <span>Verify Email Address Now</span>
+                  <span>Verify Email Address Now ({redirectCountdown}s)</span>
                   <ArrowRight size={16} />
                 </Link>
               )}

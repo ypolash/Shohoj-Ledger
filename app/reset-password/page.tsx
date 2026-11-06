@@ -246,7 +246,7 @@ function ResetPasswordContent() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         className={styles.passwordInput}
-                        placeholder="Min 6 characters..."
+                        placeholder="Enter New password"
                         required
                       />
                       <button

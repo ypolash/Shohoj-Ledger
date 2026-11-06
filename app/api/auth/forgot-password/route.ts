@@ -27,10 +27,6 @@ export async function POST(req: Request) {
       message: result.message,
       email: result.email,
       userName: result.userName,
-      // Provide token and code for direct client-side convenience and preview
-      token: result.token,
-      code: result.code,
-      resetUrl: `/reset-password?token=${result.token}&email=${encodeURIComponent(result.email || "")}`,
     });
   } catch (error) {
     console.error("Forgot Password Error:", error);

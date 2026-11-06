@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -38,13 +38,20 @@ export default function ForgotPasswordPage() {
   // Telemetry & Preview
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   
   // UI Status
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   // Calculate simple password strength
   const getPasswordStrength = (pass: string) => {
@@ -60,8 +67,8 @@ export default function ForgotPasswordPage() {
   const strength = getPasswordStrength(newPassword);
 
   // 1. Handle Requesting Reset Code
-  const handleRequestCode = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRequestCode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setError("");
     setSuccessMsg("");
     setIsLoading(true);
@@ -84,9 +91,9 @@ export default function ForgotPasswordPage() {
         setUserEmail(data.email || identifier);
         setUserName(data.userName || "User");
         setToken(data.token || "");
-        setGeneratedCode(data.code || "");
-        setCode(data.code || ""); // Pre-fill convenience code for immediate verification
-        setSuccessMsg(data.message || "Reset code generated successfully.");
+        setCode(""); // Clear input so user enters the code from their email
+        setSuccessMsg(data.message || "A 6-digit recovery code has been sent to your email.");
+        setResendCooldown(60);
         setStep("SET_NEW_PASSWORD");
       }
     } catch (err) {
@@ -94,6 +101,11 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0 || isLoading) return;
+    await handleRequestCode();
   };
 
   // 2. Handle Reset Password Submission
@@ -284,29 +296,82 @@ export default function ForgotPasswordPage() {
                   Enter the 6-digit recovery code and create a new secure password for <strong style={{ color: '#38bdf8' }}>{userEmail || identifier}</strong>.
                 </p>
 
-                {generatedCode && (
-                  <div className={styles.infoPill}>
-                    <span>Recovery Code: <strong style={{ letterSpacing: '2px', color: '#38bdf8' }}>{generatedCode}</strong></span>
-                    <button type="button" onClick={copyCodeToClipboard} className={styles.copyCodeBtn}>
-                      {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy Code"}
-                    </button>
+                <div style={{
+                  background: "rgba(56, 189, 248, 0.08)",
+                  border: "1px solid rgba(56, 189, 248, 0.2)",
+                  borderRadius: "14px",
+                  padding: "14px 16px",
+                  marginBottom: "1.25rem",
+                  fontSize: "0.88rem",
+                  color: "#cbd5e1",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <ShieldCheck size={18} color="#38bdf8" />
+                    <span>Check your email inbox for the 6-digit recovery code.</span>
                   </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={resendCooldown > 0 || isLoading}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: resendCooldown > 0 ? "#64748b" : "#38bdf8",
+                      fontWeight: 700,
+                      fontSize: "0.85rem",
+                      cursor: resendCooldown > 0 ? "default" : "pointer",
+                      textDecoration: resendCooldown > 0 ? "none" : "underline",
+                      padding: 0,
+                    }}
+                  >
+                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : "Resend code"}
+                  </button>
+                </div>
 
                 <form onSubmit={handleResetPassword} className={styles.form}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="code" className={styles.label}>
-                      6-Digit Recovery Code
-                    </label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <label htmlFor="code" className={styles.label} style={{ margin: 0 }}>
+                        6-Digit Recovery Code
+                      </label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const text = await navigator.clipboard.readText();
+                            const clean = text.replace(/\D/g, "").slice(0, 6);
+                            if (clean) setCode(clean);
+                          } catch {}
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#38bdf8",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        Paste Code
+                      </button>
+                    </div>
                     <input
                       id="code"
                       type="text"
+                      inputMode="numeric"
                       maxLength={6}
                       value={code}
-                      onChange={(e) => setCode(e.target.value)}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       className={`${styles.input} ${styles.codeInput}`}
                       placeholder="••••••"
                       required
+                      autoFocus
                     />
                   </div>
 

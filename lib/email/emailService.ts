@@ -189,9 +189,27 @@ export class EmailService {
     code: string;
     resetUrl: string;
   }) {
-    const subject = `Password Reset Request - Shohoj Ledger`;
+    const subject = `${code} is your Shohoj Ledger password reset code`;
     const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const isProductionUrl = appUrl.startsWith("https://") && !appUrl.includes("localhost") && !appUrl.includes("127.0.0.1");
     const fullUrl = resetUrl.startsWith("http") ? resetUrl : `${appUrl}${resetUrl}`;
+
+    const buttonHtml = isProductionUrl
+      ? `
+        <p style="text-align: center;">You can also click the secure button below to set a new password directly:</p>
+        <div class="btn-wrapper">
+          <a href="${fullUrl}" class="button">Reset Password Now</a>
+        </div>
+      `
+      : `
+        <p style="text-align: center; color: #94a3b8; font-size: 13px; margin: 20px 0;">
+          Please enter this 6-digit recovery code on the password reset screen in your browser.
+        </p>
+      `;
+
+    const plainText = isProductionUrl
+      ? `Hello ${userName || "User"}!\n\nYour 6-digit recovery code is: ${code}\n\nExpires in 30 minutes.\n\nOr reset directly at: ${fullUrl}`
+      : `Hello ${userName || "User"}!\n\nYour 6-digit recovery code is: ${code}\n\nExpires in 30 minutes. Please enter this code in your password reset screen.`;
 
     const html = `
       <!DOCTYPE html>
@@ -228,10 +246,7 @@ export class EmailService {
               <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">Expires in 30 minutes</div>
             </div>
 
-            <p style="text-align: center;">You can also click the secure button below to set a new password directly:</p>
-            <div class="btn-wrapper">
-              <a href="${fullUrl}" class="button">Reset Password Now</a>
-            </div>
+            ${buttonHtml}
 
             <p style="font-size: 13px; color: #f87171;">⚠️ If you did not request a password reset, please ignore this email or contact your workspace administrator immediately.</p>
           </div>
@@ -247,7 +262,7 @@ export class EmailService {
       to,
       subject,
       html,
-      text: `Hello ${userName}! Your password recovery code is: ${code}. Or reset at: ${fullUrl}`,
+      text: plainText,
     });
   }
 

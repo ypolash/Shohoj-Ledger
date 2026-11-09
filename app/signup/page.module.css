@@ -2,7 +2,9 @@
 
 .viewport {
   width: 100vw;
+  height: 100vh;
   min-height: 100vh;
+  max-height: 100vh;
   position: relative;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   user-select: none;
@@ -11,14 +13,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 2.5rem 2rem 3.5rem;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
   box-sizing: border-box;
   overflow-x: hidden;
-  perspective: 1200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Ambient Neon Glow Orbs */
+/* Ambient Neon Glow Orbs (Hardware-accelerated radial gradients, no expensive filter: blur) */
 .glowTopLeft {
   position: fixed;
   top: -120px;
@@ -26,11 +29,11 @@
   width: 540px;
   height: 540px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, transparent 70%);
-  filter: blur(100px);
+  background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, rgba(0, 242, 254, 0.04) 40%, transparent 70%);
   pointer-events: none;
   z-index: 1;
-  transition: all 0.8s ease;
+  transform: translateZ(0);
+  contain: strict;
 }
 
 .glowBottomRight {
@@ -40,11 +43,11 @@
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
-  filter: blur(120px);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
   pointer-events: none;
   z-index: 1;
-  transition: all 0.8s ease;
+  transform: translateZ(0);
+  contain: strict;
 }
 
 /* Top Navigation Bar */
@@ -143,249 +146,265 @@
   font-weight: 700;
 }
 
-/* 2-Column Split Onboarding Grid */
-.onboardingGrid {
+/* Main Centered Onboarding Container */
+.onboardingContainer {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1240px;
-  display: flex;
-  align-items: flex-start;
-  gap: 2rem;
-}
-
-/* Left Column: Mission Control & Stepper Sidebar */
-.leftSidebar {
-  flex: 0.85;
-  max-width: 440px;
-  width: 100%;
+  max-width: 860px;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  position: sticky;
-  top: 1.5rem;
+  gap: 0.65rem;
+  margin: auto 0;
 }
 
-/* Stage Info Showcase Card */
-.stageHeaderCard {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 1.75rem;
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+/* Horizontal Stepper Component */
+.horizontalStepperWrapper {
   position: relative;
-  overflow: hidden;
+  width: 100%;
+  padding: 0 0.5rem 0.2rem;
+}
+
+.stepperProgressTrack {
+  position: absolute;
+  top: 17px;
+  left: 50px;
+  right: 50px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.stepperProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00f2fe 0%, #4facfe 50%, #6366f1 100%);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.horizontalStepper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stepNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stepNode:hover .stepBadge {
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.stepBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #94a3b8;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+}
+
+.stepNodeActive .stepBadge {
+  background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+  color: #06101e;
+  border-color: #00f2fe;
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.6);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.stepNodeCompleted .stepBadge {
+  background: #10b981;
+  color: #06101e;
+  border-color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.stepInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.stepNumberLabel {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.stepNodeActive .stepNumberLabel {
+  color: #38bdf8;
+}
+
+.stepNameLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.stepNodeActive .stepNameLabel {
+  color: #ffffff;
+}
+
+/* Active Step Banner Card */
+.stepBannerCard {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.55rem 1.15rem;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  transform: translateZ(0);
+}
+
+@keyframes bannerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stepBannerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .stageBadge {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: #38bdf8;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+}
+
+.stepCounterPill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .stageTitle {
-  font-size: 1.65rem;
+  font-size: 1.18rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: #ffffff;
   margin: 0;
   line-height: 1.2;
 }
 
 .stageSubtitle {
-  font-size: 0.88rem;
+  font-size: 0.78rem;
   color: #94a3b8;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 
-.telemetryBadge {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.45rem 0.85rem;
-  border-radius: 12px;
-  font-size: 0.78rem;
-  color: #cbd5e1;
-  font-weight: 600;
-  width: fit-content;
-}
-
-.telemetryDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 10px #10b981;
-  animation: pulseDot 2s infinite ease-in-out;
-}
-
-@keyframes pulseDot {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.8; }
-}
-
-/* Vertical 3D Stepper Deck */
-.verticalStepper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  position: relative;
-}
-
-.stepDeckPill {
-  position: relative;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 0.95rem 1.15rem;
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  cursor: pointer;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.5);
-}
-
-.stepDeckPill:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateX(4px);
-}
-
-.stepPillActive {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(56, 189, 248, 0.55);
-  box-shadow: 0 12px 30px -6px rgba(0, 242, 254, 0.25), inset 0 0 15px rgba(56, 189, 248, 0.1);
-  transform: translateX(6px) scale(1.02);
-}
-
-.stepPillCompleted {
-  border-color: rgba(16, 185, 129, 0.4);
-}
-
-.stepPillNumber {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #94a3b8;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-.stepPillActive .stepPillNumber {
-  background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-  color: #06101e;
-  border: none;
-  box-shadow: 0 0 14px rgba(0, 242, 254, 0.7);
-}
-
-.stepPillCompleted .stepPillNumber {
-  background: #10b981;
-  color: #06101e;
-  border: none;
-}
-
-.stepPillMeta {
-  display: flex;
-  flex-direction: column;
-}
-
-.stepPillTag {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #64748b;
-}
-
-.stepPillActive .stepPillTag {
-  color: #38bdf8;
-}
-
-.stepPillTitle {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #e2e8f0;
-}
-
-.stepActiveShimmer {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  background: linear-gradient(180deg, #00f2fe, #4facfe, #6366f1);
-  box-shadow: 0 0 10px #00f2fe;
-}
-
-/* Security Highlights Box */
-.securityHighlights {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 1.15rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.highlightItem {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-.highlightIcon {
-  color: #38bdf8;
-  display: flex;
-  align-items: center;
-}
-
-/* Right Column: Stage & Field Boxes */
-.rightStage {
-  flex: 1.15;
-  width: 100%;
-}
-
+/* Form Stage Animation - Impressive GPU Accelerated Slide Transition */
 .cardStage3D {
   position: relative;
   width: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: cardEnter3D 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateZ(0);
 }
 
-@keyframes cardEnter3D {
-  from {
+.slideForward {
+  animation: impressiveSlideForward 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.slideBackward {
+  animation: impressiveSlideBackward 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes impressiveSlideForward {
+  0% {
     opacity: 0;
-    transform: translateY(24px) perspective(1000px) rotateX(4deg) scale(0.98);
+    transform: translateX(40px) scale(0.985);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0) perspective(1000px) rotateX(0deg) scale(1);
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes impressiveSlideBackward {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Bottom Trust Badges */
+.onboardingFooterBadges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0 0;
+}
+
+.badgeItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.badgeItem:hover {
+  color: #94a3b8;
+}
+
+@media (max-height: 760px) {
+  .onboardingFooterBadges {
+    display: none;
   }
 }
 
@@ -475,20 +494,18 @@
 }
 
 /* Responsive Breakpoints */
-@media (max-width: 980px) {
-  .onboardingGrid {
-    flex-direction: column;
-    gap: 1.5rem;
+@media (max-width: 768px) {
+  .horizontalStepper {
+    gap: 0.35rem;
   }
 
-  .leftSidebar {
-    max-width: 100%;
-    position: static;
+  .stepNameLabel {
+    display: none;
   }
 
-  .verticalStepper {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+  .stepperProgressTrack {
+    left: 40px;
+    right: 40px;
   }
 
   .viewport {
@@ -496,8 +513,16 @@
   }
 }
 
-@media (max-width: 600px) {
-  .verticalStepper {
-    grid-template-columns: 1fr;
+@media (max-width: 500px) {
+  .stepBadge {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+  }
+
+  .stepperProgressTrack {
+    top: 20px;
+    left: 25px;
+    right: 25px;
   }
 }

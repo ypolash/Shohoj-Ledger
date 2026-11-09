@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { getCompanyId } from "@/lib/company/companyFilter";
+import { parseDateTimeInTimezone } from "@/lib/attendance";
 
 async function resolveEmployee(idParam: string, companyId: string) {
   const decodedId = decodeURIComponent(idParam);
@@ -61,6 +62,30 @@ export async function GET(
       breakTime: 60,
     };
 
+    // Check today's attendance record
+    const timezone = compSetting?.timezone || "Asia/Dhaka";
+    const now = new Date();
+    const dateStr = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(now);
+    const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+
+    const todayAttendance = await prisma.attendance.findFirst({
+      where: {
+        employeeId: employee.id,
+        date: { gte: startOfDay, lte: endOfDay }
+      }
+    });
+
+    const isHalfDayDuty = Boolean(
+      employee.shift?.toLowerCase().includes("half day") ||
+      employee.workShift?.name?.toLowerCase().includes("half day")
+    );
+
     return NextResponse.json({
       success: true,
       employee: {
@@ -72,6 +97,7 @@ export async function GET(
         department: employee.department,
         designation: employee.designation,
         shift: employee.shift,
+        isHalfDayDuty,
       },
       hasCustomDuty: !!employee.workShift,
       customDuty: employee.workShift ? {
@@ -83,8 +109,16 @@ export async function GET(
         breakTime: employee.workShift.breakTime,
         nightShift: employee.workShift.nightShift,
         isActive: employee.workShift.isActive,
+        isHalfDay: employee.workShift.name?.toLowerCase().includes("half day") || false,
       } : null,
       defaultShift,
+      todayAttendance: todayAttendance ? {
+        id: todayAttendance.id,
+        status: todayAttendance.status,
+        checkInTime: todayAttendance.checkInTime,
+        checkOutTime: todayAttendance.checkOutTime,
+        reviewStatus: todayAttendance.reviewStatus,
+      } : null,
     });
   } catch (error: any) {
     console.error("Custom duty GET error:", error);
@@ -110,13 +144,140 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { startTime, endTime, gracePeriod, breakTime, nightShift, name } = body;
+
+    // 1. Action: Immediate Half Day Out / Short Sign-off for Today
+    if (body.action === "HALF_DAY_OUT" || body.action === "TODAY_SIGN_OFF") {
+      const compSetting = await prisma.companySetting.findUnique({
+        where: { companyId },
+        select: { timezone: true, shiftEndTime: true, shiftStartTime: true }
+      });
+      let timezone = compSetting?.timezone || "Asia/Dhaka";
+      if (!timezone || timezone === "UTC" || timezone === "UTC / GMT") {
+        timezone = "Asia/Dhaka";
+      }
+      try { Intl.DateTimeFormat(undefined, { timeZone: timezone }); } catch { timezone = "Asia/Dhaka"; }
+
+      const now = new Date();
+      const dateStr = new Intl.DateTimeFormat("en-CA", {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(now);
+
+      const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+      const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+
+      // Target checkout time (e.g., "14:00" or current time)
+      const targetTimeStr = body.checkOutTime || new Intl.DateTimeFormat("en-GB", {
+        timeZone: timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(now);
+
+      const checkOutDate = parseDateTimeInTimezone(dateStr, targetTimeStr, timezone) || now;
+
+      const reasonLabel = body.reason?.trim() || "Emergency departure permitted by HR (Half Day)";
+      const note = body.note?.trim() ? `${reasonLabel} · ${body.note.trim()}` : reasonLabel;
+
+      let attendanceRecord = await prisma.attendance.findFirst({
+        where: {
+          employeeId: employee.id,
+          date: { gte: startOfDay, lte: endOfDay }
+        }
+      });
+
+      if (attendanceRecord) {
+        let totalWorkingMinutes = 240;
+        if (attendanceRecord.checkInTime) {
+          totalWorkingMinutes = Math.max(0, Math.floor((checkOutDate.getTime() - attendanceRecord.checkInTime.getTime()) / 60000));
+        }
+        attendanceRecord = await prisma.attendance.update({
+          where: { id: attendanceRecord.id },
+          data: {
+            checkOutTime: checkOutDate,
+            totalWorkingMinutes,
+            status: "HALF_DAY",
+            earlyLeaveMinutes: 0,
+            reviewStatus: "PERMITTED_HALF_DAY",
+            punishmentAmount: 0,
+            punishmentReason: note,
+          }
+        });
+      } else {
+        const defaultStartStr = compSetting?.shiftStartTime || "09:30";
+        const checkInDate = parseDateTimeInTimezone(dateStr, defaultStartStr, timezone) || checkOutDate;
+        const totalWorkingMinutes = Math.max(0, Math.floor((checkOutDate.getTime() - checkInDate.getTime()) / 60000));
+
+        attendanceRecord = await prisma.attendance.create({
+          data: {
+            companyId,
+            employeeId: employee.id,
+            date: startOfDay,
+            checkInTime: checkInDate,
+            checkOutTime: checkOutDate,
+            status: "HALF_DAY",
+            totalWorkingMinutes,
+            earlyLeaveMinutes: 0,
+            reviewStatus: "PERMITTED_HALF_DAY",
+            punishmentAmount: 0,
+            punishmentReason: note,
+          }
+        });
+      }
+
+      // Record adjustment for audit trail
+      try {
+        await prisma.attendanceAdjustment.create({
+          data: {
+            attendanceId: attendanceRecord.id,
+            employeeId: employee.id,
+            type: "HALF_DAY_PERMIT",
+            reason: note,
+            status: "APPROVED",
+          }
+        });
+      } catch (adjErr) {
+        console.warn("Adjustment creation for half day permit:", adjErr);
+      }
+
+      // Send push notification
+      if (employee.userId) {
+        try {
+          const { sendNotification } = await import("@/lib/notifications/notificationService");
+          await sendNotification({
+            companyId,
+            userId: employee.userId,
+            category: "HR",
+            title: "🌓 Half Day Short Sign-off Approved",
+            message: `Your early departure at ${targetTimeStr} has been authorized as a permitted Half Day (0 early leave penalty).`,
+            priority: "NORMAL",
+          });
+        } catch (e) {
+          console.error("Failed to send notification for half day sign off:", e);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Half-day short sign-off authorized at ${targetTimeStr} for ${employee.firstName} ${employee.lastName}.`,
+        attendance: attendanceRecord
+      });
+    }
+
+    // 2. Action: Configure Duty Schedule (Full-Day or Half-Day Duty for Short Sign-off)
+    const { startTime, endTime, gracePeriod, breakTime, nightShift, name, isHalfDay } = body;
 
     if (!startTime || !endTime) {
       return NextResponse.json({ error: "Start time and end time are required." }, { status: 400 });
     }
 
-    const shiftName = name?.trim() || `Custom Duty - ${employee.employeeId}`;
+    const isHalfDayDuty = Boolean(isHalfDay) || (name && name.toLowerCase().includes("half day"));
+    const defaultShiftName = isHalfDayDuty 
+      ? `Half Day Duty - ${employee.employeeId}` 
+      : `Custom Duty - ${employee.employeeId}`;
+    const shiftName = name?.trim() || defaultShiftName;
 
     const workShift = await prisma.workShift.upsert({
       where: {
@@ -145,11 +306,15 @@ export async function POST(
       },
     });
 
+    const shiftDisplay = isHalfDayDuty
+      ? `${startTime} - ${endTime} (Half Day)`
+      : `${startTime} - ${endTime}`;
+
     const updatedEmployee = await prisma.employee.update({
       where: { id: employee.id },
       data: {
         workShiftId: workShift.id,
-        shift: `${startTime} - ${endTime}`,
+        shift: shiftDisplay,
       },
       include: {
         workShift: true,
@@ -163,8 +328,10 @@ export async function POST(
           companyId,
           userId: updatedEmployee.userId,
           category: "HR",
-          title: "⚡ Custom Duty Schedule Updated",
-          message: `Your duty shift has been configured to ${startTime} - ${endTime} (+${gracePeriod || 0}m grace period, ${breakTime || 0}m break).`,
+          title: isHalfDayDuty ? "🌓 Half Day Duty Schedule Configured" : "⚡ Custom Duty Schedule Updated",
+          message: isHalfDayDuty
+            ? `Your duty has been set to Half Day (${startTime} - ${endTime}). Short sign-off at ${endTime} will be permitted without penalty.`
+            : `Your duty shift has been configured to ${startTime} - ${endTime} (+${gracePeriod || 0}m grace period, ${breakTime || 0}m break).`,
           priority: "HIGH",
         });
       } catch (e) {
@@ -174,13 +341,16 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Custom duty schedule configured successfully.",
+      message: isHalfDayDuty
+        ? "Half-day duty schedule configured successfully. Short sign-off enabled."
+        : "Custom duty schedule configured successfully.",
       customDuty: updatedEmployee.workShift,
       employee: {
         id: updatedEmployee.id,
         employeeId: updatedEmployee.employeeId,
         fullName: `${updatedEmployee.firstName} ${updatedEmployee.lastName}`,
         shift: updatedEmployee.shift,
+        isHalfDayDuty,
       },
     });
   } catch (error: any) {

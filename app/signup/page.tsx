@@ -56,6 +56,7 @@ const STEP_META = [
 export default function SignupPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -181,12 +182,14 @@ export default function SignupPage() {
     }
 
     setApiError(null);
+    setDirection("forward");
     setCurrentStep((prev) => Math.min(4, prev + 1));
   };
 
   const handleBack = () => {
     setApiError(null);
     setFieldErrors({});
+    setDirection("backward");
     setCurrentStep((prev) => Math.max(1, prev - 1));
   };
 
@@ -274,28 +277,19 @@ export default function SignupPage() {
         </div>
       )}
 
-      {/* 2-Column Split Onboarding Grid */}
-      <div className={styles.onboardingGrid}>
+      {/* Main Centered Onboarding Flow */}
+      <div className={styles.onboardingContainer}>
         
-        {/* LEFT COLUMN: Mission Control, Phase Info & Stepper Deck */}
-        <aside className={styles.leftSidebar}>
-          {/* Phase Information Showcase */}
-          <div className={styles.stageHeaderCard}>
-            <div className={styles.stageBadge}>
-              {activeMeta.icon}
-              <span>{activeMeta.tag}</span>
-            </div>
-            <h1 className={styles.stageTitle}>{activeMeta.title}</h1>
-            <p className={styles.stageSubtitle}>{activeMeta.subtitle}</p>
-
-            <div className={styles.telemetryBadge}>
-              <span className={styles.telemetryDot} />
-              <span>Autonomous Node · Live</span>
-            </div>
+        {/* TOP: Horizontal Stepper Showing Step Numbers & Names */}
+        <div className={styles.horizontalStepperWrapper}>
+          <div className={styles.stepperProgressTrack}>
+            <div
+              className={styles.stepperProgressFill}
+              style={{ width: `${((currentStep - 1) / (STEP_META.length - 1)) * 100}%` }}
+            />
           </div>
 
-          {/* Vertical Stepper Deck */}
-          <div className={styles.verticalStepper}>
+          <div className={styles.horizontalStepper}>
             {STEP_META.map((item) => {
               const isActive = currentStep === item.step;
               const isCompleted = currentStep > item.step;
@@ -305,85 +299,102 @@ export default function SignupPage() {
                   key={item.step}
                   onClick={() => {
                     if (item.step < currentStep) {
+                      setDirection("backward");
                       setCurrentStep(item.step);
                     } else if (item.step === currentStep + 1 && validateStep(currentStep)) {
+                      setDirection("forward");
                       setCurrentStep(item.step);
                     }
                   }}
-                  className={`${styles.stepDeckPill} ${isActive ? styles.stepPillActive : ""} ${isCompleted ? styles.stepPillCompleted : ""}`}
+                  className={`${styles.stepNode} ${isActive ? styles.stepNodeActive : ""} ${isCompleted ? styles.stepNodeCompleted : ""}`}
                 >
-                  <div className={styles.stepPillNumber}>
-                    {isCompleted ? <CheckCircle2 size={16} color="#06101e" /> : item.step}
+                  <div className={styles.stepBadge}>
+                    {isCompleted ? <CheckCircle2 size={18} /> : item.step}
                   </div>
-                  <div className={styles.stepPillMeta}>
-                    <span className={styles.stepPillTag}>Phase 0{item.step}</span>
-                    <span className={styles.stepPillTitle}>{item.title}</span>
+                  <div className={styles.stepInfo}>
+                    <span className={styles.stepNumberLabel}>Step 0{item.step}</span>
+                    <span className={styles.stepNameLabel}>{item.title}</span>
                   </div>
-                  {isActive && <div className={styles.stepActiveShimmer} />}
                 </div>
               );
             })}
           </div>
+        </div>
 
-          {/* Enterprise Security Highlights */}
-          <div className={styles.securityHighlights}>
-            <div className={styles.highlightItem}>
-              <span className={styles.highlightIcon}><Shield size={14} /></span>
-              <span>AES-256 Cloud Encrypted Multi-Tenant Storage</span>
+        {/* TOP: Step Identity & Purpose Header */}
+        <div className={styles.stepBannerCard} key={`header-${currentStep}`}>
+          <div className={styles.stepBannerHeader}>
+            <div className={styles.stageBadge}>
+              {activeMeta.icon}
+              <span>{activeMeta.tag}</span>
             </div>
-            <div className={styles.highlightItem}>
-              <span className={styles.highlightIcon}><Database size={14} /></span>
-              <span>Automated PostgreSQL Schema & Role Isolation</span>
-            </div>
-            <div className={styles.highlightItem}>
-              <span className={styles.highlightIcon}><Lock size={14} /></span>
-              <span>Cryptographic OTP Email Verification Active</span>
+            <div className={styles.stepCounterPill}>
+              <span>Step {currentStep} of {STEP_META.length}</span>
             </div>
           </div>
-        </aside>
+          <h1 className={styles.stageTitle}>{activeMeta.title}</h1>
+          <p className={styles.stageSubtitle}>{activeMeta.subtitle}</p>
+        </div>
 
-        {/* RIGHT COLUMN: Active Field Form Stage */}
-        <section className={styles.rightStage}>
-          <div className={styles.cardStage3D} key={currentStep}>
-            {currentStep === 1 && (
-              <Step1CompanyProfile
-                formData={formData}
-                errors={fieldErrors}
-                updateForm={updateForm}
-                onNext={handleNext}
-              />
-            )}
+        {/* MIDDLE: Active Information Form Card with Impressive Animation */}
+        <div
+          key={`step-card-${currentStep}`}
+          className={`${styles.cardStage3D} ${direction === "forward" ? styles.slideForward : styles.slideBackward}`}
+        >
+          {currentStep === 1 && (
+            <Step1CompanyProfile
+              formData={formData}
+              errors={fieldErrors}
+              updateForm={updateForm}
+              onNext={handleNext}
+            />
+          )}
 
-            {currentStep === 2 && (
-              <Step2IndustryModules
-                formData={formData}
-                errors={fieldErrors}
-                updateForm={updateForm}
-                onBack={handleBack}
-                onNext={handleNext}
-              />
-            )}
+          {currentStep === 2 && (
+            <Step2IndustryModules
+              formData={formData}
+              errors={fieldErrors}
+              updateForm={updateForm}
+              onBack={handleBack}
+              onNext={handleNext}
+            />
+          )}
 
-            {currentStep === 3 && (
-              <Step3AdminSecurity
-                formData={formData}
-                errors={fieldErrors}
-                updateForm={updateForm}
-                onBack={handleBack}
-                onNext={handleNext}
-              />
-            )}
+          {currentStep === 3 && (
+            <Step3AdminSecurity
+              formData={formData}
+              errors={fieldErrors}
+              updateForm={updateForm}
+              onBack={handleBack}
+              onNext={handleNext}
+            />
+          )}
 
-            {currentStep === 4 && (
-              <Step4ReviewLaunch
-                formData={formData}
-                isLoading={isLoading}
-                onBack={handleBack}
-                onSubmit={handleSubmit}
-              />
-            )}
+          {currentStep === 4 && (
+            <Step4ReviewLaunch
+              formData={formData}
+              isLoading={isLoading}
+              onBack={handleBack}
+              onSubmit={handleSubmit}
+            />
+          )}
+        </div>
+
+        {/* Security & Reliability Badges at Bottom */}
+        <div className={styles.onboardingFooterBadges}>
+          <div className={styles.badgeItem}>
+            <Shield size={14} color="#38bdf8" />
+            <span>AES-256 Multi-Tenant Cloud Encryption</span>
           </div>
-        </section>
+          <div className={styles.badgeItem}>
+            <Database size={14} color="#38bdf8" />
+            <span>PostgreSQL Automated Tenant Schema Isolation</span>
+          </div>
+          <div className={styles.badgeItem}>
+            <Lock size={14} color="#38bdf8" />
+            <span>Cryptographic OTP Email Verification Active</span>
+          </div>
+        </div>
 
       </div>
 

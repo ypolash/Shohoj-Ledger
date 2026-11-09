@@ -51,11 +51,11 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
       {/* Top coral/rose glow line */}
       <div style={topGlowLine} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-        <div style={{ gridColumn: "1 / -1" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div>
           <label style={labelStyle}>Root Administrator Full Name *</label>
           <div style={inputWrapperStyle}>
-            <User size={18} color="#94a3b8" style={inputIconStyle} />
+            <User size={16} color="#94a3b8" style={inputIconStyle} />
             <input
               type="text"
               value={formData.ownerName}
@@ -70,10 +70,10 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
           {errors.ownerName && <span style={errorTextStyle}>{errors.ownerName}</span>}
         </div>
 
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div>
           <label style={labelStyle}>Root Administrator Login Email *</label>
           <div style={inputWrapperStyle}>
-            <Mail size={18} color="#94a3b8" style={inputIconStyle} />
+            <Mail size={16} color="#94a3b8" style={inputIconStyle} />
             <input
               type="email"
               value={formData.ownerEmail}
@@ -86,13 +86,13 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
             />
           </div>
           {errors.ownerEmail && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px", marginTop: "3px" }}>
               <span style={errorTextStyle}>{errors.ownerEmail}</span>
               {errors.ownerEmail.toLowerCase().includes("already registered") && (
                 <a
                   href="/login"
                   style={{
-                    fontSize: "0.78rem",
+                    fontSize: "0.74rem",
                     color: "#38bdf8",
                     fontWeight: 700,
                     textDecoration: "underline"
@@ -108,7 +108,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
         <div>
           <label style={labelStyle}>Master Password *</label>
           <div style={inputWrapperStyle}>
-            <Lock size={18} color="#94a3b8" style={inputIconStyle} />
+            <Lock size={16} color="#94a3b8" style={inputIconStyle} />
             <input
               type={showPassword ? "text" : "password"}
               value={formData.ownerPassword}
@@ -116,7 +116,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
               placeholder="••••••••••••"
               style={{
                 ...inputStyle,
-                paddingRight: "44px",
+                paddingRight: "40px",
                 borderColor: errors.ownerPassword ? "#f43f5e" : "rgba(255,255,255,0.12)"
               }}
             />
@@ -127,7 +127,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
               aria-label={showPassword ? "Hide password" : "Show password"}
               style={eyeBtnStyle}
             >
-              {showPassword ? <EyeOff size={18} color="#cbd5e1" /> : <Eye size={18} color="#cbd5e1" />}
+              {showPassword ? <EyeOff size={16} color="#cbd5e1" /> : <Eye size={16} color="#cbd5e1" />}
             </button>
           </div>
           {errors.ownerPassword && <span style={errorTextStyle}>{errors.ownerPassword}</span>}
@@ -136,7 +136,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
         <div>
           <label style={labelStyle}>Confirm Master Password *</label>
           <div style={inputWrapperStyle}>
-            <KeyRound size={18} color="#94a3b8" style={inputIconStyle} />
+            <KeyRound size={16} color="#94a3b8" style={inputIconStyle} />
             <input
               type={showConfirmPassword ? "text" : "password"}
               value={formData.confirmPassword}
@@ -144,7 +144,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
               placeholder="••••••••••••"
               style={{
                 ...inputStyle,
-                paddingRight: "44px",
+                paddingRight: "40px",
                 borderColor: passwordsMismatch
                   ? "#f43f5e"
                   : passwordsMatch
@@ -161,14 +161,14 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
               aria-label={showConfirmPassword ? "Hide password" : "Show password"}
               style={eyeBtnStyle}
             >
-              {showConfirmPassword ? <EyeOff size={18} color="#cbd5e1" /> : <Eye size={18} color="#cbd5e1" />}
+              {showConfirmPassword ? <EyeOff size={16} color="#cbd5e1" /> : <Eye size={16} color="#cbd5e1" />}
             </button>
           </div>
           {passwordsMismatch ? (
             <span style={errorTextStyle}>Passwords do not match</span>
           ) : passwordsMatch ? (
-            <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "0.78rem", color: "#34d399", marginTop: "5px", fontWeight: 600 }}>
-              <CheckCircle2 size={13} /> Passwords match perfectly
+            <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "0.74rem", color: "#34d399", marginTop: "3px", fontWeight: 600 }}>
+              <CheckCircle2 size={12} /> Passwords match
             </span>
           ) : errors.confirmPassword ? (
             <span style={errorTextStyle}>{errors.confirmPassword}</span>
@@ -176,19 +176,19 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
         </div>
       </div>
 
-      {/* Real-time 3D Password Strength & Rule Badges */}
+      {/* Real-time Password Strength & Rule Badges */}
       <div style={ruleBoxStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Cryptographic Security Strength
           </span>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: strengthScore === 4 ? "#34d399" : strengthScore >= 2 ? "#fbbf24" : "#94a3b8" }}>
+          <span style={{ fontSize: "0.72rem", fontWeight: 700, color: strengthScore === 4 ? "#34d399" : strengthScore >= 2 ? "#fbbf24" : "#94a3b8" }}>
             {strengthScore === 4 ? "EXCELLENT" : strengthScore >= 2 ? "MODERATE" : "MINIMAL"}
           </span>
         </div>
 
         {/* Strength Progress Segments */}
-        <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", gap: "5px", marginBottom: "8px" }}>
           {[1, 2, 3, 4].map((level) => {
             const isFilled = strengthScore >= level;
             const barColor = strengthScore === 4 ? "#10b981" : strengthScore >= 2 ? "#f59e0b" : "#f43f5e";
@@ -197,10 +197,10 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
                 key={level}
                 style={{
                   flex: 1,
-                  height: "4px",
+                  height: "3px",
                   borderRadius: "2px",
                   background: isFilled ? barColor : "rgba(255,255,255,0.1)",
-                  boxShadow: isFilled ? `0 0 8px ${barColor}` : "none",
+                  boxShadow: isFilled ? `0 0 6px ${barColor}` : "none",
                   transition: "all 0.3s ease"
                 }}
               />
@@ -208,17 +208,17 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
           })}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
           {[
-            { label: "8+ Characters", valid: hasLength },
-            { label: "Uppercase (A-Z)", valid: hasUpper },
-            { label: "Lowercase (a-z)", valid: hasLower },
-            { label: "Numeric Digit (0-9)", valid: hasNumber }
+            { label: "8+ Chars", valid: hasLength },
+            { label: "Uppercase", valid: hasUpper },
+            { label: "Lowercase", valid: hasLower },
+            { label: "Number (0-9)", valid: hasNumber }
           ].map((r, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.8rem", color: r.valid ? "#34d399" : "#64748b" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "0.74rem", color: r.valid ? "#34d399" : "#64748b" }}>
               <div style={{
-                width: "16px",
-                height: "16px",
+                width: "14px",
+                height: "14px",
                 borderRadius: "50%",
                 background: r.valid ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 255, 255, 0.05)",
                 border: r.valid ? "1px solid #10b981" : "1px solid rgba(255, 255, 255, 0.15)",
@@ -227,9 +227,9 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
                 justifyContent: "center",
                 flexShrink: 0
               }}>
-                {r.valid ? <Check size={10} color="#34d399" /> : <span style={{ fontSize: "8px", color: "#64748b" }}>•</span>}
+                {r.valid ? <Check size={9} color="#34d399" /> : <span style={{ fontSize: "7px", color: "#64748b" }}>•</span>}
               </div>
-              <span style={{ fontWeight: r.valid ? 600 : 400 }}>{r.label}</span>
+              <span style={{ fontWeight: r.valid ? 600 : 400, whiteSpace: "nowrap" }}>{r.label}</span>
             </div>
           ))}
         </div>
@@ -240,19 +240,19 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
         <label
           style={{
             display: "flex",
-            alignItems: "flex-start",
-            gap: "12px",
+            alignItems: "center",
+            gap: "10px",
             cursor: "pointer",
-            fontSize: "0.88rem",
+            fontSize: "0.8rem",
             color: "#e2e8f0",
-            lineHeight: 1.45
+            lineHeight: 1.3
           }}
         >
           <input
             type="checkbox"
             checked={formData.agreeToRules}
             onChange={(e) => updateForm("agreeToRules", e.target.checked)}
-            style={{ width: "18px", height: "18px", marginTop: "2px", accentColor: "#f43f5e" }}
+            style={{ width: "16px", height: "16px", accentColor: "#f43f5e" }}
           />
           <span>
             I agree to the <strong style={{ color: "#ffffff" }}>Enterprise Tenant Isolation Policy</strong>, Data Sovereignty Standards, and Service Terms.
@@ -268,7 +268,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
           onClick={onBack}
           style={secondaryButtonStyle}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={15} />
           <span>Back</span>
         </button>
         <button
@@ -277,7 +277,7 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
           style={primaryButtonStyle}
         >
           <span>Review & Launch</span>
-          <ArrowRight size={16} />
+          <ArrowRight size={15} />
         </button>
       </div>
     </div>
@@ -287,21 +287,22 @@ export function Step3AdminSecurity({ formData, errors, updateForm, onBack, onNex
 /* Styles */
 const cardContainerStyle: React.CSSProperties = {
   position: "relative",
-  background: "rgba(15, 23, 42, 0.75)",
-  backdropFilter: "blur(24px)",
-  WebkitBackdropFilter: "blur(24px)",
+  background: "rgba(15, 23, 42, 0.88)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
   border: "1px solid rgba(255, 255, 255, 0.12)",
-  borderRadius: "28px",
-  padding: "36px 32px",
+  borderRadius: "18px",
+  padding: "18px 24px",
   width: "100%",
   maxWidth: "100%",
   margin: "0",
-  boxShadow: "0 30px 70px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(244, 63, 94, 0.08)",
+  boxShadow: "0 16px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(244, 63, 94, 0.05)",
   display: "flex",
   flexDirection: "column",
-  gap: "26px",
+  gap: "12px",
   color: "#ffffff",
-  overflow: "hidden"
+  overflow: "hidden",
+  transform: "translateZ(0)"
 };
 
 const topGlowLine: React.CSSProperties = {
@@ -316,10 +317,10 @@ const topGlowLine: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "0.75rem",
+  fontSize: "0.72rem",
   fontWeight: 700,
   color: "#cbd5e1",
-  marginBottom: "8px",
+  marginBottom: "6px",
   textTransform: "uppercase",
   letterSpacing: "0.08em"
 };
@@ -331,7 +332,7 @@ const inputWrapperStyle: React.CSSProperties = {
 
 const inputIconStyle: React.CSSProperties = {
   position: "absolute",
-  left: "14px",
+  left: "12px",
   top: "50%",
   transform: "translateY(-50%)",
   pointerEvents: "none"
@@ -339,12 +340,12 @@ const inputIconStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "12px 16px 12px 42px",
-  borderRadius: "14px",
+  padding: "10px 14px 10px 36px",
+  borderRadius: "12px",
   border: "1px solid rgba(255, 255, 255, 0.12)",
   background: "rgba(0, 0, 0, 0.35)",
   color: "#ffffff",
-  fontSize: "0.92rem",
+  fontSize: "0.88rem",
   boxSizing: "border-box",
   outline: "none",
   transition: "all 0.2s ease"
@@ -352,7 +353,7 @@ const inputStyle: React.CSSProperties = {
 
 const eyeBtnStyle: React.CSSProperties = {
   position: "absolute",
-  right: "14px",
+  right: "12px",
   top: "50%",
   transform: "translateY(-50%)",
   background: "transparent",
@@ -368,24 +369,24 @@ const eyeBtnStyle: React.CSSProperties = {
 
 const errorTextStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "0.78rem",
+  fontSize: "0.74rem",
   color: "#f87171",
-  marginTop: "5px",
+  marginTop: "4px",
   fontWeight: 600
 };
 
 const ruleBoxStyle: React.CSSProperties = {
-  padding: "18px 20px",
-  borderRadius: "18px",
+  padding: "10px 14px",
+  borderRadius: "12px",
   background: "rgba(0, 0, 0, 0.35)",
-  border: "1px solid rgba(255, 255, 255, 0.1)"
+  border: "1px solid rgba(255, 255, 255, 0.08)"
 };
 
 const footerStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingTop: "16px",
+  paddingTop: "10px",
   borderTop: "1px solid rgba(255, 255, 255, 0.08)"
 };
 
@@ -393,14 +394,14 @@ const secondaryButtonStyle: React.CSSProperties = {
   background: "rgba(255, 255, 255, 0.05)",
   color: "#ffffff",
   border: "1px solid rgba(255, 255, 255, 0.15)",
-  padding: "12px 22px",
-  borderRadius: "14px",
-  fontSize: "0.92rem",
+  padding: "9px 18px",
+  borderRadius: "12px",
+  fontSize: "0.86rem",
   fontWeight: 600,
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: "8px",
+  gap: "6px",
   transition: "all 0.2s ease"
 };
 
@@ -408,14 +409,14 @@ const primaryButtonStyle: React.CSSProperties = {
   background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)",
   color: "#ffffff",
   border: "none",
-  padding: "13px 28px",
-  borderRadius: "14px",
-  fontSize: "0.95rem",
+  padding: "10px 22px",
+  borderRadius: "12px",
+  fontSize: "0.88rem",
   fontWeight: 700,
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: "8px",
-  boxShadow: "0 10px 25px -4px rgba(244, 63, 94, 0.45)",
+  gap: "6px",
+  boxShadow: "0 8px 20px -4px rgba(244, 63, 94, 0.45)",
   transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
 };

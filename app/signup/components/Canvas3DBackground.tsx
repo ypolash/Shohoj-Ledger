@@ -49,8 +49,8 @@ export function Canvas3DBackground({ currentStep }: Canvas3DBackgroundProps) {
       { r: 99, g: 102, b: 241 },  // Step 4: Indigo / Violet
     ];
 
-    // 3D Particles
-    const particleCount = 120;
+    // 3D Particles - lightweight pool
+    const particleCount = 45;
     const particles: Array<{
       x: number;
       y: number;
@@ -211,13 +211,16 @@ export function Canvas3DBackground({ currentStep }: Canvas3DBackgroundProps) {
         }
       }
 
-      // Draw nodes
+      // Draw nodes (Hardware-accelerated outer ring instead of heavy software shadowBlur)
       for (const p of projectedPoly) {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${currentColor.r}, ${currentColor.g}, ${currentColor.b}, 0.8)`;
-        ctx.shadowColor = `rgb(${currentColor.r}, ${currentColor.g}, ${currentColor.b})`;
-        ctx.shadowBlur = 10;
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${currentColor.r}, ${currentColor.g}, ${currentColor.b}, 0.25)`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${currentColor.r}, ${currentColor.g}, ${currentColor.b}, 0.95)`;
         ctx.fill();
       }
       ctx.restore();
@@ -241,13 +244,11 @@ export function Canvas3DBackground({ currentStep }: Canvas3DBackgroundProps) {
         const scale = fov / (fov + p.z);
         const px = width / 2 + p.x * scale - (mouseX - width / 2) * scale * 0.2;
         const py = height / 2 + p.y * scale - (mouseY - height / 2) * scale * 0.2;
-        const pAlpha = (1 - p.z / 800) * 0.7;
+        const pAlpha = (1 - p.z / 800) * 0.65;
 
         ctx.beginPath();
         ctx.arc(px, py, p.size * scale * 1.5, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${currentColor.r}, ${currentColor.g}, ${currentColor.b}, ${pAlpha})`;
-        ctx.shadowColor = `rgba(${currentColor.r}, ${currentColor.g}, ${currentColor.b}, ${pAlpha})`;
-        ctx.shadowBlur = 6;
         ctx.fill();
       }
       ctx.restore();
@@ -275,6 +276,9 @@ export function Canvas3DBackground({ currentStep }: Canvas3DBackgroundProps) {
         height: "100vh",
         zIndex: 0,
         pointerEvents: "none",
+        transform: "translateZ(0)",
+        willChange: "transform",
+        contain: "strict",
       }}
     />
   );

@@ -552,8 +552,8 @@ export default function AttendancePage() {
 
   const handleOpenApproveAbsentModal = (rec: AttendanceRecord) => {
     setRecordToApproveAbsent(rec);
-    const shiftStart = officeTiming?.shiftStartTime || '09:30';
-    const shiftEnd = officeTiming?.shiftEndTime || '18:30';
+    const shiftStart = officeTiming?.shiftStart || '09:30';
+    const shiftEnd = officeTiming?.shiftEnd || '18:30';
     setApproveCheckInTime(shiftStart);
     setApproveCheckOutTime(shiftEnd);
     setApproveWaiveFine(true);

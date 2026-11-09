@@ -443,6 +443,196 @@ export default function EmployeesPage() {
     }
   };
 
+  // Half Day Duty & Short Sign-Off State
+  const [halfDayModalEmployee, setHalfDayModalEmployee] = useState<Employee | null>(null);
+  const [halfDayTab, setHalfDayTab] = useState<'SCHEDULE' | 'TODAY_SIGN_OFF'>('SCHEDULE');
+  const [halfDayStartTime, setHalfDayStartTime] = useState('09:30');
+  const [halfDayEndTime, setHalfDayEndTime] = useState('14:00');
+  const [halfDayGracePeriod, setHalfDayGracePeriod] = useState(15);
+  const [halfDayBreakTime, setHalfDayBreakTime] = useState(15);
+  const [halfDaySignoffTime, setHalfDaySignoffTime] = useState('');
+  const [halfDayReason, setHalfDayReason] = useState('Medical / Sick Leave (Half Day)');
+  const [halfDayNote, setHalfDayNote] = useState('');
+  const [isSubmittingHalfDay, setIsSubmittingHalfDay] = useState(false);
+  const [halfDayFeedback, setHalfDayFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [halfDayTodayAttendance, setHalfDayTodayAttendance] = useState<{
+    id: string;
+    status: string;
+    checkInTime: string | null;
+    checkOutTime: string | null;
+    reviewStatus: string | null;
+  } | null>(null);
+
+  const handleOpenHalfDayModal = async (emp: Employee) => {
+    setHalfDayModalEmployee(emp);
+    setHalfDayFeedback(null);
+    setHalfDayNote('');
+
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    setHalfDaySignoffTime(`${hh}:${mm}`);
+
+    const isAlreadyHalfDay = Boolean(
+      emp.shift?.toLowerCase().includes('half day') ||
+      emp.workShift?.name?.toLowerCase().includes('half day')
+    );
+
+    if (emp.workShift && isAlreadyHalfDay) {
+      setHalfDayStartTime(emp.workShift.startTime || '09:30');
+      setHalfDayEndTime(emp.workShift.endTime || '14:00');
+      setHalfDayGracePeriod(emp.workShift.gracePeriod ?? 15);
+      setHalfDayBreakTime(emp.workShift.breakTime ?? 15);
+    } else {
+      setHalfDayStartTime('09:30');
+      setHalfDayEndTime('14:00');
+      setHalfDayGracePeriod(15);
+      setHalfDayBreakTime(15);
+    }
+
+    try {
+      const res = await fetch(`/api/employees/${emp.id}/custom-duty`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.todayAttendance) {
+          setHalfDayTodayAttendance(data.todayAttendance);
+          if (data.todayAttendance.checkInTime && !data.todayAttendance.checkOutTime) {
+            setHalfDayTab('TODAY_SIGN_OFF');
+          } else {
+            setHalfDayTab('SCHEDULE');
+          }
+        } else {
+          setHalfDayTodayAttendance(null);
+          setHalfDayTab('SCHEDULE');
+        }
+      }
+    } catch {
+      // Fallback to local default state
+    }
+  };
+
+  const handleSaveHalfDaySchedule = async () => {
+    if (!halfDayModalEmployee) return;
+    setIsSubmittingHalfDay(true);
+    setHalfDayFeedback(null);
+    try {
+      const res = await fetch(`/api/employees/${halfDayModalEmployee.id}/custom-duty`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startTime: halfDayStartTime,
+          endTime: halfDayEndTime,
+          gracePeriod: Number(halfDayGracePeriod) || 0,
+          breakTime: Number(halfDayBreakTime) || 0,
+          nightShift: false,
+          isHalfDay: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save Half Day Duty schedule.');
+      }
+      setEmployees(prev =>
+        prev.map(e =>
+          e.id === halfDayModalEmployee.id
+            ? {
+                ...e,
+                workShiftId: data.customDuty?.id || e.workShiftId,
+                workShift: data.customDuty,
+                shift: `${halfDayStartTime} - ${halfDayEndTime} (Half Day)`,
+              }
+            : e
+        )
+      );
+      setHalfDayFeedback({
+        type: 'success',
+        message: 'Half Day Duty schedule configured! Punches out at scheduled end time will incur 0 early leave penalty.',
+      });
+      setTimeout(() => {
+        setHalfDayModalEmployee(null);
+        setHalfDayFeedback(null);
+      }, 1300);
+    } catch (err: any) {
+      setHalfDayFeedback({ type: 'error', message: err.message || 'Error saving Half Day schedule' });
+    } finally {
+      setIsSubmittingHalfDay(false);
+    }
+  };
+
+  const handleResetHalfDayDuty = async () => {
+    if (!halfDayModalEmployee) return;
+    if (!confirm('Are you sure you want to reset this employee from Half Day back to company standard shift?')) return;
+    setIsSubmittingHalfDay(true);
+    setHalfDayFeedback(null);
+    try {
+      const res = await fetch(`/api/employees/${halfDayModalEmployee.id}/custom-duty`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to reset duty schedule.');
+      }
+      setEmployees(prev =>
+        prev.map(e =>
+          e.id === halfDayModalEmployee.id
+            ? {
+                ...e,
+                workShiftId: null,
+                workShift: null,
+                shift: null,
+              }
+            : e
+        )
+      );
+      setHalfDayFeedback({ type: 'success', message: 'Reset back to standard company duty shift.' });
+      setTimeout(() => {
+        setHalfDayModalEmployee(null);
+        setHalfDayFeedback(null);
+      }, 1000);
+    } catch (err: any) {
+      setHalfDayFeedback({ type: 'error', message: err.message || 'Error resetting duty schedule' });
+    } finally {
+      setIsSubmittingHalfDay(false);
+    }
+  };
+
+  const handleExecuteTodaySignOff = async () => {
+    if (!halfDayModalEmployee) return;
+    setIsSubmittingHalfDay(true);
+    setHalfDayFeedback(null);
+    try {
+      const res = await fetch(`/api/employees/${halfDayModalEmployee.id}/custom-duty`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'HALF_DAY_OUT',
+          checkOutTime: halfDaySignoffTime,
+          reason: halfDayReason,
+          note: halfDayNote,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to authorize short sign-off.');
+      }
+      if (data.attendance) {
+        setHalfDayTodayAttendance(data.attendance);
+      }
+      setHalfDayFeedback({
+        type: 'success',
+        message: 'Immediate Half Day short sign-off authorized! Early departure recorded with 0 penalty.',
+      });
+      setTimeout(() => {
+        setHalfDayModalEmployee(null);
+        setHalfDayFeedback(null);
+      }, 1400);
+    } catch (err: any) {
+      setHalfDayFeedback({ type: 'error', message: err.message || 'Error authorizing short sign-off' });
+    } finally {
+      setIsSubmittingHalfDay(false);
+    }
+  };
+
   const loadAll = useCallback(async (isManual = false) => {
     if (isManual) setIsSyncing(true);
     else setIsLoading(true);
@@ -548,7 +738,7 @@ export default function EmployeesPage() {
       if (isTemporaryStaff(emp)) return false;
 
       // Search
-      const searchTarget = `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.employeeId || ''} ${emp.department || ''} ${emp.designation || ''}`.toLowerCase();
+      const searchTarget = `${emp.firstName} ${emp.lastName} ${emp.email} ${emp.employeeId || ''} ${emp.department || ''} ${emp.designation || ''} ${emp.shift || ''} ${emp.workShift?.name || ''}`.toLowerCase();
       const matchesSearch = !search || searchTarget.includes(search.toLowerCase());
 
       // Department filter
@@ -926,6 +1116,10 @@ export default function EmployeesPage() {
                   const deptName = emp.departmentRef?.name || emp.department || 'Unassigned';
                   const desigName = emp.designationRef?.name || emp.designation || 'Staff';
                   const status = emp.status || 'ACTIVE';
+                  const isEmpHalfDay = Boolean(
+                    emp.shift?.toLowerCase().includes('half day') ||
+                    emp.workShift?.name?.toLowerCase().includes('half day')
+                  );
 
                   return (
                     <tr
@@ -1019,15 +1213,17 @@ export default function EmployeesPage() {
                               gap: '3px',
                               fontSize: '10px',
                               fontWeight: 600,
-                              color: '#10b981',
-                              background: 'rgba(16, 185, 129, 0.1)',
+                              color: isEmpHalfDay ? '#f59e0b' : '#10b981',
+                              background: isEmpHalfDay ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.1)',
                               padding: '1px 5px',
                               borderRadius: '3px',
-                              border: '1px solid rgba(16, 185, 129, 0.2)',
+                              border: `1px solid ${isEmpHalfDay ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.2)'}`,
                               width: 'fit-content'
                             }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>schedule</span>
-                              {emp.workShift.startTime} - {emp.workShift.endTime}
+                              <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>
+                                {isEmpHalfDay ? 'timelapse' : 'schedule'}
+                              </span>
+                              {isEmpHalfDay ? 'Half Day: ' : ''}{emp.workShift.startTime} - {emp.workShift.endTime}
                             </div>
                           )}
                         </div>
@@ -1037,9 +1233,27 @@ export default function EmployeesPage() {
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
                           <button
                             type="button"
+                            onClick={() => handleOpenHalfDayModal(emp)}
+                            className={`${styles.actionIconBtn} ${
+                              isEmpHalfDay ? styles.actionIconBtnHalfDayActive : styles.actionIconBtnHalfDay
+                            }`}
+                            title={
+                              isEmpHalfDay
+                                ? `Half Day Duty Active: ${emp.workShift?.startTime || ''} - ${emp.workShift?.endTime || ''} (Click to manage / short sign-off)`
+                                : "Half Day Duty / Short Sign-off"
+                            }
+                            aria-label="Half Day Duty / Short Sign-off"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                              timelapse
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleOpenCustomDuty(emp)}
                             className={`${styles.actionIconBtn} ${
-                              emp.workShift ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
+                              emp.workShift && !isEmpHalfDay ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
                             }`}
                             title={
                               emp.workShift
@@ -1095,6 +1309,10 @@ export default function EmployeesPage() {
             const deptName = emp.departmentRef?.name || emp.department || 'Unassigned';
             const desigName = emp.designationRef?.name || emp.designation || 'Staff';
             const status = emp.status || 'ACTIVE';
+            const isEmpHalfDay = Boolean(
+              emp.shift?.toLowerCase().includes('half day') ||
+              emp.workShift?.name?.toLowerCase().includes('half day')
+            );
 
             return (
               <div
@@ -1149,11 +1367,11 @@ export default function EmployeesPage() {
 
                   {emp.workShift && (
                     <div className={styles.cardDetailItem}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '15px', color: '#10b981' }}>
-                        schedule
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px', color: isEmpHalfDay ? '#f59e0b' : '#10b981' }}>
+                        {isEmpHalfDay ? 'timelapse' : 'schedule'}
                       </span>
-                      <span style={{ color: '#10b981', fontWeight: 600 }}>
-                        Duty: {emp.workShift.startTime} - {emp.workShift.endTime}
+                      <span style={{ color: isEmpHalfDay ? '#f59e0b' : '#10b981', fontWeight: 600 }}>
+                        {isEmpHalfDay ? 'Half Day: ' : 'Duty: '}{emp.workShift.startTime} - {emp.workShift.endTime}
                       </span>
                     </div>
                   )}
@@ -1179,9 +1397,28 @@ export default function EmployeesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={e => e.stopPropagation()}>
                     <button
                       type="button"
+                      onClick={() => handleOpenHalfDayModal(emp)}
+                      className={`${styles.actionIconBtn} ${
+                        isEmpHalfDay ? styles.actionIconBtnHalfDayActive : styles.actionIconBtnHalfDay
+                      }`}
+                      style={{ width: '30px', height: '30px', borderRadius: '7px' }}
+                      title={
+                        isEmpHalfDay
+                          ? `Half Day Duty: ${emp.workShift?.startTime || ''} - ${emp.workShift?.endTime || ''} (Click to manage / short sign-off)`
+                          : "Half Day Duty / Short Sign-off"
+                      }
+                      aria-label="Half Day Duty / Short Sign-off"
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                        timelapse
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleOpenCustomDuty(emp)}
                       className={`${styles.actionIconBtn} ${
-                        emp.workShift ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
+                        emp.workShift && !isEmpHalfDay ? styles.actionIconBtnDutyActive : styles.actionIconBtnDuty
                       }`}
                       style={{ width: '30px', height: '30px', borderRadius: '7px' }}
                       title={
@@ -1452,6 +1689,8 @@ export default function EmployeesPage() {
                   { label: 'Morning (8:00 - 4:30)', start: '08:00', end: '16:30', grace: 15, breakMin: 45, night: false },
                   { label: 'Late (11:00 - 7:30)', start: '11:00', end: '19:30', grace: 15, breakMin: 60, night: false },
                   { label: 'Night (10:00 - 6:00)', start: '22:00', end: '06:00', grace: 20, breakMin: 60, night: true },
+                  { label: '🌓 Morning Half Day (9:30 - 2:00)', start: '09:30', end: '14:00', grace: 15, breakMin: 15, night: false },
+                  { label: '🌓 Afternoon Half Day (1:30 - 6:00)', start: '13:30', end: '18:00', grace: 15, breakMin: 15, night: false },
                 ].map(preset => (
                   <button
                     key={preset.label}
@@ -1655,7 +1894,565 @@ export default function EmployeesPage() {
           </div>
         </div>
       )}
-      {/* 8. Edit Employee Profile Glass Modal Popup */}
+
+      {/* Half Day Duty & Short Sign-Off Modal Dialog */}
+      {halfDayModalEmployee && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.72)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1050,
+            padding: '16px'
+          }}
+          onClick={() => !isSubmittingHalfDay && setHalfDayModalEmployee(null)}
+        >
+          <div
+            style={{
+              background: 'var(--surface-bg, #0f172a)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '540px',
+              padding: '26px 28px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 25px rgba(245, 158, 11, 0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+              maxHeight: '92vh',
+              overflowY: 'auto'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3))',
+                  border: '1px solid rgba(245, 158, 11, 0.45)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fbbf24',
+                  flexShrink: 0
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>timelapse</span>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main, #f8fafc)' }}>
+                    Half Day Duty & Short Sign-Off
+                  </h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--text-muted, #94a3b8)' }}>
+                    {halfDayModalEmployee.firstName} {halfDayModalEmployee.lastName} ({halfDayModalEmployee.employeeId || 'Staff'}) · {halfDayModalEmployee.designation || 'Employee'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHalfDayModalEmployee(null)}
+                disabled={isSubmittingHalfDay}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted, #94a3b8)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
+
+            {/* Mode Tab Switcher */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '6px',
+              background: 'rgba(255, 255, 255, 0.04)',
+              padding: '4px',
+              borderRadius: '12px',
+              border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))'
+            }}>
+              <button
+                type="button"
+                onClick={() => setHalfDayTab('SCHEDULE')}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: halfDayTab === 'SCHEDULE' ? 'rgba(245, 158, 11, 0.22)' : 'transparent',
+                  color: halfDayTab === 'SCHEDULE' ? '#fbbf24' : 'var(--text-muted, #94a3b8)',
+                  fontWeight: halfDayTab === 'SCHEDULE' ? 700 : 500,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>schedule</span>
+                Half Day Shift Schedule
+              </button>
+              <button
+                type="button"
+                onClick={() => setHalfDayTab('TODAY_SIGN_OFF')}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: halfDayTab === 'TODAY_SIGN_OFF' ? 'rgba(245, 158, 11, 0.22)' : 'transparent',
+                  color: halfDayTab === 'TODAY_SIGN_OFF' ? '#fbbf24' : 'var(--text-muted, #94a3b8)',
+                  fontWeight: halfDayTab === 'TODAY_SIGN_OFF' ? 700 : 500,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+                Today&apos;s Short Sign-Off
+              </button>
+            </div>
+
+            {/* TAB 1: Half Day Shift Schedule */}
+            {halfDayTab === 'SCHEDULE' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Active Status Badge */}
+                <div style={{
+                  padding: '11px 14px',
+                  borderRadius: '10px',
+                  background: (halfDayModalEmployee.shift?.toLowerCase().includes('half day') || halfDayModalEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                    ? 'rgba(245, 158, 11, 0.12)'
+                    : 'rgba(59, 130, 246, 0.08)',
+                  border: `1px solid ${(halfDayModalEmployee.shift?.toLowerCase().includes('half day') || halfDayModalEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                    ? 'rgba(245, 158, 11, 0.35)'
+                    : 'rgba(59, 130, 246, 0.2)'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span className="material-symbols-outlined" style={{
+                    fontSize: '20px',
+                    color: (halfDayModalEmployee.shift?.toLowerCase().includes('half day') || halfDayModalEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                      ? '#f59e0b'
+                      : '#60a5fa'
+                  }}>
+                    {(halfDayModalEmployee.shift?.toLowerCase().includes('half day') || halfDayModalEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                      ? 'verified'
+                      : 'info'}
+                  </span>
+                  <div style={{ fontSize: '12.5px', color: 'var(--text-main, #f8fafc)' }}>
+                    {(halfDayModalEmployee.shift?.toLowerCase().includes('half day') || halfDayModalEmployee.workShift?.name?.toLowerCase().includes('half day')) ? (
+                      <>
+                        <strong>Half Day Active:</strong> {halfDayModalEmployee.workShift?.startTime || halfDayStartTime} — {halfDayModalEmployee.workShift?.endTime || halfDayEndTime} (+{halfDayModalEmployee.workShift?.gracePeriod ?? 15}m grace)
+                      </>
+                    ) : (
+                      <>
+                        <strong>Standard Shift:</strong> {halfDayModalEmployee.workShift ? `${halfDayModalEmployee.workShift.startTime} — ${halfDayModalEmployee.workShift.endTime} (Full Day)` : 'Company Standard (Full Day)'}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Half Day Presets
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'Morning Half Day (9:30 - 2:00)', start: '09:30', end: '14:00', grace: 15, breakMin: 15 },
+                      { label: 'Afternoon Half Day (1:30 - 6:00)', start: '13:30', end: '18:00', grace: 15, breakMin: 15 },
+                      { label: 'Early Half Day (8:30 - 1:00)', start: '08:30', end: '13:00', grace: 15, breakMin: 15 },
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          setHalfDayStartTime(preset.start);
+                          setHalfDayEndTime(preset.end);
+                          setHalfDayGracePeriod(preset.grace);
+                          setHalfDayBreakTime(preset.breakMin);
+                        }}
+                        style={{
+                          padding: '6px 11px',
+                          borderRadius: '8px',
+                          background: (halfDayStartTime === preset.start && halfDayEndTime === preset.end) ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                          border: `1px solid ${(halfDayStartTime === preset.start && halfDayEndTime === preset.end) ? '#f59e0b' : 'rgba(255, 255, 255, 0.1)'}`,
+                          color: (halfDayStartTime === preset.start && halfDayEndTime === preset.end) ? '#fbbf24' : 'var(--text-secondary, #cbd5e1)',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shift Fields */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '6px' }}>
+                      Shift Start Time <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="time"
+                      className={styles.input}
+                      value={halfDayStartTime}
+                      onChange={e => setHalfDayStartTime(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '6px' }}>
+                      Half Day Sign-off Time <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="time"
+                      className={styles.input}
+                      value={halfDayEndTime}
+                      onChange={e => setHalfDayEndTime(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '6px' }}>
+                      Grace Period (Minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="60"
+                      className={styles.input}
+                      value={halfDayGracePeriod}
+                      onChange={e => setHalfDayGracePeriod(Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '6px' }}>
+                      Break Allowance (Minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="120"
+                      className={styles.input}
+                      value={halfDayBreakTime}
+                      onChange={e => setHalfDayBreakTime(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                {/* Explanatory note */}
+                <div style={{
+                  fontSize: '12px',
+                  color: 'var(--text-muted, #94a3b8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(255,255,255,0.02)',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#f59e0b' }}>verified_user</span>
+                  Checkout at scheduled duty end time registers as on-time sign-off with 0 early departure penalty.
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: Immediate Short Sign-off for Today */}
+            {halfDayTab === 'TODAY_SIGN_OFF' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Live Attendance Status */}
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--border-main, rgba(255, 255, 255, 0.08))',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Today&apos;s Status
+                    </span>
+                    <span style={{
+                      display: 'inline-block',
+                      marginTop: '4px',
+                      padding: '2px 8px',
+                      borderRadius: '5px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      background: halfDayTodayAttendance?.status === 'HALF_DAY'
+                        ? 'rgba(245, 158, 11, 0.2)'
+                        : halfDayTodayAttendance?.checkInTime
+                        ? 'rgba(16, 185, 129, 0.2)'
+                        : 'rgba(100, 116, 139, 0.2)',
+                      color: halfDayTodayAttendance?.status === 'HALF_DAY'
+                        ? '#fbbf24'
+                        : halfDayTodayAttendance?.checkInTime
+                        ? '#34d399'
+                        : '#94a3b8'
+                    }}>
+                      {halfDayTodayAttendance?.status === 'HALF_DAY'
+                        ? '🌓 Permitted Half Day'
+                        : halfDayTodayAttendance?.checkInTime
+                        ? '✓ Checked In'
+                        : 'No Check-in Logged'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Check-In Recorded
+                    </span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main, #f8fafc)', marginTop: '4px', display: 'block' }}>
+                      {halfDayTodayAttendance?.checkInTime
+                        ? new Date(halfDayTodayAttendance.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+                        : 'Not recorded yet'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sign-off Time & Quick Current Time */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)' }}>
+                      Today&apos;s Sign-Off Time <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        const hh = String(now.getHours()).padStart(2, '0');
+                        const mm = String(now.getMinutes()).padStart(2, '0');
+                        setHalfDaySignoffTime(`${hh}:${mm}`);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#fbbf24',
+                        fontSize: '11.5px',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        padding: 0
+                      }}
+                    >
+                      Use Current Time
+                    </button>
+                  </div>
+                  <input
+                    type="time"
+                    className={styles.input}
+                    value={halfDaySignoffTime}
+                    onChange={e => setHalfDaySignoffTime(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Reason Select */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '6px' }}>
+                    Reason for Short Sign-Off <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    className={styles.input}
+                    value={halfDayReason}
+                    onChange={e => setHalfDayReason(e.target.value)}
+                  >
+                    <option value="Medical / Sick Leave (Half Day)">Medical / Sick Leave (Half Day)</option>
+                    <option value="Personal Emergency">Personal Emergency</option>
+                    <option value="Official External Visit / Field Assignment">Official External Visit / Field Assignment</option>
+                    <option value="Family Obligation">Family Obligation</option>
+                    <option value="Pre-approved Early Departure">Pre-approved Early Departure</option>
+                    <option value="Other Special Permission">Other Special Permission</option>
+                  </select>
+                </div>
+
+                {/* Note */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary, #cbd5e1)', marginBottom: '6px' }}>
+                    HR Note / Remarks <span style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', fontWeight: 400 }}>(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g. Authorized by Department Head due to doctor appointment"
+                    value={halfDayNote}
+                    onChange={e => setHalfDayNote(e.target.value)}
+                  />
+                </div>
+
+                {/* Notice */}
+                <div style={{
+                  padding: '10px 13px',
+                  borderRadius: '10px',
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  fontSize: '12px',
+                  color: 'var(--text-main, #f8fafc)',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px'
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '17px', color: '#f59e0b', flexShrink: 0, marginTop: '1px' }}>
+                    bolt
+                  </span>
+                  <div>
+                    <strong>Immediate Short Sign-off:</strong> Marks today&apos;s departure as permitted Half Day (0 early leave penalty), logs an approved audit adjustment, and notifies the employee.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Feedback message */}
+            {halfDayFeedback && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                background: halfDayFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                color: halfDayFeedback.type === 'success' ? '#10b981' : '#ef4444',
+                border: `1px solid ${halfDayFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
+              }}>
+                {halfDayFeedback.message}
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+              {halfDayTab === 'SCHEDULE' && (halfDayModalEmployee.shift?.toLowerCase().includes('half day') || halfDayModalEmployee.workShift?.name?.toLowerCase().includes('half day')) ? (
+                <button
+                  type="button"
+                  onClick={handleResetHalfDayDuty}
+                  disabled={isSubmittingHalfDay}
+                  style={{
+                    padding: '9px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    color: '#ef4444',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Reset to Standard Shift
+                </button>
+              ) : <div />}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setHalfDayModalEmployee(null)}
+                  disabled={isSubmittingHalfDay}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-main)',
+                    background: 'var(--surface-bg)',
+                    color: 'var(--text-main)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+
+                {halfDayTab === 'SCHEDULE' ? (
+                  <button
+                    type="button"
+                    onClick={handleSaveHalfDaySchedule}
+                    disabled={isSubmittingHalfDay}
+                    style={{
+                      padding: '9px 20px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#0f172a',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)'
+                    }}
+                  >
+                    {isSubmittingHalfDay ? (
+                      <>
+                        <span className={`material-symbols-outlined ${styles.spinning}`} style={{ fontSize: '16px' }}>progress_activity</span>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                        Save Half Day Schedule
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleExecuteTodaySignOff}
+                    disabled={isSubmittingHalfDay}
+                    style={{
+                      padding: '9px 20px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#0f172a',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)'
+                    }}
+                  >
+                    {isSubmittingHalfDay ? (
+                      <>
+                        <span className={`material-symbols-outlined ${styles.spinning}`} style={{ fontSize: '16px' }}>progress_activity</span>
+                        Authorizing...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+                        Authorize Short Sign-Off
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {editModalEmployee && (
         <div
           style={{
@@ -2296,6 +3093,38 @@ export default function EmployeesPage() {
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>auto_awesome</span>
                 </button>
 
+                {/* Half Day Duty & Short Sign-Off Action */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const emp = selectedEmployee;
+                    setSelectedEmployee(null);
+                    handleOpenHalfDayModal(emp);
+                  }}
+                  title="Half Day Duty & Short Sign-Off"
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: (selectedEmployee.shift?.toLowerCase().includes('half day') || selectedEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                      ? 'rgba(245, 158, 11, 0.22)'
+                      : 'rgba(255, 255, 255, 0.07)',
+                    border: `1px solid ${(selectedEmployee.shift?.toLowerCase().includes('half day') || selectedEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                      ? '#f59e0b'
+                      : 'rgba(255, 255, 255, 0.08)'}`,
+                    color: (selectedEmployee.shift?.toLowerCase().includes('half day') || selectedEmployee.workShift?.name?.toLowerCase().includes('half day'))
+                      ? '#fbbf24'
+                      : '#e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>timelapse</span>
+                </button>
+
                 {/* ID Tag / Copy ID Button */}
                 {selectedEmployee.employeeId && (
                   <button
@@ -2913,32 +3742,58 @@ export default function EmployeesPage() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const emp = selectedEmployee;
-                      setSelectedEmployee(null);
-                      handleOpenCustomDuty(emp);
-                    }}
-                    style={{
-                      marginTop: '4px',
-                      padding: '8px 12px',
-                      borderRadius: '10px',
-                      background: 'rgba(99, 102, 241, 0.15)',
-                      border: '1px solid rgba(99, 102, 241, 0.3)',
-                      color: '#a5b4fc',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>schedule</span>
-                    Configure Duty Shift
-                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const emp = selectedEmployee;
+                        setSelectedEmployee(null);
+                        handleOpenCustomDuty(emp);
+                      }}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '10px',
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        color: '#a5b4fc',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>schedule</span>
+                      Duty Shift
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const emp = selectedEmployee;
+                        setSelectedEmployee(null);
+                        handleOpenHalfDayModal(emp);
+                      }}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '10px',
+                        background: 'rgba(245, 158, 11, 0.15)',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        color: '#fbbf24',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>timelapse</span>
+                      Half Day Sign-Off
+                    </button>
+                  </div>
                 </div>
               )}
 

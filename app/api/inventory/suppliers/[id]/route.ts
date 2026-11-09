@@ -117,7 +117,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     if (existing._count.purchaseOrders > 0 || existing._count.goodsReceiptNotes > 0) {
       await prisma.supplier.update({
         where: { id },
-        data: { status: "SUSPENDED", isActive: false }
+        data: { status: "INACTIVE", isActive: false }
       });
       return NextResponse.json({ 
         success: true, 

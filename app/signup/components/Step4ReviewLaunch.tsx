@@ -65,25 +65,25 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
             {formData.logoUrl ? (
               <img src={formData.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <Building2 size={24} color="#60a5fa" />
+              <Building2 size={18} color="#60a5fa" />
             )}
           </div>
           <div>
-            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ffffff", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#ffffff", display: "flex", alignItems: "center", gap: "6px" }}>
               {formData.companyName || "Your Enterprise"}
-              <Sparkles size={16} color="#38bdf8" />
+              <Sparkles size={14} color="#38bdf8" />
             </div>
-            <div style={{ fontSize: "0.85rem", color: "#94a3b8", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "#94a3b8", marginTop: "1px" }}>
               <span style={{ color: "#38bdf8", fontWeight: 600 }}>{formData.businessType} Based</span> · {formData.companyEmail}
             </div>
           </div>
         </div>
 
         {/* Details Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
           <div style={summaryTileStyle}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94a3b8", marginBottom: "4px" }}>
-              <Terminal size={14} color="#60a5fa" />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#94a3b8", marginBottom: "2px" }}>
+              <Terminal size={12} color="#60a5fa" />
               <span style={summaryLabelStyle}>Industry Architecture</span>
             </div>
             <div style={summaryValueStyle}>
@@ -92,26 +92,26 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
           </div>
 
           <div style={summaryTileStyle}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94a3b8", marginBottom: "4px" }}>
-              <User size={14} color="#60a5fa" />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#94a3b8", marginBottom: "2px" }}>
+              <User size={12} color="#60a5fa" />
               <span style={summaryLabelStyle}>Root Workspace Owner</span>
             </div>
             <div style={summaryValueStyle}>
-              {formData.ownerName} <span style={{ color: "#94a3b8", fontWeight: 400 }}>({formData.ownerEmail})</span>
+              {formData.ownerName} <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "0.76rem" }}>({formData.ownerEmail})</span>
             </div>
           </div>
         </div>
 
         {/* Active Modules */}
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-            <Layers size={14} color="#60a5fa" />
+          <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "6px" }}>
+            <Layers size={13} color="#60a5fa" />
             <span style={summaryLabelStyle}>Active ERP Modules ({formData.selectedModules.length})</span>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             {formData.selectedModules.map((mId) => (
               <span key={mId} style={moduleChipStyle}>
-                <Check size={12} color="#38bdf8" />
+                <Check size={10} color="#38bdf8" />
                 {MODULE_LABELS[mId] || mId}
               </span>
             ))}
@@ -120,14 +120,14 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
 
         {/* Infrastructure Guarantee Banner */}
         <div style={infraBannerStyle}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Database size={18} color="#38bdf8" />
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Database size={16} color="#38bdf8" style={{ flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#ffffff" }}>
+              <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#ffffff" }}>
                 Multi-Tenant Sharding & Role-Based Access Control Ready
               </div>
-              <div style={{ fontSize: "0.78rem", color: "#94a3b8", marginTop: "2px" }}>
-                Instant schema migration, AES-256 encrypted storage, and email verification dispatch.
+              <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "1px" }}>
+                Instant schema migration, AES-256 encrypted storage, and verification dispatch.
               </div>
             </div>
           </div>
@@ -142,7 +142,7 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
           disabled={isLoading}
           style={secondaryButtonStyle}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={15} />
           <span>Back</span>
         </button>
         <button
@@ -151,8 +151,8 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
           disabled={isLoading}
           style={launchButtonStyle}
         >
-          <Rocket size={18} />
-          <span>{isLoading ? "Provisioning Cloud Workspace..." : "Launch Enterprise Workspace"}</span>
+          <Rocket size={16} />
+          <span>{isLoading ? "Provisioning..." : "Launch Enterprise Workspace"}</span>
         </button>
       </div>
     </div>
@@ -162,21 +162,22 @@ export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Ste
 /* Styles */
 const cardContainerStyle: React.CSSProperties = {
   position: "relative",
-  background: "rgba(15, 23, 42, 0.75)",
-  backdropFilter: "blur(24px)",
-  WebkitBackdropFilter: "blur(24px)",
+  background: "rgba(15, 23, 42, 0.88)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
   border: "1px solid rgba(255, 255, 255, 0.12)",
-  borderRadius: "28px",
-  padding: "36px 32px",
+  borderRadius: "18px",
+  padding: "16px 22px",
   width: "100%",
   maxWidth: "100%",
   margin: "0",
-  boxShadow: "0 30px 70px -15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.1)",
+  boxShadow: "0 16px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.05)",
   display: "flex",
   flexDirection: "column",
-  gap: "26px",
+  gap: "10px",
   color: "#ffffff",
-  overflow: "hidden"
+  overflow: "hidden",
+  transform: "translateZ(0)"
 };
 
 const topGlowLine: React.CSSProperties = {
@@ -191,26 +192,26 @@ const topGlowLine: React.CSSProperties = {
 
 const reviewCardBox: React.CSSProperties = {
   background: "rgba(0, 0, 0, 0.3)",
-  borderRadius: "20px",
-  padding: "24px",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
+  borderRadius: "14px",
+  padding: "12px 16px",
+  border: "1px solid rgba(255, 255, 255, 0.08)",
   display: "flex",
   flexDirection: "column",
-  gap: "18px"
+  gap: "10px"
 };
 
 const brandBannerStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "16px",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-  paddingBottom: "16px"
+  gap: "12px",
+  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+  paddingBottom: "10px"
 };
 
 const logoWrapper: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
-  borderRadius: "14px",
+  width: "36px",
+  height: "36px",
+  borderRadius: "10px",
   background: "rgba(99, 102, 241, 0.15)",
   border: "1px solid rgba(99, 102, 241, 0.3)",
   display: "flex",
@@ -222,13 +223,13 @@ const logoWrapper: React.CSSProperties = {
 
 const summaryTileStyle: React.CSSProperties = {
   background: "rgba(255, 255, 255, 0.03)",
-  padding: "12px 14px",
-  borderRadius: "12px",
+  padding: "8px 12px",
+  borderRadius: "10px",
   border: "1px solid rgba(255, 255, 255, 0.06)"
 };
 
 const summaryLabelStyle: React.CSSProperties = {
-  fontSize: "0.72rem",
+  fontSize: "0.68rem",
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: "0.08em",
@@ -236,7 +237,7 @@ const summaryLabelStyle: React.CSSProperties = {
 };
 
 const summaryValueStyle: React.CSSProperties = {
-  fontSize: "0.92rem",
+  fontSize: "0.84rem",
   fontWeight: 700,
   color: "#ffffff"
 };
@@ -244,28 +245,28 @@ const summaryValueStyle: React.CSSProperties = {
 const moduleChipStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "6px",
-  padding: "6px 12px",
-  borderRadius: "20px",
+  gap: "5px",
+  padding: "3px 8px",
+  borderRadius: "16px",
   background: "rgba(56, 189, 248, 0.12)",
   color: "#bae6fd",
-  fontSize: "0.8rem",
+  fontSize: "0.72rem",
   fontWeight: 600,
   border: "1px solid rgba(56, 189, 248, 0.3)"
 };
 
 const infraBannerStyle: React.CSSProperties = {
-  padding: "14px 16px",
-  borderRadius: "14px",
+  padding: "8px 12px",
+  borderRadius: "10px",
   background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(56, 189, 248, 0.12) 100%)",
-  border: "1px solid rgba(99, 102, 241, 0.3)"
+  border: "1px solid rgba(99, 102, 241, 0.25)"
 };
 
 const footerStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingTop: "16px",
+  paddingTop: "10px",
   borderTop: "1px solid rgba(255, 255, 255, 0.08)"
 };
 
@@ -273,14 +274,14 @@ const secondaryButtonStyle: React.CSSProperties = {
   background: "rgba(255, 255, 255, 0.05)",
   color: "#ffffff",
   border: "1px solid rgba(255, 255, 255, 0.15)",
-  padding: "12px 22px",
-  borderRadius: "14px",
-  fontSize: "0.92rem",
+  padding: "9px 18px",
+  borderRadius: "12px",
+  fontSize: "0.86rem",
   fontWeight: 600,
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: "8px",
+  gap: "6px",
   transition: "all 0.2s ease"
 };
 
@@ -288,14 +289,14 @@ const launchButtonStyle: React.CSSProperties = {
   background: "linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #00f2fe 100%)",
   color: "#ffffff",
   border: "none",
-  padding: "14px 34px",
-  borderRadius: "14px",
-  fontSize: "0.98rem",
+  padding: "10px 24px",
+  borderRadius: "12px",
+  fontSize: "0.92rem",
   fontWeight: 800,
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  gap: "10px",
-  boxShadow: "0 12px 30px -5px rgba(99, 102, 241, 0.5), 0 0 20px rgba(0, 242, 254, 0.3)",
+  gap: "8px",
+  boxShadow: "0 8px 24px -4px rgba(99, 102, 241, 0.5), 0 0 16px rgba(0, 242, 254, 0.3)",
   transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
 };

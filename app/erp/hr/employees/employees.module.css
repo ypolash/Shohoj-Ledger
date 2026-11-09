@@ -660,6 +660,43 @@
   border-color: #059669;
 }
 
+.actionIconBtnHalfDay {
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.actionIconBtnHalfDay:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.actionIconBtnHalfDayActive {
+  background: #f59e0b;
+  color: #0f172a;
+  border-color: #f59e0b;
+}
+
+.actionIconBtnHalfDayActive:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+.halfDayBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  width: fit-content;
+}
+
 .actionIconBtnEdit {
   background: rgba(37, 99, 235, 0.08);
   color: #3b82f6;

@@ -153,13 +153,6 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const copyCodeToClipboard = () => {
-    if (generatedCode) {
-      navigator.clipboard.writeText(generatedCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
     <div className={styles.container}>

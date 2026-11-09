@@ -11,9 +11,10 @@ interface AppShellProps {
   businessType?: string;
   companyName?: string;
   logoUrl?: string | null;
+  defaultPreset?: string;
 }
 
-export function AppShell({ children, businessType = 'Product + Service', companyName = 'Shohoj Ledger', logoUrl = null }: AppShellProps) {
+export function AppShell({ children, businessType = 'Product + Service', companyName = 'Shohoj Ledger', logoUrl = null, defaultPreset }: AppShellProps) {
   const { sidebarOpen, isMobile, setSidebarOpen } = useUI();
 
   return (
@@ -28,7 +29,7 @@ export function AppShell({ children, businessType = 'Product + Service', company
       )}
 
       {/* Sidebar */}
-      <Sidebar businessType={businessType} companyName={companyName} logoUrl={logoUrl} />
+      <Sidebar businessType={businessType} companyName={companyName} logoUrl={logoUrl} defaultPreset={defaultPreset} />
 
       {/* Main Content Area */}
       <div 

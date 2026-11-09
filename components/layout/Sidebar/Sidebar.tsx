@@ -31,14 +31,16 @@ interface SidebarProps {
   businessType?: string;
   companyName?: string;
   logoUrl?: string | null;
+  defaultPreset?: string;
 }
 
-export function Sidebar({ businessType = 'Product + Service', companyName = 'Shohoj Ledger', logoUrl = null }: SidebarProps) {
+export function Sidebar({ businessType = 'Product + Service', companyName = 'Shohoj Ledger', logoUrl = null, defaultPreset }: SidebarProps) {
   const { sidebarOpen, isMobile } = useUI();
   const [isHovered, setIsHovered] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isOfficeOffModalOpen, setIsOfficeOffModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentPreset, setCurrentPreset] = useState<string>(defaultPreset || '');
   const pathname = usePathname() || '';
   const router = useRouter();
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -46,19 +48,31 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
   const isExpanded = sidebarOpen || isHovered;
 
   useEffect(() => {
+    if (defaultPreset) {
+      setCurrentPreset(defaultPreset);
+    }
     const fetchUserData = async () => {
       try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          const data = await res.json();
+        const [meRes, presetRes] = await Promise.all([
+          fetch('/api/auth/me').catch(() => null),
+          fetch('/api/settings/project-presets').catch(() => null)
+        ]);
+        if (meRes && meRes.ok) {
+          const data = await meRes.json();
           setCurrentUser(data.user);
+        }
+        if (presetRes && presetRes.ok) {
+          const pData = await presetRes.json();
+          if (pData.success && pData.defaultPreset) {
+            setCurrentPreset(pData.defaultPreset);
+          }
         }
       } catch (e) {
         // ignore
       }
     };
     fetchUserData();
-  }, []);
+  }, [defaultPreset]);
 
   // Close profile menu when clicking outside
   useEffect(() => {
@@ -86,6 +100,13 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     }
   };
 
+  const isEducationPreset = Boolean(
+    currentPreset.toLowerCase().includes('education') ||
+    currentPreset.toLowerCase().includes('academic') ||
+    businessType.toLowerCase().includes('education') ||
+    businessType.toLowerCase().includes('academic')
+  );
+
   const navItems = [
     { name: 'Dashboard', icon: Home, href: '/erp' },
     { name: 'Projects', icon: Folder, href: '/erp/projects' },
@@ -103,6 +124,7 @@ export function Sidebar({ businessType = 'Product + Service', companyName = 'Sho
     if (item.name === 'Inventory' && type === 'SERVICE') return false;
     if (item.name === 'Projects' && type === 'PRODUCT') return false;
     if (item.name === 'Orders' && type === 'SERVICE') return false;
+    if (item.name === 'Student & Teacher' && !isEducationPreset) return false;
     return true;
   });
 

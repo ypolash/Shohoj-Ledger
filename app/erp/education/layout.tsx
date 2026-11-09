@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface NavTab {
   name: string;
@@ -21,12 +21,47 @@ const ACADEMY_TABS: NavTab[] = [
 
 export default function EducationLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/settings/project-presets")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!isMounted) return;
+        if (d.success) {
+          const isEdu = Boolean(
+            d.defaultPreset?.toLowerCase().includes("education") ||
+            d.defaultPreset?.toLowerCase().includes("academic")
+          );
+          if (!isEdu) {
+            router.replace("/erp");
+            return;
+          }
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(true);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsAuthorized(true);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const isItemActive = (item: NavTab) => {
     return pathname.startsWith(item.href);
   };
 
   const currentActiveItem = ACADEMY_TABS.find(isItemActive);
+
+  if (isAuthorized === false) {
+    return null;
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>

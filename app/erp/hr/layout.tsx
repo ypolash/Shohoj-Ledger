@@ -47,7 +47,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
     fetch('/api/settings/project-presets')
       .then(r => r.json())
       .then(d => {
-        if (d.success && d.defaultPreset === 'education_academic') {
+        if (d.success && (d.defaultPreset === 'education_academic' || d.defaultPreset?.toLowerCase().includes('education') || d.defaultPreset?.toLowerCase().includes('academic'))) {
           setIsEducationPreset(true);
         }
       })

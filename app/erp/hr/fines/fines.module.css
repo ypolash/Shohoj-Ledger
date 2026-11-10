@@ -5,8 +5,10 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
   width: 100%;
+  flex: 1;
+  min-height: 0;
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -29,8 +31,9 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 4px 0;
+  gap: 10px;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .headerTitleGroup {
@@ -306,13 +309,14 @@
 .policyCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 16px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 8px 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .policyHeaderRow {
@@ -324,7 +328,7 @@
 }
 
 .policyHeaderTitle {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main, #0f172a);
   display: flex;
@@ -335,30 +339,30 @@
 .policyGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  gap: 10px;
   animation: fadeIn 0.2s ease;
 }
 
 .policyItem {
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
   background: var(--surface-hover, #f8fafc);
   border-left: 3px solid var(--border-main, #e2e8f0);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .policyItemTitle {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-main, #0f172a);
 }
 
 .policyItemDesc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted, #64748b);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 /* --------------------------------------------------------------------------
@@ -367,12 +371,13 @@
 .controlsCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 0;
-  padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .controlsTopRow {
@@ -380,33 +385,33 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .searchWrapper {
   position: relative;
   flex: 1;
-  min-width: 240px;
+  min-width: 200px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-muted, #64748b);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  padding: 10px 14px 10px 40px;
-  border-radius: 0;
+  padding: 7px 12px 7px 34px;
+  border-radius: 6px;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-hover, #f8fafc);
   color: var(--text-main, #0f172a);
-  font-size: 13px;
+  font-size: 12px;
   box-sizing: border-box;
   transition: all 0.2s ease;
 }
@@ -441,12 +446,12 @@
 }
 
 .selectDropdown {
-  padding: 9px 14px;
-  border-radius: 0;
+  padding: 7px 12px;
+  border-radius: 6px;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-card, #ffffff);
   color: var(--text-main, #0f172a);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   outline: none;
@@ -462,13 +467,13 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #ef4444;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 8px 12px;
-  border-radius: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -482,18 +487,18 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 10px;
+  gap: 8px;
+  padding-top: 6px;
   border-top: 1px solid var(--border-main, #e2e8f0);
 }
 
 .statusTabsList {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   background: var(--surface-hover, #f8fafc);
-  padding: 5px;
-  border-radius: 0;
+  padding: 3px;
+  border-radius: 6px;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
@@ -508,17 +513,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   aspect-ratio: 1;
-  padding: 3px 2px;
-  border-radius: 0;
+  padding: 2px 1px;
+  border-radius: 4px;
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  gap: 2px;
+  gap: 1px;
   outline: none;
 }
 
@@ -530,7 +535,7 @@
 }
 
 .statusSquareCount {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.2px;
@@ -744,16 +749,23 @@
 .tableCard {
   background: var(--surface-main, #0f172a);
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
-  border-radius: 0;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .tableWrapper {
   overflow-x: auto;
+  overflow-y: auto;
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .dataTable {
@@ -766,12 +778,16 @@
 .tableHeaderRow {
   background: #10b981;
   border-bottom: 1px solid #059669;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .tableHeaderCell {
   padding: 9px 12px;
   font-weight: 700;
   color: #ffffff;
+  background: #10b981;
   font-size: 0.725rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -799,6 +815,63 @@
   vertical-align: middle;
   white-space: nowrap;
   font-size: 0.825rem;
+}
+
+/* Violation Reason Column Styles */
+.violationReasonCell {
+  min-width: 200px;
+  max-width: 320px;
+  white-space: normal !important;
+}
+
+.reasonPreviewRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 300px;
+}
+
+.reasonTextSnippet {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-main, #f8fafc);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+  cursor: pointer;
+  display: inline-block;
+  transition: color 0.15s ease;
+}
+
+.reasonTextSnippet:hover {
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+.viewFullReasonBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.15s ease;
+}
+
+.viewFullReasonBtn:hover {
+  background: rgba(59, 130, 246, 0.28);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 .employeeProfileGroup {

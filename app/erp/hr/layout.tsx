@@ -213,7 +213,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px', background: 'var(--surface-bg)' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 20px', background: 'var(--surface-bg)', display: 'flex', flexDirection: 'column' }}>
         {children}
       </div>
     </div>

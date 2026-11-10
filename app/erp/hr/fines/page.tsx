@@ -127,7 +127,9 @@ export default function FinesPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState('Just now');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [showPolicy, setShowPolicy] = useState(true);
+  const [showPolicy, setShowPolicy] = useState(false);
+  const [showDateStrip, setShowDateStrip] = useState(false);
+  const [selectedViolationReason, setSelectedViolationReason] = useState<EmployeeFine | null>(null);
 
   // Modal & Profile States
   const [showModal, setShowModal] = useState(false);
@@ -992,23 +994,50 @@ export default function FinesPage() {
               ))}
             </select>
 
+            {/* Date Ribbon Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowDateStrip(prev => !prev)}
+              className={styles.secondaryBtn}
+              style={{
+                fontSize: '12px',
+                padding: '6px 10px',
+                height: '33px',
+                borderColor: (showDateStrip || filterDate) ? 'rgba(244, 63, 94, 0.4)' : undefined,
+                color: (showDateStrip || filterDate) ? '#f43f5e' : undefined,
+                background: (showDateStrip || filterDate) ? 'rgba(244, 63, 94, 0.08)' : undefined,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+              title="Toggle calendar date ribbon"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>calendar_today</span>
+              <span>{filterDate ? `Date: ${filterDate}` : 'Date Ribbon'}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                {showDateStrip ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+
             {/* Reset Filters */}
             {hasActiveFilters && (
               <button onClick={handleResetFilters} className={styles.resetBtn} title="Clear all filters">
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>filter_alt_off</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>filter_alt_off</span>
                 Reset
               </button>
             )}
           </div>
         </div>
 
-        {/* Horizontal Calendar Date Ribbon Strip */}
-        <HorizontalFinesDateStrip
-          selectedDate={filterDate}
-          onSelectDate={(dateKey) => setFilterDate(dateKey)}
-          onClearDate={() => setFilterDate('')}
-          fines={fines}
-        />
+        {/* Horizontal Calendar Date Ribbon Strip (Collapsible to save screen space) */}
+        {(showDateStrip || filterDate) && (
+          <HorizontalFinesDateStrip
+            selectedDate={filterDate}
+            onSelectDate={(dateKey) => setFilterDate(dateKey)}
+            onClearDate={() => setFilterDate('')}
+            fines={fines}
+          />
+        )}
 
         <div className={styles.controlsBottomRow}>
           {/* Category & Status Tabs */}
@@ -1168,13 +1197,13 @@ export default function FinesPage() {
             <table className={styles.dataTable}>
             <thead>
               <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell}>Date</th>
-                <th className={styles.tableHeaderCell}>Employee</th>
-                <th className={styles.tableHeaderCell}>Violation / Reason</th>
-                <th className={styles.tableHeaderCell}>Fine Amount</th>
-                <th className={styles.tableHeaderCell}>Status</th>
-                <th className={styles.tableHeaderCell}>Payroll Period</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right' }}>Actions</th>
+                <th className={styles.tableHeaderCell} style={{ width: '110px' }}>Date</th>
+                <th className={styles.tableHeaderCell} style={{ width: '180px' }}>Employee</th>
+                <th className={styles.tableHeaderCell} style={{ minWidth: '200px', maxWidth: '320px' }}>Violation / Reason</th>
+                <th className={styles.tableHeaderCell} style={{ width: '110px' }}>Fine Amount</th>
+                <th className={styles.tableHeaderCell} style={{ width: '150px' }}>Status</th>
+                <th className={styles.tableHeaderCell} style={{ width: '130px' }}>Payroll Period</th>
+                <th className={styles.tableHeaderCell} style={{ textAlign: 'right', width: '140px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1223,9 +1252,9 @@ export default function FinesPage() {
                       </div>
                     </td>
 
-                    {/* Reason */}
-                    <td className={styles.tableCell}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {/* Reason - Truncated with Click to View Full Text */}
+                    <td className={`${styles.tableCell} ${styles.violationReasonCell}`}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         {f.reason?.toLowerCase().includes('late') && (
                           <span style={{
                             fontSize: '10px',
@@ -1245,9 +1274,29 @@ export default function FinesPage() {
                             Late Fine
                           </span>
                         )}
-                        <span style={{ fontWeight: 500, color: 'var(--text-main)', fontSize: '13px' }}>
-                          {f.reason}
-                        </span>
+                        <div className={styles.reasonPreviewRow}>
+                          <span
+                            className={styles.reasonTextSnippet}
+                            onClick={() => setSelectedViolationReason(f)}
+                            title={`${f.reason}\n\n(Click to view full text)`}
+                          >
+                            {f.reason}
+                          </span>
+                          {f.reason && f.reason.length > 25 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedViolationReason(f);
+                              }}
+                              className={styles.viewFullReasonBtn}
+                              title="Click to view full violation text"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>visibility</span>
+                              Full
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </td>
 
@@ -2015,8 +2064,37 @@ export default function FinesPage() {
                                     <td style={{ padding: '6px 8px', color: 'var(--text-secondary)' }}>
                                       {formatDate(item.date)}
                                     </td>
-                                    <td style={{ padding: '6px 8px', fontWeight: 500 }}>
-                                      {item.reason}
+                                    <td style={{ padding: '6px 8px', fontWeight: 500, maxWidth: '240px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span
+                                          onClick={() => setSelectedViolationReason(item)}
+                                          title={`${item.reason}\n\n(Click to view full text)`}
+                                          style={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            maxWidth: '180px',
+                                            display: 'inline-block',
+                                            cursor: 'pointer',
+                                          }}
+                                        >
+                                          {item.reason}
+                                        </span>
+                                        {item.reason && item.reason.length > 25 && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedViolationReason(item);
+                                            }}
+                                            className={styles.viewFullReasonBtn}
+                                            title="Click to view full violation text"
+                                          >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>visibility</span>
+                                            Full
+                                          </button>
+                                        )}
+                                      </div>
                                     </td>
                                     <td style={{ padding: '6px 8px', fontWeight: 700, color: 'var(--danger)' }}>
                                       {formatBDT(item.amount)}
@@ -2298,6 +2376,148 @@ export default function FinesPage() {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 8. Full Violation Reason Modal */}
+      {selectedViolationReason && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setSelectedViolationReason(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="violation-modal-title"
+        >
+          <div
+            className={styles.modalCard}
+            style={{ maxWidth: '520px', width: '92%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: 'rgba(244, 63, 94, 0.12)',
+                  color: '#f43f5e',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>gavel</span>
+                </div>
+                <div>
+                  <h3 id="violation-modal-title" style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
+                    Violation &amp; Fine Details
+                  </h3>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Full disciplinary record description
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedViolationReason(null)}
+                className={styles.closeBtn}
+                title="Close dialog"
+                aria-label="Close dialog"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Employee & Record Header Strip */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 14px',
+                background: 'var(--surface-hover)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-main)',
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-main)' }}>
+                    {selectedViolationReason.employee?.firstName || 'Employee'} {selectedViolationReason.employee?.lastName || ''}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', gap: '8px', marginTop: '2px' }}>
+                    <span>#{selectedViolationReason.employee?.employeeId || selectedViolationReason.employeeId.slice(0, 8)}</span>
+                    <span>•</span>
+                    <span>{formatDate(selectedViolationReason.date)}</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--danger)' }}>
+                    {formatBDT(selectedViolationReason.amount)}
+                  </div>
+                  <div style={{ marginTop: '2px' }}>
+                    <span className={`${styles.statusChip} ${getStatusChipClass(selectedViolationReason.status)}`} style={{ fontSize: '10px', padding: '1px 6px' }}>
+                      {selectedViolationReason.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Text Box */}
+              <div>
+                <label style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  display: 'block',
+                  marginBottom: '6px'
+                }}>
+                  Complete Violation Reason
+                </label>
+                <div style={{
+                  background: 'var(--surface-main, #0f172a)',
+                  border: '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
+                  borderRadius: '8px',
+                  padding: '14px 16px',
+                  fontSize: '13.5px',
+                  lineHeight: '1.6',
+                  color: 'var(--text-main, #f8fafc)',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  userSelect: 'text',
+                  maxHeight: '240px',
+                  overflowY: 'auto',
+                }}>
+                  {selectedViolationReason.reason || 'No violation description provided.'}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.clipboard && selectedViolationReason.reason) {
+                      navigator.clipboard.writeText(selectedViolationReason.reason);
+                      setSuccessMsg('Violation text copied to clipboard!');
+                      setTimeout(() => setSuccessMsg(''), 3000);
+                    }
+                  }}
+                  className={styles.secondaryBtn}
+                  style={{ fontSize: '12px', padding: '6px 12px' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>content_copy</span>
+                  Copy Text
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedViolationReason(null)}
+                  className={styles.primaryBtn}
+                  style={{ fontSize: '12px', padding: '6px 16px' }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

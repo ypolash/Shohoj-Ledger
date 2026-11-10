@@ -10,6 +10,14 @@
   flex: 1;
   min-height: 0;
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.container::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 @keyframes fadeIn {
@@ -758,6 +766,14 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tableCard::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .tableWrapper {
@@ -766,6 +782,14 @@
   width: 100%;
   flex: 1;
   min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tableWrapper::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .dataTable {
@@ -819,16 +843,15 @@
 
 /* Violation Reason Column Styles */
 .violationReasonCell {
-  min-width: 200px;
-  max-width: 320px;
+  min-width: 220px;
   white-space: normal !important;
 }
 
 .reasonPreviewRow {
   display: flex;
   align-items: center;
-  gap: 6px;
-  max-width: 300px;
+  gap: 8px;
+  width: 100%;
 }
 
 .reasonTextSnippet {
@@ -838,7 +861,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 220px;
+  flex: 1;
+  min-width: 0;
   cursor: pointer;
   display: inline-block;
   transition: color 0.15s ease;

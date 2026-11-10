@@ -1197,12 +1197,12 @@ export default function FinesPage() {
             <table className={styles.dataTable}>
             <thead>
               <tr className={styles.tableHeaderRow}>
-                <th className={styles.tableHeaderCell} style={{ width: '110px' }}>Date</th>
-                <th className={styles.tableHeaderCell} style={{ width: '180px' }}>Employee</th>
-                <th className={styles.tableHeaderCell} style={{ minWidth: '200px', maxWidth: '320px' }}>Violation / Reason</th>
-                <th className={styles.tableHeaderCell} style={{ width: '110px' }}>Fine Amount</th>
-                <th className={styles.tableHeaderCell} style={{ width: '150px' }}>Status</th>
-                <th className={styles.tableHeaderCell} style={{ textAlign: 'right', width: '140px' }}>Actions</th>
+                <th className={styles.tableHeaderCell} style={{ width: '120px', whiteSpace: 'nowrap' }}>Date</th>
+                <th className={styles.tableHeaderCell} style={{ width: '220px', whiteSpace: 'nowrap' }}>Employee</th>
+                <th className={styles.tableHeaderCell} style={{ minWidth: '220px' }}>Violation / Reason</th>
+                <th className={styles.tableHeaderCell} style={{ width: '120px', whiteSpace: 'nowrap' }}>Fine Amount</th>
+                <th className={styles.tableHeaderCell} style={{ width: '150px', whiteSpace: 'nowrap' }}>Status</th>
+                <th className={styles.tableHeaderCell} style={{ textAlign: 'right', width: '140px', whiteSpace: 'nowrap' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1319,10 +1319,8 @@ export default function FinesPage() {
                       </span>
                     </td>
 
-
-
                     {/* Actions */}
-                    <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                    <td className={styles.tableCell} style={{ textAlign: 'right', width: '140px', whiteSpace: 'nowrap' }}>
                       <div className={styles.actionBtnGroup} style={{ justifyContent: 'flex-end' }}>
                         {isConsideration && (
                           <button

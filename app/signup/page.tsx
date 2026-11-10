@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import styles from "./page.module.css";
 import { Canvas3DBackground } from "./components/Canvas3DBackground";
 import { Step1CompanyProfile } from "./components/Step1CompanyProfile";
@@ -16,7 +15,6 @@ import {
   Rocket, 
   CheckCircle2, 
   AlertCircle,
-  ArrowRight,
   Shield,
   Database,
   Lock
@@ -60,31 +58,6 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(3);
-  const [successData, setSuccessData] = useState<{ 
-    companyName: string; 
-    ownerEmail: string;
-    verificationCode?: string;
-    verificationUrl?: string;
-  } | null>(null);
-
-  // Auto-redirect to verification page after signup
-  useEffect(() => {
-    if (!isSuccess || !successData?.verificationUrl) return;
-
-    if (redirectCountdown <= 0) {
-      router.push(successData.verificationUrl);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setRedirectCountdown((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [isSuccess, redirectCountdown, successData, router]);
 
   // Unified Form State
   const [formData, setFormData] = useState({
@@ -226,18 +199,10 @@ export default function SignupPage() {
         throw new Error(data.message || data.error || "A validation error occurred. Please check your details.");
       }
 
-      const targetVerifyUrl = `/verify-email?email=${encodeURIComponent(data.data?.ownerEmail || formData.ownerEmail)}`;
-      setSuccessData({
-        companyName: data.data?.companyName || formData.companyName,
-        ownerEmail: data.data?.ownerEmail || formData.ownerEmail,
-        verificationCode: data.data?.verificationCode,
-        verificationUrl: targetVerifyUrl,
-      });
-      setRedirectCountdown(3);
-      setIsSuccess(true);
+      // Automatically launch directly into the provisioned ERP workspace
+      window.location.href = "/erp";
     } catch (err: any) {
       setApiError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -397,112 +362,6 @@ export default function SignupPage() {
         </div>
 
       </div>
-
-      {/* Success Modal 3D Overlay */}
-      {isSuccess && successData && (
-        <div className={styles.successOverlay}>
-          <div className={styles.successCard}>
-            <div className={styles.checkIconLarge}>
-              <CheckCircle2 size={42} />
-            </div>
-            <h2 style={{ margin: "0 0 8px 0", fontSize: "1.75rem", fontWeight: 800 }}>Workspace Ready!</h2>
-            <p style={{ margin: "0 0 24px 0", fontSize: "0.92rem", color: "#94a3b8" }}>
-              Enterprise multi-tenant schema and selected modules provisioned successfully.
-            </p>
-
-            <div
-              style={{
-                background: "rgba(0, 0, 0, 0.4)",
-                borderRadius: "18px",
-                padding: "20px",
-                textAlign: "left",
-                marginBottom: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                fontSize: "0.9rem",
-                border: "1px solid rgba(255, 255, 255, 0.1)"
-              }}
-            >
-              <div>
-                <span style={{ color: "#94a3b8" }}>Organization:</span>{" "}
-                <strong style={{ color: "#ffffff" }}>{successData.companyName}</strong>
-              </div>
-              <div>
-                <span style={{ color: "#94a3b8" }}>Root Admin Login:</span>{" "}
-                <strong style={{ color: "#ffffff" }}>{successData.ownerEmail}</strong>
-              </div>
-              {successData.verificationCode && (
-                <div style={{ marginTop: "6px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                  <span style={{ color: "#94a3b8" }}>Email Verification OTP:</span>{" "}
-                  <strong style={{ color: "#38bdf8", letterSpacing: "3px", fontFamily: "monospace", fontSize: "1.05rem" }}>
-                    {successData.verificationCode}
-                  </strong>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {successData.verificationUrl && (
-                <Link
-                  href={successData.verificationUrl}
-                  style={{
-                    padding: "14px",
-                    borderRadius: "14px",
-                    background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
-                    color: "#06101e",
-                    textDecoration: "none",
-                    fontWeight: 800,
-                    fontSize: "0.95rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    boxShadow: "0 10px 25px rgba(0, 242, 254, 0.4)"
-                  }}
-                >
-                  <span>Verify Email Address Now ({redirectCountdown}s)</span>
-                  <ArrowRight size={16} />
-                </Link>
-              )}
-
-              <div style={{ display: "flex", gap: "12px" }}>
-                <Link
-                  href="/login"
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    borderRadius: "14px",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    color: "#ffffff",
-                    textDecoration: "none",
-                    fontWeight: 600,
-                    fontSize: "0.9rem"
-                  }}
-                >
-                  Go to Login
-                </Link>
-                <Link
-                  href="/erp"
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    borderRadius: "14px",
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    color: "#ffffff",
-                    textDecoration: "none",
-                    fontWeight: 600,
-                    fontSize: "0.9rem"
-                  }}
-                >
-                  Open ERP
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

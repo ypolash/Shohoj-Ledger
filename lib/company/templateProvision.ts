@@ -19,7 +19,22 @@ export async function provisionIndustryTemplate(
   let departments: string[] = ["Management", "Finance", "Human Resources", "Sales & Marketing"];
   let jobTitles: string[] = ["Chief Executive Officer", "General Manager", "Accountant", "HR Executive"];
 
-  if (normalized.includes("it") || normalized.includes("software")) {
+  if (normalized.includes("goods") || normalized.includes("consumer") || normalized.includes("retail") || normalized.includes("commerce")) {
+    departments = ["Store & Showroom Operations", "Inventory & Warehouse", "Purchasing & Sourcing", "Billing & Cashier", "Sales & Marketing", "Customer Service"];
+    jobTitles = ["Store Manager", "Inventory Specialist", "Cashier & POS Operator", "Sales Executive", "Procurement Officer", "Visual Merchandiser"];
+  } else if (normalized.includes("hotel") || normalized.includes("resturant") || normalized.includes("restaurant") || normalized.includes("food")) {
+    departments = ["Restaurant Operations", "Kitchen & Food Prep", "Front Desk & Reservations", "Inventory & Provisions", "Billing & Cashier", "Housekeeping"];
+    jobTitles = ["Restaurant Manager", "Executive Chef", "Floor Captain", "Kitchen Supervisor", "Cashier", "Storekeeper"];
+  } else if (normalized.includes("pharmacy") || normalized.includes("pharmecy") || normalized.includes("health")) {
+    departments = ["Pharmacy Dispensing", "Medical Inventory & Expiry Control", "Procurement & Suppliers", "Billing & POS", "Regulatory Compliance"];
+    jobTitles = ["Chief Pharmacist", "Assistant Pharmacist", "Pharmacy Storekeeper", "Billing Executive", "Inventory Specialist"];
+  } else if (normalized.includes("electronic") || normalized.includes("gadget") || normalized.includes("device")) {
+    departments = ["Store & Showroom", "Technical Service & Warranty", "Inventory & Serial Tracking", "Procurement & Distribution", "Sales & B2B"];
+    jobTitles = ["Showroom Manager", "Technical Support Specialist", "Warranty Coordinator", "Inventory Specialist", "Sales Officer"];
+  } else if (normalized.includes("beauty") || normalized.includes("beuty") || normalized.includes("cosmetic")) {
+    departments = ["Salon & Retail Operations", "Product Inventory & Stock", "Consultation & Customer Care", "Billing & POS", "Marketing & Promotions"];
+    jobTitles = ["Store / Salon Manager", "Beauty Consultant", "Inventory Supervisor", "Cashier", "Brand Promoter"];
+  } else if (normalized.includes("it") || normalized.includes("software")) {
     departments = ["Engineering", "Product Design", "Quality Assurance", "Human Resources", "Finance", "Sales & Marketing", "Customer Support"];
     jobTitles = ["Software Engineer", "Frontend Developer", "Backend Developer", "UI/UX Designer", "QA Engineer", "Product Manager", "Support Specialist"];
   } else if (normalized.includes("retail") || normalized.includes("commerce")) {

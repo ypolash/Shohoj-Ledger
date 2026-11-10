@@ -162,7 +162,7 @@ export function HorizontalFinesDateStrip({
               color: '#f43f5e',
               background: 'rgba(244, 63, 94, 0.15)',
               padding: '2px 8px',
-              borderRadius: '6px',
+              borderRadius: '0px',
               textTransform: 'none'
             }}>
               Filtered: {selectedDate}

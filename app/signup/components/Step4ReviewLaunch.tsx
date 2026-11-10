@@ -43,12 +43,26 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 const TEMPLATE_LABELS: Record<string, string> = {
+  // Product Presets
+  goods_consumer: "Goods & Consumer",
+  goods: "Goods & Consumer",
+  hotel_restaurant: "Hotel & Resturant",
+  hotel: "Hotel & Resturant",
+  pharmacy: "Pharmecy",
+  electronic_gadget: "Electronic & Gadget",
+  electronics: "Electronic & Gadget",
+  beauty_cosmetics: "Beuty & Cosmetics",
+  cosmetics: "Beuty & Cosmetics",
+
+  // Service Presets
   it: "IT & Software Agency",
+  media: "Video & Media Agency",
   retail: "Retail & E-Commerce",
   manufacturing: "Manufacturing & Plant",
   wholesale: "Wholesale & Logistics",
   healthcare: "Healthcare & Pharma",
-  consulting: "Consulting & Professional"
+  consulting: "Consulting & Professional",
+  education: "Education & Academy"
 };
 
 export function Step4ReviewLaunch({ formData, isLoading, onBack, onSubmit }: Step4Props) {

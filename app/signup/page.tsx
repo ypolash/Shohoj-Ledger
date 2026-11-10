@@ -19,6 +19,7 @@ import {
   Database,
   Lock
 } from "lucide-react";
+import { mapIndustryToProjectPreset } from "@/lib/projects/projectPresets";
 
 const STEP_META = [
   {
@@ -66,8 +67,8 @@ export default function SignupPage() {
     phone: "",
     logoUrl: "",
     businessType: "Product",
-    industryTemplate: "it",
-    projectPreset: "software_it",
+    industryTemplate: "goods_consumer",
+    projectPreset: "manufacturing_engineering",
     selectedModules: ["finance", "crm", "inventory", "hr", "payroll"],
     ownerName: "",
     ownerEmail: "",
@@ -77,7 +78,25 @@ export default function SignupPage() {
   });
 
   const updateForm = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "businessType") {
+        if (value === "Product") {
+          const productTemplateIds = ["goods_consumer", "hotel_restaurant", "pharmacy", "electronic_gadget", "beauty_cosmetics"];
+          if (!productTemplateIds.includes(prev.industryTemplate)) {
+            next.industryTemplate = "goods_consumer";
+            next.projectPreset = mapIndustryToProjectPreset("goods_consumer");
+          }
+        } else if (value === "Service") {
+          const serviceTemplateIds = ["it", "media", "consulting", "education", "retail", "manufacturing", "wholesale", "healthcare"];
+          if (!serviceTemplateIds.includes(prev.industryTemplate)) {
+            next.industryTemplate = "it";
+            next.projectPreset = mapIndustryToProjectPreset("it");
+          }
+        }
+      }
+      return next;
+    });
     if (fieldErrors[field]) {
       setFieldErrors((prev) => ({ ...prev, [field]: "" }));
     }

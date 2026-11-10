@@ -176,7 +176,7 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
 
       // 10. Provision Industry Templates
       try {
-        await provisionIndustryTemplate(tx, company.id, businessType);
+        await provisionIndustryTemplate(tx, company.id, payload.industryTemplate || businessType);
       } catch (templateError: any) {
         console.log(`✗ Template Provision Failed. Error Code: ${templateError.code || templateError.message}`);
         throw templateError;

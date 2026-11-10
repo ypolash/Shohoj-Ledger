@@ -45,7 +45,7 @@
 .headerIconBtn {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 0px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -122,7 +122,7 @@
   font-size: 12px;
   font-weight: 600;
   padding: 3px 10px;
-  border-radius: 9999px;
+  border-radius: 0px;
   background: rgba(244, 63, 94, 0.1);
   color: #e11d48;
   border: 1px solid rgba(244, 63, 94, 0.2);
@@ -151,7 +151,7 @@
   background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   color: #ffffff;
   padding: 10px 18px;
-  border-radius: 12px;
+  border-radius: 0px;
   font-size: 13px;
   font-weight: 600;
   border: none;
@@ -175,7 +175,7 @@
   color: var(--text-main, #0f172a);
   border: 1px solid var(--border-main, #e2e8f0);
   padding: 9px 14px;
-  border-radius: 12px;
+  border-radius: 0px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -210,7 +210,7 @@
 .kpiCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 0px;
   padding: 18px 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   display: flex;
@@ -234,7 +234,7 @@
 .kpiIconBox {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -245,7 +245,7 @@
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 20px;
+  border-radius: 0px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -309,7 +309,7 @@
 .policyCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 8px;
+  border-radius: 0px;
   padding: 8px 14px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   display: flex;
@@ -345,7 +345,7 @@
 
 .policyItem {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 0px;
   background: var(--surface-hover, #f8fafc);
   border-left: 3px solid var(--border-main, #e2e8f0);
   display: flex;
@@ -371,7 +371,7 @@
 .controlsCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 8px;
+  border-radius: 0px;
   padding: 8px 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   display: flex;
@@ -407,7 +407,7 @@
 .searchInput {
   width: 100%;
   padding: 7px 12px 7px 34px;
-  border-radius: 6px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-hover, #f8fafc);
   color: var(--text-main, #0f172a);
@@ -447,7 +447,7 @@
 
 .selectDropdown {
   padding: 7px 12px;
-  border-radius: 6px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-card, #ffffff);
   color: var(--text-main, #0f172a);
@@ -473,7 +473,7 @@
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 0px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -498,7 +498,7 @@
   gap: 4px;
   background: var(--surface-hover, #f8fafc);
   padding: 3px;
-  border-radius: 6px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
@@ -518,7 +518,7 @@
   min-width: 36px;
   aspect-ratio: 1;
   padding: 2px 1px;
-  border-radius: 4px;
+  border-radius: 0px;
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -658,7 +658,7 @@
   font-size: 11px;
   font-weight: 600;
   padding: 5px 9px;
-  border-radius: 6px;
+  border-radius: 0px;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
@@ -690,7 +690,7 @@
   font-size: 12px;
   font-weight: 600;
   padding: 5px 12px;
-  border-radius: 8px;
+  border-radius: 0px;
   border: none;
   background: transparent;
   color: var(--text-muted, #64748b);
@@ -716,13 +716,13 @@
   gap: 4px;
   background: var(--surface-hover, #f8fafc);
   padding: 4px;
-  border-radius: 0;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
 .viewToggleBtn {
   padding: 6px 10px;
-  border-radius: 0;
+  border-radius: 0px;
   border: none;
   background: transparent;
   color: var(--text-muted, #64748b);
@@ -749,7 +749,7 @@
 .tableCard {
   background: var(--surface-main, #0f172a);
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.08));
-  border-radius: 8px;
+  border-radius: 0px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
@@ -859,7 +859,7 @@
   font-size: 10px;
   font-weight: 700;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 0px;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -883,7 +883,7 @@
 .empAvatar {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: 0px;
   background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
   color: #ffffff;
   display: flex;
@@ -915,7 +915,7 @@
   color: #e11d48;
   background: rgba(244, 63, 94, 0.08);
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: 0px;
   margin-top: 2px;
   width: fit-content;
 }
@@ -932,7 +932,7 @@
   font-size: 0.725rem;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 0;
+  border-radius: 0px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   display: inline-flex;
@@ -973,7 +973,7 @@
   color: var(--text-secondary, #475569);
   background: var(--surface-hover, #f8fafc);
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
 }
 
@@ -986,7 +986,7 @@
 
 .waiveBtn {
   padding: 5px 10px;
-  border-radius: 8px;
+  border-radius: 0px;
   border: 1px solid rgba(239, 68, 68, 0.25);
   background: rgba(239, 68, 68, 0.08);
   color: #dc2626;
@@ -1006,7 +1006,7 @@
 
 .reinstateBtn {
   padding: 5px 10px;
-  border-radius: 8px;
+  border-radius: 0px;
   border: 1px solid rgba(245, 158, 11, 0.25);
   background: rgba(245, 158, 11, 0.08);
   color: #d97706;
@@ -1036,7 +1036,7 @@
 .fineCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 18px;
+  border-radius: 0px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   display: flex;
@@ -1062,7 +1062,7 @@
 .cardAmountBox {
   background: var(--surface-hover, #f8fafc);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
@@ -1077,7 +1077,7 @@
   background: rgba(248, 250, 252, 0.7);
   border-left: 3px solid #f43f5e;
   padding: 8px 12px;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0px;
   font-style: italic;
 }
 
@@ -1102,7 +1102,7 @@
   padding: 64px 24px;
   text-align: center;
   gap: 14px;
-  border-radius: 18px;
+  border-radius: 0px;
   background: var(--surface-card, #ffffff);
   border: 1px dashed var(--border-main, #e2e8f0);
 }
@@ -1110,7 +1110,7 @@
 .emptyStateIcon {
   width: 64px;
   height: 64px;
-  border-radius: 20px;
+  border-radius: 0px;
   background: var(--surface-hover, #f8fafc);
   color: #e11d48;
   display: flex;
@@ -1159,7 +1159,7 @@
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
   margin: auto;
-  border-radius: 20px;
+  border-radius: 0px;
   padding: 28px;
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -1195,7 +1195,7 @@
   align-items: center;
   justify-content: center;
   padding: 4px;
-  border-radius: 8px;
+  border-radius: 0px;
   transition: all 0.2s ease;
 }
 
@@ -1225,7 +1225,7 @@
 .formInput {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-input, #ffffff);
   color: var(--text-main, #0f172a);
@@ -1252,7 +1252,7 @@
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, #e2e8f0);
   background: var(--surface-hover, #f8fafc);
   color: var(--text-secondary, #475569);
@@ -1276,7 +1276,7 @@
 
 .alertBox {
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: 0px;
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -1302,7 +1302,7 @@
   background: linear-gradient(90deg, var(--surface-hover, #f1f5f9) 25%, var(--border-main, #e2e8f0) 50%, var(--surface-hover, #f1f5f9) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+  border-radius: 0px;
 }
 
 @keyframes shimmer {
@@ -1324,7 +1324,7 @@
   width: 320px;
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 0px;
   padding: 8px;
   box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.25);
   z-index: 100;
@@ -1339,7 +1339,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 0px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -1357,7 +1357,7 @@
 .exportMenuItemIcon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1393,7 +1393,7 @@
   font-weight: 700;
   min-width: 18px;
   height: 18px;
-  border-radius: 9px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1410,7 +1410,7 @@
   width: 100%;
   max-width: 980px;
   max-height: 90vh;
-  border-radius: 20px;
+  border-radius: 0px;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
@@ -1446,7 +1446,7 @@
 .profileStatCard {
   background: var(--surface-hover, #f8fafc);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 14px;
+  border-radius: 0px;
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -1484,7 +1484,7 @@
 .summaryEmpCard {
   background: var(--surface-card, #ffffff);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 14px;
+  border-radius: 0px;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -1523,7 +1523,7 @@
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 0px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1532,7 +1532,7 @@
 .summaryHistoryBox {
   background: var(--surface-hover, #f8fafc);
   border: 1px solid var(--border-main, #e2e8f0);
-  border-radius: 10px;
+  border-radius: 0px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -1542,7 +1542,7 @@
 
 .clickableProfile {
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 0px;
   padding: 4px;
   margin: -4px;
   transition: all 0.15s ease;
@@ -1561,7 +1561,7 @@
    -------------------------------------------------------------------------- */
 .reviewBtn {
   padding: 5px 12px;
-  border-radius: 8px;
+  border-radius: 0px;
   border: 1px solid rgba(99, 102, 241, 0.45);
   background: rgba(99, 102, 241, 0.15);
   color: #818cf8;
@@ -1586,7 +1586,7 @@
 .considerationModalBox {
   background: var(--surface-card, #1e293b);
   border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 20px;
+  border-radius: 0px;
   width: 100%;
   max-width: 580px;
   max-height: calc(100vh - 32px);
@@ -1624,11 +1624,11 @@
 }
 .considerationBody::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  border-radius: 0px;
 }
 .considerationBody::-webkit-scrollbar-thumb {
   background: rgba(99, 102, 241, 0.35);
-  border-radius: 4px;
+  border-radius: 0px;
 }
 .considerationBody::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.55);
@@ -1638,7 +1638,7 @@
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-left: 4px solid #6366f1;
-  border-radius: 12px;
+  border-radius: 0px;
   padding: 12px 16px;
   position: relative;
 }
@@ -1669,7 +1669,7 @@
   gap: 10px 14px;
   background: var(--surface-hover, rgba(255, 255, 255, 0.03));
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.07));
-  border-radius: 14px;
+  border-radius: 0px;
   padding: 12px 16px;
 }
 
@@ -1706,7 +1706,7 @@
   align-items: center;
   justify-content: center;
   padding: 10px 8px;
-  border-radius: 12px;
+  border-radius: 0px;
   border: 1px solid var(--border-main, rgba(255, 255, 255, 0.1));
   background: var(--surface-hover, rgba(255, 255, 255, 0.03));
   cursor: pointer;
@@ -1770,7 +1770,7 @@
 .inlineConsiderBox {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(15, 23, 42, 0.6));
   border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: 14px;
+  border-radius: 0px;
   padding: 16px;
   display: flex;
   flex-direction: column;

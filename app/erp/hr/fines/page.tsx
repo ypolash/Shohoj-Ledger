@@ -1202,7 +1202,6 @@ export default function FinesPage() {
                 <th className={styles.tableHeaderCell} style={{ minWidth: '200px', maxWidth: '320px' }}>Violation / Reason</th>
                 <th className={styles.tableHeaderCell} style={{ width: '110px' }}>Fine Amount</th>
                 <th className={styles.tableHeaderCell} style={{ width: '150px' }}>Status</th>
-                <th className={styles.tableHeaderCell} style={{ width: '130px' }}>Payroll Period</th>
                 <th className={styles.tableHeaderCell} style={{ textAlign: 'right', width: '140px' }}>Actions</th>
               </tr>
             </thead>
@@ -1260,7 +1259,7 @@ export default function FinesPage() {
                             fontSize: '10px',
                             fontWeight: 700,
                             padding: '1px 6px',
-                            borderRadius: '4px',
+                            borderRadius: '0px',
                             background: 'rgba(245, 158, 11, 0.12)',
                             color: '#b45309',
                             border: '1px solid rgba(245, 158, 11, 0.25)',
@@ -1320,19 +1319,7 @@ export default function FinesPage() {
                       </span>
                     </td>
 
-                    {/* Payroll Period */}
-                    <td className={styles.tableCell}>
-                      {periodName ? (
-                        <span className={styles.periodBadge}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#059669' }}>
-                            receipt_long
-                          </span>
-                          {periodName}
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
-                      )}
-                    </td>
+
 
                     {/* Actions */}
                     <td className={styles.tableCell} style={{ textAlign: 'right' }}>
@@ -1477,7 +1464,7 @@ export default function FinesPage() {
                         fontSize: '10px',
                         fontWeight: 700,
                         padding: '1px 6px',
-                        borderRadius: '4px',
+                        borderRadius: '0px',
                         background: 'rgba(245, 158, 11, 0.12)',
                         color: '#b45309',
                         border: '1px solid rgba(245, 158, 11, 0.25)',
@@ -1495,16 +1482,7 @@ export default function FinesPage() {
                 </div>
 
                 {/* Footer and Actions */}
-                <div className={styles.cardFooter}>
-                  <div>
-                    {periodName ? (
-                      <span className={styles.periodBadge} style={{ fontSize: '11px', padding: '2px 6px' }}>
-                        {periodName}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Unassigned period</span>
-                    )}
-                  </div>
+                <div className={styles.cardFooter} style={{ justifyContent: 'flex-end' }}>
 
                   <div className={styles.actionBtnGroup}>
                     {isConsideration && (
@@ -1726,7 +1704,7 @@ export default function FinesPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div
                   className={styles.kpiIconBox}
-                  style={{ background: 'rgba(244, 63, 94, 0.12)', color: '#f43f5e', width: '44px', height: '44px', borderRadius: '12px' }}
+                  style={{ background: 'rgba(244, 63, 94, 0.12)', color: '#f43f5e', width: '44px', height: '44px', borderRadius: '0px' }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>badge</span>
                 </div>
@@ -1947,7 +1925,7 @@ export default function FinesPage() {
                                   fontSize: '11px',
                                   fontWeight: 700,
                                   padding: '4px 8px',
-                                  borderRadius: '6px',
+                                  borderRadius: '0px',
                                   background: emp.totalCount > 0 ? 'rgba(244, 63, 94, 0.12)' : 'var(--surface-hover)',
                                   color: emp.totalCount > 0 ? '#e11d48' : 'var(--text-muted)',
                                 }}
@@ -1960,7 +1938,7 @@ export default function FinesPage() {
                                   type="button"
                                   onClick={() => setExpandedEmpId(isExpanded ? null : emp.employeeId)}
                                   className={styles.secondaryBtn}
-                                  style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '8px' }}
+                                  style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '0px' }}
                                   title="Toggle fine history"
                                 >
                                   <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
@@ -1977,7 +1955,7 @@ export default function FinesPage() {
                                   setShowProfileModal(false);
                                 }}
                                 className={styles.secondaryBtn}
-                                style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '8px' }}
+                                style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '0px' }}
                                 title="Filter main page by this employee"
                               >
                                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>filter_list</span>
@@ -2055,7 +2033,6 @@ export default function FinesPage() {
                                   <th style={{ padding: '6px 8px' }}>Violation Reason</th>
                                   <th style={{ padding: '6px 8px' }}>Amount</th>
                                   <th style={{ padding: '6px 8px' }}>Status</th>
-                                  <th style={{ padding: '6px 8px' }}>Payroll Period</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -2104,9 +2081,6 @@ export default function FinesPage() {
                                         {item.status}
                                       </span>
                                     </td>
-                                    <td style={{ padding: '6px 8px', color: 'var(--text-muted)' }}>
-                                      {item.payrollRun?.period?.name || '—'}
-                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -2142,7 +2116,7 @@ export default function FinesPage() {
                     color: '#818cf8',
                     width: '38px',
                     height: '38px',
-                    borderRadius: '10px',
+                    borderRadius: '0px',
                   }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>rate_review</span>
@@ -2302,7 +2276,7 @@ export default function FinesPage() {
                               style={{
                                 padding: '3px 6px',
                                 fontSize: '10px',
-                                borderRadius: '4px',
+                                borderRadius: '0px',
                                 border: '1px solid rgba(245, 158, 11, 0.3)',
                                 background: 'rgba(245, 158, 11, 0.1)',
                                 color: '#f59e0b',
@@ -2325,7 +2299,7 @@ export default function FinesPage() {
                     justifyContent: 'space-between',
                     background: 'rgba(0,0,0,0.25)',
                     padding: '8px 12px',
-                    borderRadius: '8px',
+                    borderRadius: '0px',
                     fontSize: '12px'
                   }}>
                     <span style={{ color: 'var(--text-secondary)' }}>
@@ -2357,7 +2331,7 @@ export default function FinesPage() {
                     disabled={actionLoading === selectedConsiderationFine.id}
                     style={{
                       padding: '10px 16px',
-                      borderRadius: '8px',
+                      borderRadius: '0px',
                       background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                       color: '#ffffff',
                       fontWeight: 700,
@@ -2400,7 +2374,7 @@ export default function FinesPage() {
                 <div style={{
                   width: '32px',
                   height: '32px',
-                  borderRadius: '8px',
+                  borderRadius: '0px',
                   background: 'rgba(244, 63, 94, 0.12)',
                   color: '#f43f5e',
                   display: 'flex',
@@ -2436,7 +2410,7 @@ export default function FinesPage() {
                 alignItems: 'center',
                 padding: '10px 14px',
                 background: 'var(--surface-hover)',
-                borderRadius: '8px',
+                borderRadius: '0px',
                 border: '1px solid var(--border-main)',
               }}>
                 <div>
@@ -2477,7 +2451,7 @@ export default function FinesPage() {
                 <div style={{
                   background: 'var(--surface-main, #0f172a)',
                   border: '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
-                  borderRadius: '8px',
+                  borderRadius: '0px',
                   padding: '14px 16px',
                   fontSize: '13.5px',
                   lineHeight: '1.6',

@@ -1065,9 +1065,24 @@ export function getPresetById(presetId?: string): ProjectPreset {
  * to the best recommended project preset.
  */
 export function mapIndustryToProjectPreset(industryId?: string): ProjectPresetId {
-  if (!industryId) return "video_agency";
+  if (!industryId) return "manufacturing_engineering";
   const id = industryId.toLowerCase();
 
+  if (id.includes("goods") || id.includes("consumer")) {
+    return "manufacturing_engineering";
+  }
+  if (id.includes("hotel") || id.includes("resturant") || id.includes("restaurant") || id.includes("food")) {
+    return "manufacturing_engineering";
+  }
+  if (id.includes("pharmacy") || id.includes("pharmecy") || id.includes("pharma") || id.includes("health") || id.includes("drug")) {
+    return "manufacturing_engineering";
+  }
+  if (id.includes("electronic") || id.includes("gadget") || id.includes("hardware") || id.includes("device")) {
+    return "manufacturing_engineering";
+  }
+  if (id.includes("beauty") || id.includes("beuty") || id.includes("cosmetic") || id.includes("salon")) {
+    return "manufacturing_engineering";
+  }
   if (id.includes("it") || id.includes("software") || id.includes("tech")) {
     return "software_it";
   }
@@ -1083,7 +1098,7 @@ export function mapIndustryToProjectPreset(industryId?: string): ProjectPresetId
   if (id.includes("educat") || id.includes("academic") || id.includes("school") || id.includes("training") || id.includes("college") || id.includes("university")) {
     return "education_academic";
   }
-  if (id.includes("consult") || id.includes("legal") || id.includes("health") || id.includes("professional") || id.includes("finance")) {
+  if (id.includes("consult") || id.includes("legal") || id.includes("professional") || id.includes("finance")) {
     return "consulting_professional";
   }
   if (id.includes("event") || id.includes("entertainment") || id.includes("wedding")) {
@@ -1093,7 +1108,7 @@ export function mapIndustryToProjectPreset(industryId?: string): ProjectPresetId
     return "video_agency";
   }
 
-  return "video_agency";
+  return "manufacturing_engineering";
 }
 
 /**

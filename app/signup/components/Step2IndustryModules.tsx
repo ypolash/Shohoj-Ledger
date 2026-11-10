@@ -1,7 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { 
+  ShoppingBag,
+  UtensilsCrossed,
+  Pill,
+  Smartphone,
+  Sparkles,
   Terminal, 
   Store, 
   Factory, 
@@ -19,7 +24,6 @@ import {
   ShoppingCart, 
   Handshake,
   Video,
-  Sparkles,
   ChevronRight,
   GraduationCap
 } from "lucide-react";
@@ -27,8 +31,16 @@ import {
   mapIndustryToProjectPreset 
 } from "@/lib/projects/projectPresets";
 
+export interface IndustryTemplateItem {
+  id: string;
+  name: string;
+  desc: string;
+  icon: React.ReactNode;
+}
+
 interface Step2Props {
   formData: {
+    businessType?: string;
     industryTemplate: string;
     projectPreset?: string;
     selectedModules: string[];
@@ -48,7 +60,42 @@ const MODULES = [
   { id: "procurement", label: "Procurement & Suppliers", icon: <ShoppingCart size={18} /> }
 ];
 
-const INDUSTRY_TEMPLATES = [
+// Product-Based Presets
+export const PRODUCT_INDUSTRY_TEMPLATES: IndustryTemplateItem[] = [
+  {
+    id: "goods_consumer",
+    name: "Goods & Consumer",
+    desc: "FMCG, Groceries, Packaging & Fast Retail",
+    icon: <ShoppingBag size={20} />
+  },
+  {
+    id: "hotel_restaurant",
+    name: "Hotel & Resturant",
+    desc: "Dining, Hospitality, POS & Kitchen Orders",
+    icon: <UtensilsCrossed size={20} />
+  },
+  {
+    id: "pharmacy",
+    name: "Pharmecy",
+    desc: "Medicine, Prescriptions & Batch Expiry",
+    icon: <Pill size={20} />
+  },
+  {
+    id: "electronic_gadget",
+    name: "Electronic & Gadget",
+    desc: "Devices, Serial Tracking & Tech Specs",
+    icon: <Smartphone size={20} />
+  },
+  {
+    id: "beauty_cosmetics",
+    name: "Beuty & Cosmetics",
+    desc: "Skincare, Personal Care & Makeup Bundles",
+    icon: <Sparkles size={20} />
+  }
+];
+
+// Service-Based Presets
+export const SERVICE_INDUSTRY_TEMPLATES: IndustryTemplateItem[] = [
   { id: "it", name: "IT & Software Agency", desc: "Sprints, Milestones & Engineering", icon: <Terminal size={20} /> },
   { id: "media", name: "Video & Media Agency", desc: "Shoots, Talent & Multi-Cut Edits", icon: <Video size={20} /> },
   { id: "retail", name: "Retail & E-Commerce", desc: "POS, Cart Orders & Fast Dispatch", icon: <Store size={20} /> },
@@ -60,11 +107,22 @@ const INDUSTRY_TEMPLATES = [
 ];
 
 export function Step2IndustryModules({ formData, errors, updateForm, onBack, onNext }: Step2Props) {
+  const isProduct = !formData.businessType || formData.businessType.toLowerCase().includes("product");
+  const activeTemplates = isProduct ? PRODUCT_INDUSTRY_TEMPLATES : SERVICE_INDUSTRY_TEMPLATES;
+
   const handleIndustrySelect = (tmplId: string) => {
     updateForm("industryTemplate", tmplId);
     const recommendedPreset = mapIndustryToProjectPreset(tmplId);
     updateForm("projectPreset", recommendedPreset);
   };
+
+  // Automatically select the first template if current selection is invalid for this business type
+  React.useEffect(() => {
+    const isCurrentValid = activeTemplates.some((t) => t.id === formData.industryTemplate);
+    if (!isCurrentValid && activeTemplates.length > 0) {
+      handleIndustrySelect(activeTemplates[0].id);
+    }
+  }, [formData.businessType, activeTemplates]);
 
   const handleModuleToggle = (modId: string) => {
     const current = formData.selectedModules;
@@ -86,16 +144,21 @@ export function Step2IndustryModules({ formData, errors, updateForm, onBack, onN
           1. Industry Template Preset <span style={{ color: "#6ee7b7", textTransform: "none", fontWeight: 400 }}>· Provisions Chart of Accounts & Roles</span>
         </label>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px" }}>
-          {INDUSTRY_TEMPLATES.map((tmpl, index) => {
+          {activeTemplates.map((tmpl, index) => {
             const isSelected = formData.industryTemplate === tmpl.id;
-            const isLastRow = index >= 6; // Place last 2 items symmetrically on the downside row
+            // For 5 items: first 3 span 2 cols, last 2 span 3 cols (perfect 3 + 2 layout across 6 cols)
+            // For 8 items: first 6 span 2 cols, last 2 span 3 cols
+            const isSpan3 = activeTemplates.length === 5 
+              ? index >= 3 
+              : (activeTemplates.length === 8 ? index >= 6 : false);
+
             return (
               <div
                 key={tmpl.id}
                 onClick={() => handleIndustrySelect(tmpl.id)}
                 style={{
                   ...templateCardStyle,
-                  gridColumn: isLastRow ? "span 3" : "span 2",
+                  gridColumn: isSpan3 ? "span 3" : "span 2",
                   borderColor: isSelected ? "#10b981" : "rgba(255, 255, 255, 0.08)",
                   background: isSelected ? "rgba(16, 185, 129, 0.14)" : "rgba(0, 0, 0, 0.3)",
                   boxShadow: isSelected ? "0 4px 14px -2px rgba(16, 185, 129, 0.3)" : "none",

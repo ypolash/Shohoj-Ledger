@@ -673,7 +673,7 @@ export function HorizontalFinesCalendarView({
             style={{
               background: 'var(--surface-card, #0f172a)',
               border: '1px solid var(--border-main, rgba(255, 255, 255, 0.12))',
-              borderRadius: '16px',
+              borderRadius: '0px',
               padding: '24px',
               width: '100%',
               maxWidth: '440px',
@@ -709,7 +709,7 @@ export function HorizontalFinesCalendarView({
 
             <div style={{
               background: 'var(--surface-hover, #1e293b)',
-              borderRadius: '12px',
+              borderRadius: '0px',
               padding: '14px',
               display: 'flex',
               flexDirection: 'column',
@@ -754,7 +754,7 @@ export function HorizontalFinesCalendarView({
                 <div style={{
                   background: 'rgba(0, 0, 0, 0.2)',
                   padding: '8px 10px',
-                  borderRadius: '6px',
+                  borderRadius: '0px',
                   color: 'var(--text-main, #f8fafc)',
                   fontSize: '12px',
                   lineHeight: 1.4
@@ -770,7 +770,7 @@ export function HorizontalFinesCalendarView({
                     background: 'rgba(99, 102, 241, 0.1)',
                     borderLeft: '3px solid #6366f1',
                     padding: '8px 10px',
-                    borderRadius: '6px',
+                    borderRadius: '0px',
                     color: '#c7d2fe',
                     fontSize: '12px',
                     fontStyle: 'italic',
@@ -794,7 +794,7 @@ export function HorizontalFinesCalendarView({
                   }}
                   style={{
                     padding: '7px 14px',
-                    borderRadius: '8px',
+                    borderRadius: '0px',
                     border: '1px solid rgba(99, 102, 241, 0.45)',
                     background: 'rgba(99, 102, 241, 0.15)',
                     color: '#818cf8',
@@ -821,7 +821,7 @@ export function HorizontalFinesCalendarView({
                     }}
                     style={{
                       padding: '7px 12px',
-                      borderRadius: '8px',
+                      borderRadius: '0px',
                       border: '1px solid rgba(16, 185, 129, 0.3)',
                       background: 'rgba(16, 185, 129, 0.1)',
                       color: '#10b981',
@@ -846,7 +846,7 @@ export function HorizontalFinesCalendarView({
                     }}
                     style={{
                       padding: '7px 12px',
-                      borderRadius: '8px',
+                      borderRadius: '0px',
                       border: '1px solid rgba(100, 116, 139, 0.3)',
                       background: 'rgba(100, 116, 139, 0.1)',
                       color: '#94a3b8',
@@ -874,7 +874,7 @@ export function HorizontalFinesCalendarView({
                   }}
                   style={{
                     padding: '7px 12px',
-                    borderRadius: '8px',
+                    borderRadius: '0px',
                     border: '1px solid rgba(37, 99, 235, 0.3)',
                     background: 'rgba(37, 99, 235, 0.1)',
                     color: '#60a5fa',
@@ -901,7 +901,7 @@ export function HorizontalFinesCalendarView({
                   }}
                   style={{
                     padding: '7px 12px',
-                    borderRadius: '8px',
+                    borderRadius: '0px',
                     border: '1px solid rgba(239, 68, 68, 0.3)',
                     background: 'rgba(239, 68, 68, 0.1)',
                     color: '#ef4444',
@@ -923,7 +923,7 @@ export function HorizontalFinesCalendarView({
                 onClick={() => setSelectedFineForDetail(null)}
                 style={{
                   padding: '7px 12px',
-                  borderRadius: '8px',
+                  borderRadius: '0px',
                   border: '1px solid var(--border-main, rgba(255, 255, 255, 0.1))',
                   background: 'var(--surface-hover, #1e293b)',
                   color: 'var(--text-main, #f8fafc)',

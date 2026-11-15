@@ -1,8 +1,13 @@
+[variables]
+NODE_OPTIONS = "--max-old-space-size=1536"
+NPM_CONFIG_AUDIT = "false"
+NPM_CONFIG_FUND = "false"
+
 [phases.setup]
 nixPkgs = ["nodejs_22", "openssl"]
 
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm ci --no-audit --ignore-engines"]
 
 [phases.build]
 cmds = ["npx prisma generate", "npm run build"]

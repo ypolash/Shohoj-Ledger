@@ -8,7 +8,7 @@ WORKDIR /app
 # Install dependencies
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --no-audit --ignore-engines
 
 # Build application
 FROM base AS builder
@@ -26,6 +26,7 @@ ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 ENV BETTER_AUTH_URL=$BETTER_AUTH_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 RUN npx prisma generate
 RUN npm run build

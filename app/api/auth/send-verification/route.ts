@@ -35,11 +35,18 @@ export async function POST(req: Request) {
 
     const result = await sendVerificationEmail(user.email, user.id, user.name);
 
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, message: result.message },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       message: result.message,
       email: result.email,
-      code: result.code, // Useful for dev/preview
+      code: process.env.NODE_ENV !== "production" ? result.code : undefined,
     });
   } catch (error) {
     console.error("Send Verification Route Error:", error);

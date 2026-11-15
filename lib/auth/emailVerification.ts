@@ -73,12 +73,24 @@ export async function sendVerificationEmail(
   const verificationUrl = `/verify-email?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
   // Dispatch email
-  await EmailService.sendVerificationEmail({
+  const dispatchResult = await EmailService.sendVerificationEmail({
     to: cleanEmail,
     userName: targetName,
     code,
     verificationUrl,
   });
+
+  if (!dispatchResult.success) {
+    console.warn(`[AUTH] Verification email delivery failed for ${cleanEmail}:`, dispatchResult.error);
+    return {
+      success: false,
+      message: dispatchResult.error || "Unable to dispatch verification email. Please check server SMTP configuration.",
+      email: cleanEmail,
+      userName: targetName,
+      token,
+      code,
+    };
+  }
 
   console.log(`[AUTH] Verification email dispatched to ${cleanEmail}. Code: ${code}`);
 

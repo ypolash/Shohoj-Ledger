@@ -5,9 +5,22 @@
  * - Password Reset (OTP & Direct Link)
  * - Security Alerts
  *
- * Supports standard SMTP (e.g. Resend, SendGrid, Gmail SMTP, Mailtrap)
+ * Supports standard SMTP (e.g. Gmail SMTP, Resend, SendGrid, Mailtrap)
  * and falls back gracefully to formatted console telemetry in development.
  */
+
+// Prioritize IPv4 DNS resolution in Node.js to prevent IPv6 connection timeouts on cloud VPS/containers
+if (typeof process !== "undefined" && process.versions?.node) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const dns = require("dns");
+    if (dns && typeof dns.setDefaultResultOrder === "function") {
+      dns.setDefaultResultOrder("ipv4first");
+    }
+  } catch {
+    // Fallback if dns module is not accessible in current environment
+  }
+}
 
 export interface EmailOptions {
   to: string;
@@ -17,20 +30,23 @@ export interface EmailOptions {
 }
 
 export class EmailService {
-  private static isConfigured(): boolean {
-    return Boolean(
-      process.env.SMTP_HOST &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS
-    );
+  public static isConfigured(): boolean {
+    const user = process.env.SMTP_USER || "shohojledger@gmail.com";
+    const pass = process.env.SMTP_PASS || "iqdzqigzdvwzlrkc";
+    return Boolean(user && pass);
   }
 
   /**
    * Generic sender that sends email via SMTP if configured,
    * or outputs formatted telemetry in development.
    */
-  static async sendMail(options: EmailOptions): Promise<{ success: boolean; messageId?: string }> {
-    const fromAddress = process.env.SMTP_FROM || "Shohoj Ledger Security <security@shohojsolution.com>";
+  static async sendMail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const host = (process.env.SMTP_HOST || "smtp.gmail.com").trim();
+    const service = process.env.SMTP_SERVICE?.trim();
+    const isGmail = host.toLowerCase().includes("gmail") || service?.toLowerCase() === "gmail";
+    const cleanUser = (process.env.SMTP_USER || "shohojledger@gmail.com").trim();
+    const cleanPass = (process.env.SMTP_PASS || "iqdzqigzdvwzlrkc").replace(/\s+/g, "");
+    const fromAddress = process.env.SMTP_FROM || `Shohoj Ledger Security <${cleanUser}>`;
 
     if (this.isConfigured()) {
       try {
@@ -40,23 +56,51 @@ export class EmailService {
           throw new Error("Nodemailer module is not installed in dependencies.");
         }
         const nodemailer = nodemailerModule.default || nodemailerModule;
-        const cleanPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT) || 465,
-          secure: process.env.SMTP_SECURE === "true" || process.env.SMTP_PORT === "465",
-          auth: {
-            user: process.env.SMTP_USER?.trim(),
-            pass: cleanPass,
-          },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
-        });
+
+        // Build transport configuration optimized for Gmail or generic SMTP hosts
+        const transportConfig: any = isGmail
+          ? {
+              service: "gmail",
+              auth: {
+                user: cleanUser,
+                pass: cleanPass,
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+            }
+          : service
+          ? {
+              service: service,
+              auth: {
+                user: cleanUser,
+                pass: cleanPass,
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+            }
+          : {
+              host: host,
+              port: Number(process.env.SMTP_PORT) || 465,
+              secure: process.env.SMTP_SECURE === "true" || process.env.SMTP_PORT === "465",
+              auth: {
+                user: cleanUser,
+                pass: cleanPass,
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+              connectionTimeout: 15000,
+              greetingTimeout: 10000,
+              socketTimeout: 20000,
+            };
+
+        const transporter = nodemailer.createTransport(transportConfig);
 
         const info = await transporter.sendMail({
           from: fromAddress,
-          replyTo: process.env.SMTP_USER,
+          replyTo: cleanUser || undefined,
           to: options.to,
           subject: options.subject,
           html: options.html,
@@ -68,8 +112,24 @@ export class EmailService {
 
         console.log(`[EMAIL DISPATCHED] To: ${options.to} | Subject: "${options.subject}" | MessageId: ${info.messageId}`);
         return { success: true, messageId: info.messageId };
-      } catch (error) {
-        console.warn(`[EMAIL WARNING] SMTP delivery failed, logging email content to server console:`, error);
+      } catch (error: any) {
+        console.error(`[EMAIL ERROR] SMTP delivery failed for ${options.to}:`, error?.message || error);
+        if (process.env.NODE_ENV === "production") {
+          return {
+            success: false,
+            error: error?.message || "Failed to deliver email through live SMTP server.",
+          };
+        }
+      }
+    } else {
+      if (process.env.NODE_ENV === "production") {
+        console.error(
+          `[EMAIL CRITICAL] Production SMTP is NOT configured! Email to ${options.to} was not sent.`
+        );
+        return {
+          success: false,
+          error: "SMTP credentials are not configured on the live server.",
+        };
       }
     }
 

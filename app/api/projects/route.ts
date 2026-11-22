@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { getCompanyId } from "@/lib/company/companyFilter";
 import { requirePermission } from "@/lib/rbac/permissionGuard";
 import { createLedgerEntry } from "@/lib/ledger";
-import { getPresetById } from "@/lib/projects/projectPresets";
+import { getPresetById, PROJECT_PRESETS, ProjectPresetId, mapIndustryToProjectPreset } from "@/lib/projects/projectPresets";
 
 export async function GET(req: Request) {
   try {
@@ -20,10 +20,7 @@ export async function GET(req: Request) {
     const managerId = url.searchParams.get("managerId");
     const client = url.searchParams.get("client");
 
-    const referer = req.headers.get("referer") || "";
-    const systemSource = referer.includes("/erp") ? "ERP" : "LEGACY";
-
-    const where: any = { companyId, systemSource };
+    const where: any = { companyId };
     
     if (status) where.status = status;
     if (managerId) where.managerId = managerId;
@@ -39,7 +36,7 @@ export async function GET(req: Request) {
       ];
     }
 
-    const projects = await prisma.project.findMany({
+    let projects = await prisma.project.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -48,6 +45,94 @@ export async function GET(req: Request) {
         tasks: { select: { id: true, status: true, estimatedHours: true, actualHours: true } }
       }
     });
+
+    // If company has 0 projects and no search query, auto-provision starter projects matching the company's industry preset
+    if (projects.length === 0 && !search && !status && !client) {
+      try {
+        const presetSetting = await prisma.systemSetting.findUnique({
+          where: { key: `project_default_preset_${companyId}` }
+        });
+        const company = await prisma.company.findUnique({
+          where: { id: companyId },
+          select: { businessType: true }
+        });
+        const presetId = (presetSetting?.value as ProjectPresetId) || mapIndustryToProjectPreset(company?.businessType);
+        const preset = PROJECT_PRESETS[presetId] || PROJECT_PRESETS.manufacturing_engineering;
+
+        const starterProjects: { name: string; code: string; budget: number; category: string }[] = [];
+
+        if (presetId === "software_it") {
+          starterProjects.push({ name: "Core Web Platform & Mobile MVP", code: "MVP-01", budget: 150000, category: "Software Development" });
+          starterProjects.push({ name: "Cloud Infrastructure & CI/CD Pipeline", code: "OPS-01", budget: 80000, category: "DevOps & Cloud" });
+        } else if (presetId === "video_agency") {
+          starterProjects.push({ name: "Brand Commercial & Social Cuts", code: "VID-01", budget: 120000, category: "Video Production" });
+          starterProjects.push({ name: "Product Shoot & Reels Campaign", code: "VID-02", budget: 65000, category: "Commercial Shoot" });
+        } else if (presetId === "digital_marketing") {
+          starterProjects.push({ name: "Q1 Performance Marketing & Social Ads", code: "MKT-01", budget: 90000, category: "Digital Marketing" });
+        } else if (presetId === "education_academic") {
+          starterProjects.push({ name: "Batch 01 Curriculum & Student Enrollment", code: "EDU-01", budget: 100000, category: "Academic Cohort" });
+        } else if (presetId === "consulting_professional") {
+          starterProjects.push({ name: "Enterprise Business Audit & Advisory", code: "CNS-01", budget: 120000, category: "Strategic Advisory" });
+        } else if (presetId === "construction_realestate") {
+          starterProjects.push({ name: "Site Development & Structural Phase 1", code: "BLD-01", budget: 500000, category: "Civil Construction" });
+        } else {
+          const bType = (company?.businessType || "").toLowerCase();
+          if (bType.includes("hotel") || bType.includes("resturant") || bType.includes("restaurant") || bType.includes("food")) {
+            starterProjects.push({ name: "Menu Launch & Kitchen POS Workflow", code: "RES-01", budget: 75000, category: "Restaurant Operations" });
+          } else if (bType.includes("pharmacy") || bType.includes("pharmecy") || bType.includes("health")) {
+            starterProjects.push({ name: "Clinical Stocking & Regulatory Setup", code: "PHM-01", budget: 150000, category: "Pharmacy Operations" });
+          } else if (bType.includes("electronic") || bType.includes("gadget")) {
+            starterProjects.push({ name: "Electronics Showroom & Serial Inventory", code: "GDT-01", budget: 200000, category: "Retail & Gadgets" });
+          } else if (bType.includes("beauty") || bType.includes("beuty") || bType.includes("cosmetic")) {
+            starterProjects.push({ name: "Cosmetics Catalog & Salon Operations", code: "CSM-01", budget: 85000, category: "Beauty & Cosmetics" });
+          } else {
+            starterProjects.push({ name: "Product Line Launch & Packaging Run", code: "PRD-01", budget: 150000, category: "Production & Retail" });
+            starterProjects.push({ name: "Distributor Network & Stock Dispatch", code: "DST-01", budget: 100000, category: "Supply Chain" });
+          }
+        }
+
+        const now = new Date();
+        const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        for (const sp of starterProjects) {
+          const exists = await prisma.project.findFirst({
+            where: { companyId, projectCode: sp.code }
+          });
+          if (!exists) {
+            await prisma.project.create({
+              data: {
+                companyId,
+                projectCode: sp.code,
+                name: sp.name,
+                category: sp.category,
+                priority: "High",
+                status: "Active",
+                progress: 15,
+                startDate: now,
+                endDate: in30Days,
+                estimatedBudget: sp.budget,
+                actualCost: 0,
+                systemSource: "ERP",
+                description: `Starter project provisioned for ${preset.name}. Tailored for ${preset.category}.`
+              }
+            });
+          }
+        }
+
+        // Re-fetch after auto-provisioning
+        projects = await prisma.project.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            manager: { select: { firstName: true, lastName: true } },
+            teamMembers: { select: { id: true, firstName: true, lastName: true, email: true } },
+            tasks: { select: { id: true, status: true, estimatedHours: true, actualHours: true } }
+          }
+        });
+      } catch (seedErr) {
+        console.warn("Auto-provision starter projects non-fatal warning:", seedErr);
+      }
+    }
 
     return NextResponse.json({ projects });
   } catch (error: any) {

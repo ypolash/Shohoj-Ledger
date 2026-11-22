@@ -151,7 +151,7 @@ export default function HRTasksPage() {
     try {
       const [tasksRes, empsRes] = await Promise.all([
         fetch("/api/hr/tasks").catch(() => null),
-        fetch("/api/employees").catch(() => null),
+        fetch("/api/employees?includeTemporary=true").catch(() => null),
       ]);
 
       if (tasksRes && tasksRes.ok) {
@@ -1502,6 +1502,11 @@ export default function HRTasksPage() {
                     className={styles.formSelect}
                   >
                     <option value="">Select Employee...</option>
+                    {taskForm.assignedToEmployeeId && !employees.some((e) => e.employeeId === taskForm.assignedToEmployeeId) && (
+                      <option value={taskForm.assignedToEmployeeId}>
+                        {taskForm.assignedToEmployeeId}
+                      </option>
+                    )}
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.employeeId}>
                         {emp.firstName} {emp.lastName} ({emp.employeeId}) {emp.designation ? `— ${emp.designation}` : ""}
@@ -1740,9 +1745,17 @@ export default function HRTasksPage() {
                     onChange={(e) => setTaskForm({ ...taskForm, assignedToEmployeeId: e.target.value })}
                     className={styles.formSelect}
                   >
+                    <option value="">Select Employee...</option>
+                    {taskForm.assignedToEmployeeId && !employees.some((e) => e.employeeId === taskForm.assignedToEmployeeId) && (
+                      <option value={taskForm.assignedToEmployeeId}>
+                        {activeTask?.employee
+                          ? `${activeTask.employee.firstName} ${activeTask.employee.lastName} (${activeTask.employee.employeeId})`
+                          : taskForm.assignedToEmployeeId}
+                      </option>
+                    )}
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.employeeId}>
-                        {emp.firstName} {emp.lastName} ({emp.employeeId})
+                        {emp.firstName} {emp.lastName} ({emp.employeeId}) {emp.designation ? `— ${emp.designation}` : ""}
                       </option>
                     ))}
                   </select>

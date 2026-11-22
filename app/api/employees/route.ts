@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
     const whereClause: any = { companyId };
 
-    const employees = await prisma.employee.findMany({
+    let employees = await prisma.employee.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -35,7 +35,52 @@ export async function GET(req: Request) {
       }
     });
 
-    const result = includeTemporary ? employees : employees.filter(e => isRegularStaff(e));
+    // If company has no employee profiles yet, auto-sync/ensure the Owner has an employee record
+    if (employees.length === 0) {
+      try {
+        const ownerUser = await prisma.user.findFirst({
+          where: { companyId, role: { in: ["Owner", "Admin", "SuperAdmin"] } }
+        });
+        if (ownerUser) {
+          const nameParts = (ownerUser.name || "Company Owner").trim().split(" ");
+          const firstName = nameParts[0] || "Owner";
+          const lastName = nameParts.slice(1).join(" ") || "(Founder)";
+          const ownerEmpId = `EMP-${ownerUser.id.slice(0, 4).toUpperCase()}`;
+
+          const newOwnerEmp = await prisma.employee.create({
+            data: {
+              companyId,
+              employeeId: ownerEmpId,
+              firstName,
+              lastName,
+              email: ownerUser.email,
+              designation: "Managing Director / Owner",
+              department: "Executive Management",
+              employmentType: "Full-Time",
+              employmentStatus: "Active",
+              basicSalary: 0,
+              joinDate: new Date(),
+              userId: ownerUser.id,
+              systemSource: "ERP",
+              password: "SSO_USER_ACCOUNT",
+            },
+            include: {
+              departmentRef: true,
+              designationRef: true,
+              reportingManager: true,
+              workShift: true,
+              profile: true,
+            }
+          });
+          employees = [newOwnerEmp as any];
+        }
+      } catch (ownerEmpErr) {
+        console.warn("Auto-sync owner employee non-fatal warning:", ownerEmpErr);
+      }
+    }
+
+    const regularStaff = employees.filter(e => isRegularStaff(e));
+    const result = includeTemporary || regularStaff.length === 0 ? employees : regularStaff;
     return NextResponse.json(JSON.parse(JSON.stringify(result)));
   } catch (error) {
     console.error('Failed to fetch employees:', error);

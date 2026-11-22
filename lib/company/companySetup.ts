@@ -158,6 +158,36 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
         throw memberError;
       }
 
+      // 8.5 Auto-create founding Owner Employee Profile so staff dropdowns, tasks, and duty roster immediately work
+      try {
+        const nameParts = (ownerName || "Company Owner").trim().split(" ");
+        const firstName = nameParts[0] || "Owner";
+        const lastName = nameParts.slice(1).join(" ") || "(Founder)";
+        const ownerEmpId = `EMP-${newOwner.id.slice(0, 4).toUpperCase()}`;
+
+        await tx.employee.create({
+          data: {
+            companyId: company.id,
+            employeeId: ownerEmpId,
+            firstName,
+            lastName,
+            email: normalizedEmail,
+            designation: "Managing Director / Owner",
+            department: "Executive Management",
+            employmentType: "Full-Time",
+            employmentStatus: "Active",
+            basicSalary: 0,
+            joinDate: new Date(),
+            userId: newOwner.id,
+            systemSource: "ERP",
+            password: "SSO_USER_ACCOUNT",
+          }
+        });
+        console.log("✓ Owner Employee Profile Created");
+      } catch (empErr: any) {
+        console.warn("Owner Employee Profile creation warning:", empErr?.message);
+      }
+
       // 9. Securely attach authentication account wrapper
       try {
         const hashedPassword = await bcrypt.hash(ownerPasswordRaw, 10);
@@ -182,7 +212,7 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
         throw templateError;
       }
 
-      // 11. Provision Project Structure Preset
+      // 11. Provision Project Structure Preset & Starter Project
       try {
         const resolvedPreset = payload.projectPreset || mapIndustryToProjectPreset(payload.industryTemplate || businessType);
         await tx.systemSetting.create({
@@ -192,7 +222,65 @@ export async function setupNewCompany(payload: CompanySignupPayload) {
             description: "Default project structure preset selected during company onboarding"
           }
         });
-        console.log("✓ Project Preset Provisioned:", resolvedPreset);
+
+        // Provision initial starter project
+        let spName = "Product Launch & Operations";
+        let spCode = "PRD-01";
+        let spCategory = "Operations";
+        const indLower = (payload.industryTemplate || businessType || "").toLowerCase();
+
+        if (indLower.includes("software") || indLower.includes("it")) {
+          spName = "Core Web Platform & Mobile MVP";
+          spCode = "MVP-01";
+          spCategory = "Software Development";
+        } else if (indLower.includes("video") || indLower.includes("media")) {
+          spName = "Brand Commercial & Social Cuts";
+          spCode = "VID-01";
+          spCategory = "Video Production";
+        } else if (indLower.includes("hotel") || indLower.includes("resturant") || indLower.includes("restaurant") || indLower.includes("food")) {
+          spName = "Menu Launch & Kitchen Operations";
+          spCode = "RES-01";
+          spCategory = "Restaurant Operations";
+        } else if (indLower.includes("pharmacy") || indLower.includes("pharmecy") || indLower.includes("health")) {
+          spName = "Clinical Stocking & Dispensing Setup";
+          spCode = "PHM-01";
+          spCategory = "Pharmacy Operations";
+        } else if (indLower.includes("electronic") || indLower.includes("gadget")) {
+          spName = "Electronics Showroom & Serial Inventory";
+          spCode = "GDT-01";
+          spCategory = "Retail & Gadgets";
+        } else if (indLower.includes("beauty") || indLower.includes("beuty") || indLower.includes("cosmetic")) {
+          spName = "Cosmetics Catalog & Salon Operations";
+          spCode = "CSM-01";
+          spCategory = "Beauty & Cosmetics";
+        } else if (indLower.includes("education") || indLower.includes("academic")) {
+          spName = "Batch 01 Curriculum & Admissions";
+          spCode = "EDU-01";
+          spCategory = "Academic Cohort";
+        }
+
+        const now = new Date();
+        const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await tx.project.create({
+          data: {
+            companyId: company.id,
+            projectCode: spCode,
+            name: spName,
+            category: spCategory,
+            priority: "High",
+            status: "Active",
+            progress: 15,
+            startDate: now,
+            endDate: in30Days,
+            estimatedBudget: 100000,
+            actualCost: 0,
+            systemSource: "ERP",
+            description: `Starter project provisioned for ${companyName}. Tailored for ${spCategory}.`
+          }
+        });
+
+        console.log("✓ Project Preset and Starter Project Provisioned:", resolvedPreset);
       } catch (presetError: any) {
         console.log(`✗ Project Preset Provision Non-Fatal Warning:`, presetError?.message);
       }
